@@ -29,9 +29,20 @@ Statuts : ⏳ à faire · 🚧 en cours · ✅ fait. **Mettre à jour à chaque 
 
 Dev local : `pnpm db:start` puis `pnpm db:reset`. Identifiants : `marie@local.test` / `password123`.
 
-## E2 — Ressources ⏳
+## E2 — Ressources 🚧
 
-US-00 → US-07 · CRUD, markdown, fichiers, tags, « utilisée dans N modules ».
+| US          | Contenu                                                                      | Statut                         |
+| ----------- | ---------------------------------------------------------------------------- | ------------------------------ |
+| US-00/01/02 | CRUD ressource (titre, description, contenu Markdown, lien, catégorie, tags) | ✅                             |
+| US-03/07    | « Utilisée dans N modules » (liste + détail) via `course_resource`           | ✅                             |
+| US-04       | Archiver / désarchiver / supprimer (avec confirmation)                       | ✅                             |
+| US-03       | Liste : recherche plein texte + filtres catégorie / tag / archivées          | ✅                             |
+| —           | e2e authentifié (login seed → création → liste) + axe 0 violation            | ✅                             |
+| US-01       | Upload de fichiers joints (Storage)                                          | ⏳ reporté (bucket + policies) |
+| US-05/06    | Import Notion / Moodle → E8 (hors E2)                                        | ⏳                             |
+
+Écrans : `/resources`, `/resources/new`, `/resources/[id]`, `/resources/[id]/edit`.
+Détail : `docs/SPEC.md`.
 
 ## E3 — Modules + Cours ⏳
 

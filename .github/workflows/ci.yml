@@ -46,5 +46,18 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Supabase local
+        run: pnpm exec supabase start # applique migrations + seed
+
       - name: E2E + accessibilité (axe)
         run: pnpm test:e2e
+        env:
+          # Clés de démo de la stack Supabase locale (valides uniquement en localhost).
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          NEXT_PUBLIC_APP_URL: http://localhost:3100
+
+      - name: Supabase stop
+        if: always()
+        run: pnpm exec supabase stop --no-backup

@@ -70,5 +70,5 @@ Node : voir `.nvmrc` (22). CI : `.github/workflows/ci.yml`.
 
 ## Références
 
-`docs/YNOV-RULES.md` · `docs/DATA-MODEL.md` · `docs/DECISIONS.md` ·
-`docs/ACCESSIBILITY.md` · `docs/IMPORTS.md`.
+`docs/SPEC.md` (écrans livrés) · `docs/YNOV-RULES.md` · `docs/DATA-MODEL.md` ·
+`docs/DECISIONS.md` · `docs/ACCESSIBILITY.md` · `docs/IMPORTS.md` · `docs/BACKLOG.md`.
