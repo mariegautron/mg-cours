@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { login, type LoginState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -19,7 +19,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle className="font-heading text-2xl">MG COURS</CardTitle>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">MG COURS</h1>
         <CardDescription>Connexion à votre espace pédagogique.</CardDescription>
       </CardHeader>
       <CardContent>

@@ -2,7 +2,7 @@
 
 Statuts : ⏳ à faire · 🚧 en cours · ✅ fait. **Mettre à jour à chaque PR.**
 
-## E0 — Fondations 🚧
+## E0 — Fondations ✅
 
 | Tâche                                                                    | Statut |
 | ------------------------------------------------------------------------ | ------ |
@@ -14,12 +14,20 @@ Statuts : ⏳ à faire · 🚧 en cours · ✅ fait. **Mettre à jour à chaque 
 | Vitest + Playwright + axe configurés, smoke E2E                          | ✅     |
 | CI GitHub Actions (lint → format → typecheck → test → build + e2e)       | ✅     |
 | `AGENTS.md` + squelette `docs/`                                          | ✅     |
-| Projet Supabase Cloud + `.env.local` (PO)                                | ⏳     |
+| Projet Supabase Cloud (prod) + `.env.local` prod (PO)                    | ⏳     |
 
-## E1 — Modèle de données ⏳
+## E1 — Modèle de données ✅
 
-US-08/11 · migrations (toutes les tables de `DATA-MODEL.md`) · RLS · seed (YNOV Nantes,
-MyDigitalSchool, module exemple 21 h) · `pnpm db:types`.
+| Tâche                                                                                                                                           | Statut |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 3 migrations : 16 tables (noms anglais) + 7 enums + helpers                                                                                     | ✅     |
+| RLS `owner_id = auth.uid()` sur les 16 tables (`mg_apply_conventions`)                                                                          | ✅     |
+| Trigger `updated_at` (moddatetime) partout                                                                                                      | ✅     |
+| `seed.sql` : user local, profil, YNOV Nantes + MyDigitalSchool, module _Méthodologies Agile & Scrum_ (21 h, 6 séances), commentaires prédéfinis | ✅     |
+| `pnpm db:reset` rejoue tout · `pnpm db:types` → `src/types/database.ts`                                                                         | ✅     |
+| `US-11` calcul minimum de notes → `src/lib/ynov/notation.ts` (E0)                                                                               | ✅     |
+
+Dev local : `pnpm db:start` puis `pnpm db:reset`. Identifiants : `marie@local.test` / `password123`.
 
 ## E2 — Ressources ⏳
 
