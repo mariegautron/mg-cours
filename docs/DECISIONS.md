@@ -56,3 +56,15 @@ du Supabase local, provoquant des échecs de connexion silencieux (aucune requê
 reconnu par Next.js, gitignoré comme tout `.env*`) : lisible pour référence, jamais chargé
 automatiquement. Le déploiement réel utilisera les variables d'environnement du dashboard
 Vercel, pas un fichier local.
+
+## ADR-010 — Import CSV : toujours décoder le texte en UTF-8 nous-mêmes
+
+⚠️ **Piège vécu (E4)** : `XLSX.read(arrayBuffer, { type: "array" })` décode les octets d'un
+CSV texte en Latin-1 (« Prénom » devient « PrÃ©nom »), ce qui casse la reconnaissance de
+colonnes accentuées et faisait échouer l'import CSV en silence (toutes les lignes en erreur,
+sans qu'aucun test unitaire — écrit avec `type: "string"` — ne l'ait détecté). Attrapé par
+le test e2e d'import.
+→ `previewStudentsImport` (`src/app/(app)/students/actions.ts`) détecte l'extension/le type
+MIME : un `.csv` est décodé en UTF-8 (`TextDecoder`) puis passé en `string` à
+`parseStudentsFile` ; seul un vrai binaire XLSX passe par le chemin `ArrayBuffer`. Un test
+de régression construit un classeur XLSX réel (`XLSX.write`) pour couvrir ce second chemin.

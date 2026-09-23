@@ -65,9 +65,30 @@ Détail : `docs/SPEC.md`.
 Reporté (hors MVP / plus tard) : réordonnancement par glisser-déposer des séances (position
 numérique manuelle pour l'instant) ; transition guidée de `iceberg_state` (E7).
 
-## E4 — Étudiants + Groupes ⏳
+## E4 — Étudiants + Groupes ✅
 
-US-14 → US-19 · import CSV/XLSX, création manuelle, groupes, trombinoscope, notes perso.
+| US          | Contenu                                                                                                                                       | Statut |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-13/US-14 | CRUD étudiant·e (prénom, nom, e-mail, n° étudiant, promotion, notes perso)                                                                    | ✅     |
+| US-14       | Liste : recherche + filtres promotion / module                                                                                                | ✅     |
+| US-12       | Import CSV/XLSX avec aperçu (dry-run) puis confirmation ; alias de colonnes tolérants aux accents/casse ; détection doublons (fichier + base) | ✅     |
+| US-15       | Créer un groupe (tp/td/projet) dans un module                                                                                                 | ✅     |
+| US-16       | Voir les groupes d'un module + effectif                                                                                                       | ✅     |
+| —           | Ajouter/retirer des membres (picker)                                                                                                          | ✅     |
+| —           | e2e : étudiant → groupe → ajout membre, et import CSV bout en bout, axe 0 violation                                                           | ✅     |
+
+Écrans : `/students`, `/students/new`, `/students/[id]`, `/students/[id]/edit`,
+`/students/import`, `/modules/[id]/groups/new`, `/modules/[id]/groups/[groupId]`
+(+ section « Groupes » sur `/modules/[id]`). Détail : `docs/SPEC.md`.
+
+**Bug trouvé et corrigé par les e2e** : `XLSX.read(arrayBuffer, {type:"array"})` décodait le
+CSV en Latin-1 (accents cassés → colonnes non reconnues → tout en erreur). Fix : décodage
+UTF-8 explicite pour les `.csv` avant parsing ; test de régression sur un vrai classeur XLSX
+binaire pour vérifier que ce chemin reste correct.
+
+Reporté (hors MVP) : upload de la photo du trombinoscope (Storage, comme les fichiers de
+ressources en E2) — `photo_url` existe en base, pas d'UI d'upload pour l'instant ; comparaison
+automatique des notes Hyperplanning (E7/E8).
 
 ## E5 — Évaluations + Notation ⏳
 

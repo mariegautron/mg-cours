@@ -9,6 +9,7 @@ import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
 import { requiredNotes } from "@/lib/ynov/notation";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
@@ -40,7 +41,11 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
 
 export default async function ModulePage({ params }: PageProps<"/modules/[id]">) {
   const { id } = await params;
-  const [mod, courses] = await Promise.all([getModule(id), getModuleCourses(id)]);
+  const [mod, courses, groups] = await Promise.all([
+    getModule(id),
+    getModuleCourses(id),
+    listModuleGroups(id),
+  ]);
   if (!mod) notFound();
 
   const notes = requiredNotes(mod.total_hours);
@@ -103,6 +108,39 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           </Button>
         </div>
         <CourseList moduleId={mod.id} courses={courses} />
+      </section>
+
+      <section aria-labelledby="groups">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 id="groups" className="text-lg font-medium">
+            Groupes ({groups.length})
+          </h2>
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/modules/${mod.id}/groups/new`}>
+              <Plus aria-hidden />
+              Ajouter un groupe
+            </Link>
+          </Button>
+        </div>
+        {groups.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Aucun groupe pour l’instant.</p>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {groups.map((g) => (
+              <li key={g.id}>
+                <Link
+                  href={`/modules/${mod.id}/groups/${g.id}`}
+                  className="hover:bg-accent focus-visible:ring-ring block rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <p className="font-medium">{g.name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {g.members.length} membre{g.members.length > 1 ? "s" : ""}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section aria-labelledby="admin-docs">

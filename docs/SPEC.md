@@ -89,3 +89,44 @@ chacune liées à une ou plusieurs ressources réutilisables.
   (`src/lib/ynov/notation.ts`, `iceberg.ts`, `trame.ts`), jamais recalculées dans l'UI.
 - La duplication ne copie pas les évaluations/notes (propres à une année), seulement la
   structure pédagogique (cours + ressources liées).
+
+## Étudiants + Groupes (E4)
+
+### Liste `/students`
+
+- Cartes : prénom + nom, e-mail, promotion. Recherche plein texte (nom/prénom/e-mail),
+  filtres promotion et **module** (via l'appartenance aux groupes du module).
+
+### Création `/students/new` · Édition `/students/[id]/edit`
+
+- Champs : prénom, nom (obligatoires), e-mail (optionnel, unique), numéro étudiant,
+  promotion/groupe scolaire, notes personnelles.
+
+### Détail `/students/[id]`
+
+- Coordonnées, groupes auxquels iel appartient (tous modules confondus, lien vers chacun),
+  notes personnelles, suppression (confirmation).
+
+### Import `/students/import`
+
+- Étape 1 : dépôt d'un fichier **CSV ou XLSX**, colonnes reconnues par alias tolérant aux
+  accents/casse (nom, prénom, email, numéro étudiant, groupe) → aperçu ligne par ligne
+  (à importer / déjà en base / en erreur), **rien n'est écrit à cette étape**.
+- Étape 2 : confirmation → n'insère que les lignes valides et non déjà présentes
+  (déduplication par e-mail, fichier et base).
+- Les CSV texte sont décodés en UTF-8 explicitement avant parsing (voir `DECISIONS.md`).
+
+### Groupes (`/modules/[id]/groups/…`, intégré à la page module)
+
+- Un groupe (`student_group`) appartient à un module : nom + type (TP/TD/Projet).
+- Détail d'un groupe : deux colonnes — membres actuel·les (retrait en un clic) et
+  étudiant·es disponibles (ajout en un clic), sans limite de recherche pour l'instant.
+- Suppression du groupe (confirmation) : retire les liens, ne supprime pas les étudiant·es.
+
+### Règles
+
+- Trombinoscope : `student.photo_url` existe en base ; pas d'UI d'upload en E4 (Storage non
+  configuré, comme les fichiers de ressources en E2) — à ajouter avec un besoin concret.
+- La comparaison automatique des notes Hyperplanning (US-39) est hors MVP ; l'étape iceberg
+  `grades_in_hp` (13 états, `src/lib/ynov/iceberg.ts`) n'a pas encore de contrôle dans l'UI —
+  prévu avec le reste du workflow de facturation en E7.
