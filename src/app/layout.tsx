@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     template: "%s · MG COURS",
   },
   description: "Gestion pédagogique et facturation — Marie Gautron",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

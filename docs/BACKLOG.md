@@ -147,9 +147,24 @@ type string » en build). À vérifier une fois sur Vercel avec une 1re facture 
 
 US-05, US-06, US-16 · script one-shot `scripts/notion-migrate.ts` · import étudiants CSV/XLSX.
 
-## E9 — Recette & prod ⏳
+## E9 — Recette & prod 🚧
 
-E2E complet · import réel · déploiement Vercel + Supabase.
+| Tâche                                                                                                                                 | Statut                   |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| CI GitHub Actions verte sur tous les commits (lint, format, typecheck, unit, build, e2e sur Supabase local)                           | ✅                       |
+| Prod Vercel joignable ; routes privées et `/api/*` redirigent vers `/login` sans session                                              | ✅ vérifié               |
+| Schéma cloud à jour (4 migrations) ; anon ne lit aucune donnée                                                                        | ✅ vérifié               |
+| **Isolation RLS** testée (2e compte : lecture/modif/suppression/insertion forgée, 16 tables, anonyme)                                 | ✅ e2e                   |
+| Dépendances : `pnpm audit --prod` propre (xlsx → 0.20.3 officiel SheetJS)                                                             | ✅                       |
+| En-têtes de sécurité (nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy) + `noindex`                                      | ✅                       |
+| `docs/DEPLOY.md` (variables, mise en place Supabase, checklist de recette, retour arrière, risques) ; `docs/ACCESSIBILITY.md` honnête | ✅                       |
+| **Fermer les inscriptions Supabase** (Allow new users to sign up = off)                                                               | ⏳ **Marie** (dashboard) |
+| Création du compte prod + Réglages + facture d'essai sur Vercel                                                                       | ⏳ **Marie**             |
+| Passe RGAA manuelle (clavier, lecteur d'écran, zoom)                                                                                  | ⏳ **Marie**             |
+| Migration des données Notion (E8, session dédiée)                                                                                     | ⏳                       |
+| Resend configuré (e-mails résultats/factures)                                                                                         | ⏳ **Marie** (optionnel) |
+
+Détail : `docs/DEPLOY.md`.
 
 ## Hors MVP (post-12/10)
 

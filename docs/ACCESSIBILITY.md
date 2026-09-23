@@ -24,14 +24,23 @@ C'est le domaine d'expertise de Marie : l'app doit être **exemplaire**.
 
 ## Checklist par écran
 
-| Écran                    | axe 0 violation | Clavier | Lecteur d'écran | Contraste AA | Zoom 200 % |
-| ------------------------ | --------------- | ------- | --------------- | ------------ | ---------- |
-| Connexion                | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Tableau de bord          | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Modules (liste / détail) | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Ressources               | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Étudiants / groupes      | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Saisie de notes          | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Checklist iceberg        | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Génération de facture    | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
-| Génération de trame      | ⏳              | ⏳      | ⏳              | ⏳           | ⏳         |
+Légende : ✅ vérifié automatiquement (axe-core en CI, 0 violation WCAG 2.0/2.1 A + AA) ·
+🔎 **à vérifier à la main par Marie** (clavier, lecteur d'écran, zoom, contraste des états) · — non couvert.
+
+| Écran                                                          | axe | Clavier | Lecteur d'écran | Contraste AA | Zoom 200 % |
+| -------------------------------------------------------------- | --- | ------- | --------------- | ------------ | ---------- |
+| Connexion                                                      | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Ressources (création, détail)                                  | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Module (détail : trame, séances, groupes, docs admin)          | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Étudiants / groupes                                            | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Évaluation + saisie de notes                                   | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Réglages                                                       | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Facturation (conditions, facture)                              | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
+| Listes globales (modules, étudiants, évaluations, facturation) | —   | 🔎      | 🔎              | —            | 🔎         |
+| Tableau de bord                                                | —   | 🔎      | 🔎              | —            | 🔎         |
+
+Limites honnêtes : axe détecte ~30-40 % des critères RGAA ; il ne remplace pas une passe manuelle
+(NVDA/VoiceOver, navigation clavier complète, zoom 400 %). Les PDF générés (trame, résultats,
+facture) ne sont pas audités en accessibilité (PDF/UA) — hors périmètre MVP.
+Le design « ludique & coloré » (palette, mascotte, halos) n'est pas encore appliqué : le thème est
+celui de shadcn (contrastes déjà conformes) ; toute nouvelle palette devra être revérifiée en AA.
