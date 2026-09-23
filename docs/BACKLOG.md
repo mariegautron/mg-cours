@@ -108,18 +108,20 @@ automatique des notes Hyperplanning (E7/E8).
 Reporté : export PDF des résultats + envoi e-mail aux étudiant·es (E6) ; éditeur dynamique de
 critères (saisie texte « Libellé | points » en V1).
 
-## E6 — Documents 🚧
+## E6 — Documents ✅
 
-| US        | Contenu                                                                                                                                                                                                      | Statut |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| US-30     | **Trame pédagogique PDF** : instantané (`pedagogical_outline.content`) généré depuis module + séances + profil, PDF « Progression pédagogique » (en-tête, une section par séance avec dates de dernière MAJ) | ✅     |
-| US-00f/31 | Statuts trame : générée → **marquée envoyée** (date) → validée ; fait avancer l'état iceberg sans jamais reculer (`advanceTo`)                                                                               | ✅     |
-| —         | Alerte J-15/J-7 : passe à « Trame envoyée » dès l'envoi (déjà en E3)                                                                                                                                         | ✅     |
-| US-28     | Export PDF des résultats d'une évaluation                                                                                                                                                                    | ⏳     |
-| US-29     | Envoi e-mail des résultats (Resend)                                                                                                                                                                          | ⏳     |
-| US-31     | Export PDF de tous les cours d'un module                                                                                                                                                                     | ⏳     |
+| US     | Contenu                                                                                                                                                       | Statut                                                     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| US-30  | **Trame pédagogique PDF** (instantané figé, « Progression pédagogique », dates de MAJ par séance)                                                             | ✅                                                         |
+| US-00f | Statuts trame : générée → marquée envoyée (date) → validée ; `advanceTo` fait avancer l'état iceberg sans reculer                                             | ✅                                                         |
+| US-28  | Export PDF des résultats d'une évaluation (1 fiche par étudiant·e, ou 1 pour le groupe) avec détail par critère, appréciation, commentaires                   | ✅                                                         |
+| US-29  | Envoi e-mail des résultats via Resend (PDF individuel en pièce jointe ; étudiant·es sans e-mail listé·es)                                                     | ✅ code — **à activer** : `RESEND_API_KEY` + `RESEND_FROM` |
+| —      | **Réglages** : profil prestataire (nom, adresse, SIRET validé 14 chiffres, TVA/293 B, tarif, RIB) + écoles (SIRET, e-mail facturation, id. Plateforme Agréée) | ✅                                                         |
+| US-31  | Export PDF de tous les cours d'un module                                                                                                                      | ⏳ reporté (non bloquant pour le 12/10)                    |
 
-Écran : section « Trame pédagogique » de `/modules/[id]` ; PDF : `GET /api/modules/[id]/outline`.
+Écrans : section « Trame pédagogique » de `/modules/[id]`, boutons d'export/envoi sur
+`/modules/[id]/assessments/[assessmentId]`, `/settings` (+ `/settings/schools/…`).
+API PDF : `GET /api/modules/[id]/outline`, `GET /api/modules/[id]/assessments/[assessmentId]/results`.
 
 ## E7 — Facturation YNOV ⏳
 

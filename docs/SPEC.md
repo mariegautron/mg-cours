@@ -177,3 +177,22 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - « Marquer comme envoyée » enregistre la date et fait passer `iceberg_state` à
   `outline_sent` (jamais de retour en arrière) ; l'alerte J-15/J-7 disparaît.
 - Nom du/de la formateur·rice = `teacher_profile.legal_name` (écran Réglages à venir).
+
+## Résultats PDF + e-mail (E6)
+
+- Sur la page d'une évaluation (dès qu'une note existe) : **Exporter les résultats (PDF)** et
+  **Envoyer par e-mail**.
+- Une fiche par note : titre, module, sujet, date, destinataire(s), détail par critère
+  (points / max), note totale, appréciation, commentaires prédéfinis cochés. Note de groupe :
+  une seule fiche adressée à tous les membres.
+- E-mail : Resend, sujet « Vos résultats — <évaluation> », PDF en pièce jointe. Les étudiant·es
+  sans e-mail sont signalé·es. Sans `RESEND_API_KEY`/`RESEND_FROM` : message
+  « Envoi d'e-mails non configuré ».
+
+## Réglages (E6)
+
+- `/settings` : **profil de prestataire** (nom/raison sociale, adresse, SIRET 14 chiffres,
+  n° TVA, TVA non applicable art. 293 B, tarif horaire, e-mail, téléphone, RIB) — un seul profil,
+  créé au premier enregistrement — et **écoles** (nom, SIRET, adresse, e-mail de facturation,
+  identifiant Plateforme Agréée) avec ajout / modification / suppression.
+- Ces données alimentent la trame (nom du/de la formateur·rice) et, en E7, les factures.

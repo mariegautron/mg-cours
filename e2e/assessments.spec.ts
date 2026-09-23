@@ -62,6 +62,14 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await expect(page.getByText("Note enregistrée.")).toBeVisible();
   await expect(page.getByText("Note actuelle : 8")).toBeVisible();
 
+  // Export PDF des résultats + envoi e-mail (non configuré en local).
+  const pdfUrl = `${moduleUrl.replace("/modules/", "/api/modules/")}/assessments/${page.url().split("/").pop()}/results`;
+  const pdf = await page.request.get(pdfUrl);
+  expect(pdf.status()).toBe(200);
+  expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+  await page.getByRole("button", { name: "Envoyer par e-mail" }).click();
+  await expect(page.getByText(/Envoi d’e-mails non configuré/)).toBeVisible();
+
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

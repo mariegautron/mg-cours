@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { GradeForm } from "@/components/assessments/grade-form";
+import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assessments/queries";
@@ -60,6 +61,12 @@ export default async function AssessmentPage({
           <DeleteAssessmentButton moduleId={id} assessmentId={assessmentId} />
         </div>
       </div>
+
+      <ResultsActions
+        moduleId={id}
+        assessmentId={assessmentId}
+        hasGrades={grades.some((g) => g.value !== null)}
+      />
 
       {!group ? (
         <p className="text-muted-foreground">Groupe introuvable.</p>
