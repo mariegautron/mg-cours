@@ -414,6 +414,7 @@ export type Database = {
           purchase_order_ref: string | null
           recipient_email: string | null
           sent_at: string | null
+          snapshot: Json | null
           status: Database["public"]["Enums"]["invoice_status"]
           unit_price_ex_vat: number
           updated_at: string
@@ -437,6 +438,7 @@ export type Database = {
           purchase_order_ref?: string | null
           recipient_email?: string | null
           sent_at?: string | null
+          snapshot?: Json | null
           status?: Database["public"]["Enums"]["invoice_status"]
           unit_price_ex_vat?: number
           updated_at?: string
@@ -460,6 +462,7 @@ export type Database = {
           purchase_order_ref?: string | null
           recipient_email?: string | null
           sent_at?: string | null
+          snapshot?: Json | null
           status?: Database["public"]["Enums"]["invoice_status"]
           unit_price_ex_vat?: number
           updated_at?: string

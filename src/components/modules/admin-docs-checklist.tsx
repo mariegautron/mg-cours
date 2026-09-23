@@ -5,13 +5,9 @@ import { useTransition } from "react";
 import { setAdminDoc } from "@/app/(app)/modules/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 
-const DOCS: { key: string; label: string }[] = [
-  { key: "fiche_positionnement", label: "Fiche de positionnement" },
-  { key: "progression_pedagogique", label: "Progression pédagogique" },
-  { key: "supports_moodle", label: "Supports déposés sur Moodle" },
-  { key: "sujets_grilles_moodle", label: "Sujets et grilles déposés sur Moodle" },
-];
+const DOCS = REQUIRED_ADMIN_DOCS;
 
 export function AdminDocsChecklist({
   moduleId,

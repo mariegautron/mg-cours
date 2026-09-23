@@ -5,7 +5,9 @@ const baseURL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: true,
+  // Un seul compte / un seul profil prestataire partagés : les tests s'exécutent en série.
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",

@@ -183,6 +183,22 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         </div>
       </section>
 
+      <section aria-labelledby="billing" className="rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="billing" className="text-lg font-medium">
+              Facturation
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Conditions YNOV, mentions obligatoires et facture Factur-X.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/modules/${mod.id}/billing`}>Voir la facturation</Link>
+          </Button>
+        </div>
+      </section>
+
       <section aria-labelledby="admin-docs">
         <h2 id="admin-docs" className="mb-3 text-lg font-medium">
           Documents administratifs

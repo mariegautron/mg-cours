@@ -1,7 +1,14 @@
 # Migration Notion → MG COURS (E8)
 
 > Compte-rendu de l'étude, pour reprendre si la session s'interrompt.
-> Source : espace Notion « 🎓 Enseignement » (`34f903c74f138112be7cdc4278f5d63f`).
+> Source : espace Notion « 🎓 Enseignement » (`34f903c74f138112be7cdc4278f5d63f`)
+> **+ la page « [Ynov] Accessibilité & Qualité Web »** rangée dans « 🗂️ Archives »
+> (`1b3903c74f13808bac1ac1a9c7291e96`).
+>
+> **Périmètre validé par la PO (23/09/2026)** : ces 8 racines **et toutes leurs
+> sous-pages, récursivement** — les 3 cours Ynov, PROGRESSION PÉDAGOGIQUE, [2025] Cours
+> Template, 📚 Bibliothèque pédagogique (dont « Notes prépa cours gestion de projet »),
+> [Ynov] Accessibilité & Qualité Web. Le reste de « 🗂️ Archives » est **hors périmètre**.
 > **Aucune donnée n'a été écrite** (ni dans Notion, ni dans la base MG COURS).
 > Ce fichier ne contient **aucun nom d'étudiant·e** : uniquement des volumes.
 
@@ -104,6 +111,24 @@ Ces pages sont aussi les **activités pédagogiques** des séances (déplacées 
 | Étudiant·es                                                           | **15**                 | **prénom seul**, appréciation                                                | `student` ?                      | ⚠️ pas de nom de famille ni d'e-mail → rapprochement impossible avec un import HP    |
 | Pages « Notes prépa B2 a11y », « Atelier Houston, on a reçu l'audit » | 2                      | notes / atelier                                                              | `resource`                       |                                                                                      |
 
+### F. [Ynov] Accessibilité & Qualité Web (🗂️ Archives, mars–mai 2025)
+
+Première version du cours d'accessibilité (3 séances de 4 h, jalons conception → audit →
+production, orientée Opquast).
+
+| Élément                                                  | Volume                                 | Cible proposée                    | Remarques                                                                                       |
+| -------------------------------------------------------- | -------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Page racine : plan des 3 séances + évaluations           | 1 page (3 séances)                     | `module` + `course` ×3            | objectifs / déroulé / critères Opquast par séance ; 3 évaluations pondérées 30 / 30 / 40 %      |
+| Projet fil rouge (consignes)                             | 1 page                                 | `resource`                        | lien Google Docs externe                                                                        |
+| Groupes projet                                           | 1 page texte                           | `student_group` ×7                | ⚠️ **prénoms seuls**, en texte libre (pas de base)                                              |
+| Grille d'évaluation – Phase conception                   | 1 page (24 critères /80)               | `grading_grid` + `grid_criterion` | barème 0 / 1 / 3 pts                                                                            |
+| Pages « Note - Groupe 1…6 » (conception)                 | 6                                      | `grade` (groupe)                  | sous la grille                                                                                  |
+| Oral : pages « Groupe N – nom du projet »                | 6                                      | `grade.feedback` ou —             | notes brutes prises pendant l'oral                                                              |
+| Oral / Note projet : grille + « Groupe N – Note projet » | 1 + 6                                  | `grading_grid` + `grade`          |                                                                                                 |
+| Correction évaluations individuelles (base)              | ~30 (5 vus : vue filtrée sur 1 groupe) | `student` + `grade`               | ⚠️ NOM Prénom, note /20 et /30, appréciation, lien PR GitHub, statut « à rentrer dans HP »      |
+| Base « Pull Requests GitHub »                            | non comptée                            | —                                 | liée aux copies individuelles                                                                   |
+| **Commentaires selon les erreurs fréquentes**            | **11**                                 | **`predefined_comment`**          | seule source de commentaires prédéfinis de l'espace (tabindex, alt, label, skip link, outline…) |
+
 ### E. Divers
 
 | Élément                       | Volume                                 | Cible | Remarques                                         |
@@ -113,7 +138,11 @@ Ces pages sont aussi les **activités pédagogiques** des séances (déplacées 
 
 ## Points d'attention
 
-**Données étudiantes sensibles** — 72 fiches (30 + 27 + 15) avec notes, appréciations
+**Source suivante (après Notion)** — contenus déposés sur **Moodle** (supports, sujets,
+grilles) : à compléter ensuite. Import `.mbz` / CSV prévu hors MVP (`IMPORTS.md`) ; à
+réévaluer une fois la migration Notion faite (dédoublonnage Notion ↔ Moodle).
+
+**Données étudiantes sensibles** — ~102 fiches (30 + 27 + 15 + ~30 en archives) avec notes, appréciations
 nominatives, profil technique, affectations de groupe ; 11 groupes avec appréciations
 collectives, dépôts GitHub/déploiements d'étudiants. Cohortes 2025 terminées : l'intérêt de
 les importer (vs. RGPD / minimisation) est à trancher. Aucun e-mail dans Notion.

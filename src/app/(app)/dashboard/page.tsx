@@ -3,13 +3,17 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { listBillingOverview } from "@/lib/invoice/queries";
 import { listModules } from "@/lib/modules/queries";
 import { trameStatus } from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
 export default async function DashboardPage() {
-  const modules = await listModules();
+  const [modules, billing] = await Promise.all([listModules(), listBillingOverview()]);
+  const toInvoice = billing.filter((b) => b.kind === "ready");
+  const toSend = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "ready");
+  const toCollect = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "sent");
   const trames = modules
     .map((m) => ({ module: m, status: trameStatus(m.first_session_date, m.iceberg_state) }))
     .filter((t) => t.status.level === "urgent" || t.status.level === "overdue")
@@ -64,8 +68,13 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-base">Facturation</CardTitle>
           </CardHeader>
-          <CardContent className="text-muted-foreground text-sm">
-            Bientôt disponible (E7).
+          <CardContent className="space-y-1 text-sm">
+            <p>{toInvoice.length} module(s) prêt(s) à facturer</p>
+            <p>{toSend.length} facture(s) à envoyer</p>
+            <p>{toCollect.length} paiement(s) attendu(s)</p>
+            <Link href="/billing" className="underline underline-offset-2">
+              Voir la facturation
+            </Link>
           </CardContent>
         </Card>
       </div>

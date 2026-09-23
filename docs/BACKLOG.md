@@ -123,10 +123,25 @@ critères (saisie texte « Libellé | points » en V1).
 `/modules/[id]/assessments/[assessmentId]`, `/settings` (+ `/settings/schools/…`).
 API PDF : `GET /api/modules/[id]/outline`, `GET /api/modules/[id]/assessments/[assessmentId]/results`.
 
-## E7 — Facturation YNOV ⏳
+## E7 — Facturation YNOV ✅
 
-US-33 → US-39 · checklist iceberg + blocage · facture Factur-X (PDF/A-3 + XML CII) · envoi ·
-suivi paiement · alertes dashboard.
+| US       | Contenu                                                                                                                                                                       | Statut                                  |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| US-29    | Blocage : trame envoyée + notes ≥ minimum + 5 documents administratifs (dont « notes saisies dans Hyperplanning ») ; raisons listées ; **revérifié côté serveur**             | ✅                                      |
+| US-34    | Mentions obligatoires vérifiées avant émission (profil, SIRET, TVA/293 B, IBAN valide modulo 97, école, adresse, e-mail de facturation, YCODE, **référence bon de commande**) | ✅                                      |
+| US-34/38 | Facture **Factur-X EN 16931** : PDF/A-3 (polices Inter embarquées) + XML CII, **validé XSD + Schematron à chaque émission** (TVA 20 % et franchise 293 B)                     | ✅                                      |
+| —        | Numérotation `AAAA-NNN` séquentielle, montants arrondis au centime, échéance « 30 jours fin de mois »                                                                         | ✅                                      |
+| US-35    | Envoi par e-mail à l'école (Resend, objet `FACTURE – [nom] – [N°]`, un seul fichier) ou marquage manuel « envoyée » (dépôt PA)                                                | ✅ code — e-mail **à activer** (Resend) |
+| US-36    | Suivi : à envoyer → envoyée → payée ; état iceberg avance (`invoice_ready` → `invoice_sent` → `paid`) ; suppression possible tant que non envoyée                             | ✅                                      |
+| US-33/37 | Écran `/billing` (prêt / bloqué / facturé par module) + carte dashboard + section sur chaque module                                                                           | ✅                                      |
+| —        | e2e : parcours complet blocages → notes → trame → documents → facture → téléchargements PDF/XML → envoyée → payée, axe 0 violation                                            | ✅                                      |
+
+Écrans : `/billing`, `/modules/[id]/billing`. API : `GET /api/invoices/[id]/pdf`, `…/xml`.
+Migration : `invoice.snapshot` (instantané figé) + unicité 1 facture / module.
+
+**Bug de bundling trouvé par les e2e** : la lib Factur-X charge WASM/XSD/Schematron via
+`import.meta.url` → `serverExternalPackages` dans `next.config.ts` (sinon « path argument must be of
+type string » en build). À vérifier une fois sur Vercel avec une 1re facture d'essai.
 
 ## E8 — Migration Notion ⏳
 

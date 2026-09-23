@@ -68,3 +68,21 @@ le test e2e d'import.
 MIME : un `.csv` est décodé en UTF-8 (`TextDecoder`) puis passé en `string` à
 `parseStudentsFile` ; seul un vrai binaire XLSX passe par le chemin `ArrayBuffer`. Un test
 de régression construit un classeur XLSX réel (`XLSX.write`) pour couvrir ce second chemin.
+
+## ADR-011 — Factur-X : XML généré par gabarit, validé par la lib (ADR-004 précisé)
+
+`@stafyniaksacha/facturx` (XSD + Schematron officiels EN 16931, génération PDF/A-3) est utilisée
+pour **valider et embarquer** ; le XML CII est produit par un gabarit (`snapshotToXml`) plutôt que
+via les classes du modèle, beaucoup plus verbeuses. Garde-fou : chaque émission appelle `check`
+avec `schematron: true` et refuse d'enregistrer si le XML est invalide (testé : XML valide en
+franchise 293 B et à 20 %, XML aux totaux faux rejeté). Profil **EN 16931** (et non BASIC) pour
+rester dans le socle de la réforme française.
+Hypothèses à confirmer avec YNOV / la PA : franchise 293 B = catégorie TVA « E » avec motif +
+identifiant fiscal `FC` = SIREN ; adresses sans découpage postal (ligne libre + pays FR) ; PDF/A-3
+non vérifié par veraPDF ici. → faire tester une **facture d'essai** avant la première vraie.
+
+## ADR-012 — Facture immuable : instantané + une facture par module
+
+`invoice.snapshot` fige vendeur, acheteur, ligne, montants et échéance ; PDF et XML sont
+régénérés à partir de lui (pas de stockage de fichiers, pas de dérive si le profil change ensuite).
+Une facture envoyée ne peut plus être supprimée. Contrainte unique `invoice(module_id)`.

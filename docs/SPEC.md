@@ -196,3 +196,17 @@ chacune liées à une ou plusieurs ressources réutilisables.
   créé au premier enregistrement — et **écoles** (nom, SIRET, adresse, e-mail de facturation,
   identifiant Plateforme Agréée) avec ajout / modification / suppression.
 - Ces données alimentent la trame (nom du/de la formateur·rice) et, en E7, les factures.
+
+## Facturation (E7)
+
+- `/modules/[id]/billing` : **Conditions YNOV** (trame envoyée, notes X/Y, 5 documents
+  administratifs — case « Notes saisies dans Hyperplanning » ajoutée à la checklist du module) et
+  **Mentions obligatoires** manquantes (avec liens vers Réglages / fiche module). Le bouton
+  « Générer la facture » n'est actif que si tout est vert ; le serveur revérifie tout.
+- Facture : numéro `AAAA-NNN`, échéance 30 jours fin de mois, désignation
+  « Prestation d'enseignement – Module … (YCODE : …) – N heures », montants HT/TVA/TTC
+  (franchise 293 B = TVA 0 % + mention), référence de bon de commande, IBAN.
+- Formats : **PDF Factur-X (PDF/A-3 + XML EN 16931)** et XML seul, téléchargeables à tout moment
+  (régénérés à l'identique depuis l'instantané).
+- Cycle : À envoyer → (e-mail à l'école **ou** marquage manuel) Envoyée → Payée.
+- `/billing` : par module — facturé (n° + statut) / prêt à facturer / bloqué (nb de points).
