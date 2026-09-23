@@ -108,10 +108,18 @@ automatique des notes Hyperplanning (E7/E8).
 Reporté : export PDF des résultats + envoi e-mail aux étudiant·es (E6) ; éditeur dynamique de
 critères (saisie texte « Libellé | points » en V1).
 
-## E6 — Documents ⏳
+## E6 — Documents 🚧
 
-US-10, US-28 → US-32 · trame PDF + « marquer envoyée » + alerte J-15 · export résultats PDF ·
-envoi e-mail (Resend).
+| US        | Contenu                                                                                                                                                                                                      | Statut |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| US-30     | **Trame pédagogique PDF** : instantané (`pedagogical_outline.content`) généré depuis module + séances + profil, PDF « Progression pédagogique » (en-tête, une section par séance avec dates de dernière MAJ) | ✅     |
+| US-00f/31 | Statuts trame : générée → **marquée envoyée** (date) → validée ; fait avancer l'état iceberg sans jamais reculer (`advanceTo`)                                                                               | ✅     |
+| —         | Alerte J-15/J-7 : passe à « Trame envoyée » dès l'envoi (déjà en E3)                                                                                                                                         | ✅     |
+| US-28     | Export PDF des résultats d'une évaluation                                                                                                                                                                    | ⏳     |
+| US-29     | Envoi e-mail des résultats (Resend)                                                                                                                                                                          | ⏳     |
+| US-31     | Export PDF de tous les cours d'un module                                                                                                                                                                     | ⏳     |
+
+Écran : section « Trame pédagogique » de `/modules/[id]` ; PDF : `GET /api/modules/[id]/outline`.
 
 ## E7 — Facturation YNOV ⏳
 

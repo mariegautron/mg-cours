@@ -56,3 +56,8 @@ export function nextState(state: IcebergState): IcebergState | null {
   const i = stateIndex(state);
   return i < ICEBERG_STATES.length - 1 ? ICEBERG_STATES[i + 1] : null;
 }
+
+/** Avance l'état jusqu'à `target` sans jamais reculer (idempotent). */
+export function advanceTo(current: IcebergState, target: IcebergState): IcebergState {
+  return isAtLeast(current, target) ? current : target;
+}

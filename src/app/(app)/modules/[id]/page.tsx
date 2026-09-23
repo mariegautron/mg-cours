@@ -6,10 +6,12 @@ import { Pencil, Plus } from "lucide-react";
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
 import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
+import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
@@ -48,7 +50,10 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
   ]);
   if (!mod) notFound();
 
-  const notes = await moduleNoteProgress(id, mod.total_hours);
+  const [notes, outline] = await Promise.all([
+    moduleNoteProgress(id, mod.total_hours),
+    getOutline(id),
+  ]);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
 
   return (
@@ -94,6 +99,21 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
               Échéance : {trame.dueDate.toLocaleDateString("fr-FR")}
             </span>
           ) : null}
+        </div>
+        {outline ? (
+          <p className="text-muted-foreground mt-2 text-sm">
+            Générée le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
+            {outline.sent_at
+              ? ` · envoyée le ${new Date(outline.sent_at).toLocaleDateString("fr-FR")}`
+              : ""}
+            {outline.validated_at
+              ? ` · validée le ${new Date(outline.validated_at).toLocaleDateString("fr-FR")}`
+              : ""}
+            .
+          </p>
+        ) : null}
+        <div className="mt-3">
+          <OutlineActions moduleId={mod.id} status={outline?.status ?? null} />
         </div>
       </section>
 

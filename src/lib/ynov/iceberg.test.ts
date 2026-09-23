@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ICEBERG_STATES, isAtLeast, isOutlineSent, nextState } from "./iceberg";
+import { advanceTo, ICEBERG_STATES, isAtLeast, isOutlineSent, nextState } from "./iceberg";
 
 describe("iceberg workflow", () => {
   it("contient les 13 étapes dans l'ordre du schéma", () => {
@@ -24,5 +24,11 @@ describe("iceberg workflow", () => {
   it("nextState avance d'une étape, null en bout de chaîne", () => {
     expect(nextState("fiche_received")).toBe("module_created");
     expect(nextState("paid")).toBeNull();
+  });
+
+  it("advanceTo avance sans jamais reculer", () => {
+    expect(advanceTo("module_created", "outline_generated")).toBe("outline_generated");
+    expect(advanceTo("invoice_sent", "outline_sent")).toBe("invoice_sent");
+    expect(advanceTo("outline_sent", "outline_sent")).toBe("outline_sent");
   });
 });

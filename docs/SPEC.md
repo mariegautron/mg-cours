@@ -163,3 +163,17 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Une « note » au sens YNOV = une **évaluation** (une évaluation individuelle produit une ligne
   `grade` par étudiant·e mais ne compte que pour 1 note).
 - `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).
+
+## Trame pédagogique (E6)
+
+- Section « Trame pédagogique » de `/modules/[id]` : badge d'échéance (E3) + boutons
+  **Générer / Régénérer la trame**, **Télécharger le PDF**, **Marquer comme envoyée**,
+  **Marquer comme validée**.
+- Générer = instantané figé (`pedagogical_outline.content`, construit par la fonction pure
+  `buildOutlineContent`) ; régénérer rafraîchit le contenu sans toucher au statut d'envoi.
+- PDF « PROGRESSION PÉDAGOGIQUE » : formateur·rice, matière, YCODE, niveau, école, année,
+  heures, **date de dernière MAJ**, puis par séance : titre, modalité, date, date de dernière
+  MAJ du contenu, objectifs, modalités d'animation/d'évaluation, ressources, matériel.
+- « Marquer comme envoyée » enregistre la date et fait passer `iceberg_state` à
+  `outline_sent` (jamais de retour en arrière) ; l'alerte J-15/J-7 disparaît.
+- Nom du/de la formateur·rice = `teacher_profile.legal_name` (écran Réglages à venir).
