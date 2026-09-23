@@ -32,7 +32,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
-  await expect(page.getByText("3 notes min.")).toBeVisible();
+  await expect(page.getByText(/0\/3/).first()).toBeVisible();
   await expect(page.getByText(/Échéance/).first()).toBeVisible();
 
   // Séance liée à la ressource.

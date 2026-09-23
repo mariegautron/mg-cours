@@ -90,9 +90,23 @@ Reporté (hors MVP) : upload de la photo du trombinoscope (Storage, comme les fi
 ressources en E2) — `photo_url` existe en base, pas d'UI d'upload pour l'instant ; comparaison
 automatique des notes Hyperplanning (E7/E8).
 
-## E5 — Évaluations + Notation ⏳
+## E5 — Évaluations + Notation ✅
 
-US-20 → US-27 · grilles, saisie, moyenne pondérée ×1/×3, commentaires prédéfinis, compteur.
+| US          | Contenu                                                                                                                                 | Statut |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-17/18    | Grilles de correction réutilisables (critères « Libellé \| points », barème auto) : liste, création, édition, suppression               | ✅     |
+| US-19/20    | Évaluations par module (groupe cible, grille optionnelle, coefficient, note de groupe ou individuelle) : création, édition, suppression | ✅     |
+| US-20/21    | Saisie des notes : par critère (total auto) ou note directe ; 1 note pour le groupe, ou 1 par membre                                    | ✅     |
+| US-22/23/24 | Commentaires prédéfinis : CRUD + recherche/filtres + sélection à la saisie                                                              | ✅     |
+| US-11/27    | Compteur « X/Y notes requises » réel (1 évaluation notée = 1 note YNOV) + moyenne pondérée ×1/×3 par étudiant·e                         | ✅     |
+| —           | e2e : grille → groupe → évaluation → note → compteur → moyenne, axe 0 violation                                                         | ✅     |
+
+Écrans : `/assessments` (vue globale), `/assessments/grids…`, `/assessments/comments…`,
+`/modules/[id]/assessments` (compteur + liste + moyennes), `…/new`, `…/[assessmentId]`
+(saisie), `…/[assessmentId]/edit`. Détail : `docs/SPEC.md`.
+
+Reporté : export PDF des résultats + envoi e-mail aux étudiant·es (E6) ; éditeur dynamique de
+critères (saisie texte « Libellé | points » en V1).
 
 ## E6 — Documents ⏳
 

@@ -130,3 +130,36 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - La comparaison automatique des notes Hyperplanning (US-39) est hors MVP ; l'étape iceberg
   `grades_in_hp` (13 états, `src/lib/ynov/iceberg.ts`) n'a pas encore de contrôle dans l'UI —
   prévu avec le reste du workflow de facturation en E7.
+
+## Évaluations + Notation (E5)
+
+### Grilles `/assessments/grids`
+
+- Grille réutilisable : nom, description, critères saisis une ligne par critère
+  (`Libellé | points`) ; barème = somme des points. Modifier remplace les critères.
+
+### Commentaires prédéfinis `/assessments/comments`
+
+- Texte, catégorie (positif / négatif / conseil), tags ; recherche + filtres ; utilisables
+  (cases à cocher) lors de la saisie d'une note.
+
+### Évaluations d'un module `/modules/[id]/assessments`
+
+- En-tête : compteur **« X/Y notes requises »** (Y = palier YNOV selon les heures ; X = nombre
+  d'évaluations ayant au moins une note saisie, ventilé groupe/individuelle) + ce qui manque.
+- Liste (titre, groupe, type de note, date, notée / à noter) et tableau des **moyennes
+  pondérées** par étudiant·e (note de groupe ×1, individuelle ×3, `weightedAverage`).
+- Création : titre, sujet, type, date, durée, coefficient, **groupe** (obligatoire), grille
+  (optionnelle), case « note de groupe ».
+
+### Saisie `/modules/[id]/assessments/[assessmentId]`
+
+- Note de groupe → un formulaire pour le groupe. Note individuelle → un formulaire par membre.
+- Avec grille : un champ par critère (max = points du critère), total calculé ; sans grille :
+  note directe. Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
+
+### Règles
+
+- Une « note » au sens YNOV = une **évaluation** (une évaluation individuelle produit une ligne
+  `grade` par étudiant·e mais ne compte que pour 1 note).
+- `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).

@@ -8,10 +8,10 @@ import { CourseList } from "@/components/modules/course-list";
 import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
-import { requiredNotes } from "@/lib/ynov/notation";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
 export async function generateMetadata({ params }: PageProps<"/modules/[id]">): Promise<Metadata> {
@@ -48,7 +48,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
   ]);
   if (!mod) notFound();
 
-  const notes = requiredNotes(mod.total_hours);
+  const notes = await moduleNoteProgress(id, mod.total_hours);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
 
   return (
@@ -71,10 +71,12 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
 
       <div className="flex flex-wrap gap-2">
         <Badge variant="secondary">{mod.total_hours} h</Badge>
-        <Badge variant="outline">
-          {notes.total} note{notes.total > 1 ? "s" : ""} min. ({notes.group} groupe
-          {notes.group > 1 ? "s" : ""} + {notes.individual} individuelle
-          {notes.individual > 1 ? "s" : ""}){!notes.exact ? " — hors palier, à confirmer" : ""}
+        <Badge variant={notes.satisfied ? "secondary" : "outline"}>
+          {notes.enteredTotal}/{notes.requirement.total} note
+          {notes.requirement.total > 1 ? "s" : ""} ({notes.requirement.group} groupe
+          {notes.requirement.group > 1 ? "s" : ""} + {notes.requirement.individual} individuelle
+          {notes.requirement.individual > 1 ? "s" : ""})
+          {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
         <Badge variant="outline">{ICEBERG_LABELS[mod.iceberg_state]}</Badge>
       </div>
@@ -141,6 +143,24 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
             ))}
           </ul>
         )}
+      </section>
+
+      <section aria-labelledby="assessments" className="rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="assessments" className="text-lg font-medium">
+              Évaluations
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {notes.enteredTotal}/{notes.requirement.total} note
+              {notes.requirement.total > 1 ? "s" : ""} saisie
+              {notes.enteredTotal > 1 ? "s" : ""}.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
+          </Button>
+        </div>
       </section>
 
       <section aria-labelledby="admin-docs">
