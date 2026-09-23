@@ -17,7 +17,7 @@
   onboarding, alertes iceberg, réussite), jeu d'icônes maison + micro-animations signées —
   toutes désactivables (`prefers-reduced-motion`).
 
-## Palette
+## Palette (appliquée — voir `DESIGN.md`)
 
 À proposer par l'UX à partir des couleurs Notion de Marie et de ses thèmes accessibilité /
 numérique responsable. Contrainte dure : tous les couples texte/fond ≥ **AA**, halos inclus.
@@ -37,3 +37,8 @@ Tokens actuels = défauts shadcn neutres (placeholder) → à remplacer.
 
 Shell (barre latérale + header + zone principale), page de connexion, tableau de bord stub,
 thème sombre. Styles = placeholders, à retravailler avec la palette validée.
+
+## Statut (E9+)
+
+Direction appliquée : palette violette + 5 accents, mascotte « Plume », halos, thème clair/sombre, coque
+expressive / données calmes. Détail, contrastes et règles d'usage : `docs/DESIGN.md`.

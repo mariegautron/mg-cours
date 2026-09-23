@@ -42,5 +42,5 @@ Légende : ✅ vérifié automatiquement (axe-core en CI, 0 violation WCAG 2.0/2
 Limites honnêtes : axe détecte ~30-40 % des critères RGAA ; il ne remplace pas une passe manuelle
 (NVDA/VoiceOver, navigation clavier complète, zoom 400 %). Les PDF générés (trame, résultats,
 facture) ne sont pas audités en accessibilité (PDF/UA) — hors périmètre MVP.
-Le design « ludique & coloré » (palette, mascotte, halos) n'est pas encore appliqué : le thème est
-celui de shadcn (contrastes déjà conformes) ; toute nouvelle palette devra être revérifiée en AA.
+Le design « ludique & coloré » est appliqué (`DESIGN.md`) : axe passe à 0 violation sur 12 écrans dans les
+deux thèmes (`e2e/design.spec.ts`). Toute nouvelle couleur doit être revérifiée en AA.

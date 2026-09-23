@@ -86,3 +86,10 @@ non vérifié par veraPDF ici. → faire tester une **facture d'essai** avant la
 `invoice.snapshot` fige vendeur, acheteur, ligne, montants et échéance ; PDF et XML sont
 régénérés à partir de lui (pas de stockage de fichiers, pas de dérive si le profil change ensuite).
 Une facture envoyée ne peut plus être supprimée. Contrainte unique `invoice(module_id)`.
+
+## ADR-013 — Design : tokens CSS + illustrations SVG maison, sans dépendance
+
+Palette, halos et animations en CSS pur (tokens `:root` / `.dark`, `@theme inline`) ; mascotte et logo en
+SVG React (`mascot.tsx`) qui héritent des tokens → aucun asset binaire, aucune lib d'animation, thème clair
+et sombre gratuits. Contrastes validés par calcul puis par axe-core (`e2e/design.spec.ts`, lecture seule,
+2 thèmes × 12 écrans). Les documents PDF restent neutres (la facture ne porte jamais l'identité graphique).

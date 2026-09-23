@@ -1,17 +1,26 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { Mascot, type MascotMood } from "@/components/mascot";
 import { cn } from "@/lib/utils";
 
-function Empty({ className, ...props }: React.ComponentProps<"div">) {
+function Empty({
+  className,
+  children,
+  mascot = "thinking",
+  ...props
+}: React.ComponentProps<"div"> & { mascot?: MascotMood | false }) {
   return (
     <div
       data-slot="empty"
       className={cn(
-        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-xl border-dashed p-6 text-center text-balance",
+        "bg-shell flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-8 text-center text-balance",
         className,
       )}
       {...props}
-    />
+    >
+      {mascot ? <Mascot mood={mascot} className="size-24" /> : null}
+      {children}
+    </div>
   );
 }
 

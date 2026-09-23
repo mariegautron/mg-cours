@@ -12,9 +12,11 @@ import {
   Settings,
 } from "lucide-react";
 
+import { LogoMark, Mascot } from "@/components/mascot";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -24,14 +26,23 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
+// Classes complètes (pas de concaténation) pour que Tailwind les détecte.
+const CHIP = {
+  violet: "bg-violet/15 text-violet",
+  coral: "bg-coral/15 text-coral",
+  mint: "bg-mint/15 text-mint",
+  sky: "bg-sky/15 text-sky",
+  sun: "bg-sun/15 text-sun",
+} as const;
+
 const NAV = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/modules", label: "Modules", icon: BookMarked },
-  { href: "/resources", label: "Ressources", icon: Library },
-  { href: "/students", label: "Étudiants", icon: GraduationCap },
-  { href: "/assessments", label: "Évaluations", icon: ClipboardCheck },
-  { href: "/billing", label: "Facturation", icon: Receipt },
-  { href: "/settings", label: "Réglages", icon: Settings },
+  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, tone: "violet" },
+  { href: "/modules", label: "Modules", icon: BookMarked, tone: "coral" },
+  { href: "/resources", label: "Ressources", icon: Library, tone: "mint" },
+  { href: "/students", label: "Étudiants", icon: GraduationCap, tone: "sky" },
+  { href: "/assessments", label: "Évaluations", icon: ClipboardCheck, tone: "sun" },
+  { href: "/billing", label: "Facturation", icon: Receipt, tone: "coral" },
+  { href: "/settings", label: "Réglages", icon: Settings, tone: "violet" },
 ] as const;
 
 export function AppSidebar() {
@@ -39,15 +50,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <Link
-          href="/dashboard"
-          className="font-heading flex items-center gap-2 px-2 py-1.5 text-lg font-semibold"
-        >
-          <span aria-hidden className="text-xl">
-            📚
-          </span>
-          MG COURS
+      <SidebarHeader className="px-3 pt-4 pb-2">
+        <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg px-1 py-1">
+          <LogoMark />
+          <span className="font-heading text-xl font-bold tracking-tight">MG COURS</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>
@@ -58,10 +64,19 @@ export function AppSidebar() {
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={active}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      size="lg"
+                      className="data-[active=true]:halo gap-3 rounded-xl transition-colors"
+                    >
                       <Link href={item.href}>
-                        <item.icon aria-hidden />
-                        <span>{item.label}</span>
+                        <span
+                          className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
+                        >
+                          <item.icon aria-hidden className="size-4" />
+                        </span>
+                        <span className="font-medium">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -71,6 +86,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="items-center pb-4">
+        <Mascot mood="happy" className="size-16" />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

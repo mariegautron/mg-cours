@@ -17,9 +17,9 @@ export function LoginForm() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="halo w-full max-w-sm">
       <CardHeader>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">MG COURS</h1>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">Bienvenue</h1>
         <CardDescription>Connexion à votre espace pédagogique.</CardDescription>
       </CardHeader>
       <CardContent>

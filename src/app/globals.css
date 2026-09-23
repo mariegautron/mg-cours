@@ -10,6 +10,12 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-heading);
+  --color-violet: var(--violet);
+  --color-coral: var(--coral);
+  --color-mint: var(--mint);
+  --color-sun: var(--sun);
+  --color-sky: var(--sky);
+  --color-glow: var(--glow);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,72 +55,89 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Thème clair (secondaire) — teintes violettes, contrastes AA vérifiés (≥ 6,3:1). */
+  --background: oklch(0.985 0.008 285);
+  --foreground: oklch(0.2 0.03 285);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.2 0.03 285);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.2 0.03 285);
+  --primary: oklch(0.48 0.2 285);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.025 285);
+  --secondary-foreground: oklch(0.25 0.05 285);
+  --muted: oklch(0.95 0.015 285);
+  --muted-foreground: oklch(0.46 0.035 285);
+  --accent: oklch(0.93 0.04 285);
+  --accent-foreground: oklch(0.25 0.06 285);
+  --destructive: oklch(0.5 0.22 27);
+  --border: oklch(0.88 0.02 285);
+  --input: oklch(0.88 0.02 285);
+  --ring: oklch(0.55 0.2 285);
+  --chart-1: oklch(0.55 0.2 285);
+  --chart-2: oklch(0.55 0.19 25);
+  --chart-3: oklch(0.55 0.12 165);
+  --chart-4: oklch(0.6 0.13 85);
+  --chart-5: oklch(0.55 0.12 240);
+  --radius: 0.875rem;
+  --sidebar: oklch(0.97 0.015 285);
+  --sidebar-foreground: oklch(0.2 0.03 285);
+  --sidebar-primary: oklch(0.48 0.2 285);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.92 0.045 285);
+  --sidebar-accent-foreground: oklch(0.25 0.06 285);
+  --sidebar-border: oklch(0.88 0.02 285);
+  --sidebar-ring: oklch(0.55 0.2 285);
+
+  /* Accents de la « coque » ludique (texte/icône ≥ 6:1 sur les cartes). */
+  --violet: oklch(0.45 0.2 285);
+  --coral: oklch(0.5 0.19 25);
+  --mint: oklch(0.42 0.11 165);
+  --sun: oklch(0.45 0.1 85);
+  --sky: oklch(0.45 0.12 240);
+  --glow: oklch(0.6 0.2 285 / 18%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  /* Thème sombre (par défaut) — encre violette + accents vifs, AA vérifié (≥ 6,3:1). */
+  --background: oklch(0.16 0.03 285);
+  --foreground: oklch(0.97 0.01 285);
+  --card: oklch(0.21 0.035 285);
+  --card-foreground: oklch(0.97 0.01 285);
+  --popover: oklch(0.23 0.04 285);
+  --popover-foreground: oklch(0.97 0.01 285);
+  --primary: oklch(0.74 0.16 285);
+  --primary-foreground: oklch(0.16 0.04 285);
+  --secondary: oklch(0.28 0.05 285);
+  --secondary-foreground: oklch(0.97 0.01 285);
+  --muted: oklch(0.26 0.04 285);
+  --muted-foreground: oklch(0.74 0.035 285);
+  --accent: oklch(0.3 0.06 285);
+  --accent-foreground: oklch(0.97 0.01 285);
+  --destructive: oklch(0.72 0.19 25);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.74 0.16 285);
+  --chart-1: oklch(0.74 0.16 285);
+  --chart-2: oklch(0.76 0.16 25);
+  --chart-3: oklch(0.84 0.14 165);
+  --chart-4: oklch(0.89 0.15 95);
+  --chart-5: oklch(0.8 0.11 230);
+  --sidebar: oklch(0.19 0.04 285);
+  --sidebar-foreground: oklch(0.97 0.01 285);
+  --sidebar-primary: oklch(0.74 0.16 285);
+  --sidebar-primary-foreground: oklch(0.16 0.04 285);
+  --sidebar-accent: oklch(0.3 0.07 285);
+  --sidebar-accent-foreground: oklch(0.97 0.01 285);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.74 0.16 285);
+
+  --violet: oklch(0.74 0.16 285);
+  --coral: oklch(0.76 0.16 25);
+  --mint: oklch(0.84 0.14 165);
+  --sun: oklch(0.89 0.15 95);
+  --sky: oklch(0.8 0.11 230);
+  --glow: oklch(0.74 0.16 285 / 22%);
 }
 
 @layer base {
@@ -143,5 +166,55 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ── Coque expressive : halos, blobs, animations douces (désactivées par reduced-motion) ── */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+  .animate-pop-in {
+    animation: pop-in 0.4s ease-out both;
+  }
+  /* Halo lumineux discret derrière un élément actif ou un titre d'écran. */
+  .halo {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent),
+      0 8px 30px -8px var(--glow);
+  }
+  .bg-shell {
+    background-image:
+      radial-gradient(
+        60rem 30rem at 85% -10%,
+        color-mix(in oklch, var(--violet) 14%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        40rem 24rem at -10% 110%,
+        color-mix(in oklch, var(--coral) 10%, transparent),
+        transparent 60%
+      );
   }
 }
