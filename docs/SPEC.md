@@ -44,3 +44,48 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
   par défaut.
 - Suppression : `course_resource` en `on delete cascade` (les liens disparaissent, pas les cours).
 - Fichiers joints : prévus (Storage), non livrés en E2.
+
+## Modules + Cours (E3)
+
+Un module = conteneur école/année (YCODE, heures, dates). Ses séances (`course`) sont
+chacune liées à une ou plusieurs ressources réutilisables.
+
+### Liste `/modules`
+
+- Cartes triées par année décroissante puis nom : école · niveau · année, badges heures,
+  minimum de notes, statut de la trame.
+
+### Création `/modules/new` · Édition `/modules/[id]/edit`
+
+- Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
+  dates (début, **1re séance**, fin), référence bon de commande.
+- La date de 1re séance sert au calcul de l'échéance de la trame (J-15).
+
+### Détail `/modules/[id]`
+
+- En-tête : école, niveau, année, YCODE ; badges heures / **minimum de notes requises**
+  (`requiredNotes`, ex. 21 h → « 3 notes min. (2 groupes + 1 individuelle) ») / état iceberg.
+- **Trame pédagogique** : badge d'échéance (`trameStatus`) —
+  `ok` (> J-15) · `warning` (≤ J-15) · `urgent` (≤ J-7) · `overdue` (dépassée) ·
+  `sent` (dès `iceberg_state ≥ outline_sent`) · `unknown` (pas de date de 1re séance).
+  Génération réelle de la trame PDF : E6.
+- **Séances** : liste ordonnée (titre, modalité, objectifs, ressources liées, date de
+  dernière MAJ du contenu) ; ajouter / modifier / supprimer une séance.
+- **Documents administratifs** : 4 interrupteurs (fiche de positionnement, progression
+  pédagogique, supports Moodle, sujets/grilles Moodle) → `module.admin_docs`.
+- **Actions** : dupliquer vers une nouvelle année (module + séances + liens ressources,
+  dates et statut remis à zéro) · supprimer (confirmation).
+
+### Séance `/modules/[id]/courses/new` · `/modules/[id]/courses/[courseId]/edit`
+
+- Champs : titre, modalité (cours théorique / atelier-TP / projet / évaluation /
+  démonstration / cours appliqué), position, date, objectifs pédagogiques (une ligne par
+  objectif), ressources liées (cases à cocher), modalités d'animation/d'évaluation, matériel.
+- Toute modification met à jour `content_last_updated_at` (repris tel quel dans la trame).
+
+### Règles
+
+- `required_notes` et le workflow iceberg sont des fonctions pures testées
+  (`src/lib/ynov/notation.ts`, `iceberg.ts`, `trame.ts`), jamais recalculées dans l'UI.
+- La duplication ne copie pas les évaluations/notes (propres à une année), seulement la
+  structure pédagogique (cours + ressources liées).

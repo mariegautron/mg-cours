@@ -42,3 +42,17 @@ la cérémonie lourde vs la deadline).
 
 Ni commits, ni PR, ni UI, ni factures. `CLAUDE.md` (régénéré par `next dev`) est gitignoré ;
 le fichier de gouvernance est `AGENTS.md`.
+
+## ADR-009 — Credentials Supabase Cloud : jamais dans un nom de fichier « magique » Next.js
+
+⚠️ **Piège vécu** : Next.js charge automatiquement `.env`, `.env.local`, `.env.production`,
+`.env.production.local`, `.env.test`, `.env.test.local` selon `NODE_ENV` — avec
+`.env.production.local` **prioritaire sur `.env.local`** pour `next build`/`next start`.
+Un fichier `.env.production.local` créé pour simplement _stocker_ les identifiants du
+projet Supabase Cloud a fait pointer `pnpm build` local vers la base cloud (vide) au lieu
+du Supabase local, provoquant des échecs de connexion silencieux (aucune requête vers
+`127.0.0.1:54321`, erreur générique « e-mail ou mot de passe incorrect »).
+→ Les identifiants Supabase Cloud sont stockés dans **`.env.vercel.local`** (nom non
+reconnu par Next.js, gitignoré comme tout `.env*`) : lisible pour référence, jamais chargé
+automatiquement. Le déploiement réel utilisera les variables d'environnement du dashboard
+Vercel, pas un fichier local.

@@ -44,10 +44,26 @@ Dev local : `pnpm db:start` puis `pnpm db:reset`. Identifiants : `marie@local.te
 Écrans : `/resources`, `/resources/new`, `/resources/[id]`, `/resources/[id]/edit`.
 Détail : `docs/SPEC.md`.
 
-## E3 — Modules + Cours ⏳
+## E3 — Modules + Cours ✅
 
-US-08 → US-13 · métadonnées, `required_notes`, association ressources,
-`content_last_updated_at`, `trame_due_date`, duplication d'année, checklist d'avancement.
+| US          | Contenu                                                                                                 | Statut |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------ |
+| US-08       | CRUD module (nom, école, niveau, année, YCODE, heures, dates, référence BC)                             | ✅     |
+| US-11       | Badge « minimum de notes requises » (`requiredNotes`)                                                   | ✅     |
+| US-09/US-06 | Association de cours à des ressources (multi-sélection, `course_resource`)                              | ✅     |
+| —           | `content_last_updated_at` mis à jour à chaque édition de séance (critique trame)                        | ✅     |
+| —           | `trame_due_date` = 1re séance − 15 j + alerte (`trameStatus` : ok/warning J-15/urgent J-7/overdue/sent) | ✅     |
+| US-13       | Dupliquer un module vers une nouvelle année (module + cours + liens ressources)                         | ✅     |
+| US-12       | Checklist documents administratifs (4 cases, `module.admin_docs`) + `iceberg_state` affiché             | ✅     |
+| —           | Dashboard connecté (modules actifs, trames urgentes/en retard)                                          | ✅     |
+| —           | e2e authentifié (module → séance liée à une ressource → doc coché) + axe 0 violation                    | ✅     |
+| —           | Logique pure testée : `src/lib/ynov/iceberg.ts` (13 états) + `trame.ts` (échéance)                      | ✅     |
+
+Écrans : `/modules`, `/modules/new`, `/modules/[id]`, `/modules/[id]/edit`,
+`/modules/[id]/courses/new`, `/modules/[id]/courses/[courseId]/edit`. Détail : `docs/SPEC.md`.
+
+Reporté (hors MVP / plus tard) : réordonnancement par glisser-déposer des séances (position
+numérique manuelle pour l'instant) ; transition guidée de `iceberg_state` (E7).
 
 ## E4 — Étudiants + Groupes ⏳
 
