@@ -5,13 +5,14 @@ export interface ModuleWithSchool extends Tables<"module"> {
   school: Pick<Tables<"school">, "id" | "name"> | null;
 }
 
-export async function listModules(): Promise<ModuleWithSchool[]> {
+/** Modules actifs par défaut ; `includeArchived` ajoute les modules archivés (années passées). */
+export async function listModules(
+  opts: { includeArchived?: boolean } = {},
+): Promise<ModuleWithSchool[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("module")
-    .select("*, school:school_id(id, name)")
-    .order("year", { ascending: false })
-    .order("name");
+  let query = supabase.from("module").select("*, school:school_id(id, name)");
+  if (!opts.includeArchived) query = query.is("archived_at", null);
+  const { data } = await query.order("year", { ascending: false }).order("name");
   return (data ?? []) as ModuleWithSchool[];
 }
 

@@ -85,6 +85,28 @@ export async function deleteModule(id: string) {
   redirect("/modules");
 }
 
+async function setModuleArchived(id: string, archived: boolean) {
+  const supabase = await createClient();
+  await supabase
+    .from("module")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
+  revalidatePath("/modules");
+  revalidatePath(`/modules/${id}`);
+  revalidatePath("/billing");
+  revalidatePath("/dashboard");
+}
+
+export async function archiveModule(id: string) {
+  "use server";
+  await setModuleArchived(id, true);
+}
+
+export async function unarchiveModule(id: string) {
+  "use server";
+  await setModuleArchived(id, false);
+}
+
 export async function setAdminDoc(id: string, key: string, value: boolean) {
   "use server";
   const supabase = await createClient();

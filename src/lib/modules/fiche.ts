@@ -56,7 +56,7 @@ export function parseFiche(rawText: string, schoolNames: string[] = []): FicheDa
   }
 
   const level =
-    /(Mast[eè]re?\s*\d|Bachelor\s*\d|Licence\s*\d|\bB[123]\b|\bM[12]\b)(\s+(?:en\s+)?[A-ZÀ-Ý][\wÀ-ÿ&-]+)?/.exec(
+    /(Mast[eè]re?\s*\d|Bachelor\s*\d|Licence\s*\d|\bB[123]\b|\bM[12]\b)([ \t]+(?:en[ \t]+)?[A-ZÀ-Ý][\wÀ-ÿ&-]+)?/.exec(
       text,
     );
   if (level) out.level = clean(level[0]);

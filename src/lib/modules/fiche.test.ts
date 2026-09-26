@@ -31,6 +31,10 @@ describe("parseFiche", () => {
     expect(r.hoursTp).toBe(12);
   });
 
+  it("ne déborde pas sur la ligne suivante pour le niveau", () => {
+    expect(parseFiche("Bachelor 3\nVolume horaire : 12 h").level).toBe("Bachelor 3");
+  });
+
   it("ne renvoie rien d'inventé sur un texte sans rapport", () => {
     expect(parseFiche("Bonjour, voici un texte quelconque.")).toEqual({});
   });

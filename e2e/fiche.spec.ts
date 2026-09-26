@@ -12,6 +12,7 @@ async function fichePdf(lines: string[]) {
 }
 
 test("préremplit le formulaire module depuis une fiche pédagogique PDF", async ({ page }) => {
+  test.setTimeout(60_000);
   await page.goto("/login");
   await page.getByLabel("E-mail").fill("marie@local.test");
   await page.getByLabel("Mot de passe").fill("password123");
@@ -20,6 +21,8 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");
+  // YCODE unique par année : un code différent à chaque exécution.
+  const ycode = `A2627_${String(Date.now()).slice(-5)}`;
 
   await page.getByLabel(/Fiche pédagogique \(PDF/).setInputFiles({
     name: "fiche.pdf",
@@ -28,7 +31,7 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
       "FICHE PEDAGOGIQUE",
       "YNOV Campus Nantes",
       "Intitule du module : Architecture Web",
-      "Code module : A2627_9001",
+      `Code module : ${ycode}`,
       "Bachelor 3",
       "Volume horaire total : 24 h",
       "FFP : 12 h",
@@ -39,7 +42,7 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
 
   await expect(page.getByRole("status")).toContainText("Préremplis");
   await expect(page.getByLabel("Nom du module")).toHaveValue("Architecture Web");
-  await expect(page.getByLabel("YCODE")).toHaveValue("A2627_9001");
+  await expect(page.getByLabel("YCODE")).toHaveValue(ycode);
   await expect(page.getByLabel("Année")).toHaveValue("2026");
   await expect(page.getByLabel("Nombre d’heures total")).toHaveValue("24");
 

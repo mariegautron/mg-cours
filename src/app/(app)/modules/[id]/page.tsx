@@ -6,6 +6,7 @@ import { Download, ExternalLink, Pencil, Plus } from "lucide-react";
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
 import { ModuleDocuments } from "@/components/modules/module-documents";
+import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
 import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
         <Badge variant="outline">{ICEBERG_LABELS[mod.iceberg_state]}</Badge>
+        {mod.archived_at ? <Badge variant="outline">Archivé</Badge> : null}
       </div>
 
       <section aria-labelledby="trame" className="rounded-lg border p-4">
@@ -250,7 +252,10 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         <h2 id="danger" className="mb-3 text-lg font-medium">
           Actions
         </h2>
-        <ModuleDangerZone id={mod.id} year={mod.year} />
+        <div className="space-y-6">
+          <ArchiveModuleButton id={mod.id} archived={!!mod.archived_at} />
+          <ModuleDangerZone id={mod.id} year={mod.year} />
+        </div>
       </section>
     </div>
   );

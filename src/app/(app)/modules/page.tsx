@@ -29,8 +29,10 @@ const TRAME_BADGE: Record<
   unknown: { label: "1re séance à renseigner", variant: "outline" },
 };
 
-export default async function ModulesPage() {
-  const modules = await listModules();
+export default async function ModulesPage({ searchParams }: PageProps<"/modules">) {
+  const sp = await searchParams;
+  const showArchived = sp.archived === "1";
+  const modules = await listModules({ includeArchived: showArchived });
 
   return (
     <div className="space-y-6">
@@ -48,6 +50,15 @@ export default async function ModulesPage() {
           </Link>
         </Button>
       </div>
+
+      <p className="text-sm">
+        <Link
+          href={showArchived ? "/modules" : "/modules?archived=1"}
+          className="underline underline-offset-2"
+        >
+          {showArchived ? "Masquer les archivés" : "Afficher les archivés"}
+        </Link>
+      </p>
 
       {modules.length === 0 ? (
         <Empty>
@@ -78,6 +89,7 @@ export default async function ModulesPage() {
                     {m.school?.name ?? "École non renseignée"} · {m.level ?? "—"} · {m.year}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-1">
+                    {m.archived_at ? <Badge variant="outline">Archivé</Badge> : null}
                     <Badge variant="secondary">{m.total_hours} h</Badge>
                     <Badge variant="outline">
                       {notes.total} note{notes.total > 1 ? "s" : ""} min.
