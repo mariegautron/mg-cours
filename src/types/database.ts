@@ -847,6 +847,7 @@ export type Database = {
       }
       teacher_profile: {
         Row: {
+          activity_number: string | null
           address: string | null
           bank_details: string | null
           created_at: string
@@ -861,6 +862,7 @@ export type Database = {
           vat_number: string | null
         }
         Insert: {
+          activity_number?: string | null
           address?: string | null
           bank_details?: string | null
           created_at?: string
@@ -875,6 +877,7 @@ export type Database = {
           vat_number?: string | null
         }
         Update: {
+          activity_number?: string | null
           address?: string | null
           bank_details?: string | null
           created_at?: string

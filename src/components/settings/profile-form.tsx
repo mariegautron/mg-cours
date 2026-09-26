@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { saveProfile, type SettingsFormState } from "@/app/(app)/settings/actions";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
 export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | null }) {
   const [state, formAction, pending] = useActionState(saveProfile, initial);
   const fe = state.fieldErrors ?? {};
+  const [vatExempt, setVatExempt] = useState(profile?.vat_exempt ?? false);
 
   return (
     <form action={formAction} className="max-w-xl space-y-4">
@@ -53,8 +54,12 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
           <FieldError id="siret" errors={fe.siret} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="vatNumber">N° de TVA intracommunautaire</Label>
-          <Input id="vatNumber" name="vatNumber" defaultValue={profile?.vat_number ?? ""} />
+          <Label htmlFor="activityNumber">N° de déclaration d’activité (NDA)</Label>
+          <Input
+            id="activityNumber"
+            name="activityNumber"
+            defaultValue={profile?.activity_number ?? ""}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">E-mail</Label>
@@ -73,9 +78,22 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="vatExempt" defaultChecked={profile?.vat_exempt ?? false} />
+        <input
+          type="checkbox"
+          name="vatExempt"
+          checked={vatExempt}
+          onChange={(e) => setVatExempt(e.target.checked)}
+        />
         TVA non applicable (art. 293 B du CGI)
       </label>
+      {vatExempt ? (
+        <input type="hidden" name="vatNumber" value={profile?.vat_number ?? ""} />
+      ) : (
+        <div className="space-y-2">
+          <Label htmlFor="vatNumber">N° de TVA intracommunautaire</Label>
+          <Input id="vatNumber" name="vatNumber" defaultValue={profile?.vat_number ?? ""} />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="bankDetails">RIB (IBAN + BIC)</Label>
         <Textarea

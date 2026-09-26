@@ -70,6 +70,7 @@ export function InvoiceDocument({ s }: { s: InvoiceSnapshot }) {
             <Text>{s.seller.address}</Text>
             <Text>SIRET : {s.seller.siret}</Text>
             {s.seller.vatNumber ? <Text>TVA : {s.seller.vatNumber}</Text> : null}
+            {s.seller.activityNumber ? <Text>NDA : {s.seller.activityNumber}</Text> : null}
             {s.seller.email ? <Text>{s.seller.email}</Text> : null}
             {s.seller.phone ? <Text>{s.seller.phone}</Text> : null}
           </View>

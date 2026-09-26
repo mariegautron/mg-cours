@@ -36,6 +36,7 @@ export interface InvoiceContext {
     address: string | null;
     siret: string | null;
     vat_number: string | null;
+    activity_number?: string | null;
     vat_exempt: boolean;
     bank_details: string | null;
     email: string | null;
@@ -185,6 +186,7 @@ export interface InvoiceSnapshot {
     address: string;
     siret: string;
     vatNumber: string | null;
+    activityNumber?: string | null;
     vatExempt: boolean;
     email: string | null;
     phone: string | null;
@@ -228,6 +230,7 @@ export function buildInvoiceSnapshot(
       address: p.address!,
       siret: p.siret!.replace(/\s/g, ""),
       vatNumber: p.vat_number,
+      activityNumber: p.activity_number ?? null,
       vatExempt: p.vat_exempt,
       email: p.email,
       phone: p.phone,

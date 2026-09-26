@@ -11,6 +11,7 @@ export const profileSchema = z.object({
     .transform((v) => v.replace(/\s/g, ""))
     .pipe(z.string().regex(/^(\d{14})?$/, "Le SIRET compte 14 chiffres.")),
   vatNumber: optionalText(50),
+  activityNumber: optionalText(50),
   vatExempt: z.boolean(),
   bankDetails: optionalText(500),
   email: z.string().trim().email("E-mail invalide.").optional().or(z.literal("")),
@@ -23,6 +24,7 @@ export function readProfileForm(formData: FormData) {
     address: formData.get("address") ?? "",
     siret: formData.get("siret") ?? "",
     vatNumber: formData.get("vatNumber") ?? "",
+    activityNumber: formData.get("activityNumber") ?? "",
     vatExempt: formData.get("vatExempt") === "on",
     bankDetails: formData.get("bankDetails") ?? "",
     email: formData.get("email") ?? "",

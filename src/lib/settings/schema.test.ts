@@ -7,6 +7,7 @@ const profile = {
   address: "",
   siret: "",
   vatNumber: "",
+  activityNumber: "",
   vatExempt: true,
   bankDetails: "",
   email: "",

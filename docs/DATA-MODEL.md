@@ -47,7 +47,7 @@ erDiagram
 | `pedagogical_outline` | module_id, generated_at, content(jsonb), status, sent_at, pdf_file                                                                                                                          |
 | `module_document`     | module_id, kind (`school_expectations` \| `outline_sent`), name, path (bucket privé `module-documents`), size_bytes, mime                                                                   |
 | `school`              | name, siret, address, billing_email, pa_identifier                                                                                                                                          |
-| `teacher_profile`     | legal_name, address, siret, vat_number, bank_details, email                                                                                                                                 |
+| `teacher_profile`     | legal_name, address, siret, vat_number, activity_number (NDA), bank_details, email                                                                                                          |
 
 ## Transverse
 

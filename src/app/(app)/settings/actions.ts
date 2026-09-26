@@ -34,6 +34,7 @@ export async function saveProfile(
     address: d.address || null,
     siret: d.siret || null,
     vat_number: d.vatNumber || null,
+    activity_number: d.activityNumber || null,
     vat_exempt: d.vatExempt,
     bank_details: d.bankDetails || null,
     email: d.email || null,
