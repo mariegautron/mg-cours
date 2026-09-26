@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { formatBankDetails } from "@/lib/settings/bank";
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,7 +37,7 @@ export async function saveProfile(
     vat_number: d.vatNumber || null,
     activity_number: d.activityNumber || null,
     vat_exempt: d.vatExempt,
-    bank_details: d.bankDetails || null,
+    bank_details: formatBankDetails(d.iban, d.bic) || null,
     email: d.email || null,
     phone: d.phone || null,
   };

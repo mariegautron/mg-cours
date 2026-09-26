@@ -9,7 +9,8 @@ const profile = {
   vatNumber: "",
   activityNumber: "",
   vatExempt: true,
-  bankDetails: "",
+  iban: "",
+  bic: "",
   email: "",
   phone: "",
 };
@@ -22,6 +23,17 @@ describe("profileSchema", () => {
 
   it("refuse un SIRET qui n'a pas 14 chiffres", () => {
     expect(profileSchema.safeParse({ ...profile, siret: "12345" }).success).toBe(false);
+  });
+
+  it("valide l'IBAN et normalise le BIC", () => {
+    expect(profileSchema.safeParse({ ...profile, iban: "FR76 1234" }).success).toBe(false);
+    const r = profileSchema.parse({
+      ...profile,
+      iban: "FR76 3000 6000 0112 3456 7890 189",
+      bic: "bnpa frpp",
+    });
+    expect(r.bic).toBe("BNPAFRPP");
+    expect(profileSchema.safeParse({ ...profile, bic: "ABC" }).success).toBe(false);
   });
 
   it("accepte un SIRET vide", () => {

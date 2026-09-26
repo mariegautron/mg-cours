@@ -21,10 +21,10 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.goto("/settings");
   await page.getByLabel("Adresse", { exact: true }).fill("1 rue de l’Enseignement 44000 Nantes");
   await page.getByLabel("SIRET").fill("123 456 789 00012");
-  await page.getByLabel("RIB (IBAN + BIC)").fill(`IBAN ${IBAN}`);
+  await page.getByLabel("IBAN").fill(IBAN);
   await page.getByLabel(/TVA non applicable/).check();
-  await page.getByRole("button", { name: "Enregistrer le profil" }).click();
-  await expect(page.getByText("Profil enregistré.")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
+  await expect(page.getByText("Modifications enregistrées")).toBeVisible();
 
   // École.
   await page.getByRole("link", { name: "Ajouter une école" }).click();

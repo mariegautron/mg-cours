@@ -25,18 +25,19 @@ export function DeleteSchoolButton({ id, name }: { id: string; name: string }) {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="sm"
           disabled={pending}
           aria-label={`Supprimer ${name}`}
         >
           <Trash2 aria-hidden />
+          Supprimer
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Supprimer « {name} » ?</AlertDialogTitle>
+          <AlertDialogTitle>Supprimer l’école « {name} » ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Les modules liés resteront, mais sans école associée.
+            Les modules liés sont conservés, sans école associée. Cette action est définitive.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

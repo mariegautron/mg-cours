@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidIban } from "@/lib/ynov/invoice";
+
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(""));
 
 export const profileSchema = z.object({
@@ -13,7 +15,15 @@ export const profileSchema = z.object({
   vatNumber: optionalText(50),
   activityNumber: optionalText(50),
   vatExempt: z.boolean(),
-  bankDetails: optionalText(500),
+  iban: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || isValidIban(v), "IBAN invalide."),
+  bic: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\s/g, "").toUpperCase())
+    .pipe(z.string().regex(/^([A-Z0-9]{8}|[A-Z0-9]{11})?$/, "Le BIC compte 8 ou 11 caractères.")),
   email: z.string().trim().email("E-mail invalide.").optional().or(z.literal("")),
   phone: optionalText(50),
 });
@@ -26,7 +36,8 @@ export function readProfileForm(formData: FormData) {
     vatNumber: formData.get("vatNumber") ?? "",
     activityNumber: formData.get("activityNumber") ?? "",
     vatExempt: formData.get("vatExempt") === "on",
-    bankDetails: formData.get("bankDetails") ?? "",
+    iban: formData.get("iban") ?? "",
+    bic: formData.get("bic") ?? "",
     email: formData.get("email") ?? "",
     phone: formData.get("phone") ?? "",
   });

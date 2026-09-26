@@ -191,10 +191,15 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 ## Réglages (E6)
 
-- `/settings` : **profil de prestataire** (nom/raison sociale, adresse, SIRET 14 chiffres,
-  n° TVA, TVA non applicable art. 293 B, tarif horaire, e-mail, téléphone, RIB) — un seul profil,
-  créé au premier enregistrement — et **écoles** (nom, SIRET, adresse, e-mail de facturation,
-  identifiant Plateforme Agréée) avec ajout / modification / suppression.
+- `/settings` : **profil du prestataire** en 4 groupes (`fieldset`) — Identité (nom/raison
+  sociale, adresse) · Informations administratives (SIRET 14 chiffres, NDA, TVA non applicable
+  art. 293 B avec aide, n° TVA) · Coordonnées (e-mail, téléphone) · Coordonnées bancaires
+  (**IBAN** validé modulo 97 + **BIC** 8/11 caractères, stockés dans `bank_details` sous la forme
+  `IBAN : …\nBIC : …`) — un seul profil, créé au premier enregistrement. Bouton « Enregistrer les
+  modifications » désactivé tant que rien n'a changé, puis « ✓ Modifications enregistrées »
+  (`role="status"`). **Écoles** (nom, SIRET, adresse, e-mail de facturation, identifiant
+  Plateforme Agréée) : cartes avec SIRET formaté, actions « Modifier » / « Supprimer »
+  (confirmation) et ajout.
 - Ces données alimentent la trame (nom du/de la formateur·rice) et, en E7, les factures.
 
 ## Facturation (E7)

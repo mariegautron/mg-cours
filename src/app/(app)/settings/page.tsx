@@ -5,6 +5,7 @@ import { Pencil, Plus } from "lucide-react";
 import { DeleteSchoolButton } from "@/components/settings/delete-school-button";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { Button } from "@/components/ui/button";
+import { formatSiret } from "@/lib/settings/bank";
 import { getProfile, listAllSchools } from "@/lib/settings/queries";
 
 export const metadata: Metadata = { title: "Réglages" };
@@ -17,23 +18,31 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Réglages</h1>
         <p className="text-muted-foreground">
-          Ces informations alimentent la trame pédagogique et les factures.
+          Vos informations administratives et les écoles avec lesquelles vous travaillez.
         </p>
       </div>
 
       <section aria-labelledby="profile">
-        <h2 id="profile" className="mb-4 text-lg font-medium">
-          Mon profil de prestataire
-        </h2>
+        <div className="mb-6">
+          <h2 id="profile" className="text-lg font-medium">
+            Profil du prestataire
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Utilisé sur la trame pédagogique et les factures.
+          </p>
+        </div>
         <ProfileForm profile={profile} />
       </section>
 
       <section aria-labelledby="schools">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="schools" className="text-lg font-medium">
-            Écoles
-          </h2>
-          <Button asChild size="sm" variant="secondary">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 id="schools" className="text-lg font-medium">
+              Écoles
+            </h2>
+            <p className="text-muted-foreground text-sm">Les écoles que vous facturez.</p>
+          </div>
+          <Button asChild variant="secondary">
             <Link href="/settings/schools/new">
               <Plus aria-hidden />
               Ajouter une école
@@ -47,18 +56,22 @@ export default async function SettingsPage() {
             {schools.map((s) => (
               <li
                 key={s.id}
-                className="flex items-center justify-between gap-2 rounded-lg border p-3"
+                className="flex flex-wrap items-start justify-between gap-2 rounded-lg border p-4"
               >
-                <div>
+                <div className="space-y-0.5">
                   <p className="font-medium">{s.name}</p>
                   <p className="text-muted-foreground text-sm">
-                    {[s.siret, s.billing_email].filter(Boolean).join(" · ") || "—"}
+                    {s.siret ? `SIRET ${formatSiret(s.siret)}` : "SIRET non renseigné"}
                   </p>
+                  {s.billing_email ? (
+                    <p className="text-muted-foreground text-sm">{s.billing_email}</p>
+                  ) : null}
                 </div>
                 <div className="flex gap-1">
-                  <Button asChild variant="ghost" size="icon">
+                  <Button asChild variant="ghost" size="sm">
                     <Link href={`/settings/schools/${s.id}/edit`} aria-label={`Modifier ${s.name}`}>
                       <Pencil aria-hidden />
+                      Modifier
                     </Link>
                   </Button>
                   <DeleteSchoolButton id={s.id} name={s.name} />

@@ -16,11 +16,11 @@ test("enregistre le profil et ajoute une école", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Réglages", level: 1 })).toBeVisible();
 
   await page.getByLabel("SIRET").first().fill("123 456 789 00012");
-  await page.getByRole("button", { name: "Enregistrer le profil" }).click();
-  await expect(page.getByText("Profil enregistré.")).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
+  await expect(page.getByText("Modifications enregistrées")).toBeVisible();
 
   await page.getByLabel("SIRET").first().fill("123");
-  await page.getByRole("button", { name: "Enregistrer le profil" }).click();
+  await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
   await expect(page.getByText("Le SIRET compte 14 chiffres.")).toBeVisible();
 
   await page.getByRole("link", { name: "Ajouter une école" }).click();
