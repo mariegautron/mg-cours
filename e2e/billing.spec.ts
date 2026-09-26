@@ -29,12 +29,12 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   // École.
   await page.getByRole("link", { name: "Ajouter une école" }).click();
   const schoolName = `École Facture ${suffix}`;
-  await page.getByLabel("Nom de l’école / campus").fill(schoolName);
+  await page.getByLabel("Nom de l’école").fill(schoolName);
   await page.getByLabel("SIRET").fill("80442673200033");
   await page.getByLabel("E-mail de facturation").fill("fournisseurs@example.fr");
   await page.getByLabel("Adresse", { exact: true }).fill("Nantes");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText(schoolName)).toBeVisible();
+  await page.getByRole("button", { name: "Créer l’école" }).click();
+  await expect(page.getByText(schoolName, { exact: true })).toBeVisible();
 
   // Module de 4 h (→ 2 notes : 1 de groupe + 1 individuelle) avec toutes les mentions.
   await page.goto("/modules/new");
@@ -79,7 +79,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   ] as const) {
     await page.goto(`${moduleUrl}/assessments/new`);
     await page.getByLabel("Titre").fill(`${title} ${suffix}`);
-    await page.getByLabel("Groupe", { exact: true }).selectOption({ label: `Groupe F ${suffix}` });
+    await page.getByRole("checkbox", { name: `Groupe F ${suffix}` }).check();
     if (isGroup) await page.getByLabel(/Note de groupe/).check();
     await page.getByRole("button", { name: "Enregistrer" }).click();
     await page.getByLabel("Note", { exact: true }).fill(value);

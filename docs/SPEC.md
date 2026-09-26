@@ -157,21 +157,26 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 - En-tête : compteur **« X/Y notes requises »** (Y = palier YNOV selon les heures ; X = nombre
   d'évaluations ayant au moins une note saisie, ventilé groupe/individuelle) + ce qui manque.
-- Liste (titre, groupe, type de note, date, notée / à noter) et tableau des **moyennes
+- Liste (titre, groupes, type de note, date, notée / à noter) et tableau des **moyennes
   pondérées** par étudiant·e (note de groupe ×1, individuelle ×3, `weightedAverage`).
-- Création : titre, sujet, type, date, durée, coefficient, **groupe** (obligatoire), grille
-  (optionnelle), case « note de groupe ».
+- Création : titre, sujet, type, date, durée, coefficient, **groupes** (cases à cocher, au moins un :
+  ex. les 6 groupes de projet notés sur un même TP), grille
+  (optionnelle), case « note de groupe ». Sujet = zone de texte **Markdown** (consignes
+  complètes, 20 000 caractères max), rendu en section « Sujet » sur la page de l'évaluation.
 
 ### Saisie `/modules/[id]/assessments/[assessmentId]`
 
-- Note de groupe → un formulaire pour le groupe. Note individuelle → un formulaire par membre.
+- Note de groupe → un formulaire par groupe visé. Note individuelle → un formulaire par membre de
+  l'ensemble des groupes, rangés par groupe ; un·e étudiant·e présent·e dans plusieurs groupes n'a
+  qu'un formulaire (`gradingTargets`, `src/lib/assessments/targets.ts`).
+- Retirer un groupe à l'édition supprime ses notes de groupe ; les notes individuelles restent.
 - Avec grille : un champ par critère (max = points du critère), total calculé ; sans grille :
   note directe. Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
 ### Règles
 
 - Une « note » au sens YNOV = une **évaluation** (une évaluation individuelle produit une ligne
-  `grade` par étudiant·e mais ne compte que pour 1 note).
+  `grade` par étudiant·e mais ne compte que pour 1 note ; une évaluation sur 6 groupes aussi).
 - `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).
 
 ## Trame pédagogique (E6)
@@ -192,7 +197,7 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 - Sur la page d'une évaluation (dès qu'une note existe) : **Exporter les résultats (PDF)** et
   **Envoyer par e-mail**.
-- Une fiche par note : titre, module, sujet, date, destinataire(s), détail par critère
+- Une fiche par note : titre, module, date, destinataire(s), sujet (Markdown rendu), détail par critère
   (points / max), note totale, appréciation, commentaires prédéfinis cochés. Note de groupe :
   une seule fiche adressée à tous les membres.
 - E-mail : Resend, sujet « Vos résultats — <évaluation> », PDF en pièce jointe. Les étudiant·es
@@ -210,6 +215,11 @@ chacune liées à une ou plusieurs ressources réutilisables.
   (`role="status"`). **Écoles** (nom, SIRET, adresse, e-mail de facturation, identifiant
   Plateforme Agréée) : cartes avec SIRET formaté, actions « Modifier » / « Supprimer »
   (confirmation) et ajout.
+- Formulaire école (création / modification) : groupes « L'école » (nom\*, adresse multi-ligne)
+  et « Facturation » (SIRET, identifiant PA, e-mail) avec exemples et aides reliées ; bouton
+  « Créer l'école » ou « Enregistrer les modifications » ; lien « ← Réglages ». Quitter avec des
+  modifications non enregistrées demande confirmation (dialogue + `beforeunload`). Retour sur
+  `/settings?saved=…` avec « ✓ École « X » enregistrée. » (`role="status"`).
 - Ces données alimentent la trame (nom du/de la formateur·rice) et, en E7, les factures.
 
 ## Facturation (E7)

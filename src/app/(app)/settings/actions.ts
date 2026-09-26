@@ -70,7 +70,7 @@ export async function createSchool(
   if (error) return { error: "Enregistrement impossible." };
 
   revalidatePath("/settings");
-  redirect("/settings");
+  redirect(`/settings?saved=${encodeURIComponent(d.name)}`);
 }
 
 export async function updateSchool(
@@ -96,7 +96,7 @@ export async function updateSchool(
   if (error) return { error: "Enregistrement impossible." };
 
   revalidatePath("/settings");
-  redirect("/settings");
+  redirect(`/settings?saved=${encodeURIComponent(d.name)}`);
 }
 
 export async function deleteSchool(id: string) {

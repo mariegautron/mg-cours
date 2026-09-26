@@ -25,9 +25,23 @@ test("enregistre le profil et ajoute une école", async ({ page }) => {
 
   await page.getByRole("link", { name: "Ajouter une école" }).click();
   const name = `École test ${Date.now()}`;
-  await page.getByLabel("Nom de l’école / campus").fill(name);
-  await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText(name)).toBeVisible();
+  await page.getByLabel("Nom de l’école").fill(name);
+  await page.getByRole("button", { name: "Créer l’école" }).click();
+  await expect(page.getByText(`École « ${name} » enregistrée.`)).toBeVisible();
+
+  // Garde-fou : quitter une modification non enregistrée demande confirmation.
+  await page.getByRole("link", { name: `Modifier ${name}` }).click();
+  await expect(page.getByRole("heading", { name: `Modifier « ${name} »` })).toBeVisible();
+  await page.getByLabel("Adresse").fill("Nantes");
+  await page.getByRole("link", { name: "Annuler" }).click();
+  await expect(
+    page.getByRole("alertdialog", { name: "Abandonner les modifications ?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Continuer la saisie" }).click();
+  await expect(page.getByLabel("Adresse")).toHaveValue("Nantes");
+  await page.getByRole("link", { name: "Annuler" }).click();
+  await page.getByRole("button", { name: "Abandonner" }).click();
+  await expect(page.getByRole("heading", { name: "Réglages", level: 1 })).toBeVisible();
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

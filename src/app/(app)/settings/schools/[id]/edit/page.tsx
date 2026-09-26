@@ -13,9 +13,10 @@ export default async function EditSchoolPage({ params }: PageProps<"/settings/sc
   if (!school) notFound();
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {school.name} »</h1>
-      <SchoolForm action={updateSchool.bind(null, id)} school={school} />
-    </div>
+    <SchoolForm
+      title={`Modifier « ${school.name} »`}
+      action={updateSchool.bind(null, id)}
+      school={school}
+    />
   );
 }

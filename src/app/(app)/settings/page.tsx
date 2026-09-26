@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
+import { Check, Pencil, Plus } from "lucide-react";
 
 import { DeleteSchoolButton } from "@/components/settings/delete-school-button";
 import { ProfileForm } from "@/components/settings/profile-form";
@@ -10,7 +10,8 @@ import { getProfile, listAllSchools } from "@/lib/settings/queries";
 
 export const metadata: Metadata = { title: "Réglages" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
+  const { saved } = await searchParams;
   const [profile, schools] = await Promise.all([getProfile(), listAllSchools()]);
 
   return (
@@ -49,6 +50,21 @@ export default async function SettingsPage() {
             </Link>
           </Button>
         </div>
+        <p
+          role="status"
+          className={
+            typeof saved === "string"
+              ? "mb-3 text-sm text-emerald-600 dark:text-emerald-400"
+              : "sr-only"
+          }
+        >
+          {typeof saved === "string" ? (
+            <span className="inline-flex items-center gap-1">
+              <Check aria-hidden className="size-4" />
+              École « {saved} » enregistrée.
+            </span>
+          ) : null}
+        </p>
         {schools.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucune école pour l’instant.</p>
         ) : (
