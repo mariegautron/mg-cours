@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   const [profile, schools] = await Promise.all([getProfile(), listAllSchools()]);
 
   return (
-    <div className="max-w-3xl space-y-10">
+    <div className="max-w-5xl space-y-10">
       <div>
         <h1 className="text-2xl font-semibold">Réglages</h1>
         <p className="text-muted-foreground">
@@ -52,7 +52,7 @@ export default async function SettingsPage() {
         {schools.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucune école pour l’instant.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="grid gap-2 md:grid-cols-2">
             {schools.map((s) => (
               <li
                 key={s.id}
