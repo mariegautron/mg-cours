@@ -45,6 +45,7 @@ erDiagram
 | `predefined_comment`  | text, category (`positive` \| `negative` \| `advice`), tags[]                                                                                                                               |
 | `invoice`             | module_id, number (`YYYY-NNN`), issued_on, amount_ex_vat, vat_rate, vat_amount, amount_inc_vat, status, purchase_order_ref, sent_at, paid_on, xml_file, pdf_file                            |
 | `pedagogical_outline` | module_id, generated_at, content(jsonb), status, sent_at, pdf_file                                                                                                                          |
+| `module_document`     | module_id, kind (`school_expectations` \| `outline_sent`), name, path (bucket privé `module-documents`), size_bytes, mime                                                                   |
 | `school`              | name, siret, address, billing_email, pa_identifier                                                                                                                                          |
 | `teacher_profile`     | legal_name, address, siret, vat_number, bank_details, email                                                                                                                                 |
 

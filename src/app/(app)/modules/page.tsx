@@ -37,7 +37,9 @@ export default async function ModulesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Modules</h1>
-          <p className="text-muted-foreground">Un module par école et par année.</p>
+          <p className="text-muted-foreground">
+            Tous vos modules, toutes écoles et toutes années confondues.
+          </p>
         </div>
         <Button asChild>
           <Link href="/modules/new">

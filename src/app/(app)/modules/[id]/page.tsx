@@ -5,12 +5,13 @@ import { Pencil, Plus } from "lucide-react";
 
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
+import { ModuleDocuments } from "@/components/modules/module-documents";
 import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { moduleNoteProgress } from "@/lib/assessments/queries";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
@@ -43,10 +44,11 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
 
 export default async function ModulePage({ params }: PageProps<"/modules/[id]">) {
   const { id } = await params;
-  const [mod, courses, groups] = await Promise.all([
+  const [mod, courses, groups, documents] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     listModuleGroups(id),
+    getModuleDocuments(id),
   ]);
   if (!mod) notFound();
 
@@ -115,6 +117,13 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         <div className="mt-3">
           <OutlineActions moduleId={mod.id} status={outline?.status ?? null} />
         </div>
+      </section>
+
+      <section aria-labelledby="documents">
+        <h2 id="documents" className="mb-3 text-lg font-medium">
+          Documents
+        </h2>
+        <ModuleDocuments moduleId={mod.id} documents={documents} />
       </section>
 
       <section aria-labelledby="courses">

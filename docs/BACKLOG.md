@@ -110,18 +110,19 @@ critères (saisie texte « Libellé | points » en V1).
 
 ## E6 — Documents ✅
 
-| US     | Contenu                                                                                                                                                       | Statut                                                     |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| US-30  | **Trame pédagogique PDF** (instantané figé, « Progression pédagogique », dates de MAJ par séance)                                                             | ✅                                                         |
-| US-00f | Statuts trame : générée → marquée envoyée (date) → validée ; `advanceTo` fait avancer l'état iceberg sans reculer                                             | ✅                                                         |
-| US-28  | Export PDF des résultats d'une évaluation (1 fiche par étudiant·e, ou 1 pour le groupe) avec détail par critère, appréciation, commentaires                   | ✅                                                         |
-| US-29  | Envoi e-mail des résultats via Resend (PDF individuel en pièce jointe ; étudiant·es sans e-mail listé·es)                                                     | ✅ code — **à activer** : `RESEND_API_KEY` + `RESEND_FROM` |
-| —      | **Réglages** : profil prestataire (nom, adresse, SIRET validé 14 chiffres, TVA/293 B, tarif, RIB) + écoles (SIRET, e-mail facturation, id. Plateforme Agréée) | ✅                                                         |
-| US-31  | Export PDF de tous les cours d'un module                                                                                                                      | ⏳ reporté (non bloquant pour le 12/10)                    |
+| US     | Contenu                                                                                                                                                                 | Statut                                                     |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| US-30  | **Trame pédagogique PDF** (instantané figé, « Progression pédagogique », dates de MAJ par séance)                                                                       | ✅                                                         |
+| US-00f | Statuts trame : générée → marquée envoyée (date) → validée ; `advanceTo` fait avancer l'état iceberg sans reculer                                                       | ✅                                                         |
+| US-28  | Export PDF des résultats d'une évaluation (1 fiche par étudiant·e, ou 1 pour le groupe) avec détail par critère, appréciation, commentaires                             | ✅                                                         |
+| US-29  | Envoi e-mail des résultats via Resend (PDF individuel en pièce jointe ; étudiant·es sans e-mail listé·es)                                                               | ✅ code — **à activer** : `RESEND_API_KEY` + `RESEND_FROM` |
+| —      | **Réglages** : profil prestataire (nom, adresse, SIRET validé 14 chiffres, TVA/293 B, tarif, RIB) + écoles (SIRET, e-mail facturation, id. Plateforme Agréée)           | ✅                                                         |
+| US-32  | **Documents du module** : dépôt des attendus de l'école (PDF/Word) et de la trame déjà envoyée (module déjà réalisé), téléchargement, suppression (bucket privé, 10 Mo) | ✅                                                         |
+| US-31  | Export PDF de tous les cours d'un module                                                                                                                                | ⏳ reporté (non bloquant pour le 12/10)                    |
 
-Écrans : section « Trame pédagogique » de `/modules/[id]`, boutons d'export/envoi sur
+Écrans : sections « Documents » et « Trame pédagogique » de `/modules/[id]`, boutons d'export/envoi sur
 `/modules/[id]/assessments/[assessmentId]`, `/settings` (+ `/settings/schools/…`).
-API PDF : `GET /api/modules/[id]/outline`, `GET /api/modules/[id]/assessments/[assessmentId]/results`.
+API PDF : `GET /api/modules/[id]/outline`, `GET /api/modules/[id]/documents/[docId]`, `GET /api/modules/[id]/assessments/[assessmentId]/results`.
 
 ## E7 — Facturation YNOV ✅
 
@@ -165,6 +166,12 @@ US-05, US-06, US-16 · script one-shot `scripts/notion-migrate.ts` · import ét
 | Resend configuré (e-mails résultats/factures)                                                                                         | ⏳ **Marie** (optionnel) |
 
 Détail : `docs/DEPLOY.md`.
+
+## Vision suivante (validée 26/09)
+
+Partir des **attendus de l'école** déposés sur le module pour **construire les cours en piochant** dans les
+ressources/activités existantes (proposition de séances depuis les attendus, réutilisation sans duplication).
+À cadrer après la migration Notion.
 
 ## Hors MVP (post-12/10)
 

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Dépôt des documents de module (10 Mo max, cf. bucket module-documents).
+  experimental: { serverActions: { bodySizeLimit: "11mb" } },
   // Ces paquets chargent des fichiers (WASM, XSD, Schematron compilé) via import.meta.url :
   // ils doivent rester externes au bundle serveur pour résoudre leurs chemins.
   async headers() {

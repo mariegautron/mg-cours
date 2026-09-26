@@ -82,3 +82,13 @@ export async function listActiveResources(): Promise<Pick<Tables<"resource">, "i
     .order("title");
   return data ?? [];
 }
+
+export async function getModuleDocuments(moduleId: string): Promise<Tables<"module_document">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module_document")
+    .select("*")
+    .eq("module_id", moduleId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}

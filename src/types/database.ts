@@ -557,6 +557,53 @@ export type Database = {
           },
         ]
       }
+      module_document: {
+        Row: {
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["module_document_kind"]
+          mime: string
+          module_id: string
+          name: string
+          owner_id: string
+          path: string
+          size_bytes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["module_document_kind"]
+          mime: string
+          module_id: string
+          name: string
+          owner_id?: string
+          path: string
+          size_bytes: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["module_document_kind"]
+          mime?: string
+          module_id?: string
+          name?: string
+          owner_id?: string
+          path?: string
+          size_bytes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_document_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedagogical_outline: {
         Row: {
           content: Json
@@ -879,6 +926,7 @@ export type Database = {
         | "invoice_sent"
         | "paid"
       invoice_status: "draft" | "ready" | "sent" | "paid"
+      module_document_kind: "school_expectations" | "outline_sent"
       outline_status: "draft" | "sent" | "validated"
     }
     CompositeTypes: {
@@ -1037,6 +1085,7 @@ export const Constants = {
         "paid",
       ],
       invoice_status: ["draft", "ready", "sent", "paid"],
+      module_document_kind: ["school_expectations", "outline_sent"],
       outline_status: ["draft", "sent", "validated"],
     },
   },
