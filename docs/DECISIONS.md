@@ -113,3 +113,10 @@ Un déclencheur `before update` sur `resource` copie l'état précédent dans `r
 contenu change (30 versions max). Choisi plutôt qu'un code applicatif : il couvre aussi les imports et scripts, et ne
 peut pas être oublié. Restaurer = ré-écrire la ressource ; l'état courant est lui-même sauvegardé, donc rien n'est perdu.
 Pas de diff ligne à ligne (hors besoin), l'affichage montre la version complète.
+
+## ADR-017 — Fiche pédagogique : extraction de texte « au mieux », sans OCR ni IA
+
+`unpdf` lit le texte du PDF côté serveur ; des expressions régulières (`src/lib/modules/fiche.ts`, testées) repèrent
+YCODE, niveau, heures, etc. Seules les valeurs trouvées préremplissent le formulaire, toujours relues avant
+enregistrement. Pas d'OCR (PDF scanné → message clair) ni de service externe : gratuit, rapide, prévisible. Limite 4 Mo
+(plafond des Server Actions sur Vercel). Heuristiques à affiner avec une vraie fiche YNOV.

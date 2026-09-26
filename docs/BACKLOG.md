@@ -31,15 +31,15 @@ Dev local : `pnpm db:start` puis `pnpm db:reset`. Identifiants : `marie@local.te
 
 ## E2 — Ressources 🚧
 
-| US          | Contenu                                                                      | Statut                         |
-| ----------- | ---------------------------------------------------------------------------- | ------------------------------ |
-| US-00/01/02 | CRUD ressource (titre, description, contenu Markdown, lien, catégorie, tags) | ✅                             |
-| US-03/07    | « Utilisée dans N modules » (liste + détail) via `course_resource`           | ✅                             |
-| US-04       | Archiver / désarchiver / supprimer (avec confirmation)                       | ✅                             |
-| US-03       | Liste : recherche plein texte + filtres catégorie / tag / archivées          | ✅                             |
-| —           | e2e authentifié (login seed → création → liste) + axe 0 violation            | ✅                             |
-| US-01       | Upload de fichiers joints (Storage)                                          | ⏳ reporté (bucket + policies) |
-| US-05/06    | Import Notion / Moodle → E8 (hors E2)                                        | ⏳                             |
+| US          | Contenu                                                                      | Statut |
+| ----------- | ---------------------------------------------------------------------------- | ------ |
+| US-00/01/02 | CRUD ressource (titre, description, contenu Markdown, lien, catégorie, tags) | ✅     |
+| US-03/07    | « Utilisée dans N modules » (liste + détail) via `course_resource`           | ✅     |
+| US-04       | Archiver / désarchiver / supprimer (avec confirmation)                       | ✅     |
+| US-03       | Liste : recherche plein texte + filtres catégorie / tag / archivées          | ✅     |
+| —           | e2e authentifié (login seed → création → liste) + axe 0 violation            | ✅     |
+| US-01       | Fichiers joints (bucket `resource-files`) + images dans le contenu Markdown  | ✅     |
+| US-05/06    | Import Notion / Moodle → E8 (hors E2)                                        | ⏳     |
 
 Écrans : `/resources`, `/resources/new`, `/resources/[id]`, `/resources/[id]/edit`.
 Détail : `docs/SPEC.md`.
@@ -92,14 +92,15 @@ automatique des notes Hyperplanning (E7/E8).
 
 ## E5 — Évaluations + Notation ✅
 
-| US          | Contenu                                                                                                                                 | Statut |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| US-17/18    | Grilles de correction réutilisables (critères « Libellé \| points », barème auto) : liste, création, édition, suppression               | ✅     |
-| US-19/20    | Évaluations par module (groupe cible, grille optionnelle, coefficient, note de groupe ou individuelle) : création, édition, suppression | ✅     |
-| US-20/21    | Saisie des notes : par critère (total auto) ou note directe ; 1 note pour le groupe, ou 1 par membre                                    | ✅     |
-| US-22/23/24 | Commentaires prédéfinis : CRUD + recherche/filtres + sélection à la saisie                                                              | ✅     |
-| US-11/27    | Compteur « X/Y notes requises » réel (1 évaluation notée = 1 note YNOV) + moyenne pondérée ×1/×3 par étudiant·e                         | ✅     |
-| —           | e2e : grille → groupe → évaluation → note → compteur → moyenne, axe 0 violation                                                         | ✅     |
+| US          | Contenu                                                                                                                                                   | Statut |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-17/18    | Grilles de correction réutilisables (critères « Libellé \| points », barème auto) : liste, création, édition, suppression                                 | ✅     |
+| US-19/20    | Évaluations par module (un ou plusieurs groupes cibles, grille optionnelle, coefficient, note de groupe ou individuelle) : création, édition, suppression | ✅     |
+| US-20/21    | Saisie des notes : par critère (total auto) ou note directe ; 1 note par groupe visé, ou 1 par membre                                                     | ✅     |
+| US-22/23/24 | Commentaires prédéfinis : CRUD + recherche/filtres + sélection à la saisie                                                                                | ✅     |
+| US-19b      | Sujet complet en **Markdown** (zone de texte, 20 000 car. max) : section « Sujet » sur la page de l'évaluation et dans le PDF des résultats               | ✅     |
+| US-11/27    | Compteur « X/Y notes requises » réel (1 évaluation notée = 1 note YNOV) + moyenne pondérée ×1/×3 par étudiant·e                                           | ✅     |
+| —           | e2e : grille → groupe → évaluation → note → compteur → moyenne, axe 0 violation                                                                           | ✅     |
 
 Écrans : `/assessments` (vue globale), `/assessments/grids…`, `/assessments/comments…`,
 `/modules/[id]/assessments` (compteur + liste + moyennes), `…/new`, `…/[assessmentId]`
@@ -110,18 +111,18 @@ critères (saisie texte « Libellé | points » en V1).
 
 ## E6 — Documents ✅
 
-| US     | Contenu                                                                                                                                                                                                             | Statut                                                     |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| US-30  | **Trame pédagogique PDF** (instantané figé, « Progression pédagogique », dates de MAJ par séance)                                                                                                                   | ✅                                                         |
-| US-00f | Statuts trame : générée → marquée envoyée (date) → validée ; `advanceTo` fait avancer l'état iceberg sans reculer                                                                                                   | ✅                                                         |
-| US-28  | Export PDF des résultats d'une évaluation (1 fiche par étudiant·e, ou 1 pour le groupe) avec détail par critère, appréciation, commentaires                                                                         | ✅                                                         |
-| US-29  | Envoi e-mail des résultats via Resend (PDF individuel en pièce jointe ; étudiant·es sans e-mail listé·es)                                                                                                           | ✅ code — **à activer** : `RESEND_API_KEY` + `RESEND_FROM` |
-| —      | **Réglages** : profil prestataire groupé (identité, administratif, coordonnées, IBAN + BIC validés), état d'enregistrement explicite + écoles (SIRET, e-mail facturation, id. Plateforme Agréée), actions libellées | ✅                                                         |
-| US-33b | **Lien des slides (Figma)** sur le module (copié à la duplication). Pas de dépôt de fichiers de slides : trop lourd pour le stockage, le lien Figma suffit                                                          | ✅                                                         |
-| US-04  | **Historique des ressources** : état précédent conservé à chaque modification (30 versions max), écran Historique, restauration en un clic (l'état courant est sauvegardé avant) — pas de comparaison ligne à ligne | ✅                                                         |
-| US-33c | **Facture émise hors application** : dépôt du PDF sur le module (Documents + page Facturation) et bouton « Marquer le module comme payé »                                                                           | ✅                                                         |
-| US-32  | **Documents du module** : dépôt des attendus de l'école (PDF/Word) et de la trame déjà envoyée (module déjà réalisé), téléchargement, suppression (bucket privé, 10 Mo)                                             | ✅                                                         |
-| US-31  | Export PDF des cours d'un module pour Moodle : **un seul PDF** ou **un PDF par séance (zip)** ; contenu des ressources liées (Markdown), sans notes d'animation/évaluation                                          | ✅                                                         |
+| US     | Contenu                                                                                                                                                                                                                                                | Statut                                                     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| US-30  | **Trame pédagogique PDF** (instantané figé, « Progression pédagogique », dates de MAJ par séance)                                                                                                                                                      | ✅                                                         |
+| US-00f | Statuts trame : générée → marquée envoyée (date) → validée ; `advanceTo` fait avancer l'état iceberg sans reculer                                                                                                                                      | ✅                                                         |
+| US-28  | Export PDF des résultats d'une évaluation (1 fiche par étudiant·e, ou 1 par groupe noté) avec détail par critère, appréciation, commentaires                                                                                                           | ✅                                                         |
+| US-29  | Envoi e-mail des résultats via Resend (PDF individuel en pièce jointe ; étudiant·es sans e-mail listé·es)                                                                                                                                              | ✅ code — **à activer** : `RESEND_API_KEY` + `RESEND_FROM` |
+| —      | **Réglages** : profil prestataire groupé (identité, administratif, coordonnées, IBAN + BIC validés), état d'enregistrement explicite + écoles (SIRET, e-mail facturation, id. Plateforme Agréée) : formulaire guidé, garde-fou de sortie, confirmation | ✅                                                         |
+| US-33b | **Lien des slides (Figma)** sur le module (copié à la duplication). Pas de dépôt de fichiers de slides : trop lourd pour le stockage, le lien Figma suffit                                                                                             | ✅                                                         |
+| US-04  | **Historique des ressources** : état précédent conservé à chaque modification (30 versions max), écran Historique, restauration en un clic (l'état courant est sauvegardé avant) — pas de comparaison ligne à ligne                                    | ✅                                                         |
+| US-33c | **Facture émise hors application** : dépôt du PDF sur le module (Documents + page Facturation) et bouton « Marquer le module comme payé »                                                                                                              | ✅                                                         |
+| US-32  | **Documents du module** : dépôt des attendus de l'école (PDF/Word) et de la trame déjà envoyée (module déjà réalisé), téléchargement, suppression (bucket privé, 10 Mo)                                                                                | ✅                                                         |
+| US-31  | Export PDF des cours d'un module pour Moodle : **un seul PDF** ou **un PDF par séance (zip)** ; contenu des ressources liées (Markdown), sans notes d'animation/évaluation                                                                             | ✅                                                         |
 
 Écrans : sections « Documents » et « Trame pédagogique » de `/modules/[id]`, boutons d'export/envoi sur
 `/modules/[id]/assessments/[assessmentId]`, `/settings` (+ `/settings/schools/…`).

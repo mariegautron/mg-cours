@@ -28,8 +28,7 @@ const optionalRate = z
 export const moduleSchema = z.object({
   name: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
   schoolId: z
-    .string()
-    .uuid()
+    .guid()
     .optional()
     .or(z.literal(""))
     .transform((v) => v || null),
