@@ -2,68 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 
+import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/modules/documents";
 import { createClient } from "@/lib/supabase/server";
 
-export interface DocumentActionState {
-  error?: string;
-  saved?: boolean;
-}
-
-const KINDS = ["school_expectations", "outline_sent"] as const;
-const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.oasis.opendocument.text",
-]);
-
-function safeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .slice(-120);
-}
-
-export async function uploadModuleDocument(
+/**
+ * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur
+ * plafonnent les requêtes à quelques Mo). Cette action enregistre ensuite le document.
+ */
+export async function registerModuleDocument(
   moduleId: string,
-  kind: (typeof KINDS)[number],
-  _prev: DocumentActionState,
-  formData: FormData,
-): Promise<DocumentActionState> {
-  if (!KINDS.includes(kind)) return { error: "Type de document invalide." };
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choisissez un fichier." };
-  if (file.size > MAX_BYTES) return { error: "Fichier trop volumineux (10 Mo maximum)." };
-  if (!ALLOWED_MIME.has(file.type))
-    return { error: "Formats acceptés : PDF, Word ou OpenDocument." };
+  kind: DocumentKind,
+  file: { path: string; name: string; size: number; mime: string },
+): Promise<{ error?: string }> {
+  if (!DOCUMENT_KINDS.includes(kind)) return { error: "Type de document invalide." };
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { error: "Session expirée." };
-
-  const path = `${auth.user.id}/${moduleId}/${crypto.randomUUID()}-${safeName(file.name)}`;
-  const { error: uploadError } = await supabase.storage
-    .from("module-documents")
-    .upload(path, file, { contentType: file.type });
-  if (uploadError) return { error: "Dépôt impossible. Réessayez." };
+  if (!file.path.startsWith(`${auth.user.id}/${moduleId}/`)) return { error: "Chemin invalide." };
 
   const { error } = await supabase.from("module_document").insert({
     module_id: moduleId,
     kind,
-    name: file.name,
-    path,
+    name: file.name.slice(0, 255),
+    path: file.path,
     size_bytes: file.size,
-    mime: file.type,
+    mime: file.mime,
   });
   if (error) {
-    await supabase.storage.from("module-documents").remove([path]);
+    await supabase.storage.from("module-documents").remove([file.path]);
     return { error: "Enregistrement impossible. Réessayez." };
   }
 
   revalidatePath(`/modules/${moduleId}`);
-  return { saved: true };
+  return {};
 }
 
 export async function deleteModuleDocument(moduleId: string, docId: string) {

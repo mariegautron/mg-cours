@@ -99,3 +99,10 @@ et sombre gratuits. Contrastes validés par calcul puis par axe-core (`e2e/desig
 Le tarif varie selon l'école, le niveau et le module : `module.hourly_rate` est la seule source
 (champ « Tarif horaire HT (€) » du formulaire module, copié à la duplication). Plus de tarif par défaut
 sur `teacher_profile` (colonne supprimée). Facture bloquée tant que le tarif du module est vide.
+
+## ADR-015 — Dépôt de fichiers : direct navigateur → Storage
+
+Les fonctions serveur (Vercel) plafonnent le corps de requête à ~4,5 Mo : un dépôt via Server Action échouerait en
+production pour des slides. Le navigateur envoie donc le fichier directement dans le bucket privé `module-documents`
+(RLS : dossier `<owner_id>/…`), puis une Server Action enregistre la ligne `module_document` après avoir vérifié le
+préfixe du chemin. Limite 50 Mo, formats PDF / Word / OpenDocument / PowerPoint / Keynote.

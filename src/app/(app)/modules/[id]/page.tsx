@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Plus } from "lucide-react";
+import { Download, ExternalLink, Pencil, Plus } from "lucide-react";
 
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
@@ -123,6 +123,17 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         <h2 id="documents" className="mb-3 text-lg font-medium">
           Documents
         </h2>
+        {mod.slides_url ? (
+          <p className="mb-3">
+            <Button asChild size="sm" variant="secondary">
+              <a href={mod.slides_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink aria-hidden />
+                Ouvrir les slides (Figma)
+                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
+              </a>
+            </Button>
+          </p>
+        ) : null}
         <ModuleDocuments moduleId={mod.id} documents={documents} />
       </section>
 
@@ -139,6 +150,23 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           </Button>
         </div>
         <CourseList moduleId={mod.id} courses={courses} />
+        {courses.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
+            <Button asChild size="sm" variant="secondary">
+              <a href={`/api/modules/${mod.id}/courses`}>
+                <Download aria-hidden />
+                Un seul PDF
+              </a>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <a href={`/api/modules/${mod.id}/courses?format=zip`}>
+                <Download aria-hidden />
+                Un PDF par séance (zip)
+              </a>
+            </Button>
+          </div>
+        ) : null}
       </section>
 
       <section aria-labelledby="groups">

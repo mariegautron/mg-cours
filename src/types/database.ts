@@ -497,6 +497,7 @@ export type Database = {
           owner_id: string
           purchase_order_ref: string | null
           school_id: string | null
+          slides_url: string | null
           start_date: string | null
           total_hours: number
           updated_at: string
@@ -519,6 +520,7 @@ export type Database = {
           owner_id?: string
           purchase_order_ref?: string | null
           school_id?: string | null
+          slides_url?: string | null
           start_date?: string | null
           total_hours?: number
           updated_at?: string
@@ -541,6 +543,7 @@ export type Database = {
           owner_id?: string
           purchase_order_ref?: string | null
           school_id?: string | null
+          slides_url?: string | null
           start_date?: string | null
           total_hours?: number
           updated_at?: string
@@ -929,7 +932,7 @@ export type Database = {
         | "invoice_sent"
         | "paid"
       invoice_status: "draft" | "ready" | "sent" | "paid"
-      module_document_kind: "school_expectations" | "outline_sent"
+      module_document_kind: "school_expectations" | "outline_sent" | "slides"
       outline_status: "draft" | "sent" | "validated"
     }
     CompositeTypes: {
@@ -1088,7 +1091,7 @@ export const Constants = {
         "paid",
       ],
       invoice_status: ["draft", "ready", "sent", "paid"],
-      module_document_kind: ["school_expectations", "outline_sent"],
+      module_document_kind: ["school_expectations", "outline_sent", "slides"],
       outline_status: ["draft", "sent", "validated"],
     },
   },

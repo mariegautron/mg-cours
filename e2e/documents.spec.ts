@@ -13,11 +13,16 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await page.getByLabel("Nom du module").fill(`Module Documents ${Date.now()}`);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByLabel("Lien des slides (Figma)").fill("https://www.figma.com/deck/abc123");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
   await page.waitForLoadState("networkidle");
   await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("link", { name: /Ouvrir les slides/ })).toHaveAttribute(
+    "href",
+    "https://www.figma.com/deck/abc123",
+  );
   await page.getByLabel(/Déposer un fichier \(attendus/).setInputFiles({
     name: "attendus-ecole.pdf",
     mimeType: "application/pdf",
@@ -37,4 +42,13 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
 
   await page.getByRole("button", { name: /Supprimer attendus-ecole\.pdf/ }).click();
   await expect(page.getByText("attendus-ecole.pdf")).toHaveCount(0);
+
+  // Slides d'un ancien cours : dépôt direct depuis le navigateur.
+  await page.getByLabel(/Déposer un fichier \(slides/).setInputFiles({
+    name: "ancien-cours.pptx",
+    mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    buffer: Buffer.from("PK-fake-pptx"),
+  });
+  await page.getByRole("button", { name: "Déposer", exact: true }).nth(2).click();
+  await expect(page.getByText("ancien-cours.pptx").first()).toBeVisible();
 });

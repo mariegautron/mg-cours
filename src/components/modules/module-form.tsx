@@ -173,6 +173,23 @@ export function ModuleForm({
             defaultValue={mod?.purchase_order_ref ?? ""}
           />
         </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="slidesUrl">Lien des slides (Figma)</Label>
+          <Input
+            id="slidesUrl"
+            name="slidesUrl"
+            type="url"
+            placeholder="https://www.figma.com/…"
+            defaultValue={mod?.slides_url ?? ""}
+            aria-describedby={state.fieldErrors?.slidesUrl ? "slidesUrl-error" : undefined}
+          />
+          {state.fieldErrors?.slidesUrl ? (
+            <p id="slidesUrl-error" role="alert" className="text-destructive text-sm">
+              {state.fieldErrors.slidesUrl.join(" ")}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {state.error ? (

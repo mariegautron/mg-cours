@@ -45,6 +45,15 @@ export const moduleSchema = z.object({
   firstSessionDate: optionalDate,
   endDate: optionalDate,
   purchaseOrderRef: z.string().trim().max(200).optional().or(z.literal("")),
+  slidesUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine(
+      (v) => v === "" || /^https?:\/\/\S+$/.test(v),
+      "Le lien doit commencer par http:// ou https://.",
+    )
+    .optional(),
 });
 
 export type ModuleInput = z.infer<typeof moduleSchema>;
@@ -65,6 +74,7 @@ export function readModuleForm(formData: FormData) {
     firstSessionDate: formData.get("firstSessionDate") ?? "",
     endDate: formData.get("endDate") ?? "",
     purchaseOrderRef: formData.get("purchaseOrderRef") ?? "",
+    slidesUrl: formData.get("slidesUrl") ?? "",
   });
 }
 

@@ -92,3 +92,79 @@ export async function getModuleDocuments(moduleId: string): Promise<Tables<"modu
     .order("created_at", { ascending: false });
   return data ?? [];
 }
+
+export interface CourseExport {
+  module: {
+    name: string;
+    ycode: string | null;
+    schoolName: string | null;
+    level: string | null;
+    year: number;
+  };
+  courses: {
+    number: number;
+    title: string;
+    sessionDate: string | null;
+    objectives: string[];
+    material: string | null;
+    resources: {
+      title: string;
+      description: string | null;
+      content: string | null;
+      url: string | null;
+    }[];
+  }[];
+}
+
+/** Données du PDF « cours » : séances dans l'ordre, avec le contenu complet des ressources liées. */
+export async function getCourseExport(moduleId: string): Promise<CourseExport | null> {
+  const supabase = await createClient();
+  const mod = await getModule(moduleId);
+  if (!mod) return null;
+
+  const { data } = await supabase
+    .from("course")
+    .select(
+      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url))",
+    )
+    .eq("module_id", moduleId)
+    .order("position");
+
+  type Row = {
+    title: string;
+    session_date: string | null;
+    learning_objectives: string[];
+    material: string | null;
+    course_resource: {
+      role: string;
+      resource: {
+        title: string;
+        description: string | null;
+        content: string | null;
+        url: string | null;
+      } | null;
+    }[];
+  };
+
+  return {
+    module: {
+      name: mod.name,
+      ycode: mod.ycode,
+      schoolName: mod.school?.name ?? null,
+      level: mod.level,
+      year: mod.year,
+    },
+    courses: ((data ?? []) as unknown as Row[]).map((c, i) => ({
+      number: i + 1,
+      title: c.title,
+      sessionDate: c.session_date,
+      objectives: c.learning_objectives,
+      material: c.material,
+      // Ressource principale d'abord, puis les secondaires.
+      resources: [...c.course_resource]
+        .sort((a, b) => (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1))
+        .map((cr) => cr.resource)
+        .filter((r) => r !== null),
+    })),
+  };
+}
