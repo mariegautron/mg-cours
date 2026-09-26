@@ -167,6 +167,24 @@ export async function markInvoicePaid(moduleId: string): Promise<BillingActionSt
   return { ok: true };
 }
 
+/**
+ * Facture faite hors de l'application : le PDF a été déposé sur le module, on passe le module
+ * à l'état final « payée » (plus d'alerte ni de ligne « à facturer »).
+ */
+export async function markExternalInvoicePaid(moduleId: string): Promise<BillingActionState> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("module_document")
+    .select("id", { count: "exact", head: true })
+    .eq("module_id", moduleId)
+    .eq("kind", "external_invoice");
+  if (!count) return { error: "Déposez d’abord le PDF de la facture." };
+
+  await advanceModule(moduleId, "paid");
+  refresh(moduleId);
+  return { ok: true };
+}
+
 /** Supprime une facture non envoyée (une facture envoyée est définitive). */
 export async function deleteInvoice(moduleId: string): Promise<BillingActionState> {
   const invoice = await getInvoiceByModule(moduleId);

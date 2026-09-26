@@ -15,8 +15,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/db";
 
 const MAX_BYTES = 50 * 1024 * 1024;
-const EXTENSIONS = /\.(pdf|docx?|odt|pptx?|odp|key)$/i;
-const ACCEPT = ".pdf,.doc,.docx,.odt,.ppt,.pptx,.odp,.key";
+const EXTENSIONS = /\.(pdf|docx?|odt)$/i;
+const ACCEPT = ".pdf,.doc,.docx,.odt";
 const MIME_BY_EXT: Record<string, string> = {
   pdf: "application/pdf",
   doc: "application/msword",
@@ -42,7 +42,7 @@ function formatSize(bytes: number) {
     : `${(bytes / 1024 / 1024).toFixed(1)} Mo`;
 }
 
-function DocumentSlot({
+export function DocumentSlot({
   moduleId,
   kind,
   title,
@@ -69,7 +69,7 @@ function DocumentSlot({
       return setState({ error: "Fichier trop volumineux (50 Mo maximum)." });
     if (!EXTENSIONS.test(file.name)) {
       return setState({
-        error: "Formats acceptés : PDF, Word, OpenDocument, PowerPoint, Keynote.",
+        error: "Formats acceptés : PDF, Word ou OpenDocument.",
       });
     }
 
@@ -202,10 +202,10 @@ export function ModuleDocuments({
       />
       <DocumentSlot
         moduleId={moduleId}
-        kind="slides"
-        title="Slides des anciens cours"
-        hint="Présentations existantes (PDF, PowerPoint, Keynote, OpenDocument), à conserver avec le module."
-        documents={documents.filter((d) => d.kind === "slides")}
+        kind="external_invoice"
+        title="Facture émise hors application"
+        hint="PDF d’une facture faite avec un autre outil (ex. Henrri). Voir aussi la page Facturation."
+        documents={documents.filter((d) => d.kind === "external_invoice")}
       />
     </div>
   );

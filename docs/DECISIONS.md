@@ -105,4 +105,4 @@ sur `teacher_profile` (colonne supprimée). Facture bloquée tant que le tarif d
 Les fonctions serveur (Vercel) plafonnent le corps de requête à ~4,5 Mo : un dépôt via Server Action échouerait en
 production pour des slides. Le navigateur envoie donc le fichier directement dans le bucket privé `module-documents`
 (RLS : dossier `<owner_id>/…`), puis une Server Action enregistre la ligne `module_document` après avoir vérifié le
-préfixe du chemin. Limite 50 Mo, formats PDF / Word / OpenDocument / PowerPoint / Keynote.
+préfixe du chemin. Limite 50 Mo par fichier. Seuls les documents légers sont déposés (attendus, trames, factures) : les slides restent dans Figma (lien), le stockage gratuit étant limité (~1 Go au total).

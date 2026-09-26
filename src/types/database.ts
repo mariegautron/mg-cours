@@ -397,6 +397,39 @@ export type Database = {
           },
         ]
       }
+      import_ref: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          source: string
+          source_id: string
+          target_id: string
+          target_table: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          source: string
+          source_id: string
+          target_id: string
+          target_table: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          source?: string
+          source_id?: string
+          target_id?: string
+          target_table?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice: {
         Row: {
           amount_ex_vat: number
@@ -483,6 +516,7 @@ export type Database = {
       module: {
         Row: {
           admin_docs: Json
+          archived_at: string | null
           created_at: string
           end_date: string | null
           first_session_date: string | null
@@ -506,6 +540,7 @@ export type Database = {
         }
         Insert: {
           admin_docs?: Json
+          archived_at?: string | null
           created_at?: string
           end_date?: string | null
           first_session_date?: string | null
@@ -529,6 +564,7 @@ export type Database = {
         }
         Update: {
           admin_docs?: Json
+          archived_at?: string | null
           created_at?: string
           end_date?: string | null
           first_session_date?: string | null
@@ -932,7 +968,11 @@ export type Database = {
         | "invoice_sent"
         | "paid"
       invoice_status: "draft" | "ready" | "sent" | "paid"
-      module_document_kind: "school_expectations" | "outline_sent" | "slides"
+      module_document_kind:
+        | "school_expectations"
+        | "outline_sent"
+        | "slides"
+        | "external_invoice"
       outline_status: "draft" | "sent" | "validated"
     }
     CompositeTypes: {
@@ -1091,7 +1131,12 @@ export const Constants = {
         "paid",
       ],
       invoice_status: ["draft", "ready", "sent", "paid"],
-      module_document_kind: ["school_expectations", "outline_sent", "slides"],
+      module_document_kind: [
+        "school_expectations",
+        "outline_sent",
+        "slides",
+        "external_invoice",
+      ],
       outline_status: ["draft", "sent", "validated"],
     },
   },

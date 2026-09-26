@@ -6,7 +6,9 @@ import { CircleAlert, CircleCheck } from "lucide-react";
 import { GenerateInvoiceButton, InvoiceActions } from "@/components/billing/invoice-actions";
 import { Badge } from "@/components/ui/badge";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
-import { getModule } from "@/lib/modules/queries";
+import { ExternalInvoicePaid } from "@/components/billing/external-invoice-paid";
+import { DocumentSlot } from "@/components/modules/module-documents";
+import { getModule, getModuleDocuments } from "@/lib/modules/queries";
 import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 
 export async function generateMetadata({
@@ -30,10 +32,11 @@ const STATUS_LABEL = {
 
 export default async function ModuleBillingPage({ params }: PageProps<"/modules/[id]/billing">) {
   const { id } = await params;
-  const [mod, ctx, invoice] = await Promise.all([
+  const [mod, ctx, invoice, documents] = await Promise.all([
     getModule(id),
     loadInvoiceContext(id),
     getInvoiceByModule(id),
+    getModuleDocuments(id),
   ]);
   if (!mod || !ctx) notFound();
 
@@ -168,6 +171,26 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
           <GenerateInvoiceButton moduleId={id} disabled={!canGenerate} />
         </>
       )}
+
+      <section aria-labelledby="external" className="space-y-3 rounded-lg border p-4">
+        <div>
+          <h2 id="external" className="text-lg font-medium">
+            Facture émise hors application
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Facture faite avec un autre outil : déposez le PDF pour le conserver ici, puis marquez
+            le module comme payé une fois réglé.
+          </p>
+        </div>
+        <DocumentSlot
+          moduleId={id}
+          kind="external_invoice"
+          title="Facture (PDF)"
+          hint="Le fichier reste attaché au module."
+          documents={documents.filter((d) => d.kind === "external_invoice")}
+        />
+        <ExternalInvoicePaid moduleId={id} paid={mod.iceberg_state === "paid"} />
+      </section>
     </div>
   );
 }

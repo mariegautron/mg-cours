@@ -43,12 +43,16 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await page.getByRole("button", { name: /Supprimer attendus-ecole\.pdf/ }).click();
   await expect(page.getByText("attendus-ecole.pdf")).toHaveCount(0);
 
-  // Slides d'un ancien cours : dépôt direct depuis le navigateur.
-  await page.getByLabel(/Déposer un fichier \(slides/).setInputFiles({
-    name: "ancien-cours.pptx",
-    mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    buffer: Buffer.from("PK-fake-pptx"),
+  // Facture émise hors application : dépôt sur la page Facturation, puis module payé.
+  await page.goto(`${page.url().replace(/\/$/, "")}/billing`);
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel(/Déposer un fichier \(facture/).setInputFiles({
+    name: "facture-26-03-6.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
   });
-  await page.getByRole("button", { name: "Déposer", exact: true }).nth(2).click();
-  await expect(page.getByText("ancien-cours.pptx").first()).toBeVisible();
+  await page.getByRole("button", { name: "Déposer", exact: true }).click();
+  await expect(page.getByText("facture-26-03-6.pdf").first()).toBeVisible();
+  await page.getByRole("button", { name: "Marquer le module comme payé" }).click();
+  await expect(page.getByText("Module marqué comme payé.")).toBeVisible();
 });
