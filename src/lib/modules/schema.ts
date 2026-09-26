@@ -16,6 +16,15 @@ const optionalHours = z
   .transform((v) => (v ? Number(v) : null))
   .pipe(z.number().min(0).max(1000).nullable());
 
+/** Tarif horaire HT optionnel : chaîne vide → null, sinon nombre ≥ 0. */
+const optionalRate = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ? Number(v) : null))
+  .pipe(z.number().min(0).max(10000).nullable());
+
 export const moduleSchema = z.object({
   name: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
   schoolId: z
@@ -28,6 +37,7 @@ export const moduleSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
   ycode: z.string().trim().max(50).optional().or(z.literal("")),
   totalHours: z.coerce.number().min(0).max(1000),
+  hourlyRate: optionalRate,
   hoursLecture: optionalHours,
   hoursTd: optionalHours,
   hoursTp: optionalHours,
@@ -47,6 +57,7 @@ export function readModuleForm(formData: FormData) {
     year: formData.get("year") ?? "",
     ycode: formData.get("ycode") ?? "",
     totalHours: formData.get("totalHours") ?? "0",
+    hourlyRate: formData.get("hourlyRate") ?? "",
     hoursLecture: formData.get("hoursLecture") ?? "",
     hoursTd: formData.get("hoursTd") ?? "",
     hoursTp: formData.get("hoursTp") ?? "",

@@ -36,8 +36,8 @@ begin
   on conflict (provider, provider_id) do nothing;
 
   -- Profil prestataire -----------------------------------------------------
-  insert into public.teacher_profile (owner_id, legal_name, email, hourly_rate, vat_exempt)
-  values (uid, 'Marie Gautron', 'marie@local.test', 50.00, true)
+  insert into public.teacher_profile (owner_id, legal_name, email, vat_exempt)
+  values (uid, 'Marie Gautron', 'marie@local.test', true)
   on conflict (owner_id) do nothing;
 
   -- Écoles ---------------------------------------------------------------

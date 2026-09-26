@@ -8,7 +8,6 @@ const profile = {
   siret: "",
   vatNumber: "",
   vatExempt: true,
-  hourlyRate: "50",
   bankDetails: "",
   email: "",
   phone: "",
@@ -24,10 +23,8 @@ describe("profileSchema", () => {
     expect(profileSchema.safeParse({ ...profile, siret: "12345" }).success).toBe(false);
   });
 
-  it("accepte un SIRET vide et convertit le tarif", () => {
-    const r = profileSchema.parse(profile);
-    expect(r.siret).toBe("");
-    expect(r.hourlyRate).toBe(50);
+  it("accepte un SIRET vide", () => {
+    expect(profileSchema.parse(profile).siret).toBe("");
   });
 });
 

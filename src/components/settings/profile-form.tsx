@@ -57,16 +57,6 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
           <Input id="vatNumber" name="vatNumber" defaultValue={profile?.vat_number ?? ""} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="hourlyRate">Tarif horaire HT (€)</Label>
-          <Input
-            id="hourlyRate"
-            name="hourlyRate"
-            type="number"
-            step="0.01"
-            defaultValue={profile?.hourly_rate ?? ""}
-          />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="email">E-mail</Label>
           <Input
             id="email"

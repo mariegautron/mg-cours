@@ -21,7 +21,6 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.goto("/settings");
   await page.getByLabel("Adresse", { exact: true }).fill("1 rue de l’Enseignement 44000 Nantes");
   await page.getByLabel("SIRET").fill("123 456 789 00012");
-  await page.getByLabel("Tarif horaire HT (€)").fill("50");
   await page.getByLabel("RIB (IBAN + BIC)").fill(`IBAN ${IBAN}`);
   await page.getByLabel(/TVA non applicable/).check();
   await page.getByRole("button", { name: "Enregistrer le profil" }).click();
@@ -44,6 +43,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("YCODE").fill(`A2627_${String(suffix).slice(-4)}`);
   await page.getByLabel("Nombre d’heures total").fill("4");
+  await page.getByLabel("Tarif horaire HT (€)").fill("50");
   await page.getByLabel("Date de la 1re séance").fill("2026-12-01");
   await page.getByLabel("Référence bon de commande").fill("PO-2026-12345");
   await page.getByRole("button", { name: "Enregistrer" }).click();

@@ -102,6 +102,18 @@ export function ModuleForm({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="hourlyRate">Tarif horaire HT (€)</Label>
+          <Input
+            id="hourlyRate"
+            name="hourlyRate"
+            type="number"
+            step="0.01"
+            defaultValue={mod?.hourly_rate ?? ""}
+          />
+          <p className="text-muted-foreground text-sm">Utilisé pour la facture de ce module.</p>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="hoursLecture">Heures FFP / cours</Label>
           <Input
             id="hoursLecture"

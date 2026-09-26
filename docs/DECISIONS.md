@@ -93,3 +93,9 @@ Palette, halos et animations en CSS pur (tokens `:root` / `.dark`, `@theme inlin
 SVG React (`mascot.tsx`) qui héritent des tokens → aucun asset binaire, aucune lib d'animation, thème clair
 et sombre gratuits. Contrastes validés par calcul puis par axe-core (`e2e/design.spec.ts`, lecture seule,
 2 thèmes × 12 écrans). Les documents PDF restent neutres (la facture ne porte jamais l'identité graphique).
+
+## ADR-014 — Tarif horaire : uniquement sur le module
+
+Le tarif varie selon l'école, le niveau et le module : `module.hourly_rate` est la seule source
+(champ « Tarif horaire HT (€) » du formulaire module, copié à la duplication). Plus de tarif par défaut
+sur `teacher_profile` (colonne supprimée). Facture bloquée tant que le tarif du module est vide.

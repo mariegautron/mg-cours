@@ -22,7 +22,7 @@ const ok = (over: Partial<InvoiceContext> = {}): InvoiceContext => ({
     ycode: "A2627_4752",
     year: 2026,
     total_hours: 21,
-    hourly_rate: null,
+    hourly_rate: 50,
     purchase_order_ref: "PO-2026-12345",
     iceberg_state: "outline_sent",
     admin_docs: allDocs,
@@ -36,7 +36,6 @@ const ok = (over: Partial<InvoiceContext> = {}): InvoiceContext => ({
     siret: "123 456 789 00012",
     vat_number: null,
     vat_exempt: true,
-    hourly_rate: 50,
     bank_details: `IBAN ${IBAN} BIC BNPAFRPP`,
     email: "m@x.fr",
     phone: null,
@@ -147,10 +146,10 @@ describe("missingInvoiceData", () => {
     expect(missingInvoiceData(ctx)).toEqual([]);
   });
 
-  it("exige un tarif : celui du module prime, sinon celui du profil", () => {
+  it("exige un tarif horaire saisi sur le module", () => {
     const ctx = ok();
-    ctx.profile!.hourly_rate = null;
-    expect(missingInvoiceData(ctx)).toContain("Tarif horaire (profil ou module).");
+    ctx.module.hourly_rate = null;
+    expect(missingInvoiceData(ctx)).toContain("Tarif horaire HT du module.");
     ctx.module.hourly_rate = 60;
     expect(missingInvoiceData(ctx)).toEqual([]);
   });

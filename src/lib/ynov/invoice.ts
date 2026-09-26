@@ -37,7 +37,6 @@ export interface InvoiceContext {
     siret: string | null;
     vat_number: string | null;
     vat_exempt: boolean;
-    hourly_rate: number | null;
     bank_details: string | null;
     email: string | null;
     phone: string | null;
@@ -95,9 +94,9 @@ export function extractIban(text: string | null): string | null {
   return null;
 }
 
-/** Tarif horaire retenu : surcharge du module, sinon celui du profil. */
+/** Tarif horaire HT : saisi sur le module, uniquement (pas de tarif par défaut). */
 export function effectiveRate(ctx: InvoiceContext): number | null {
-  return ctx.module.hourly_rate ?? ctx.profile?.hourly_rate ?? null;
+  return ctx.module.hourly_rate;
 }
 
 /** Informations manquantes pour émettre une facture conforme (mentions obligatoires). */
@@ -114,7 +113,7 @@ export function missingInvoiceData(ctx: InvoiceContext): string[] {
       missing.push("N° de TVA du prestataire (ou cocher l’art. 293 B).");
     if (!extractIban(p.bank_details)) missing.push("IBAN valide dans le RIB du prestataire.");
   }
-  if (effectiveRate(ctx) === null) missing.push("Tarif horaire (profil ou module).");
+  if (effectiveRate(ctx) === null) missing.push("Tarif horaire HT du module.");
   if (!ctx.module.total_hours || ctx.module.total_hours <= 0)
     missing.push("Nombre d’heures du module.");
   if (!ctx.module.ycode) missing.push("YCODE du module.");

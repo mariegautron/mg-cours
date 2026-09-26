@@ -804,7 +804,6 @@ export type Database = {
           bank_details: string | null
           created_at: string
           email: string | null
-          hourly_rate: number | null
           id: string
           legal_name: string
           owner_id: string
@@ -819,7 +818,6 @@ export type Database = {
           bank_details?: string | null
           created_at?: string
           email?: string | null
-          hourly_rate?: number | null
           id?: string
           legal_name: string
           owner_id?: string
@@ -834,7 +832,6 @@ export type Database = {
           bank_details?: string | null
           created_at?: string
           email?: string | null
-          hourly_rate?: number | null
           id?: string
           legal_name?: string
           owner_id?: string
