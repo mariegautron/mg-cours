@@ -65,6 +65,16 @@ test("un second compte ne voit ni ne modifie les données de Marie (RLS)", async
   const forged = await other.from("resource").insert({ title: "intrus", owner_id: MARIE_ID });
   expect(forged.error).not.toBeNull();
 
+  // Stockage privé des ressources : impossible de déposer dans le dossier de Marie.
+  const intrusion = await other.storage
+    .from("resource-files")
+    .upload(`${MARIE_ID}/intrus/x.pdf`, new Blob(["%PDF-1.4"], { type: "application/pdf" }), {
+      contentType: "application/pdf",
+    });
+  expect(intrusion.error).not.toBeNull();
+  const listed = await other.storage.from("resource-files").list(MARIE_ID);
+  expect(listed.data ?? []).toEqual([]);
+
   // Sans session : aucune donnée non plus.
   const anon = createClient(URL, ANON);
   for (const table of TABLES) {

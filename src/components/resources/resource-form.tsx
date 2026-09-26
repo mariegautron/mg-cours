@@ -93,8 +93,13 @@ export function ResourceForm({
           name="content"
           rows={12}
           className="font-mono text-sm"
+          aria-describedby="content-hint"
           defaultValue={resource?.content ?? ""}
         />
+        <p id="content-hint" className="text-muted-foreground text-sm">
+          Pour afficher une image déposée sur la ressource :{" "}
+          <code>![description](nom-du-fichier.png)</code>.
+        </p>
       </div>
 
       {state.error ? (

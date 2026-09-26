@@ -12,7 +12,15 @@ describe("parseInline", () => {
       { text: " " },
       { text: "d", code: true },
       { text: " " },
-      { text: "e (https://x.fr)" },
+      { text: "e", href: "https://x.fr" },
+    ]);
+  });
+
+  it("remplace une image en ligne par son texte alternatif", () => {
+    expect(parseInline("voir ![le schéma](a.png) ici")).toEqual([
+      { text: "voir " },
+      { text: "le schéma" },
+      { text: " ici" },
     ]);
   });
 
@@ -34,6 +42,14 @@ describe("parseMarkdown", () => {
     });
     expect(blocks[3]).toMatchObject({ ordered: true });
     expect(blocks[4]).toEqual({ type: "code", text: "code" });
+  });
+
+  it("reconnaît une image seule sur sa ligne", () => {
+    expect(parseMarkdown('Avant\n![Schéma](Page%20A/schema.png "titre")\nAprès')).toEqual([
+      { type: "paragraph", runs: [{ text: "Avant" }] },
+      { type: "image", alt: "Schéma", src: "Page%20A/schema.png" },
+      { type: "paragraph", runs: [{ text: "Après" }] },
+    ]);
   });
 
   it("plafonne les titres au niveau 3 et gère un texte vide", () => {

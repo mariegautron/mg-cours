@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  parseResourceFiles,
+  RESOURCE_FILES_BUCKET,
+  upsertFile,
+  type ResourceFile,
+} from "@/lib/resources/files";
 import { readResourceForm } from "@/lib/resources/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -99,10 +105,79 @@ export async function unarchiveResource(id: string) {
 export async function deleteResource(id: string) {
   "use server";
   const supabase = await createClient();
+  const { data: current } = await supabase
+    .from("resource")
+    .select("files")
+    .eq("id", id)
+    .maybeSingle();
+  const paths = parseResourceFiles(current?.files).map((f) => f.path);
   const { error } = await supabase.from("resource").delete().eq("id", id);
   if (error) return;
+  if (paths.length) await supabase.storage.from(RESOURCE_FILES_BUCKET).remove(paths);
   revalidatePath("/resources");
   redirect("/resources");
+}
+
+/**
+ * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur
+ * plafonnent les requêtes à quelques Mo). Cette action l'ajoute ensuite à resource.files.
+ */
+export async function registerResourceFile(
+  resourceId: string,
+  file: ResourceFile,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: "Session expirée." };
+  if (!file.path.startsWith(`${auth.user.id}/${resourceId}/`)) return { error: "Chemin invalide." };
+
+  const storage = supabase.storage.from(RESOURCE_FILES_BUCKET);
+  const { data: resource } = await supabase
+    .from("resource")
+    .select("files")
+    .eq("id", resourceId)
+    .maybeSingle();
+  if (!resource) {
+    await storage.remove([file.path]);
+    return { error: "Ressource introuvable." };
+  }
+
+  const { files, replacedPath } = upsertFile(parseResourceFiles(resource.files), {
+    path: file.path,
+    name: file.name.slice(0, 255),
+    size: file.size,
+    mime: file.mime,
+  });
+  const { error } = await supabase.from("resource").update({ files: files }).eq("id", resourceId);
+  if (error) {
+    await storage.remove([file.path]);
+    return { error: "Enregistrement impossible. Réessayez." };
+  }
+  if (replacedPath) await storage.remove([replacedPath]);
+
+  revalidatePath(`/resources/${resourceId}`);
+  return {};
+}
+
+export async function deleteResourceFile(resourceId: string, path: string) {
+  "use server";
+  const supabase = await createClient();
+  const { data: resource } = await supabase
+    .from("resource")
+    .select("files")
+    .eq("id", resourceId)
+    .maybeSingle();
+  if (!resource) return;
+  const files = parseResourceFiles(resource.files);
+  if (!files.some((f) => f.path === path)) return;
+
+  const { error } = await supabase
+    .from("resource")
+    .update({ files: files.filter((f) => f.path !== path) })
+    .eq("id", resourceId);
+  if (error) return;
+  await supabase.storage.from(RESOURCE_FILES_BUCKET).remove([path]);
+  revalidatePath(`/resources/${resourceId}`);
 }
 
 /** Restaure une ancienne version (l'état courant est sauvegardé par le déclencheur avant écrasement). */

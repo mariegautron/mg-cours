@@ -35,7 +35,15 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
 - Titre, description, catégorie/tags, lien externe.
 - **Utilisation** : liste des modules (nom + année) où la ressource est employée, triés par
   année décroissante ; lien vers chaque module.
-- Contenu Markdown affiché en bloc préformaté (rendu riche : plus tard).
+- **Fichiers** : liste (nom, taille) + Télécharger / Supprimer ; dépôt direct navigateur → Storage
+  (bucket privé `resource-files`, `<owner_id>/<resource_id>/…`, 50 Mo, PDF / Word / présentation /
+  PNG-JPEG-GIF-WebP, pas de SVG). Un fichier du même nom remplace l'ancien. Pour une image :
+  « Copier la syntaxe » (`![nom](nom.png)`).
+- Contenu Markdown rendu (titres, listes, code, citations, liens, images). Une image au chemin
+  relatif (`![alt](schema.png)`, ou chemin d'export Notion `Page%20x/schema.png`) désigne le
+  fichier de la ressource portant ce nom ; elle est servie par
+  `GET /api/resources/[id]/files/[name]`, qui redirige vers un lien signé de 5 min
+  (`?download=1` pour forcer le téléchargement).
 - Actions : Modifier · Archiver / Désarchiver · Supprimer (confirmation `AlertDialog`).
 
 ### Règles
@@ -43,7 +51,9 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
 - `resource.archived_at` : une ressource archivée reste liée à ses cours mais sort des listes
   par défaut.
 - Suppression : `course_resource` en `on delete cascade` (les liens disparaissent, pas les cours).
-- Fichiers joints : prévus (Storage), non livrés en E2.
+- Fichiers joints : métadonnées dans `resource.files` (`[{ path, name, size, mime }]`), fichiers
+  supprimés du stockage avec la ressource. Non versionnés par l'historique. Dans le PDF des
+  cours, une image devient `[Image : alt]`.
 
 ## Modules + Cours (E3)
 

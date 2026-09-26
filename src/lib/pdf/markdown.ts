@@ -1,20 +1,30 @@
 /**
  * Mini-parseur Markdown → blocs pour le PDF des cours.
- * Couvre ce qu'on écrit dans les ressources : titres, listes, code, gras/italique, liens.
+ * Couvre ce qu'on écrit dans les ressources : titres, listes, code, gras/italique, liens, images.
+ * Sert aussi à l'affichage web du contenu (MarkdownView).
  * Le reste est rendu comme du texte simple (jamais de perte de contenu).
  */
 
-export type InlineRun = { text: string; bold?: boolean; italic?: boolean; code?: boolean };
+export type InlineRun = {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  code?: boolean;
+  href?: string;
+};
 
 export type Block =
   | { type: "heading"; level: 1 | 2 | 3; runs: InlineRun[] }
   | { type: "paragraph"; runs: InlineRun[] }
   | { type: "list"; ordered: boolean; items: InlineRun[][] }
   | { type: "code"; text: string }
-  | { type: "quote"; runs: InlineRun[] };
+  | { type: "quote"; runs: InlineRun[] }
+  | { type: "image"; alt: string; src: string };
 
 const INLINE =
-  /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|\[[^\]]+\]\([^)]+\))/;
+  /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/;
+
+const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)\s*$/;
 
 export function parseInline(input: string): InlineRun[] {
   const runs: InlineRun[] = [];
@@ -26,9 +36,13 @@ export function parseInline(input: string): InlineRun[] {
       runs.push({ text: part.slice(1, -1), italic: true });
     } else if (/^`[^`]+`$/.test(part)) {
       runs.push({ text: part.slice(1, -1), code: true });
+    } else if (/^!\[[^\]]*\]\([^)]+\)$/.test(part)) {
+      // Image au milieu d'un texte : on garde son texte alternatif.
+      const alt = part.slice(2, part.indexOf("]"));
+      if (alt) runs.push({ text: alt });
     } else {
       const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
-      runs.push({ text: link ? `${link[1]} (${link[2]})` : part });
+      runs.push(link ? { text: link[1], href: link[2] } : { text: part });
     }
   }
   return runs;
@@ -74,6 +88,13 @@ export function parseMarkdown(source: string): Block[] {
       } else {
         blocks.push({ type: "list", ordered, items: [parseInline(item[2])] });
       }
+      continue;
+    }
+
+    const image = IMAGE_LINE.exec(line.trim());
+    if (image) {
+      flushPara();
+      blocks.push({ type: "image", alt: image[1], src: image[2] });
       continue;
     }
 

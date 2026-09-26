@@ -149,8 +149,9 @@ les importer (vs. RGPD / minimisation) est à trancher. Aucun e-mail dans Notion
 
 **Pièces jointes** (fichiers Notion, URLs signées temporaires) : ~11 PDF de slides,
 3 docx/html d'évaluations, 2 fichiers de slides d'oral (pptx, pdf), 8 captures (page
-client 2023). Liens externes : Figma, Canva, Kahoot. `resource.files` existe mais l'upload
-Storage n'est pas encore livré (E2, reporté).
+client 2023). Liens externes : Figma, Canva, Kahoot. Upload livré : bucket
+`resource-files` + `resource.files` ; les images du Markdown au chemin relatif s'affichent si
+le fichier de même nom est déposé sur la ressource (le script peut donc les importer).
 
 **Doublons** — ressources Chrome/Firefox, 2 fiches de même URL, pages « onglets » ×2,
 « Oral de projet » ×2, Séances B2 vs page Progression, activités M2 dupliquées entre la

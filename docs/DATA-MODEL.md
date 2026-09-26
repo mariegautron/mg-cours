@@ -31,7 +31,7 @@ erDiagram
 
 | Table                 | Colonnes clés                                                                                                                                                                               |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `resource`            | title, description, content (markdown), url, category, tags[], files(jsonb)                                                                                                                 |
+| `resource`            | title, description, content (markdown), url, category, tags[], files(jsonb `[{ path, name, size, mime }]`, bucket privé `resource-files`)                                                   |
 | `module`              | name, school_id, level, year, ycode, total_hours, start_date, first_session_date, end_date, iceberg_state, trame_state, trame_sent_at, billing_state, purchase_order_ref, admin_docs(jsonb) |
 | `course`              | module_id, title, position, session_date, type, learning_objectives[], content_last_updated_at                                                                                              |
 | `course_resource`     | course_id, resource_id, role (`primary` \| `secondary`)                                                                                                                                     |

@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { History, Pencil } from "lucide-react";
 
+import { Markdown } from "@/components/markdown";
 import { ResourceActions } from "@/components/resources/resource-actions";
+import { ResourceFiles } from "@/components/resources/resource-files";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { parseResourceFiles, resolveImageSrc } from "@/lib/resources/files";
 import { getResource, getResourceModules } from "@/lib/resources/queries";
 
 export async function generateMetadata({
@@ -92,14 +95,22 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
         )}
       </section>
 
+      <section aria-labelledby="files">
+        <h2 id="files" className="mb-2 text-lg font-medium">
+          Fichiers
+        </h2>
+        <ResourceFiles resourceId={resource.id} files={parseResourceFiles(resource.files)} />
+      </section>
+
       {resource.content ? (
         <section aria-labelledby="content">
           <h2 id="content" className="mb-2 text-lg font-medium">
             Contenu
           </h2>
-          <pre className="bg-muted overflow-x-auto rounded-md p-4 text-sm whitespace-pre-wrap">
-            {resource.content}
-          </pre>
+          <Markdown
+            source={resource.content}
+            resolveImageSrc={(src) => resolveImageSrc(resource.id, src)}
+          />
         </section>
       ) : null}
 
