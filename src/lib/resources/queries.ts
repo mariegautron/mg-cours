@@ -93,3 +93,15 @@ export async function getResourceModules(
   }
   return Array.from(seen.values()).sort((a, b) => b.year - a.year);
 }
+
+export async function listResourceVersions(
+  resourceId: string,
+): Promise<Tables<"resource_version">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resource_version")
+    .select("*")
+    .eq("resource_id", resourceId)
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}

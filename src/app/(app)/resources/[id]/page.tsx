@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { History, Pencil } from "lucide-react";
 
 import { ResourceActions } from "@/components/resources/resource-actions";
 import { Badge } from "@/components/ui/badge";
@@ -33,12 +33,20 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
             <p className="text-muted-foreground mt-1">{resource.description}</p>
           ) : null}
         </div>
-        <Button asChild variant="secondary">
-          <Link href={`/resources/${resource.id}/edit`}>
-            <Pencil aria-hidden />
-            Modifier
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="ghost">
+            <Link href={`/resources/${resource.id}/history`}>
+              <History aria-hidden />
+              Historique
+            </Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href={`/resources/${resource.id}/edit`}>
+              <Pencil aria-hidden />
+              Modifier
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1">

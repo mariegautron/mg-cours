@@ -104,3 +104,23 @@ export async function deleteResource(id: string) {
   revalidatePath("/resources");
   redirect("/resources");
 }
+
+/** Restaure une ancienne version (l'état courant est sauvegardé par le déclencheur avant écrasement). */
+export async function restoreResourceVersion(resourceId: string, versionId: string) {
+  "use server";
+  const supabase = await createClient();
+  const { data: version } = await supabase
+    .from("resource_version")
+    .select("title, description, content, url, category, tags")
+    .eq("id", versionId)
+    .eq("resource_id", resourceId)
+    .maybeSingle();
+  if (!version) return;
+
+  const { error } = await supabase.from("resource").update(version).eq("id", resourceId);
+  if (error) return;
+
+  revalidatePath("/resources");
+  revalidatePath(`/resources/${resourceId}`);
+  redirect(`/resources/${resourceId}`);
+}
