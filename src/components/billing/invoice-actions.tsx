@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { BadgeEuro, Download, FileCheck2, FileCode, Mail, Send, Trash2 } from "lucide-react";
+import {
+  BadgeEuro,
+  Download,
+  Ellipsis,
+  ExternalLink,
+  FileCheck2,
+  FileCode,
+  Mail,
+  Send,
+} from "lucide-react";
 
 import {
   deleteInvoice,
@@ -11,7 +20,25 @@ import {
   sendInvoiceByEmail,
   type BillingActionState,
 } from "@/app/(app)/modules/[id]/billing/actions";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function GenerateInvoiceButton({
   moduleId,
@@ -49,14 +76,23 @@ export function GenerateInvoiceButton({
   );
 }
 
+const eur = (n: number) =>
+  `${n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
 export function InvoiceActions({
   moduleId,
   invoiceId,
   status,
+  number,
+  recipientEmail,
+  amountIncVat,
 }: {
   moduleId: string;
   invoiceId: string;
   status: "draft" | "ready" | "sent" | "paid";
+  number: string;
+  recipientEmail: string | null;
+  amountIncVat: number;
 }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<BillingActionState | null>(null);
@@ -72,23 +108,52 @@ export function InvoiceActions({
             Télécharger le PDF Factur-X
           </a>
         </Button>
-        <Button asChild size="sm" variant="secondary">
-          <a href={`/api/invoices/${invoiceId}/xml`}>
-            <FileCode aria-hidden />
-            Télécharger le XML
-          </a>
-        </Button>
         {status === "ready" ? (
           <>
-            <Button
-              type="button"
-              size="sm"
-              disabled={pending}
-              onClick={() => run(sendInvoiceByEmail)}
-            >
-              <Mail aria-hidden />
-              Envoyer par e-mail à l’école
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" size="sm" disabled={pending || !recipientEmail}>
+                  <Mail aria-hidden />
+                  {pending ? "Envoi…" : "Envoyer par e-mail à l’école"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Envoyer la facture {number} ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    L’envoi est définitif : la facture ne pourra plus être supprimée.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">Destinataire</dt>
+                  <dd className="break-all">{recipientEmail}</dd>
+                  <dt className="text-muted-foreground">Facture</dt>
+                  <dd>{number}</dd>
+                  <dt className="text-muted-foreground">Montant TTC</dt>
+                  <dd className="font-medium">{eur(amountIncVat)}</dd>
+                  <dt className="text-muted-foreground">Pièce jointe</dt>
+                  <dd>facture-{number}.pdf (Factur-X)</dd>
+                </dl>
+                <p className="text-sm">
+                  <a
+                    href={`/api/invoices/${invoiceId}/pdf?inline=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 underline underline-offset-2"
+                  >
+                    <ExternalLink aria-hidden className="size-4" />
+                    Aperçu du PDF
+                    <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
+                  </a>
+                </p>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => run(sendInvoiceByEmail)}>
+                    Envoyer à {recipientEmail}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button
               type="button"
               size="sm"
@@ -99,16 +164,6 @@ export function InvoiceActions({
               <Send aria-hidden />
               Marquer comme envoyée
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={pending}
-              onClick={() => run(deleteInvoice)}
-            >
-              <Trash2 aria-hidden />
-              Supprimer la facture
-            </Button>
           </>
         ) : null}
         {status === "sent" ? (
@@ -117,7 +172,37 @@ export function InvoiceActions({
             Marquer comme payée
           </Button>
         ) : null}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" size="sm" variant="ghost">
+              <Ellipsis aria-hidden />
+              Plus<span className="sr-only"> d’actions sur la facture</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <a href={`/api/invoices/${invoiceId}/xml`}>
+                <FileCode aria-hidden />
+                Télécharger le XML
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {status === "ready" ? (
+          <ConfirmDeleteButton
+            itemName={`la facture ${number}`}
+            title={`Supprimer la facture ${number} ?`}
+            description="La facture n’a pas été envoyée : elle sera supprimée et son numéro pourra être réattribué. Vous pourrez la générer à nouveau."
+            onConfirm={() => run(deleteInvoice)}
+          />
+        ) : null}
       </div>
+      {!recipientEmail && status === "ready" ? (
+        <p className="text-muted-foreground text-sm">
+          Aucun e-mail de facturation pour l’école : renseignez-le dans Réglages, ou marquez la
+          facture comme envoyée après un dépôt manuel.
+        </p>
+      ) : null}
       {state?.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}

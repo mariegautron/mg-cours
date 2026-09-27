@@ -138,6 +138,29 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
     .analyze();
   expect(axe.violations).toEqual([]);
 
+  // US-73 : l'envoi par e-mail passe par une confirmation qui récapitule l'envoi.
+  await page.getByRole("button", { name: "Envoyer par e-mail à l’école" }).click();
+  const sendDialog = page.getByRole("alertdialog", { name: /Envoyer la facture \d{4}-\d{3} \?/ });
+  await expect(sendDialog.getByText("fournisseurs@example.fr", { exact: true })).toBeVisible();
+  await expect(sendDialog.getByText("200,00 €")).toBeVisible();
+  await expect(sendDialog.getByRole("link", { name: /Aperçu du PDF/ })).toHaveAttribute(
+    "href",
+    /\/pdf\?inline=1$/,
+  );
+  const dialogAxe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(dialogAxe.violations).toEqual([]);
+  await sendDialog.getByRole("button", { name: "Annuler" }).click();
+  await expect(sendDialog).toHaveCount(0);
+
+  // Suppression confirmée, annulée ici ; XML dans le menu « Plus ».
+  await page.getByRole("button", { name: /Supprimer la facture/ }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Annuler" }).click();
+  await page.getByRole("button", { name: /Plus d’actions sur la facture/ }).click();
+  await expect(page.getByRole("menuitem", { name: "Télécharger le XML" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
   // Envoi (manuel) puis paiement.
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
   await expect(page.getByText("Envoyée", { exact: true })).toBeVisible();

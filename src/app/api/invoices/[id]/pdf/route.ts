@@ -4,7 +4,7 @@ import type { InvoiceSnapshot } from "@/lib/ynov/invoice";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, ctx: RouteContext<"/api/invoices/[id]/pdf">) {
+export async function GET(req: Request, ctx: RouteContext<"/api/invoices/[id]/pdf">) {
   const { id } = await ctx.params;
   const invoice = await getInvoice(id);
   if (!invoice?.snapshot) return new Response("Facture introuvable", { status: 404 });
@@ -14,7 +14,8 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/invoices/[id]/p
   return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="facture-${snapshot.number}.pdf"`,
+      // `?inline=1` : aperçu dans le navigateur avant envoi (US-73).
+      "Content-Disposition": `${new URL(req.url).searchParams.get("inline") === "1" ? "inline" : "attachment"}; filename="facture-${snapshot.number}.pdf"`,
     },
   });
 }

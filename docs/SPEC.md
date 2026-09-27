@@ -372,4 +372,10 @@ jamais comme la version envoyée.
 - Formats : **PDF Factur-X (PDF/A-3 + XML EN 16931)** et XML seul, téléchargeables à tout moment
   (régénérés à l'identique depuis l'instantané).
 - Cycle : À envoyer → (e-mail à l'école **ou** marquage manuel) Envoyée → Payée.
+- **Actions sécurisées (US-73)** : « Envoyer par e-mail à l'école » ouvre une confirmation
+  (`AlertDialog`) récapitulant destinataire, numéro, montant TTC et pièce jointe, avec « Aperçu du
+  PDF » (`/api/invoices/[id]/pdf?inline=1`, nouvel onglet) ; le bouton de validation nomme le
+  destinataire. Bouton désactivé (avec explication) sans e-mail de facturation. « Supprimer la
+  facture » passe par `ConfirmDeleteButton`. « Télécharger le XML » est rangé dans le menu
+  « Plus » (le PDF Factur-X contient déjà le XML).
 - `/billing` : par module — facturé (n° + statut) / prêt à facturer / bloqué (nb de points).

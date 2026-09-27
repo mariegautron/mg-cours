@@ -168,6 +168,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-71 | Checklist des documents administratifs modifiable sur la page Facturation, retour « Enregistré » / erreur                                                               | ✅     |
 | US-78 | Vocabulaire : « progression pédagogique » remplace « trame » dans toute l'interface, les e2e et la doc (identifiants `outline` inchangés)                               | ✅     |
 | US-74 | Alerte progression honnête : niveau J-15 affiché (badge « À préparer »), « Tout est en ordre » seulement sans aucune alerte ; filtrage pur testé                        | ✅     |
+| US-73 | Envoi de facture sécurisé : confirmation (destinataire, n°, TTC, aperçu PDF), suppression confirmée, XML dans le menu « Plus »                                          | ✅     |
 
 ## E8 — Migration Notion ⏳
 

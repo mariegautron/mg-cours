@@ -105,7 +105,14 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               </>
             ) : null}
           </dl>
-          <InvoiceActions moduleId={id} invoiceId={invoice.id} status={invoice.status} />
+          <InvoiceActions
+            moduleId={id}
+            invoiceId={invoice.id}
+            status={invoice.status}
+            number={invoice.number}
+            recipientEmail={invoice.recipient_email}
+            amountIncVat={invoice.amount_inc_vat}
+          />
         </section>
       ) : (
         <>
