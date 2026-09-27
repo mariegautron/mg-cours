@@ -6,6 +6,8 @@ import { Pencil } from "lucide-react";
 import { StudentActions } from "@/components/students/student-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { listStudentObservations } from "@/lib/notebook/queries";
 import { groupsBySchoolYear } from "@/lib/students/groups";
 import { getStudent, getStudentGroups } from "@/lib/students/queries";
 
@@ -17,7 +19,11 @@ export async function generateMetadata({ params }: PageProps<"/students/[id]">):
 
 export default async function StudentPage({ params }: PageProps<"/students/[id]">) {
   const { id } = await params;
-  const [student, groups] = await Promise.all([getStudent(id), getStudentGroups(id)]);
+  const [student, groups, observations] = await Promise.all([
+    getStudent(id),
+    getStudentGroups(id),
+    listStudentObservations(id),
+  ]);
   if (!student) notFound();
 
   return (
@@ -74,6 +80,40 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
               </section>
             ))}
           </div>
+        )}
+      </section>
+
+      <section aria-labelledby="observations">
+        <h2 id="observations" className="mb-1 text-lg font-medium">
+          Journal d’observations
+        </h2>
+        <p className="text-muted-foreground mb-2 text-xs">
+          Privé : notes prises en séance, du plus récent au plus ancien. Jamais projeté ni envoyé.
+        </p>
+        {observations.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Aucune observation.</p>
+        ) : (
+          <ol className="space-y-2 text-sm">
+            {observations.map((o) => (
+              <li key={o.id} className="rounded-lg border p-2">
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <time dateTime={o.created_at} className="text-muted-foreground">
+                    {new Date(o.created_at).toLocaleString("fr-FR", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                      timeZone: "Europe/Paris",
+                    })}
+                  </time>
+                  <span>
+                    {[o.module?.name, o.course?.title].filter(Boolean).join(" · ") ||
+                      "Séance supprimée"}
+                  </span>
+                  <Badge variant="outline">{OBSERVATION_TAG_LABELS[o.tag]}</Badge>
+                </p>
+                {o.note ? <p className="mt-1 whitespace-pre-wrap">{o.note}</p> : null}
+              </li>
+            ))}
+          </ol>
         )}
       </section>
 

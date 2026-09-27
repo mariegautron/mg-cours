@@ -121,9 +121,9 @@ export default async function DashboardPage() {
                     </Link>
                   </Button>
                   <Button asChild variant="secondary">
-                    <Link href={`/modules/${c.module.id}#courses`}>
+                    <Link href={`/modules/${c.module.id}/courses/${c.id}/notebook`}>
                       <NotebookPen aria-hidden />
-                      Voir la séance<span className="sr-only"> : {c.title}</span>
+                      Carnet de séance<span className="sr-only"> : {c.title}</span>
                     </Link>
                   </Button>
                 </div>

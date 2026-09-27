@@ -26,6 +26,8 @@ erDiagram
   student_group ||--o{ assessment_group : "noté dans"
   module ||--o| pedagogical_outline : "a"
   module ||--o{ invoice : "a"
+  student ||--o{ student_observation : "observé·e"
+  course |o--o{ student_observation : "pendant"
   teacher_profile ||--o{ school : "facture"
 ```
 
@@ -35,11 +37,12 @@ erDiagram
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `resource`            | title, description, content (markdown), url, **kind** (`resource_kind`, nullable), **audience** (`students` \| `teacher`, défaut `students`), category (= matière), tags[], files(jsonb, bucket `resource-files`)                         |
 | `module`              | name, school_id, level, year, ycode, total_hours, start_date, first_session_date, end_date, iceberg_state, trame_state, trame_sent_at, billing_state, purchase_order_ref, admin_docs(jsonb), slides_url, student_intro (markdown projeté) |
-| `course`              | module_id, title, position, session_date, type, learning_objectives[], content_last_updated_at                                                                                                                                            |
+| `course`              | module_id, title, position, session_date, type, learning_objectives[], content_last_updated_at ; clôture privée (US-67) : completion (`course_completion`, nullable), not_covered, next_time, retro_note                                  |
 | `course_resource`     | course_id, resource_id, role (`primary` \| `secondary`)                                                                                                                                                                                   |
 | `student`             | first_name, last_name, email, photo_url, student_number, personal_notes                                                                                                                                                                   |
 | `student_group`       | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                                                                         |
 | `group_member`        | student_group_id, student_id                                                                                                                                                                                                              |
+| `student_observation` | module_id, course_id? (`on delete set null`), student_id, tag (`observation_tag`), note — observations privées prises en séance (US-65), jamais projetées, exportées ni envoyées                                                          |
 | `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade, max_score (barème, vide = total grille sinon 20), results_sent_at (dernier envoi des résultats par e-mail)                                                            |
 | `assessment_group`    | assessment_id, student_group_id — groupes visés par l'évaluation (≥ 1, paire unique)                                                                                                                                                      |
 | `grading_grid`        | name, description                                                                                                                                                                                                                         |
@@ -59,6 +62,14 @@ erDiagram
   `reference`, `teacher_notes` (libellés FR dans `src/lib/resources/kind.ts`).
 - `resource_audience` : `students`, `teacher` — `teacher` n'est **jamais** diffusé aux
   étudiant·es (`studentFacing()`).
+
+## Enums carnet de séance (privé)
+
+- `observation_tag` : `relevant_question`, `participation`, `difficulty`, `absent_late`, `other`
+  (libellés FR dans `src/lib/notebook/notebook.ts`).
+- `course_completion` : `done`, `partial`, `not_done`.
+- Garde-fou : `src/lib/notebook/privacy.test.ts` vérifie qu'aucun code d'export PDF, d'e-mail ou
+  de présentation ne lit ces données.
 
 ## Transverse
 

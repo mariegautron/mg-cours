@@ -162,16 +162,18 @@ type string » en build). À vérifier une fois sur Vercel avec une 1re facture 
 
 Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/09/2026) ».
 
-| US     | Contenu                                                                                                                                                                 | Statut |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| US-70  | Progression déposée = progression envoyée (état iceberg → `outline_sent`) ; « Progression pédagogique » retirée des documents administratifs (4 cases) ; rattrapage SQL | ✅     |
-| US-71  | Checklist des documents administratifs modifiable sur la page Facturation, retour « Enregistré » / erreur                                                               | ✅     |
-| US-78  | Vocabulaire : « progression pédagogique » remplace « trame » dans toute l'interface, les e2e et la doc (identifiants `outline` inchangés)                               | ✅     |
-| US-74  | Alerte progression honnête : niveau J-15 affiché (badge « À préparer »), « Tout est en ordre » seulement sans aucune alerte ; filtrage pur testé                        | ✅     |
-| US-73  | Envoi de facture sécurisé : confirmation (destinataire, n°, TTC, aperçu PDF), suppression confirmée, XML dans le menu « Plus »                                          | ✅     |
-| US-76  | Envoi des résultats confirmé : nombre de destinataires, étudiant·es sans e-mail, envoi précédent (`assessment.results_sent_at`, migration `20260927140000`)             | ✅     |
-| US-80a | Fiche étudiant·e : groupes avec module et année scolaire, rangés par année (la plus récente d'abord)                                                                    | ✅     |
-| US-63  | Accès à la séance du jour : carte « Aujourd'hui » du tableau de bord (fuseau Europe/Paris) avec « Faire cours » ; boutons séance / module livrés en E10                 | ✅     |
+| US     | Contenu                                                                                                                                                                         | Statut |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-70  | Progression déposée = progression envoyée (état iceberg → `outline_sent`) ; « Progression pédagogique » retirée des documents administratifs (4 cases) ; rattrapage SQL         | ✅     |
+| US-71  | Checklist des documents administratifs modifiable sur la page Facturation, retour « Enregistré » / erreur                                                                       | ✅     |
+| US-78  | Vocabulaire : « progression pédagogique » remplace « trame » dans toute l'interface, les e2e et la doc (identifiants `outline` inchangés)                                       | ✅     |
+| US-74  | Alerte progression honnête : niveau J-15 affiché (badge « À préparer »), « Tout est en ordre » seulement sans aucune alerte ; filtrage pur testé                                | ✅     |
+| US-73  | Envoi de facture sécurisé : confirmation (destinataire, n°, TTC, aperçu PDF), suppression confirmée, XML dans le menu « Plus »                                                  | ✅     |
+| US-76  | Envoi des résultats confirmé : nombre de destinataires, étudiant·es sans e-mail, envoi précédent (`assessment.results_sent_at`, migration `20260927140000`)                     | ✅     |
+| US-80a | Fiche étudiant·e : groupes avec module et année scolaire, rangés par année (la plus récente d'abord)                                                                            | ✅     |
+| US-63  | Accès à la séance du jour : carte « Aujourd'hui » du tableau de bord (fuseau Europe/Paris) avec « Faire cours » ; boutons séance / module livrés en E10                         | ✅     |
+| US-65  | Observations en direct (version simple) : carnet privé, étudiant·es du module filtrables, étiquette en 1 appui + texte, journal sur la fiche étudiant·e (`student_observation`) | ✅     |
+| US-67  | Clôture de séance (version simple) : Faite / Partielle / Non faite, points non traités, à faire pour la prochaine fois, retour d'expérience privé ; badge sur la liste          | ✅     |
 
 ## E8 — Migration Notion ⏳
 

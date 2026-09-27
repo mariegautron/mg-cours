@@ -149,15 +149,19 @@ export type Database = {
         Row: {
           animation_notes: string | null
           assessment_notes: string | null
+          completion: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at: string
           created_at: string
           id: string
           learning_objectives: string[]
           material: string | null
           module_id: string
+          next_time: string | null
+          not_covered: string | null
           owner_id: string
           position: number
           prep_status: string
+          retro_note: string | null
           session_date: string | null
           slides: Json
           title: string
@@ -167,15 +171,19 @@ export type Database = {
         Insert: {
           animation_notes?: string | null
           assessment_notes?: string | null
+          completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string
           id?: string
           learning_objectives?: string[]
           material?: string | null
           module_id: string
+          next_time?: string | null
+          not_covered?: string | null
           owner_id?: string
           position?: number
           prep_status?: string
+          retro_note?: string | null
           session_date?: string | null
           slides?: Json
           title: string
@@ -185,15 +193,19 @@ export type Database = {
         Update: {
           animation_notes?: string | null
           assessment_notes?: string | null
+          completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string
           id?: string
           learning_objectives?: string[]
           material?: string | null
           module_id?: string
+          next_time?: string | null
+          not_covered?: string | null
           owner_id?: string
           position?: number
           prep_status?: string
+          retro_note?: string | null
           session_date?: string | null
           slides?: Json
           title?: string
@@ -981,6 +993,64 @@ export type Database = {
           },
         ]
       }
+      student_observation: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          module_id: string
+          note: string | null
+          owner_id: string
+          student_id: string
+          tag: Database["public"]["Enums"]["observation_tag"]
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          note?: string | null
+          owner_id?: string
+          student_id: string
+          tag: Database["public"]["Enums"]["observation_tag"]
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          note?: string | null
+          owner_id?: string
+          student_id?: string
+          tag?: Database["public"]["Enums"]["observation_tag"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_observation_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_observation_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_observation_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_profile: {
         Row: {
           activity_number: string | null
@@ -1041,6 +1111,7 @@ export type Database = {
     }
     Enums: {
       comment_category: "positive" | "negative" | "advice"
+      course_completion: "done" | "partial" | "not_done"
       course_resource_role: "primary" | "secondary"
       course_type:
         | "lecture"
@@ -1070,6 +1141,12 @@ export type Database = {
         | "outline_sent"
         | "slides"
         | "external_invoice"
+      observation_tag:
+        | "relevant_question"
+        | "participation"
+        | "difficulty"
+        | "absent_late"
+        | "other"
       outline_status: "draft" | "sent" | "validated"
       resource_audience: "students" | "teacher"
       resource_kind:
@@ -1212,6 +1289,7 @@ export const Constants = {
   public: {
     Enums: {
       comment_category: ["positive", "negative", "advice"],
+      course_completion: ["done", "partial", "not_done"],
       course_resource_role: ["primary", "secondary"],
       course_type: [
         "lecture",
@@ -1243,6 +1321,13 @@ export const Constants = {
         "outline_sent",
         "slides",
         "external_invoice",
+      ],
+      observation_tag: [
+        "relevant_question",
+        "participation",
+        "difficulty",
+        "absent_late",
+        "other",
       ],
       outline_status: ["draft", "sent", "validated"],
       resource_audience: ["students", "teacher"],

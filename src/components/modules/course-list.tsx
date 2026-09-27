@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Pencil, Play, Plus } from "lucide-react";
+import { CalendarDays, NotebookPen, Pencil, Play, Plus } from "lucide-react";
 
 import { deleteCourse } from "@/app/(app)/modules/[id]/courses/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
+import { COMPLETION_LABELS, type CourseCompletion } from "@/lib/notebook/notebook";
 import { groupByKind } from "@/lib/resources/kind";
 
 const COURSE_TYPE_LABELS: Record<string, string> = {
@@ -25,6 +26,12 @@ const PREP_VARIANT: Record<PrepStatus, "default" | "secondary" | "outline"> = {
   todo: "outline",
   in_progress: "secondary",
   ready: "default",
+};
+
+const COMPLETION_VARIANT: Record<CourseCompletion, "secondary" | "outline" | "destructive"> = {
+  done: "secondary",
+  partial: "outline",
+  not_done: "destructive",
 };
 
 const formatDate = (iso: string) =>
@@ -77,6 +84,11 @@ export function CourseList({
               <h3 className="font-medium">{c.title}</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {c.completion ? (
+                <Badge variant={COMPLETION_VARIANT[c.completion]}>
+                  {COMPLETION_LABELS[c.completion]}
+                </Badge>
+              ) : null}
               <Badge variant={PREP_VARIANT[c.prep_status as PrepStatus] ?? "outline"}>
                 {PREP_STATUS_LABELS[c.prep_status as PrepStatus] ?? c.prep_status}
               </Badge>
@@ -85,6 +97,12 @@ export function CourseList({
                 <Link href={`/present/modules/${moduleId}/courses/${c.id}`}>
                   <Play aria-hidden />
                   Faire cours<span className="sr-only"> : {c.title}</span>
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/modules/${moduleId}/courses/${c.id}/notebook`}>
+                  <NotebookPen aria-hidden />
+                  Carnet<span className="sr-only"> de séance : {c.title}</span>
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="icon">

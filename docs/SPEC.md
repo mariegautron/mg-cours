@@ -207,6 +207,32 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
 - Sommaire par section, thème clair/sombre, barre de progression, « Diapositive n sur N »
   annoncé (`aria-live`), « Quitter » → fiche. Mode et taille mémorisés (`localStorage`).
 
+## Carnet de séance (US-65 + US-67) — `/modules/[id]/courses/[courseId]/notebook`
+
+Vue **privée**, pensée pour le téléphone ou une 2e fenêtre, **jamais projetée**. Accès : bouton
+« Carnet » sur chaque séance de la fiche module, et « Carnet de séance » sur la carte
+« Aujourd'hui » du tableau de bord. En-tête : module · séance N · date, avertissement « Vue
+privée », lien « Ouvrir la présentation » (nouvel onglet).
+
+- **Observations (US-65, version simple)** : étudiant·es des groupes du module (sans doublon,
+  triés par nom), champ « Filtrer par nom » (prénom/nom, sans accents ni casse, nombre annoncé).
+  Un appui sur un nom (`aria-expanded`) ouvre un petit formulaire : note facultative puis
+  **étiquettes en boutons** (Question pertinente, Participation, Difficulté, Absent·e ou retard,
+  Autre) — un appui sur l'étiquette enregistre. Retour « Observation enregistrée : Nom —
+  Étiquette. » (`role=status`), le formulaire se referme et le focus revient sur le nom. Liste
+  « Notées pendant cette séance (N) » (heure, nom, étiquette, texte, suppression confirmée). Le
+  serveur vérifie que la séance appartient au module et l'étudiant·e à un de ses groupes.
+- **Clôture (US-67, version simple)** : La séance a été… Faite / Partiellement faite / Non faite
+  (radios), « Points non traités, à reporter », « À faire pour la prochaine fois », « Retour
+  d'expérience (privé) » ; « Enregistrer la clôture » → « Clôture enregistrée. ». Badge de statut
+  sur la liste des séances. Ne modifie pas `content_last_updated_at` ; non copié à la duplication
+  d'un module.
+- Fiche `/students/[id]` : **Journal d'observations** (date et heure à Paris, module · séance,
+  étiquette, texte), du plus récent au plus ancien.
+- **Jamais** dans les exports PDF, les e-mails ni la présentation : test
+  `src/lib/notebook/privacy.test.ts` (lecture des sources d'export + builders) et e2e (HTML de
+  la présentation sans aucun texte du carnet).
+
 ## Étudiants + Groupes (E4)
 
 ### Liste `/students`
