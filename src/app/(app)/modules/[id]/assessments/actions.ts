@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
+import { criteriaTotal, effectiveMaxScore, scaleGridTotal } from "@/lib/ynov/notation";
 
 export interface AssessmentFormState {
   error?: string;
@@ -55,6 +56,7 @@ export async function createAssessment(
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
+      max_score: parsed.data.maxScore,
     })
     .select("id")
     .single();
@@ -99,6 +101,7 @@ export async function updateAssessment(
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
+      max_score: parsed.data.maxScore,
     })
     .eq("id", assessmentId);
 
@@ -182,13 +185,31 @@ async function saveGrade(
   target: { studentId: string | null; studentGroupId: string | null },
   formData: FormData,
 ): Promise<GradeFormState> {
-  const { value, scores } = computeGradeFromForm(formData);
-  if (value === null) return { error: "Saisissez une note." };
+  const { value: raw, scores } = computeGradeFromForm(formData);
+  if (raw === null) return { error: "Saisissez une note." };
 
   const feedback = String(formData.get("feedback") ?? "").trim();
   const predefinedCommentIds = formData.getAll("predefinedCommentIds").map(String);
 
   const supabase = await createClient();
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("max_score, grading_grid:grading_grid_id(grid_criterion(weight))")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  if (!assessment) return { error: "Évaluation introuvable." };
+
+  // Grille notée sur un autre barème (ex. grille /30 notée /20) : total ramené au barème.
+  const grid = assessment.grading_grid as { grid_criterion: { weight: number }[] } | null;
+  const gridTotal = criteriaTotal(grid?.grid_criterion ?? []);
+  const value =
+    Object.keys(scores).length > 0 && gridTotal
+      ? scaleGridTotal(raw, gridTotal, assessment.max_score)
+      : raw;
+  const maxScore = effectiveMaxScore(assessment.max_score, gridTotal);
+  if (value < 0 || value > maxScore) {
+    return { error: `La note doit être comprise entre 0 et ${maxScore}.` };
+  }
   const match = target.studentId
     ? { assessment_id: assessmentId, student_id: target.studentId }
     : { assessment_id: assessmentId, student_group_id: target.studentGroupId };

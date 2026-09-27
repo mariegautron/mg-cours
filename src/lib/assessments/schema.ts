@@ -83,9 +83,28 @@ const optionalMinutes = z
   .transform((v) => (v ? Number(v) : null))
   .pipe(z.number().int().min(0).max(1440).nullable());
 
+const optionalMaxScore = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ? Number(v.replace(",", ".")) : null))
+  .pipe(
+    z
+      .number({ message: "Barème invalide." })
+      .positive("Le barème doit être supérieur à 0.")
+      .max(1000, "Barème trop élevé.")
+      .nullable(),
+  );
+
 export const assessmentSchema = z.object({
   title: z.string().trim().min(1, "Le titre est obligatoire.").max(200),
-  subject: z.string().trim().max(200).optional().or(z.literal("")),
+  subject: z
+    .string()
+    .trim()
+    .max(20000, "Le sujet dépasse 20 000 caractères.")
+    .optional()
+    .or(z.literal("")),
   type: z.string().trim().max(100).optional().or(z.literal("")),
   coefficient: z.coerce.number().min(0.1).max(100).default(1),
   date: optionalDate,
@@ -101,6 +120,7 @@ export const assessmentSchema = z.object({
     .or(z.literal(""))
     .transform((v) => v || null),
   isGroupGrade: z.coerce.boolean().default(false),
+  maxScore: optionalMaxScore,
 });
 
 export function readAssessmentForm(formData: FormData) {
@@ -114,5 +134,6 @@ export function readAssessmentForm(formData: FormData) {
     studentGroupIds: formData.getAll("studentGroupIds").map(String),
     gradingGridId: formData.get("gradingGridId") ?? "",
     isGroupGrade: formData.get("isGroupGrade") === "on",
+    maxScore: formData.get("maxScore") ?? "",
   });
 }

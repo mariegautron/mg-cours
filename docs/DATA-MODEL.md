@@ -40,7 +40,7 @@ erDiagram
 | `student`             | first_name, last_name, email, photo_url, student_number, personal_notes                                                                                                                     |
 | `student_group`       | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                           |
 | `group_member`        | student_group_id, student_id                                                                                                                                                                |
-| `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade                                                                                                                          |
+| `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade, max_score (barème, vide = total grille sinon 20)                                                                        |
 | `assessment_group`    | assessment_id, student_group_id — groupes visés par l'évaluation (≥ 1, paire unique)                                                                                                        |
 | `grading_grid`        | name, description                                                                                                                                                                           |
 | `grid_criterion`      | grading_grid_id, label, weight, description                                                                                                                                                 |

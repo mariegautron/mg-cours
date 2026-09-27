@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { noteProgress, weightedAverage, type NoteProgress } from "@/lib/ynov/notation";
+import {
+  criteriaTotal,
+  effectiveMaxScore,
+  noteProgress,
+  weightedAverage,
+  type GradeInput,
+  type NoteProgress,
+} from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
 export interface GridWithCriteria extends Tables<"grading_grid"> {
@@ -74,15 +81,18 @@ export interface AssessmentWithMeta extends Tables<"assessment"> {
   /** Groupes visés, triés par nom. */
   groups: GroupRef[];
   grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
+  /** Barème effectif (saisi, sinon total de la grille, sinon 20). */
+  maxScore: number;
   gradeCount: number;
 }
 
 const LIST_SELECT =
-  "*, assessment_group(student_group:student_group_id(id, name)), grading_grid:grading_grid_id(id, name)";
+  "*, assessment_group(student_group:student_group_id(id, name)), grading_grid:grading_grid_id(id, name, grid_criterion(weight))";
 
 type RawListed = Tables<"assessment"> & {
   assessment_group: { student_group: GroupRef | null }[];
-  grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
+  grading_grid:
+    (Pick<Tables<"grading_grid">, "id" | "name"> & { grid_criterion: { weight: number }[] }) | null;
 };
 
 function byName<T extends { name: string }>(a: T, b: T) {
@@ -91,9 +101,15 @@ function byName<T extends { name: string }>(a: T, b: T) {
 
 function flattenGroups<T extends RawListed>(
   rows: T[],
-): (Omit<T, "assessment_group"> & { groups: GroupRef[] })[] {
-  return rows.map(({ assessment_group, ...a }) => ({
+): (Omit<T, "assessment_group" | "grading_grid"> & {
+  groups: GroupRef[];
+  grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
+  maxScore: number;
+})[] {
+  return rows.map(({ assessment_group, grading_grid, ...a }) => ({
     ...a,
+    grading_grid: grading_grid ? { id: grading_grid.id, name: grading_grid.name } : null,
+    maxScore: effectiveMaxScore(a.max_score, criteriaTotal(grading_grid?.grid_criterion ?? [])),
     groups: assessment_group
       .map((ag) => ag.student_group)
       .filter((g): g is GroupRef => g !== null)
@@ -159,6 +175,8 @@ export interface AssessmentDetail extends Tables<"assessment"> {
   /** Groupes visés (triés par nom) avec leurs membres. */
   groups: GroupWithMembers[];
   grading_grid: GridWithCriteria | null;
+  /** Barème effectif (saisi, sinon total de la grille, sinon 20). */
+  maxScore: number;
 }
 
 export async function getAssessment(id: string): Promise<AssessmentDetail | null> {
@@ -197,7 +215,9 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
       }
     : null;
 
-  return { ...raw, groups, grading_grid };
+  const maxScore = effectiveMaxScore(raw.max_score, criteriaTotal(grading_grid?.criteria ?? []));
+
+  return { ...raw, groups, grading_grid, maxScore };
 }
 
 export async function getGradesByAssessment(assessmentId: string): Promise<Tables<"grade">[]> {
@@ -227,7 +247,7 @@ export interface StudentAverage {
   average: ReturnType<typeof weightedAverage>;
 }
 
-/** Moyenne pondérée YNOV (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
+/** Moyenne pondérée YNOV sur 20 (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
 export async function moduleStudentAverages(moduleId: string): Promise<StudentAverage[]> {
   const supabase = await createClient();
   const [{ data: groups }, assessments] = await Promise.all([
@@ -268,20 +288,21 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     gradesByAssessment.set(g.assessment_id, list);
   }
 
-  const perStudent = new Map<string, { value: number; kind: "group" | "individual" }[]>();
+  const perStudent = new Map<string, GradeInput[]>();
   for (const student of allStudents.values()) perStudent.set(student.id, []);
 
   for (const assessment of assessments) {
     const rows = gradesByAssessment.get(assessment.id) ?? [];
     const kind = assessment.is_group_grade ? "group" : "individual";
+    const max = assessment.maxScore;
     for (const row of rows) {
       if (row.value === null) continue;
       if (assessment.is_group_grade && row.student_group_id) {
         for (const s of studentsByGroup.get(row.student_group_id) ?? []) {
-          perStudent.get(s.id)?.push({ value: row.value, kind });
+          perStudent.get(s.id)?.push({ value: row.value, kind, max });
         }
       } else if (row.student_id) {
-        perStudent.get(row.student_id)?.push({ value: row.value, kind });
+        perStudent.get(row.student_id)?.push({ value: row.value, kind, max });
       }
     }
   }

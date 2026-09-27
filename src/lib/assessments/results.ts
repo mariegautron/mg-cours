@@ -1,4 +1,5 @@
 import { gradingTargets } from "@/lib/assessments/targets";
+import { criteriaTotal, effectiveMaxScore, toTwenty } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
 export interface ResultCriterionLine {
@@ -12,11 +13,15 @@ export interface ResultSheet {
   recipients: { name: string; email: string | null }[];
   title: string;
   isGroupGrade: boolean;
-  subjectName: string | null;
+  /** Sujet complet (Markdown). */
+  subject: string | null;
   moduleName: string;
   date: string | null;
   value: number | null;
-  maxScore: number | null;
+  /** Barème effectif de l'évaluation. */
+  maxScore: number;
+  /** Note ramenée sur 20 (moyennes YNOV / Hyperplanning). */
+  valueOn20: number | null;
   criteria: ResultCriterionLine[];
   feedback: string | null;
   comments: string[];
@@ -24,7 +29,10 @@ export interface ResultSheet {
 
 interface Input {
   moduleName: string;
-  assessment: Pick<Tables<"assessment">, "title" | "subject" | "date" | "is_group_grade">;
+  assessment: Pick<
+    Tables<"assessment">,
+    "title" | "subject" | "date" | "is_group_grade" | "max_score"
+  >;
   groups: { id: string; name: string; members: Tables<"student">[] }[];
   criteria: Pick<Tables<"grid_criterion">, "id" | "label" | "weight">[];
   grades: Tables<"grade">[];
@@ -38,7 +46,7 @@ interface Input {
 export function buildResultSheets(input: Input): ResultSheet[] {
   const { assessment, criteria, comments } = input;
   const commentText = new Map(comments.map((c) => [c.id, c.text]));
-  const maxScore = criteria.length ? criteria.reduce((s, c) => s + c.weight, 0) : null;
+  const maxScore = effectiveMaxScore(assessment.max_score, criteriaTotal(criteria));
 
   const sheetFor = (grade: Tables<"grade">, recipients: ResultSheet["recipients"]): ResultSheet => {
     const scores = (grade.scores ?? {}) as Record<string, number>;
@@ -46,11 +54,12 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       recipients,
       title: assessment.title,
       isGroupGrade: assessment.is_group_grade,
-      subjectName: assessment.subject,
+      subject: assessment.subject,
       moduleName: input.moduleName,
       date: assessment.date,
       value: grade.value,
       maxScore,
+      valueOn20: grade.value === null ? null : toTwenty(grade.value, maxScore),
       criteria: criteria.map((c) => ({
         label: c.label,
         points: scores[c.id] ?? null,

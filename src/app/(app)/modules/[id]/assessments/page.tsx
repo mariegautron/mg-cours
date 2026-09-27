@@ -95,7 +95,7 @@ export default async function ModuleAssessmentsPage({
                     <p className="font-medium">{a.title}</p>
                     <p className="text-muted-foreground text-sm">
                       {a.groups.map((g) => g.name).join(", ") || "—"} ·{" "}
-                      {a.is_group_grade ? "note de groupe" : "note individuelle"}
+                      {a.is_group_grade ? "note de groupe" : "note individuelle"} · sur {a.maxScore}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export default async function ModuleAssessmentsPage({
                     Étudiant·e
                   </th>
                   <th scope="col" className="p-2 text-left">
-                    Moyenne
+                    Moyenne /20
                   </th>
                 </tr>
               </thead>
@@ -146,7 +146,8 @@ export default async function ModuleAssessmentsPage({
             </table>
           </div>
           <p className="text-muted-foreground mt-2 text-sm">
-            Pondération YNOV : note de groupe ×1, note individuelle ×3.
+            Pondération YNOV : note de groupe ×1, note individuelle ×3. Chaque note est ramenée sur
+            20 avant le calcul.
           </p>
         </section>
       ) : null}

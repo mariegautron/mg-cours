@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { GridWithCriteria } from "@/lib/assessments/queries";
+import { criteriaTotal, DEFAULT_MAX_SCORE, scaleGridTotal, toTwenty } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
 type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormState>;
@@ -17,12 +18,15 @@ export function GradeForm({
   action,
   title,
   grid,
+  maxScore,
   grade,
   comments,
 }: {
   action: Action;
   title: string;
   grid: GridWithCriteria | null;
+  /** Barème effectif de l'évaluation. */
+  maxScore: number;
   grade?: Tables<"grade">;
   comments: Tables<"predefined_comment">[];
 }) {
@@ -31,9 +35,9 @@ export function GradeForm({
   const uid = useId();
   const scores = (grade?.scores as Record<string, number> | undefined) ?? {};
   const selectedComments = new Set(grade?.predefined_comment_ids ?? []);
-  const total = grid
-    ? grid.criteria.reduce((sum, c) => sum + (scores[c.id] ?? 0), 0)
-    : (grade?.value ?? "");
+  const gridTotal = grid ? (criteriaTotal(grid.criteria) ?? 0) : 0;
+  const total = grid ? grid.criteria.reduce((sum, c) => sum + (scores[c.id] ?? 0), 0) : 0;
+  const scaled = grid && gridTotal !== maxScore;
 
   return (
     <form
@@ -46,7 +50,10 @@ export function GradeForm({
           {title}
         </h3>
         {grade?.value !== undefined && grade?.value !== null ? (
-          <span className="text-muted-foreground text-sm">Note actuelle : {grade.value}</span>
+          <span className="text-muted-foreground text-sm">
+            Note actuelle : {grade.value} / {maxScore}
+            {maxScore !== DEFAULT_MAX_SCORE ? ` (${toTwenty(grade.value, maxScore)}/20)` : ""}
+          </span>
         ) : null}
       </div>
 
@@ -69,17 +76,20 @@ export function GradeForm({
             </div>
           ))}
           <p className="text-muted-foreground text-sm sm:col-span-2">
-            Total sur {grid.criteria.reduce((s, c) => s + c.weight, 0)} : {total || 0}
+            Total : {total} / {gridTotal}
+            {scaled ? ` → ${scaleGridTotal(total, gridTotal, maxScore)} / ${maxScore}` : ""}
           </p>
         </div>
       ) : (
         <div className="space-y-1">
-          <Label htmlFor={`${uid}-value`}>Note</Label>
+          <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
           <Input
             id={`${uid}-value`}
             name="value"
             type="number"
             step="0.5"
+            min={0}
+            max={maxScore}
             defaultValue={grade?.value ?? ""}
             required
           />

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { noteProgress, requiredNotes, weightedAverage } from "./notation";
+import {
+  effectiveMaxScore,
+  noteProgress,
+  requiredNotes,
+  scaleGridTotal,
+  toTwenty,
+  weightedAverage,
+} from "./notation";
 
 describe("requiredNotes", () => {
   it.each([
@@ -44,6 +51,16 @@ describe("weightedAverage", () => {
     expect(r.average).toBeCloseTo(66 / 5);
   });
 
+  it("ramène chaque note sur 20 avant de pondérer", () => {
+    // Groupe 15/30 (= 10/20) ×1 + individuelle 16/20 ×3.
+    const r = weightedAverage([
+      { value: 15, kind: "group", max: 30 },
+      { value: 16, kind: "individual" },
+    ]);
+    expect(r.points).toBe(10 + 48);
+    expect(r.average).toBeCloseTo(58 / 4);
+  });
+
   it("renvoie une moyenne nulle sans note", () => {
     expect(weightedAverage([])).toMatchObject({ points: 0, weight: 0, average: null });
   });
@@ -61,5 +78,30 @@ describe("noteProgress", () => {
     expect(p.satisfied).toBe(false);
     expect(p.missingGroup).toBe(1);
     expect(p.missingIndividual).toBe(1);
+  });
+});
+
+describe("barème", () => {
+  it("retient le barème saisi, sinon le total de la grille, sinon 20", () => {
+    expect(effectiveMaxScore(24, 30)).toBe(24);
+    expect(effectiveMaxScore(null, 30)).toBe(30);
+    expect(effectiveMaxScore(null, null)).toBe(20);
+    expect(effectiveMaxScore(0, 0)).toBe(20);
+  });
+
+  it.each([
+    [15, 30, 10],
+    [60, 80, 15],
+    [18, 24, 15], // oral Moodle sur 24
+    [13.5, 20, 13.5],
+    [7, 30, 4.67],
+  ])("%d/%d → %d/20", (value, max, expected) => {
+    expect(toTwenty(value, max)).toBe(expected);
+  });
+
+  it("ramène le total d'une grille au barème de l'évaluation", () => {
+    expect(scaleGridTotal(24, 30, 20)).toBe(16);
+    expect(scaleGridTotal(24, 30, null)).toBe(24);
+    expect(scaleGridTotal(24, 30, 30)).toBe(24);
   });
 });

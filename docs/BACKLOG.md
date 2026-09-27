@@ -99,6 +99,7 @@ automatique des notes Hyperplanning (E7/E8).
 | US-20/21    | Saisie des notes : par critère (total auto) ou note directe ; 1 note par groupe visé, ou 1 par membre                                                     | ✅     |
 | US-22/23/24 | Commentaires prédéfinis : CRUD + recherche/filtres + sélection à la saisie                                                                                | ✅     |
 | US-19b      | Sujet complet en **Markdown** (zone de texte, 20 000 car. max) : section « Sujet » sur la page de l'évaluation et dans le PDF des résultats               | ✅     |
+| US-19c      | Barème ≠ 20 (`assessment.max_score`, défaut = total de la grille, sinon 20) ; note ramenée sur 20 pour moyennes et PDF (« 15 / 30 (soit 10/20) »)         | ✅     |
 | US-11/27    | Compteur « X/Y notes requises » réel (1 évaluation notée = 1 note YNOV) + moyenne pondérée ×1/×3 par étudiant·e                                           | ✅     |
 | —           | e2e : grille → groupe → évaluation → note → compteur → moyenne, axe 0 violation                                                                           | ✅     |
 

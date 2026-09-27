@@ -7,6 +7,7 @@ import type { AssessmentFormState } from "@/app/(app)/modules/[id]/assessments/a
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail } from "@/lib/assessments/queries";
 import type { Tables } from "@/types/db";
 
@@ -55,11 +56,23 @@ export function AssessmentForm({
         <FieldError id="title" errors={fe.title} />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="subject">Sujet (Markdown)</Label>
+        <p id="subject-hint" className="text-muted-foreground text-sm">
+          Consignes complètes : titres (#), listes (-), **gras**, `code`… 20 000 caractères maximum.
+        </p>
+        <Textarea
+          id="subject"
+          name="subject"
+          rows={10}
+          maxLength={20000}
+          defaultValue={assessment?.subject ?? ""}
+          aria-describedby={fe.subject ? "subject-hint subject-error" : "subject-hint"}
+        />
+        <FieldError id="subject" errors={fe.subject} />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="subject">Sujet</Label>
-          <Input id="subject" name="subject" defaultValue={assessment?.subject ?? ""} />
-        </div>
         <div className="space-y-2">
           <Label htmlFor="type">Type</Label>
           <Input
@@ -91,6 +104,24 @@ export function AssessmentForm({
             step="0.1"
             defaultValue={assessment?.coefficient ?? 1}
           />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="maxScore">Barème (note sur)</Label>
+          <p id="maxScore-hint" className="text-muted-foreground text-sm">
+            Laisser vide : total de la grille, ou 20 sans grille. Les moyennes YNOV sont toujours
+            ramenées sur 20.
+          </p>
+          <Input
+            id="maxScore"
+            name="maxScore"
+            type="number"
+            step="0.5"
+            min={0.5}
+            className="sm:w-32"
+            defaultValue={assessment?.max_score ?? ""}
+            aria-describedby={fe.maxScore ? "maxScore-hint maxScore-error" : "maxScore-hint"}
+          />
+          <FieldError id="maxScore" errors={fe.maxScore} />
         </div>
         <fieldset
           className="space-y-2 sm:col-span-2"

@@ -12,7 +12,10 @@ Source : Notion « MG COURS - Documentation Projet COMPLETE » (2026-09-01) + pr
 | 52 à 70 h        | 5             | 3               | 2                   |
 
 - Coefficients : **note de groupe ×1**, **note individuelle ×3**.
-- Total des points = Σ(note × coefficient).
+- Toute note est d'abord **ramenée sur 20** : barème de l'évaluation = `max_score`, sinon
+  total des critères de la grille, sinon 20 (ex. 15/30 → 10/20, oral Moodle 18/24 → 15/20).
+  Une grille peut être notée sur un autre barème (grille /30 notée /20 : 24/30 → 16/20).
+- Total des points = Σ(note sur 20 × coefficient).
 - Exemple (module 21 h) : 2 notes de groupe (14, 16) + 1 individuelle (12)
   → points = 14 + 16 + 36 = 66 ; poids = 5 ; moyenne = 13,2.
 - Les notes doivent aussi être **saisies dans Hyperplanning** (vérifié par YNOV).

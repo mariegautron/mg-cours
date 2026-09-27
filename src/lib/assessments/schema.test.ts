@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseCriteriaLines, readAssessmentForm } from "./schema";
+import { assessmentSchema, parseCriteriaLines, readAssessmentForm } from "./schema";
 
 describe("parseCriteriaLines", () => {
   it("parse un critère par ligne au format « Libellé | points »", () => {
@@ -50,5 +50,35 @@ describe("readAssessmentForm", () => {
     expect(parsed.error?.flatten().fieldErrors.studentGroupIds).toEqual([
       "Choisissez au moins un groupe.",
     ]);
+  });
+
+  it("barème : vide → null, décimal accepté (virgule ou point), zéro refusé", () => {
+    const withMax = (v: string) => {
+      const fd = form([G1]);
+      fd.set("maxScore", v);
+      return readAssessmentForm(fd);
+    };
+    const empty = withMax("");
+    expect(empty.success && empty.data.maxScore).toBeNull();
+    const comma = withMax("24,5");
+    expect(comma.success && comma.data.maxScore).toBe(24.5);
+    const zero = withMax("0");
+    expect(zero.success).toBe(false);
+    expect(zero.error?.flatten().fieldErrors.maxScore).toEqual([
+      "Le barème doit être supérieur à 0.",
+    ]);
+  });
+});
+
+describe("assessmentSchema — sujet", () => {
+  const base = { title: "Oral", studentGroupIds: ["00000000-0000-4000-8000-000000000000"] };
+
+  it("accepte un sujet Markdown jusqu'à 20 000 caractères", () => {
+    expect(assessmentSchema.safeParse({ ...base, subject: "a".repeat(20000) }).success).toBe(true);
+  });
+
+  it("refuse un sujet au-delà de 20 000 caractères", () => {
+    const parsed = assessmentSchema.safeParse({ ...base, subject: "a".repeat(20001) });
+    expect(parsed.success).toBe(false);
   });
 });

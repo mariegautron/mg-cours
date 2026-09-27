@@ -43,6 +43,7 @@ export type Database = {
           grading_grid_id: string | null
           id: string
           is_group_grade: boolean
+          max_score: number | null
           module_id: string
           owner_id: string
           subject: string | null
@@ -58,6 +59,7 @@ export type Database = {
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
+          max_score?: number | null
           module_id: string
           owner_id?: string
           subject?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
+          max_score?: number | null
           module_id?: string
           owner_id?: string
           subject?: string | null

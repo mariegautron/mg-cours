@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { GradeForm } from "@/components/assessments/grade-form";
+import { Markdown } from "@/components/markdown";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,11 +41,12 @@ export default async function AssessmentPage({
         <div>
           <h1 className="text-2xl font-semibold">{assessment.title}</h1>
           <p className="text-muted-foreground">
-            {[assessment.subject, assessment.type, groupNames].filter(Boolean).join(" · ")}
+            {[assessment.type, groupNames].filter(Boolean).join(" · ")}
             {assessment.date ? ` · ${new Date(assessment.date).toLocaleDateString("fr-FR")}` : ""}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">Coefficient {assessment.coefficient}</Badge>
+            <Badge variant="outline">Sur {assessment.maxScore}</Badge>
             <Badge variant="outline">
               {assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}
             </Badge>
@@ -64,6 +66,15 @@ export default async function AssessmentPage({
         </div>
       </div>
 
+      {assessment.subject ? (
+        <section aria-labelledby="subject">
+          <h2 id="subject" className="mb-2 text-lg font-medium">
+            Sujet
+          </h2>
+          <Markdown source={assessment.subject} />
+        </section>
+      ) : null}
+
       <ResultsActions
         moduleId={id}
         assessmentId={assessmentId}
@@ -80,6 +91,7 @@ export default async function AssessmentPage({
               action={saveGroupGrade.bind(null, id, assessmentId, group.id)}
               title={`Note du groupe « ${group.name} »`}
               grid={assessment.grading_grid}
+              maxScore={assessment.maxScore}
               grade={grades.find((g) => g.student_group_id === group.id)}
               comments={comments}
             />
@@ -105,6 +117,7 @@ export default async function AssessmentPage({
                     action={saveStudentGrade.bind(null, id, assessmentId, m.id)}
                     title={`${m.first_name} ${m.last_name}`}
                     grid={assessment.grading_grid}
+                    maxScore={assessment.maxScore}
                     grade={grades.find((g) => g.student_id === m.id)}
                     comments={comments}
                   />

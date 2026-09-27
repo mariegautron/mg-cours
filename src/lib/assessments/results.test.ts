@@ -45,12 +45,19 @@ describe("buildResultSheets", () => {
   it("note individuelle : une fiche par étudiant·e noté·e, détail par critère et commentaires connus", () => {
     const sheets = buildResultSheets({
       ...base,
-      assessment: { title: "Oral", subject: null, date: null, is_group_grade: false },
+      assessment: {
+        title: "Oral",
+        subject: null,
+        date: null,
+        is_group_grade: false,
+        max_score: null,
+      },
       grades: [grade({ student_id: "s1" })],
     });
     expect(sheets).toHaveLength(1);
     expect(sheets[0].recipients).toEqual([{ name: "Lea Test", email: "lea@x.fr" }]);
     expect(sheets[0].maxScore).toBe(10);
+    expect(sheets[0].valueOn20).toBe(16);
     expect(sheets[0].criteria).toEqual([
       { label: "Présentation", points: 3, max: 4 },
       { label: "Contenu", points: 5, max: 6 },
@@ -61,7 +68,13 @@ describe("buildResultSheets", () => {
   it("note de groupe : une seule fiche pour tous les membres", () => {
     const sheets = buildResultSheets({
       ...base,
-      assessment: { title: "Projet", subject: null, date: null, is_group_grade: true },
+      assessment: {
+        title: "Projet",
+        subject: null,
+        date: null,
+        is_group_grade: true,
+        max_score: null,
+      },
       grades: [grade({ student_group_id: "grp", is_group_grade: true })],
     });
     expect(sheets).toHaveLength(1);
@@ -76,7 +89,13 @@ describe("buildResultSheets", () => {
     const groupSheets = buildResultSheets({
       ...base,
       groups,
-      assessment: { title: "Projet", subject: null, date: null, is_group_grade: true },
+      assessment: {
+        title: "Projet",
+        subject: null,
+        date: null,
+        is_group_grade: true,
+        max_score: null,
+      },
       grades: [
         grade({ id: "x", student_group_id: "grp", is_group_grade: true }),
         grade({ id: "y", student_group_id: "grp2", is_group_grade: true, value: 12 }),
@@ -90,16 +109,44 @@ describe("buildResultSheets", () => {
     const individualSheets = buildResultSheets({
       ...base,
       groups,
-      assessment: { title: "Oral", subject: null, date: null, is_group_grade: false },
+      assessment: {
+        title: "Oral",
+        subject: null,
+        date: null,
+        is_group_grade: false,
+        max_score: null,
+      },
       grades: [grade({ student_id: "s2" }), grade({ student_id: "s3" })],
     });
     expect(individualSheets.map((sh) => sh.recipients[0].name)).toEqual(["Noa Test", "Zoe Test"]);
   });
 
+  it("retient le barème saisi plutôt que le total de la grille", () => {
+    const sheets = buildResultSheets({
+      ...base,
+      assessment: {
+        title: "Oral",
+        subject: null,
+        date: null,
+        is_group_grade: false,
+        max_score: 40,
+      },
+      grades: [grade({ student_id: "s1", value: 30 })],
+    });
+    expect(sheets[0].maxScore).toBe(40);
+    expect(sheets[0].valueOn20).toBe(15);
+  });
+
   it("aucune fiche tant qu'aucune note n'est saisie", () => {
     const sheets = buildResultSheets({
       ...base,
-      assessment: { title: "Oral", subject: null, date: null, is_group_grade: false },
+      assessment: {
+        title: "Oral",
+        subject: null,
+        date: null,
+        is_group_grade: false,
+        max_score: null,
+      },
       grades: [grade({ student_id: "s1", value: null })],
     });
     expect(sheets).toEqual([]);

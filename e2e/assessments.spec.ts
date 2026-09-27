@@ -60,7 +60,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.getByLabel("Contenu (/6)").fill("5");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(page.getByText("Note enregistrée.")).toBeVisible();
-  await expect(page.getByText("Note actuelle : 8")).toBeVisible();
+  await expect(page.getByText("Note actuelle : 8 / 10 (16/20)")).toBeVisible();
 
   // Export PDF des résultats + envoi e-mail (non configuré en local).
   const pdfUrl = `${moduleUrl.replace("/modules/", "/api/modules/")}/assessments/${page.url().split("/").pop()}/results`;
@@ -79,7 +79,8 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.goto(`${moduleUrl}/assessments`);
   await expect(page.getByText(/1\/3 notes? requises?/)).toBeVisible();
   await expect(page.getByRole("cell", { name: `Nora Benali${suffix}` })).toBeVisible();
-  await expect(page.getByRole("cell", { name: "8.00" })).toBeVisible();
+  // 8/10 ramené sur 20.
+  await expect(page.getByRole("cell", { name: "16.00" })).toBeVisible();
 });
 
 test("une évaluation sur plusieurs groupes compte pour une seule note", async ({ page }) => {
@@ -112,7 +113,7 @@ test("une évaluation sur plusieurs groupes compte pour une seule note", async (
 
   for (const [i, name] of groupNames.entries()) {
     const form = page.getByRole("form", { name: `Note du groupe « ${name} »` });
-    await form.getByLabel("Note", { exact: true }).fill(String(12 + i));
+    await form.getByLabel("Note (/20)", { exact: true }).fill(String(12 + i));
     await form.getByRole("button", { name: "Enregistrer la note" }).click();
     await expect(form.getByText("Note enregistrée.")).toBeVisible();
   }

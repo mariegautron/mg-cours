@@ -14,6 +14,46 @@
 export const GROUP_COEFFICIENT = 1;
 export const INDIVIDUAL_COEFFICIENT = 3;
 
+/** Barème YNOV / Hyperplanning : toutes les notes sont remontées sur 20. */
+export const DEFAULT_MAX_SCORE = 20;
+
+/** Total des points d'une grille (`null` sans critère). */
+export function criteriaTotal(criteria: readonly { weight: number }[]): number | null {
+  return criteria.length ? criteria.reduce((sum, c) => sum + c.weight, 0) : null;
+}
+
+/**
+ * Barème effectif d'une évaluation : barème saisi, sinon total des critères de la
+ * grille, sinon 20.
+ */
+export function effectiveMaxScore(
+  maxScore: number | null | undefined,
+  criteriaTotal: number | null | undefined,
+): number {
+  if (maxScore && maxScore > 0) return maxScore;
+  if (criteriaTotal && criteriaTotal > 0) return criteriaTotal;
+  return DEFAULT_MAX_SCORE;
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** Ramène une note sur 20 (ex. 15/30 → 10). Arrondi au centième. */
+export function toTwenty(value: number, max: number = DEFAULT_MAX_SCORE): number {
+  if (!(max > 0)) return value;
+  return round2((value * DEFAULT_MAX_SCORE) / max);
+}
+
+/**
+ * Note d'une grille ramenée au barème de l'évaluation (ex. grille sur 30 notée sur 20 :
+ * 24/30 → 16). Sans barème distinct, renvoie le total brut.
+ */
+export function scaleGridTotal(total: number, gridTotal: number, maxScore: number | null): number {
+  if (!maxScore || !(gridTotal > 0) || maxScore === gridTotal) return total;
+  return round2((total * maxScore) / gridTotal);
+}
+
 export interface NoteRequirement {
   /** Nombre total de notes attendues. */
   total: number;
@@ -81,22 +121,26 @@ export function requiredNotes(totalHours: number): NoteRequirement {
 }
 
 export interface GradeInput {
+  /** Note brute, sur `max`. */
   value: number;
   kind: "group" | "individual";
+  /** Barème de la note (20 par défaut). */
+  max?: number;
 }
 
 export interface WeightedResult {
-  /** Somme des (note × coefficient). */
+  /** Somme des (note sur 20 × coefficient). */
   points: number;
   /** Somme des coefficients appliqués. */
   weight: number;
-  /** Moyenne pondérée, ou `null` si aucune note. */
+  /** Moyenne pondérée sur 20, ou `null` si aucune note. */
   average: number | null;
 }
 
 /**
  * Moyenne pondérée d'un ensemble de notes selon les coefficients YNOV
- * (groupe ×1, individuel ×3). `points` = total des points au sens YNOV.
+ * (groupe ×1, individuel ×3), chaque note étant d'abord ramenée sur 20.
+ * `points` = total des points au sens YNOV.
  */
 export function weightedAverage(grades: readonly GradeInput[]): WeightedResult {
   let points = 0;
@@ -104,7 +148,7 @@ export function weightedAverage(grades: readonly GradeInput[]): WeightedResult {
 
   for (const g of grades) {
     const coef = g.kind === "group" ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT;
-    points += g.value * coef;
+    points += toTwenty(g.value, g.max) * coef;
     weight += coef;
   }
 

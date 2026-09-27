@@ -1,6 +1,7 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import type { ResultSheet } from "@/lib/assessments/results";
+import { MarkdownPdf } from "@/lib/pdf/markdown-view";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: "Helvetica", color: "#111" },
@@ -28,12 +29,19 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
         <Page key={i} size="A4" style={styles.page}>
           <Text style={styles.title}>{s.title}</Text>
           <Text style={styles.sub}>
-            {[s.moduleName, s.subjectName, fmtDate(s.date)].filter(Boolean).join(" · ")}
+            {[s.moduleName, fmtDate(s.date)].filter(Boolean).join(" · ")}
           </Text>
           <Text style={styles.who}>
             {s.isGroupGrade ? "Groupe : " : ""}
             {s.recipients.map((r) => r.name).join(", ")}
           </Text>
+
+          {s.subject ? (
+            <View>
+              <Text style={styles.h}>Sujet</Text>
+              <MarkdownPdf source={s.subject} />
+            </View>
+          ) : null}
 
           {s.criteria.map((c) => (
             <View key={c.label} style={styles.row}>
@@ -45,8 +53,8 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
           ))}
 
           <Text style={styles.total}>
-            Note : {s.value ?? "—"}
-            {s.maxScore ? ` / ${s.maxScore}` : ""}
+            Note : {s.value ?? "—"} / {s.maxScore}
+            {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
           </Text>
 
           {s.feedback ? (
