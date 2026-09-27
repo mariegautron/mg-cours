@@ -8,8 +8,10 @@ import { join } from "node:path";
 import {
   ALL_ADMIN_DOCS_DONE,
   anonymize,
-  completeAdminDocs,
   attachResourceFile,
+  classifyResources,
+  completeAdminDocs,
+  type Classification,
   importModuleDocument,
   importResourceImages,
   splitNotionName,
@@ -41,6 +43,46 @@ export interface CourseContext {
 
 const COURSE_PAGE = "29f903c74f1380d6a310f9e4bff4329a";
 const SCHOOL_SIRET = "80442673200033"; // Nantes Ynov Campus
+
+/** Classement des ressources du cours (docs/specs/ressources-classement.md, validé le 27/09). */
+const GP = "Gestion de projet";
+const gpItem = (
+  sourceId: string,
+  kind: Classification["kind"],
+  audience: Classification["audience"],
+  subject = GP,
+  importedCategory = GP,
+  source: Classification["source"] = "notion",
+): Classification => ({ source, sourceId, kind, audience, subject, importedCategory });
+const CLASSIFICATION = (moodleShortname: string): Classification[] => [
+  ...[
+    "29f903c74f1380b2b115f9ebeb6de1c4",
+    "29f903c74f138079a904d32cbb40f1d6",
+    "29f903c74f1380b99813dc20786d6f1d",
+    "29f903c74f13800d94f1cc4fe7a61725",
+    "29f903c74f1380dd958cc28db2ed32da",
+    "29f903c74f138083bb9cc552b8b09009",
+    "29f903c74f13808ea8d4cea966f82bcd",
+    "29f903c74f1380a78344e9d6c42c80af",
+    "29f903c74f1380128632f2839544d6f7",
+    "29f903c74f1380e88867ff04407ddd5a",
+    "29f903c74f13808f9f65c0089e93507c",
+    "29f903c74f1380b99618e30669ed4d72",
+    "2a3903c74f1380718389cfd6716692ae",
+  ].map((id) => gpItem(id, "course", "students")),
+  gpItem("2a3903c74f1380f581b7fccb0c4a9db7", "course", "students", "Agilité"),
+  gpItem("29f903c74f1380cc9db2f977b5d8b196", "project", "students"),
+  gpItem("29f903c74f1380e8bf8ec604ae95d06c", "project", "students"),
+  gpItem("29f903c74f1380fc8f32c4c2cb0b9174", "project", "students"),
+  gpItem("2a3903c74f13800b8111cdab4bb8dcdc", "project", "teacher"),
+  gpItem("29e903c74f13806197c8da904892ab33#reponses-client", "project", "teacher"),
+  gpItem("29f903c74f1380c587ffc9e4fba09522", "answer_key", "teacher", GP, "Évaluation"),
+  gpItem("2a0903c74f1380b4a70ff1f120d750d3", "answer_key", "teacher", GP, "Évaluation"),
+  gpItem("2a1903c74f1380bda33cd4a3da16120f", "answer_key", "teacher", GP, "Évaluation"),
+  gpItem(`questions:${moodleShortname}`, "question_bank", "teacher", GP, "Évaluation", "moodle"),
+  gpItem("2a2903c74f1380d89e79e38d550cf7ef", "template", "students"),
+  gpItem("29e903c74f13806197c8da904892ab33#retour-experience", "teacher_notes", "teacher"),
+];
 
 /** Séances Notion (datées) : titre court choisi d'après leurs objectifs, type MG COURS. */
 const SESSIONS = [
@@ -900,4 +942,6 @@ export async function migrate(ctx: CourseContext): Promise<void> {
   imp.warnings.push(
     "Non importés (décision PO) : dossiers de cadrage des groupes (gabarits restés vides), classement des groupes, liens Jira/Trello.",
   );
+
+  await classifyResources(imp, CLASSIFICATION(moodle.shortname));
 }

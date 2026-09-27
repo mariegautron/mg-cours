@@ -538,3 +538,7 @@ compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelle
   **20 commentaires prédéfinis** tirés des corrections (cadrage, specs, oral) ; PDF :
   slides de la séance 1 et « Communication & conduite du changement » → documents du
   module (type slides), « Gestion des risques » → fichier de la ressource correspondante.
+- **Classement des ressources (27/09)** : les 46 ressources importées (B2 + GP) ont reçu
+  type, matière et visibilité selon `docs/specs/ressources-classement.md` (passe
+  `classifyResources`, ne remplit que les champs vides / non retouchés). 9 ressources en
+  « Enseignante uniquement ». Nouvelle matière « Agilité » (Focus Scrum).

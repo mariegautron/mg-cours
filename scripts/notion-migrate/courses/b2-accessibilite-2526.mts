@@ -10,7 +10,12 @@ import * as XLSX from "xlsx";
 
 import { MIME_BY_EXT, safeName } from "../../../src/lib/storage/files.ts";
 
-import { ALL_ADMIN_DOCS_DONE, completeAdminDocs } from "../lib/helpers.mts";
+import {
+  ALL_ADMIN_DOCS_DONE,
+  classifyResources,
+  completeAdminDocs,
+  type Classification,
+} from "../lib/helpers.mts";
 import type { Importer } from "../lib/importer.mts";
 import { sectionActivities, type MoodleCourse } from "../lib/moodle.mts";
 import { stripLocalImages, type NotionPage } from "../lib/notion.mts";
@@ -30,6 +35,97 @@ export interface CourseContext {
 const PROGRESSION = "2df903c74f13805c8a20f402589c8c9a";
 const CORRIGE_EVAL_INDIVIDUELLE = "2df903c74f13809d8f5ac4cc183b8a31";
 const SCHOOL_SIRET = "80442673200033"; // Nantes Ynov Campus
+
+/** Classement des ressources du cours (docs/specs/ressources-classement.md, validé le 27/09). */
+const A11Y_COURSES = [
+  "205903c74f13806e91a8fbb545b11a45",
+  "205903c74f13806d8aa5f66236d030ce",
+  "205903c74f13800cac5be81417b9d428",
+  "205903c74f138052a56cf68aba60635d",
+  "205903c74f1380a8a968ea18b62f9463",
+  "205903c74f13808cb74fff9f514e126d",
+  "205903c74f13800bb452e59367b36b64",
+  "205903c74f1380418ec7cd15da7b3f2b",
+  "205903c74f13803e85b6d0ba28ffcd17",
+  "205903c74f1380229a85d2d1db3aa7fd",
+  "205903c74f13800bb045c92f6abaa289",
+  "205903c74f138095b033cbcf52ec95d8",
+  "205903c74f13805fa1f9cd292cbf3753",
+];
+const CLASSIFICATION: Classification[] = [
+  ...A11Y_COURSES.map((id) => ({
+    source: "notion" as const,
+    sourceId: id,
+    kind: "course" as const,
+    audience: "students" as const,
+    subject: "Accessibilité",
+    importedCategory: "Accessibilité",
+  })),
+  {
+    source: "notion",
+    sourceId: "20d903c74f1380aa8eccce3fdc8b7856",
+    kind: "course",
+    audience: "students",
+    subject: "Numérique responsable",
+    importedCategory: "Numérique responsable",
+  },
+  {
+    source: "notion",
+    sourceId: "205903c74f13806ab389ee0a21054e25",
+    kind: "workshop",
+    audience: "students",
+    subject: "Accessibilité",
+    importedCategory: "Accessibilité",
+  },
+  {
+    source: "notion",
+    sourceId: "20d903c74f1380709df7df7ce5434638",
+    kind: "answer_key",
+    audience: "students",
+    subject: "Numérique responsable",
+    importedCategory: "Numérique responsable",
+  },
+  {
+    source: "notion",
+    sourceId: CORRIGE_EVAL_INDIVIDUELLE,
+    kind: "answer_key",
+    audience: "teacher",
+    subject: "Accessibilité",
+    importedCategory: "Évaluation",
+  },
+  {
+    source: "moodle",
+    sourceId: "url:https://ics.utc.fr/capa/DOCS/SP4/Tuto/02/co/02c_descDet.html",
+    kind: "reference",
+    audience: "students",
+    subject: "Accessibilité",
+    importedCategory: "Lien",
+  },
+  {
+    source: "moodle",
+    sourceId: "url:https://access42.net/reseaux-sociaux-accessibilite-emojis-accessibles/",
+    kind: "reference",
+    audience: "students",
+    subject: "Accessibilité",
+    importedCategory: "Lien",
+  },
+  {
+    source: "moodle",
+    sourceId: "url:https://www.atalan.fr/agissons/fr/",
+    kind: "reference",
+    audience: "students",
+    subject: "Accessibilité",
+    importedCategory: "Lien",
+  },
+  {
+    source: "moodle",
+    sourceId: "url:https://checklists.opquast.com/fr/qualite-numerique/",
+    kind: "reference",
+    audience: "students",
+    subject: "Qualité web",
+    importedCategory: "Lien",
+  },
+];
 
 /** Pages de la bibliothèque diffusées sur Moodle, par section du cours Moodle. */
 const LIBRARY: Record<string, { id: string; category: string }[]> = {
@@ -527,6 +623,8 @@ export async function migrate(ctx: CourseContext): Promise<void> {
   imp.warnings.push(
     "Non importés (décision PO, économie de stockage) : PDF des supports (slides / cours) et site support (zip).",
   );
+
+  await classifyResources(imp, CLASSIFICATION);
 }
 
 /** Lit l'export « Notes » de Moodle (ODS, XLSX ou CSV) : une ligne par étudiant·e. */

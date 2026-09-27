@@ -194,3 +194,66 @@ export async function completeAdminDocs(imp: Importer, moduleId: string, label: 
     label,
   );
 }
+
+export type ResourceKind =
+  | "course"
+  | "workshop"
+  | "project"
+  | "template"
+  | "answer_key"
+  | "question_bank"
+  | "reference"
+  | "teacher_notes";
+
+export interface Classification {
+  source: "notion" | "moodle";
+  sourceId: string;
+  kind: ResourceKind;
+  audience: "students" | "teacher";
+  /** Matière (colonne `category`). */
+  subject: string;
+  /** Catégorie posée par l'import initial : remplacée seulement si elle n'a pas été retouchée. */
+  importedCategory: string;
+}
+
+const KIND_LABELS: Record<ResourceKind, string> = {
+  course: "Cours",
+  workshop: "Atelier",
+  project: "Projet",
+  template: "Modèle",
+  answer_key: "Corrigé",
+  question_bank: "Banque de questions",
+  reference: "Référence",
+  teacher_notes: "Notes enseignante",
+};
+
+/**
+ * Classe les ressources déjà importées (docs/specs/ressources-classement.md) : type et
+ * visibilité si le type est encore vide, matière si la catégorie est restée celle de l'import.
+ */
+export async function classifyResources(imp: Importer, items: Classification[]) {
+  for (const c of items) {
+    const id = await imp.findRef(c.source, c.sourceId, "resource");
+    if (!id) continue;
+    const { data, error } = await imp.sb
+      .from("resource")
+      .select("title, kind, audience, category")
+      .eq("id", id)
+      .single();
+    if (error) throw new Error(`resource ${c.sourceId} : ${error.message}`);
+    const patch: Record<string, unknown> = {};
+    if (!data.kind) {
+      patch.kind = c.kind;
+      if (data.audience !== c.audience) patch.audience = c.audience;
+    }
+    if ((data.category === c.importedCategory || !data.category) && data.category !== c.subject)
+      patch.category = c.subject;
+    if (!Object.keys(patch).length) continue;
+    imp.report.push({
+      table: "resource (classement)",
+      action: "compléter",
+      label: `${data.title} → ${KIND_LABELS[c.kind]} · ${c.subject} · ${c.audience === "teacher" ? "Enseignante uniquement" : "Étudiant·es"}${patch.kind ? "" : " (type déjà renseigné)"}`,
+    });
+    await imp.update("resource", id, patch, data.title as string);
+  }
+}
