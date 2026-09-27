@@ -5,7 +5,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { importModuleDocument, importResourceImages, splitNotionName } from "../lib/helpers.mts";
+import {
+  anonymize,
+  attachResourceFile,
+  importModuleDocument,
+  importResourceImages,
+  splitNotionName,
+} from "../lib/helpers.mts";
 import type { Importer } from "../lib/importer.mts";
 import type { MoodleCourse } from "../lib/moodle.mts";
 import { parseQuestionBank, questionBankMarkdown } from "../lib/moodle-questions.mts";
@@ -139,6 +145,150 @@ const CORRIGES = [
   },
 ];
 const CADRAGE_NOTES = "2ae903c74f1380daa710d97b5647765f"; // commentaire global par groupe
+
+// ── 2e passe (décision PO du 27/09) ──────────────────────────────────────────
+const NOTES_PREP = "29e903c74f13806197c8da904892ab33";
+/** Gabarit vide du dossier de cadrage donné aux équipes. */
+const CADRAGE_TEMPLATE = "2a2903c74f1380d89e79e38d550cf7ef";
+/** « Résumé des groupes » (sans le classement), anonymisés. */
+const TEAM_SUMMARIES = [
+  "2cc903c74f13803fa55cdbd0635fd597",
+  "2cc903c74f138017acefc0bd00693eb7",
+  "2cc903c74f1380f1a142c898014bdaf5",
+  "2cc903c74f1380789c28f8abdc52456c",
+  "2cc903c74f13806c9b0cee734b03be2c",
+  "2cc903c74f138004b77ff50059520ff3",
+];
+const RISK_ACTIVITY = "29f903c74f1380128632f2839544d6f7";
+/** PDF joints dans Notion : page, fichier, destination. */
+const PDFS = [
+  {
+    page: "29f903c74f13816e84d0d4001606cf2c",
+    file: "Gestion_de_projet_-_sance_1.pdf",
+    to: "module",
+    name: "Slides — Séance 1 (lancement du projet).pdf",
+  },
+  {
+    page: "29f903c74f13801c92a8f95c0e39ddff",
+    file: "Gestion_de_projet-14-17.pdf",
+    to: "module",
+    name: "Slides — Communication & conduite du changement.pdf",
+  },
+  {
+    page: RISK_ACTIVITY,
+    file: "Gestion_des_risques.pdf",
+    to: "resource",
+    name: "Gestion_des_risques.pdf",
+  },
+] as const;
+
+/** Remarques récurrentes des corrections 2025-26, reformulées en commentaires prédéfinis. */
+const PREDEFINED_COMMENTS: {
+  text: string;
+  category: "positive" | "negative" | "advice";
+  tags: string[];
+}[] = [
+  {
+    text: "Objectifs SMART très ambitieux (ex. 100 %) fixés sans validation du client : à discuter et ajuster avec lui.",
+    category: "negative",
+    tags: ["cadrage", "objectifs"],
+  },
+  {
+    text: "Contexte trop générique : reprenez les éléments concrets du brief (contraintes, volumétrie, enjeux).",
+    category: "negative",
+    tags: ["cadrage", "contexte"],
+  },
+  {
+    text: "Cartographie des parties prenantes incomplète : il manque des acteurs clés du brief (décideurs, utilisateurs, financeurs).",
+    category: "negative",
+    tags: ["cadrage", "acteurs"],
+  },
+  {
+    text: "Précisez pour chaque acteur son rôle, son influence et ses attentes : c'est ce qui permet de piloter les arbitrages.",
+    category: "advice",
+    tags: ["cadrage", "acteurs"],
+  },
+  {
+    text: "Le « besoin réel » décrit déjà une solution : reformulez-le en besoins implicites et en hypothèses à valider avec le client.",
+    category: "negative",
+    tags: ["cadrage", "besoin"],
+  },
+  {
+    text: "Catégorisez les contraintes (techniques, fonctionnelles, légales, budget, délais) et chiffrez-les quand c'est possible.",
+    category: "advice",
+    tags: ["cadrage", "contraintes"],
+  },
+  {
+    text: "Les forces du SWOT portent sur votre équipe plutôt que sur le projet du client : recentrez l'analyse sur sa situation.",
+    category: "negative",
+    tags: ["cadrage", "SWOT"],
+  },
+  {
+    text: "Interprétez la SWOT : quelles opportunités exploiter, quels risques surveiller en priorité ?",
+    category: "advice",
+    tags: ["cadrage", "SWOT"],
+  },
+  {
+    text: "Un élément « non faisable » relève souvent du « à risque » : précisez les conditions ou arbitrages qui le rendraient faisable.",
+    category: "advice",
+    tags: ["cadrage", "faisabilité"],
+  },
+  {
+    text: "Distinguez clairement ce qui relève du MVP (V1) et de la V2 pour montrer vos arbitrages.",
+    category: "advice",
+    tags: ["cadrage", "MVP"],
+  },
+  {
+    text: "Plans d'action trop génériques : précisez qui fait quoi et comment le risque est concrètement réduit.",
+    category: "negative",
+    tags: ["risques"],
+  },
+  {
+    text: "Hypothèses explicitement signalées : le raisonnement est facile à suivre, c'est un réflexe professionnel.",
+    category: "positive",
+    tags: ["cadrage", "rédaction"],
+  },
+  {
+    text: "Justifiez le choix méthodologique par les contraintes du projet (délai, incertitudes, disponibilité du client) et comparez-le aux alternatives.",
+    category: "advice",
+    tags: ["specs", "méthodologie"],
+  },
+  {
+    text: "Architecture surdimensionnée pour une V1 au regard du délai et du budget : simplifiez et justifiez vos arbitrages.",
+    category: "negative",
+    tags: ["specs", "architecture"],
+  },
+  {
+    text: "Modèle de données à formaliser : entités, relations, volumétrie, archivage et règles RGPD.",
+    category: "advice",
+    tags: ["specs", "données"],
+  },
+  {
+    text: "Sécurité : détaillez les rôles, les niveaux d'accès et la protection des données sensibles.",
+    category: "advice",
+    tags: ["specs", "sécurité"],
+  },
+  {
+    text: "Soyez explicite sur le périmètre du MVP : le client doit savoir exactement ce qu'il aura, et quand.",
+    category: "advice",
+    tags: ["oral", "MVP"],
+  },
+  {
+    text: "Planning et budget peu cohérents avec le staffing annoncé : alignez périmètre, charge, délai et ressources.",
+    category: "negative",
+    tags: ["oral", "planning"],
+  },
+  {
+    text: "Posture professionnelle et discours orienté client, clairs et convaincants.",
+    category: "positive",
+    tags: ["oral", "posture"],
+  },
+  {
+    text: "Ne relisez pas vos documents : synthétisez et racontez, les slides soutiennent le discours.",
+    category: "advice",
+    tags: ["oral", "présentation"],
+  },
+];
 
 const ASSESSMENTS = [
   {
@@ -450,11 +600,13 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     }
 
   const students: { id: string; label: string; group: number | null; qcm: number | null }[] = [];
+  const people: { first: string; last: string }[] = [];
   for (const f of readdirSync(studentsDir)
     .filter((x) => /[0-9a-f]{32}\.md$/.test(x))
     .sort()) {
     const p = page(/([0-9a-f]{32})\.md$/.exec(f)![1]);
     const { first, last } = splitNotionName(p.title);
+    people.push({ first, last });
     const initial = `${last.charAt(0).toUpperCase()}.`;
     const label = `${first} ${initial}`;
     const group = groupNumberById.get(linkedIds(p.properties["Groupe"])[0] ?? "") ?? null;
@@ -653,6 +805,73 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     );
   }
 
+  // ── 2e passe : modèle de cadrage, retour d'expérience, commentaires, supports ──
+  const linkNow = async (session: number, resourceId: string, label: string) =>
+    imp.link(
+      "course_resource",
+      { course_id: courseIds.get(session), resource_id: resourceId, role: "secondary" },
+      "course_id,resource_id",
+      `Séance ${session} ↔ ${label}`,
+    );
+
+  const template = page(CADRAGE_TEMPLATE);
+  const templateId = await ensureResource(
+    template.id,
+    {
+      title: "Modèle — Dossier de cadrage SantaConnect",
+      content: template.body,
+      category: "Gestion de projet",
+      tags: ["modèle", "SantaConnect"],
+    },
+    `Modèle — Dossier de cadrage SantaConnect (${template.body.length} car.)`,
+  );
+  await linkNow(3, templateId, "Modèle — Dossier de cadrage");
+
+  const summaries = TEAM_SUMMARIES.map((id) => page(id));
+  const retex = [
+    "Synthèse des propositions des 6 équipes (projet SantaConnect, 2025-26) : positionnement, livrables, solution, MVP, points forts et points faibles. Noms des étudiant·es retirés.",
+    ...summaries.map((p) => `## ${p.title}\n\n${anonymize(p.body, people)}`),
+  ].join("\n\n");
+  const leftovers = people
+    .map((x) => x.first.split(/\s+/)[0])
+    .filter((f) => f.length > 3 && new RegExp(`(?<!\\p{L})${f}(?!\\p{L})`, "u").test(retex));
+  if (leftovers.length)
+    imp.warnings.push(
+      `Retour d'expérience : prénoms encore présents à vérifier (${[...new Set(leftovers)].join(", ")}).`,
+    );
+  const retexId = await ensureResource(
+    `${NOTES_PREP}#retour-experience`,
+    {
+      title: "Retour d'expérience 2025 — propositions des équipes",
+      content: retex,
+      category: "Gestion de projet",
+      tags: ["retour d'expérience", "SantaConnect"],
+    },
+    `Retour d'expérience 2025 — propositions des équipes (6 équipes, anonymisé, ${retex.length} car.)`,
+  );
+  await linkNow(7, retexId, "Retour d'expérience 2025");
+
+  for (const [i, c] of PREDEFINED_COMMENTS.entries()) {
+    await imp.ensure(
+      "predefined_comment",
+      "notion",
+      `${NOTES_PREP}#commentaire-${i + 1}`,
+      { text: c.text, category: c.category, tags: ["gestion de projet", ...c.tags] },
+      `[${c.category}] ${c.text}`,
+    );
+  }
+
+  for (const f of PDFS) {
+    const path = join(page(f.page).path.replace(/ [0-9a-f]{32}\.md$/, ""), f.file);
+    if (f.to === "resource") {
+      const resourceId = resourceIds.get(RISK_ACTIVITY);
+      if (resourceId)
+        await attachResourceFile(imp, resourceId, path, "Identifier et gérer les risques projet");
+      else imp.warnings.push(`Ressource cible absente pour ${f.file}.`);
+    } else
+      await importModuleDocument(imp, moduleId, "slides", path, `${f.page}#pdf:${f.file}`, f.name);
+  }
+
   // ── Documents du module ──────────────────────────────────────────────────
   await importModuleDocument(
     imp,
@@ -675,6 +894,6 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     imp.warnings.push(`${droppedImages} image(s) retirée(s) des sujets d'évaluation.`);
   for (const issue of imageIssues) imp.warnings.push(`Image non importée — ${issue}`);
   imp.warnings.push(
-    "Non importés (décision PO) : PDF joints, dossiers de cadrage des groupes, résumés / classement des groupes, notes de correction perso, liens Jira/Trello.",
+    "Non importés (décision PO) : dossiers de cadrage des groupes (gabarits restés vides), classement des groupes, liens Jira/Trello.",
   );
 }

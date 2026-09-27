@@ -532,3 +532,9 @@ compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelle
   critère et commentaires ; 2 documents).
 - Relations séance → pages de bibliothèque absentes de l'export (pages déplacées) :
   reprises à la main (séance 4 : méthodes, Scrum ; séance 6 : estimation).
+- **2e passe GP (27/09)** : ressource « Modèle — Dossier de cadrage SantaConnect » (séance 3) ;
+  « Retour d'expérience 2025 — propositions des équipes » (6 résumés, **anonymisés** :
+  noms et prénoms remplacés par « [étudiant·e] », classement exclu ; séance 7) ;
+  **20 commentaires prédéfinis** tirés des corrections (cadrage, specs, oral) ; PDF :
+  slides de la séance 1 et « Communication & conduite du changement » → documents du
+  module (type slides), « Gestion des risques » → fichier de la ressource correspondante.

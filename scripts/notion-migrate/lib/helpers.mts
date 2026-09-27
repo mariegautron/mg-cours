@@ -51,7 +51,7 @@ export async function importResourceImages(
 export async function importModuleDocument(
   imp: Importer,
   moduleId: string,
-  kind: "outline_sent" | "external_invoice",
+  kind: "outline_sent" | "external_invoice" | "slides",
   file: string | null,
   sourceId: string,
   name: string,
@@ -82,3 +82,78 @@ export function splitNotionName(full: string): { first: string; last: string } {
   if (i === 0) return { first: tokens.slice(1).join(" "), last: tokens[0] ?? "" };
   return { first: tokens.slice(i).join(" "), last: tokens.slice(0, i).join(" ") };
 }
+
+/** Joint un fichier (PDF, slides…) à une ressource : bucket `resource-files` + `resource.files`. */
+export async function attachResourceFile(
+  imp: Importer,
+  resourceId: string,
+  file: string,
+  label: string,
+) {
+  const name = basename(file);
+  const mime = MIME_BY_EXT[extname(name).slice(1).toLowerCase()];
+  if (!mime || !existsSync(file)) {
+    imp.warnings.push(`Fichier non joint — ${label} › ${name}`);
+    return;
+  }
+  const { data } = imp.isDry(resourceId)
+    ? { data: null }
+    : await imp.sb.from("resource").select("files").eq("id", resourceId).single();
+  const files = (Array.isArray(data?.files) ? data.files : []) as Record<string, unknown>[];
+  if (files.some((f) => f.name === name)) return;
+  const body = readFileSync(file);
+  const path = `${imp.ownerId}/${resourceId}/${randomUUID()}-${safeName(name)}`;
+  imp.report.push({
+    table: "resource-files (fichiers)",
+    action: "envoyer",
+    label: `${label} › ${name} (${Math.max(1, Math.round(body.length / 1024))} Ko)`,
+  });
+  await imp.upload("resource-files", path, body, mime);
+  await imp.update(
+    "resource",
+    resourceId,
+    { files: [...files, { path, name, size: body.length, mime }] },
+    label,
+  );
+}
+
+/** Remplace les noms d'étudiant·es (« Prénom NOM », « NOM Prénom », « NOM ») par un libellé neutre. */
+export function anonymize(
+  text: string,
+  people: { first: string; last: string }[],
+  label = "[étudiant·e]",
+) {
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let out = text;
+  for (const { first, last } of people) {
+    if (!last) continue;
+    const f = first.split(/\s+/)[0];
+    const re = new RegExp(
+      // \b ne gère pas les lettres accentuées : bornes de mot en \p{L}.
+      `(?<!\\p{L})(?:${esc(f)}\\s+)?${esc(last)}(?:\\s+${esc(f)})?(?!\\p{L})`,
+      "giu",
+    );
+    out = out.replace(re, label);
+  }
+  // Prénoms seuls (souvent écrits avec ou sans accent : Matheo / Mathéo).
+  const fold = (s: string) =>
+    [...s.normalize("NFD").replace(/\p{M}/gu, "")]
+      .map((c) => ACCENTS[c.toLowerCase()] ?? esc(c))
+      .join("");
+  for (const { first } of people) {
+    const f = first.split(/\s+/)[0];
+    if (f.length < 4) continue;
+    out = out.replace(new RegExp(`(?<!\\p{L})${fold(f)}(?!\\p{L})`, "giu"), label);
+  }
+  return out.replace(new RegExp(`${esc(label)}(\\s+${esc(label)})+`, "g"), label);
+}
+
+const ACCENTS: Record<string, string> = {
+  a: "[aàâä]",
+  e: "[eéèêë]",
+  i: "[iîï]",
+  o: "[oôö]",
+  u: "[uùûü]",
+  c: "[cç]",
+  y: "[yÿ]",
+};
