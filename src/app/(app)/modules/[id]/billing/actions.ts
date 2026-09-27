@@ -22,7 +22,6 @@ export interface BillingActionState {
   ok?: boolean;
 }
 
-
 function refresh(moduleId: string) {
   revalidatePath(`/modules/${moduleId}/billing`);
   revalidatePath(`/modules/${moduleId}`);

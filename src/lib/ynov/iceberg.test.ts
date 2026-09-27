@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  advanceTo,
-  ICEBERG_STATES,
-  isAtLeast,
-  isOutlineSent,
-  nextState,
-} from "./iceberg";
+import { advanceTo, ICEBERG_STATES, isAtLeast, isOutlineSent, nextState } from "./iceberg";
 
 describe("iceberg workflow", () => {
   it("contient les 13 étapes dans l'ordre du schéma", () => {

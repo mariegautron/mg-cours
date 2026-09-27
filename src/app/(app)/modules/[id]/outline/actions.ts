@@ -10,7 +10,6 @@ export interface OutlineActionState {
   error?: string;
 }
 
-
 /** Génère (ou rafraîchit) l'instantané de la trame. Ne touche pas au statut d'envoi. */
 export async function generateOutline(moduleId: string): Promise<OutlineActionState> {
   const content = await buildCurrentOutline(moduleId);
