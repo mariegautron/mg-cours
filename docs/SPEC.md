@@ -152,8 +152,17 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 ### Grilles `/assessments/grids`
 
-- Grille réutilisable : nom, description, critères saisis une ligne par critère
-  (`Libellé | points`) ; barème = somme des points. Modifier remplace les critères.
+- Grille réutilisable : nom, description, éditeur de liste de critères (libellé, points,
+  description repliable pour les niveaux de notation, ex. « 6 pts : excellent ») ; barème = somme
+  des points ; réordonnancement par boutons (haut/bas, clavier), ajout, suppression.
+- Modifier une grille **conserve l'identifiant** de chaque critère inchangé (mise à jour, pas
+  recréation) : les descriptions ne sont pas perdues et le détail des notes déjà saisies
+  (`grade.scores`, rangé par identifiant de critère) reste rattaché.
+- Supprimer un critère déjà noté dans au moins une évaluation demande confirmation avant
+  d'enregistrer (message nommant le ou les critères concernés) ; une fois confirmé, sa clé est
+  retirée de `grade.scores` (la note globale `value` est conservée telle quelle, non recalculée).
+- Un identifiant soumis qui n'appartient pas à cette grille (copié depuis une autre) est ignoré et
+  traité comme une création.
 
 ### Commentaires prédéfinis `/assessments/comments`
 
@@ -177,8 +186,9 @@ chacune liées à une ou plusieurs ressources réutilisables.
   l'ensemble des groupes, rangés par groupe ; un·e étudiant·e présent·e dans plusieurs groupes n'a
   qu'un formulaire (`gradingTargets`, `src/lib/assessments/targets.ts`).
 - Retirer un groupe à l'édition supprime ses notes de groupe ; les notes individuelles restent.
-- Avec grille : un champ par critère (max = points du critère), total calculé ; sans grille :
-  note directe. Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
+- Avec grille : un champ par critère (max = points du critère), total calculé, description du
+  critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
+  Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
 ### Règles
 

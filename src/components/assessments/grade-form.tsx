@@ -73,6 +73,16 @@ export function GradeForm({
                 max={c.weight}
                 defaultValue={scores[c.id] ?? ""}
               />
+              {c.description ? (
+                <details>
+                  <summary className="text-muted-foreground cursor-pointer text-xs">
+                    Voir le barème
+                  </summary>
+                  <p className="text-muted-foreground mt-1 text-xs whitespace-pre-wrap">
+                    {c.description}
+                  </p>
+                </details>
+              ) : null}
             </div>
           ))}
           <p className="text-muted-foreground text-sm sm:col-span-2">

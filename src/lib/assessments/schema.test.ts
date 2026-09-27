@@ -1,31 +1,32 @@
 import { describe, expect, it } from "vitest";
 
-import { assessmentSchema, parseCriteriaLines, readAssessmentForm } from "./schema";
+import { assessmentSchema, gridSchema, readAssessmentForm, readGridForm } from "./schema";
 
-describe("parseCriteriaLines", () => {
-  it("parse un critère par ligne au format « Libellé | points »", () => {
-    const criteria = parseCriteriaLines("Présentation | 4\nDémonstration | 6\n");
-    expect(criteria).toEqual([
-      { label: "Présentation", weight: 4, lineNumber: 1 },
-      { label: "Démonstration", weight: 6, lineNumber: 2 },
+describe("gridSchema", () => {
+  it("exige un nom et un JSON de critères non vide", () => {
+    const fd = new FormData();
+    fd.set("name", "");
+    fd.set("criteriaJson", "");
+    const parsed = readGridForm(fd);
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.flatten().fieldErrors.name).toEqual(["Le nom est obligatoire."]);
+    expect(parsed.error?.flatten().fieldErrors.criteriaJson).toEqual([
+      "Ajoutez au moins un critère.",
     ]);
   });
 
-  it("ignore les lignes vides", () => {
-    const criteria = parseCriteriaLines("Présentation | 4\n\n\nDémonstration | 6\n");
-    expect(criteria).toHaveLength(2);
-  });
-
-  it("signale un libellé manquant", () => {
-    const criteria = parseCriteriaLines("| 4\n");
-    expect(criteria[0].error).toBe("libellé manquant");
-  });
-
-  it("signale des points manquants ou invalides", () => {
-    expect(parseCriteriaLines("Présentation\n")[0].error).toBe("points invalides");
-    expect(parseCriteriaLines("Présentation | abc\n")[0].error).toBe("points invalides");
-    expect(parseCriteriaLines("Présentation | 0\n")[0].error).toBe("points invalides");
-    expect(parseCriteriaLines("Présentation | -2\n")[0].error).toBe("points invalides");
+  it("lit confirmDeleteCriteria depuis le champ caché", () => {
+    const fd = new FormData();
+    fd.set("name", "Grille");
+    fd.set("criteriaJson", "[]");
+    fd.set("confirmDeleteCriteria", "1");
+    const parsed = gridSchema.safeParse({
+      name: "Grille",
+      description: "",
+      criteriaJson: "[]",
+      confirmDeleteCriteria: true,
+    });
+    expect(parsed.success && parsed.data.confirmDeleteCriteria).toBe(true);
   });
 });
 

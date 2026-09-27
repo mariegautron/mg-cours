@@ -1,43 +1,20 @@
 import { z } from "zod";
 
-export interface ParsedCriterion {
-  label: string;
-  weight: number;
-  lineNumber: number;
-  error?: string;
-}
-
-/**
- * Un critère par ligne, format « Libellé | points » (ex. « Présentation | 4 »).
- * Pas d'éditeur de liste dynamique en V1 — texte libre, parsé et validé côté serveur.
- */
-export function parseCriteriaLines(raw: string): ParsedCriterion[] {
-  return raw
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line, i) => {
-      const [labelPart, weightPart] = line.split("|").map((p) => p.trim());
-      const weight = Number(weightPart);
-      if (!labelPart) return { label: "", weight: 0, lineNumber: i + 1, error: "libellé manquant" };
-      if (!weightPart || Number.isNaN(weight) || weight <= 0) {
-        return { label: labelPart, weight: 0, lineNumber: i + 1, error: "points invalides" };
-      }
-      return { label: labelPart, weight, lineNumber: i + 1 };
-    });
-}
-
 export const gridSchema = z.object({
   name: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
-  criteriaText: z.string().trim().min(1, "Ajoutez au moins un critère."),
+  // Sérialisé par l'éditeur de liste de critères (voir grid-form.tsx) ; validé plus précisément
+  // par `readCriteriaInput` (src/lib/assessments/grid-criteria.ts) une fois le JSON parsé.
+  criteriaJson: z.string().trim().min(1, "Ajoutez au moins un critère."),
+  confirmDeleteCriteria: z.coerce.boolean().default(false),
 });
 
 export function readGridForm(formData: FormData) {
   return gridSchema.safeParse({
     name: formData.get("name") ?? "",
     description: formData.get("description") ?? "",
-    criteriaText: formData.get("criteriaText") ?? "",
+    criteriaJson: formData.get("criteriaJson") ?? "",
+    confirmDeleteCriteria: formData.get("confirmDeleteCriteria") === "1",
   });
 }
 
