@@ -437,3 +437,17 @@ les 6 groupes projet, sujet dans l'évaluation, images des ressources, facture 2
 Migration `20260926160000_import_ref.sql` commitée (9e25319, crée aussi
 `module.archived_at`). Reste : `db push`, relancer la simulation, puis `--apply`. Rien n'est
 encore écrit sur le cloud ; script non commité.
+
+#### B2 — écriture (27/09)
+
+- Simulation réelle sur le cloud validée par la PO (1 module, 5 séances, 21 ressources +
+  33 images, 6 groupes, 15 étudiant·es, 3 grilles / 12 critères, 3 évaluations × 6 groupes,
+  2 documents).
+- Oral : barème **/20** conservé (la grille totalise 20 ; décision PO, remplace le /24).
+- `--apply` lancé par la PO. Contrôles à faire : simulation relancée = tout « déjà importé » ;
+  vérification dans l'app (modules archivés affichés).
+- ⚠️ Ne pas modifier les 3 grilles du B2 dans l'app avant le correctif « édition de grille
+  sans recréer les critères ».
+- `--apply` exécuté sans erreur le 27/09 : tout est créé sur le cloud.
+- **PDF des supports (slides / cours) et site support : non importés** (décision PO,
+  économie de stockage). Seuls la trame envoyée et la facture sont stockées.

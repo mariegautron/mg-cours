@@ -431,6 +431,6 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     "Oral : Moodle notait sur 24, la grille Notion totalise 20 → barème de l'évaluation = 20 (total de la grille), modifiable dans l'app.",
   );
   imp.warnings.push(
-    "Non importés pour l'instant : PDF des supports (slides / cours), site support (zip).",
+    "Non importés (décision PO, économie de stockage) : PDF des supports (slides / cours) et site support (zip).",
   );
 }
