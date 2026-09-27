@@ -2,11 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Copy, Download, Trash2, Upload } from "lucide-react";
+import { Copy, Download, Eye } from "lucide-react";
 
 import { deleteResourceFile, registerResourceFile } from "@/app/(app)/resources/actions";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { FileCard } from "@/components/files/file-card";
+import { FileDropZone } from "@/components/files/file-drop-zone";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   isImageMime,
   RESOURCE_FILE_ACCEPT,
@@ -16,7 +18,7 @@ import {
   resourceFileUrl,
   type ResourceFile,
 } from "@/lib/resources/files";
-import { formatSize, mimeOf, safeName } from "@/lib/storage/files";
+import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
 
 export function ResourceFiles({
@@ -27,15 +29,11 @@ export function ResourceFiles({
   files: ResourceFile[];
 }) {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [state, setState] = useState<{ error?: string; status?: string }>({});
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const file = new FormData(form).get("file");
-    if (!(file instanceof File) || file.size === 0)
-      return setState({ error: "Choisissez un fichier." });
+  async function upload(file: File, input: HTMLInputElement) {
+    input.value = "";
     if (file.size > RESOURCE_FILE_MAX_BYTES)
       return setState({ error: "Fichier trop volumineux (50 Mo maximum)." });
     if (!RESOURCE_FILE_EXTENSIONS.test(file.name)) {
@@ -44,12 +42,12 @@ export function ResourceFiles({
       });
     }
 
-    setPending(true);
+    setUploading(file.name);
     setState({});
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
-      setPending(false);
+      setUploading(null);
       return setState({ error: "Session expirée." });
     }
     const mime = mimeOf(file);
@@ -59,7 +57,7 @@ export function ResourceFiles({
       .from(RESOURCE_FILES_BUCKET)
       .upload(path, file, { contentType: mime });
     if (uploadError) {
-      setPending(false);
+      setUploading(null);
       return setState({ error: "Dépôt impossible. Réessayez." });
     }
 
@@ -69,9 +67,8 @@ export function ResourceFiles({
       size: file.size,
       mime,
     });
-    setPending(false);
+    setUploading(null);
     if (result.error) return setState({ error: result.error });
-    form.reset();
     setState({ status: "Fichier déposé." });
     router.refresh();
   }
@@ -91,65 +88,53 @@ export function ResourceFiles({
       {files.length ? (
         <ul className="space-y-2">
           {files.map((f) => (
-            <li key={f.path} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span>
-                {f.name} <span className="text-muted-foreground">({formatSize(f.size)})</span>
-              </span>
-              <span className="flex flex-wrap gap-2">
-                {isImageMime(f.mime) ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => copySyntax(f.name)}
-                  >
-                    <Copy aria-hidden />
-                    Copier la syntaxe
-                    <span className="sr-only"> de {f.name}</span>
-                  </Button>
-                ) : null}
+            <FileCard key={f.path} name={f.name} mime={f.mime} size={f.size}>
+              {f.mime === "application/pdf" || isImageMime(f.mime) ? (
                 <Button asChild size="sm" variant="secondary">
-                  <a href={resourceFileUrl(resourceId, f.name, true)}>
-                    <Download aria-hidden />
-                    Télécharger
-                    <span className="sr-only"> {f.name}</span>
+                  <a
+                    href={resourceFileUrl(resourceId, f.name)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Eye aria-hidden />
+                    Aperçu
+                    <span className="sr-only"> {f.name} — s’ouvre dans un nouvel onglet</span>
                   </a>
                 </Button>
-                <form action={deleteResourceFile.bind(null, resourceId, f.path)}>
-                  <Button type="submit" size="sm" variant="ghost">
-                    <Trash2 aria-hidden />
-                    Supprimer
-                    <span className="sr-only"> {f.name}</span>
-                  </Button>
-                </form>
-              </span>
-            </li>
+              ) : null}
+              <Button asChild size="sm" variant="secondary">
+                <a href={resourceFileUrl(resourceId, f.name, true)}>
+                  <Download aria-hidden />
+                  Télécharger
+                  <span className="sr-only"> {f.name}</span>
+                </a>
+              </Button>
+              {isImageMime(f.mime) ? (
+                <Button type="button" size="sm" variant="ghost" onClick={() => copySyntax(f.name)}>
+                  <Copy aria-hidden />
+                  Copier la syntaxe
+                  <span className="sr-only"> de {f.name}</span>
+                </Button>
+              ) : null}
+              <ConfirmDeleteButton
+                itemName={f.name}
+                title={`Supprimer « ${f.name} » ?`}
+                description="Le fichier sera définitivement effacé ; une image affichée dans le contenu n’apparaîtra plus."
+                onConfirm={() => deleteResourceFile(resourceId, f.path)}
+              />
+            </FileCard>
           ))}
         </ul>
-      ) : (
-        <p className="text-muted-foreground text-sm">Aucun fichier déposé.</p>
-      )}
-      <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1">
-          <Label htmlFor="resource-file">Déposer un fichier</Label>
-          <input
-            id="resource-file"
-            name="file"
-            type="file"
-            accept={RESOURCE_FILE_ACCEPT}
-            required
-            aria-describedby="resource-file-hint"
-            className="block text-sm"
-          />
-          <p id="resource-file-hint" className="text-muted-foreground text-sm">
-            PDF, Word, présentation ou image, 50 Mo maximum. Un fichier du même nom est remplacé.
-          </p>
-        </div>
-        <Button type="submit" size="sm" disabled={pending}>
-          <Upload aria-hidden />
-          {pending ? "Dépôt…" : "Déposer"}
-        </Button>
-      </form>
+      ) : null}
+      <FileDropZone
+        id="resource-file"
+        label={files.length ? "Ajouter un fichier" : "Déposer un fichier"}
+        hint="PDF, Word, présentation ou image · 50 Mo max · un fichier du même nom est remplacé"
+        accept={RESOURCE_FILE_ACCEPT}
+        compact={files.length > 0}
+        busy={uploading ? `Dépôt de « ${uploading} » en cours…` : null}
+        onFile={(file, input) => void upload(file, input)}
+      />
       {state.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}

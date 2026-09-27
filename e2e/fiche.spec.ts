@@ -38,7 +38,6 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
       "TDP : 12 h",
     ]),
   });
-  await page.getByRole("button", { name: "Lire la fiche" }).click();
 
   await expect(page.getByRole("status")).toContainText("Préremplis");
   await expect(page.getByLabel("Nom du module")).toHaveValue("Architecture Web");
@@ -71,6 +70,5 @@ test("signale un PDF sans texte exploitable", async ({ page }) => {
     mimeType: "application/pdf",
     buffer: await fichePdf(["Bonjour, un texte sans aucun rapport avec un module."]),
   });
-  await page.getByRole("button", { name: "Lire la fiche" }).click();
   await expect(page.locator("p[role=alert]")).toContainText("Rien d’exploitable");
 });

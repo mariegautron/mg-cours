@@ -35,7 +35,8 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
 - Titre, description, catégorie/tags, lien externe.
 - **Utilisation** : liste des modules (nom + année) où la ressource est employée, triés par
   année décroissante ; lien vers chaque module.
-- **Fichiers** : liste (nom, taille) + Télécharger / Supprimer ; dépôt direct navigateur → Storage
+- **Fichiers (n)** : cartes fichier (type · taille) + Aperçu (PDF, image) / Télécharger /
+  Supprimer (confirmation) ; zone de dépôt partagée (`FileDropZone`) ; dépôt direct navigateur → Storage
   (bucket privé `resource-files`, `<owner_id>/<resource_id>/…`, 50 Mo, PDF / Word / présentation /
   PNG-JPEG-GIF-WebP, pas de SVG). Un fichier du même nom remplace l'ancien. Pour une image :
   « Copier la syntaxe » (`![nom](nom.png)`).
@@ -86,6 +87,11 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 ### Détail `/modules/[id]`
 
+Dépôts de fichiers (partout : documents du module, fichiers de ressource, fiche pédagogique,
+import étudiants) : `src/components/files/` — `FileDropZone` (zone pointillés cliquable +
+glisser-déposer, formats et taille affichés, envoi dès la sélection, état « en cours »
+annoncé) et `FileCard` (type · taille · date + actions nommées).
+
 - Fil d'Ariane `Modules › {nom}` (« Modules archivés » si archivé) ; bandeau « Module archivé le
   … » + « Restaurer le module » ; sous-navigation d'ancres collante (Trame · Séances · Groupes ·
   Évaluations · Documents · Facturation · Administratif · Actions). Ordre des sections = ordre
@@ -104,8 +110,8 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - **Documents** (attendus de l'école, trame envoyée, facture externe — aussi sur Facturation) :
   zone de dépôt en pointillés cliquable + glisser-déposer (PDF/Word/ODT, 50 Mo max, dépôt dès
   la sélection) ; une fois déposé, carte fichier (type · taille · date) avec « Aperçu » (PDF,
-  `?inline=1`, nouvel onglet), « Télécharger », « Supprimer » (confirmation) et « Ajouter un
-  fichier » pour déplier la zone.
+  `?inline=1`, nouvel onglet), « Télécharger », « Supprimer » (confirmation) ; la zone reste
+  visible en version compacte « Ajouter un fichier ».
 - **Documents administratifs** : 4 interrupteurs (fiche de positionnement, progression
   pédagogique, supports Moodle, sujets/grilles Moodle) → `module.admin_docs`.
 - **Actions** : dupliquer vers une nouvelle année (module + séances + liens ressources,
@@ -144,7 +150,7 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 ### Import `/students/import`
 
-- Étape 1 : dépôt d'un fichier **CSV ou XLSX**, colonnes reconnues par alias tolérant aux
+- Étape 1 : dépôt d'un fichier **CSV ou XLSX** (zone de dépôt, analyse dès la sélection), colonnes reconnues par alias tolérant aux
   accents/casse (nom, prénom, email, numéro étudiant, groupe) → aperçu ligne par ligne
   (à importer / déjà en base / en erreur), **rien n'est écrit à cette étape**.
 - Étape 2 : confirmation → n'insère que les lignes valides et non déjà présentes

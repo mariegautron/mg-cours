@@ -23,6 +23,7 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
   const { id } = await params;
   const [resource, modules] = await Promise.all([getResource(id), getResourceModules(id)]);
   if (!resource) notFound();
+  const files = parseResourceFiles(resource.files);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -98,8 +99,9 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
       <section aria-labelledby="files">
         <h2 id="files" className="mb-2 text-lg font-medium">
           Fichiers
+          {files.length ? ` (${files.length})` : ""}
         </h2>
-        <ResourceFiles resourceId={resource.id} files={parseResourceFiles(resource.files)} />
+        <ResourceFiles resourceId={resource.id} files={files} />
       </section>
 
       {resource.content ? (

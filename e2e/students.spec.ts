@@ -60,7 +60,6 @@ test("importe des étudiant·es depuis un CSV", async ({ page }) => {
     mimeType: "text/csv",
     buffer: Buffer.from(csv, "utf-8"),
   });
-  await page.getByRole("button", { name: "Analyser le fichier" }).click();
 
   await expect(page.getByText("1 à importer")).toBeVisible();
   await expect(page.getByText("1 en erreur")).toBeVisible();

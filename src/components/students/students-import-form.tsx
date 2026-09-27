@@ -9,10 +9,9 @@ import {
   type ImportConfirmState,
   type ImportPreviewState,
 } from "@/app/(app)/students/actions";
+import { FileDropZone } from "@/components/files/file-drop-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const previewInitial: ImportPreviewState = {};
 const confirmInitial: ImportConfirmState = {};
@@ -45,8 +44,14 @@ export function StudentsImportForm() {
     return (
       <form action={previewAction} className="max-w-md space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="file">Fichier CSV ou XLSX</Label>
-          <Input id="file" name="file" type="file" accept=".csv,.xlsx,.xls" required />
+          <FileDropZone
+            id="file"
+            label="Fichier CSV ou XLSX"
+            hint="analyse immédiate, rien n’est importé avant confirmation"
+            accept=".csv,.xlsx,.xls"
+            busy={previewPending ? "Analyse du fichier…" : null}
+            onFile={(_file, input) => input.form?.requestSubmit()}
+          />
           <p className="text-muted-foreground text-sm">
             Colonnes reconnues : nom, prénom, e-mail, numéro étudiant, groupe (accents et casse
             ignorés).
@@ -57,9 +62,6 @@ export function StudentsImportForm() {
             {previewState.error}
           </p>
         ) : null}
-        <Button type="submit" disabled={previewPending}>
-          {previewPending ? "Analyse…" : "Analyser le fichier"}
-        </Button>
       </form>
     );
   }

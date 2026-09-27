@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FileSearch } from "lucide-react";
 
 import { extractFiche } from "@/app/(app)/modules/fiche-actions";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { FileDropZone } from "@/components/files/file-drop-zone";
 import type { FicheData } from "@/lib/modules/fiche";
 
 const LABELS: Record<keyof FicheData, string> = {
@@ -41,15 +39,17 @@ function setField(id: string, value: string) {
 }
 
 export function FichePrefill({ schools }: { schools: { id: string; name: string }[] }) {
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setPending(true);
+  async function read(file: File, input: HTMLInputElement) {
+    input.value = "";
+    setPending(file.name);
     setMessage(null);
-    const result = await extractFiche(new FormData(event.currentTarget));
-    setPending(false);
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await extractFiche(formData);
+    setPending(null);
 
     if (result.error || !result.data) {
       return setMessage({ kind: "error", text: result.error ?? "Lecture impossible." });
@@ -84,23 +84,14 @@ export function FichePrefill({ schools }: { schools: { id: string; name: string 
           sont trouvés. Le fichier n’est pas conservé (déposez-le ensuite dans « Documents »).
         </p>
       </div>
-      <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1">
-          <Label htmlFor="ficheFile">Fiche pédagogique (PDF, 4 Mo max)</Label>
-          <input
-            id="ficheFile"
-            name="file"
-            type="file"
-            accept=".pdf"
-            required
-            className="block text-sm"
-          />
-        </div>
-        <Button type="submit" size="sm" variant="secondary" disabled={pending}>
-          <FileSearch aria-hidden />
-          {pending ? "Lecture…" : "Lire la fiche"}
-        </Button>
-      </form>
+      <FileDropZone
+        id="ficheFile"
+        label="Fiche pédagogique (PDF, 4 Mo max)"
+        hint="lecture immédiate, le fichier n’est pas conservé"
+        accept=".pdf"
+        busy={pending ? `Lecture de « ${pending} »…` : null}
+        onFile={(file, input) => void read(file, input)}
+      />
       <div aria-live="polite">
         {message ? (
           <p

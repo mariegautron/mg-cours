@@ -33,8 +33,8 @@ test("dépose une image et un PDF sur une ressource, affiche l’image dans le c
       buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
     },
   ]) {
-    await page.getByLabel("Déposer un fichier").setInputFiles(file);
-    await page.getByRole("button", { name: "Déposer", exact: true }).click();
+    // Dépôt dès la sélection ; la zone devient « Ajouter un fichier » après le premier.
+    await page.getByLabel(/^(Déposer|Ajouter) un fichier/).setInputFiles(file);
     await expect(page.getByRole("link", { name: `Télécharger ${file.name}` })).toBeVisible();
   }
 
@@ -55,5 +55,6 @@ test("dépose une image et un PDF sur une ressource, affiche l’image dans le c
   expect((await download).suggestedFilename()).toBe("cours.pdf");
 
   await page.getByRole("button", { name: /Supprimer cours\.pdf/ }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
   await expect(page.getByRole("link", { name: "Télécharger cours.pdf" })).toHaveCount(0);
 });
