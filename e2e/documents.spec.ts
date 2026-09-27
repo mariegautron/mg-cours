@@ -28,8 +28,12 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
   });
-  await page.getByRole("button", { name: "Déposer", exact: true }).first().click();
-  await expect(page.getByText("attendus-ecole.pdf").first()).toBeVisible();
+  // Dépôt immédiat à la sélection du fichier (zone de dépôt).
+  await expect(page.getByRole("link", { name: /Télécharger attendus-ecole\.pdf/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Aperçu attendus-ecole\.pdf/ })).toHaveAttribute(
+    "href",
+    /\?inline=1$/,
+  );
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -40,7 +44,12 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await page.getByRole("link", { name: /Télécharger attendus-ecole\.pdf/ }).click();
   expect((await download).suggestedFilename()).toBe("attendus-ecole.pdf");
 
+  // Suppression confirmée : « Annuler » conserve le fichier, « Supprimer » l'efface.
   await page.getByRole("button", { name: /Supprimer attendus-ecole\.pdf/ }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Annuler" }).click();
+  await expect(page.getByText("attendus-ecole.pdf").first()).toBeVisible();
+  await page.getByRole("button", { name: /Supprimer attendus-ecole\.pdf/ }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
   await expect(page.getByText("attendus-ecole.pdf")).toHaveCount(0);
 
   // Facture émise hors application : dépôt sur la page Facturation, puis module payé.
@@ -51,8 +60,7 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
   });
-  await page.getByRole("button", { name: "Déposer", exact: true }).click();
-  await expect(page.getByText("facture-26-03-6.pdf").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Télécharger facture-26-03-6\.pdf/ })).toBeVisible();
   await page.getByRole("button", { name: "Marquer le module comme payé" }).click();
   await expect(page.getByText("Module marqué comme payé.")).toBeVisible();
 });

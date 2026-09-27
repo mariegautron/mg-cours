@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, ExternalLink, Pencil, Plus } from "lucide-react";
+import { Archive, ChevronRight, Download, ExternalLink, Pencil, Plus } from "lucide-react";
 
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
@@ -11,7 +11,7 @@ import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { moduleNoteProgress } from "@/lib/assessments/queries";
+import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -43,6 +43,17 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
     unknown: "outline",
   };
 
+const SECTIONS: [id: string, label: string][] = [
+  ["trame", "Trame"],
+  ["courses", "Séances"],
+  ["groups", "Groupes"],
+  ["assessments", "Évaluations"],
+  ["documents", "Documents"],
+  ["billing", "Facturation"],
+  ["admin-docs", "Administratif"],
+  ["danger", "Actions"],
+];
+
 export default async function ModulePage({ params }: PageProps<"/modules/[id]">) {
   const { id } = await params;
   const [mod, courses, groups, documents] = await Promise.all([
@@ -53,14 +64,37 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
   ]);
   if (!mod) notFound();
 
-  const [notes, outline] = await Promise.all([
-    moduleNoteProgress(id, mod.total_hours),
-    getOutline(id),
-  ]);
+  const [assessments, outline] = await Promise.all([listModuleAssessments(id), getOutline(id)]);
+  const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
+  const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
+  const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
+  // La plus récente : `getModuleDocuments` trie par date de dépôt décroissante.
+  const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
 
   return (
     <div className="max-w-3xl space-y-8">
+      <nav aria-label="Fil d’Ariane" className="text-muted-foreground -mb-4 text-sm">
+        <ol className="flex flex-wrap items-center gap-1">
+          <li>
+            <Link
+              href={mod.archived_at ? "/modules?filter=archived" : "/modules"}
+              className="hover:text-foreground underline-offset-2 hover:underline"
+            >
+              {mod.archived_at ? "Modules archivés" : "Modules"}
+            </Link>
+          </li>
+          <li aria-hidden>
+            <ChevronRight className="size-3.5" />
+          </li>
+          <li>
+            <span aria-current="page" className="text-foreground">
+              {mod.name}
+            </span>
+          </li>
+        </ol>
+      </nav>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{mod.name}</h1>
@@ -87,24 +121,86 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
         <Badge variant="outline">{ICEBERG_LABELS[mod.iceberg_state]}</Badge>
-        {mod.archived_at ? <Badge variant="outline">Archivé</Badge> : null}
       </div>
 
+      {mod.archived_at ? (
+        <div className="bg-muted flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed p-4">
+          <p className="flex items-start gap-2 text-sm">
+            <Archive aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <span>
+              <strong>Module archivé</strong> le{" "}
+              {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il n’apparaît plus dans le
+              tableau de bord ni dans la facturation.
+            </span>
+          </p>
+          <ArchiveModuleButton id={mod.id} archived compact />
+        </div>
+      ) : null}
+
+      <nav
+        aria-label="Sections du module"
+        className="bg-shell sticky top-0 z-10 -mx-2 border-b px-2 py-2"
+      >
+        <ul className="flex gap-1 overflow-x-auto text-sm">
+          {SECTIONS.map(([id, label]) => (
+            <li key={id} className="shrink-0">
+              <a
+                href={`#${id}`}
+                className="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring block rounded-md px-2 py-1 focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <section aria-labelledby="trame" className="rounded-lg border p-4">
-        <h2 id="trame" className="mb-1 text-lg font-medium">
+        <h2 id="trame" className="mb-1 scroll-mt-16 text-lg font-medium">
           Trame pédagogique
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={TRAME_VARIANT[trame.level]}>
-            {TRAME_MESSAGE[trame.level](trame.daysUntilDue)}
-          </Badge>
-          {trame.dueDate ? (
-            <span className="text-muted-foreground text-sm">
-              Échéance : {trame.dueDate.toLocaleDateString("fr-FR")}
-            </span>
-          ) : null}
-        </div>
-        {outline ? (
+        {depositedOutline ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">
+              Trame envoyée (PDF déposé le{" "}
+              {new Date(depositedOutline.created_at).toLocaleDateString("fr-FR")})
+            </Badge>
+            <Button asChild size="sm" variant="secondary">
+              <a href={`/api/modules/${mod.id}/documents/${depositedOutline.id}`}>
+                <Download aria-hidden />
+                Télécharger
+              </a>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <a
+                href={`/api/modules/${mod.id}/documents/${depositedOutline.id}?inline=1`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink aria-hidden />
+                Voir
+                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
+              </a>
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={TRAME_VARIANT[trame.level]}>
+              {TRAME_MESSAGE[trame.level](trame.daysUntilDue)}
+            </Badge>
+            {trame.dueDate ? (
+              <span className="text-muted-foreground text-sm">
+                Échéance : {trame.dueDate.toLocaleDateString("fr-FR")}
+              </span>
+            ) : null}
+          </div>
+        )}
+        {outline && depositedOutline ? (
+          <p className="text-muted-foreground mt-2 text-sm">
+            Trame générée depuis les séances le{" "}
+            {new Date(outline.generated_at).toLocaleDateString("fr-FR")} (brouillon, non envoyée).
+          </p>
+        ) : outline ? (
           <p className="text-muted-foreground mt-2 text-sm">
             Générée le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
             {outline.sent_at
@@ -117,34 +213,28 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           </p>
         ) : null}
         <div className="mt-3">
-          <OutlineActions moduleId={mod.id} status={outline?.status ?? null} />
+          <OutlineActions
+            moduleId={mod.id}
+            status={outline?.status ?? null}
+            hasDepositedOutline={!!depositedOutline}
+            archived={!!mod.archived_at}
+          />
         </div>
       </section>
 
-      <section aria-labelledby="documents">
-        <h2 id="documents" className="mb-3 text-lg font-medium">
-          Documents
-        </h2>
-        {mod.slides_url ? (
-          <p className="mb-3">
-            <Button asChild size="sm" variant="secondary">
-              <a href={mod.slides_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink aria-hidden />
-                Ouvrir les slides (Figma)
-                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
-              </a>
-            </Button>
-          </p>
-        ) : null}
-        <ModuleDocuments moduleId={mod.id} documents={documents} />
-      </section>
-
       <section aria-labelledby="courses">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 id="courses" className="text-lg font-medium">
-            Séances ({courses.length})
-          </h2>
-          <Button asChild size="sm" variant="secondary">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="courses" className="scroll-mt-16 text-lg font-medium">
+              Séances ({courses.length})
+            </h2>
+            {courses.length ? (
+              <p className="text-muted-foreground text-sm">
+                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""}
+              </p>
+            ) : null}
+          </div>
+          <Button asChild size="sm">
             <Link href={`/modules/${mod.id}/courses/new`}>
               <Plus aria-hidden />
               Ajouter une séance
@@ -173,7 +263,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
 
       <section aria-labelledby="groups">
         <div className="mb-3 flex items-center justify-between">
-          <h2 id="groups" className="text-lg font-medium">
+          <h2 id="groups" className="scroll-mt-16 text-lg font-medium">
             Groupes ({groups.length})
           </h2>
           <Button asChild size="sm" variant="secondary">
@@ -184,7 +274,10 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
           </Button>
         </div>
         {groups.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Aucun groupe pour l’instant.</p>
+          <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+            Aucun groupe pour l’instant. Créez un groupe (TP, TD, projet) pour y rattacher les
+            étudiant·es et saisir les notes.
+          </p>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {groups.map((g) => (
@@ -195,7 +288,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
                 >
                   <p className="font-medium">{g.name}</p>
                   <p className="text-muted-foreground text-sm">
-                    {g.members.length} membre{g.members.length > 1 ? "s" : ""}
+                    {g.members.length} étudiant·e{g.members.length > 1 ? "s" : ""}
                   </p>
                 </Link>
               </li>
@@ -207,12 +300,15 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
       <section aria-labelledby="assessments" className="rounded-lg border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="assessments" className="text-lg font-medium">
+            <h2 id="assessments" className="scroll-mt-16 text-lg font-medium">
               Évaluations
             </h2>
             <p className="text-muted-foreground text-sm">
+              {assessments.length} évaluation{assessments.length > 1 ? "s" : ""}
+              {assessments.length ? ` (${gradedAssessments} avec des notes saisies)` : ""} ·{" "}
               {notes.enteredTotal}/{notes.requirement.total} note
-              {notes.requirement.total > 1 ? "s" : ""} saisie
+              {notes.requirement.total > 1 ? "s" : ""} requise
+              {notes.requirement.total > 1 ? "s" : ""} obtenue
               {notes.enteredTotal > 1 ? "s" : ""}.
             </p>
           </div>
@@ -222,10 +318,28 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         </div>
       </section>
 
+      <section aria-labelledby="documents">
+        <h2 id="documents" className="mb-3 scroll-mt-16 text-lg font-medium">
+          Documents{documents.length ? ` (${documents.length})` : ""}
+        </h2>
+        {mod.slides_url ? (
+          <p className="mb-3">
+            <Button asChild size="sm" variant="secondary">
+              <a href={mod.slides_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink aria-hidden />
+                Ouvrir les slides (Figma)
+                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
+              </a>
+            </Button>
+          </p>
+        ) : null}
+        <ModuleDocuments moduleId={mod.id} documents={documents} />
+      </section>
+
       <section aria-labelledby="billing" className="rounded-lg border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 id="billing" className="text-lg font-medium">
+            <h2 id="billing" className="scroll-mt-16 text-lg font-medium">
               Facturation
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -239,7 +353,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
       </section>
 
       <section aria-labelledby="admin-docs">
-        <h2 id="admin-docs" className="mb-3 text-lg font-medium">
+        <h2 id="admin-docs" className="mb-3 scroll-mt-16 text-lg font-medium">
           Documents administratifs
         </h2>
         <AdminDocsChecklist
@@ -249,11 +363,12 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
       </section>
 
       <section aria-labelledby="danger">
-        <h2 id="danger" className="mb-3 text-lg font-medium">
+        <h2 id="danger" className="mb-3 scroll-mt-16 text-lg font-medium">
           Actions
         </h2>
         <div className="space-y-6">
-          <ArchiveModuleButton id={mod.id} archived={!!mod.archived_at} />
+          {/* Module archivé : la restauration se fait depuis le bandeau en tête de page. */}
+          {!mod.archived_at ? <ArchiveModuleButton id={mod.id} archived={false} /> : null}
           <ModuleDangerZone id={mod.id} year={mod.year} />
         </div>
       </section>

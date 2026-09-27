@@ -7,7 +7,16 @@ import { toast } from "sonner";
 import { archiveModule, unarchiveModule } from "@/app/(app)/modules/actions";
 import { Button } from "@/components/ui/button";
 
-export function ArchiveModuleButton({ id, archived }: { id: string; archived: boolean }) {
+export function ArchiveModuleButton({
+  id,
+  archived,
+  compact = false,
+}: {
+  id: string;
+  archived: boolean;
+  /** Sans texte d'aide (ex. bandeau « module archivé »). */
+  compact?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
 
   function toggle() {
@@ -28,12 +37,17 @@ export function ArchiveModuleButton({ id, archived }: { id: string; archived: bo
     });
   }
 
+  const button = (
+    <Button type="button" variant="secondary" disabled={pending} onClick={toggle}>
+      {archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
+      {archived ? "Restaurer le module" : "Archiver le module"}
+    </Button>
+  );
+  if (compact) return button;
+
   return (
     <div className="space-y-2">
-      <Button type="button" variant="secondary" disabled={pending} onClick={toggle}>
-        {archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
-        {archived ? "Restaurer le module" : "Archiver le module"}
-      </Button>
+      {button}
       <p className="text-muted-foreground text-sm">
         Un module archivé (année passée) disparaît du tableau de bord, de la facturation et des
         modules actifs ; il reste consultable dans l’onglet « Archivés ».

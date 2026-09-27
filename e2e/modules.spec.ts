@@ -39,9 +39,11 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel(resourceTitle).check();
+  await page.getByLabel("Préparation").selectOption("ready");
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await expect(page.getByText("Séance 1")).toBeVisible();
+  await expect(page.getByText("1/1 prête")).toBeVisible();
   await expect(page.getByRole("link", { name: resourceTitle })).toBeVisible();
 
   // Document administratif.
@@ -52,4 +54,25 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
+
+  // Thème sombre : contraste des textes secondaires.
+  await page.evaluate(() => window.localStorage.setItem("theme", "dark"));
+  await page.reload();
+  const axeDark = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axeDark.violations).toEqual([]);
+
+  // Navigation : fil d'Ariane + sous-navigation d'ancres.
+  const sections = page.getByRole("navigation", { name: "Sections du module" });
+  await sections.getByRole("link", { name: "Séances" }).click();
+  await expect(page).toHaveURL(/#courses$/);
+  await expect(
+    page.getByRole("navigation", { name: "Fil d’Ariane" }).getByRole("link", { name: "Modules" }),
+  ).toHaveAttribute("href", "/modules");
+
+  // Suppression d'une séance : confirmation obligatoire.
+  await page.getByRole("button", { name: "Supprimer Introduction à l’Agilité" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
+  await expect(page.getByText("Aucune séance pour l’instant")).toBeVisible();
 });

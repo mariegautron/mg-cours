@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { CourseWithResources } from "@/lib/modules/queries";
+import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
 import type { Tables } from "@/types/db";
 
 type Action = (state: CourseFormState, formData: FormData) => Promise<CourseFormState>;
@@ -63,7 +64,7 @@ export function CourseForm({
         <FieldError id="title" errors={fe.title} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="type">Modalité</Label>
           <select
@@ -96,6 +97,21 @@ export function CourseForm({
             type="date"
             defaultValue={course?.session_date ?? ""}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="prepStatus">Préparation</Label>
+          <select
+            id="prepStatus"
+            name="prepStatus"
+            defaultValue={course?.prep_status ?? "todo"}
+            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+          >
+            {Object.entries(PREP_STATUS_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

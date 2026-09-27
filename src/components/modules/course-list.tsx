@@ -1,13 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, Pencil, Plus } from "lucide-react";
 
 import { deleteCourse } from "@/app/(app)/modules/[id]/courses/actions";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CourseWithResources } from "@/lib/modules/queries";
+import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
 
 const COURSE_TYPE_LABELS: Record<string, string> = {
   lecture: "Cours théorique",
@@ -18,6 +19,20 @@ const COURSE_TYPE_LABELS: Record<string, string> = {
   applied: "Cours appliqué",
 };
 
+const PREP_VARIANT: Record<PrepStatus, "default" | "secondary" | "outline"> = {
+  todo: "outline",
+  in_progress: "secondary",
+  ready: "default",
+};
+
+const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
 export function CourseList({
   moduleId,
   courses,
@@ -25,10 +40,21 @@ export function CourseList({
   moduleId: string;
   courses: CourseWithResources[];
 }) {
-  const [pending, startTransition] = useTransition();
-
   if (courses.length === 0) {
-    return <p className="text-muted-foreground text-sm">Aucune séance pour l’instant.</p>;
+    return (
+      <div className="rounded-lg border border-dashed p-6 text-center">
+        <p className="font-medium">Aucune séance pour l’instant</p>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Planifiez la première séance : elle alimente la trame pédagogique et les PDF Moodle.
+        </p>
+        <Button asChild size="sm" className="mt-3">
+          <Link href={`/modules/${moduleId}/courses/new`}>
+            <Plus aria-hidden />
+            Planifier la première séance
+          </Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -37,10 +63,21 @@ export function CourseList({
         <li key={c.id} className="rounded-lg border p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <p className="text-muted-foreground text-sm">Séance {i + 1}</p>
+              <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
+                <span>Séance {i + 1}</span>
+                {c.session_date ? (
+                  <span className="inline-flex items-center gap-1">
+                    <CalendarDays aria-hidden className="size-3.5" />
+                    {formatDate(c.session_date)}
+                  </span>
+                ) : null}
+              </p>
               <h3 className="font-medium">{c.title}</h3>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={PREP_VARIANT[c.prep_status as PrepStatus] ?? "outline"}>
+                {PREP_STATUS_LABELS[c.prep_status as PrepStatus] ?? c.prep_status}
+              </Badge>
               <Badge variant="secondary">{COURSE_TYPE_LABELS[c.type] ?? c.type}</Badge>
               <Button asChild variant="ghost" size="icon">
                 <Link
@@ -50,16 +87,13 @@ export function CourseList({
                   <Pencil aria-hidden />
                 </Link>
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={pending}
-                aria-label={`Supprimer ${c.title}`}
-                onClick={() => startTransition(() => void deleteCourse(moduleId, c.id))}
-              >
-                <Trash2 aria-hidden />
-              </Button>
+              <ConfirmDeleteButton
+                iconOnly
+                itemName={c.title}
+                title={`Supprimer la séance « ${c.title} » ?`}
+                description="La séance et ses liens vers les ressources seront supprimés (les ressources elles-mêmes sont conservées)."
+                onConfirm={() => deleteCourse(moduleId, c.id)}
+              />
             </div>
           </div>
 

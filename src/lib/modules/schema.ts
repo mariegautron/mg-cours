@@ -79,11 +79,22 @@ export function readModuleForm(formData: FormData) {
 
 const COURSE_TYPES = ["lecture", "workshop", "project", "assessment", "demo", "applied"] as const;
 
+/** Statut de préparation d'une séance (`course.prep_status`). */
+export const PREP_STATUSES = ["todo", "in_progress", "ready"] as const;
+export type PrepStatus = (typeof PREP_STATUSES)[number];
+
+export const PREP_STATUS_LABELS: Record<PrepStatus, string> = {
+  todo: "À préparer",
+  in_progress: "En préparation",
+  ready: "Prête",
+};
+
 export const courseSchema = z.object({
   title: z.string().trim().min(1, "Le titre est obligatoire.").max(200),
   type: z.enum(COURSE_TYPES).default("lecture"),
   position: z.coerce.number().int().min(0).max(1000).default(0),
   sessionDate: optionalDate,
+  prepStatus: z.enum(PREP_STATUSES).default("todo"),
   learningObjectives: z.array(z.string().min(1)).max(30).default([]),
   animationNotes: z.string().trim().max(4000).optional().or(z.literal("")),
   assessmentNotes: z.string().trim().max(4000).optional().or(z.literal("")),
@@ -107,6 +118,7 @@ export function readCourseForm(formData: FormData) {
     type: formData.get("type") ?? "lecture",
     position: formData.get("position") ?? "0",
     sessionDate: formData.get("sessionDate") ?? "",
+    prepStatus: formData.get("prepStatus") ?? "todo",
     learningObjectives: parseLines(String(formData.get("learningObjectives") ?? "")),
     animationNotes: formData.get("animationNotes") ?? "",
     assessmentNotes: formData.get("assessmentNotes") ?? "",

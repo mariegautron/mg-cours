@@ -232,11 +232,13 @@ export async function getGradesByAssessment(assessmentId: string): Promise<Table
  * c'est le sens YNOV de « note » (1 évaluation = 1 note), pas le nombre de lignes
  * `grade` (une évaluation individuelle produit N lignes, une par étudiant·e).
  */
+/** `assessments` : liste déjà chargée par l'appelant, pour éviter une seconde requête. */
 export async function moduleNoteProgress(
   moduleId: string,
   totalHours: number,
+  loaded?: AssessmentWithMeta[],
 ): Promise<NoteProgress> {
-  const assessments = await listModuleAssessments(moduleId);
+  const assessments = loaded ?? (await listModuleAssessments(moduleId));
   const group = assessments.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
   const individual = assessments.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
   return noteProgress(totalHours, { group, individual });

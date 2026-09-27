@@ -1,23 +1,31 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Download, Trash2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { Download, Eye, FileText, Loader2, Plus, Upload } from "lucide-react";
 
 import {
   deleteModuleDocument,
   registerModuleDocument,
 } from "@/app/(app)/modules/[id]/documents/actions";
+import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import type { DocumentKind } from "@/lib/modules/documents";
 import { formatSize, mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import type { Tables } from "@/types/db";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const EXTENSIONS = /\.(pdf|docx?|odt)$/i;
 const ACCEPT = ".pdf,.doc,.docx,.odt";
+
+function kindLabel(mime: string) {
+  if (mime === "application/pdf") return "PDF";
+  if (mime.includes("word") || mime === "application/msword") return "Word";
+  if (mime.includes("opendocument")) return "OpenDocument";
+  return "Fichier";
+}
 
 export function DocumentSlot({
   moduleId,
@@ -33,29 +41,25 @@ export function DocumentSlot({
   documents: Tables<"module_document">[];
 }) {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [open, setOpen] = useState(false);
   const [state, setState] = useState<{ error?: string; saved?: boolean }>({});
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const file = new FormData(form).get("file");
-    if (!(file instanceof File) || file.size === 0)
-      return setState({ error: "Choisissez un fichier." });
+  async function upload(file: File) {
     if (file.size > MAX_BYTES)
       return setState({ error: "Fichier trop volumineux (50 Mo maximum)." });
     if (!EXTENSIONS.test(file.name)) {
-      return setState({
-        error: "Formats acceptés : PDF, Word ou OpenDocument.",
-      });
+      return setState({ error: "Formats acceptés : PDF, Word ou OpenDocument." });
     }
 
-    setPending(true);
+    setUploading(file.name);
     setState({});
     const supabase = createClient();
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
-      setPending(false);
+      setUploading(null);
       return setState({ error: "Session expirée." });
     }
     const mime = mimeOf(file);
@@ -65,7 +69,7 @@ export function DocumentSlot({
       .from("module-documents")
       .upload(path, file, { contentType: mime });
     if (uploadError) {
-      setPending(false);
+      setUploading(null);
       return setState({ error: "Dépôt impossible. Réessayez." });
     }
 
@@ -75,32 +79,58 @@ export function DocumentSlot({
       size: file.size,
       mime,
     });
-    setPending(false);
+    setUploading(null);
+    if (inputRef.current) inputRef.current.value = "";
     if (result.error) return setState({ error: result.error });
-    form.reset();
     setState({ saved: true });
+    setOpen(false);
     router.refresh();
   }
+
   const inputId = `doc-${kind}`;
+  const headingId = `doc-${kind}-title`;
+  const showZone = documents.length === 0 || open;
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
+    <section aria-labelledby={headingId} className="space-y-3 rounded-lg border p-4">
       <div>
-        <h3 className="font-medium">{title}</h3>
+        <h3 id={headingId} className="font-medium">
+          {title}
+          {documents.length ? (
+            <span className="text-muted-foreground font-normal"> ({documents.length})</span>
+          ) : null}
+        </h3>
         <p className="text-muted-foreground text-sm">{hint}</p>
       </div>
+
       {documents.length ? (
         <ul className="space-y-2">
           {documents.map((d) => (
-            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span>
-                {d.name}{" "}
-                <span className="text-muted-foreground">
-                  ({formatSize(d.size_bytes)} · déposé le{" "}
-                  {new Date(d.created_at).toLocaleDateString("fr-FR")})
-                </span>
-              </span>
-              <span className="flex gap-2">
+            <li key={d.id} className="bg-card rounded-md border p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <FileText aria-hidden className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium break-all">{d.name}</p>
+                  <p className="text-muted-foreground">
+                    {kindLabel(d.mime)} · {formatSize(d.size_bytes)} · déposé le{" "}
+                    {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {d.mime === "application/pdf" ? (
+                  <Button asChild size="sm" variant="secondary">
+                    <a
+                      href={`/api/modules/${moduleId}/documents/${d.id}?inline=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Eye aria-hidden />
+                      Aperçu
+                      <span className="sr-only"> {d.name} — s’ouvre dans un nouvel onglet</span>
+                    </a>
+                  </Button>
+                ) : null}
                 <Button asChild size="sm" variant="secondary">
                   <a href={`/api/modules/${moduleId}/documents/${d.id}`}>
                     <Download aria-hidden />
@@ -108,37 +138,76 @@ export function DocumentSlot({
                     <span className="sr-only"> {d.name}</span>
                   </a>
                 </Button>
-                <form action={deleteModuleDocument.bind(null, moduleId, d.id)}>
-                  <Button type="submit" size="sm" variant="ghost">
-                    <Trash2 aria-hidden />
-                    Supprimer
-                    <span className="sr-only"> {d.name}</span>
-                  </Button>
-                </form>
-              </span>
+                <ConfirmDeleteButton
+                  itemName={d.name}
+                  title={`Supprimer « ${d.name} » ?`}
+                  description="Le fichier sera définitivement effacé."
+                  onConfirm={() => deleteModuleDocument(moduleId, d.id)}
+                />
+              </div>
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-muted-foreground text-sm">Aucun document déposé.</p>
-      )}
-      <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1">
-          <Label htmlFor={inputId}>Déposer un fichier ({title.toLowerCase()})</Label>
+      ) : null}
+
+      {uploading ? (
+        <p role="status" className="flex items-center gap-2 rounded-md border p-3 text-sm">
+          <Loader2 aria-hidden className="size-4 motion-safe:animate-spin" />
+          Dépôt de « {uploading} » en cours…
+        </p>
+      ) : showZone ? (
+        <label
+          htmlFor={inputId}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const file = e.dataTransfer.files[0];
+            if (file) void upload(file);
+          }}
+          className={cn(
+            "hover:bg-accent focus-within:ring-ring flex cursor-pointer flex-col items-center gap-1 rounded-md border-2 border-dashed p-4 text-center text-sm focus-within:ring-2",
+            dragging && "border-primary bg-accent",
+          )}
+        >
+          <Upload aria-hidden className="text-muted-foreground size-5" />
+          <span className="font-medium">
+            Déposer un fichier<span className="sr-only"> ({title.toLowerCase()})</span>
+          </span>
+          <span className="text-muted-foreground">
+            Glissez-le ici ou cliquez pour parcourir · PDF, Word, OpenDocument · 50 Mo max
+          </span>
           <input
+            ref={inputRef}
             id={inputId}
-            name="file"
             type="file"
             accept={ACCEPT}
-            required
-            className="block text-sm"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.currentTarget.files?.[0];
+              if (file) void upload(file);
+            }}
           />
-        </div>
-        <Button type="submit" size="sm" disabled={pending}>
-          <Upload aria-hidden />
-          {pending ? "Dépôt…" : "Déposer"}
+        </label>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setOpen(true);
+            setState({});
+          }}
+        >
+          <Plus aria-hidden />
+          Ajouter un fichier<span className="sr-only"> ({title.toLowerCase()})</span>
         </Button>
-      </form>
+      )}
+
       {state.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}
@@ -149,7 +218,7 @@ export function DocumentSlot({
           Document déposé.
         </p>
       ) : null}
-    </div>
+    </section>
   );
 }
 
