@@ -80,14 +80,26 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 ### Détail `/modules/[id]`
 
+- Fil d'Ariane `Modules › {nom}` (« Modules archivés » si archivé) ; bandeau « Module archivé le
+  … » + « Restaurer le module » ; sous-navigation d'ancres collante (Trame · Séances · Groupes ·
+  Évaluations · Documents · Facturation · Administratif · Actions). Ordre des sections = ordre
+  d'usage : Séances avant Documents.
 - En-tête : école, niveau, année, YCODE ; badges heures / **minimum de notes requises**
   (`requiredNotes`, ex. 21 h → « 3 notes min. (2 groupes + 1 individuelle) ») / état iceberg.
 - **Trame pédagogique** : badge d'échéance (`trameStatus`) —
   `ok` (> J-15) · `warning` (≤ J-15) · `urgent` (≤ J-7) · `overdue` (dépassée) ·
   `sent` (dès `iceberg_state ≥ outline_sent`) · `unknown` (pas de date de 1re séance).
   Génération réelle de la trame PDF : E6.
-- **Séances** : liste ordonnée (titre, modalité, objectifs, ressources liées, date de
-  dernière MAJ du contenu) ; ajouter / modifier / supprimer une séance.
+- **Séances** : liste ordonnée (titre, date, statut de préparation `prep_status` — À préparer /
+  En préparation / Prête, compteur « n/N prêtes » —, modalité, objectifs, ressources liées, date
+  de dernière MAJ du contenu) ; ajouter (bouton principal) / modifier / supprimer une séance
+  (confirmation). État vide avec « Planifier la première séance ».
+- **Évaluations** : nombre d'évaluations, nombre avec notes saisies, notes requises obtenues.
+- **Documents** (attendus de l'école, trame envoyée, facture externe — aussi sur Facturation) :
+  zone de dépôt en pointillés cliquable + glisser-déposer (PDF/Word/ODT, 50 Mo max, dépôt dès
+  la sélection) ; une fois déposé, carte fichier (type · taille · date) avec « Aperçu » (PDF,
+  `?inline=1`, nouvel onglet), « Télécharger », « Supprimer » (confirmation) et « Ajouter un
+  fichier » pour déplier la zone.
 - **Documents administratifs** : 4 interrupteurs (fiche de positionnement, progression
   pédagogique, supports Moodle, sujets/grilles Moodle) → `module.admin_docs`.
 - **Actions** : dupliquer vers une nouvelle année (module + séances + liens ressources,
@@ -96,7 +108,7 @@ chacune liées à une ou plusieurs ressources réutilisables.
 ### Séance `/modules/[id]/courses/new` · `/modules/[id]/courses/[courseId]/edit`
 
 - Champs : titre, modalité (cours théorique / atelier-TP / projet / évaluation /
-  démonstration / cours appliqué), position, date, objectifs pédagogiques (une ligne par
+  démonstration / cours appliqué), position, date, préparation, objectifs pédagogiques (une ligne par
   objectif), ressources liées (cases à cocher), modalités d'animation/d'évaluation, matériel.
 - Toute modification met à jour `content_last_updated_at` (repris tel quel dans la trame).
 
@@ -209,6 +221,26 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - « Marquer comme envoyée » enregistre la date et fait passer `iceberg_state` à
   `outline_sent` (jamais de retour en arrière) ; l'alerte J-15/J-7 disparaît.
 - Nom du/de la formateur·rice = `teacher_profile.legal_name` (écran Réglages à venir).
+
+### Cohabitation avec une trame déposée en PDF (module déjà réalisé)
+
+Pour un module déjà réalisé, une trame déposée sur « Documents » (`module_document.kind =
+outline_sent`) **fait foi** : la génération depuis les séances reste possible mais ne se présente
+jamais comme la version envoyée.
+
+- Dès qu'un document `outline_sent` existe (le plus récent), la section affiche « Trame envoyée
+  (PDF déposé le jj/mm/aaaa) » avec **Télécharger** et **Voir** (aperçu, `?inline=1`) à la place du
+  badge d'échéance habituel.
+- Une trame générée en plus s'affiche en secondaire : « Trame générée depuis les séances le …
+  (brouillon, non envoyée) ».
+- Le bouton devient **« Générer une trame depuis les séances »**, avec l'aide « La trame déposée
+  reste la version envoyée à l'école. » — **Marquer comme envoyée** ne s'affiche pas (une trame
+  générée sans dépôt garde son bouton habituel).
+- Module archivé : les boutons **Générer** et **Marquer comme envoyée** sont masqués (plus besoin
+  d'une nouvelle trame pour un module passé) ; télécharger et valider restent disponibles.
+- Aucun lien en base entre le document déposé et l'instantané généré (pas nécessaire à la
+  cohabitation) : `depositedOutline` est calculé côté page comme le document `outline_sent` le plus
+  récent du module.
 
 ## Résultats PDF + e-mail (E6)
 

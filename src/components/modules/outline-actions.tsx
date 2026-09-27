@@ -16,10 +16,16 @@ const initial: OutlineActionState = {};
 export function OutlineActions({
   moduleId,
   status,
+  hasDepositedOutline = false,
+  archived = false,
 }: {
   moduleId: string;
   /** `null` = trame jamais générée. */
   status: "draft" | "sent" | "validated" | null;
+  /** Une trame déjà envoyée est déposée en PDF (voir « Documents ») : elle fait foi. */
+  hasDepositedOutline?: boolean;
+  /** Module archivé : plus besoin de générer ou d'envoyer une nouvelle trame. */
+  archived?: boolean;
 }) {
   const [genState, genAction, genPending] = useActionState(
     generateOutline.bind(null, moduleId),
@@ -38,12 +44,18 @@ export function OutlineActions({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <form action={genAction}>
-          <Button type="submit" size="sm" variant="secondary" disabled={genPending}>
-            <FileText aria-hidden />
-            {status ? "Régénérer la trame" : "Générer la trame"}
-          </Button>
-        </form>
+        {!archived ? (
+          <form action={genAction}>
+            <Button type="submit" size="sm" variant="secondary" disabled={genPending}>
+              <FileText aria-hidden />
+              {hasDepositedOutline
+                ? "Générer une trame depuis les séances"
+                : status
+                  ? "Régénérer la trame"
+                  : "Générer la trame"}
+            </Button>
+          </form>
+        ) : null}
         {status ? (
           <Button asChild size="sm" variant="secondary">
             <a href={`/api/modules/${moduleId}/outline`}>
@@ -52,7 +64,7 @@ export function OutlineActions({
             </a>
           </Button>
         ) : null}
-        {status === "draft" ? (
+        {status === "draft" && !hasDepositedOutline && !archived ? (
           <form action={sentAction}>
             <Button type="submit" size="sm" disabled={sentPending}>
               <Send aria-hidden />
@@ -69,6 +81,11 @@ export function OutlineActions({
           </form>
         ) : null}
       </div>
+      {hasDepositedOutline && !archived ? (
+        <p className="text-muted-foreground text-sm">
+          La trame déposée reste la version envoyée à l’école.
+        </p>
+      ) : null}
       {error ? (
         <p role="alert" className="text-destructive text-sm">
           {error}
