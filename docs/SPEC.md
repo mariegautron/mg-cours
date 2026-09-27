@@ -217,6 +217,10 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
 
 - Coordonnées, groupes auxquels iel appartient (tous modules confondus, lien vers chacun),
   notes personnelles, suppression (confirmation).
+- **Groupes par année scolaire (US-80a)** : un sous-titre « Année 2025-26 » par année (la plus
+  récente en premier, « Sans module » à la fin) ; chaque groupe s'affiche « Groupe · Module ·
+  2025-26 », trié par module puis par nom de groupe. L'année vient de `module.year` via le
+  groupe (pas de migration) ; logique pure `groupsBySchoolYear` (`src/lib/students/groups.ts`).
 
 ### Import `/students/import`
 

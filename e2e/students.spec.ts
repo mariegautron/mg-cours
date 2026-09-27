@@ -46,6 +46,20 @@ test("crée un·e étudiant·e, un groupe, et les relie", async ({ page }) => {
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
+
+  // US-80a : la fiche affiche le groupe avec son module et son année scolaire.
+  await page.getByRole("link", { name: `Léa Martin${suffix}` }).click();
+  await expect(page.getByRole("heading", { name: `Léa Martin${suffix}` })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Année \d{4}-\d{2}$/ }).first()).toBeVisible();
+  await expect(
+    page.getByRole("link", {
+      name: new RegExp(`^${groupName} · Méthodologies Agile.* · \\d{4}-\\d{2}$`),
+    }),
+  ).toBeVisible();
+  const studentAxe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(studentAxe.violations).toEqual([]);
 });
 
 test("importe des étudiant·es depuis un CSV", async ({ page }) => {
