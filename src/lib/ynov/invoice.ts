@@ -54,11 +54,13 @@ export interface InvoiceContext {
   } | null;
 }
 
-/** Conditions de processus bloquantes (trame, notes, documents administratifs). */
+export const OUTLINE_NOT_SENT = "La progression pédagogique n’a pas été envoyée.";
+
+/** Conditions de processus bloquantes (progression, notes, documents administratifs). */
 export function invoiceBlockers(ctx: InvoiceContext): string[] {
   const reasons: string[] = [];
   if (!isOutlineSent(ctx.module.iceberg_state)) {
-    reasons.push("La trame pédagogique n’a pas été envoyée.");
+    reasons.push(OUTLINE_NOT_SENT);
   }
   if (!ctx.notes.satisfied) {
     reasons.push(

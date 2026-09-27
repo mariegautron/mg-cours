@@ -29,7 +29,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             Profil du prestataire
           </h2>
           <p className="text-muted-foreground text-sm">
-            Utilisé sur la trame pédagogique et les factures.
+            Utilisé sur la progression pédagogique et les factures.
           </p>
         </div>
         <ProfileForm profile={profile} />

@@ -49,10 +49,10 @@ export function OutlineActions({
             <Button type="submit" size="sm" variant="secondary" disabled={genPending}>
               <FileText aria-hidden />
               {hasDepositedOutline
-                ? "Générer une trame depuis les séances"
+                ? "Générer une progression depuis les séances"
                 : status
-                  ? "Régénérer la trame"
-                  : "Générer la trame"}
+                  ? "Régénérer la progression"
+                  : "Générer la progression"}
             </Button>
           </form>
         ) : null}
@@ -83,7 +83,7 @@ export function OutlineActions({
       </div>
       {hasDepositedOutline && !archived ? (
         <p className="text-muted-foreground text-sm">
-          La trame déposée reste la version envoyée à l’école.
+          La progression déposée reste la version envoyée à l’école.
         </p>
       ) : null}
       {error ? (

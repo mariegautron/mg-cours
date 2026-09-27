@@ -66,7 +66,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-muted-foreground text-base">
             {urgent
-              ? "Une trame demande ton attention avant l’échéance."
+              ? "Une progression pédagogique demande ton attention avant l’échéance."
               : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
           </p>
         </div>
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
         </StatCard>
 
         <StatCard
-          title="Trames urgentes"
+          title="Progressions pédagogiques à envoyer"
           chip="bg-sun/15 text-sun"
           icon={<TimerReset aria-hidden className="size-5" />}
         >

@@ -1,5 +1,5 @@
 /**
- * Contenu de la trame pédagogique (« progression pédagogique » YNOV).
+ * Contenu de la progression pédagogique YNOV (rédigée d’après la « trame » fournie par l’école).
  * Fonction pure : construit un instantané sérialisable (stocké dans
  * `pedagogical_outline.content`) à partir du module, de ses séances et du profil.
  */

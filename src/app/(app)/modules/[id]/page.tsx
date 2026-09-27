@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps<"/modules/[id]">): 
 }
 
 const TRAME_MESSAGE: Record<TrameAlertLevel, (days: number | null) => string> = {
-  sent: () => "Trame envoyée.",
+  sent: () => "Progression pédagogique envoyée.",
   overdue: (d) => `Échéance dépassée depuis ${Math.abs(d ?? 0)} jour(s) — à envoyer sans attendre.`,
   urgent: (d) => `Échéance dans ${d} jour(s) (J-15/J-7) — à envoyer rapidement.`,
   warning: (d) => `Échéance dans ${d} jour(s) — pensez à la préparer.`,
@@ -54,7 +54,7 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
   };
 
 const SECTIONS: [id: string, label: string][] = [
-  ["trame", "Trame"],
+  ["trame", "Progression"],
   ["courses", "Séances"],
   ["groups", "Groupes"],
   ["assessments", "Évaluations"],
@@ -209,12 +209,12 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
 
       <section aria-labelledby="trame" className="rounded-lg border p-4">
         <h2 id="trame" className="mb-1 scroll-mt-16 text-lg font-medium">
-          Trame pédagogique
+          Progression pédagogique
         </h2>
         {depositedOutline ? (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">
-              Trame envoyée (PDF déposé le{" "}
+              Progression envoyée (PDF déposé le{" "}
               {new Date(depositedOutline.created_at).toLocaleDateString("fr-FR")})
             </Badge>
             <Button asChild size="sm" variant="secondary">
@@ -249,7 +249,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
         )}
         {outline && depositedOutline ? (
           <p className="text-muted-foreground mt-2 text-sm">
-            Trame générée depuis les séances le{" "}
+            Progression générée depuis les séances le{" "}
             {new Date(outline.generated_at).toLocaleDateString("fr-FR")} (brouillon, non envoyée).
           </p>
         ) : outline ? (

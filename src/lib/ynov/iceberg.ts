@@ -25,10 +25,10 @@ export type IcebergState = (typeof ICEBERG_STATES)[number];
 export const ICEBERG_LABELS: Record<IcebergState, string> = {
   fiche_received: "Fiche reçue",
   module_created: "Module créé",
-  outline_generated: "Trame générée",
+  outline_generated: "Progression générée",
   plan_on_moodle: "Plan déposé sur Moodle",
   materials_on_moodle: "Supports déposés sur Moodle",
-  outline_sent: "Trame envoyée",
+  outline_sent: "Progression envoyée",
   subjects_on_moodle: "Sujets/grilles déposés sur Moodle",
   grades_in_hp: "Notes saisies sur Hyperplanning",
   grades_in_mg: "Notes saisies dans MG COURS",

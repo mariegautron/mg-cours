@@ -40,7 +40,7 @@ grades_in_mg → admin_docs_ok → invoice_ready → invoice_sent → paid`
 
 `invoice_ready` est **bloqué** tant que :
 
-- la trame pédagogique n'est pas envoyée **ET**
+- la progression pédagogique n'est pas envoyée **ET**
 - le nombre de notes saisies < minimum requis (§1) **ET**
 - les documents administratifs ne sont pas tous cochés
   (fiche de positionnement, supports Moodle, sujets/grilles Moodle, notes Hyperplanning).
@@ -49,7 +49,13 @@ grades_in_mg → admin_docs_ok → invoice_ready → invoice_sent → paid`
 
 Implémentation : `src/lib/ynov/iceberg.ts`.
 
-## 3. Trame pédagogique
+## 3. Progression pédagogique
+
+**Vocabulaire** (US-78) : la **trame** est le modèle fourni par YNOV pour rédiger la
+progression ; le document produit et envoyé par la formatrice est la **progression
+pédagogique**. L'interface ne parle que de « progression pédagogique ». Le modèle YNOV n'est pas
+stocké : ses règles (J-15, contenu par séance, dates de mise à jour) sont codées dans l'app. Les
+identifiants de code (`outline`, `trame.ts`) restent inchangés.
 
 - Document obligatoire **avant** le début des cours, envoyé à l'école 15 j avant la 1re séance.
 - `trame_due_date = first_session_date − 15 jours`. Alerte dans l'app à J-15 puis J-7.

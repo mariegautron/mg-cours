@@ -157,7 +157,7 @@ export function ModuleForm({
               defaultValue={mod?.first_session_date ?? ""}
             />
             <p className="text-muted-foreground text-sm">
-              Sert à calculer l’échéance d’envoi de la trame (J-15).
+              Sert à calculer l’échéance d’envoi de la progression pédagogique (J-15).
             </p>
           </div>
           <div className="space-y-2">

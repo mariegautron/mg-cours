@@ -30,7 +30,7 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
   pré-sélectionnent « Enseignante uniquement ».
 - **Garde-fou** : `studentFacing()` (`src/lib/resources/kind.ts`) filtre toute sortie vers les
   étudiant·es — mode présentation, export PDF des cours (`toExportCourses`), futurs liens élèves /
-  QCM. Les e-mails existants (résultats, facture) n'embarquent aucune ressource. La trame
+  QCM. Les e-mails existants (résultats, facture) n'embarquent aucune ressource. La progression
   (destinée à l'école) liste toujours tous les titres.
 
 ### Liste `/resources`
@@ -98,7 +98,7 @@ chacune liées à une ou plusieurs ressources réutilisables.
 ### Liste `/modules`
 
 - Cartes triées par année décroissante puis nom : école · niveau · année, badges heures,
-  minimum de notes, statut de la trame.
+  minimum de notes, statut de la progression.
 - Filtre segmenté `Actifs (n) | Archivés (n) | Tous` (`nav` + `aria-current`), dans l'URL :
   `?filter=archived` / `?filter=all` (l'ancien `?archived=1` mène à « Tous »).
 - Carte archivée : fond atténué, bordure pointillée, icône archive, badge « Archivé le … » +
@@ -111,7 +111,7 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
-- La date de 1re séance sert au calcul de l'échéance de la trame (J-15).
+- La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
 
 ### Détail `/modules/[id]`
 
@@ -121,21 +121,21 @@ glisser-déposer, formats et taille affichés, envoi dès la sélection, état �
 annoncé) et `FileCard` (type · taille · date + actions nommées).
 
 - Fil d'Ariane `Modules › {nom}` (« Modules archivés » si archivé) ; bandeau « Module archivé le
-  … » + « Restaurer le module » ; sous-navigation d'ancres collante (Trame · Séances · Groupes ·
+  … » + « Restaurer le module » ; sous-navigation d'ancres collante (Progression · Séances · Groupes ·
   Évaluations · Documents · Facturation · Administratif · Actions). Ordre des sections = ordre
   d'usage : Séances avant Documents.
 - En-tête : école, niveau, année, YCODE ; badges heures / **minimum de notes requises**
   (`requiredNotes`, ex. 21 h → « 3 notes min. (2 groupes + 1 individuelle) ») / état iceberg.
-- **Trame pédagogique** : badge d'échéance (`trameStatus`) —
+- **Progression pédagogique** : badge d'échéance (`trameStatus`) —
   `ok` (> J-15) · `warning` (≤ J-15) · `urgent` (≤ J-7) · `overdue` (dépassée) ·
   `sent` (dès `iceberg_state ≥ outline_sent`) · `unknown` (pas de date de 1re séance).
-  Génération réelle de la trame PDF : E6.
+  Génération réelle de la progression PDF : E6.
 - **Séances** : liste ordonnée (titre, date, statut de préparation `prep_status` — À préparer /
   En préparation / Prête, compteur « n/N prêtes » —, modalité, objectifs, ressources liées, date
   de dernière MAJ du contenu) ; ajouter (bouton principal) / modifier / supprimer une séance
   (confirmation). État vide avec « Planifier la première séance ».
 - **Évaluations** : nombre d'évaluations, nombre avec notes saisies, notes requises obtenues.
-- **Documents** (attendus de l'école, trame envoyée, facture externe — aussi sur Facturation) :
+- **Documents** (attendus de l'école, progression envoyée, facture externe — aussi sur Facturation) :
   zone de dépôt en pointillés cliquable + glisser-déposer (PDF/Word/ODT, 50 Mo max, dépôt dès
   la sélection) ; une fois déposé, carte fichier (type · taille · date) avec « Aperçu » (PDF,
   `?inline=1`, nouvel onglet), « Télécharger », « Supprimer » (confirmation) ; la zone reste
@@ -152,7 +152,7 @@ annoncé) et `FileCard` (type · taille · date + actions nommées).
 - Champs : titre, modalité (cours théorique / atelier-TP / projet / évaluation /
   démonstration / cours appliqué), position, date, préparation, objectifs pédagogiques (une ligne par
   objectif), ressources liées (cases à cocher), modalités d'animation/d'évaluation, matériel.
-- Toute modification met à jour `content_last_updated_at` (repris tel quel dans la trame).
+- Toute modification met à jour `content_last_updated_at` (repris tel quel dans la progression).
 
 ### Règles
 
@@ -279,10 +279,10 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
   `grade` par étudiant·e mais ne compte que pour 1 note ; une évaluation sur 6 groupes aussi).
 - `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).
 
-## Trame pédagogique (E6)
+## Progression pédagogique (E6)
 
-- Section « Trame pédagogique » de `/modules/[id]` : badge d'échéance (E3) + boutons
-  **Générer / Régénérer la trame**, **Télécharger le PDF**, **Marquer comme envoyée**,
+- Section « Progression pédagogique » de `/modules/[id]` : badge d'échéance (E3) + boutons
+  **Générer / Régénérer la progression**, **Télécharger le PDF**, **Marquer comme envoyée**,
   **Marquer comme validée**.
 - Générer = instantané figé (`pedagogical_outline.content`, construit par la fonction pure
   `buildOutlineContent`) ; régénérer rafraîchit le contenu sans toucher au statut d'envoi.
@@ -293,22 +293,22 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
   `outline_sent` (jamais de retour en arrière) ; l'alerte J-15/J-7 disparaît.
 - Nom du/de la formateur·rice = `teacher_profile.legal_name` (écran Réglages à venir).
 
-### Cohabitation avec une trame déposée en PDF (module déjà réalisé)
+### Cohabitation avec une progression déposée en PDF (module déjà réalisé)
 
-Pour un module déjà réalisé, une trame déposée sur « Documents » (`module_document.kind =
+Pour un module déjà réalisé, une progression déposée sur « Documents » (`module_document.kind =
 outline_sent`) **fait foi** : la génération depuis les séances reste possible mais ne se présente
 jamais comme la version envoyée.
 
-- Dès qu'un document `outline_sent` existe (le plus récent), la section affiche « Trame envoyée
+- Dès qu'un document `outline_sent` existe (le plus récent), la section affiche « Progression envoyée
   (PDF déposé le jj/mm/aaaa) » avec **Télécharger** et **Voir** (aperçu, `?inline=1`) à la place du
   badge d'échéance habituel.
-- Une trame générée en plus s'affiche en secondaire : « Trame générée depuis les séances le …
+- Une progression générée en plus s'affiche en secondaire : « Progression générée depuis les séances le …
   (brouillon, non envoyée) ».
-- Le bouton devient **« Générer une trame depuis les séances »**, avec l'aide « La trame déposée
-  reste la version envoyée à l'école. » — **Marquer comme envoyée** ne s'affiche pas (une trame
+- Le bouton devient **« Générer une progression depuis les séances »**, avec l'aide « La progression déposée
+  reste la version envoyée à l'école. » — **Marquer comme envoyée** ne s'affiche pas (une progression
   générée sans dépôt garde son bouton habituel).
 - Module archivé : les boutons **Générer** et **Marquer comme envoyée** sont masqués (plus besoin
-  d'une nouvelle trame pour un module passé) ; télécharger et valider restent disponibles.
+  d'une nouvelle progression pour un module passé) ; télécharger et valider restent disponibles.
 - Aucun lien en base entre le document déposé et l'instantané généré (pas nécessaire à la
   cohabitation) : `depositedOutline` est calculé côté page comme le document `outline_sent` le plus
   récent du module.
@@ -345,11 +345,11 @@ jamais comme la version envoyée.
   « Créer l'école » ou « Enregistrer les modifications » ; lien « ← Réglages ». Quitter avec des
   modifications non enregistrées demande confirmation (dialogue + `beforeunload`). Retour sur
   `/settings?saved=…` avec « ✓ École « X » enregistrée. » (`role="status"`).
-- Ces données alimentent la trame (nom du/de la formateur·rice) et, en E7, les factures.
+- Ces données alimentent la progression (nom du/de la formateur·rice) et, en E7, les factures.
 
 ## Facturation (E7)
 
-- `/modules/[id]/billing` : **Conditions YNOV** (trame envoyée, notes X/Y) puis la **checklist
+- `/modules/[id]/billing` : **Conditions YNOV** (progression envoyée, notes X/Y) puis la **checklist
   des 4 documents administratifs, modifiable sur place** (US-71 : mêmes interrupteurs que la fiche
   module ; chaque bascule affiche « Enregistré : … » dans une zone `role=status`, ou l'erreur en
   `role=alert` ; l'action `setAdminDoc` refuse une clé inconnue) et

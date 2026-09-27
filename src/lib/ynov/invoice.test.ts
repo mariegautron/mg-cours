@@ -58,7 +58,7 @@ describe("invoiceBlockers", () => {
   it("bloque si la trame n'est pas envoyée", () => {
     const ctx = ok();
     ctx.module.iceberg_state = "outline_generated";
-    expect(invoiceBlockers(ctx)).toContain("La trame pédagogique n’a pas été envoyée.");
+    expect(invoiceBlockers(ctx)).toContain("La progression pédagogique n’a pas été envoyée.");
   });
 
   it("bloque si le nombre de notes est insuffisant, avec le décompte", () => {

@@ -10,12 +10,14 @@ async function login(page: import("@playwright/test").Page) {
   await page.waitForURL("**/dashboard");
 }
 
-test("génère la trame PDF, la télécharge et la marque envoyée", async ({ page }) => {
+test("génère la progression pédagogique PDF, la télécharge et la marque envoyée", async ({
+  page,
+}) => {
   await login(page);
   const suffix = Date.now();
 
   await page.goto("/modules/new");
-  await page.getByLabel("Nom du module").fill(`Module Trame ${suffix}`);
+  await page.getByLabel("Nom du module").fill(`Module Progression ${suffix}`);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
   await page.getByLabel("Date de la 1re séance").fill("2026-12-01");
@@ -34,7 +36,7 @@ test("génère la trame PDF, la télécharge et la marque envoyée", async ({ pa
   const before = await page.request.get(`/api/modules/${moduleId}/outline`);
   expect(before.status()).toBe(404);
 
-  await page.getByRole("button", { name: "Générer la trame" }).click();
+  await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
 
   const pdf = await page.request.get(`/api/modules/${moduleId}/outline`);
@@ -45,7 +47,7 @@ test("génère la trame PDF, la télécharge et la marque envoyée", async ({ pa
 
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();
-  await expect(page.getByText("Trame envoyée.")).toBeVisible();
+  await expect(page.getByText("Progression pédagogique envoyée.")).toBeVisible();
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

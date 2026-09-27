@@ -54,7 +54,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.goto(`${moduleUrl}/billing`);
   await expect(page.getByRole("heading", { name: /Facturation —/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Générer la facture" })).toBeDisabled();
-  await expect(page.getByText(/Trame pédagogique envoyée/)).toBeVisible();
+  await expect(page.getByText(/Progression pédagogique envoyée/)).toBeVisible();
 
   // Étudiant·e + groupe + 2 évaluations notées.
   await page.goto("/students/new");
@@ -87,9 +87,9 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
     await expect(page.getByText("Note enregistrée.")).toBeVisible();
   }
 
-  // Trame envoyée + documents administratifs.
+  // Progression envoyée + documents administratifs.
   await page.goto(moduleUrl);
-  await page.getByRole("button", { name: "Générer la trame" }).click();
+  await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();

@@ -23,11 +23,11 @@ const TRAME_BADGE: Record<
   string,
   { label: string; variant: "default" | "destructive" | "outline" | "secondary" }
 > = {
-  sent: { label: "Trame envoyée", variant: "secondary" },
-  overdue: { label: "Trame en retard", variant: "destructive" },
-  urgent: { label: "Trame — J-7", variant: "destructive" },
-  warning: { label: "Trame — J-15", variant: "outline" },
-  ok: { label: "Trame OK", variant: "outline" },
+  sent: { label: "Progression envoyée", variant: "secondary" },
+  overdue: { label: "Progression en retard", variant: "destructive" },
+  urgent: { label: "Progression — J-7", variant: "destructive" },
+  warning: { label: "Progression — J-15", variant: "outline" },
+  ok: { label: "Progression OK", variant: "outline" },
   unknown: { label: "1re séance à renseigner", variant: "outline" },
 };
 

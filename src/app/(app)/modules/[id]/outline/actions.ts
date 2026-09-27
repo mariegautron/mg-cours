@@ -36,7 +36,7 @@ export async function generateOutline(moduleId: string): Promise<OutlineActionSt
 
 export async function markOutlineSent(moduleId: string): Promise<OutlineActionState> {
   const outline = await getOutline(moduleId);
-  if (!outline) return { error: "Générez d’abord la trame." };
+  if (!outline) return { error: "Générez d’abord la progression pédagogique." };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -54,7 +54,7 @@ export async function markOutlineSent(moduleId: string): Promise<OutlineActionSt
 export async function markOutlineValidated(moduleId: string): Promise<OutlineActionState> {
   const outline = await getOutline(moduleId);
   if (!outline || outline.status === "draft") {
-    return { error: "La trame doit d’abord être envoyée." };
+    return { error: "La progression pédagogique doit d’abord être envoyée." };
   }
 
   const supabase = await createClient();

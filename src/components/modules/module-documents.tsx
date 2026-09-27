@@ -176,8 +176,8 @@ export function ModuleDocuments({
       <DocumentSlot
         moduleId={moduleId}
         kind="outline_sent"
-        title="Trame envoyée"
-        hint="Pour un module déjà réalisé : la trame envoyée à l’école, à conserver ici."
+        title="Progression pédagogique envoyée"
+        hint="Module déjà réalisé : la progression envoyée à l’école. La déposer ici la compte comme envoyée pour la facturation."
         documents={documents.filter((d) => d.kind === "outline_sent")}
       />
       <DocumentSlot

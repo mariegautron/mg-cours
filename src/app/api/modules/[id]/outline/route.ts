@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export async function GET(_req: Request, ctx: RouteContext<"/api/modules/[id]/outline">) {
   const { id } = await ctx.params;
   const outline = await getOutline(id);
-  if (!outline) return new Response("Trame introuvable", { status: 404 });
+  if (!outline) return new Response("Progression pédagogique introuvable", { status: 404 });
 
   const content = outline.content as unknown as OutlineContent;
   const buffer = await renderToBuffer(OutlineDocument({ content }));

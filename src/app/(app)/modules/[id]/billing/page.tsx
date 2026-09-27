@@ -10,7 +10,7 @@ import { ExternalInvoicePaid } from "@/components/billing/external-invoice-paid"
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { DocumentSlot } from "@/components/modules/module-documents";
 import { getModule, getModuleDocuments } from "@/lib/modules/queries";
-import { invoiceBlockers, missingInvoiceData } from "@/lib/ynov/invoice";
+import { invoiceBlockers, missingInvoiceData, OUTLINE_NOT_SENT } from "@/lib/ynov/invoice";
 
 export async function generateMetadata({
   params,
@@ -47,8 +47,8 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
 
   const conditions = [
     {
-      ok: !blockers.includes("La trame pédagogique n’a pas été envoyée."),
-      label: "Trame pédagogique envoyée",
+      ok: !blockers.includes(OUTLINE_NOT_SENT),
+      label: "Progression pédagogique envoyée",
     },
     {
       ok: ctx.notes.satisfied,
