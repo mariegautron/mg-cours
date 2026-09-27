@@ -36,6 +36,10 @@ export function AssessmentForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
+  // Un seul groupe dans le module : pré-coché à la création.
+  const selectedGroupIds = new Set(
+    assessment ? assessment.groups.map((g) => g.id) : groups.length === 1 ? [groups[0].id] : [],
+  );
 
   return (
     <form action={formAction} className="max-w-xl space-y-6">
@@ -88,27 +92,31 @@ export function AssessmentForm({
             defaultValue={assessment?.coefficient ?? 1}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="studentGroupId">Groupe</Label>
-          <select
-            id="studentGroupId"
-            name="studentGroupId"
-            required
-            defaultValue={assessment?.student_group_id ?? ""}
-            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-            aria-describedby={fe.studentGroupId ? "studentGroupId-error" : undefined}
-          >
-            <option value="" disabled>
-              Choisir…
-            </option>
+        <fieldset
+          className="space-y-2 sm:col-span-2"
+          aria-describedby={fe.studentGroupIds ? "studentGroupIds-error" : undefined}
+        >
+          <legend className="text-sm leading-none font-medium">Groupes</legend>
+          <p className="text-muted-foreground text-sm">
+            Cochez tous les groupes notés sur cette évaluation : elle compte pour une seule note.
+          </p>
+          <ul className="grid gap-2 sm:grid-cols-2">
             {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
+              <li key={g.id}>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="studentGroupIds"
+                    value={g.id}
+                    defaultChecked={selectedGroupIds.has(g.id)}
+                  />
+                  {g.name}
+                </label>
+              </li>
             ))}
-          </select>
-          <FieldError id="studentGroupId" errors={fe.studentGroupId} />
-        </div>
+          </ul>
+          <FieldError id="studentGroupIds" errors={fe.studentGroupIds} />
+        </fieldset>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="gradingGridId">Grille de correction (optionnel)</Label>
           <select
@@ -133,7 +141,7 @@ export function AssessmentForm({
           name="isGroupGrade"
           defaultChecked={assessment?.is_group_grade ?? false}
         />
-        Note de groupe (une seule note pour tout le groupe, coefficient ×1 au lieu de ×3)
+        Note de groupe (une note par groupe coché, coefficient ×1 au lieu de ×3)
       </label>
 
       {state.error ? (

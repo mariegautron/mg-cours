@@ -32,7 +32,13 @@ const base = {
     { id: "c2", label: "Contenu", weight: 6 },
   ],
   comments: [{ id: "k1", text: "Bonne maîtrise." }],
-  group: { name: "G1", members: [student("s1", "Lea", "lea@x.fr"), student("s2", "Noa", null)] },
+  groups: [
+    {
+      id: "grp",
+      name: "G1",
+      members: [student("s1", "Lea", "lea@x.fr"), student("s2", "Noa", null)],
+    },
+  ],
 };
 
 describe("buildResultSheets", () => {
@@ -60,6 +66,34 @@ describe("buildResultSheets", () => {
     });
     expect(sheets).toHaveLength(1);
     expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test", "Noa Test"]);
+  });
+
+  it("plusieurs groupes : une fiche par groupe noté, une par étudiant·e sans doublon", () => {
+    const groups = [
+      ...base.groups,
+      { id: "grp2", name: "G2", members: [student("s2", "Noa", null), student("s3", "Zoe", null)] },
+    ];
+    const groupSheets = buildResultSheets({
+      ...base,
+      groups,
+      assessment: { title: "Projet", subject: null, date: null, is_group_grade: true },
+      grades: [
+        grade({ id: "x", student_group_id: "grp", is_group_grade: true }),
+        grade({ id: "y", student_group_id: "grp2", is_group_grade: true, value: 12 }),
+      ],
+    });
+    expect(groupSheets.map((sh) => [sh.value, sh.recipients.map((r) => r.name)])).toEqual([
+      [8, ["Lea Test", "Noa Test"]],
+      [12, ["Noa Test", "Zoe Test"]],
+    ]);
+
+    const individualSheets = buildResultSheets({
+      ...base,
+      groups,
+      assessment: { title: "Oral", subject: null, date: null, is_group_grade: false },
+      grades: [grade({ student_id: "s2" }), grade({ student_id: "s3" })],
+    });
+    expect(individualSheets.map((sh) => sh.recipients[0].name)).toEqual(["Noa Test", "Zoe Test"]);
   });
 
   it("aucune fiche tant qu'aucune note n'est saisie", () => {

@@ -17,6 +17,18 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
   );
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/** Vrai si tous les groupes appartiennent au module (la RLS garantit déjà la propriété). */
+async function groupsBelongToModule(supabase: Supabase, moduleId: string, groupIds: string[]) {
+  const { count } = await supabase
+    .from("student_group")
+    .select("id", { count: "exact", head: true })
+    .eq("module_id", moduleId)
+    .in("id", groupIds);
+  return count === groupIds.length;
+}
+
 export async function createAssessment(
   moduleId: string,
   _prev: AssessmentFormState,
@@ -25,7 +37,12 @@ export async function createAssessment(
   const parsed = readAssessmentForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
+  const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
+  if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
+    return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
+  }
+
   const { data, error } = await supabase
     .from("assessment")
     .insert({
@@ -36,7 +53,6 @@ export async function createAssessment(
       coefficient: parsed.data.coefficient,
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,
-      student_group_id: parsed.data.studentGroupId,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
     })
@@ -44,6 +60,14 @@ export async function createAssessment(
     .single();
 
   if (error || !data) return { error: "Enregistrement impossible." };
+
+  const { error: groupsError } = await supabase
+    .from("assessment_group")
+    .insert(groupIds.map((student_group_id) => ({ assessment_id: data.id, student_group_id })));
+  if (groupsError) {
+    await supabase.from("assessment").delete().eq("id", data.id);
+    return { error: "Enregistrement impossible." };
+  }
 
   revalidatePath(`/modules/${moduleId}/assessments`);
   redirect(`/modules/${moduleId}/assessments/${data.id}`);
@@ -58,7 +82,12 @@ export async function updateAssessment(
   const parsed = readAssessmentForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
+  const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
+  if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
+    return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
+  }
+
   const { error } = await supabase
     .from("assessment")
     .update({
@@ -68,13 +97,44 @@ export async function updateAssessment(
       coefficient: parsed.data.coefficient,
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,
-      student_group_id: parsed.data.studentGroupId,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
     })
     .eq("id", assessmentId);
 
   if (error) return { error: "Enregistrement impossible." };
+
+  const { data: current } = await supabase
+    .from("assessment_group")
+    .select("student_group_id")
+    .eq("assessment_id", assessmentId);
+  const currentIds = (current ?? []).map((r) => r.student_group_id);
+  const added = groupIds.filter((g) => !currentIds.includes(g));
+  const removed = currentIds.filter((g) => !groupIds.includes(g));
+
+  if (added.length) {
+    const { error: addError } = await supabase
+      .from("assessment_group")
+      .insert(added.map((student_group_id) => ({ assessment_id: assessmentId, student_group_id })));
+    if (addError) return { error: "Enregistrement impossible." };
+  }
+  if (removed.length) {
+    // Les notes de groupe des groupes retirés disparaissent (sinon elles compteraient encore) ;
+    // les notes individuelles sont conservées.
+    const [{ error: removeError }, { error: gradeError }] = await Promise.all([
+      supabase
+        .from("assessment_group")
+        .delete()
+        .eq("assessment_id", assessmentId)
+        .in("student_group_id", removed),
+      supabase
+        .from("grade")
+        .delete()
+        .eq("assessment_id", assessmentId)
+        .in("student_group_id", removed),
+    ]);
+    if (removeError || gradeError) return { error: "Enregistrement impossible." };
+  }
 
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);

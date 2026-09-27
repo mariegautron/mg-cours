@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useId } from "react";
 
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ export function GradeForm({
   comments: Tables<"predefined_comment">[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
+  const uid = useId();
   const scores = (grade?.scores as Record<string, number> | undefined) ?? {};
   const selectedComments = new Set(grade?.predefined_comment_ids ?? []);
   const total = grid
@@ -34,9 +36,15 @@ export function GradeForm({
     : (grade?.value ?? "");
 
   return (
-    <form action={formAction} className="space-y-4 rounded-lg border p-4">
+    <form
+      action={formAction}
+      aria-labelledby={`${uid}-title`}
+      className="space-y-4 rounded-lg border p-4"
+    >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium">{title}</h3>
+        <h3 id={`${uid}-title`} className="font-medium">
+          {title}
+        </h3>
         {grade?.value !== undefined && grade?.value !== null ? (
           <span className="text-muted-foreground text-sm">Note actuelle : {grade.value}</span>
         ) : null}
@@ -46,11 +54,11 @@ export function GradeForm({
         <div className="grid gap-3 sm:grid-cols-2">
           {grid.criteria.map((c) => (
             <div key={c.id} className="space-y-1">
-              <Label htmlFor={`score_${c.id}`}>
+              <Label htmlFor={`${uid}-score_${c.id}`}>
                 {c.label} <span className="text-muted-foreground">(/{c.weight})</span>
               </Label>
               <Input
-                id={`score_${c.id}`}
+                id={`${uid}-score_${c.id}`}
                 name={`score_${c.id}`}
                 type="number"
                 step="0.5"
@@ -66,9 +74,9 @@ export function GradeForm({
         </div>
       ) : (
         <div className="space-y-1">
-          <Label htmlFor="value">Note</Label>
+          <Label htmlFor={`${uid}-value`}>Note</Label>
           <Input
-            id="value"
+            id={`${uid}-value`}
             name="value"
             type="number"
             step="0.5"
@@ -79,8 +87,13 @@ export function GradeForm({
       )}
 
       <div className="space-y-1">
-        <Label htmlFor="feedback">Appréciation</Label>
-        <Textarea id="feedback" name="feedback" rows={2} defaultValue={grade?.feedback ?? ""} />
+        <Label htmlFor={`${uid}-feedback`}>Appréciation</Label>
+        <Textarea
+          id={`${uid}-feedback`}
+          name="feedback"
+          rows={2}
+          defaultValue={grade?.feedback ?? ""}
+        />
       </div>
 
       {comments.length > 0 ? (
@@ -90,13 +103,13 @@ export function GradeForm({
             {comments.map((c) => (
               <li key={c.id} className="flex items-start gap-2">
                 <Checkbox
-                  id={`comment_${c.id}`}
+                  id={`${uid}-comment_${c.id}`}
                   name="predefinedCommentIds"
                   value={c.id}
                   defaultChecked={selectedComments.has(c.id)}
                   className="mt-0.5"
                 />
-                <Label htmlFor={`comment_${c.id}`} className="font-normal">
+                <Label htmlFor={`${uid}-comment_${c.id}`} className="font-normal">
                   {c.text}
                 </Label>
               </li>

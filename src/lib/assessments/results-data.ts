@@ -13,13 +13,13 @@ export async function loadResultSheets(
     getGradesByAssessment(assessmentId),
     listComments(),
   ]);
-  if (!mod || !assessment || assessment.module_id !== moduleId || !assessment.student_group) {
+  if (!mod || !assessment || assessment.module_id !== moduleId || assessment.groups.length === 0) {
     return null;
   }
   return buildResultSheets({
     moduleName: mod.name,
     assessment,
-    group: assessment.student_group,
+    groups: assessment.groups,
     criteria: assessment.grading_grid?.criteria ?? [],
     grades,
     comments,

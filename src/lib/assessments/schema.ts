@@ -90,7 +90,10 @@ export const assessmentSchema = z.object({
   coefficient: z.coerce.number().min(0.1).max(100).default(1),
   date: optionalDate,
   durationMinutes: optionalMinutes,
-  studentGroupId: z.string().uuid("Choisissez un groupe."),
+  studentGroupIds: z
+    .array(z.string().uuid("Groupe invalide."))
+    .min(1, "Choisissez au moins un groupe.")
+    .transform((ids) => Array.from(new Set(ids))),
   gradingGridId: z
     .string()
     .uuid()
@@ -108,7 +111,7 @@ export function readAssessmentForm(formData: FormData) {
     coefficient: formData.get("coefficient") ?? "1",
     date: formData.get("date") ?? "",
     durationMinutes: formData.get("durationMinutes") ?? "",
-    studentGroupId: formData.get("studentGroupId") ?? "",
+    studentGroupIds: formData.getAll("studentGroupIds").map(String),
     gradingGridId: formData.get("gradingGridId") ?? "",
     isGroupGrade: formData.get("isGroupGrade") === "on",
   });

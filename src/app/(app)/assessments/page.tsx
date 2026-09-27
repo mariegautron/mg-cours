@@ -66,7 +66,8 @@ export default async function AssessmentsPage() {
                 <div>
                   <p className="font-medium">{a.title}</p>
                   <p className="text-muted-foreground text-sm">
-                    {a.module?.name} ({a.module?.year}) · {a.student_group?.name ?? "—"}
+                    {a.module?.name} ({a.module?.year}) ·{" "}
+                    {a.groups.map((g) => g.name).join(", ") || "—"}
                   </p>
                 </div>
                 <Badge variant={a.gradeCount > 0 ? "secondary" : "outline"}>

@@ -68,19 +68,43 @@ export async function commentTags(): Promise<string[]> {
   return Array.from(set).sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+type GroupRef = Pick<Tables<"student_group">, "id" | "name">;
+
 export interface AssessmentWithMeta extends Tables<"assessment"> {
-  student_group: Pick<Tables<"student_group">, "id" | "name"> | null;
+  /** Groupes visés, triés par nom. */
+  groups: GroupRef[];
   grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
   gradeCount: number;
 }
 
-async function attachGradeCounts(
+const LIST_SELECT =
+  "*, assessment_group(student_group:student_group_id(id, name)), grading_grid:grading_grid_id(id, name)";
+
+type RawListed = Tables<"assessment"> & {
+  assessment_group: { student_group: GroupRef | null }[];
+  grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
+};
+
+function byName<T extends { name: string }>(a: T, b: T) {
+  return a.name.localeCompare(b.name, "fr");
+}
+
+function flattenGroups<T extends RawListed>(
+  rows: T[],
+): (Omit<T, "assessment_group"> & { groups: GroupRef[] })[] {
+  return rows.map(({ assessment_group, ...a }) => ({
+    ...a,
+    groups: assessment_group
+      .map((ag) => ag.student_group)
+      .filter((g): g is GroupRef => g !== null)
+      .sort(byName),
+  }));
+}
+
+async function attachGradeCounts<T extends { id: string }>(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  assessments: (Tables<"assessment"> & {
-    student_group: Pick<Tables<"student_group">, "id" | "name"> | null;
-    grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
-  })[],
-): Promise<AssessmentWithMeta[]> {
+  assessments: T[],
+): Promise<(T & { gradeCount: number })[]> {
   if (assessments.length === 0) return [];
   const { data: grades } = await supabase
     .from("grade")
@@ -103,17 +127,11 @@ export async function listModuleAssessments(moduleId: string): Promise<Assessmen
   const supabase = await createClient();
   const { data } = await supabase
     .from("assessment")
-    .select("*, student_group:student_group_id(id, name), grading_grid:grading_grid_id(id, name)")
+    .select(LIST_SELECT)
     .eq("module_id", moduleId)
     .order("date", { ascending: false, nullsFirst: false });
 
-  return attachGradeCounts(
-    supabase,
-    (data ?? []) as unknown as (Tables<"assessment"> & {
-      student_group: Pick<Tables<"student_group">, "id" | "name"> | null;
-      grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
-    })[],
-  );
+  return attachGradeCounts(supabase, flattenGroups((data ?? []) as unknown as RawListed[]));
 }
 
 export async function listAllAssessments(): Promise<
@@ -122,26 +140,24 @@ export async function listAllAssessments(): Promise<
   const supabase = await createClient();
   const { data } = await supabase
     .from("assessment")
-    .select(
-      "*, student_group:student_group_id(id, name), grading_grid:grading_grid_id(id, name), module:module_id(id, name, year)",
-    )
+    .select(`${LIST_SELECT}, module:module_id(id, name, year)`)
     .order("date", { ascending: false, nullsFirst: false });
 
-  const withCounts = await attachGradeCounts(
+  return attachGradeCounts(
     supabase,
-    (data ?? []) as unknown as (Tables<"assessment"> & {
-      student_group: Pick<Tables<"student_group">, "id" | "name"> | null;
-      grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
-      module: Pick<Tables<"module">, "id" | "name" | "year"> | null;
-    })[],
+    flattenGroups(
+      (data ?? []) as unknown as (RawListed & {
+        module: Pick<Tables<"module">, "id" | "name" | "year"> | null;
+      })[],
+    ),
   );
-  return withCounts as (AssessmentWithMeta & {
-    module: Pick<Tables<"module">, "id" | "name" | "year"> | null;
-  })[];
 }
 
+export type GroupWithMembers = Tables<"student_group"> & { members: Tables<"student">[] };
+
 export interface AssessmentDetail extends Tables<"assessment"> {
-  student_group: (Tables<"student_group"> & { members: Tables<"student">[] }) | null;
+  /** Groupes visés (triés par nom) avec leurs membres. */
+  groups: GroupWithMembers[];
   grading_grid: GridWithCriteria | null;
 }
 
@@ -150,24 +166,29 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
   const { data } = await supabase
     .from("assessment")
     .select(
-      "*, student_group:student_group_id(*, group_member(student:student_id(*))), grading_grid:grading_grid_id(*, grid_criterion(*))",
+      "*, assessment_group(student_group:student_group_id(*, group_member(student:student_id(*)))), grading_grid:grading_grid_id(*, grid_criterion(*))",
     )
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
 
-  const raw = data as unknown as Tables<"assessment"> & {
-    student_group:
-      (Tables<"student_group"> & { group_member: { student: Tables<"student"> | null }[] }) | null;
+  const { assessment_group, ...raw } = data as unknown as Tables<"assessment"> & {
+    assessment_group: {
+      student_group:
+        | (Tables<"student_group"> & { group_member: { student: Tables<"student"> | null }[] })
+        | null;
+    }[];
     grading_grid: (Tables<"grading_grid"> & { grid_criterion: Tables<"grid_criterion">[] }) | null;
   };
 
-  const student_group = raw.student_group
-    ? {
-        ...raw.student_group,
-        members: raw.student_group.group_member.map((m) => m.student).filter((s) => s !== null),
-      }
-    : null;
+  const groups = assessment_group
+    .map((ag) => ag.student_group)
+    .filter((g) => g !== null)
+    .map(({ group_member, ...g }) => ({
+      ...g,
+      members: group_member.map((m) => m.student).filter((s) => s !== null),
+    }))
+    .sort(byName);
 
   const grading_grid = raw.grading_grid
     ? {
@@ -176,7 +197,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
       }
     : null;
 
-  return { ...raw, student_group, grading_grid };
+  return { ...raw, groups, grading_grid };
 }
 
 export async function getGradesByAssessment(assessmentId: string): Promise<Tables<"grade">[]> {

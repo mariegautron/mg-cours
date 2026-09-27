@@ -1,3 +1,4 @@
+import { gradingTargets } from "@/lib/assessments/targets";
 import type { Tables } from "@/types/db";
 
 export interface ResultCriterionLine {
@@ -24,15 +25,18 @@ export interface ResultSheet {
 interface Input {
   moduleName: string;
   assessment: Pick<Tables<"assessment">, "title" | "subject" | "date" | "is_group_grade">;
-  group: { name: string; members: Tables<"student">[] };
+  groups: { id: string; name: string; members: Tables<"student">[] }[];
   criteria: Pick<Tables<"grid_criterion">, "id" | "label" | "weight">[];
   grades: Tables<"grade">[];
   comments: Pick<Tables<"predefined_comment">, "id" | "text">[];
 }
 
-/** Construit une fiche de résultat par note (groupe = 1 fiche, individuelle = 1 par étudiant·e noté·e). */
+/**
+ * Construit une fiche de résultat par note : note de groupe = 1 fiche par groupe noté (destinataires :
+ * ses membres), note individuelle = 1 fiche par étudiant·e noté·e (sans doublon entre groupes).
+ */
 export function buildResultSheets(input: Input): ResultSheet[] {
-  const { assessment, group, criteria, comments } = input;
+  const { assessment, criteria, comments } = input;
   const commentText = new Map(comments.map((c) => [c.id, c.text]));
   const maxScore = criteria.length ? criteria.reduce((s, c) => s + c.weight, 0) : null;
 
@@ -59,21 +63,23 @@ export function buildResultSheets(input: Input): ResultSheet[] {
     };
   };
 
+  const recipient = (m: Tables<"student">) => ({
+    name: `${m.first_name} ${m.last_name}`,
+    email: m.email,
+  });
+  const targets = gradingTargets(assessment.is_group_grade, input.groups);
+
   if (assessment.is_group_grade) {
-    const grade = input.grades.find((g) => g.student_group_id !== null && g.value !== null);
-    if (!grade) return [];
-    return [
-      sheetFor(
-        grade,
-        group.members.map((m) => ({ name: `${m.first_name} ${m.last_name}`, email: m.email })),
-      ),
-    ];
+    return targets.flatMap(({ group }) => {
+      const grade = input.grades.find((g) => g.student_group_id === group.id && g.value !== null);
+      return grade ? [sheetFor(grade, group.members.map(recipient))] : [];
+    });
   }
 
-  return group.members.flatMap((m) => {
-    const grade = input.grades.find((g) => g.student_id === m.id && g.value !== null);
-    return grade
-      ? [sheetFor(grade, [{ name: `${m.first_name} ${m.last_name}`, email: m.email }])]
-      : [];
-  });
+  return targets
+    .flatMap((t) => t.students)
+    .flatMap((m) => {
+      const grade = input.grades.find((g) => g.student_id === m.id && g.value !== null);
+      return grade ? [sheetFor(grade, [recipient(m)])] : [];
+    });
 }

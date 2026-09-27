@@ -25,6 +25,7 @@ const TABLES = [
   "grid_criterion",
   "predefined_comment",
   "assessment",
+  "assessment_group",
   "grade",
   "pedagogical_outline",
   "invoice",
@@ -48,7 +49,7 @@ test("un second compte ne voit ni ne modifie les données de Marie (RLS)", async
   expect(signUp.error).toBeNull();
   expect(signUp.data.session).not.toBeNull(); // sinon confirmation d'e-mail requise en local
 
-  // Lecture : zéro ligne, sur les 16 tables.
+  // Lecture : zéro ligne, sur les 17 tables.
   for (const table of TABLES) {
     const { data, error } = await other.from(table).select("id");
     expect(error, table).toBeNull();

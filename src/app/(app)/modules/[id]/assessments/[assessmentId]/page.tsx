@@ -10,6 +10,7 @@ import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assessments/queries";
+import { gradingTargets } from "@/lib/assessments/targets";
 
 export async function generateMetadata({
   params,
@@ -30,7 +31,8 @@ export default async function AssessmentPage({
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
-  const group = assessment.student_group;
+  const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
+  const groupNames = assessment.groups.map((g) => g.name).join(", ");
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -38,7 +40,7 @@ export default async function AssessmentPage({
         <div>
           <h1 className="text-2xl font-semibold">{assessment.title}</h1>
           <p className="text-muted-foreground">
-            {[assessment.subject, assessment.type, group?.name].filter(Boolean).join(" · ")}
+            {[assessment.subject, assessment.type, groupNames].filter(Boolean).join(" · ")}
             {assessment.date ? ` · ${new Date(assessment.date).toLocaleDateString("fr-FR")}` : ""}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -68,29 +70,47 @@ export default async function AssessmentPage({
         hasGrades={grades.some((g) => g.value !== null)}
       />
 
-      {!group ? (
-        <p className="text-muted-foreground">Groupe introuvable.</p>
+      {targets.length === 0 ? (
+        <p className="text-muted-foreground">Aucun groupe visé : modifiez l’évaluation.</p>
       ) : assessment.is_group_grade ? (
-        <GradeForm
-          action={saveGroupGrade.bind(null, id, assessmentId, group.id)}
-          title={`Note du groupe « ${group.name} »`}
-          grid={assessment.grading_grid}
-          grade={grades.find((g) => g.student_group_id === group.id)}
-          comments={comments}
-        />
-      ) : group.members.length === 0 ? (
-        <p className="text-muted-foreground">Ce groupe n’a aucun membre pour l’instant.</p>
-      ) : (
         <div className="space-y-4">
-          {group.members.map((m) => (
+          {targets.map(({ group }) => (
             <GradeForm
-              key={m.id}
-              action={saveStudentGrade.bind(null, id, assessmentId, m.id)}
-              title={`${m.first_name} ${m.last_name}`}
+              key={group.id}
+              action={saveGroupGrade.bind(null, id, assessmentId, group.id)}
+              title={`Note du groupe « ${group.name} »`}
               grid={assessment.grading_grid}
-              grade={grades.find((g) => g.student_id === m.id)}
+              grade={grades.find((g) => g.student_group_id === group.id)}
               comments={comments}
             />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {targets.map(({ group, students }) => (
+            <section key={group.id} aria-labelledby={`group-${group.id}`} className="space-y-4">
+              <h2 id={`group-${group.id}`} className="text-lg font-semibold">
+                {group.name}
+              </h2>
+              {students.length === 0 ? (
+                <p className="text-muted-foreground">
+                  {group.members.length === 0
+                    ? "Ce groupe n’a aucun membre pour l’instant."
+                    : "Membres déjà notés dans un autre groupe ci-dessus."}
+                </p>
+              ) : (
+                students.map((m) => (
+                  <GradeForm
+                    key={m.id}
+                    action={saveStudentGrade.bind(null, id, assessmentId, m.id)}
+                    title={`${m.first_name} ${m.last_name}`}
+                    grid={assessment.grading_grid}
+                    grade={grades.find((g) => g.student_id === m.id)}
+                    comments={comments}
+                  />
+                ))
+              )}
+            </section>
           ))}
         </div>
       )}

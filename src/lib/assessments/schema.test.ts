@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseCriteriaLines } from "./schema";
+import { parseCriteriaLines, readAssessmentForm } from "./schema";
 
 describe("parseCriteriaLines", () => {
   it("parse un critère par ligne au format « Libellé | points »", () => {
@@ -26,5 +26,29 @@ describe("parseCriteriaLines", () => {
     expect(parseCriteriaLines("Présentation | abc\n")[0].error).toBe("points invalides");
     expect(parseCriteriaLines("Présentation | 0\n")[0].error).toBe("points invalides");
     expect(parseCriteriaLines("Présentation | -2\n")[0].error).toBe("points invalides");
+  });
+});
+
+describe("readAssessmentForm", () => {
+  const G1 = "11111111-1111-4111-8111-111111111111";
+  const G2 = "22222222-2222-4222-8222-222222222222";
+  const form = (groupIds: string[]) => {
+    const fd = new FormData();
+    fd.set("title", "TP noté");
+    for (const id of groupIds) fd.append("studentGroupIds", id);
+    return fd;
+  };
+
+  it("accepte plusieurs groupes et retire les doublons", () => {
+    const parsed = readAssessmentForm(form([G1, G2, G1]));
+    expect(parsed.success && parsed.data.studentGroupIds).toEqual([G1, G2]);
+  });
+
+  it("exige au moins un groupe", () => {
+    const parsed = readAssessmentForm(form([]));
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.flatten().fieldErrors.studentGroupIds).toEqual([
+      "Choisissez au moins un groupe.",
+    ]);
   });
 });

@@ -22,6 +22,8 @@ erDiagram
   assessment }o--|| grading_grid : "utilise"
   grading_grid ||--o{ grid_criterion : "a"
   assessment ||--o{ grade : "a"
+  assessment ||--o{ assessment_group : "vise"
+  student_group ||--o{ assessment_group : "noté dans"
   module ||--o| pedagogical_outline : "a"
   module ||--o{ invoice : "a"
   teacher_profile ||--o{ school : "facture"
@@ -38,7 +40,8 @@ erDiagram
 | `student`             | first_name, last_name, email, photo_url, student_number, personal_notes                                                                                                                     |
 | `student_group`       | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                           |
 | `group_member`        | student_group_id, student_id                                                                                                                                                                |
-| `assessment`          | module_id, group_id?, title, type, coefficient, date, subject, is_group_grade                                                                                                               |
+| `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade                                                                                                                          |
+| `assessment_group`    | assessment_id, student_group_id — groupes visés par l'évaluation (≥ 1, paire unique)                                                                                                        |
 | `grading_grid`        | name, description                                                                                                                                                                           |
 | `grid_criterion`      | grading_grid_id, label, weight, description                                                                                                                                                 |
 | `grade`               | assessment_id, student_id?, group_id?, value, feedback, is_group_grade, scores(jsonb)                                                                                                       |

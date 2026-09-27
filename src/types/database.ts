@@ -45,7 +45,6 @@ export type Database = {
           is_group_grade: boolean
           module_id: string
           owner_id: string
-          student_group_id: string | null
           subject: string | null
           title: string
           type: string | null
@@ -61,7 +60,6 @@ export type Database = {
           is_group_grade?: boolean
           module_id: string
           owner_id?: string
-          student_group_id?: string | null
           subject?: string | null
           title: string
           type?: string | null
@@ -77,7 +75,6 @@ export type Database = {
           is_group_grade?: boolean
           module_id?: string
           owner_id?: string
-          student_group_id?: string | null
           subject?: string | null
           title?: string
           type?: string | null
@@ -98,8 +95,43 @@ export type Database = {
             referencedRelation: "module"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      assessment_group: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          student_group_id: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          student_group_id: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          student_group_id?: string
+          updated_at?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "assessment_student_group_id_fkey"
+            foreignKeyName: "assessment_group_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_group_student_group_id_fkey"
             columns: ["student_group_id"]
             isOneToOne: false
             referencedRelation: "student_group"

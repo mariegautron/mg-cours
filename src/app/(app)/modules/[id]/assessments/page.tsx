@@ -94,7 +94,7 @@ export default async function ModuleAssessmentsPage({
                   <div>
                     <p className="font-medium">{a.title}</p>
                     <p className="text-muted-foreground text-sm">
-                      {a.student_group?.name ?? "—"} ·{" "}
+                      {a.groups.map((g) => g.name).join(", ") || "—"} ·{" "}
                       {a.is_group_grade ? "note de groupe" : "note individuelle"}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                     </p>

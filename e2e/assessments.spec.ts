@@ -50,7 +50,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   // Évaluation individuelle avec grille, sur ce groupe.
   await page.goto(`${moduleUrl}/assessments/new`);
   await page.getByLabel("Titre").fill(`Oral ${suffix}`);
-  await page.getByLabel("Groupe", { exact: true }).selectOption({ label: groupName });
+  await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
@@ -80,4 +80,50 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await expect(page.getByText(/1\/3 notes? requises?/)).toBeVisible();
   await expect(page.getByRole("cell", { name: `Nora Benali${suffix}` })).toBeVisible();
   await expect(page.getByRole("cell", { name: "8.00" })).toBeVisible();
+});
+
+test("une évaluation sur plusieurs groupes compte pour une seule note", async ({ page }) => {
+  await login(page);
+  const suffix = Date.now();
+
+  await page.goto("/modules/new");
+  await page.getByLabel("Nom du module").fill(`Module Multi ${suffix}`);
+  await page.getByLabel("Année").fill("2026");
+  await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  const moduleUrl = page.url();
+
+  const groupNames = [`Projet A ${suffix}`, `Projet B ${suffix}`];
+  for (const name of groupNames) {
+    await page.goto(moduleUrl);
+    await page.getByRole("link", { name: "Ajouter un groupe" }).click();
+    await page.getByLabel("Nom du groupe").fill(name);
+    await page.getByRole("button", { name: "Créer le groupe" }).click();
+    await expect(page.getByRole("button", { name: "Créer le groupe" })).toBeHidden();
+  }
+
+  // Note de groupe sur les deux groupes : un formulaire par groupe.
+  await page.goto(`${moduleUrl}/assessments/new`);
+  await page.getByLabel("Titre").fill(`TP projet ${suffix}`);
+  for (const name of groupNames) await page.getByRole("checkbox", { name }).check();
+  await page.getByLabel(/Note de groupe/).check();
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+
+  for (const [i, name] of groupNames.entries()) {
+    const form = page.getByRole("form", { name: `Note du groupe « ${name} »` });
+    await form.getByLabel("Note", { exact: true }).fill(String(12 + i));
+    await form.getByRole("button", { name: "Enregistrer la note" }).click();
+    await expect(form.getByText("Note enregistrée.")).toBeVisible();
+  }
+
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  // Deux groupes notés, une seule évaluation : 1 note YNOV.
+  await page.goto(`${moduleUrl}/assessments`);
+  await expect(page.getByText(/1\/3 notes? requises?/)).toBeVisible();
+  await expect(page.getByText(groupNames.join(", "))).toBeVisible();
 });
