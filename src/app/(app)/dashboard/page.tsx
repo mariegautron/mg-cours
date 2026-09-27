@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { listModules } from "@/lib/modules/queries";
 import { getProfile } from "@/lib/settings/queries";
-import { trameStatus } from "@/lib/ynov/trame";
+import { outlineAlerts, outlineAlertSummary, type OutlineAlert } from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -36,6 +36,17 @@ function StatCard({
   );
 }
 
+/** En retard et J-7 : rouge ; J-15 : contour, libellé « à préparer » (pas seulement la couleur). */
+function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
+  if (alert.level === "overdue") {
+    return <Badge variant="destructive">En retard de {Math.abs(alert.daysUntilDue)} j</Badge>;
+  }
+  if (alert.level === "urgent") {
+    return <Badge variant="destructive">Urgent · J-{alert.daysUntilDue}</Badge>;
+  }
+  return <Badge variant="outline">À préparer · J-{alert.daysUntilDue}</Badge>;
+}
+
 export default async function DashboardPage() {
   const [modules, billing, profile] = await Promise.all([
     listModules(),
@@ -45,13 +56,10 @@ export default async function DashboardPage() {
   const toInvoice = billing.filter((b) => b.kind === "ready");
   const toSend = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "ready");
   const toCollect = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "sent");
-  const trames = modules
-    .map((m) => ({ module: m, status: trameStatus(m.first_session_date, m.iceberg_state) }))
-    .filter((t) => t.status.level === "urgent" || t.status.level === "overdue")
-    .sort((a, b) => (a.status.daysUntilDue ?? 0) - (b.status.daysUntilDue ?? 0));
+  const alerts = outlineAlerts(modules);
+  const summary = outlineAlertSummary(alerts);
 
   const firstName = profile?.legal_name?.split(" ")[0];
-  const urgent = trames.length > 0;
 
   return (
     <div className="space-y-8">
@@ -65,12 +73,17 @@ export default async function DashboardPage() {
             {firstName ? `Bonjour ${firstName} !` : "Bonjour !"}
           </h1>
           <p className="text-muted-foreground text-base">
-            {urgent
+            {summary === "pressing"
               ? "Une progression pédagogique demande ton attention avant l’échéance."
-              : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
+              : summary === "upcoming"
+                ? "Une progression pédagogique est à préparer : échéance dans moins de 15 jours."
+                : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
           </p>
         </div>
-        <Mascot mood={urgent ? "alert" : "party"} className="relative size-28 sm:size-32" />
+        <Mascot
+          mood={summary === "none" ? "party" : "alert"}
+          className="relative size-28 sm:size-32"
+        />
       </div>
 
       <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -90,24 +103,20 @@ export default async function DashboardPage() {
           chip="bg-sun/15 text-sun"
           icon={<TimerReset aria-hidden className="size-5" />}
         >
-          {trames.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Rien d’urgent pour l’instant.</p>
+          {alerts.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Aucune échéance dans les 15 jours.</p>
           ) : (
             <ul className="space-y-2 text-sm">
-              {trames.slice(0, 5).map((t) => (
-                <li key={t.module.id} className="flex flex-wrap items-center gap-2">
-                  <Link href={`/modules/${t.module.id}`} className="underline underline-offset-2">
-                    {t.module.name}
+              {alerts.slice(0, 5).map((a) => (
+                <li key={a.module.id} className="flex flex-wrap items-center gap-2">
+                  <Link href={`/modules/${a.module.id}`} className="underline underline-offset-2">
+                    {a.module.name}
                   </Link>
-                  <Badge variant="destructive">
-                    {t.status.level === "overdue"
-                      ? `en retard de ${Math.abs(t.status.daysUntilDue ?? 0)} j`
-                      : `J-${t.status.daysUntilDue}`}
-                  </Badge>
+                  <AlertBadge alert={a} />
                 </li>
               ))}
-              {trames.length > 5 ? (
-                <li className="text-muted-foreground">+ {trames.length - 5} autre(s)</li>
+              {alerts.length > 5 ? (
+                <li className="text-muted-foreground">+ {alerts.length - 5} autre(s)</li>
               ) : null}
             </ul>
           )}

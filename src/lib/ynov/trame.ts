@@ -57,3 +57,42 @@ export function trameStatus(
 
   return { dueDate, daysUntilDue, level };
 }
+
+export type OutlineAlertLevel = Extract<TrameAlertLevel, "overdue" | "urgent" | "warning">;
+
+export interface OutlineAlert<M> {
+  module: M;
+  level: OutlineAlertLevel;
+  daysUntilDue: number;
+}
+
+const ALERT_LEVELS: readonly TrameAlertLevel[] = ["overdue", "urgent", "warning"];
+
+/**
+ * Progressions pédagogiques à surveiller (tableau de bord) : en retard, J-7 et J-15, triées de
+ * la plus pressante à la moins pressante. Une liste vide = rien à signaler.
+ */
+export function outlineAlerts<
+  M extends { first_session_date: string | null; iceberg_state: IcebergState },
+>(modules: M[], today: Date = new Date()): OutlineAlert<M>[] {
+  return modules
+    .map((module) => ({
+      module,
+      status: trameStatus(module.first_session_date, module.iceberg_state, today),
+    }))
+    .filter(({ status }) => ALERT_LEVELS.includes(status.level))
+    .map(({ module, status }) => ({
+      module,
+      level: status.level as OutlineAlertLevel,
+      daysUntilDue: status.daysUntilDue ?? 0,
+    }))
+    .sort((a, b) => a.daysUntilDue - b.daysUntilDue);
+}
+
+/** Résumé pour l'accroche du tableau de bord. */
+export function outlineAlertSummary(
+  alerts: OutlineAlert<unknown>[],
+): "pressing" | "upcoming" | "none" {
+  if (alerts.some((a) => a.level !== "warning")) return "pressing";
+  return alerts.length ? "upcoming" : "none";
+}

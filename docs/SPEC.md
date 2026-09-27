@@ -14,6 +14,17 @@
   Facturation, Réglages. En-tête : bouton repli + e-mail.
 - Thème sombre par défaut.
 
+## Tableau de bord (`/dashboard`)
+
+- Accroche : « Tout est en ordre » **uniquement** si aucune progression pédagogique n'est en
+  alerte ; sinon « … demande ton attention » (retard ou J-7) ou « … est à préparer » (J-15
+  seulement). Mascotte en alerte dans les deux derniers cas.
+- Carte « Progressions pédagogiques à envoyer » (US-74) : retard, J-7 **et J-15**, triés du plus
+  pressant au moins pressant, 5 au plus (+ N autre(s)). Badges distincts, avec texte et pas
+  seulement couleur : « En retard de N j » et « Urgent · J-N » (rouge), « À préparer · J-N »
+  (contour). Logique pure `outlineAlerts` / `outlineAlertSummary` (`src/lib/ynov/trame.ts`).
+- Cartes Modules actifs et Facturation (prêts à facturer, à envoyer, paiements attendus).
+
 ## Ressources (E2)
 
 Support pédagogique **réutilisable** dans N modules (≈ base « Ressources » de Notion).

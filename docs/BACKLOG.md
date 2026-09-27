@@ -167,6 +167,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-70 | Progression déposée = progression envoyée (état iceberg → `outline_sent`) ; « Progression pédagogique » retirée des documents administratifs (4 cases) ; rattrapage SQL | ✅     |
 | US-71 | Checklist des documents administratifs modifiable sur la page Facturation, retour « Enregistré » / erreur                                                               | ✅     |
 | US-78 | Vocabulaire : « progression pédagogique » remplace « trame » dans toute l'interface, les e2e et la doc (identifiants `outline` inchangés)                               | ✅     |
+| US-74 | Alerte progression honnête : niveau J-15 affiché (badge « À préparer »), « Tout est en ordre » seulement sans aucune alerte ; filtrage pur testé                        | ✅     |
 
 ## E8 — Migration Notion ⏳
 
