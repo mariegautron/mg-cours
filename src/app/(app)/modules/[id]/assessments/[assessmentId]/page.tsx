@@ -11,6 +11,8 @@ import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assessments/queries";
+import { loadResultSheets } from "@/lib/assessments/results-data";
+import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
 
 export async function generateMetadata({
@@ -33,6 +35,10 @@ export default async function AssessmentPage({
   if (!assessment || assessment.module_id !== id) notFound();
 
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
+  const hasGrades = grades.some((g) => g.value !== null);
+  const recipients = hasGrades
+    ? resultsRecipients((await loadResultSheets(id, assessmentId)) ?? [])
+    : { emails: 0, withoutEmail: [] };
   const groupNames = assessment.groups.map((g) => g.name).join(", ");
 
   return (
@@ -78,7 +84,9 @@ export default async function AssessmentPage({
       <ResultsActions
         moduleId={id}
         assessmentId={assessmentId}
-        hasGrades={grades.some((g) => g.value !== null)}
+        hasGrades={hasGrades}
+        recipients={recipients}
+        sentAt={assessment.results_sent_at}
       />
 
       {targets.length === 0 ? (

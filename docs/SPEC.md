@@ -339,6 +339,11 @@ jamais comme la version envoyée.
 - E-mail : Resend, sujet « Vos résultats — <évaluation> », PDF en pièce jointe. Les étudiant·es
   sans e-mail sont signalé·es. Sans `RESEND_API_KEY`/`RESEND_FROM` : message
   « Envoi d'e-mails non configuré ».
+- **Envoi confirmé (US-76)** : « Envoyer par e-mail » ouvre une confirmation avec le nombre de
+  destinataires (e-mails distincts, `resultsRecipients` dans `src/lib/assessments/results.ts`),
+  la liste des étudiant·es sans e-mail, et « Déjà envoyés le … » si `assessment.results_sent_at`
+  est renseigné (le bouton devient « Renvoyer à N destinataires »). Bouton désactivé si personne
+  n'a d'e-mail. `sendResultsEmail` renseigne `results_sent_at` dès qu'au moins un e-mail part.
 
 ## Réglages (E6)
 

@@ -1,11 +1,23 @@
 "use server";
 
 import { renderToBuffer } from "@react-pdf/renderer";
+import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { serverEnv } from "@/lib/env";
 import { ResultsDocument } from "@/lib/pdf/results";
+import { createClient } from "@/lib/supabase/server";
+
+/** Mémorise la date d'envoi (rappel « déjà envoyés le … » avant un nouvel envoi). */
+async function recordSent(moduleId: string, assessmentId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("assessment")
+    .update({ results_sent_at: new Date().toISOString() })
+    .eq("id", assessmentId);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+}
 
 export interface EmailState {
   error?: string;
@@ -43,9 +55,13 @@ export async function sendResultsEmail(
       text: `Bonjour,\n\nVous trouverez en pièce jointe votre résultat pour « ${sheet.title} » (${sheet.moduleName}).\n\nBien cordialement.`,
       attachments: [{ filename: "resultats.pdf", content: Buffer.from(pdf) }],
     });
-    if (error) return { error: "Échec de l’envoi d’un e-mail.", sent, skipped };
+    if (error) {
+      if (sent > 0) await recordSent(moduleId, assessmentId);
+      return { error: "Échec de l’envoi d’un e-mail.", sent, skipped };
+    }
     sent += to.length;
   }
 
+  if (sent > 0) await recordSent(moduleId, assessmentId);
   return { sent, skipped };
 }

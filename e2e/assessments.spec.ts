@@ -30,6 +30,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.goto("/students/new");
   await page.getByLabel("Prénom").fill("Nora");
   await page.getByLabel("Nom", { exact: true }).fill(`Benali${suffix}`);
+  await page.getByLabel("E-mail").fill(`nora${suffix}@example.fr`);
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   // Module neuf (21 h → 3 notes requises) pour un compteur isolé d'un run à l'autre.
@@ -71,7 +72,15 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   const pdf = await page.request.get(pdfUrl);
   expect(pdf.status()).toBe(200);
   expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+  // US-76 : confirmation avec le nombre de destinataires avant l'envoi.
   await page.getByRole("button", { name: "Envoyer par e-mail" }).click();
+  const dialog = page.getByRole("alertdialog", { name: "Envoyer les résultats par e-mail ?" });
+  await expect(dialog.getByText(/1 destinataire\./)).toBeVisible();
+  const dialogAxe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(dialogAxe.violations).toEqual([]);
+  await dialog.getByRole("button", { name: "Envoyer à 1 destinataire" }).click();
   await expect(page.getByText(/Envoi d’e-mails non configuré/)).toBeVisible();
 
   const axe = await new AxeBuilder({ page })

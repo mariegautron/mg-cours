@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildResultSheets } from "./results";
+import { buildResultSheets, resultsRecipients } from "./results";
 import type { Tables } from "@/types/db";
 
 const student = (id: string, first: string, email: string | null): Tables<"student"> =>
@@ -150,5 +150,26 @@ describe("buildResultSheets", () => {
       grades: [grade({ student_id: "s1", value: null })],
     });
     expect(sheets).toEqual([]);
+  });
+});
+
+describe("resultsRecipients", () => {
+  it("compte les e-mails distincts et liste les étudiant·es sans e-mail, sans doublon", () => {
+    const r = resultsRecipients([
+      {
+        recipients: [
+          { name: "Ana Test", email: "ana@x.fr" },
+          { name: "Bo Test", email: null },
+        ],
+      },
+      { recipients: [{ name: "Cy Test", email: "ANA@x.fr" }] },
+      { recipients: [{ name: "Bo Test", email: null }] },
+      { recipients: [{ name: "Di Test", email: "di@x.fr" }] },
+    ]);
+    expect(r).toEqual({ emails: 2, withoutEmail: ["Bo Test"] });
+  });
+
+  it("aucune fiche : aucun destinataire", () => {
+    expect(resultsRecipients([])).toEqual({ emails: 0, withoutEmail: [] });
   });
 });

@@ -46,6 +46,7 @@ export type Database = {
           max_score: number | null
           module_id: string
           owner_id: string
+          results_sent_at: string | null
           subject: string | null
           title: string
           type: string | null
@@ -62,6 +63,7 @@ export type Database = {
           max_score?: number | null
           module_id: string
           owner_id?: string
+          results_sent_at?: string | null
           subject?: string | null
           title: string
           type?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           max_score?: number | null
           module_id?: string
           owner_id?: string
+          results_sent_at?: string | null
           subject?: string | null
           title?: string
           type?: string | null

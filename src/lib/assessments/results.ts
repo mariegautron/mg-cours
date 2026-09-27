@@ -92,3 +92,23 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       return grade ? [sheetFor(grade, [recipient(m)])] : [];
     });
 }
+
+export interface ResultsRecipients {
+  /** Adresses e-mail distinctes qui recevront un message. */
+  emails: number;
+  /** Étudiant·es sans e-mail, dans l'ordre des fiches (sans doublon). */
+  withoutEmail: string[];
+}
+
+/** Destinataires d'un envoi des résultats, affichés avant confirmation (US-76). */
+export function resultsRecipients(sheets: Pick<ResultSheet, "recipients">[]): ResultsRecipients {
+  const emails = new Set<string>();
+  const withoutEmail: string[] = [];
+  for (const sheet of sheets) {
+    for (const r of sheet.recipients) {
+      if (r.email) emails.add(r.email.toLowerCase());
+      else if (!withoutEmail.includes(r.name)) withoutEmail.push(r.name);
+    }
+  }
+  return { emails: emails.size, withoutEmail };
+}
