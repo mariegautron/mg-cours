@@ -459,3 +459,76 @@ encore écrit sur le cloud ; script non commité.
 - 2 étudiant·es sans groupe de projet (ni TP ni oral) → groupe **« Hors groupe projet »**
   (TD), visé uniquement par l'évaluation individuelle ; retiré·es du « Groupe 3 – CYBER »
   où le premier import les avait placé·es.
+
+### Cours 2 — [2025] Ynov Gestion de projet (proposition 27/09)
+
+Source principale : l'export Notion est très complet (notes par critère et commentaires
+compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelles.
+
+- **Module** : Gestion de projet · YNOV · année 2025 (2025-26) · 8 séances du 05/11 au
+  18/12/2025 (~28 h) · promos DEVWEB / DEVLMIOT / DATA · YCODE ? · archivé, payé ?
+- **8 séances** (pages Notion « Séance N ») : date + horaires, objectifs, contenus +
+  activité → animation, livrable + évaluation → modalités d'évaluation.
+- **Activités** (19) : 13 avec contenu (≥ 1 000 car.) → ressources liées à leur séance ;
+  6 quasi vides → ligne dans l'animation de la séance. PDF joints non importés ; images
+  PNG → `resource-files` (1 AVIF non accepté).
+- **Bibliothèque GP** : méthodes de gestion de projet, focus Scrum, estimation → ressources
+  (séances 4 et 6).
+- **Matériel client SantaConnect** : brief, mails client, organigramme, ~30 « réponses aux
+  questions » du client, corrigés (stakeholder map, lecture du brief, dossier de cadrage).
+- **Évaluations** : Dossier de cadrage (groupe, grille 8 critères /20) · Specs & choix
+  méthodo (groupe, 9 critères /20) · Oral du projet (groupe, 8 critères /20) · QCM
+  (individuel, sans grille).
+- **Notes** : 18 notes de groupe (6 groupes × 3) **avec le détail par critère et les
+  commentaires** (matrices de correction + pages d'oral) ; note individuelle /20 par
+  étudiant·e (27) — QCM ? à confirmer.
+- **Étudiant·es** : 27 → « Prénom N. », 6 groupes (appartenance connue dans Notion),
+  promo → `scholar_group`.
+- **Écartés proposés** : dossiers de cadrage des groupes (livrables étudiants), résumés et
+  classement des groupes, notes de correction perso, liens Jira/Trello des groupes.
+
+#### « Notes prépa cours gestion de projet » (bibliothèque GP) — classement proposé
+
+| Sous-page                                                                                                                         | Proposition                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Mails client · Organigramme du Pôle Nord                                                                                          | 2 ressources « SantaConnect — … » (matériel du jeu client)                                                |
+| 4 pages « Réponses aux questions » (brief, besoin, audit, faisabilité) + base « Réponses au questions » (30 réponses, par groupe) | 1 ressource « SantaConnect — Réponses du client », sections par séance / thème (groupe demandeur indiqué) |
+| Correction stakeholder map · Correction activité 2 (lecture du brief) · Dossier de cadrage (correction modèle)                    | 3 ressources « Corrigé — … »                                                                              |
+| Notes correction dossier de cadrage (commentaire global par groupe)                                                               | **Appréciation** des 6 notes de groupe « Dossier de cadrage » (en plus du détail par critère)             |
+| Oral (consignes)                                                                                                                  | — doublon (94 %) du sujet de l'évaluation « Oral du projet »                                              |
+| Résumé des groupes (6 pages) + Classement                                                                                         | — (synthèses et classement des groupes) ; noms d'équipe réutilisés pour les groupes                       |
+
+#### Complément Moodle — GP (27/09)
+
+- Cours Moodle « Gestion d'un projet IT », Mastère 1 → **YCODE `A2526_0172`**.
+- Sections : QCM individuel (quiz /20, 37 points bruts), QCM rattrapage (18–21/12/2025),
+  sections « Séance 3…8 » vides, dossier de supports (1 PDF fusionné, non importé).
+- **Banque de questions : 69 questions** (53 QCM, 13 vrai/faux, 2 ouvertes, 1 numérique)
+  classées par thème (Scrum, faisabilité, besoin, RACI, SWOT, méthodes, estimation,
+  pilotage/risques, cadrage).
+- 8 groupes Moodle (non utilisés : Notion a les 6 vrais groupes et leurs membres).
+- Participants Moodle : 19 étudiant·es (sans groupe), dont 18 retrouvé·es dans Notion
+  (27 fiches) → **Notion reste la source** des étudiant·es et des groupes.
+- « Note individuelle » Notion = **note du QCM ramenée sur 20** (ex. 36,75/37 → 19,86) :
+  pas besoin du carnet Moodle.
+- Facture GP : **n° 26-01-5 du 04/01/2026**, « Intervention module Gestion d'un projet IT »,
+  **28 h × 60 € = 1 680 € HT**, TVA 293 B → confirme 28 h et tarif 60 €/h. Payée : à
+  confirmer.
+
+#### Décisions PO — GP (27/09)
+
+- Séances : **Notion** (datées, ce qui a été fait) ; le PDF de progression = trame envoyée.
+- Facture 26-01-5 **payée** → module `paid`, archivé ; tarif 60 €/h, 28 h.
+- Banque de questions → ressource « QCM — Gestion de projet (questions et réponses) »
+  (bonnes réponses lues dans la sauvegarde Moodle, l'export HTML ne les contient pas) ;
+  fonctionnalité QCM spécifiée dans `docs/specs/qcm-banque-questions.md`, migration de la
+  banque dedans une fois livrée.
+- Classement des notes de prépa validé ; groupes nommés « Groupe N – <équipe> ».
+- **Appréciations individuelles conservées** → `student.personal_notes`
+  (« Gestion d'un projet IT (2025-26) : … »).
+- Plan : `scripts/notion-migrate/courses/gp-2526.mts` (8 séances, 23 ressources dont
+  bibliothèque, matériel client, corrigés, banque QCM ; 6 groupes ; 27 étudiant·es ;
+  3 grilles / 25 critères ; 4 évaluations ; 45 notes dont 18 de groupe avec détail par
+  critère et commentaires ; 2 documents).
+- Relations séance → pages de bibliothèque absentes de l'export (pages déplacées) :
+  reprises à la main (séance 4 : méthodes, Scrum ; séance 6 : estimation).

@@ -148,3 +148,85 @@ export function parseCsv(text: string): Record<string, string>[] {
   const [header, ...data] = rows.filter((r) => r.some((c) => c.trim()));
   return data.map((r) => Object.fromEntries(header.map((h, k) => [h.trim(), (r[k] ?? "").trim()])));
 }
+
+/** Sections « ### Titre » d'une page : titre sans emoji → contenu. */
+export function headingSections(body: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const part of body.split(/^### /m).slice(1)) {
+    const [head, ...rest] = part.split("\n");
+    const key = cleanInline(head)
+      .replace(/^[^\p{L}\d]+/u, "")
+      .toLowerCase();
+    out.set(key, rest.join("\n").split(/^---$/m)[0].trim());
+  }
+  return out;
+}
+
+/** « 27 novembre 2025 13:00 (UTC+1) → 16:00 » → date, heures de début / fin, durée (h). */
+export function frenchDateTimeRange(s: string | undefined): {
+  date: string | null;
+  start: string | null;
+  end: string | null;
+  hours: number | null;
+} {
+  const date = frenchDate(s ?? "");
+  const times = [...(s ?? "").matchAll(/(\d{1,2}):(\d{2})/g)];
+  if (times.length < 2) return { date, start: times[0]?.[0] ?? null, end: null, hours: null };
+  const [a, b] = times.map((t) => Number(t[1]) + Number(t[2]) / 60);
+  return { date, start: times[0][0], end: times[1][0], hours: Math.round((b - a) * 100) / 100 };
+}
+
+/** « 3.5/4 ⭐ », « 2,5 », « 1 / 1 » → 3.5, 2.5, 1 ; vide → null. */
+export function parseScore(s: string | undefined): number | null {
+  const m = /(-?\d+(?:[.,]\d+)?)/.exec(s ?? "");
+  return m ? Number(m[1].replace(",", ".")) : null;
+}
+
+/** Grille en tableau : « | **1. Libellé** /4 | attendus | commentaires | ». */
+export function parseTableGrid(body: string): GridCriterion[] {
+  const rows = body.split(/^(?=\| \*\*\d+\.)/m).slice(1);
+  return rows.map((row) => {
+    const cells = row
+      .split(/\n\s*\n/)[0]
+      .split("|")
+      .map((c) => c.trim());
+    const head = (cells[1] ?? "").replace(/\*\*/g, "");
+    const m = /^\s*\d+\.\s*(.+?)\s*\/\s*([\d.,]+)\s*$/.exec(head);
+    return {
+      label: cleanInline(m?.[1] ?? head),
+      weight: Number((m?.[2] ?? "0").replace(",", ".")),
+      description: (cells[2] ?? "").replace(/\n{2,}/g, "\n").trim(),
+    };
+  });
+}
+
+/**
+ * Tableau de correction d'une page Notion (une ligne par critère) : note lue dans la
+ * 1re cellule (« **1. …** 1.75/2 ») ou dans une colonne « Note », commentaire en dernière
+ * colonne. Renvoie aussi la section « Commentaire global » si elle existe.
+ */
+export function parseCorrectionTable(body: string): {
+  rows: { number: number; score: number | null; comment: string }[];
+  global: string;
+} {
+  const rows = body
+    .split(/^(?=\| \*\*\d+\.)/m)
+    .slice(1)
+    .map((row) => {
+      // Une ligne de tableau peut s'étendre sur plusieurs lignes ; le tableau finit à la ligne vide.
+      const cells = row
+        .split(/\n\s*\n/)[0]
+        .split("|")
+        .map((c) => c.trim());
+      const number = Number(/\*\*(\d+)\./.exec(cells[1] ?? "")?.[1]);
+      const inHead = /\*\*\s*([\d.,]+)\s*\/\s*[\d.,]+\s*$/.exec(cells[1] ?? "");
+      const inColumn = cells.length > 5 ? parseScore(cells[3]) : null;
+      return {
+        number,
+        score: inHead ? Number(inHead[1].replace(",", ".")) : inColumn,
+        comment: cleanInline(cells[cells.length - 2] ?? ""),
+      };
+    });
+  const global = /^##\s*\**Commentaire global\**\s*$([\s\S]*)/m.exec(body)?.[1] ?? "";
+  return { rows, global: global.split(/^---$/m)[0].trim() };
+}

@@ -35,6 +35,8 @@ export function stripLocalImages(body: string): { body: string; dropped: number 
 }
 
 const PAGE_FILE = /([0-9a-f]{32})\.md$/;
+/** Base Notion exportée en CSV (toutes les propriétés) : indexée sous `csv:<id de la base>`. */
+const DATABASE_FILE = /([0-9a-f]{32})_all\.csv$/;
 
 export function indexExport(roots: string[]): Map<string, string> {
   const index = new Map<string, string>();
@@ -45,6 +47,8 @@ export function indexExport(roots: string[]): Map<string, string> {
       else {
         const m = PAGE_FILE.exec(name);
         if (m) index.set(m[1], path);
+        const db = DATABASE_FILE.exec(name);
+        if (db) index.set(`csv:${db[1]}`, path);
       }
     }
   };
@@ -104,4 +108,16 @@ export function readPage(index: Map<string, string>, rawId: string): NotionPage 
 /** Retire le gras Markdown et les espaces superflus d'un texte d'une ligne. */
 export function cleanInline(s: string): string {
   return s.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+}
+
+/** Chemin du CSV complet d'une base Notion (`<Nom> <id>_all.csv`). */
+export function databaseCsv(index: Map<string, string>, databaseId: string): string {
+  const path = index.get(`csv:${normalizeId(databaseId)}`);
+  if (!path) throw new Error(`Base Notion ${databaseId} absente de l'export (CSV)`);
+  return path;
+}
+
+/** Ids de pages cités dans une valeur de propriété relation (liens `… <id>.md` ou URL Notion). */
+export function linkedIds(value: string | undefined): string[] {
+  return [...(value ?? "").matchAll(/([0-9a-f]{32})(?=\.md|\.csv|[),\s]|$)/g)].map((m) => m[1]);
 }

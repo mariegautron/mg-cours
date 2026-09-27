@@ -19,6 +19,8 @@ export interface MoodleCourse {
   sections: { id: string; number: number; name: string; sequence: string[] }[];
   activities: Map<string, MoodleActivity>;
   groups: string[];
+  /** Contenu brut de `questions.xml` (banque de questions), vide si absent. */
+  questionsXml: string;
 }
 
 const decode = (s: string) =>
@@ -77,6 +79,9 @@ export function readMoodleBackup(mbzPath: string): MoodleCourse {
     sections,
     activities,
     groups,
+    questionsXml: existsSync(join(dir, "questions.xml"))
+      ? readFileSync(join(dir, "questions.xml"), "utf8")
+      : "",
   };
 }
 

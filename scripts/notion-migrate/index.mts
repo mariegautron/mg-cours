@@ -13,11 +13,28 @@ import { homedir } from "node:os";
 import { createClient } from "@supabase/supabase-js";
 
 import * as b2 from "./courses/b2-accessibilite-2526.mts";
+import * as gp from "./courses/gp-2526.mts";
 import { Importer } from "./lib/importer.mts";
-import { readMoodleBackup } from "./lib/moodle.mts";
-import { indexExport, readPage } from "./lib/notion.mts";
+import { readMoodleBackup, type MoodleCourse } from "./lib/moodle.mts";
+import { databaseCsv, indexExport, readPage, type NotionPage } from "./lib/notion.mts";
 
-const COURSES: Record<string, typeof b2> = { "b2-accessibilite-2526": b2 };
+/** Contexte commun : chaque cours n'en lit que la partie qui le concerne. */
+interface MigrationContext {
+  imp: Importer;
+  page: (id: string) => NotionPage;
+  csv: (databaseId: string) => string;
+  has: (id: string) => boolean;
+  moodle: MoodleCourse;
+  participantsCsv: string | null;
+  outlinePdf: string | null;
+  invoicePdf: string | null;
+  gradesFile: string | null;
+}
+
+const COURSES: Record<string, { migrate: (ctx: MigrationContext) => Promise<void> }> = {
+  "b2-accessibilite-2526": b2,
+  "gp-2526": gp,
+};
 
 function args(): Record<string, string | true> {
   const out: Record<string, string | true> = {};
@@ -79,6 +96,8 @@ async function main() {
   await course.migrate({
     imp,
     page: (id) => readPage(index, id),
+    csv: (id) => databaseCsv(index, id),
+    has: (id) => index.has(id),
     moodle: readMoodleBackup(a.moodle as string),
     participantsCsv: typeof a.participants === "string" ? a.participants : null,
     outlinePdf: typeof a["outline-pdf"] === "string" ? a["outline-pdf"] : null,
