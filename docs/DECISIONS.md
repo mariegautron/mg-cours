@@ -131,3 +131,15 @@ regroupement de l'IBAN à la saisie, et une phrase neutre « Visible uniquement 
 Idem écartés : tooltip TVA (la mention explicative est déjà en clair, meilleur pour l'accessibilité), toast de
 confirmation (le message `role="status"` inline suffit), accordéon mobile (les groupes sont déjà empilés en une colonne
 sur petit écran, un accordéon cacherait des champs obligatoires).
+
+## ADR-019 — Markdown : un seul parseur maison, pas de bibliothèque (`react-markdown`)
+
+Les ressources importées de Notion contiennent des tableaux (136 pages), des listes imbriquées, des cases à cocher et
+des encadrés `<aside>` que le parseur maison (`src/lib/pdf/markdown.ts`) ne couvrait pas encore. Option écartée :
+`react-markdown` côté web + parseur maison complété côté PDF — deux moteurs à maintenir en cohérence, pour un gain
+douteux (react-pdf ne peut de toute façon pas consommer une AST react-markdown). Choisi : étendre le parseur unique
+existant (déjà partagé par `components/markdown.tsx` et `lib/pdf/markdown-view.tsx`) avec tableaux GFM, séparateurs,
+listes imbriquées (pile d'indentation, largeur variable, pas un multiple fixe), cases à cocher en lecture seule,
+titres jusqu'à h6, callouts `<aside>` (récursifs, ré-appellent `parseMarkdown` sur leur contenu) et `<br>`. Tout HTML
+non reconnu reste du texte : le parseur ne construit jamais de DOM à partir d'une chaîne (pas de
+`dangerouslySetInnerHTML`), donc rien à échapper explicitement — la sécurité vient de l'absence d'interprétation.
