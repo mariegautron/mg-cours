@@ -5,6 +5,11 @@ const SAFE_HREF = /^(https?:|mailto:|\/|#)/i;
 
 type HeadingTag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
+/** `present` : typographie agrandie pour la projection en classe. */
+export type MarkdownSize = "default" | "present";
+
+const PRESENT_HEADING = ["text-5xl", "text-4xl", "text-3xl"] as const;
+
 function Runs({ runs }: { runs: InlineRun[] }) {
   return runs.map((r, i) => {
     if ("break" in r) return <br key={i} />;
@@ -62,16 +67,27 @@ function BlockView({
   block,
   headingLevel,
   resolveImageSrc,
+  size,
+  id,
 }: {
   block: Block;
   headingLevel: 2 | 3 | 4;
   resolveImageSrc?: (src: string) => string;
+  size: MarkdownSize;
+  /** Ancre d'un titre (sommaire). */
+  id?: string;
 }) {
+  const present = size === "present";
   switch (block.type) {
     case "heading": {
       const Tag = `h${Math.min(headingLevel + block.level - 1, 6)}` as HeadingTag;
+      const className = present
+        ? `font-heading font-semibold leading-tight ${PRESENT_HEADING[Math.min(block.level, 3) - 1]}`
+        : block.level === 1
+          ? "text-base font-semibold"
+          : "font-medium";
       return (
-        <Tag className={block.level === 1 ? "text-base font-semibold" : "font-medium"}>
+        <Tag id={id} className={id ? `${className} scroll-mt-20` : className}>
           <Runs runs={block.runs} />
         </Tag>
       );
@@ -86,7 +102,9 @@ function BlockView({
       return <ListView block={block} headingLevel={headingLevel} />;
     case "code":
       return (
-        <pre className="bg-muted overflow-x-auto rounded-md p-3 text-sm">
+        <pre
+          className={`bg-muted overflow-x-auto rounded-md p-3 ${present ? "text-xl" : "text-sm"}`}
+        >
           <code>{block.text}</code>
         </pre>
       );
@@ -97,7 +115,9 @@ function BlockView({
           src={resolveImageSrc ? resolveImageSrc(block.src) : block.src}
           alt={block.alt}
           loading="lazy"
-          className="max-w-full rounded-md"
+          className={
+            present ? "mx-auto max-h-[70vh] max-w-full rounded-md" : "max-w-full rounded-md"
+          }
         />
       );
     case "quote":
@@ -116,7 +136,7 @@ function BlockView({
           aria-label="Tableau"
           className="focus-visible:ring-ring overflow-x-auto rounded-md border focus-visible:ring-2 focus-visible:outline-none"
         >
-          <table className="w-full text-sm">
+          <table className={present ? "w-full text-xl" : "w-full text-sm"}>
             <caption className="sr-only">Tableau</caption>
             <thead>
               <tr>
@@ -158,6 +178,7 @@ function BlockView({
             blocks={block.blocks}
             headingLevel={headingLevel}
             resolveImageSrc={resolveImageSrc}
+            size={size}
           />
         </div>
       );
@@ -173,6 +194,8 @@ export function Markdown({
   headingLevel = 3,
   resolveImageSrc,
   blocks,
+  size = "default",
+  anchorPrefix,
 }: {
   source: string;
   headingLevel?: 2 | 3 | 4;
@@ -180,17 +203,41 @@ export function Markdown({
   resolveImageSrc?: (src: string) => string;
   /** Pour le rendu récursif d'un encadré : blocs déjà découpés, `source` est alors ignoré. */
   blocks?: Block[];
+  size?: MarkdownSize;
+  /** Donne aux titres de premier niveau l'ancre `${anchorPrefix}-${index du bloc}` (voir `markdownOutline`). */
+  anchorPrefix?: string;
 }) {
   return (
-    <div className="space-y-3 leading-relaxed">
+    <div
+      className={
+        size === "present" ? "space-y-6 text-2xl leading-relaxed" : "space-y-3 leading-relaxed"
+      }
+    >
       {(blocks ?? parseMarkdown(source)).map((block, i) => (
         <BlockView
           key={i}
           block={block}
           headingLevel={headingLevel}
           resolveImageSrc={resolveImageSrc}
+          size={size}
+          id={anchorPrefix && block.type === "heading" ? `${anchorPrefix}-${i}` : undefined}
         />
       ))}
     </div>
+  );
+}
+
+/** Titres `#` / `##` d'un contenu, avec l'ancre posée par `<Markdown anchorPrefix>`. */
+export function markdownOutline(source: string, anchorPrefix: string) {
+  return parseMarkdown(source).flatMap((block, i) =>
+    block.type === "heading" && block.level <= 2
+      ? [
+          {
+            id: `${anchorPrefix}-${i}`,
+            level: block.level,
+            text: block.runs.map((r) => ("text" in r ? r.text : " ")).join(""),
+          },
+        ]
+      : [],
   );
 }

@@ -568,6 +568,7 @@ export type Database = {
           school_id: string | null
           slides_url: string | null
           start_date: string | null
+          student_intro: string | null
           total_hours: number
           updated_at: string
           ycode: string | null
@@ -592,6 +593,7 @@ export type Database = {
           school_id?: string | null
           slides_url?: string | null
           start_date?: string | null
+          student_intro?: string | null
           total_hours?: number
           updated_at?: string
           ycode?: string | null
@@ -616,6 +618,7 @@ export type Database = {
           school_id?: string | null
           slides_url?: string | null
           start_date?: string | null
+          student_intro?: string | null
           total_hours?: number
           updated_at?: string
           ycode?: string | null
@@ -761,12 +764,14 @@ export type Database = {
       resource: {
         Row: {
           archived_at: string | null
+          audience: Database["public"]["Enums"]["resource_audience"]
           category: string | null
           content: string | null
           created_at: string
           description: string | null
           files: Json
           id: string
+          kind: Database["public"]["Enums"]["resource_kind"] | null
           owner_id: string
           tags: string[]
           title: string
@@ -775,12 +780,14 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
           content?: string | null
           created_at?: string
           description?: string | null
           files?: Json
           id?: string
+          kind?: Database["public"]["Enums"]["resource_kind"] | null
           owner_id?: string
           tags?: string[]
           title: string
@@ -789,12 +796,14 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
           content?: string | null
           created_at?: string
           description?: string | null
           files?: Json
           id?: string
+          kind?: Database["public"]["Enums"]["resource_kind"] | null
           owner_id?: string
           tags?: string[]
           title?: string
@@ -1059,6 +1068,16 @@ export type Database = {
         | "slides"
         | "external_invoice"
       outline_status: "draft" | "sent" | "validated"
+      resource_audience: "students" | "teacher"
+      resource_kind:
+        | "course"
+        | "workshop"
+        | "project"
+        | "template"
+        | "answer_key"
+        | "question_bank"
+        | "reference"
+        | "teacher_notes"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1223,6 +1242,17 @@ export const Constants = {
         "external_invoice",
       ],
       outline_status: ["draft", "sent", "validated"],
+      resource_audience: ["students", "teacher"],
+      resource_kind: [
+        "course",
+        "workshop",
+        "project",
+        "template",
+        "answer_key",
+        "question_bank",
+        "reference",
+        "teacher_notes",
+      ],
     },
   },
 } as const

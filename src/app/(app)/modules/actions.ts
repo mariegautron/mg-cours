@@ -36,6 +36,7 @@ function toRow(input: ReturnType<typeof readModuleForm>["data"]) {
     end_date: input.endDate,
     purchase_order_ref: input.purchaseOrderRef || null,
     slides_url: input.slidesUrl || null,
+    student_intro: input.studentIntro?.trim() || null,
   };
 }
 
@@ -146,6 +147,7 @@ export async function duplicateModule(
       total_hours: source.total_hours,
       hourly_rate: source.hourly_rate,
       slides_url: source.slides_url,
+      student_intro: source.student_intro,
       hours_lecture: source.hours_lecture,
       hours_td: source.hours_td,
       hours_tp: source.hours_tp,

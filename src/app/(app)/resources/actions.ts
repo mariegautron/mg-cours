@@ -40,6 +40,8 @@ export async function createResource(
       description: parsed.data.description || null,
       content: parsed.data.content || null,
       url: parsed.data.url || null,
+      kind: parsed.data.kind,
+      audience: parsed.data.audience,
       category: parsed.data.category || null,
       tags: parsed.data.tags,
     })
@@ -70,6 +72,8 @@ export async function updateResource(
       description: parsed.data.description || null,
       content: parsed.data.content || null,
       url: parsed.data.url || null,
+      kind: parsed.data.kind,
+      audience: parsed.data.audience,
       category: parsed.data.category || null,
       tags: parsed.data.tags,
     })

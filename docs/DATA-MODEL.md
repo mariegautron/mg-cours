@@ -31,27 +31,34 @@ erDiagram
 
 ## Tables
 
-| Table                 | Colonnes clés                                                                                                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `resource`            | title, description, content (markdown), url, category, tags[], files(jsonb `[{ path, name, size, mime }]`, bucket privé `resource-files`)                                                   |
-| `module`              | name, school_id, level, year, ycode, total_hours, start_date, first_session_date, end_date, iceberg_state, trame_state, trame_sent_at, billing_state, purchase_order_ref, admin_docs(jsonb) |
-| `course`              | module_id, title, position, session_date, type, learning_objectives[], content_last_updated_at                                                                                              |
-| `course_resource`     | course_id, resource_id, role (`primary` \| `secondary`)                                                                                                                                     |
-| `student`             | first_name, last_name, email, photo_url, student_number, personal_notes                                                                                                                     |
-| `student_group`       | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                           |
-| `group_member`        | student_group_id, student_id                                                                                                                                                                |
-| `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade, max_score (barème, vide = total grille sinon 20)                                                                        |
-| `assessment_group`    | assessment_id, student_group_id — groupes visés par l'évaluation (≥ 1, paire unique)                                                                                                        |
-| `grading_grid`        | name, description                                                                                                                                                                           |
-| `grid_criterion`      | grading_grid_id, label, weight, description                                                                                                                                                 |
-| `grade`               | assessment_id, student_id?, group_id?, value, feedback, is_group_grade, scores(jsonb)                                                                                                       |
-| `predefined_comment`  | text, category (`positive` \| `negative` \| `advice`), tags[]                                                                                                                               |
-| `invoice`             | module_id, number (`YYYY-NNN`), issued_on, amount_ex_vat, vat_rate, vat_amount, amount_inc_vat, status, purchase_order_ref, sent_at, paid_on, xml_file, pdf_file                            |
-| `pedagogical_outline` | module_id, generated_at, content(jsonb), status, sent_at, pdf_file                                                                                                                          |
-| `module_document`     | module_id, kind (`school_expectations` \| `outline_sent` \| `external_invoice`), name, path (bucket privé `module-documents`), size_bytes, mime                                             |
-| `resource_version`    | resource_id, title, description, content, url, category, tags (copie de l'état précédent, déclencheur `resource_snapshot`, 30 max)                                                          |
-| `school`              | name, siret, address, billing_email, pa_identifier                                                                                                                                          |
-| `teacher_profile`     | legal_name, address, siret, vat_number, activity_number (NDA), bank_details, email                                                                                                          |
+| Table                 | Colonnes clés                                                                                                                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resource`            | title, description, content (markdown), url, **kind** (`resource_kind`, nullable), **audience** (`students` \| `teacher`, défaut `students`), category (= matière), tags[], files(jsonb, bucket `resource-files`)                         |
+| `module`              | name, school_id, level, year, ycode, total_hours, start_date, first_session_date, end_date, iceberg_state, trame_state, trame_sent_at, billing_state, purchase_order_ref, admin_docs(jsonb), slides_url, student_intro (markdown projeté) |
+| `course`              | module_id, title, position, session_date, type, learning_objectives[], content_last_updated_at                                                                                                                                            |
+| `course_resource`     | course_id, resource_id, role (`primary` \| `secondary`)                                                                                                                                                                                   |
+| `student`             | first_name, last_name, email, photo_url, student_number, personal_notes                                                                                                                                                                   |
+| `student_group`       | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                                                                         |
+| `group_member`        | student_group_id, student_id                                                                                                                                                                                                              |
+| `assessment`          | module_id, title, type, coefficient, date, subject, is_group_grade, max_score (barème, vide = total grille sinon 20)                                                                                                                      |
+| `assessment_group`    | assessment_id, student_group_id — groupes visés par l'évaluation (≥ 1, paire unique)                                                                                                                                                      |
+| `grading_grid`        | name, description                                                                                                                                                                                                                         |
+| `grid_criterion`      | grading_grid_id, label, weight, description                                                                                                                                                                                               |
+| `grade`               | assessment_id, student_id?, group_id?, value, feedback, is_group_grade, scores(jsonb)                                                                                                                                                     |
+| `predefined_comment`  | text, category (`positive` \| `negative` \| `advice`), tags[]                                                                                                                                                                             |
+| `invoice`             | module_id, number (`YYYY-NNN`), issued_on, amount_ex_vat, vat_rate, vat_amount, amount_inc_vat, status, purchase_order_ref, sent_at, paid_on, xml_file, pdf_file                                                                          |
+| `pedagogical_outline` | module_id, generated_at, content(jsonb), status, sent_at, pdf_file                                                                                                                                                                        |
+| `module_document`     | module_id, kind (`school_expectations` \| `outline_sent` \| `external_invoice`), name, path (bucket privé `module-documents`), size_bytes, mime                                                                                           |
+| `resource_version`    | resource_id, title, description, content, url, category, tags (copie de l'état précédent, déclencheur `resource_snapshot`, 30 max)                                                                                                        |
+| `school`              | name, siret, address, billing_email, pa_identifier                                                                                                                                                                                        |
+| `teacher_profile`     | legal_name, address, siret, vat_number, activity_number (NDA), bank_details, email                                                                                                                                                        |
+
+## Enums ressources
+
+- `resource_kind` : `course`, `workshop`, `project`, `template`, `answer_key`, `question_bank`,
+  `reference`, `teacher_notes` (libellés FR dans `src/lib/resources/kind.ts`).
+- `resource_audience` : `students`, `teacher` — `teacher` n'est **jamais** diffusé aux
+  étudiant·es (`studentFacing()`).
 
 ## Transverse
 

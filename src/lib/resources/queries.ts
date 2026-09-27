@@ -1,12 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
-export interface ResourceListFilters {
-  q?: string;
-  category?: string;
-  tag?: string;
-  archived?: boolean;
-}
+import type { ResourceListFilters } from "./filters";
 
 export interface ResourceWithUsage extends Tables<"resource"> {
   /** Nombre de modules distincts où la ressource est utilisée. */
@@ -44,6 +39,9 @@ export async function listResources(
   }
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.tag) query = query.contains("tags", [filters.tag]);
+  if (filters.kind === "none") query = query.is("kind", null);
+  else if (filters.kind) query = query.eq("kind", filters.kind);
+  if (filters.audience) query = query.eq("audience", filters.audience);
 
   const [{ data }, usage] = await Promise.all([query, moduleUsage()]);
   return (data ?? []).map((r) => ({ ...r, moduleCount: usage.get(r.id) ?? 0 }));

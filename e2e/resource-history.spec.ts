@@ -12,6 +12,7 @@ test("conserve l’historique d’une ressource et restaure une ancienne version
   await page.goto("/resources/new");
   const title = `Historique ${Date.now()}`;
   await page.getByLabel("Titre").fill(title);
+  await page.getByLabel("Type").selectOption("course");
   await page.getByLabel("Contenu (Markdown)").fill("Version un");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();

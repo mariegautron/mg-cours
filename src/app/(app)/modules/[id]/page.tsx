@@ -1,7 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Archive, ChevronRight, Download, ExternalLink, Pencil, Plus } from "lucide-react";
+import {
+  Archive,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  Pencil,
+  Play,
+  Plus,
+  Presentation,
+} from "lucide-react";
 
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
@@ -13,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
+import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
@@ -71,6 +81,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
   const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
   // La plus récente : `getModuleDocuments` trie par date de dépôt décroissante.
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
+  const upcoming = mod.archived_at ? null : highlightedSession(courses, todayInParis());
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -104,14 +115,53 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
               {mod.ycode ? ` · YCODE ${mod.ycode}` : ""}
             </p>
           </div>
-          <Button asChild variant="secondary">
-            <Link href={`/modules/${mod.id}/edit`}>
-              <Pencil aria-hidden />
-              Modifier
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/present/modules/${mod.id}`}>
+                <Presentation aria-hidden />
+                Présenter le module
+              </Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href={`/modules/${mod.id}/edit`}>
+                <Pencil aria-hidden />
+                Modifier
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
+
+      {upcoming ? (
+        <section
+          aria-labelledby="upcoming"
+          className="halo bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
+        >
+          <div>
+            <h2 id="upcoming" className="text-primary text-sm font-medium">
+              {upcoming.isToday ? "Séance du jour" : "Prochaine séance"}
+            </h2>
+            <p className="font-heading text-lg font-semibold">
+              Séance {upcoming.number} — {upcoming.course.title}
+            </p>
+            {!upcoming.isToday && upcoming.course.session_date ? (
+              <p className="text-muted-foreground text-sm">
+                {new Date(`${upcoming.course.session_date}T00:00:00`).toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </p>
+            ) : null}
+          </div>
+          <Button asChild size="lg">
+            <Link href={`/present/modules/${mod.id}/courses/${upcoming.course.id}`}>
+              <Play aria-hidden />
+              Faire cours
+            </Link>
+          </Button>
+        </section>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <Badge variant="secondary">{mod.total_hours} h</Badge>

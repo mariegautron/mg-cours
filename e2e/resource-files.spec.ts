@@ -20,6 +20,7 @@ test("dépose une image et un PDF sur une ressource, affiche l’image dans le c
   await page.goto("/resources/new");
   const title = `Ressource fichiers ${Date.now()}`;
   await page.getByLabel("Titre").fill(title);
+  await page.getByLabel("Type").selectOption("course");
   await page.getByLabel("Contenu (Markdown)").fill("## Schéma\n\n![Logo de test](logo.png)\n");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/resources\/[0-9a-f-]{36}$/);

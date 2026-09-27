@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { Constants } from "@/types/db";
+
 /** Transforme "a, b ,c" → ["a","b","c"] (sans doublons ni vides). */
 export function parseTags(raw: string): string[] {
   return Array.from(
@@ -17,6 +19,11 @@ export const resourceSchema = z.object({
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   content: z.string().max(100_000).optional().or(z.literal("")),
   url: z.string().trim().url("URL invalide.").optional().or(z.literal("")),
+  kind: z.enum(Constants.public.Enums.resource_kind, {
+    error: "Choisissez le type de ressource.",
+  }),
+  audience: z.enum(Constants.public.Enums.resource_audience).default("students"),
+  /** Matière. */
   category: z.string().trim().max(100).optional().or(z.literal("")),
   tags: z.array(z.string().min(1)).max(50).default([]),
 });
@@ -30,6 +37,8 @@ export function readResourceForm(formData: FormData) {
     description: formData.get("description") ?? "",
     content: formData.get("content") ?? "",
     url: formData.get("url") ?? "",
+    kind: formData.get("kind") || undefined,
+    audience: formData.get("audience") || undefined,
     category: formData.get("category") ?? "",
     tags: parseTags(String(formData.get("tags") ?? "")),
   });

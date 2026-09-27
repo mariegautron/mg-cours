@@ -18,21 +18,45 @@
 
 Support pédagogique **réutilisable** dans N modules (≈ base « Ressources » de Notion).
 
+### Classement (spec `docs/specs/ressources-classement.md`)
+
+- **Type** (`kind`) : Cours · Atelier / exercice · Projet · Modèle · Corrigé · Banque de questions
+  · Référence externe · Notes enseignante. Obligatoire dans le formulaire ; vide pour
+  l'existant (« Type à définir », groupe « Non classées »).
+- **Matière** (`category`) : suggestions (matières déjà utilisées + Accessibilité, Qualité web,
+  Numérique responsable, Gestion de projet, Agilité), saisie libre.
+- **Visibilité** (`audience`) : Étudiant·es (défaut) / **Enseignante uniquement** — badge texte
+  avec icône cadenas partout où la ressource apparaît. Corrigé, banque de questions et notes
+  pré-sélectionnent « Enseignante uniquement ».
+- **Garde-fou** : `studentFacing()` (`src/lib/resources/kind.ts`) filtre toute sortie vers les
+  étudiant·es — mode présentation, export PDF des cours (`toExportCourses`), futurs liens élèves /
+  QCM. Les e-mails existants (résultats, facture) n'embarquent aucune ressource. La trame
+  (destinée à l'école) liste toujours tous les titres.
+
 ### Liste `/resources`
 
-- Cartes : titre, description (2 lignes), catégorie + tags, « Utilisée dans N modules ».
-- Recherche plein texte (titre + description), filtres catégorie / tag / afficher les archivées.
+- Cartes : titre, description (2 lignes), type, badge « Enseignante uniquement », matière +
+  tags, « Utilisée dans N modules ».
+- Recherche plein texte (titre + description), filtres **Type** (dont « Non classées »),
+  **Matière**, **Visibilité**, tag, archivées ; **regroupement** par type (défaut), par matière
+  ou aucun (`?group=`), sections `<h2>` avec effectif. Compteur de résultats (`role="status"`).
 - État vide → invite à créer.
 
 ### Création `/resources/new` · Édition `/resources/[id]/edit`
 
-- Champs : **titre** (obligatoire), description, catégorie, lien (URL validée), tags
-  (saisie séparée par virgules → tableau), contenu (Markdown, textarea mono).
+- Champs : **titre** et **type** (obligatoires), matière (suggestions), visibilité (2 cartes
+  radio avec explication), description, lien (URL validée), tags (virgules → tableau), contenu
+  Markdown avec onglets **Écrire / Aperçu** (même rendu que la fiche). Barre d'enregistrement
+  collante ; alerte navigateur si on quitte avec des modifications.
 - Validation zod côté serveur, erreurs par champ reliées (`aria-describedby` + `role="alert"`).
 
 ### Détail `/resources/[id]`
 
-- Titre, description, catégorie/tags, lien externe.
+- En-tête : titre, type, visibilité, matière, description ; actions **Présenter** (masqué si
+  « Enseignante uniquement »), Modifier, Historique.
+- Contenu au centre (largeur de lecture) ; colonne latérale (écran large, collante) :
+  **sommaire** des titres `#`/`##` (ancres), visibilité expliquée, tags, utilisation, fichiers,
+  actions. Lien externe au-dessus du contenu.
 - **Utilisation** : liste des modules (nom + année) où la ressource est employée, triés par
   année décroissante ; lien vers chaque module.
 - **Fichiers (n)** : cartes fichier (type · taille) + Aperçu (PDF, image) / Télécharger /
@@ -52,6 +76,10 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
   `GET /api/resources/[id]/files/[name]`, qui redirige vers un lien signé de 5 min
   (`?download=1` pour forcer le téléchargement).
 - Actions : Modifier · Archiver / Désarchiver · Supprimer (confirmation `AlertDialog`).
+
+### Historique `/resources/[id]/history`
+
+- Chaque version se déplie sur son contenu **rendu** (Markdown), restaurable.
 
 ### Règles
 
@@ -130,6 +158,35 @@ annoncé) et `FileCard` (type · taille · date + actions nommées).
   (`src/lib/ynov/notation.ts`, `iceberg.ts`, `trame.ts`), jamais recalculées dans l'UI.
 - La duplication ne copie pas les évaluations/notes (propres à une année), seulement la
   structure pédagogique (cours + ressources liées).
+
+## Faire cours (E10) — mode présentation
+
+Projeté en classe depuis la session de l'enseignante (aucune route publique). Route group
+`(present)` : plein écran sans menu, même contrôle d'auth que `(app)`.
+
+### Écrans
+
+- `/present/modules/[id]/courses/[courseId]` — **Faire cours** (bouton sur chaque séance et
+  encart « Séance du jour / Prochaine séance » en tête de fiche module) : titre (module, séance N,
+  date) → objectifs → « Au programme » → pour chaque ressource étudiant·es (principale d'abord) :
+  intercalaire (type, titre, description) + contenu + lien + fichiers (image en grand, PDF intégré
+  avec lien « Ouvrir », autres fichiers à télécharger) → « Prochaine séance : … ». Notes
+  d'animation / d'évaluation jamais affichées.
+- `/present/modules/[id]` — **Présenter le module** : accueil (école, niveau, année, heures,
+  début) → présentation aux étudiant·es (`module.student_intro`, Markdown, saisi dans le
+  formulaire module) → programme daté → objectifs (union des séances) → évaluation (titre,
+  groupe/individuelle, date + minimum YNOV) → ressources étudiant·es groupées par type.
+- `/present/resources/[id]` — une ressource seule ; ressource « Enseignante uniquement » →
+  message, rien n'est affiché.
+
+### Coque `PresentShell`
+
+- **Document** (défaut, lecture continue grand format) ou **Diapositives** : découpage auto sur
+  les titres `#`/`##` et les séparateurs `---` (`splitSlides`, `src/lib/present/slides.ts`).
+- Clavier : ← → Espace PageUp/PageDown Début/Fin, `F` plein écran, `S` sommaire, `D`
+  document/diapositives, `+`/`−` taille du texte (80 → 150 %). Boutons visibles équivalents.
+- Sommaire par section, thème clair/sombre, barre de progression, « Diapositive n sur N »
+  annoncé (`aria-live`), « Quitter » → fiche. Mode et taille mémorisés (`localStorage`).
 
 ## Étudiants + Groupes (E4)
 
@@ -253,6 +310,11 @@ jamais comme la version envoyée.
 - Aucun lien en base entre le document déposé et l'instantané généré (pas nécessaire à la
   cohabitation) : `depositedOutline` est calculé côté page comme le document `outline_sent` le plus
   récent du module.
+- **Dépôt = envoi (US-70)** : déposer un document `outline_sent` fait avancer `iceberg_state`
+  jusqu'à `outline_sent` (jamais de recul, `applyOutlineUpload` dans `src/lib/ynov/iceberg.ts`) et
+  coche « Progression pédagogique » (= la trame) : la facturation n'est plus bloquée par une trame
+  envoyée hors application. Supprimer le document ne fait pas reculer l'état. Migration de
+  rattrapage `20260927130000_outline_upload_sent` pour les modules déjà concernés.
 
 ## Résultats PDF + e-mail (E6)
 

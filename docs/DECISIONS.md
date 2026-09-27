@@ -143,3 +143,22 @@ listes imbriquées (pile d'indentation, largeur variable, pas un multiple fixe),
 titres jusqu'à h6, callouts `<aside>` (récursifs, ré-appellent `parseMarkdown` sur leur contenu) et `<br>`. Tout HTML
 non reconnu reste du texte : le parseur ne construit jamais de DOM à partir d'une chaîne (pas de
 `dangerouslySetInnerHTML`), donc rien à échapper explicitement — la sécurité vient de l'absence d'interprétation.
+
+## ADR-020 — « Faire cours » : présentation projetée, privée, rendue côté serveur
+
+Besoin (27/09) : l'app doit servir à **faire** cours, pas seulement à le préparer. Choisi : un route group
+`(present)` plein écran, privé (même contrôle d'auth que `(app)`, `proxy.ts` inchangé), projeté depuis la session de
+l'enseignante. Les diapositives sont rendues côté serveur avec le parseur Markdown unique (ADR-019) et
+`<Markdown size="present">` ; une coque client (`PresentShell`) ne gère que la navigation. Découpage automatique aux
+titres `#`/`##` et aux `---` : aucun format « slides » à saisir, les ressources Notion existantes se projettent telles
+quelles, en mode document par défaut. Écartés : route publique / lien étudiant·es (US-40a, après le 12/10, jeton
+révocable + fonction `security definer`) ; fenêtre « présentateur » à deux écrans ; bibliothèque de slides
+(reveal.js…) — deux moteurs de rendu et un format à maintenir.
+
+## ADR-021 — Visibilité par ressource (`audience`), filtrage centralisé
+
+Un corrigé ne doit jamais partir chez les étudiant·es. Choisi : colonne `resource.audience` (`students` \| `teacher`)
+distincte du type (`kind`) — un corrigé peut être publié (quiz NR), un « projet » peut être réservé (réponses du
+client). Tout ce qui sort vers les étudiant·es passe par `studentFacing()` : présentation, export PDF des cours, futurs
+liens. La migration marque d'office `teacher` les titres « Corrigé… » et le tag « banque de questions » ; le script de
+migration Notion affine. Proposition non retenue pour le 12/10 : blocs « Prof » masqués à l'intérieur d'un contenu.

@@ -11,6 +11,7 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
   await page.goto("/resources/new");
   const resourceTitle = `Ressource export ${Date.now()}`;
   await page.getByLabel("Titre").fill(resourceTitle);
+  await page.getByLabel("Type").selectOption("course");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: resourceTitle, level: 1 })).toBeVisible();
 

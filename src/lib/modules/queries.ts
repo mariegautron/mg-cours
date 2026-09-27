@@ -1,3 +1,8 @@
+import {
+  toExportCourses,
+  type CourseExport,
+  type ExportCourseRow,
+} from "@/lib/modules/course-export";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
@@ -32,21 +37,23 @@ export async function getModule(id: string): Promise<ModuleWithSchool | null> {
   return data as ModuleWithSchool | null;
 }
 
+export type LinkedResource = Pick<Tables<"resource">, "id" | "title" | "kind" | "audience">;
+
 export interface CourseWithResources extends Tables<"course"> {
-  resources: Pick<Tables<"resource">, "id" | "title">[];
+  resources: LinkedResource[];
 }
 
 export async function getModuleCourses(moduleId: string): Promise<CourseWithResources[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title))")
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience))")
     .eq("module_id", moduleId)
     .order("position");
 
   return (data ?? []).map((c) => {
     const { course_resource, ...course } = c as unknown as Tables<"course"> & {
-      course_resource: { resource: Pick<Tables<"resource">, "id" | "title"> | null }[];
+      course_resource: { resource: LinkedResource | null }[];
     };
     return {
       ...course,
@@ -59,13 +66,13 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title))")
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience))")
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
 
   const { course_resource, ...course } = data as unknown as Tables<"course"> & {
-    course_resource: { resource: Pick<Tables<"resource">, "id" | "title"> | null }[];
+    course_resource: { resource: LinkedResource | null }[];
   };
   return {
     ...course,
@@ -74,11 +81,11 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
 }
 
 /** Ressources actives, pour le sélecteur d'un cours. */
-export async function listActiveResources(): Promise<Pick<Tables<"resource">, "id" | "title">[]> {
+export async function listActiveResources(): Promise<LinkedResource[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("resource")
-    .select("id, title")
+    .select("id, title, kind, audience")
     .is("archived_at", null)
     .order("title");
   return data ?? [];
@@ -94,30 +101,10 @@ export async function getModuleDocuments(moduleId: string): Promise<Tables<"modu
   return data ?? [];
 }
 
-export interface CourseExport {
-  module: {
-    name: string;
-    ycode: string | null;
-    schoolName: string | null;
-    level: string | null;
-    year: number;
-  };
-  courses: {
-    number: number;
-    title: string;
-    sessionDate: string | null;
-    objectives: string[];
-    material: string | null;
-    resources: {
-      title: string;
-      description: string | null;
-      content: string | null;
-      url: string | null;
-    }[];
-  }[];
-}
-
-/** Données du PDF « cours » : séances dans l'ordre, avec le contenu complet des ressources liées. */
+/**
+ * Données du PDF « cours » (destiné aux étudiant·es) : séances dans l'ordre, avec le contenu
+ * complet des ressources liées — sauf celles réservées à l'enseignante.
+ */
 export async function getCourseExport(moduleId: string): Promise<CourseExport | null> {
   const supabase = await createClient();
   const mod = await getModule(moduleId);
@@ -126,26 +113,10 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
   const { data } = await supabase
     .from("course")
     .select(
-      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url))",
+      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url, audience))",
     )
     .eq("module_id", moduleId)
     .order("position");
-
-  type Row = {
-    title: string;
-    session_date: string | null;
-    learning_objectives: string[];
-    material: string | null;
-    course_resource: {
-      role: string;
-      resource: {
-        title: string;
-        description: string | null;
-        content: string | null;
-        url: string | null;
-      } | null;
-    }[];
-  };
 
   return {
     module: {
@@ -155,17 +126,45 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
       level: mod.level,
       year: mod.year,
     },
-    courses: ((data ?? []) as unknown as Row[]).map((c, i) => ({
-      number: i + 1,
-      title: c.title,
-      sessionDate: c.session_date,
-      objectives: c.learning_objectives,
-      material: c.material,
-      // Ressource principale d'abord, puis les secondaires.
-      resources: [...c.course_resource]
-        .sort((a, b) => (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1))
-        .map((cr) => cr.resource)
-        .filter((r) => r !== null),
-    })),
+    courses: toExportCourses((data ?? []) as unknown as ExportCourseRow[]),
   };
+}
+
+/**
+ * Ressources complètes d'une séance, principale d'abord. Toutes audiences confondues :
+ * passer par `studentFacing()` avant toute diffusion aux étudiant·es.
+ */
+export async function getCourseResourcesFull(courseId: string): Promise<Tables<"resource">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course_resource")
+    .select("role, resource:resource_id(*)")
+    .eq("course_id", courseId);
+
+  return ((data ?? []) as unknown as { role: string; resource: Tables<"resource"> | null }[])
+    .sort((a, b) => (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1))
+    .map((cr) => cr.resource)
+    .filter((r) => r !== null);
+}
+
+/** Ressources distinctes d'un module, dans l'ordre des séances (même avertissement). */
+export async function getModuleResourcesFull(moduleId: string): Promise<Tables<"resource">[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course")
+    .select("position, course_resource(role, resource:resource_id(*))")
+    .eq("module_id", moduleId)
+    .order("position");
+
+  const seen = new Map<string, Tables<"resource">>();
+  for (const c of (data ?? []) as unknown as {
+    course_resource: { role: string; resource: Tables<"resource"> | null }[];
+  }[]) {
+    for (const cr of [...c.course_resource].sort((a, b) =>
+      a.role === b.role ? 0 : a.role === "primary" ? -1 : 1,
+    )) {
+      if (cr.resource && !seen.has(cr.resource.id)) seen.set(cr.resource.id, cr.resource);
+    }
+  }
+  return Array.from(seen.values());
 }

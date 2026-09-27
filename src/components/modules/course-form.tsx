@@ -9,8 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { CourseWithResources } from "@/lib/modules/queries";
+import type { CourseWithResources, LinkedResource } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
+import { groupByKind } from "@/lib/resources/kind";
+import { AudienceBadge } from "@/components/resources/resource-badges";
 import type { Tables } from "@/types/db";
 
 type Action = (state: CourseFormState, formData: FormData) => Promise<CourseFormState>;
@@ -43,7 +45,7 @@ export function CourseForm({
   action: Action;
   moduleId: string;
   course?: CourseWithResources;
-  resources: Pick<Tables<"resource">, "id" | "title">[];
+  resources: LinkedResource[];
   nextPosition: number;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -137,21 +139,31 @@ export function CourseForm({
             .
           </p>
         ) : (
-          <ul className="max-h-56 space-y-2 overflow-y-auto rounded-md border p-3">
-            {resources.map((r) => (
-              <li key={r.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={`resource-${r.id}`}
-                  name="resourceIds"
-                  value={r.id}
-                  defaultChecked={selected.has(r.id)}
-                />
-                <Label htmlFor={`resource-${r.id}`} className="font-normal">
-                  {r.title}
-                </Label>
-              </li>
+          <div className="max-h-80 space-y-4 overflow-y-auto rounded-md border p-3">
+            {groupByKind(resources).map((group) => (
+              <fieldset key={group.key} className="space-y-2">
+                <legend className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                  {group.label}
+                </legend>
+                <ul className="space-y-2">
+                  {group.items.map((r) => (
+                    <li key={r.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`resource-${r.id}`}
+                        name="resourceIds"
+                        value={r.id}
+                        defaultChecked={selected.has(r.id)}
+                      />
+                      <Label htmlFor={`resource-${r.id}`} className="font-normal">
+                        {r.title}
+                      </Label>
+                      <AudienceBadge audience={r.audience} />
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
             ))}
-          </ul>
+          </div>
         )}
       </fieldset>
 

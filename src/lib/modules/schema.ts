@@ -53,6 +53,8 @@ export const moduleSchema = z.object({
       "Le lien doit commencer par http:// ou https://.",
     )
     .optional(),
+  /** Présentation du module aux étudiant·es (Markdown), projetée en ouverture. */
+  studentIntro: z.string().max(20_000).optional().or(z.literal("")),
 });
 
 export type ModuleInput = z.infer<typeof moduleSchema>;
@@ -74,6 +76,7 @@ export function readModuleForm(formData: FormData) {
     endDate: formData.get("endDate") ?? "",
     purchaseOrderRef: formData.get("purchaseOrderRef") ?? "",
     slidesUrl: formData.get("slidesUrl") ?? "",
+    studentIntro: formData.get("studentIntro") ?? "",
   });
 }
 

@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Pencil, Plus } from "lucide-react";
+import { CalendarDays, Pencil, Play, Plus } from "lucide-react";
 
 import { deleteCourse } from "@/app/(app)/modules/[id]/courses/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { AudienceBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
+import { groupByKind } from "@/lib/resources/kind";
 
 const COURSE_TYPE_LABELS: Record<string, string> = {
   lecture: "Cours théorique",
@@ -79,6 +81,12 @@ export function CourseList({
                 {PREP_STATUS_LABELS[c.prep_status as PrepStatus] ?? c.prep_status}
               </Badge>
               <Badge variant="secondary">{COURSE_TYPE_LABELS[c.type] ?? c.type}</Badge>
+              <Button asChild size="sm">
+                <Link href={`/present/modules/${moduleId}/courses/${c.id}`}>
+                  <Play aria-hidden />
+                  Faire cours<span className="sr-only"> : {c.title}</span>
+                </Link>
+              </Button>
               <Button asChild variant="ghost" size="icon">
                 <Link
                   href={`/modules/${moduleId}/courses/${c.id}/edit`}
@@ -106,13 +114,25 @@ export function CourseList({
           ) : null}
 
           {c.resources.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {c.resources.map((r) => (
-                <Link key={r.id} href={`/resources/${r.id}`}>
-                  <Badge variant="outline">{r.title}</Badge>
-                </Link>
+            <dl className="mt-3 space-y-1 text-sm">
+              {groupByKind(c.resources).map((group) => (
+                <div key={group.key} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <dt className="text-muted-foreground w-24 shrink-0 text-xs">{group.label}</dt>
+                  <dd className="flex flex-1 flex-wrap gap-1">
+                    {group.items.map((r) => (
+                      <Link
+                        key={r.id}
+                        href={`/resources/${r.id}`}
+                        className="focus-visible:ring-ring inline-flex items-center gap-1 rounded-4xl focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        <Badge variant="outline">{r.title}</Badge>
+                        <AudienceBadge audience={r.audience} />
+                      </Link>
+                    ))}
+                  </dd>
+                </div>
               ))}
-            </div>
+            </dl>
           ) : null}
 
           <p className="text-muted-foreground mt-2 text-xs">

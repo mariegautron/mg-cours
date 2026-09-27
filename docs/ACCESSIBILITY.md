@@ -27,17 +27,24 @@ C'est le domaine d'expertise de Marie : l'app doit être **exemplaire**.
 Légende : ✅ vérifié automatiquement (axe-core en CI, 0 violation WCAG 2.0/2.1 A + AA) ·
 🔎 **à vérifier à la main par Marie** (clavier, lecteur d'écran, zoom, contraste des états) · — non couvert.
 
-| Écran                                                          | axe | Clavier | Lecteur d'écran | Contraste AA | Zoom 200 % |
-| -------------------------------------------------------------- | --- | ------- | --------------- | ------------ | ---------- |
-| Connexion                                                      | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Ressources (création, détail)                                  | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Module (détail : trame, séances, groupes, docs admin)          | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Étudiants / groupes                                            | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Évaluation + saisie de notes                                   | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Réglages                                                       | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Facturation (conditions, facture)                              | ✅  | 🔎      | 🔎              | ✅ (axe)     | 🔎         |
-| Listes globales (modules, étudiants, évaluations, facturation) | —   | 🔎      | 🔎              | —            | 🔎         |
-| Tableau de bord                                                | —   | 🔎      | 🔎              | —            | 🔎         |
+| Écran                                                          | axe | Clavier  | Lecteur d'écran | Contraste AA  | Zoom 200 % |
+| -------------------------------------------------------------- | --- | -------- | --------------- | ------------- | ---------- |
+| Connexion                                                      | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Ressources (création, détail, liste filtrée et groupée)        | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Mode présentation (séance, module ; document et diapositives)  | ✅  | ✅ (e2e) | 🔎              | ✅ (2 thèmes) | 🔎         |
+| Module (détail : trame, séances, groupes, docs admin)          | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Étudiants / groupes                                            | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Évaluation + saisie de notes                                   | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Réglages                                                       | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Facturation (conditions, facture)                              | ✅  | 🔎       | 🔎              | ✅ (axe)      | 🔎         |
+| Listes globales (modules, étudiants, évaluations, facturation) | —   | 🔎       | 🔎              | —             | 🔎         |
+| Tableau de bord                                                | —   | 🔎       | 🔎              | —             | 🔎         |
+
+Mode présentation : navigation clavier complète (flèches, Début/Fin, F, S, D, +/−) ignorée pendant une saisie ;
+« Diapositive n sur N » annoncé en `aria-live="polite"` sans voler le focus ; chaque diapo est une `section`
+(`aria-roledescription="diapositive"`) ; fondu d'entrée coupé sous `prefers-reduced-motion` ; taille du texte
+réglable (80–150 %) en plus du zoom navigateur. Visibilité « Enseignante uniquement » signalée par du texte, pas
+seulement une couleur.
 
 Limites honnêtes : axe détecte ~30-40 % des critères RGAA ; il ne remplace pas une passe manuelle
 (NVDA/VoiceOver, navigation clavier complète, zoom 400 %). Les PDF générés (trame, résultats,

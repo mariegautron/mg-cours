@@ -8,6 +8,7 @@ import { FichePrefill } from "@/components/modules/fiche-prefill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/types/db";
 
 type Action = (state: ModuleFormState, formData: FormData) => Promise<ModuleFormState>;
@@ -197,6 +198,23 @@ export function ModuleForm({
                 {state.fieldErrors.slidesUrl.join(" ")}
               </p>
             ) : null}
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="studentIntro">Présentation aux étudiant·es</Label>
+            <Textarea
+              id="studentIntro"
+              name="studentIntro"
+              rows={6}
+              className="font-mono text-sm"
+              placeholder={"## Bienvenue !\nCe module vous apprend à…"}
+              aria-describedby="studentIntro-hint"
+              defaultValue={mod?.student_intro ?? ""}
+            />
+            <p id="studentIntro-hint" className="text-muted-foreground text-sm">
+              Markdown, projeté au début de « Présenter le module » (avant le programme et
+              l’évaluation).
+            </p>
           </div>
         </div>
 

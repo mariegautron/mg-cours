@@ -18,6 +18,7 @@ test("affiche un tableau Markdown, défilable au clavier, sans violation d'acces
   await page.goto("/resources/new");
   const title = `Ressource Tableau ${Date.now()}`;
   await page.getByLabel("Titre").fill(title);
+  await page.getByLabel("Type").selectOption("course");
   await page
     .getByLabel(/Contenu/)
     .fill(

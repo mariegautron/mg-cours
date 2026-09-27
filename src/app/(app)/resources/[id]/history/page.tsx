@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 
 import { restoreResourceVersion } from "@/app/(app)/resources/actions";
+import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
+import { resolveImageSrc } from "@/lib/resources/files";
 import { getResource, listResourceVersions } from "@/lib/resources/queries";
 
 export async function generateMetadata({
@@ -68,9 +70,13 @@ export default async function ResourceHistoryPage({
                     Voir le contenu
                     <span className="sr-only"> de la version du {when(v.created_at)}</span>
                   </summary>
-                  <pre className="bg-muted mt-2 overflow-x-auto rounded-md p-3 text-sm whitespace-pre-wrap">
-                    {v.content}
-                  </pre>
+                  <div className="bg-muted/40 mt-2 rounded-md border p-3 text-sm">
+                    <Markdown
+                      source={v.content}
+                      headingLevel={4}
+                      resolveImageSrc={(src) => resolveImageSrc(id, src)}
+                    />
+                  </div>
                 </details>
               ) : null}
             </li>

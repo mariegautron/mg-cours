@@ -40,6 +40,10 @@ Dev local : `pnpm db:start` puis `pnpm db:reset`. Identifiants : `marie@local.te
 | —           | e2e authentifié (login seed → création → liste) + axe 0 violation            | ✅     |
 | US-01       | Fichiers joints (bucket `resource-files`) + images dans le contenu Markdown  | ✅     |
 | US-05/06    | Import Notion / Moodle → E8 (hors E2)                                        | ⏳     |
+| US-07       | Classement : type, matière, visibilité ; filtres + regroupement ; badge      | ✅     |
+| —           | Garde-fou `studentFacing` : export PDF des cours sans ressource enseignante  | ✅     |
+| —           | Éditeur Écrire/Aperçu, fiche 2 colonnes + sommaire, historique rendu         | ✅     |
+| —           | Reclassement des ressources importées (script de migration)                  | ⏳     |
 
 Écrans : `/resources`, `/resources/new`, `/resources/[id]`, `/resources/[id]/edit`.
 Détail : `docs/SPEC.md`.
@@ -154,6 +158,14 @@ Migration : `invoice.snapshot` (instantané figé) + unicité 1 facture / module
 `import.meta.url` → `serverExternalPackages` dans `next.config.ts` (sinon « path argument must be of
 type string » en build). À vérifier une fois sur Vercel avec une 1re facture d'essai.
 
+## E11 — Audit UX, vague 1 (avant le 12/10) 🚧
+
+Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/09/2026) ».
+
+| US    | Contenu                                                                                                  | Statut |
+| ----- | -------------------------------------------------------------------------------------------------------- | ------ |
+| US-70 | Trame déposée = trame envoyée (état iceberg → `outline_sent`, « Progression pédagogique » cochée) + rattrapage SQL | ✅     |
+
 ## E8 — Migration Notion ⏳
 
 US-05, US-06, US-16 · script one-shot `scripts/notion-migrate.ts` · import étudiants CSV/XLSX.
@@ -176,6 +188,21 @@ US-05, US-06, US-16 · script one-shot `scripts/notion-migrate.ts` · import ét
 | Resend configuré (e-mails résultats/factures)                                                                                         | ⏳ **Marie** (optionnel) |
 
 Détail : `docs/DEPLOY.md`.
+
+## E10 — Faire cours 🚧
+
+| US     | Contenu                                                                                    | Statut |
+| ------ | ------------------------------------------------------------------------------------------ | ------ |
+| E10-01 | Mode présentation `(present)` : document / diapositives, clavier, plein écran, sommaire    | ✅     |
+| E10-02 | « Faire cours » une séance + encart séance du jour / prochaine séance                      | ✅     |
+| E10-03 | « Présenter le module » aux étudiant·es (`module.student_intro`, programme, évaluation)    | ✅     |
+| E10-04 | Présenter une ressource seule (refus si « Enseignante uniquement »)                        | ✅     |
+| E10-05 | Fiche module en onglets (Cours · Étudiant·es & évaluations · Administratif)                | ⏳     |
+| US-40a | **Urgent après le 12/10** : lien étudiant·es partageable (jeton, lecture seule, révocable) | ⏳     |
+| —      | Proposition (non urgent) : blocs « Prof » masqués dans le Markdown en vue étudiant·es      | 💡     |
+
+Écrans : `/present/modules/[id]`, `/present/modules/[id]/courses/[courseId]`,
+`/present/resources/[id]`. e2e : `e2e/present.spec.ts`, `e2e/resources.spec.ts`.
 
 ## Vision suivante (validée 26/09)
 

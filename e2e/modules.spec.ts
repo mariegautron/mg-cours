@@ -19,6 +19,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.goto("/resources/new");
   const resourceTitle = `Kanban – bases ${Date.now()}`;
   await page.getByLabel("Titre").fill(resourceTitle);
+  await page.getByLabel("Type").selectOption("course");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: resourceTitle, level: 1 })).toBeVisible();
 
@@ -39,7 +40,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel(resourceTitle).check();
-  await page.getByLabel("Préparation").selectOption("ready");
+  await page.getByLabel("Préparation", { exact: true }).selectOption("ready");
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await expect(page.getByText("Séance 1")).toBeVisible();

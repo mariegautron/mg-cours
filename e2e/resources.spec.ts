@@ -20,6 +20,7 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
   await page.getByRole("link", { name: "Nouvelle ressource" }).first().click();
   const title = `Scrum – bases ${Date.now()}`;
   await page.getByLabel("Titre").fill(title);
+  await page.getByLabel("Type").selectOption("course");
   await page.getByLabel("Description").fill("Cérémonies et rôles Scrum.");
   await page.getByLabel("Tags").fill("agile, scrum");
   await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -34,4 +35,64 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
 
   await page.goto("/resources");
   await expect(page.getByRole("link", { name: title })).toBeVisible();
+});
+
+test("classe une ressource (type, matière, visibilité), filtre et regroupe la liste", async ({
+  page,
+}) => {
+  await login(page);
+  const stamp = Date.now();
+  const subject = `Matière ${stamp}`;
+  const title = `Notes de préparation ${stamp}`;
+
+  await page.goto("/resources/new");
+  await page.getByLabel("Titre").fill(title);
+  // Type obligatoire : le formulaire refuse l'envoi sans type.
+  await expect(page.getByLabel("Type")).toHaveAttribute("required", "");
+  await page.getByLabel("Type").selectOption("teacher_notes");
+  await expect(page.getByRole("radio", { name: /Enseignante uniquement/ })).toBeChecked();
+  await page.getByLabel("Matière").fill(subject);
+  await page.getByRole("tab", { name: "Aperçu" }).click();
+  await expect(page.getByText("Rien à afficher pour l’instant.")).toBeVisible();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
+  await expect(page.getByText("Enseignante uniquement").first()).toBeVisible();
+  // Pas de bouton « Présenter » pour une ressource enseignante.
+  await expect(page.getByRole("link", { name: "Présenter" })).toHaveCount(0);
+
+  // Filtres Type / Matière / Visibilité + regroupement par matière.
+  await page.goto("/resources");
+  await page.getByLabel("Type").selectOption("teacher_notes");
+  await page.getByLabel("Matière").selectOption(subject);
+  await page.getByLabel("Visibilité").selectOption("teacher");
+  await page.getByLabel("Regrouper").selectOption("category");
+  await page.getByRole("button", { name: "Filtrer" }).click();
+
+  await expect(page).toHaveURL(/audience=teacher/);
+  await expect(page.getByRole("heading", { name: new RegExp(subject), level: 2 })).toBeVisible();
+  const card = page.getByRole("link", { name: new RegExp(title) });
+  await expect(card).toBeVisible();
+  await expect(card.getByText("Enseignante uniquement")).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("1 ressource");
+
+  // Regroupement par type.
+  await page.getByLabel("Regrouper").selectOption("kind");
+  await page.getByRole("button", { name: "Filtrer" }).click();
+  await expect(page.getByRole("heading", { name: /^Notes/, level: 2 })).toBeVisible();
+
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  // Visibilité étudiant·es : la ressource disparaît.
+  await page.goto(`/resources?audience=students&category=${encodeURIComponent(subject)}`);
+  await expect(page.getByRole("status")).toHaveText("0 ressource");
 });
