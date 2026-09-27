@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
-test("archive un module : masqué de la liste puis visible avec « Afficher les archivés »", async ({
+test("archive un module : masqué de la liste puis visible dans l’onglet « Archivés »", async ({
   page,
 }) => {
   test.setTimeout(60_000);
@@ -21,13 +21,21 @@ test("archive un module : masqué de la liste puis visible avec « Afficher les 
   await page.waitForLoadState("networkidle");
 
   await page.getByRole("button", { name: "Archiver le module" }).click();
-  await expect(page.getByRole("button", { name: "Désarchiver le module" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Restaurer le module" })).toBeVisible();
 
   await page.goto("/modules");
   await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Afficher les archivés" }).click();
+  await page.getByRole("link", { name: /^Archivés \(\d+\)$/ }).click();
+  await expect(page.getByRole("link", { name: /^Archivés/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
+
+  await page.getByRole("link", { name: /^Tous/ }).click();
+  await expect(page.getByRole("heading", { name: "Archivés", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name, level: 3 })).toBeVisible();
 
   await page.goto("/billing");
   await expect(page.getByText(name)).toHaveCount(0);

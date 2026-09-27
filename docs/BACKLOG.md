@@ -56,6 +56,7 @@ Détail : `docs/SPEC.md`.
 | US-13       | Dupliquer un module vers une nouvelle année (module + cours + liens ressources)                         | ✅     |
 | US-12       | Checklist documents administratifs (4 cases, `module.admin_docs`) + `iceberg_state` affiché             | ✅     |
 | —           | Dashboard connecté (modules actifs, trames urgentes/en retard)                                          | ✅     |
+| —           | Liste : filtre Actifs / Archivés / Tous (compteurs), cartes archivées distinctes, toast « Annuler »     | ✅     |
 | —           | e2e authentifié (module → séance liée à une ressource → doc coché) + axe 0 violation                    | ✅     |
 | —           | Logique pure testée : `src/lib/ynov/iceberg.ts` (13 états) + `trame.ts` (échéance)                      | ✅     |
 

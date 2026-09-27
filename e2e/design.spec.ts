@@ -6,6 +6,8 @@ import { expect, test } from "@playwright/test";
 const PAGES = [
   "/dashboard",
   "/modules",
+  "/modules?filter=all",
+  "/modules?filter=archived",
   "/modules/new",
   "/resources",
   "/resources/new",

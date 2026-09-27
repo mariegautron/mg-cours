@@ -64,6 +64,13 @@ chacune liées à une ou plusieurs ressources réutilisables.
 
 - Cartes triées par année décroissante puis nom : école · niveau · année, badges heures,
   minimum de notes, statut de la trame.
+- Filtre segmenté `Actifs (n) | Archivés (n) | Tous` (`nav` + `aria-current`), dans l'URL :
+  `?filter=archived` / `?filter=all` (l'ancien `?archived=1` mène à « Tous »).
+- Carte archivée : fond atténué, bordure pointillée, icône archive, badge « Archivé le … » +
+  heures seulement ; archivés triés du plus récemment archivé. « Tous » : intertitres
+  « Actifs » / « Archivés ».
+- État vide contextuel : « Aucun module actif — N modules archivés » + « Voir les archivés ».
+- Archiver depuis la fiche : toast avec « Annuler » ; « Restaurer le module » pour désarchiver.
 
 ### Création `/modules/new` · Édition `/modules/[id]/edit`
 
