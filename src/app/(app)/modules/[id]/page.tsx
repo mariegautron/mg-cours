@@ -74,41 +74,43 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
 
   return (
     <div className="max-w-3xl space-y-8">
-      <nav aria-label="Fil d’Ariane" className="text-muted-foreground -mb-4 text-sm">
-        <ol className="flex flex-wrap items-center gap-1">
-          <li>
-            <Link
-              href={mod.archived_at ? "/modules?filter=archived" : "/modules"}
-              className="hover:text-foreground underline-offset-2 hover:underline"
-            >
-              {mod.archived_at ? "Modules archivés" : "Modules"}
-            </Link>
-          </li>
-          <li aria-hidden>
-            <ChevronRight className="size-3.5" />
-          </li>
-          <li>
-            <span aria-current="page" className="text-foreground">
-              {mod.name}
-            </span>
-          </li>
-        </ol>
-      </nav>
+      <div className="space-y-2">
+        <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li>
+              <Link
+                href={mod.archived_at ? "/modules?filter=archived" : "/modules"}
+                className="hover:text-foreground underline-offset-2 hover:underline"
+              >
+                {mod.archived_at ? "Modules archivés" : "Modules"}
+              </Link>
+            </li>
+            <li aria-hidden>
+              <ChevronRight className="size-3.5" />
+            </li>
+            <li>
+              <span aria-current="page" className="text-foreground">
+                {mod.name}
+              </span>
+            </li>
+          </ol>
+        </nav>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{mod.name}</h1>
-          <p className="text-muted-foreground">
-            {mod.school?.name ?? "École non renseignée"} · {mod.level ?? "—"} · {mod.year}
-            {mod.ycode ? ` · YCODE ${mod.ycode}` : ""}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold">{mod.name}</h1>
+            <p className="text-muted-foreground">
+              {mod.school?.name ?? "École non renseignée"} · {mod.level ?? "—"} · {mod.year}
+              {mod.ycode ? ` · YCODE ${mod.ycode}` : ""}
+            </p>
+          </div>
+          <Button asChild variant="secondary">
+            <Link href={`/modules/${mod.id}/edit`}>
+              <Pencil aria-hidden />
+              Modifier
+            </Link>
+          </Button>
         </div>
-        <Button asChild variant="secondary">
-          <Link href={`/modules/${mod.id}/edit`}>
-            <Pencil aria-hidden />
-            Modifier
-          </Link>
-        </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -139,7 +141,7 @@ export default async function ModulePage({ params }: PageProps<"/modules/[id]">)
 
       <nav
         aria-label="Sections du module"
-        className="bg-shell sticky top-0 z-10 -mx-2 border-b px-2 py-2"
+        className="bg-background sticky top-0 z-10 -mx-2 rounded-b-lg border-b px-2 py-2 shadow-sm"
       >
         <ul className="flex gap-1 overflow-x-auto text-sm">
           {SECTIONS.map(([id, label]) => (
