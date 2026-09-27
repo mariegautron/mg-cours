@@ -8,10 +8,13 @@ import type { NoteProgress } from "./notation";
 export const VAT_RATE = 20;
 export const VAT_EXEMPT_MENTION = "TVA non applicable, art. 293 B du CGI";
 
-/** Documents administratifs exigés par YNOV avant facturation. */
+/**
+ * Documents administratifs exigés par YNOV avant facturation. La progression pédagogique n'en
+ * fait pas partie : c'est la condition « progression envoyée » (état iceberg), déduite du dépôt
+ * du PDF ou de « Marquer comme envoyée ». La clé `progression_pedagogique` reste en base, ignorée.
+ */
 export const REQUIRED_ADMIN_DOCS: { key: string; label: string }[] = [
   { key: "fiche_positionnement", label: "Fiche de positionnement" },
-  { key: "progression_pedagogique", label: "Progression pédagogique" },
   { key: "supports_moodle", label: "Supports déposés sur Moodle" },
   { key: "sujets_grilles_moodle", label: "Sujets et grilles déposés sur Moodle" },
   { key: "notes_hyperplanning", label: "Notes saisies dans Hyperplanning" },

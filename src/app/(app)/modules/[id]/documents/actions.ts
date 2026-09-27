@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/modules/documents";
+import { advanceModule } from "@/lib/modules/advance";
 import { createClient } from "@/lib/supabase/server";
-import { applyOutlineUpload } from "@/lib/ynov/iceberg";
 
 /**
  * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur
@@ -36,22 +36,8 @@ export async function registerModuleDocument(
   }
 
   if (kind === "outline_sent") {
-    const { data: mod } = await supabase
-      .from("module")
-      .select("iceberg_state, admin_docs")
-      .eq("id", moduleId)
-      .single();
-    if (mod) {
-      await supabase
-        .from("module")
-        .update(
-          applyOutlineUpload({
-            iceberg_state: mod.iceberg_state,
-            admin_docs: (mod.admin_docs as Record<string, boolean>) ?? {},
-          }),
-        )
-        .eq("id", moduleId);
-    }
+    // La progression déposée vaut progression envoyée (module repris, envoi hors application).
+    await advanceModule(moduleId, "outline_sent");
     revalidatePath(`/modules/${moduleId}/billing`);
     revalidatePath("/billing");
     revalidatePath("/dashboard");

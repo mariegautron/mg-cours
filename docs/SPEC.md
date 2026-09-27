@@ -140,8 +140,10 @@ annoncé) et `FileCard` (type · taille · date + actions nommées).
   la sélection) ; une fois déposé, carte fichier (type · taille · date) avec « Aperçu » (PDF,
   `?inline=1`, nouvel onglet), « Télécharger », « Supprimer » (confirmation) ; la zone reste
   visible en version compacte « Ajouter un fichier ».
-- **Documents administratifs** : 4 interrupteurs (fiche de positionnement, progression
-  pédagogique, supports Moodle, sujets/grilles Moodle) → `module.admin_docs`.
+- **Documents administratifs** : 4 interrupteurs (fiche de positionnement, supports Moodle,
+  sujets/grilles Moodle, notes saisies dans Hyperplanning) → `module.admin_docs`. La progression
+  pédagogique n'est pas une case : elle est déduite de son dépôt en PDF ou de « Marquer comme
+  envoyée » (clé historique `progression_pedagogique` conservée en base, ignorée).
 - **Actions** : dupliquer vers une nouvelle année (module + séances + liens ressources,
   dates et statut remis à zéro) · supprimer (confirmation).
 
@@ -311,9 +313,9 @@ jamais comme la version envoyée.
   cohabitation) : `depositedOutline` est calculé côté page comme le document `outline_sent` le plus
   récent du module.
 - **Dépôt = envoi (US-70)** : déposer un document `outline_sent` fait avancer `iceberg_state`
-  jusqu'à `outline_sent` (jamais de recul, `applyOutlineUpload` dans `src/lib/ynov/iceberg.ts`) et
-  coche « Progression pédagogique » (= la trame) : la facturation n'est plus bloquée par une trame
-  envoyée hors application. Supprimer le document ne fait pas reculer l'état. Migration de
+  jusqu'à `outline_sent` (jamais de recul, `advanceModule` dans `src/lib/modules/advance.ts`,
+  partagé avec la génération et la facturation) : la facturation n'est plus bloquée par une
+  progression envoyée hors application. Supprimer le document ne fait pas reculer l'état. Migration de
   rattrapage `20260927130000_outline_upload_sent` pour les modules déjà concernés.
 
 ## Résultats PDF + e-mail (E6)

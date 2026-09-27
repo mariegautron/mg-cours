@@ -76,6 +76,24 @@ describe("invoiceBlockers", () => {
     expect(r).toContain("Document manquant : Notes saisies dans Hyperplanning.");
   });
 
+  it("exige 4 documents administratifs, sans la progression pédagogique", () => {
+    expect(REQUIRED_ADMIN_DOCS.map((d) => d.key)).toEqual([
+      "fiche_positionnement",
+      "supports_moodle",
+      "sujets_grilles_moodle",
+      "notes_hyperplanning",
+    ]);
+  });
+
+  it("la progression envoyée suffit : l'ancienne case progression_pedagogique est ignorée", () => {
+    const ctx = ok();
+    ctx.module.admin_docs = { ...allDocs, progression_pedagogique: false };
+    expect(invoiceBlockers(ctx)).toEqual([]);
+    ctx.module.iceberg_state = "materials_on_moodle";
+    ctx.module.admin_docs = { ...allDocs, progression_pedagogique: true };
+    expect(invoiceBlockers(ctx)).toHaveLength(1);
+  });
+
   it("cumule tous les blocages", () => {
     const ctx = ok({ notes: { satisfied: false, enteredTotal: 0, requiredTotal: 3 } });
     ctx.module.iceberg_state = "module_created";

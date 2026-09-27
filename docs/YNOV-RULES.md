@@ -43,7 +43,9 @@ grades_in_mg → admin_docs_ok → invoice_ready → invoice_sent → paid`
 - la trame pédagogique n'est pas envoyée **ET**
 - le nombre de notes saisies < minimum requis (§1) **ET**
 - les documents administratifs ne sont pas tous cochés
-  (fiche de positionnement, progression pédagogique, supports Moodle, sujets/grilles Moodle).
+  (fiche de positionnement, supports Moodle, sujets/grilles Moodle, notes Hyperplanning).
+  La progression pédagogique n'est **pas** une case : c'est la condition « envoyée » ci-dessus,
+  déduite du dépôt du PDF ou de « Marquer comme envoyée » (US-70).
 
 Implémentation : `src/lib/ynov/iceberg.ts`.
 

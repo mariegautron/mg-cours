@@ -162,9 +162,9 @@ type string » en build). À vérifier une fois sur Vercel avec une 1re facture 
 
 Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/09/2026) ».
 
-| US    | Contenu                                                                                                  | Statut |
-| ----- | -------------------------------------------------------------------------------------------------------- | ------ |
-| US-70 | Trame déposée = trame envoyée (état iceberg → `outline_sent`, « Progression pédagogique » cochée) + rattrapage SQL | ✅     |
+| US    | Contenu                                                                                                                                                                 | Statut |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-70 | Progression déposée = progression envoyée (état iceberg → `outline_sent`) ; « Progression pédagogique » retirée des documents administratifs (4 cases) ; rattrapage SQL | ✅     |
 
 ## E8 — Migration Notion ⏳
 

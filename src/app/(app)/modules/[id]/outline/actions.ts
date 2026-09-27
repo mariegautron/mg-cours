@@ -3,26 +3,13 @@
 import { revalidatePath } from "next/cache";
 
 import { buildCurrentOutline, getOutline } from "@/lib/outline/queries";
+import { advanceModule } from "@/lib/modules/advance";
 import { createClient } from "@/lib/supabase/server";
-import { advanceTo, type IcebergState } from "@/lib/ynov/iceberg";
 
 export interface OutlineActionState {
   error?: string;
 }
 
-async function advanceModule(moduleId: string, target: IcebergState) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("module")
-    .select("iceberg_state")
-    .eq("id", moduleId)
-    .single();
-  if (!data) return;
-  const next = advanceTo(data.iceberg_state, target);
-  if (next !== data.iceberg_state) {
-    await supabase.from("module").update({ iceberg_state: next }).eq("id", moduleId);
-  }
-}
 
 /** Génère (ou rafraîchit) l'instantané de la trame. Ne touche pas au statut d'envoi. */
 export async function generateOutline(moduleId: string): Promise<OutlineActionState> {

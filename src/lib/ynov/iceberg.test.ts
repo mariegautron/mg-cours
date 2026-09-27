@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   advanceTo,
-  applyOutlineUpload,
   ICEBERG_STATES,
   isAtLeast,
   isOutlineSent,
@@ -37,28 +36,5 @@ describe("iceberg workflow", () => {
     expect(advanceTo("module_created", "outline_generated")).toBe("outline_generated");
     expect(advanceTo("invoice_sent", "outline_sent")).toBe("invoice_sent");
     expect(advanceTo("outline_sent", "outline_sent")).toBe("outline_sent");
-  });
-});
-
-describe("applyOutlineUpload (trame déposée = trame envoyée)", () => {
-  it("avance jusqu'à outline_sent et coche la progression pédagogique", () => {
-    const next = applyOutlineUpload({
-      iceberg_state: "module_created",
-      admin_docs: { fiche_positionnement: true },
-    });
-    expect(next.iceberg_state).toBe("outline_sent");
-    expect(next.admin_docs).toEqual({ fiche_positionnement: true, progression_pedagogique: true });
-    expect(isOutlineSent(next.iceberg_state)).toBe(true);
-  });
-
-  it("ne fait jamais reculer un module plus avancé", () => {
-    expect(applyOutlineUpload({ iceberg_state: "invoice_sent", admin_docs: {} }).iceberg_state).toBe(
-      "invoice_sent",
-    );
-  });
-
-  it("est idempotent", () => {
-    const once = applyOutlineUpload({ iceberg_state: "fiche_received", admin_docs: {} });
-    expect(applyOutlineUpload(once)).toEqual(once);
   });
 });

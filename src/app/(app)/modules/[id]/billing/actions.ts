@@ -6,8 +6,8 @@ import { Resend } from "resend";
 import { serverEnv } from "@/lib/env";
 import { buildFacturX } from "@/lib/invoice/facturx";
 import { getInvoiceByModule, listInvoiceNumbers, loadInvoiceContext } from "@/lib/invoice/queries";
+import { advanceModule } from "@/lib/modules/advance";
 import { createClient } from "@/lib/supabase/server";
-import { advanceTo, type IcebergState } from "@/lib/ynov/iceberg";
 import {
   buildInvoiceSnapshot,
   invoiceBlockers,
@@ -22,19 +22,6 @@ export interface BillingActionState {
   ok?: boolean;
 }
 
-async function advanceModule(moduleId: string, target: IcebergState) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("module")
-    .select("iceberg_state")
-    .eq("id", moduleId)
-    .single();
-  if (!data) return;
-  const next = advanceTo(data.iceberg_state, target);
-  if (next !== data.iceberg_state) {
-    await supabase.from("module").update({ iceberg_state: next }).eq("id", moduleId);
-  }
-}
 
 function refresh(moduleId: string) {
   revalidatePath(`/modules/${moduleId}/billing`);
