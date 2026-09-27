@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookMarked, Receipt, TimerReset } from "lucide-react";
+import { BookMarked, CalendarCheck, NotebookPen, Play, Receipt, TimerReset } from "lucide-react";
 
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { listCoursesOn } from "@/lib/dashboard/queries";
+import { todaySessions } from "@/lib/dashboard/today";
 import { listBillingOverview } from "@/lib/invoice/queries";
+import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
 import { getProfile } from "@/lib/settings/queries";
 import { outlineAlerts, outlineAlertSummary, type OutlineAlert } from "@/lib/ynov/trame";
@@ -48,11 +52,14 @@ function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
 }
 
 export default async function DashboardPage() {
-  const [modules, billing, profile] = await Promise.all([
+  const today = todayInParis();
+  const [modules, billing, profile, coursesToday] = await Promise.all([
     listModules(),
     listBillingOverview(),
     getProfile(),
+    listCoursesOn(today),
   ]);
+  const sessions = todaySessions(coursesToday, today);
   const toInvoice = billing.filter((b) => b.kind === "ready");
   const toSend = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "ready");
   const toCollect = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "sent");
@@ -85,6 +92,46 @@ export default async function DashboardPage() {
           className="relative size-28 sm:size-32"
         />
       </div>
+
+      {sessions.length ? (
+        <section aria-labelledby="today" className="bg-card halo space-y-3 rounded-2xl border p-5">
+          <div className="flex items-center gap-3">
+            <span className="bg-primary/15 text-primary flex size-9 items-center justify-center rounded-xl">
+              <CalendarCheck aria-hidden className="size-5" />
+            </span>
+            <h2 id="today" className="text-base font-semibold">
+              Aujourd’hui
+            </h2>
+          </div>
+          <ul className="divide-y">
+            {sessions.map((c) => (
+              <li
+                key={c.id}
+                className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <div>
+                  <p className="text-muted-foreground text-sm">{c.module.name}</p>
+                  <p className="font-heading text-lg font-semibold">{c.title}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild>
+                    <Link href={`/present/modules/${c.module.id}/courses/${c.id}`}>
+                      <Play aria-hidden />
+                      Faire cours<span className="sr-only"> : {c.title}</span>
+                    </Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href={`/modules/${c.module.id}#courses`}>
+                      <NotebookPen aria-hidden />
+                      Voir la séance<span className="sr-only"> : {c.title}</span>
+                    </Link>
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard

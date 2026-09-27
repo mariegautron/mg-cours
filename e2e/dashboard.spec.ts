@@ -48,3 +48,42 @@ test("US-74 : une progression à J-15 est signalée, jamais « Tout est en ordre
     .analyze();
   expect(axe.violations).toEqual([]);
 });
+
+test("US-63 : la séance du jour est accessible en un clic depuis le tableau de bord", async ({
+  page,
+}) => {
+  await login(page);
+  const suffix = Date.now();
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
+
+  await page.goto("/modules/new");
+  await page.getByLabel("Nom du module").fill(`Module Jour J ${suffix}`);
+  await page.getByLabel("Année").fill("2026");
+  await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  const moduleId = page.url().split("/").pop();
+
+  await page.getByRole("link", { name: "Ajouter une séance" }).click();
+  await page.getByLabel("Titre de la séance").fill(`Séance du jour ${suffix}`);
+  await page.getByLabel("Date", { exact: true }).fill(today);
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page.getByText(`Séance du jour ${suffix}`).first()).toBeVisible();
+
+  await page.goto("/dashboard");
+  const card = page.getByRole("region", { name: "Aujourd’hui" });
+  const item = card.getByRole("listitem").filter({ hasText: `Séance du jour ${suffix}` });
+  await expect(item.getByText(`Module Jour J ${suffix}`)).toBeVisible();
+  await expect(item.getByRole("link", { name: /^Faire cours/ })).toHaveAttribute(
+    "href",
+    new RegExp(`^/present/modules/${moduleId}/courses/[0-9a-f-]{36}$`),
+  );
+
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  await item.getByRole("link", { name: /^Faire cours/ }).click();
+  await page.waitForURL(/\/present\/modules\/.+\/courses\//);
+});

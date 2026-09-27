@@ -171,6 +171,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-73  | Envoi de facture sécurisé : confirmation (destinataire, n°, TTC, aperçu PDF), suppression confirmée, XML dans le menu « Plus »                                          | ✅     |
 | US-76  | Envoi des résultats confirmé : nombre de destinataires, étudiant·es sans e-mail, envoi précédent (`assessment.results_sent_at`, migration `20260927140000`)             | ✅     |
 | US-80a | Fiche étudiant·e : groupes avec module et année scolaire, rangés par année (la plus récente d'abord)                                                                    | ✅     |
+| US-63  | Accès à la séance du jour : carte « Aujourd'hui » du tableau de bord (fuseau Europe/Paris) avec « Faire cours » ; boutons séance / module livrés en E10                 | ✅     |
 
 ## E8 — Migration Notion ⏳
 

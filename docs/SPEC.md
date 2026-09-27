@@ -16,6 +16,12 @@
 
 ## Tableau de bord (`/dashboard`)
 
+- **Carte « Aujourd'hui » (US-63)**, sous l'accroche, affichée seulement s'il y a cours : séances
+  dont `session_date` = aujourd'hui **à Paris** (`todayInParis`), modules non archivés, triées par
+  module puis position (`todaySessions`, `src/lib/dashboard/today.ts`). Pour chacune : module,
+  titre, **Faire cours** (`/present/modules/[id]/courses/[courseId]`) et un second lien vers la
+  séance côté enseignante. « Faire cours » par séance et « Présenter le module » : fiche module
+  (E10).
 - Accroche : « Tout est en ordre » **uniquement** si aucune progression pédagogique n'est en
   alerte ; sinon « … demande ton attention » (retard ou J-7) ou « … est à préparer » (J-15
   seulement). Mascotte en alerte dans les deux derniers cas.
