@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
+import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import type { Tables } from "@/types/db";
 
 export interface ModuleFormState {
@@ -108,13 +109,23 @@ export async function unarchiveModule(id: string) {
   await setModuleArchived(id, false);
 }
 
-export async function setAdminDoc(id: string, key: string, value: boolean) {
-  "use server";
+export interface AdminDocState {
+  error?: string;
+  saved?: boolean;
+}
+
+export async function setAdminDoc(id: string, key: string, value: boolean): Promise<AdminDocState> {
+  if (!REQUIRED_ADMIN_DOCS.some((d) => d.key === key)) return { error: "Document inconnu." };
   const supabase = await createClient();
   const { data: mod } = await supabase.from("module").select("admin_docs").eq("id", id).single();
-  const adminDocs = { ...((mod?.admin_docs as Record<string, boolean>) ?? {}), [key]: value };
-  await supabase.from("module").update({ admin_docs: adminDocs }).eq("id", id);
+  if (!mod) return { error: "Module introuvable." };
+  const adminDocs = { ...((mod.admin_docs as Record<string, boolean>) ?? {}), [key]: value };
+  const { error } = await supabase.from("module").update({ admin_docs: adminDocs }).eq("id", id);
+  if (error) return { error: "Enregistrement impossible. Réessayez." };
   revalidatePath(`/modules/${id}`);
+  revalidatePath(`/modules/${id}/billing`);
+  revalidatePath("/billing");
+  return { saved: true };
 }
 
 export interface DuplicateState {

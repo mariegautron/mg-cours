@@ -165,6 +165,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US    | Contenu                                                                                                                                                                 | Statut |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | US-70 | Progression déposée = progression envoyée (état iceberg → `outline_sent`) ; « Progression pédagogique » retirée des documents administratifs (4 cases) ; rattrapage SQL | ✅     |
+| US-71 | Checklist des documents administratifs modifiable sur la page Facturation, retour « Enregistré » / erreur                                                               | ✅     |
 
 ## E8 — Migration Notion ⏳
 

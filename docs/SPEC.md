@@ -349,8 +349,10 @@ jamais comme la version envoyée.
 
 ## Facturation (E7)
 
-- `/modules/[id]/billing` : **Conditions YNOV** (trame envoyée, notes X/Y, 5 documents
-  administratifs — case « Notes saisies dans Hyperplanning » ajoutée à la checklist du module) et
+- `/modules/[id]/billing` : **Conditions YNOV** (trame envoyée, notes X/Y) puis la **checklist
+  des 4 documents administratifs, modifiable sur place** (US-71 : mêmes interrupteurs que la fiche
+  module ; chaque bascule affiche « Enregistré : … » dans une zone `role=status`, ou l'erreur en
+  `role=alert` ; l'action `setAdminDoc` refuse une clé inconnue) et
   **Mentions obligatoires** manquantes (avec liens vers Réglages / fiche module). Le bouton
   « Générer la facture » n'est actif que si tout est vert ; le serveur revérifie tout.
 - Facture : numéro `AAAA-NNN`, échéance 30 jours fin de mois, désignation

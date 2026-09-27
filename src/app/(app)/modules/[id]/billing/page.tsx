@@ -7,9 +7,10 @@ import { GenerateInvoiceButton, InvoiceActions } from "@/components/billing/invo
 import { Badge } from "@/components/ui/badge";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { ExternalInvoicePaid } from "@/components/billing/external-invoice-paid";
+import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { DocumentSlot } from "@/components/modules/module-documents";
 import { getModule, getModuleDocuments } from "@/lib/modules/queries";
-import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
+import { invoiceBlockers, missingInvoiceData } from "@/lib/ynov/invoice";
 
 export async function generateMetadata({
   params,
@@ -53,7 +54,6 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
       ok: ctx.notes.satisfied,
       label: `Notes saisies (${ctx.notes.enteredTotal}/${ctx.notes.requiredTotal} requises)`,
     },
-    ...REQUIRED_ADMIN_DOCS.map((d) => ({ ok: !!ctx.module.admin_docs[d.key], label: d.label })),
   ];
 
   return (
@@ -131,13 +131,10 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
                 </li>
               ))}
             </ul>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Documents administratifs : à cocher sur la{" "}
-              <Link href={`/modules/${id}`} className="underline underline-offset-2">
-                page du module
-              </Link>
-              .
-            </p>
+            <h3 id="billing-admin-docs" className="mt-4 mb-2 font-medium">
+              Documents administratifs
+            </h3>
+            <AdminDocsChecklist moduleId={id} adminDocs={ctx.module.admin_docs} />
           </section>
 
           <section aria-labelledby="missing">

@@ -93,19 +93,23 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await expect(page.getByText(/Générée le/)).toBeVisible();
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();
+
+  // Documents administratifs cochés directement sur la page Facturation (US-71).
+  await page.goto(`${moduleUrl}/billing`);
   for (const label of [
     "Fiche de positionnement",
-    "Progression pédagogique",
     "Supports déposés sur Moodle",
     "Sujets et grilles déposés sur Moodle",
     "Notes saisies dans Hyperplanning",
   ]) {
     await page.getByRole("switch", { name: label }).click();
     await expect(page.getByRole("switch", { name: label })).toBeChecked();
+    await expect(
+      page.getByRole("status").filter({ hasText: `Enregistré : ${label}.` }),
+    ).toBeVisible();
   }
 
   // Tout est vert : génération de la facture.
-  await page.goto(`${moduleUrl}/billing`);
   await expect(page.getByText("Toutes les informations requises sont renseignées.")).toBeVisible();
   const generate = page.getByRole("button", { name: "Générer la facture" });
   await expect(generate).toBeEnabled();

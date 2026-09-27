@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
-import { setAdminDoc } from "@/app/(app)/modules/actions";
+import { setAdminDoc, type AdminDocState } from "@/app/(app)/modules/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
@@ -17,30 +17,43 @@ export function AdminDocsChecklist({
   adminDocs: Record<string, boolean>;
 }) {
   const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<AdminDocState & { label?: string }>({});
 
   return (
-    <ul className="space-y-3">
-      {DOCS.map((doc) => {
-        const checked = !!adminDocs[doc.key];
-        const id = `admin-doc-${doc.key}`;
-        return (
-          <li key={doc.key} className="flex items-center gap-3">
-            <Switch
-              id={id}
-              checked={checked}
-              disabled={pending}
-              onCheckedChange={(value) =>
-                startTransition(() => {
-                  void setAdminDoc(moduleId, doc.key, value);
-                })
-              }
-            />
-            <Label htmlFor={id} className="font-normal">
-              {doc.label}
-            </Label>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="space-y-3">
+      <ul className="space-y-3">
+        {DOCS.map((doc) => {
+          const checked = !!adminDocs[doc.key];
+          const id = `admin-doc-${moduleId}-${doc.key}`;
+          return (
+            <li key={doc.key} className="flex items-center gap-3">
+              <Switch
+                id={id}
+                checked={checked}
+                disabled={pending}
+                onCheckedChange={(value) =>
+                  startTransition(async () => {
+                    setState({});
+                    const result = await setAdminDoc(moduleId, doc.key, value);
+                    setState({ ...result, label: doc.label });
+                  })
+                }
+              />
+              <Label htmlFor={id} className="font-normal">
+                {doc.label}
+              </Label>
+            </li>
+          );
+        })}
+      </ul>
+      <p role="status" className="text-muted-foreground min-h-5 text-sm">
+        {state.saved ? `Enregistré : ${state.label}.` : null}
+      </p>
+      {state.error ? (
+        <p role="alert" className="text-destructive text-sm">
+          {state.error}
+        </p>
+      ) : null}
+    </div>
   );
 }
