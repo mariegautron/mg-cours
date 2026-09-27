@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/modules/documents";
 import { createClient } from "@/lib/supabase/server";
+import { applyOutlineUpload } from "@/lib/ynov/iceberg";
 
 /**
  * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur
@@ -32,6 +33,28 @@ export async function registerModuleDocument(
   if (error) {
     await supabase.storage.from("module-documents").remove([file.path]);
     return { error: "Enregistrement impossible. Réessayez." };
+  }
+
+  if (kind === "outline_sent") {
+    const { data: mod } = await supabase
+      .from("module")
+      .select("iceberg_state, admin_docs")
+      .eq("id", moduleId)
+      .single();
+    if (mod) {
+      await supabase
+        .from("module")
+        .update(
+          applyOutlineUpload({
+            iceberg_state: mod.iceberg_state,
+            admin_docs: (mod.admin_docs as Record<string, boolean>) ?? {},
+          }),
+        )
+        .eq("id", moduleId);
+    }
+    revalidatePath(`/modules/${moduleId}/billing`);
+    revalidatePath("/billing");
+    revalidatePath("/dashboard");
   }
 
   revalidatePath(`/modules/${moduleId}`);

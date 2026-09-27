@@ -61,3 +61,20 @@ export function nextState(state: IcebergState): IcebergState | null {
 export function advanceTo(current: IcebergState, target: IcebergState): IcebergState {
   return isAtLeast(current, target) ? current : target;
 }
+
+export interface OutlineUploadState {
+  iceberg_state: IcebergState;
+  admin_docs: Record<string, boolean>;
+}
+
+/**
+ * Une trame déposée (module déjà réalisé, trame envoyée hors application) vaut trame
+ * envoyée : l'état avance jusqu'à `outline_sent` sans reculer, et le document
+ * administratif « Progression pédagogique » (= la trame) est coché.
+ */
+export function applyOutlineUpload(current: OutlineUploadState): OutlineUploadState {
+  return {
+    iceberg_state: advanceTo(current.iceberg_state, "outline_sent"),
+    admin_docs: { ...current.admin_docs, progression_pedagogique: true },
+  };
+}
