@@ -4,7 +4,8 @@
 //   node scripts/notion-migrate/index.mts --course b2-accessibilite-2526 \
 //     --env .env.vercel.local --notion ~/Bureau/exports/notion \
 //     --moodle ~/Bureau/exports/moodle/b2-accessibilite-2526.mbz \
-//     --participants <participants.csv> --outline-pdf <trame.pdf> --invoice-pdf <facture.pdf>
+//     --participants <participants.csv> --outline-pdf <trame.pdf> --invoice-pdf <facture.pdf> \
+//     --grades <export Notes Moodle .ods>
 // Écriture : même commande + --apply (uniquement après validation du rapport).
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -82,6 +83,7 @@ async function main() {
     participantsCsv: typeof a.participants === "string" ? a.participants : null,
     outlinePdf: typeof a["outline-pdf"] === "string" ? a["outline-pdf"] : null,
     invoicePdf: typeof a["invoice-pdf"] === "string" ? a["invoice-pdf"] : null,
+    gradesFile: typeof a.grades === "string" ? a.grades : null,
   });
   imp.printReport();
 }

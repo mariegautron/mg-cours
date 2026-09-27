@@ -6,6 +6,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, extname } from "node:path";
 
+import * as XLSX from "xlsx";
+
 import { MIME_BY_EXT, safeName } from "../../../src/lib/storage/files.ts";
 
 import type { Importer } from "../lib/importer.mts";
@@ -20,6 +22,8 @@ export interface CourseContext {
   participantsCsv: string | null;
   outlinePdf: string | null;
   invoicePdf: string | null;
+  /** Export du carnet de notes Moodle (ODS/XLSX/CSV, notes brutes). */
+  gradesFile: string | null;
 }
 
 const PROGRESSION = "2df903c74f13805c8a20f402589c8c9a";
@@ -89,11 +93,18 @@ const ASSESSMENTS = [
     isGroupGrade: true,
     date: "2026-02-05",
     duration: 10,
+    /** Oral noté sur 24 dans Moodle : notes d'origine conservées, ramenées sur 20 par l'app. */
+    maxScore: 24,
   },
 ];
 
-/** Étudiant·es présent·es dans le cours Moodle mais sans groupe (décision PO du 26/09). */
-const FALLBACK_GROUP = "Groupe 3 – CYBER";
+/**
+ * Étudiant·es inscrit·es au cours Moodle sans groupe de projet (ni TP ni oral) : groupe dédié,
+ * visé seulement par l'évaluation individuelle (décision PO du 27/09). Le premier import les
+ * avait rangé·es dans « Groupe 3 – CYBER » : cette liaison est retirée.
+ */
+const NO_PROJECT_GROUP = "Hors groupe projet";
+const WRONG_FALLBACK_GROUP = "Groupe 3 – CYBER";
 
 const normalizeGroup = (g: string) => {
   const m = /groupe\s*(\d+)\s*-\s*(\w+)/i.exec(g);
@@ -280,49 +291,65 @@ export async function migrate(ctx: CourseContext): Promise<void> {
         .filter((g): g is string => g !== null && g !== "Groupe 4 – CYBER"),
     ),
   ].sort();
-  for (const name of groupNames) {
+  for (const name of [...groupNames, NO_PROJECT_GROUP]) {
+    const project = name !== NO_PROJECT_GROUP;
     groupIds.set(
       name,
       await imp.ensure(
         "student_group",
         "moodle",
         `course:${moodle.shortname}#group:${name}`,
-        { module_id: moduleId, name, type: "project" },
-        `${name} (projet)`,
+        { module_id: moduleId, name, type: project ? "project" : "td" },
+        `${name} (${project ? "projet" : "TD — sans groupe de projet"})`,
       ),
     );
   }
+
+  /** Empreinte de l'e-mail → étudiant·e importé·e (clé commune participants / carnet de notes). */
+  const students = new Map<string, { id: string; group: string; label: string }>();
+  const emailKey = (email: string) =>
+    createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 16);
 
   if (ctx.participantsCsv) {
     const rows = parseCsv(readFileSync(ctx.participantsCsv, "utf8")).filter(
       (r) => !/gautron/i.test(`${r["Nom de famille"]} ${r["Adresse de courriel"]}`),
     );
     for (const r of rows) {
-      const group = normalizeGroup(r["Groupes"] ?? "") ?? FALLBACK_GROUP;
-      const promo = group.split("– ")[1];
+      const projectGroup = normalizeGroup(r["Groupes"] ?? "");
+      const group = projectGroup ?? NO_PROJECT_GROUP;
+      const promo = (projectGroup ?? WRONG_FALLBACK_GROUP).split("– ")[1];
       const initial = `${(r["Nom de famille"] ?? "").trim().charAt(0).toUpperCase()}.`;
+      const label = `${r["Prénom"]} ${initial}`;
       // Clé d'idempotence pseudonyme : empreinte de l'e-mail, jamais l'e-mail lui-même.
-      const key = createHash("sha256")
-        .update((r["Adresse de courriel"] ?? "").toLowerCase())
-        .digest("hex")
-        .slice(0, 16);
+      const key = emailKey(r["Adresse de courriel"] ?? "");
       const studentId = await imp.ensure(
         "student",
         "moodle",
         `participant:${key}`,
         { first_name: r["Prénom"], last_name: initial, scholar_group: `B2 ${promo}` },
-        `${r["Prénom"]} ${initial} — ${group}${r["Groupes"] ? "" : " (sans groupe Moodle → groupe par défaut)"}`,
+        `${label} — ${group}`,
       );
+      students.set(key, { id: studentId, group, label });
+      if (!projectGroup)
+        await imp.unlink(
+          "group_member",
+          { student_group_id: groupIds.get(WRONG_FALLBACK_GROUP), student_id: studentId },
+          `${WRONG_FALLBACK_GROUP} ✕ ${label} (rangé·e par erreur au premier import)`,
+        );
       await imp.link(
         "group_member",
         { student_group_id: groupIds.get(group), student_id: studentId },
         "student_group_id,student_id",
-        `${group} ← ${r["Prénom"]} ${initial}`,
+        `${group} ← ${label}`,
       );
     }
   } else imp.warnings.push("Pas de liste de participants : aucun·e étudiant·e importé·e.");
 
-  // ── Grilles + évaluations ────────────────────────────────────────────────
+  // ── Carnet de notes Moodle (notes brutes) ────────────────────────────────
+  const gradeRows = ctx.gradesFile ? readGradebook(ctx.gradesFile) : [];
+  if (!ctx.gradesFile) imp.warnings.push("Pas de carnet de notes : aucune note importée.");
+
+  // ── Grilles + évaluations + notes ────────────────────────────────────────
   for (const a of ASSESSMENTS) {
     const gridPage = page(a.grid);
     const grid = parseGrid(gridPage.body);
@@ -359,6 +386,8 @@ export async function migrate(ctx: CourseContext): Promise<void> {
         `Sujet « ${subjectPage.title} » : ${subject.body.length} car. (> 20 000, limite du formulaire).`,
       );
 
+    const targets = a.isGroupGrade ? groupNames : [...groupNames, NO_PROJECT_GROUP];
+    const maxScore = a.maxScore ?? null;
     const assessmentId = await imp.ensure(
       "assessment",
       "notion",
@@ -372,16 +401,81 @@ export async function migrate(ctx: CourseContext): Promise<void> {
         is_group_grade: a.isGroupGrade,
         date: a.date,
         duration_minutes: a.duration,
+        max_score: maxScore,
       },
-      `${subjectPage.title} — sujet ${subject.body.length} car., ${a.type}, ${a.date}, ${a.duration} min, grille /${total}, ${groupNames.length} groupes`,
+      `${subjectPage.title} — sujet ${subject.body.length} car., ${a.type}, ${a.date}, ${a.duration} min, barème /${maxScore ?? total}, ${targets.length} groupes`,
     );
-    for (const g of groupNames) {
+    if (maxScore)
+      await imp.fillIfEmpty(
+        "assessment",
+        assessmentId,
+        "max_score",
+        maxScore,
+        `${subjectPage.title} : barème /${maxScore}`,
+      );
+    for (const g of targets) {
       await imp.link(
         "assessment_group",
         { assessment_id: assessmentId, student_group_id: groupIds.get(g) },
         "assessment_id,student_group_id",
         `${subjectPage.title} → ${g}`,
       );
+    }
+
+    if (!gradeRows.length) continue;
+    const column = Object.keys(gradeRows[0]).find((h) => h.includes(subjectPage.title));
+    if (!column) {
+      imp.warnings.push(`Carnet de notes : colonne « ${subjectPage.title} » introuvable.`);
+      continue;
+    }
+    const scale = maxScore ?? total;
+    const notes = gradeRows.flatMap((row) => {
+      const value = parseGradeValue(row[column]);
+      const student = students.get(emailKey(String(row["Adresse de courriel"] ?? "")));
+      if (!student) {
+        if (value !== null) imp.warnings.push(`Note sans étudiant·e correspondant·e (${column}).`);
+        return [];
+      }
+      if (value !== null && value > scale)
+        imp.warnings.push(`${student.label} : ${value} > barème /${scale} (${subjectPage.title}).`);
+      return value === null ? [] : [{ student, value }];
+    });
+
+    if (a.isGroupGrade) {
+      for (const g of groupNames) {
+        const values = [...new Set(notes.filter((n) => n.student.group === g).map((n) => n.value))];
+        if (!values.length) continue;
+        if (values.length > 1) {
+          imp.warnings.push(
+            `${subjectPage.title} › ${g} : notes différentes (${values.join(", ")}) → note de groupe non importée.`,
+          );
+          continue;
+        }
+        await imp.ensure(
+          "grade",
+          "moodle",
+          `grade:${subjectPage.id}:group:${g}`,
+          {
+            assessment_id: assessmentId,
+            student_group_id: groupIds.get(g),
+            is_group_grade: true,
+            value: values[0],
+          },
+          `${subjectPage.title} › ${g} : ${values[0]}/${scale}`,
+        );
+      }
+      for (const n of notes.filter((x) => x.student.group === NO_PROJECT_GROUP))
+        imp.warnings.push(`${n.student.label} : note de groupe hors groupe projet ignorée.`);
+    } else {
+      for (const { student, value } of notes) {
+        await imp.ensure(
+          "grade",
+          "moodle",
+          `grade:${subjectPage.id}:student:${student.id}`,
+          { assessment_id: assessmentId, student_id: student.id, is_group_grade: false, value },
+          `${subjectPage.title} › ${student.label} : ${value}/${scale}`,
+        );
+      }
     }
   }
 
@@ -428,9 +522,26 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     );
   for (const issue of imageIssues) imp.warnings.push(`Image non importée — ${issue}`);
   imp.warnings.push(
-    "Oral : Moodle notait sur 24, la grille Notion totalise 20 → barème de l'évaluation = 20 (total de la grille), modifiable dans l'app.",
-  );
-  imp.warnings.push(
     "Non importés (décision PO, économie de stockage) : PDF des supports (slides / cours) et site support (zip).",
   );
+}
+
+/** Lit l'export « Notes » de Moodle (ODS, XLSX ou CSV) : une ligne par étudiant·e. */
+function readGradebook(file: string): Record<string, unknown>[] {
+  const book = XLSX.read(readFileSync(file));
+  return XLSX.utils.sheet_to_json<Record<string, unknown>>(book.Sheets[book.SheetNames[0]], {
+    defval: "",
+    raw: true,
+  });
+}
+
+/** « 16,67 » / 16.67 → 16.67 ; « - » ou vide → pas de note. */
+function parseGradeValue(v: unknown): number | null {
+  if (typeof v === "number") return Number.isFinite(v) ? Math.round(v * 100) / 100 : null;
+  const s = String(v ?? "")
+    .trim()
+    .replace(",", ".");
+  if (!s || s === "-") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
 }

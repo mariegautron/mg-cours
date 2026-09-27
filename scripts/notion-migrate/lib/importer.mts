@@ -7,7 +7,7 @@ export type Source = "notion" | "moodle";
 
 export interface ReportLine {
   table: string;
-  action: "créer" | "déjà importé" | "lier" | "envoyer";
+  action: "créer" | "déjà importé" | "lier" | "délier" | "envoyer" | "compléter";
   label: string;
 }
 
@@ -116,6 +116,40 @@ export class Importer {
       .eq("id", id)
       .eq("owner_id", this.ownerId);
     if (error) throw new Error(`${table} « ${label} » : ${error.message}`);
+  }
+
+  /**
+   * Corrige une liaison posée par erreur lors d'un import précédent (ex. étudiant·e rangé·e
+   * dans le mauvais groupe). N'agit que si la liaison existe.
+   */
+  async unlink(table: string, match: Record<string, string | undefined>, label: string) {
+    const values = Object.values(match);
+    if (values.some((v) => !v || this.isDry(v))) return;
+    let query = this.sb.from(table).select("id").eq("owner_id", this.ownerId);
+    for (const [k, v] of Object.entries(match)) query = query.eq(k, v as string);
+    const { data, error } = await query;
+    if (error) throw new Error(`${table} « ${label} » : ${error.message}`);
+    if (!data?.length) return;
+    this.report.push({ table, action: "délier", label });
+    if (!this.apply) return;
+    const { error: delError } = await this.sb
+      .from(table)
+      .delete()
+      .in(
+        "id",
+        data.map((r) => r.id as string),
+      );
+    if (delError) throw new Error(`${table} « ${label} » : ${delError.message}`);
+  }
+
+  /** Renseigne une colonne encore vide d'une ligne déjà importée (sans écraser une saisie). */
+  async fillIfEmpty(table: string, id: string, column: string, value: unknown, label: string) {
+    if (this.isDry(id)) return;
+    const { data, error } = await this.sb.from(table).select(column).eq("id", id).single();
+    if (error) throw new Error(`${table} « ${label} » : ${error.message}`);
+    if ((data as unknown as Record<string, unknown>)[column] !== null) return;
+    this.report.push({ table, action: "compléter", label });
+    await this.update(table, id, { [column]: value }, label);
   }
 
   printReport() {

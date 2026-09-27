@@ -451,3 +451,11 @@ encore écrit sur le cloud ; script non commité.
 - `--apply` exécuté sans erreur le 27/09 : tout est créé sur le cloud.
 - **PDF des supports (slides / cours) et site support : non importés** (décision PO,
   économie de stockage). Seuls la trame envoyée et la facture sont stockées.
+- **Notes (27/09)** : carnet de notes Moodle (export ODS, `--grades`) → 27 notes importées
+  (TP audit : 6 notes de groupe · évaluation individuelle : 15 · oral : 6 notes de groupe
+  **sur 24**, barème de l'évaluation = 24, ramené sur 20 par l'app). Notes de groupe
+  identiques au sein de chaque groupe (vérifié). Pas de détail par critère (Moodle ne
+  fournit que le total).
+- 2 étudiant·es sans groupe de projet (ni TP ni oral) → groupe **« Hors groupe projet »**
+  (TD), visé uniquement par l'évaluation individuelle ; retiré·es du « Groupe 3 – CYBER »
+  où le premier import les avait placé·es.
