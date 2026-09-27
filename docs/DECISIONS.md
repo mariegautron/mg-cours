@@ -120,3 +120,14 @@ Pas de diff ligne à ligne (hors besoin), l'affichage montre la version complèt
 YCODE, niveau, heures, etc. Seules les valeurs trouvées préremplissent le formulaire, toujours relues avant
 enregistrement. Pas d'OCR (PDF scanné → message clair) ni de service externe : gratuit, rapide, prévisible. Limite 4 Mo
 (plafond des Server Actions sur Vercel). Heuristiques à affiner avec une vraie fiche YNOV.
+
+## ADR-018 — Réglages : pas de masquage des champs sensibles, pas de mention « chiffré »
+
+Une suggestion de revue proposait de masquer IBAN/SIRET/NDA (façon `FR76 •••• •••• 4068`, révélation au clic) et
+d'afficher « 🔒 Données chiffrées ». Écarté : l'app n'a qu'un seul compte, protégé par l'authentification et la RLS
+(`owner_id = auth.uid()`) — masquer ajoute de la friction de saisie sans gain réel, et rien n'est chiffré au niveau
+applicatif, donc l'afficher serait une promesse inexacte. À la place : validations (SIRET Luhn, IBAN, NDA, téléphone),
+regroupement de l'IBAN à la saisie, et une phrase neutre « Visible uniquement par vous ; reprise sur vos factures ».
+Idem écartés : tooltip TVA (la mention explicative est déjà en clair, meilleur pour l'accessibilité), toast de
+confirmation (le message `role="status"` inline suffit), accordéon mobile (les groupes sont déjà empilés en une colonne
+sur petit écran, un accordéon cacherait des champs obligatoires).

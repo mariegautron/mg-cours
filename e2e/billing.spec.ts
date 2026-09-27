@@ -20,7 +20,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   // Profil prestataire complet (franchise 293 B).
   await page.goto("/settings");
   await page.getByLabel("Adresse", { exact: true }).fill("1 rue de l’Enseignement 44000 Nantes");
-  await page.getByLabel("SIRET").fill("123 456 789 00012");
+  await page.getByLabel("SIRET").fill("123 456 789 00007");
   await page.getByLabel("IBAN").fill(IBAN);
   await page.getByLabel(/TVA non applicable/).check();
   await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
@@ -110,7 +110,10 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   const generate = page.getByRole("button", { name: "Générer la facture" });
   await expect(generate).toBeEnabled();
   await generate.click();
-  await expect(page.getByRole("heading", { name: /Facture \d{4}-\d{3}/ })).toBeVisible();
+  // Premier appel : chargement à froid de la validation Factur-X (XSD + Schematron).
+  await expect(page.getByRole("heading", { name: /Facture \d{4}-\d{3}/ })).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(page.getByText("200,00 €").first()).toBeVisible();
 
   // Téléchargements : PDF Factur-X et XML.

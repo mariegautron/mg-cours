@@ -1,19 +1,37 @@
 import { z } from "zod";
 
+import { isValidSiret } from "@/lib/settings/bank";
 import { isValidIban } from "@/lib/ynov/invoice";
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(""));
 
+const siretField = z
+  .string()
+  .trim()
+  .transform((v) => v.replace(/\s/g, ""))
+  .pipe(z.string().regex(/^(\d{14})?$/, "Le SIRET compte 14 chiffres."))
+  .refine((v) => v === "" || isValidSiret(v), "Ce SIRET n’est pas valide (clé de contrôle).");
+
+const phoneField = z
+  .string()
+  .trim()
+  .refine(
+    (v) => v === "" || /^(?:\+33|0)[1-9](?:[\s.-]?\d{2}){4}$/.test(v),
+    "Numéro de téléphone invalide (ex. 06 12 34 56 78).",
+  );
+
 export const profileSchema = z.object({
   legalName: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
   address: optionalText(500),
-  siret: z
+  siret: siretField,
+  vatNumber: optionalText(50),
+  activityNumber: z
     .string()
     .trim()
-    .transform((v) => v.replace(/\s/g, ""))
-    .pipe(z.string().regex(/^(\d{14})?$/, "Le SIRET compte 14 chiffres.")),
-  vatNumber: optionalText(50),
-  activityNumber: optionalText(50),
+    .refine(
+      (v) => v === "" || /^\d{2}\s?\d{2}\s?\d{5}\s?\d{2}$/.test(v),
+      "Le NDA compte 11 chiffres (ex. 52 44 09999 44).",
+    ),
   vatExempt: z.boolean(),
   iban: z
     .string()
@@ -25,7 +43,7 @@ export const profileSchema = z.object({
     .transform((v) => v.replace(/\s/g, "").toUpperCase())
     .pipe(z.string().regex(/^([A-Z0-9]{8}|[A-Z0-9]{11})?$/, "Le BIC compte 8 ou 11 caractères.")),
   email: z.string().trim().email("E-mail invalide.").optional().or(z.literal("")),
-  phone: optionalText(50),
+  phone: phoneField,
 });
 
 export function readProfileForm(formData: FormData) {
@@ -45,11 +63,7 @@ export function readProfileForm(formData: FormData) {
 
 export const schoolSchema = z.object({
   name: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
-  siret: z
-    .string()
-    .trim()
-    .transform((v) => v.replace(/\s/g, ""))
-    .pipe(z.string().regex(/^(\d{14})?$/, "Le SIRET compte 14 chiffres.")),
+  siret: siretField,
   address: optionalText(500),
   billingEmail: z.string().trim().email("E-mail invalide.").optional().or(z.literal("")),
   paIdentifier: optionalText(100),

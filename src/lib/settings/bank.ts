@@ -1,5 +1,23 @@
 import { extractIban } from "@/lib/ynov/invoice";
 
+/** Valide la clé de contrôle Luhn d'un SIRET (14 chiffres). Les établissements La Poste
+ * (SIREN 356 000 000) dérogent historiquement à cette règle. */
+export function isValidSiret(siret: string): boolean {
+  const s = siret.replace(/\s/g, "");
+  if (!/^\d{14}$/.test(s)) return false;
+  if (s.startsWith("356000000")) return true;
+  let sum = 0;
+  for (let i = 0; i < s.length; i++) {
+    let d = Number(s[s.length - 1 - i]);
+    if (i % 2 === 1) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+  }
+  return sum % 10 === 0;
+}
+
 /** Découpe le RIB stocké (`teacher_profile.bank_details`) en IBAN + BIC pour le formulaire. */
 export function parseBankDetails(text: string | null): { iban: string; bic: string } {
   if (!text?.trim()) return { iban: "", bic: "" };
@@ -17,7 +35,8 @@ export function formatBankDetails(iban: string, bic: string): string {
   return lines.join("\n");
 }
 
-function groupIban(iban: string): string {
+/** IBAN affiché par blocs de 4 : FR76 3000 6000 0112 3456 7890 189. */
+export function groupIban(iban: string): string {
   return iban
     .replace(/\s/g, "")
     .toUpperCase()

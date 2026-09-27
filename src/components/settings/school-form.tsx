@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import type { SettingsFormState } from "@/app/(app)/settings/actions";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +54,7 @@ function describedBy(id: string, hasHint: boolean, errors?: string[]) {
 function Group({ legend, children }: { legend: string; children: React.ReactNode }) {
   return (
     <fieldset className="space-y-4">
-      <legend className="mb-3 text-sm font-semibold">{legend}</legend>
+      <legend className="mb-3 block w-full border-b pb-2 text-base font-semibold">{legend}</legend>
       {children}
     </fieldset>
   );
@@ -74,12 +75,7 @@ export function SchoolForm({
   const [leaving, setLeaving] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useUnsavedChangesGuard(dirty);
 
   function leave(e: React.MouseEvent) {
     if (!dirty) return;

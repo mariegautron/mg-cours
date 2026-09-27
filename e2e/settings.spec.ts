@@ -14,14 +14,27 @@ test("enregistre le profil et ajoute une école", async ({ page }) => {
   await login(page);
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Réglages", level: 1 })).toBeVisible();
+  await expect(page.getByText(/Profil complété à \d+ %/)).toBeVisible();
 
-  await page.getByLabel("SIRET").first().fill("123 456 789 00012");
+  // SIRET dont la clé de contrôle est invalide (14 chiffres, mais pas de Luhn).
+  await page.getByLabel("SIRET").first().fill("123 456 789 00099");
+  await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
+  await expect(page.getByText("Ce SIRET n’est pas valide (clé de contrôle).")).toBeVisible();
+
+  await page.getByLabel("SIRET").first().fill("123 456 789 00007");
   await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
   await expect(page.getByText("Modifications enregistrées")).toBeVisible();
 
   await page.getByLabel("SIRET").first().fill("123");
   await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
   await expect(page.getByText("Le SIRET compte 14 chiffres.")).toBeVisible();
+  await page.getByLabel("SIRET").first().fill("123 456 789 00007");
+
+  // L'IBAN se regroupe par 4 au fur et à mesure de la saisie.
+  await page.getByLabel("IBAN").fill("FR7630006000011234567890189");
+  await expect(page.getByLabel("IBAN")).toHaveValue("FR76 3000 6000 0112 3456 7890 189");
+  await page.getByRole("button", { name: "Enregistrer les modifications" }).click();
+  await expect(page.getByText("Modifications enregistrées")).toBeVisible();
 
   await page.getByRole("link", { name: "Ajouter une école" }).click();
   const name = `École test ${Date.now()}`;
