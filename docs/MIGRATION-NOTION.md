@@ -14,12 +14,12 @@
 
 ## Avancement
 
-| Phase                       | Statut                         |
-| --------------------------- | ------------------------------ |
-| 1 — Étude (lecture seule)   | ✅ 23/09/2026                  |
-| 2 — Tri avec la PO          | ⏳ en attente du feu vert      |
-| 3 — Rattachement (modules…) | ⏳                             |
-| 4 — Script `notion-migrate` | ⏳ (uniquement après OK écrit) |
+| Phase                       | Statut                          |
+| --------------------------- | ------------------------------- |
+| 1 — Étude (lecture seule)   | ✅ 23/09/2026                   |
+| 2 — Tri avec la PO          | 🚧 proposition 26/09, à valider |
+| 3 — Rattachement (modules…) | ⏳                              |
+| 4 — Script `notion-migrate` | ⏳ (uniquement après OK écrit)  |
 
 ## Arborescence
 
@@ -56,7 +56,7 @@ Légende cible : `resource` · `module` · `course` · `student` · `student_gro
 | ------------------------------------ | ----------------- | ------ | -------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Accessibilité / pages de cours       | pages riches (MD) | 17     | 2025-06 → 07   | `resource` (content) | ARIA, titres, contrastes, liens, skip links, focus, onglets, `alt`, formulaires, outils de tests, atelier flashcards, intro… |
 | Accessibilité / « Tutoriel onglets » | page              | 1      | 2025-07        | `resource`           | doublon partiel de « Créer des onglets accessibles »                                                                         |
-| Accessibilité / Oral certification   | page              | 1      | 2025-07        | `resource` ou —      | consignes d'oral RGAA (certification)                                                                                        |
+| Accessibilité / Oral certification   | page              | 1      | 2025-07        | —                    | certification passée par la PO (hors cours)                                                                                  |
 | Accessibilité / Diagnostic + Infos   | pages (2023)      | 2      | 2023-02/03     | — (recommandé)       | ⚠️ mission client (audit d'un site tiers, Jira client, 8 captures S3) — pas du contenu de cours                              |
 | Accessibilité / Ressources a11y      | liste de liens    | 1      | 2023-03        | `resource` (liens)   | recoupe la base Ressources M2                                                                                                |
 | Gestion de projet                    | pages riches      | 3      | 2025-10 → 11   | `resource`           | méthodes GP, focus Scrum, estimation                                                                                         |
@@ -173,3 +173,267 @@ activités (créneaux horaires fins).
 - Barèmes des grilles = tableaux dans le corps des pages → parsing Markdown ; notes des
   matrices GP en texte libre (« 3.5/4 ⭐ »).
 - Pas de colonne « promotion » : `student.scholar_group` est le plus proche.
+
+## Phase 2 — Tri (proposition, en attente de validation)
+
+> **26/09 — méthode changée par la PO : tri cours par cours** (un cours proposé → retours
+> de la PO → cours suivant). La liste globale ci-dessous sert de base de départ.
+
+`[x]` = recommandé · `[ ]` = non recommandé · `[?]` = décision PO nécessaire.
+Rien ne sera écrit tant que la PO n'a pas validé cette liste **et** les changements de
+schéma ci-dessous.
+
+### Principe de modélisation retenu (ADR-005, sans nouvelle table)
+
+- **Séance Notion → `course`** (date, type, objectifs, animation, évaluation, matériel,
+  slides).
+- **Activité pédagogique Notion** :
+  - si sa page a du contenu → **`resource`** (Markdown) liée à la séance via
+    `course_resource` (`primary` pour la 1re, `secondary` ensuite) ;
+  - sinon (ex. « Sprint 2 », « Feedback ») → une ligne dans `course.animation_notes`
+    (créneau + nom) ;
+  - objectif / compétences RNCP / notions → `course.learning_objectives` et
+    `resource.tags`.
+- **Page de cours Notion → `module`** (école YNOV) ; modules passés marqués comme terminés
+  (voir S2).
+
+### Lot 1 — Bibliothèque et ressources (contenu réutilisable)
+
+- [x] Accessibilité : 17 pages de cours + atelier flashcards → `resource`
+- [x] « Tutoriel onglets – Inclusive Components » → `resource` (gardé à part, lien vers
+      « Créer des onglets »)
+- [ ] « Oral certification RGAA » : certification passée par la PO elle-même, sans lien avec les cours
+- [x] « Ressources accessibilité » (liens 2023) → 1 `resource`
+- [ ] « Diagnostic Accessibilité » + « Informations accessibilité » (mission client 2023)
+- [x] Gestion de projet : 3 pages → `resource`
+- [?] « Notes prépa cours gestion de projet » + « Notes prépa B2 a11y » → `resource` tag
+  `notes-prepa` (ou ignorées)
+- [x] Numérique responsable : 3 pages → `resource`
+- [x] Base Ressources M2 : 38 liens → `resource` (url, catégorie, tags = « Types »)
+- [?] Doublons Chrome/Firefox (HeadingsMap, WAVE, axe DevTools) : fusion en 1 fiche avec
+  les 2 liens dans le contenu (recommandé) ou 6 fiches
+- [x] 2 fiches « texte masqué » de même URL → fusionnées
+- [x] Briefs projets M2 (3), brief SantaConnect, consignes « Oral de projet » (1 des 2
+      doublons), consignes projet fil rouge (archives), atelier « Houston » → `resource`
+
+### Lot 2 — Modules et séances
+
+- [x] **M2 Accessibilité 2025** → `module` + 4 `course` (Jour 1–4) + activités (14 + pages
+      bibliothèque liées)
+- [x] **Gestion de projet 2025** → `module` + 8 `course` datés + 19 activités
+- [x] **B2 Accessibilité 2026** → `module` + 5 `course` depuis **PROGRESSION
+      PÉDAGOGIQUE** (source la plus complète)
+- [ ] Base Séances B2 (5 lignes sans date, doublon de la progression)
+- [?] **[Archives] Accessibilité & Qualité Web 2025** : module historique (3 séances) ou
+  seulement ses éléments réutilisables (grilles, commentaires, consignes) →
+  recommandé : **éléments réutilisables seuls**
+- [ ] [2025] Cours Template, 2 pages « MG COURS - Documentation »
+
+### Lot 3 — Évaluations, grilles, commentaires
+
+- [x] Grilles : M2 projet fil rouge (/30, ~27 critères, réf. RGAA en description), M2 oral
+      projet (/20, 7 critères), GP dossier de cadrage (8 critères /20), GP specs & méthodo
+      (9 critères /20), GP présentation orale, B2 ×3, archives conception (24 critères
+      /80) et note projet
+- [ ] « Grille QCM » M2 (vide) ; modèles de page en double dans les « Suivi corrections »
+- [x] Évaluations des modules importés (M2 ×2, GP ×4, B2 ×3) → `assessment` (type,
+      grille, date de la séance)
+- [ ] QCM final M2 (« à préparer », vide)
+- [x] **11 « Commentaires selon les erreurs fréquentes »** → `predefined_comment`
+      (catégorie `advice`, tags thématiques ; texte = titre + corps)
+
+### Lot 4 — Étudiant·es, groupes, notes (données personnelles)
+
+Toutes les cohortes sont **terminées** (dernière : B2, 05/02/2026) et les notes sont déjà
+dans Hyperplanning.
+
+- [?] **Option A — recommandée** : ne rien importer (ni étudiant·es, ni groupes, ni
+  notes, ni appréciations) → minimisation RGPD, pas de « bruit » dans les compteurs
+- [?] Option B : importer groupes + notes de groupe seulement (sans individus)
+- [?] Option C : tout importer (~102 fiches, 25 groupes, ~50 notes, appréciations)
+- [ ] Dossiers de cadrage (livrables d'étudiants), base « Pull Requests GitHub », notes
+      brutes d'oral
+
+### Lot 5 — Pièces jointes
+
+- [?] **Option A — recommandée** : créer un stockage de fichiers (bucket privé) et y
+  importer les ~15 fichiers de cours (PDF de slides, sujets docx/html) dans
+  `resource.files` / `course.slides` — débloque aussi US-01 (E2)
+- [?] Option B : pas de fichiers, seulement leur nom + lien Figma/Canva/Kahoot/Google Docs
+  dans le contenu
+- [ ] Captures de la page client 2023, slides d'oral des étudiant·es
+
+### Changements de schéma proposés (migration à valider)
+
+| #   | Changement                                                                                                                                   | Pourquoi                                                                                                                                                                                      | Obligatoire ? |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| S1  | Table **`import_ref`** (`source` `notion`\|`moodle`, `source_id`, `target_table`, `target_id`, unique `(owner_id, source, source_id)`) + RLS | Rejouer le script **sans doublons** ; resservira pour Moodle. Évite d'ajouter une colonne dans 8 tables.                                                                                      | Oui           |
+| S2  | **`module.archived_at`** + filtre dans tableau de bord / facturation / listes (bascule « afficher les archivés »)                            | Les modules 2025 ne doivent déclencher ni alerte de trame ni ligne « à facturer ». Alternative sans schéma : `iceberg_state = 'paid'` (masque la trame mais le module reste dans les listes). | Recommandé    |
+| S3  | Bucket Storage **`course-files`** privé + politiques `owner_id`                                                                              | Pièces jointes (lot 5, option A)                                                                                                                                                              | Si lot 5 = A  |
+
+Pas besoin de nouvelle table « activité » (ADR-005 suffit), ni de colonne « promotion ».
+
+### Source des données pour le script
+
+Recommandé : **export ZIP Notion** (Markdown & CSV, **sous-pages incluses**, fichiers
+inclus) des 8 racines, à faire par la PO. Les noms de fichiers de l'export contiennent l'id
+Notion → clé d'idempotence stable. (Alternative : jeton d'intégration API Notion — contraire
+à ADR-003.)
+
+## Tri cours par cours
+
+### Cours 1 — [2026] Ynov B2 Accessibilité & Qualité Web (proposition 26/09)
+
+Sources lues : page du cours, PROGRESSION PÉDAGOGIQUE, 3 évaluations, 3 grilles, « Notes
+prépa B2 a11y » (+ 2 sous-pages), « Atelier Houston ».
+
+**Module** : « Accessibilité & Qualité Web » · YNOV · niveau « Bachelor 2 INFO & CYBER » ·
+année **2025** (année scolaire 2025-26, convention YCODE `A2526`) · 20 h (5 × 4 h) · 1re
+séance 08/01/2026 · fin 05/02/2026 · YCODE ? · archivé (S2).
+
+**Séances** (depuis PROGRESSION ; objectifs → `learning_objectives`, modalités d'animation /
+d'évaluation / matériel → champs dédiés) :
+
+| #   | Date       | Titre                                                            | Type         | Promo        |
+| --- | ---------- | ---------------------------------------------------------------- | ------------ | ------------ |
+| 1   | 08/01/2026 | Introduction à l'accessibilité numérique et à la qualité web     | `lecture`    | INFO         |
+| 2   | 12/01/2026 | TP Audit Opquast (INFO) / Cours introductif (CYBER)              | `workshop`   | INFO + CYBER |
+| 3   | 22/01/2026 | TP Audit qualité & accessibilité avec Opquast                    | `workshop`   | CYBER        |
+| 4   | 23/01/2026 | Du constat à la correction : HTML sémantique, qualité web & ARIA | `applied`    | INFO + CYBER |
+| 5   | 05/02/2026 | Évaluation individuelle et restitution orale                     | `assessment` | INFO + CYBER |
+
+**Évaluations + grilles**
+
+| Évaluation                                  | Type                 | Grille (critères, points)                                                                | Pièces jointes                  |
+| ------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------- | ------------------------------- |
+| TP Audit qualité & accessibilité (Opquast)  | groupe, écrit, 4 h   | Constats /8 · Opquast /4 · Impact utilisateur /4 · Priorisation /4                       | grille d'audit Opquast (docx)   |
+| Évaluation individuelle – correction ciblée | individuelle, 45 min | Structure & navigation /6 · Formulaire /8 · Bouton /2 · Justification /4                 | questions (docx) + extrait HTML |
+| Corrections ciblées & restitution orale     | groupe, oral, 10 min | Pertinence /6 · Justification par les usages /6 · Qualité technique /4 · Clarté orale /4 | —                               |
+
+Sujet complet (consignes, extrait de code) → `assessment.subject` ; niveaux de notation
+(« 6 pts : … / 4 pts : … ») → description du critère ; « rappels pédagogiques » →
+description de la grille.
+
+**Autres pages**
+
+| Page                                             | Proposition                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------- |
+| Exemple de correction (éval. individuelle)       | `resource` « Corrigé » liée à la séance 5                                 |
+| Notes prépa B2 a11y (plan + déroulés)            | ? — 1re version du plan, différente de PROGRESSION                        |
+| Corrections grille audit (prompts de correction) | — (outil de travail personnel)                                            |
+| Atelier « Houston, on a reçu l'audit »           | ? — semble être un atelier pour professionnel·les (rôles PO, commercial…) |
+| Base Séances (5 lignes), bases vides             | —                                                                         |
+| 15 étudiant·es (prénoms + appréciations)         | — (recommandé, cf. Lot 4)                                                 |
+
+#### Complément Moodle (sauvegarde `.mbz` sans utilisateurs, 26/09)
+
+- Cours Moodle « Accessibilité et qualité Web », nom court
+  `…b2a2526_0121…` → **YCODE probable `A2526_0121`**.
+- **Sections** : Séance Cours 1 · Séance TP · Séance Cours 2 · Séance finale (+ sections
+  administratives YNOV : dépôt de la progression, évaluations formatives, enquête, annonces).
+- **Supports réellement diffusés** : pour chaque notion, un PDF « [COURS] » (= page Notion
+  de la bibliothèque exportée) + un PDF « [SLIDES] » (n'existe que sur Moodle) — 16 notions,
+  ~35 PDF uniques (~45 Mo).
+- **3 devoirs** = les 3 évaluations Notion (mêmes consignes) + pièces jointes : sujets et
+  grilles en PDF, grille d'audit (docx), **site support `eval-b2-ynov-master.zip`**,
+  questions (docx) + extrait HTML. ⚠️ Moodle note l'oral sur **24** (grille Notion /20).
+- **7 groupes** (noms seuls, sans membres) : Groupe 1–3 INFO, Groupe 1–4 CYBER.
+- 3 liens vus en cours (description longue d'image, emojis accessibles, simulateur Atalan)
+  - checklist Opquast (xls, pdf, lien).
+- **Non repris** : consignes et modèles YNOV (progression pédagogique, évaluations
+  formatives, enquête, forums). Les modèles `Modèle de progression pédagogique_YNOV Campus
+25-26.docx` peuvent servir de **gabarit de trame** (E6) — à confirmer.
+
+**Rattachement des supports aux séances (proposé)**
+
+| Séance MG COURS                      | Section Moodle | Ressources (Notion = contenu Markdown, Moodle = PDF joints)                                                                             |
+| ------------------------------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Intro (INFO) · 2 — Intro (CYBER) | Séance Cours 1 | Intro numérique responsable, Cartes Latitudes, Théorie de l'accessibilité, Outils de tests, RGAA 10 points, Quiz NR (réponses), 3 liens |
+| 2 — TP (INFO) · 3 — TP (CYBER)       | Séance TP      | Checklist Opquast (xls/pdf/lien), exemple de grille corrigée, site support (zip)                                                        |
+| 4 — Du constat à la correction       | Séance Cours 2 | Contrastes, Images (`alt`), Titres, Structure HTML, Focus outline, Cache-cache CSS, Skip links, Liens, Formulaires, ARIA                |
+| 5 — Évaluation + oral                | Séance finale  | (sujets dans les évaluations, champ `subject`)                                                                                          |
+
+Les ressources de la bibliothèque sont **créées une seule fois** et resserviront aux cours
+suivants (M2…) via `import_ref`, sans doublon.
+
+**Méthode validée par la PO (26/09)** : migration **cours par cours** — valider la
+proposition d'un cours → migrer ce cours (local, puis cloud sur confirmation) → cours
+suivant.
+
+#### Décisions PO — B2 (26/09)
+
+1. Module validé : « Accessibilité & Qualité Web », Bachelor 2 INFO & CYBER, année 2025,
+   YCODE `A2526_0121`, 20 h.
+2. « Notes prépa B2 a11y » : hors B2 (ignorées).
+3. Atelier « Houston » : atelier pro, hors cours → ignoré.
+4. 7 groupes Moodle créés (Groupe 1–3 INFO, Groupe 1–4 CYBER).
+5. **Une seule** évaluation TP Audit (INFO et CYBER = un même module).
+6. Oral : barème **Moodle (/24)** fait foi.
+7. Fichiers : attendre le stockage développé dans une autre session.
+8. S1 (`import_ref`) + S2 (`module.archived_at`) : OK.
+9. Étudiant·es : garder **prénom + initiale du nom** (source à trouver : Notion n'a que le
+   prénom).
+
+- Modèle de progression YNOV : non. **Progression réellement envoyée** : oui (absente de la
+  sauvegarde sans utilisateurs → à fournir).
+- **Cible : directement le cloud** (pas de passage en local) — simulation (dry-run) et
+  rapport d'abord, écriture après OK explicite.
+- Accès cloud : **option B** — la PO lance elle-même les commandes cloud (`!`), lecture et
+  écriture ; simulation d'abord.
+- Progression envoyée : PDF fourni (6 pages, 05/01/2026) → `module_document` de type
+  `outline_sent` (bucket `module-documents`, livré par la session « documents du module »,
+  commit `2e305a4`) + état de trame « envoyée ».
+- **Facture liée** : n° 26-03-6 du 11/03/2026 (faite hors app), 20 h × 50 € = 1 000 € HT,
+  TVA 293 B, échéance 30/04/2026. Ne peut pas aller dans `invoice` tel quel (l'app
+  régénère le PDF depuis `snapshot`, absent ici) → voir proposition S4.
+- Étudiant·es : pas de source prénom + initiale (pas de droits d'export Moodle probables) ;
+  appréciations non conservées.
+- Facture 26-03-6 **payée** → module à l'état `paid` ; PDF de la facture importé quand
+  l'upload « factures » (développé par la PO) sera en ligne.
+- Slides : upload développé par la PO (documents de module) → import des PDF ensuite.
+- Participants Moodle (CSV, 16 lignes) : 13 étudiant·es répartis dans 6 groupes (Groupe 4
+  CYBER vide) + 3 sans groupe (dont la PO). Import : **« Prénom N. »** + groupe ;
+  promo (`scholar_group`) = INFO / CYBER déduite du groupe ; **ni e-mail ni appréciation**.
+- 2 comptes sans groupe = étudiant·es → proposés dans **Groupe 3 CYBER** (le « groupe 3 »
+  le moins rempli), à confirmer. Groupe 4 CYBER = groupe créé par erreur → **non importé**
+  (6 groupes au total).
+
+#### Script (26/09)
+
+- `scripts/notion-migrate/` : `index.mts` (CLI), `lib/` (lecture de l'export Notion, de la
+  sauvegarde Moodle, grilles / progression, écriture idempotente via `import_ref`),
+  `courses/b2-accessibilite-2526.mts` (plan du cours). Node 22 (types retirés nativement).
+- **Simulation par défaut** ; `--apply` pour écrire. Une ligne déjà importée n'est jamais
+  modifiée (les retouches faites dans l'app sont préservées).
+- Sources hors repo : `~/Bureau/exports/notion/` (export ZIP extrait),
+  `~/Bureau/exports/moodle/*.mbz`, CSV des participants, PDF de la trame.
+- Étudiant·es : clé d'idempotence = empreinte SHA-256 de l'e-mail (l'e-mail n'est pas stocké).
+- Les 3 évaluations visent les **6 groupes projet** (`assessment_group`) : plus de groupe
+  « Promo » artificiel. Éval. individuelle : chaque étudiant·e noté·e une fois.
+- Images des pages de la bibliothèque (33 PNG) → bucket `resource-files` + `resource.files`,
+  citées par leur nom dans le Markdown. Images des sujets d'évaluation retirées (pas de
+  stockage sur une évaluation).
+- Documents du module : trame envoyée (`outline_sent`) et facture 26-03-6
+  (`external_invoice`, option `--invoice-pdf`).
+- Oral : barème = total de la grille (20) ; Moodle notait sur 24 (modifiable dans l'app).
+- Sujets complets des évaluations (Markdown) → `assessment.subject` (20 000 caractères max,
+  affiché sur la page de l'évaluation et dans le PDF des résultats) — pas de ressource
+  « Sujet — … » séparée ; niveaux de notation → description des critères (perdus si
+  la grille est rééditée dans l'app, qui recrée les critères depuis « Libellé | points »).
+
+#### ⏸️ Pause (26/09) — reprise après les devs de la PO
+
+En attente de ces développements, menés par la PO dans une autre session :
+
+1. Édition de grille sans recréer les critères + description de critère éditable.
+2. Évaluation sur plusieurs groupes (`assessment_group`).
+3. Sujet d'évaluation long en Markdown.
+4. Fichiers et images sur les ressources (bucket `resource-files`).
+5. Interface des modules archivés (`module.archived_at`).
+6. Upload des slides et des factures sur le module.
+
+**27/09 — script adapté** (points 2 à 6 livrés ; slides = lien Figma) : évaluations sur
+les 6 groupes projet, sujet dans l'évaluation, images des ressources, facture 26-03-6.
+Migration `20260926160000_import_ref.sql` commitée (9e25319, crée aussi
+`module.archived_at`). Reste : `db push`, relancer la simulation, puis `--apply`. Rien n'est
+encore écrit sur le cloud ; script non commité.
