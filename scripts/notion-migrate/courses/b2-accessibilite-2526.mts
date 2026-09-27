@@ -10,6 +10,7 @@ import * as XLSX from "xlsx";
 
 import { MIME_BY_EXT, safeName } from "../../../src/lib/storage/files.ts";
 
+import { ALL_ADMIN_DOCS_DONE, completeAdminDocs } from "../lib/helpers.mts";
 import type { Importer } from "../lib/importer.mts";
 import { sectionActivities, type MoodleCourse } from "../lib/moodle.mts";
 import { stripLocalImages, type NotionPage } from "../lib/notion.mts";
@@ -144,10 +145,12 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       end_date: sessions[4].date,
       hourly_rate: 50,
       iceberg_state: "paid",
+      admin_docs: ALL_ADMIN_DOCS_DONE,
       archived_at: new Date().toISOString(),
     },
     `Accessibilité & Qualité Web — B2 — 2025-26 (A2526_0121, 20 h, payé, archivé) — école : ${school?.name ?? "aucune"}`,
   );
+  await completeAdminDocs(imp, moduleId, "B2 Accessibilité");
 
   // ── Séances ──────────────────────────────────────────────────────────────
   const courseIds = new Map<number, string>();

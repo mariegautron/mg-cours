@@ -6,7 +6,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  ALL_ADMIN_DOCS_DONE,
   anonymize,
+  completeAdminDocs,
   attachResourceFile,
   importModuleDocument,
   importResourceImages,
@@ -362,10 +364,12 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       end_date: sessions[sessions.length - 1].when.date,
       hourly_rate: 60,
       iceberg_state: "paid",
+      admin_docs: ALL_ADMIN_DOCS_DONE,
       archived_at: new Date().toISOString(),
     },
     `Gestion d'un projet IT — M1 — 2025-26 (${ycode}, 28 h, 60 €/h, payé, archivé) — école : ${school?.name ?? "aucune"}`,
   );
+  await completeAdminDocs(imp, moduleId, "Gestion d'un projet IT");
 
   // ── Ressources (activités, bibliothèque, matériel client, corrigés) ─────
   const resourceIds = new Map<string, string>();

@@ -157,3 +157,40 @@ const ACCENTS: Record<string, string> = {
   c: "[cç]",
   y: "[yÿ]",
 };
+
+/**
+ * Documents administratifs YNOV (clés de `REQUIRED_ADMIN_DOCS`, src/lib/ynov/invoice.ts — non
+ * importable ici : imports sans extension). Un module passé et payé les a forcément tous fournis.
+ */
+export const ALL_ADMIN_DOCS_DONE = {
+  fiche_positionnement: true,
+  progression_pedagogique: true,
+  supports_moodle: true,
+  sujets_grilles_moodle: true,
+  notes_hyperplanning: true,
+};
+
+/** Coche les documents administratifs d'un module déjà importé s'il en manque. */
+export async function completeAdminDocs(imp: Importer, moduleId: string, label: string) {
+  if (imp.isDry(moduleId)) return;
+  const { data, error } = await imp.sb
+    .from("module")
+    .select("admin_docs")
+    .eq("id", moduleId)
+    .single();
+  if (error) throw new Error(`module « ${label} » : ${error.message}`);
+  const current = (data?.admin_docs ?? {}) as Record<string, boolean>;
+  const missing = Object.keys(ALL_ADMIN_DOCS_DONE).filter((k) => !current[k]);
+  if (!missing.length) return;
+  imp.report.push({
+    table: "module",
+    action: "compléter",
+    label: `${label} : documents administratifs (${missing.length} à cocher)`,
+  });
+  await imp.update(
+    "module",
+    moduleId,
+    { admin_docs: { ...current, ...ALL_ADMIN_DOCS_DONE } },
+    label,
+  );
+}
