@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { createCoursesFromSchedule } from "@/lib/modules/schedule-actions";
 import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";

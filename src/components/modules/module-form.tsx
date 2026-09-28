@@ -224,6 +224,24 @@ export function ModuleForm({
           </p>
         ) : null}
 
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="schedule">Planning (optionnel)</Label>
+          <Textarea
+            id="schedule"
+            name="schedule"
+            rows={6}
+            className="font-mono text-sm"
+            placeholder={`01/10/2026 10:00-12:00
+08/10/2026 14:00-16:00
+15/10/2026 10:00-12:00`}
+            aria-describedby="schedule-hint"
+          />
+          <p id="schedule-hint" className="text-muted-foreground text-sm">
+            Une ligne par créneau. Formats acceptés : 01/10/2026 10:00-12:00, 01/10 10h-12h, 01-10-2026 10h00 12h00, etc.
+            La 1re sance sert de référence pour le calcul de l&apos;échéance (J-15).
+          </p>
+        </div>
+
         <div className="flex gap-3">
           <Button type="submit" disabled={pending}>
             {pending ? "Enregistrement…" : "Enregistrer"}
