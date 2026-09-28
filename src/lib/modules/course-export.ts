@@ -1,4 +1,4 @@
-import { studentFacing, type ResourceAudience } from "@/lib/resources/kind";
+import { studentFacing, type ResourceAudience, type ResourceStatus } from "@/lib/resources/kind";
 
 export interface CourseExport {
   module: {
@@ -37,6 +37,7 @@ export interface ExportCourseRow {
       content: string | null;
       url: string | null;
       audience: ResourceAudience;
+      status: ResourceStatus;
     } | null;
   }[];
 }

@@ -206,7 +206,7 @@ Détail : `docs/DEPLOY.md`.
 | E10-02 | « Faire cours » une séance + encart séance du jour / prochaine séance                      | ✅     |
 | E10-03 | « Présenter le module » aux étudiant·es (`module.student_intro`, programme, évaluation)    | ✅     |
 | E10-04 | Présenter une ressource seule (refus si « Enseignante uniquement »)                        | ✅     |
-| E10-05 | Fiche module en onglets (Progression · Seances · Groupes & Evaluations · Administratif)                | ✅     |
+| E10-05 | Fiche module en onglets (Progression · Séances · Groupes et évaluations · Administratif)  | 🔧     |
 | US-40a | **Urgent après le 12/10** : lien étudiant·es partageable (jeton, lecture seule, révocable) | ⏳     |
 | —      | Proposition (non urgent) : blocs « Prof » masqués dans le Markdown en vue étudiant·es      | 💡     |
 
@@ -219,10 +219,10 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 
 | US     | Contenu                                                                                                                                                                         | Statut |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| US-79  | Verification heures modules : liste les modules crees depuis une fiche importe et signale ceux dont le total d'heures parait faux ; ne corrige rien sans accord explicite | ✅     |
-| US-60  | Horaires et duree par seance : colonnes course.start_time / end_time (time, nullable), duree par seance, affichage 18 h planifiees / 21 h avec avertissement | ✅     |
-| US-59  | Planning a la creation du module : saisie du planning (tableau ou colle, une ligne par creneau, formats FR toleres) -> seances vides creees d'un coup, numerotees ; 1re seance -> J-15 | ✅     |
-| US-57  | Ressource a construire : resource.status (progress/ready, defaut ready) + intent_note, compteurs sur liste et module, etendu studentFacing pour exclure progress | ✅     |
+| US-79  | Vérification des heures : nom (« Nom long »), niveau et total lus dans la fiche (jamais dans le tableau des unités pédagogiques) ; FFP/TDP facultatifs ; liste les modules suspects sans rien corriger | 🔧     |
+| US-60  | Horaires et durée par séance : `course.start_time` / `end_time` (time, nullable), saisie sur la séance, « 18 h planifiées / 21 h » + avertissement, horaires dans le PDF de progression et sur la carte « Aujourd'hui » | 🔧     |
+| US-59  | Planning à la création du module : saisie en tableau ou collage, aperçu, séances vides numérotées « Séance 1…N » (« À préparer »), 1re séance → J-15 ; possible sur un module existant | 🔧     |
+| US-57  | Ressource « à construire » : `resource.status` (`progress` / `ready`) + `intent_note`, création rapide, filtre sur `/resources`, compteur sur le module ; `studentFacing()` exclut `progress` (projection, PDF cours) | ✅     |
 
 ## Vision suivante (validée 26/09)
 

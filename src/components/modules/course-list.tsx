@@ -5,7 +5,7 @@ import { CalendarDays, NotebookPen, Pencil, Play, Plus } from "lucide-react";
 
 import { deleteCourse } from "@/app/(app)/modules/[id]/courses/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
-import { AudienceBadge } from "@/components/resources/resource-badges";
+import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CourseWithResources } from "@/lib/modules/queries";
@@ -145,6 +145,7 @@ export function CourseList({
                       >
                         <Badge variant="outline">{r.title}</Badge>
                         <AudienceBadge audience={r.audience} />
+                        <StatusBadge status={r.status} />
                       </Link>
                     ))}
                   </dd>

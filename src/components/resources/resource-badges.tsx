@@ -1,7 +1,13 @@
-import { Lock } from "lucide-react";
+import { Hammer, Lock } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { KIND_LABELS, type ResourceAudience, type ResourceKind } from "@/lib/resources/kind";
+import {
+  KIND_LABELS,
+  STATUS_LABELS,
+  type ResourceAudience,
+  type ResourceKind,
+  type ResourceStatus,
+} from "@/lib/resources/kind";
 
 export function KindBadge({ kind }: { kind: ResourceKind | null }) {
   return kind ? (
@@ -20,6 +26,17 @@ export function AudienceBadge({ audience }: { audience: ResourceAudience }) {
     <Badge variant="outline" className="border-coral text-coral">
       <Lock aria-hidden />
       Enseignante uniquement
+    </Badge>
+  );
+}
+
+/** Repère textuel des ressources encore à écrire : elles ne sont jamais projetées. */
+export function StatusBadge({ status }: { status: ResourceStatus }) {
+  if (status === "ready") return null;
+  return (
+    <Badge variant="outline" className="border-dashed">
+      <Hammer aria-hidden />
+      {STATUS_LABELS[status]}
     </Badge>
   );
 }

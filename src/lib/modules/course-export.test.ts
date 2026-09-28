@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { toExportCourses, type ExportCourseRow } from "./course-export";
 
-const resource = (title: string, audience: "students" | "teacher") => ({
+const resource = (
+  title: string,
+  audience: "students" | "teacher",
+  status: "ready" | "progress" = "ready",
+) => ({
   title,
+  status,
   description: null,
   content: `# ${title}`,
   url: null,
@@ -33,6 +38,19 @@ describe("toExportCourses", () => {
       "Modèle de cadrage",
     ]);
     expect(JSON.stringify(course)).not.toContain("Corrigé");
+  });
+
+  it("n'inclut jamais une ressource « à construire »", () => {
+    const [course] = toExportCourses([
+      {
+        ...rows[0],
+        course_resource: [
+          { role: "primary", resource: resource("Brouillon de TP", "students", "progress") },
+          { role: "secondary", resource: resource("Modèle de cadrage", "students") },
+        ],
+      },
+    ]);
+    expect(course.resources.map((r) => r.title)).toEqual(["Modèle de cadrage"]);
   });
 
   it("numérote les séances et n'expose pas le champ audience", () => {

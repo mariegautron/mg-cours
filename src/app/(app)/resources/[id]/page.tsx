@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { History, Pencil, Presentation } from "lucide-react";
 
 import { Markdown, markdownOutline } from "@/components/markdown";
-import { AudienceBadge, KindBadge } from "@/components/resources/resource-badges";
+import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { ResourceActions } from "@/components/resources/resource-actions";
 import { ResourceFiles } from "@/components/resources/resource-files";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +40,14 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
           <div className="flex flex-wrap gap-1">
             <KindBadge kind={resource.kind} />
             <AudienceBadge audience={resource.audience} />
+            <StatusBadge status={resource.status} />
             {resource.category ? <Badge variant="secondary">{resource.category}</Badge> : null}
           </div>
+          {resource.intent_note ? (
+            <p className="max-w-prose text-sm">
+              <strong>À construire :</strong> {resource.intent_note}
+            </p>
+          ) : null}
           {resource.description ? (
             <p className="text-muted-foreground max-w-prose">{resource.description}</p>
           ) : null}

@@ -5,17 +5,34 @@ import {
   groupByKind,
   studentFacing,
   subjectSuggestions,
+  type ResourceAudience,
   type ResourceKind,
+  type ResourceStatus,
 } from "./kind";
+
+const item = (id: string, audience: ResourceAudience, status: ResourceStatus) => ({
+  id,
+  audience,
+  status,
+});
 
 describe("studentFacing", () => {
   it("écarte toute ressource réservée à l'enseignante", () => {
     const out = studentFacing([
-      { id: "a", audience: "students" as const },
-      { id: "b", audience: "teacher" as const },
-      { id: "c", audience: "students" as const },
+      item("a", "students", "ready"),
+      item("b", "teacher", "ready"),
+      item("c", "students", "ready"),
     ]);
     expect(out.map((r) => r.id)).toEqual(["a", "c"]);
+  });
+
+  it("écarte toute ressource « à construire », même destinée aux étudiant·es", () => {
+    const out = studentFacing([
+      item("a", "students", "progress"),
+      item("b", "students", "ready"),
+      item("c", "teacher", "progress"),
+    ]);
+    expect(out.map((r) => r.id)).toEqual(["b"]);
   });
 });
 

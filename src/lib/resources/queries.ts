@@ -42,6 +42,7 @@ export async function listResources(
   if (filters.kind === "none") query = query.is("kind", null);
   else if (filters.kind) query = query.eq("kind", filters.kind);
   if (filters.audience) query = query.eq("audience", filters.audience);
+  if (filters.status) query = query.eq("status", filters.status);
 
   const [{ data }, usage] = await Promise.all([query, moduleUsage()]);
   return (data ?? []).map((r) => ({ ...r, moduleCount: usage.get(r.id) ?? 0 }));

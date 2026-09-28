@@ -45,6 +45,10 @@ Support pédagogique **réutilisable** dans N modules (≈ base « Ressources »
 - **Visibilité** (`audience`) : Étudiant·es (défaut) / **Enseignante uniquement** — badge texte
   avec icône cadenas partout où la ressource apparaît. Corrigé, banque de questions et notes
   pré-sélectionnent « Enseignante uniquement ».
+- **Statut** (`status`, US-57) : Prête (défaut) / **À construire** avec une note d'intention.
+  Création rapide sur `/resources` (titre + note), filtre « Statut », compteur « N ressources à
+  construire » sur l'onglet Séances du module. Une ressource « À construire » n'est jamais
+  projetée ni exportée (`studentFacing()` exige `status = ready`).
 - **Garde-fou** : `studentFacing()` (`src/lib/resources/kind.ts`) filtre toute sortie vers les
   étudiant·es — mode présentation, export PDF des cours (`toExportCourses`), futurs liens élèves /
   QCM. Les e-mails existants (résultats, facture) n'embarquent aucune ressource. La progression

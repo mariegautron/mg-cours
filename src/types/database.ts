@@ -152,6 +152,7 @@ export type Database = {
           completion: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at: string
           created_at: string
+          end_time: string | null
           id: string
           learning_objectives: string[]
           material: string | null
@@ -163,9 +164,8 @@ export type Database = {
           prep_status: string
           retro_note: string | null
           session_date: string | null
-          start_time: string | null
-          end_time: string | null
           slides: Json
+          start_time: string | null
           title: string
           type: Database["public"]["Enums"]["course_type"]
           updated_at: string
@@ -176,6 +176,7 @@ export type Database = {
           completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string
+          end_time?: string | null
           id?: string
           learning_objectives?: string[]
           material?: string | null
@@ -187,9 +188,8 @@ export type Database = {
           prep_status?: string
           retro_note?: string | null
           session_date?: string | null
-          start_time?: string | null
-          end_time?: string | null
           slides?: Json
+          start_time?: string | null
           title: string
           type?: Database["public"]["Enums"]["course_type"]
           updated_at?: string
@@ -200,6 +200,7 @@ export type Database = {
           completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string
+          end_time?: string | null
           id?: string
           learning_objectives?: string[]
           material?: string | null
@@ -211,9 +212,8 @@ export type Database = {
           prep_status?: string
           retro_note?: string | null
           session_date?: string | null
-          start_time?: string | null
-          end_time?: string | null
           slides?: Json
+          start_time?: string | null
           title?: string
           type?: Database["public"]["Enums"]["course_type"]
           updated_at?: string
@@ -787,15 +787,15 @@ export type Database = {
           archived_at: string | null
           audience: Database["public"]["Enums"]["resource_audience"]
           category: string | null
-          intent_note: string | null
-          status: Database["public"]["Enums"]["resource_status"]
           content: string | null
           created_at: string
           description: string | null
           files: Json
           id: string
+          intent_note: string | null
           kind: Database["public"]["Enums"]["resource_kind"] | null
           owner_id: string
+          status: Database["public"]["Enums"]["resource_status"]
           tags: string[]
           title: string
           updated_at: string
@@ -805,15 +805,15 @@ export type Database = {
           archived_at?: string | null
           audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
-          intent_note?: string | null
-          status?: Database["public"]["Enums"]["resource_status"]
           content?: string | null
           created_at?: string
           description?: string | null
           files?: Json
           id?: string
+          intent_note?: string | null
           kind?: Database["public"]["Enums"]["resource_kind"] | null
           owner_id?: string
+          status?: Database["public"]["Enums"]["resource_status"]
           tags?: string[]
           title: string
           updated_at?: string
@@ -823,15 +823,15 @@ export type Database = {
           archived_at?: string | null
           audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
-          intent_note?: string | null
-          status?: Database["public"]["Enums"]["resource_status"]
           content?: string | null
           created_at?: string
           description?: string | null
           files?: Json
           id?: string
+          intent_note?: string | null
           kind?: Database["public"]["Enums"]["resource_kind"] | null
           owner_id?: string
+          status?: Database["public"]["Enums"]["resource_status"]
           tags?: string[]
           title?: string
           updated_at?: string
@@ -1161,7 +1161,6 @@ export type Database = {
         | "other"
       outline_status: "draft" | "sent" | "validated"
       resource_audience: "students" | "teacher"
-      resource_status: "progress" | "ready"
       resource_kind:
         | "course"
         | "workshop"
@@ -1171,6 +1170,7 @@ export type Database = {
         | "question_bank"
         | "reference"
         | "teacher_notes"
+      resource_status: "progress" | "ready"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1344,7 +1344,6 @@ export const Constants = {
       ],
       outline_status: ["draft", "sent", "validated"],
       resource_audience: ["students", "teacher"],
-      resource_status: ["progress", "ready"],
       resource_kind: [
         "course",
         "workshop",
@@ -1355,6 +1354,7 @@ export const Constants = {
         "reference",
         "teacher_notes",
       ],
+      resource_status: ["progress", "ready"],
     },
   },
 } as const

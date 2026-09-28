@@ -22,13 +22,18 @@ export default async function PresentResourcePage({
   if (!resource) notFound();
 
   // Garde-fou : une ressource réservée à l'enseignante ne se projette pas.
-  if (resource.audience === "teacher") {
+  if (resource.audience === "teacher" || resource.status !== "ready") {
     return (
       <main className="mx-auto max-w-xl space-y-4 p-12">
-        <h1 className="text-2xl font-semibold">Ressource réservée à l’enseignante</h1>
+        <h1 className="text-2xl font-semibold">
+          {resource.audience === "teacher"
+            ? "Ressource réservée à l’enseignante"
+            : "Ressource pas encore prête"}
+        </h1>
         <p className="text-muted-foreground">
-          « {resource.title} » est marquée « Enseignante uniquement » : elle n’est jamais projetée
-          ni diffusée aux étudiant·es. Changez sa visibilité pour la présenter.
+          {resource.audience === "teacher"
+            ? `« ${resource.title} » est marquée « Enseignante uniquement » : elle n’est jamais projetée ni diffusée aux étudiant·es. Changez sa visibilité pour la présenter.`
+            : `« ${resource.title} » est encore « À construire » : elle n’est jamais projetée ni diffusée aux étudiant·es. Passez-la en « Prête » pour la présenter.`}
         </p>
         <Link href={`/resources/${resource.id}`} className="underline underline-offset-2">
           Retour à la ressource

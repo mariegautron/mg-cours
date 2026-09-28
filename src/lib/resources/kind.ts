@@ -46,6 +46,9 @@ export const AUDIENCE_LABELS: Record<ResourceAudience, string> = {
   teacher: "Enseignante uniquement",
 };
 
+/** Ordre d'affichage des statuts. */
+export const RESOURCE_STATUSES: readonly ResourceStatus[] = ["ready", "progress"];
+
 export const STATUS_LABELS: Record<ResourceStatus, string> = {
   progress: "À construire",
   ready: "Prête",
@@ -53,6 +56,10 @@ export const STATUS_LABELS: Record<ResourceStatus, string> = {
 
 /** Les ressources « À construire » ne sont jamais projetées. */
 export const STUDENT_FACING_STATUSES: readonly ResourceStatus[] = ["ready"];
+
+export function isResourceStatus(value: unknown): value is ResourceStatus {
+  return typeof value === "string" && (RESOURCE_STATUSES as readonly string[]).includes(value);
+}
 
 /** Types dont le contenu est, par nature, réservé à l'enseignante (pré-sélection du formulaire). */
 export const TEACHER_KINDS: readonly ResourceKind[] = [
@@ -73,13 +80,11 @@ export function isResourceAudience(value: unknown): value is ResourceAudience {
  * Garde-fou : ne garde que ce qui peut partir chez les étudiant·es (présentation, export PDF,
  * futurs liens). Toute sortie vers les étudiant·es DOIT passer par ici.
  */
-export function studentFacing<T extends { audience: ResourceAudience; status?: ResourceStatus }>(
+export function studentFacing<T extends { audience: ResourceAudience; status: ResourceStatus }>(
   resources: T[],
 ): T[] {
   return resources.filter(
-    (r) =>
-      r.audience === "students" &&
-      (!r.status || STUDENT_FACING_STATUSES.includes(r.status)),
+    (r) => r.audience === "students" && STUDENT_FACING_STATUSES.includes(r.status),
   );
 }
 

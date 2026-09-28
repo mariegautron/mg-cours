@@ -96,3 +96,31 @@ test("classe une ressource (type, matière, visibilité), filtre et regroupe la 
   await page.goto(`/resources?audience=students&category=${encodeURIComponent(subject)}`);
   await expect(page.getByRole("status")).toHaveText("0 ressource");
 });
+
+test("US-57 : note une ressource à construire, la filtre et l'enregistre depuis le formulaire", async ({
+  page,
+}) => {
+  await login(page);
+  const title = `TP de démonstration ${Date.now()}`;
+
+  await page.goto("/resources");
+  await page.getByLabel("Ressource à construire").fill(title);
+  await page.locator("#draft-note").fill("Un TP sur les tests d’accessibilité.");
+  await page.getByRole("button", { name: "Noter à construire" }).click();
+
+  await page.goto(`/resources?status=progress&q=${encodeURIComponent(title)}`);
+  const card = page.getByRole("link", { name: new RegExp(title) });
+  await expect(card).toBeVisible();
+  await expect(card.getByText("À construire", { exact: true })).toBeVisible();
+
+  await card.click();
+  await expect(page.getByText("Un TP sur les tests d’accessibilité.")).toBeVisible();
+
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  await page.goto(`/resources?status=ready&q=${encodeURIComponent(title)}`);
+  await expect(page.getByRole("link", { name: new RegExp(title) })).toHaveCount(0);
+});

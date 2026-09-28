@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { AudienceBadge, KindBadge } from "@/components/resources/resource-badges";
+import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { createDraftResource } from "@/app/(app)/resources/actions";
 import { readResourceFilters, type ResourceGrouping } from "@/lib/resources/filters";
 import {
   AUDIENCE_LABELS,
@@ -21,6 +22,8 @@ import {
   groupByKind,
   KIND_LABELS,
   RESOURCE_KINDS,
+  RESOURCE_STATUSES,
+  STATUS_LABELS,
   UNCLASSIFIED_LABEL,
   type ResourceGroup,
 } from "@/lib/resources/kind";
@@ -52,6 +55,7 @@ function ResourceCard({ r }: { r: ResourceWithUsage }) {
       <div className="mt-3 flex flex-wrap gap-1">
         <KindBadge kind={r.kind} />
         <AudienceBadge audience={r.audience} />
+        <StatusBadge status={r.status} />
         {r.category ? <Badge variant="secondary">{r.category}</Badge> : null}
         {r.tags.map((t) => (
           <Badge key={t} variant="outline">
@@ -157,6 +161,22 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
           </select>
         </div>
         <div className="space-y-1">
+          <Label htmlFor="status">Statut</Label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={filters.status ?? ""}
+            className={SELECT_CLASS}
+          >
+            <option value="">Tous</option>
+            {RESOURCE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="tag">Tag</Label>
           <select id="tag" name="tag" defaultValue={filters.tag ?? ""} className={SELECT_CLASS}>
             <option value="">Tous</option>
@@ -183,6 +203,30 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         </label>
         <Button type="submit" variant="secondary">
           Filtrer
+        </Button>
+      </form>
+
+      <form
+        action={createDraftResource}
+        className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed p-3"
+        aria-label="Création rapide"
+      >
+        <div className="space-y-1">
+          <Label htmlFor="draft-title">Ressource à construire</Label>
+          <Input id="draft-title" name="title" required maxLength={200} placeholder="Titre" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="draft-note">Note d’intention</Label>
+          <Input
+            id="draft-note"
+            name="intentNote"
+            maxLength={2000}
+            placeholder="Ex. Un TP pour pratiquer les tests d’accessibilité"
+            className="w-80 max-w-full"
+          />
+        </div>
+        <Button type="submit" variant="secondary">
+          Noter à construire
         </Button>
       </form>
 

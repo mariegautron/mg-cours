@@ -30,7 +30,11 @@ import { listModuleGroups } from "@/lib/students/queries";
 import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const mod = await getModule(id);
   return { title: mod?.name ?? "Module" };
@@ -45,14 +49,15 @@ const TRAME_MESSAGE: Record<TrameAlertLevel, (days: number | null) => string> = 
   unknown: () => "Renseignez la date de la 1re séance pour calculer l’échéance.",
 };
 
-const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outline" | "secondary"> = {
-  sent: "secondary",
-  overdue: "destructive",
-  urgent: "destructive",
-  warning: "outline",
-  ok: "outline",
-  unknown: "outline",
-};
+const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outline" | "secondary"> =
+  {
+    sent: "secondary",
+    overdue: "destructive",
+    urgent: "destructive",
+    warning: "outline",
+    ok: "outline",
+    unknown: "outline",
+  };
 
 export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -70,6 +75,9 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
   const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
+  const toBuild = new Set(
+    courses.flatMap((c) => c.resources.filter((r) => r.status === "progress").map((r) => r.id)),
+  ).size;
   const plannedHours = totalPlannedHours(courses);
   const hoursCheck = checkPlannedHours(plannedHours, mod.total_hours);
   const upcoming = mod.archived_at ? null : highlightedSession(courses, todayInParis());
@@ -157,8 +165,15 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             </h2>
             {courses.length ? (
               <p className="text-muted-foreground text-sm">
-                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""} · {plannedHours > 0 ? `${plannedHours} h planifiées` : "0 h planifiée"}
+                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""} ·{" "}
+                {plannedHours > 0 ? `${plannedHours} h planifiées` : "0 h planifiée"}
                 {hoursCheck.message ? ` / ${mod.total_hours} h - ${hoursCheck.message}` : ""}
+              </p>
+            ) : null}
+            {toBuild > 0 ? (
+              <p className="text-sm">
+                {toBuild} ressource{toBuild > 1 ? "s" : ""} à construire dans ce module (jamais
+                projetée{toBuild > 1 ? "s" : ""}).
               </p>
             ) : null}
           </div>
@@ -424,7 +439,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             Progression
           </TabsTrigger>
           <TabsTrigger value="courses" className="text-sm">
-              Séances ({courses.length})
+            Séances ({courses.length})
           </TabsTrigger>
           <TabsTrigger value="groups-evaluations" className="text-sm">
             Groupes ({groups.length}) et évaluations

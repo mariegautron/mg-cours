@@ -15,10 +15,9 @@ import {
   KIND_LABELS,
   RESOURCE_KINDS,
   STATUS_LABELS,
-  STUDENT_FACING_STATUSES,
+  RESOURCE_STATUSES,
   TEACHER_KINDS,
   type ResourceAudience,
-  type ResourceStatus,
 } from "@/lib/resources/kind";
 import { cn } from "@/lib/utils";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
@@ -201,27 +200,26 @@ export function ResourceForm({
             defaultValue={resource?.status ?? "ready"}
             className={SELECT_CLASS}
           >
-            {STUDENT_FACING_STATUSES.map((status) => (
+            {RESOURCE_STATUSES.map((status) => (
               <option key={status} value={status}>
                 {STATUS_LABELS[status]}
               </option>
             ))}
-            <option value="progress">A construire</option>
           </select>
           <p className="text-muted-foreground text-sm">
-            Les ressources « A construire » ne sont jamais projetées.
+            Les ressources « À construire » ne sont jamais projetées.
           </p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="intentNote">Note dintention</Label>
+          <Label htmlFor="intentNote">Note d’intention</Label>
           <Input
             id="intentNote"
             name="intentNote"
-            placeholder="Ex. A adapter pour le niveau L3"
+            placeholder="Ex. À adapter pour le niveau L3"
             defaultValue={resource?.intent_note ?? ""}
           />
           <p className="text-muted-foreground text-sm">
-            Note interne pour expliquer ce quil reste à faire.
+            Note interne pour expliquer ce qu’il reste à faire.
           </p>
         </div>
         <div className="space-y-2">

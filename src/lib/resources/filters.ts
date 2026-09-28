@@ -1,8 +1,10 @@
 import {
   isResourceAudience,
   isResourceKind,
+  isResourceStatus,
   type ResourceAudience,
   type ResourceKind,
+  type ResourceStatus,
 } from "./kind";
 
 export type ResourceGrouping = "kind" | "category" | "none";
@@ -15,6 +17,8 @@ export interface ResourceListFilters {
   /** `"none"` = ressources pas encore classées. */
   kind?: ResourceKind | "none";
   audience?: ResourceAudience;
+  /** Prête ou « À construire ». */
+  status?: ResourceStatus;
   archived?: boolean;
 }
 
@@ -29,6 +33,7 @@ export function readResourceFilters(sp: SearchParams): {
 } {
   const kind = str(sp.kind);
   const audience = str(sp.audience);
+  const status = str(sp.status);
   const group = str(sp.group);
   return {
     filters: {
@@ -37,6 +42,7 @@ export function readResourceFilters(sp: SearchParams): {
       tag: str(sp.tag) || undefined,
       kind: kind === "none" || isResourceKind(kind) ? kind : undefined,
       audience: isResourceAudience(audience) ? audience : undefined,
+      status: isResourceStatus(status) ? status : undefined,
       archived: sp.archived === "1",
     },
     group: group === "category" || group === "none" ? group : "kind",

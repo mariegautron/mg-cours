@@ -44,6 +44,8 @@ export async function createResource(
       audience: parsed.data.audience,
       category: parsed.data.category || null,
       tags: parsed.data.tags,
+      status: parsed.data.status,
+      intent_note: parsed.data.intentNote?.trim() || null,
     })
     .select("id")
     .single();
@@ -76,6 +78,8 @@ export async function updateResource(
       audience: parsed.data.audience,
       category: parsed.data.category || null,
       tags: parsed.data.tags,
+      status: parsed.data.status,
+      intent_note: parsed.data.intentNote?.trim() || null,
     })
     .eq("id", id);
 
@@ -84,6 +88,24 @@ export async function updateResource(
   revalidatePath("/resources");
   revalidatePath(`/resources/${id}`);
   redirect(`/resources/${id}`);
+}
+
+/** Création rapide d'une ressource « à construire » : un titre et une note d'intention. */
+export async function createDraftResource(formData: FormData): Promise<void> {
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title || title.length > 200) return;
+  const intentNote = String(formData.get("intentNote") ?? "")
+    .trim()
+    .slice(0, 2000);
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("resource").insert({
+    title,
+    status: "progress",
+    intent_note: intentNote || null,
+  });
+  if (error) return;
+  revalidatePath("/resources");
 }
 
 async function setArchived(id: string, archived: boolean) {

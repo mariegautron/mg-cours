@@ -37,7 +37,10 @@ export async function getModule(id: string): Promise<ModuleWithSchool | null> {
   return data as ModuleWithSchool | null;
 }
 
-export type LinkedResource = Pick<Tables<"resource">, "id" | "title" | "kind" | "audience">;
+export type LinkedResource = Pick<
+  Tables<"resource">,
+  "id" | "title" | "kind" | "audience" | "status"
+>;
 
 export type CourseWithResources = Tables<"course"> & {
   resources: LinkedResource[];
@@ -47,7 +50,9 @@ export async function getModuleCourses(moduleId: string): Promise<CourseWithReso
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title, kind, audience)), start_time, end_time")
+    .select(
+      "*, course_resource(resource:resource_id(id, title, kind, audience, status)), start_time, end_time",
+    )
     .eq("module_id", moduleId)
     .order("position");
 
@@ -68,7 +73,9 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title, kind, audience)), start_time, end_time")
+    .select(
+      "*, course_resource(resource:resource_id(id, title, kind, audience, status)), start_time, end_time",
+    )
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
@@ -89,7 +96,7 @@ export async function listActiveResources(): Promise<LinkedResource[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("resource")
-    .select("id, title, kind, audience")
+    .select("id, title, kind, audience, status")
     .is("archived_at", null)
     .order("title");
   return data ?? [];
@@ -117,7 +124,7 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
   const { data } = await supabase
     .from("course")
     .select(
-      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url, audience))",
+      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url, audience, status))",
     )
     .eq("module_id", moduleId)
     .order("position");
