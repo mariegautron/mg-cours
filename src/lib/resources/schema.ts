@@ -26,6 +26,8 @@ export const resourceSchema = z.object({
   /** Matière. */
   category: z.string().trim().max(100).optional().or(z.literal("")),
   tags: z.array(z.string().min(1)).max(50).default([]),
+  status: z.enum(Constants.public.Enums.resource_status).default("ready"),
+  intentNote: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
 export type ResourceInput = z.infer<typeof resourceSchema>;
@@ -41,5 +43,7 @@ export function readResourceForm(formData: FormData) {
     audience: formData.get("audience") || undefined,
     category: formData.get("category") ?? "",
     tags: parseTags(String(formData.get("tags") ?? "")),
+    status: (formData.get("status") as string) || undefined,
+    intentNote: formData.get("intentNote") ?? "",
   });
 }

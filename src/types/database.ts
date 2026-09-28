@@ -787,6 +787,8 @@ export type Database = {
           archived_at: string | null
           audience: Database["public"]["Enums"]["resource_audience"]
           category: string | null
+          intent_note: string | null
+          status: Database["public"]["Enums"]["resource_status"]
           content: string | null
           created_at: string
           description: string | null
@@ -803,6 +805,8 @@ export type Database = {
           archived_at?: string | null
           audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
+          intent_note?: string | null
+          status?: Database["public"]["Enums"]["resource_status"]
           content?: string | null
           created_at?: string
           description?: string | null
@@ -819,6 +823,8 @@ export type Database = {
           archived_at?: string | null
           audience?: Database["public"]["Enums"]["resource_audience"]
           category?: string | null
+          intent_note?: string | null
+          status?: Database["public"]["Enums"]["resource_status"]
           content?: string | null
           created_at?: string
           description?: string | null
@@ -1155,6 +1161,7 @@ export type Database = {
         | "other"
       outline_status: "draft" | "sent" | "validated"
       resource_audience: "students" | "teacher"
+      resource_status: "progress" | "ready"
       resource_kind:
         | "course"
         | "workshop"
@@ -1337,6 +1344,7 @@ export const Constants = {
       ],
       outline_status: ["draft", "sent", "validated"],
       resource_audience: ["students", "teacher"],
+      resource_status: ["progress", "ready"],
       resource_kind: [
         "course",
         "workshop",

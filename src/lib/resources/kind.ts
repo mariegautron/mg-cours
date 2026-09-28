@@ -2,6 +2,7 @@ import type { Enums } from "@/types/db";
 
 export type ResourceKind = Enums<"resource_kind">;
 export type ResourceAudience = Enums<"resource_audience">;
+export type ResourceStatus = Enums<"resource_status">;
 
 /** Ordre d'affichage des groupes (séance, module, liste). */
 export const RESOURCE_KINDS: readonly ResourceKind[] = [
@@ -45,6 +46,14 @@ export const AUDIENCE_LABELS: Record<ResourceAudience, string> = {
   teacher: "Enseignante uniquement",
 };
 
+export const STATUS_LABELS: Record<ResourceStatus, string> = {
+  progress: "À construire",
+  ready: "Prête",
+};
+
+/** Les ressources « À construire » ne sont jamais projetées. */
+export const STUDENT_FACING_STATUSES: readonly ResourceStatus[] = ["ready"];
+
 /** Types dont le contenu est, par nature, réservé à l'enseignante (pré-sélection du formulaire). */
 export const TEACHER_KINDS: readonly ResourceKind[] = [
   "answer_key",
@@ -64,8 +73,14 @@ export function isResourceAudience(value: unknown): value is ResourceAudience {
  * Garde-fou : ne garde que ce qui peut partir chez les étudiant·es (présentation, export PDF,
  * futurs liens). Toute sortie vers les étudiant·es DOIT passer par ici.
  */
-export function studentFacing<T extends { audience: ResourceAudience }>(resources: T[]): T[] {
-  return resources.filter((r) => r.audience === "students");
+export function studentFacing<T extends { audience: ResourceAudience; status?: ResourceStatus }>(
+  resources: T[],
+): T[] {
+  return resources.filter(
+    (r) =>
+      r.audience === "students" &&
+      (!r.status || STUDENT_FACING_STATUSES.includes(r.status)),
+  );
 }
 
 export interface ResourceGroup<T> {
