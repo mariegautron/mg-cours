@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   Archive,
+  CalendarPlus,
   ChevronRight,
   Download,
   ExternalLink,
@@ -177,12 +178,20 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               </p>
             ) : null}
           </div>
-          <Button asChild size="sm">
-            <Link href={`/modules/${mod.id}/courses/new`}>
-              <Plus aria-hidden />
-              Ajouter une séance
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/schedule`}>
+                <CalendarPlus aria-hidden />
+                Depuis un planning
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href={`/modules/${mod.id}/courses/new`}>
+                <Plus aria-hidden />
+                Ajouter une séance
+              </Link>
+            </Button>
+          </div>
         </div>
         <CourseList moduleId={mod.id} courses={courses} />
         {courses.length ? (

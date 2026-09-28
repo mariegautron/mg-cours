@@ -133,6 +133,14 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Planning (US-59)** : à la création, tableau de créneaux (date, début, fin ; « Ajouter une
+  ligne », « + 7 jours » pour dupliquer) ou collage (« 01/10/2026 10:00-12:00 », « 01/10 10h-12h »…),
+  avec aperçu des séances et des lignes non reconnues. Les séances vides sont créées d'un coup
+  (« Séance 1…N », « À préparer ») et la 1re séance renseigne la date de référence J-15. Même saisie
+  sur un module existant : `/modules/[id]/schedule` (bouton « Depuis un planning » de l'onglet
+  Séances), numérotation à la suite des séances existantes. Logique pure :
+  `src/lib/modules/schedule-parser.ts` ; écriture : Server Actions `createModule` /
+  `addScheduleToModule` (module contrôlé par `owner_id`).
 
 ### Détail `/modules/[id]`
 

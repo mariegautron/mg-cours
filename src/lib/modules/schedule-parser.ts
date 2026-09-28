@@ -1,214 +1,177 @@
-/** US-59: Planning a la creation du module.
- * Parseur pur pour les creneaux de planning (formats FR toleres).
- * Une ligne par creneau -> seances vides creees d'un coup, numerotees.
- * 1re seance -> J-15 pour le calcul de l'echeance.
+import { z } from "zod";
+
+import { calculateDuration } from "./course-duration";
+
+/**
+ * US-59 : planning d'un module. Fonctions pures — saisie en tableau ou collage, un créneau par
+ * ligne, formats français tolérés — qui produisent les séances vides à créer.
  */
 
-/** Format de date FR : DD/MM/YYYY, DD/MM, DD-MM-YYYY, etc. */
-export type DateString = string;
-
-/** Format d'heure : HH:MM, HHhMM, HH h MM, etc. */
-export type TimeString = string;
-
-/** Une seance parsee depuis une ligne de planning. */
-export interface ParsedSession {
-  date: DateString;
-  startTime: TimeString | null;
-  endTime: TimeString | null;
-  position: number;
+/** Un créneau du planning : date ISO, heures `HH:MM` facultatives. */
+export interface ScheduleRow {
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
 }
 
-/** Resultat du parsing : liste de seances ou erreur. */
-export interface ParseResult {
-  sessions: ParsedSession[];
-  errors: string[];
+export interface IgnoredLine {
+  line: number;
+  text: string;
 }
 
-/** Normalise une date FR en ISO (YYYY-MM-DD).
- * Accepte : DD/MM/YYYY, DD/MM/YY, DD-MM-YYYY, DD-MM-YY, DD.MM.YYYY
+export interface PlannedSession {
+  number: number;
+  title: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  /** Durée en heures, `null` sans début et fin. */
+  hours: number | null;
+}
+
+export interface SchedulePlan {
+  sessions: PlannedSession[];
+  /** Date de la 1re séance (sert au calcul de l'échéance J-15). */
+  firstSessionDate: string | null;
+  /** Total des heures planifiées (créneaux avec début et fin). */
+  totalHours: number;
+  /** Anomalies à signaler avant création (chevauchement, doublon). */
+  issues: string[];
+}
+
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const scheduleRowSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(TIME).nullable(),
+  endTime: z.string().regex(TIME).nullable(),
+});
+
+const MAX_ROWS = 200;
+
+/** Lit le champ caché `scheduleJson` ; renvoie `null` si le contenu est invalide. */
+export function readScheduleRows(json: string | null | undefined): ScheduleRow[] | null {
+  if (!json || !json.trim()) return [];
+  try {
+    const parsed = z.array(scheduleRowSchema).max(MAX_ROWS).safeParse(JSON.parse(json));
+    if (!parsed.success) return null;
+    return parsed.data.filter((row) => isValidIsoDate(row.date));
+  } catch {
+    return null;
+  }
+}
+
+/** Vrai pour une date ISO qui existe au calendrier (pas de 31/02). */
+export function isValidIsoDate(iso: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return false;
+  const [year, month, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
+}
+
+/** Ajoute des jours à une date ISO (calcul en UTC, sans effet de fuseau ni d'heure d'été). */
+export function addDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** « Dupliquer + 7 jours » : même créneau la semaine suivante. */
+export function duplicateRow(row: ScheduleRow, days = 7): ScheduleRow {
+  return { ...row, date: addDays(row.date, days) };
+}
+
+const pad = (n: number | string) => String(n).padStart(2, "0");
+
+function toIsoDate(day: string, month: string, year: string | undefined, defaultYear: number) {
+  let y = year === undefined ? defaultYear : Number(year);
+  if (year !== undefined && year.length === 2) y += 2000;
+  const iso = `${y}-${pad(month)}-${pad(day)}`;
+  return isValidIsoDate(iso) ? iso : null;
+}
+
+const DATE_RE = /(\d{1,2})\s*[/.-]\s*(\d{1,2})(?:\s*[/.-]\s*(\d{4}|\d{2}))?(?!\d)/;
+const TIME_RE = /(\d{1,2})\s*(?:h|:)(\d{2})?/gi;
+
+/**
+ * Lit une ligne collée : « 01/10/2026 10:00-12:00 », « jeudi 1/10 10h-12h »,
+ * « 01-10-2026 10h00 12h00 », « 01.10.26 de 14h à 16h »… L'année manquante est celle du module.
  */
-export function normalizeDate(dateStr: string): string | null {
-  const trimmed = dateStr.trim();
-
-  // DD/MM/YYYY ou DD/MM/YY
-  const slashMatch = trimmed.match(/^(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})$/);
-  if (slashMatch) {
-    const [, day, month, year] = slashMatch;
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  // DD-MM-YYYY ou DD-MM-YY
-  const dashMatch = trimmed.match(/^(\d{1,2})[.-](\d{1,2})[.-](\d{2,4})$/);
-  if (dashMatch) {
-    const [, day, month, year] = dashMatch;
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  // DD.MM.YYYY
-  const dotMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
-  if (dotMatch) {
-    const [, day, month, year] = dotMatch;
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  // DD/MM (sans annee) - on suppose annee courante
-  const shortMatch = trimmed.match(/^(\d{1,2})[/.](\d{1,2})$/);
-  if (shortMatch) {
-    const [, day, month] = shortMatch;
-    const now = new Date();
-    const year = now.getFullYear();
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  return null;
-}
-
-/** Normalise une heure FR en HH:MM.
- * Accepte : HH:MM, HHhMM, HH h MM, HHh, HH h
- */
-export function normalizeTime(timeStr: string): string | null {
-  const trimmed = timeStr.trim().toLowerCase();
-
-  // HH:MM
-  const colonMatch = trimmed.match(/^(\d{1,2}):(\d{2})$/);
-  if (colonMatch) {
-    const [, hours, minutes] = colonMatch;
-    return `${hours.padStart(2, "0")}:${minutes}`;
-  }
-
-  // HHhMM ou HHh
-  const hMatch = trimmed.match(/^(\d{1,2})h(\d{2})?$/);
-  if (hMatch) {
-    const [, hours, minutes = "00"] = hMatch;
-    return `${hours.padStart(2, "0")}:${minutes}`;
-  }
-
-  // HH h MM ou HH h
-  const spaceMatch = trimmed.match(/^(\d{1,2})\s+h\s+(\d{2})?$/);
-  if (spaceMatch) {
-    const [, hours, minutes = "00"] = spaceMatch;
-    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
-  }
-
-  // HH (seulement)
-  const simpleMatch = trimmed.match(/^(\d{1,2})$/);
-  if (simpleMatch) {
-    const [, hours] = simpleMatch;
-    return `${hours.padStart(2, "0")}:00`;
-  }
-
-  return null;
-}
-
-/** Parse une ligne de planning.
- * Formats attendus :
- * - Date HeureDebut-HeureFin
- * - Date HeureDebut HeureFin
- * - Date, HeureDebut-HeureFin
- * - Date HeureDebut
- * 
- * Exemples :
- * - "01/10/2026 10:00-12:00"
- * - "01/10 10h-12h"
- * - "01/10/2026, 10:00 12:00"
- * - "01-10-2026 10h00-12h00"
- */
-export function parseScheduleLine(line: string, position: number): ParsedSession | null {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-
-  // Nettoyer la ligne : remplacer les virgules par des espaces
-  const cleaned = trimmed.replace(/,/g, " ");
-
-  // Essayer de trouver la date d'abord
-  // Formats de date : DD/MM/YYYY, DD/MM/YY, DD-MM-YYYY, DD.MM.YYYY
-  const dateMatch = cleaned.match(/^(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})\s*/);
+export function parseScheduleLine(line: string, defaultYear: number): ScheduleRow | null {
+  const dateMatch = DATE_RE.exec(line);
   if (!dateMatch) return null;
-
-  const dateStr = dateMatch[1];
-  const date = normalizeDate(dateStr);
+  const date = toIsoDate(dateMatch[1], dateMatch[2], dateMatch[3], defaultYear);
   if (!date) return null;
 
-  // Extraire la partie apres la date
-  const afterDate = cleaned.slice(dateMatch[0].length).trim();
-  if (!afterDate) {
-    return { date, startTime: null, endTime: null, position };
+  const rest =
+    line.slice(0, dateMatch.index) + " " + line.slice(dateMatch.index + dateMatch[0].length);
+  const times: string[] = [];
+  for (const m of rest.matchAll(TIME_RE)) {
+    const hours = Number(m[1]);
+    const minutes = m[2] === undefined ? 0 : Number(m[2]);
+    if (hours > 23 || minutes > 59) return null;
+    times.push(`${pad(hours)}:${pad(minutes)}`);
   }
+  if (times.length > 2) return null;
+  return { date, startTime: times[0] ?? null, endTime: times[1] ?? null };
+}
 
-  // Parser les heures
-  let startTime: TimeString | null = null;
-  let endTime: TimeString | null = null;
+/** Lit un planning collé (une ligne par créneau) ; les lignes illisibles sont renvoyées à part. */
+export function parseSchedule(
+  text: string,
+  defaultYear: number,
+): { rows: ScheduleRow[]; ignored: IgnoredLine[] } {
+  const rows: ScheduleRow[] = [];
+  const ignored: IgnoredLine[] = [];
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line) return;
+    const row = parseScheduleLine(line, defaultYear);
+    if (row) rows.push(row);
+    else ignored.push({ line: i + 1, text: line });
+  });
+  return { rows, ignored };
+}
 
-  // Cas 1 : format "10h-12h" ou "10:00-12:00"
-  const rangeMatch = afterDate.match(/^([\d:h]+)-([\d:h]+)$/);
-  if (rangeMatch) {
-    startTime = normalizeTime(rangeMatch[1]);
-    endTime = normalizeTime(rangeMatch[2]);
-  } else {
-    // Cas 2 : format "10:00 12:00" (espace) ou "10h 12h"
-    const parts = afterDate.split(/\s+/);
-    if (parts.length === 2) {
-      startTime = normalizeTime(parts[0]);
-      endTime = normalizeTime(parts[1]);
-    } else if (parts.length === 1) {
-      // Cas 3 : une seule heure
-      startTime = normalizeTime(parts[0]);
+const rowKey = (r: ScheduleRow) => `${r.date} ${r.startTime ?? "99:99"}`;
+
+/**
+ * Séances vides à créer : triées par date puis heure, numérotées « Séance N » à la suite des
+ * `existingCount` séances déjà présentes.
+ */
+export function planSessions(rows: ScheduleRow[], existingCount = 0): SchedulePlan {
+  const sorted = [...rows].sort((a, b) => rowKey(a).localeCompare(rowKey(b)));
+  const issues: string[] = [];
+
+  const sessions = sorted.map((r, i): PlannedSession => {
+    const number = existingCount + i + 1;
+    return {
+      number,
+      title: `Séance ${number}`,
+      date: r.date,
+      startTime: r.startTime,
+      endTime: r.endTime,
+      hours: calculateDuration(r.startTime, r.endTime),
+    };
+  });
+
+  for (let i = 1; i < sessions.length; i++) {
+    const prev = sessions[i - 1];
+    const cur = sessions[i];
+    if (prev.date !== cur.date) continue;
+    if (prev.startTime === cur.startTime) {
+      issues.push(`Séances ${prev.number} et ${cur.number} : même créneau le ${cur.date}.`);
+    } else if (prev.endTime && cur.startTime && cur.startTime < prev.endTime) {
+      issues.push(
+        `Séances ${prev.number} et ${cur.number} : les horaires se chevauchent le ${cur.date}.`,
+      );
     }
   }
 
   return {
-    date,
-    startTime,
-    endTime,
-    position,
+    sessions,
+    firstSessionDate: sessions[0]?.date ?? null,
+    totalHours: sessions.reduce((sum, s) => sum + (s.hours ?? 0), 0),
+    issues,
   };
-}
-
-/** Parse un texte de planning (plusieurs lignes).
- * Retourne la liste des seances parsees et les erreurs eventuelles.
- */
-export function parseSchedule(text: string): ParseResult {
-  const lines = text.split("\n");
-  const sessions: ParsedSession[] = [];
-  const errors: string[] = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const session = parseScheduleLine(line, i + 1);
-    if (session) {
-      sessions.push(session);
-    } else {
-      errors.push(`Ligne ${i + 1} : "${line}" - format invalide`);
-    }
-  }
-
-  return { sessions, errors };
-}
-
-/** Valide que les seances sont dans l'ordre chronologique. */
-export function validateSessionOrder(sessions: ParsedSession[]): string | null {
-  for (let i = 1; i < sessions.length; i++) {
-    const prevDate = sessions[i - 1].date;
-    const currDate = sessions[i].date;
-
-    if (currDate < prevDate) {
-      return `Les seances ne sont pas dans l'ordre chronologique (ligne ${i + 1})`;
-    }
-
-    if (currDate === prevDate) {
-      const prevEnd = sessions[i - 1].endTime;
-      const currStart = sessions[i].startTime;
-
-      if (prevEnd && currStart && currStart < prevEnd) {
-        return `Chevauchement de seances le ${currDate} (ligne ${i + 1})`;
-      }
-    }
-  }
-
-  return null;
 }

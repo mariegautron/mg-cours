@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createCoursesFromSchedule } from "@/lib/modules/schedule-actions";
+import { planSessions, readScheduleRows, type ScheduleRow } from "@/lib/modules/schedule-parser";
 import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
@@ -42,24 +42,106 @@ function toRow(input: ReturnType<typeof readModuleForm>["data"]) {
   };
 }
 
+const SCHEDULE_ERROR = "Le planning est illisible. Vérifiez les dates et les horaires.";
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/** Crée les séances vides d'un planning, à la suite de celles qui existent déjà. */
+async function insertScheduleCourses(
+  supabase: Supabase,
+  moduleId: string,
+  rows: ScheduleRow[],
+  existingCount: number,
+) {
+  const plan = planSessions(rows, existingCount);
+  const { error } = await supabase.from("course").insert(
+    plan.sessions.map((s) => ({
+      module_id: moduleId,
+      title: s.title,
+      position: s.number,
+      session_date: s.date,
+      start_time: s.startTime,
+      end_time: s.endTime,
+      prep_status: "todo",
+    })),
+  );
+  return { plan, error };
+}
+
 export async function createModule(
   _prev: ModuleFormState,
   formData: FormData,
 ): Promise<ModuleFormState> {
   const parsed = readModuleForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
+  const scheduleRows = readScheduleRows(String(formData.get("scheduleJson") ?? ""));
+  if (!scheduleRows) return { error: SCHEDULE_ERROR };
+
+  const row = toRow(parsed.data)!;
+  // La 1re séance du planning donne la date de référence de l'échéance (J-15).
+  const firstSessionDate = planSessions(scheduleRows).firstSessionDate;
+  if (firstSessionDate) row.first_session_date = firstSessionDate;
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("module")
-    .insert(toRow(parsed.data)!)
-    .select("id")
-    .single();
-
+  const { data, error } = await supabase.from("module").insert(row).select("id").single();
   if (error) return { error: "Enregistrement impossible. Réessayez." };
+
+  if (scheduleRows.length) {
+    const { error: coursesError } = await insertScheduleCourses(supabase, data.id, scheduleRows, 0);
+    if (coursesError) {
+      // Pas de module à moitié créé : on retire le module et on laisse la saisie en place.
+      await supabase.from("module").delete().eq("id", data.id);
+      return { error: "Les séances n’ont pas pu être créées. Réessayez." };
+    }
+  }
 
   revalidatePath("/modules");
   redirect(`/modules/${data.id}`);
+}
+
+/** Ajoute des séances vides à un module existant à partir d'un planning. */
+export async function addScheduleToModule(
+  moduleId: string,
+  _prev: ModuleFormState,
+  formData: FormData,
+): Promise<ModuleFormState> {
+  const rows = readScheduleRows(String(formData.get("scheduleJson") ?? ""));
+  if (!rows) return { error: SCHEDULE_ERROR };
+  if (!rows.length) return { error: "Ajoutez au moins un créneau." };
+
+  const supabase = await createClient();
+  // Le module doit appartenir à l'utilisatrice connectée : la RLS ne renvoie rien sinon.
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: "Session expirée." };
+  const { data: mod } = await supabase
+    .from("module")
+    .select("id, owner_id, first_session_date")
+    .eq("id", moduleId)
+    .maybeSingle();
+  if (!mod || mod.owner_id !== auth.user.id) return { error: "Module introuvable." };
+
+  const { count } = await supabase
+    .from("course")
+    .select("id", { count: "exact", head: true })
+    .eq("module_id", moduleId);
+
+  const { plan, error } = await insertScheduleCourses(supabase, moduleId, rows, count ?? 0);
+  if (error) return { error: "Les séances n’ont pas pu être créées. Réessayez." };
+
+  if (
+    plan.firstSessionDate &&
+    (!mod.first_session_date || plan.firstSessionDate < mod.first_session_date)
+  ) {
+    await supabase
+      .from("module")
+      .update({ first_session_date: plan.firstSessionDate })
+      .eq("id", moduleId);
+  }
+
+  revalidatePath("/modules");
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath("/dashboard");
+  redirect(`/modules/${moduleId}#courses`);
 }
 
 export async function updateModule(

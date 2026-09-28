@@ -221,7 +221,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | US-79  | Vérification des heures : nom (« Nom long »), niveau et total lus dans la fiche (jamais dans le tableau des unités pédagogiques) ; FFP/TDP facultatifs ; liste les modules suspects sans rien corriger | 🔧     |
 | US-60  | Horaires et durée par séance : `course.start_time` / `end_time` (time, nullable), saisie sur la séance, « 18 h planifiées / 21 h » + avertissement, horaires dans le PDF de progression et sur la carte « Aujourd'hui » | 🔧     |
-| US-59  | Planning à la création du module : saisie en tableau ou collage, aperçu, séances vides numérotées « Séance 1…N » (« À préparer »), 1re séance → J-15 ; possible sur un module existant | 🔧     |
+| US-59  | Planning à la création du module : saisie en tableau ou collage, aperçu, séances vides numérotées « Séance 1…N » (« À préparer »), 1re séance → J-15 ; possible sur un module existant | ✅     |
 | US-57  | Ressource « à construire » : `resource.status` (`progress` / `ready`) + `intent_note`, création rapide, filtre sur `/resources`, compteur sur le module ; `studentFacing()` exclut `progress` (projection, PDF cours) | ✅     |
 
 ## Vision suivante (validée 26/09)
