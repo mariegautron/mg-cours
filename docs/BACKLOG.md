@@ -206,12 +206,20 @@ Détail : `docs/DEPLOY.md`.
 | E10-02 | « Faire cours » une séance + encart séance du jour / prochaine séance                      | ✅     |
 | E10-03 | « Présenter le module » aux étudiant·es (`module.student_intro`, programme, évaluation)    | ✅     |
 | E10-04 | Présenter une ressource seule (refus si « Enseignante uniquement »)                        | ✅     |
-| E10-05 | Fiche module en onglets (Cours · Étudiant·es & évaluations · Administratif)                | ⏳     |
+| E10-05 | Fiche module en onglets (Progression · Seances · Groupes & Evaluations · Administratif)                | ✅     |
 | US-40a | **Urgent après le 12/10** : lien étudiant·es partageable (jeton, lecture seule, révocable) | ⏳     |
 | —      | Proposition (non urgent) : blocs « Prof » masqués dans le Markdown en vue étudiant·es      | 💡     |
 
 Écrans : `/present/modules/[id]`, `/present/modules/[id]/courses/[courseId]`,
 `/present/resources/[id]`. e2e : `e2e/present.spec.ts`, `e2e/resources.spec.ts`.
+
+## E12 — Audit UX, vague 2 (octobre–novembre, « faire cours en confort » + « préparer à partir des attendus »)
+
+Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/09/2026) ».
+
+| US     | Contenu                                                                                                                                                                         | Statut |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-79  | Verification heures modules : liste les modules crees depuis une fiche importe et signale ceux dont le total d'heures parait faux ; ne corrige rien sans accord explicite | ✅     |
 
 ## Vision suivante (validée 26/09)
 
