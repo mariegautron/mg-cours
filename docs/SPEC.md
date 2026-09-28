@@ -18,7 +18,8 @@
 
 - **Carte « Aujourd'hui » (US-63)**, sous l'accroche, affichée seulement s'il y a cours : séances
   dont `session_date` = aujourd'hui **à Paris** (`todayInParis`), modules non archivés, triées par
-  module puis position (`todaySessions`, `src/lib/dashboard/today.ts`). Pour chacune : module,
+  heure de début (sans horaire à la fin), puis module et position (`todaySessions`,
+  `src/lib/dashboard/today.ts`). Pour chacune : horaires (US-60) et module,
   titre, **Faire cours** (`/present/modules/[id]/courses/[courseId]`) et un second lien vers la
   séance côté enseignante. « Faire cours » par séance et « Présenter le module » : fiche module
   (E10).
@@ -180,6 +181,11 @@ annoncé) et `FileCard` (type · taille · date + actions nommées).
 - Champs : titre, modalité (cours théorique / atelier-TP / projet / évaluation /
   démonstration / cours appliqué), position, date, préparation, objectifs pédagogiques (une ligne par
   objectif), ressources liées (cases à cocher), modalités d'animation/d'évaluation, matériel.
+- **Horaires (US-60)** : début et fin facultatifs (`start_time` / `end_time`, fin après le début,
+  début obligatoire si fin). Durée par séance dans la liste ; l'onglet Séances affiche « 18 h
+  planifiées / 21 h » et un avertissement « À vérifier » au-delà de 0,5 h d'écart avec le volume du
+  module (seuls les créneaux complets comptent). Horaires repris dans le PDF de progression
+  (`src/lib/modules/course-duration.ts`).
 - Toute modification met à jour `content_last_updated_at` (repris tel quel dans la progression).
 
 ### Règles

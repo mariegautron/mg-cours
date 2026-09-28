@@ -1,93 +1,84 @@
-/** US-60: Horaires et duree par seance.
- * Fonctions pures pour calculer la duree et verifier la coherence des heures.
+/**
+ * US-60 : horaires et durée par séance. Fonctions pures : durée d'un créneau, total planifié
+ * d'un module et cohérence avec le volume d'heures annoncé.
  */
 
-/** Format d'heure : HH:MM */
-export type TimeString = string | null;
+/** Heure `HH:MM` (ou `HH:MM:SS`, tel que renvoyé par Postgres), `null` si absente. */
+export type TimeString = string | null | undefined;
 
-/** Parse une heure au format HH:MM en minutes depuis minuit. */
+/** Heure en minutes depuis minuit, `null` si absente ou invalide. */
 export function parseTime(time: TimeString): number | null {
   if (!time) return null;
-  const [hours, minutes] = time.split(":").map(Number);
-  if (
-    isNaN(hours) ||
-    isNaN(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
+  const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(time);
+  if (!m) return null;
+  const hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  if (hours > 23 || minutes > 59) return null;
   return hours * 60 + minutes;
 }
 
-/** Calcule la duree en heures entre deux heures (start_time, end_time).
- * Retourne null si les heures sont manquantes ou invalides.
- * La duree est arrondie a 0.25h (15 min) le plus proche.
- */
-export function calculateDuration(
-  start_time: TimeString,
-  end_time: TimeString,
-): number | null {
-  const start = parseTime(start_time);
-  const end = parseTime(end_time);
-
-  if (start === null || end === null) return null;
-  if (end <= start) return null;
-
-  const minutes = end - start;
-  // Arrondi a 15 min (0.25h) le plus proche
-  const rounded = Math.round(minutes / 15) * 15;
-  return rounded / 60;
+/** `HH:MM` sans les secondes de Postgres ; chaîne vide si absente. */
+export function formatTime(time: TimeString): string {
+  const minutes = parseTime(time);
+  if (minutes === null) return "";
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
-/** Formate une duree en heures au format lisible.
- * Exemples: 1.5 -> "1 h 30", 2 -> "2 h", 0.75 -> "45 min"
- */
+/** « 10:00–12:00 », « 10:00 » sans fin, chaîne vide sans début. */
+export function formatTimeRange(start: TimeString, end: TimeString): string {
+  const s = formatTime(start);
+  const e = formatTime(end);
+  if (!s) return "";
+  return e ? `${s}–${e}` : s;
+}
+
+/** Durée en heures entre début et fin ; `null` si l'un manque ou si la fin ne suit pas le début. */
+export function calculateDuration(start: TimeString, end: TimeString): number | null {
+  const from = parseTime(start);
+  const to = parseTime(end);
+  if (from === null || to === null || to <= from) return null;
+  return (to - from) / 60;
+}
+
+/** « 2 h », « 1 h 30 », « 45 min » ; chaîne vide pour `null`. */
 export function formatDuration(hours: number | null): string {
   if (hours === null) return "";
-  const totalMinutes = Math.round(hours * 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (h > 0 && m > 0) return `${h} h ${m}`;
+  const total = Math.round(hours * 60);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h > 0 && m > 0) return `${h} h ${String(m).padStart(2, "0")}`;
   if (h > 0) return `${h} h`;
   return `${m} min`;
 }
 
-/** Calcule la duree totale planifiee pour une liste de seances.
- * Seules les seances avec startTime et endTime valides sont prises en compte.
- */
-export function totalPlannedHours(courses: Array<{ start_time?: string | null; end_time?: string | null }>): number {
-  let total = 0;
-  for (const course of courses) {
-    const duration = calculateDuration(course.start_time ?? null, course.end_time ?? null);
-    if (duration !== null) {
-      total += duration;
-    }
-  }
-  return total;
+/** Total planifié : seules les séances avec début et fin valides comptent. */
+export function totalPlannedHours(
+  courses: { start_time?: TimeString; end_time?: TimeString }[],
+): number {
+  return courses.reduce((sum, c) => sum + (calculateDuration(c.start_time, c.end_time) ?? 0), 0);
 }
 
-/** Verifie si la duree totale planifiee correspond aux heures du module.
- * Retourne un message d'avertissement si incoherence > 0.5h.
- */
-export function checkPlannedHours(
-  plannedHours: number,
-  moduleTotalHours: number,
-): { consistent: boolean; message: string } {
-  const diff = Math.abs(plannedHours - moduleTotalHours);
-  if (diff <= 0.5) {
-    return { consistent: true, message: "" };
-  }
-  if (plannedHours < moduleTotalHours) {
-    return {
-      consistent: false,
-      message: `${formatDuration(plannedHours)} planifiees / ${moduleTotalHours} h - il manque ${formatDuration(moduleTotalHours - plannedHours)}`,
-    };
-  }
+export interface PlannedHoursCheck {
+  consistent: boolean;
+  /** Écart en heures : négatif = il manque des heures, positif = trop d'heures. */
+  gap: number;
+  /** Avertissement prêt à afficher, vide si cohérent. */
+  message: string;
+}
+
+/** Tolérance d'arrondi entre heures planifiées et volume annoncé. */
+const TOLERANCE_HOURS = 0.5;
+
+/** Compare les heures planifiées au volume du module ; ne corrige rien, signale seulement. */
+export function checkPlannedHours(planned: number, moduleTotal: number): PlannedHoursCheck {
+  const gap = planned - moduleTotal;
+  if (Math.abs(gap) <= TOLERANCE_HOURS) return { consistent: true, gap, message: "" };
   return {
     consistent: false,
-    message: `${formatDuration(plannedHours)} planifiees / ${moduleTotalHours} h - excess de ${formatDuration(plannedHours - moduleTotalHours)}`,
+    gap,
+    message:
+      gap < 0
+        ? `Il manque ${formatDuration(-gap)} par rapport aux ${moduleTotal} h du module.`
+        : `${formatDuration(gap)} de plus que les ${moduleTotal} h du module.`,
   };
 }

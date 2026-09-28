@@ -8,6 +8,7 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { calculateDuration, formatDuration, formatTimeRange } from "@/lib/modules/course-duration";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
 import { COMPLETION_LABELS, type CourseCompletion } from "@/lib/notebook/notebook";
@@ -78,6 +79,10 @@ export function CourseList({
                   <span className="inline-flex items-center gap-1">
                     <CalendarDays aria-hidden className="size-3.5" />
                     {formatDate(c.session_date)}
+                    {c.start_time ? ` · ${formatTimeRange(c.start_time, c.end_time)}` : ""}
+                    {calculateDuration(c.start_time, c.end_time)
+                      ? ` (${formatDuration(calculateDuration(c.start_time, c.end_time))})`
+                      : ""}
                   </span>
                 ) : null}
               </p>

@@ -86,17 +86,17 @@ const COURSE_TYPES = ["lecture", "workshop", "project", "assessment", "demo", "a
 export const PREP_STATUSES = ["todo", "in_progress", "ready"] as const;
 export type PrepStatus = (typeof PREP_STATUSES)[number];
 
-/** Format d'heure : HH:MM, optionnel. */
+/** Heure `HH:MM` (les secondes de Postgres sont retirées), facultative. */
 const optionalTime = z
   .string()
   .trim()
   .optional()
   .or(z.literal(""))
-  .transform((v) => (v ? v : null))
+  .transform((v) => (v ? v.replace(/^(\d{1,2}:\d{2}):\d{2}$/, "$1") : null))
   .pipe(
     z
       .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format invalide : HH:MM attendu.")
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Format invalide : HH:MM attendu.")
       .nullable(),
   );
 
@@ -106,20 +106,29 @@ export const PREP_STATUS_LABELS: Record<PrepStatus, string> = {
   ready: "Prête",
 };
 
-export const courseSchema = z.object({
-  title: z.string().trim().min(1, "Le titre est obligatoire.").max(200),
-  type: z.enum(COURSE_TYPES).default("lecture"),
-  position: z.coerce.number().int().min(0).max(1000).default(0),
-  sessionDate: optionalDate,
-  startTime: optionalTime,
-  endTime: optionalTime,
-  prepStatus: z.enum(PREP_STATUSES).default("todo"),
-  learningObjectives: z.array(z.string().min(1)).max(30).default([]),
-  animationNotes: z.string().trim().max(4000).optional().or(z.literal("")),
-  assessmentNotes: z.string().trim().max(4000).optional().or(z.literal("")),
-  material: z.string().trim().max(2000).optional().or(z.literal("")),
-  resourceIds: z.array(z.string().uuid()).max(50).default([]),
-});
+export const courseSchema = z
+  .object({
+    title: z.string().trim().min(1, "Le titre est obligatoire.").max(200),
+    type: z.enum(COURSE_TYPES).default("lecture"),
+    position: z.coerce.number().int().min(0).max(1000).default(0),
+    sessionDate: optionalDate,
+    startTime: optionalTime,
+    endTime: optionalTime,
+    prepStatus: z.enum(PREP_STATUSES).default("todo"),
+    learningObjectives: z.array(z.string().min(1)).max(30).default([]),
+    animationNotes: z.string().trim().max(4000).optional().or(z.literal("")),
+    assessmentNotes: z.string().trim().max(4000).optional().or(z.literal("")),
+    material: z.string().trim().max(2000).optional().or(z.literal("")),
+    resourceIds: z.array(z.string().uuid()).max(50).default([]),
+  })
+  .refine((c) => !c.startTime || !c.endTime || c.endTime > c.startTime, {
+    message: "La fin doit être après le début.",
+    path: ["endTime"],
+  })
+  .refine((c) => !c.endTime || c.startTime, {
+    message: "Renseignez aussi l’heure de début.",
+    path: ["startTime"],
+  });
 
 export type CourseInput = z.infer<typeof courseSchema>;
 

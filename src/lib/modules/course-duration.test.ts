@@ -1,125 +1,105 @@
-import {
-  parseTime,
-  calculateDuration,
-  formatDuration,
-  totalPlannedHours,
-  checkPlannedHours,
-} from "./course-duration";
 import { describe, expect, it } from "vitest";
 
+import {
+  calculateDuration,
+  checkPlannedHours,
+  formatDuration,
+  formatTime,
+  formatTimeRange,
+  parseTime,
+  totalPlannedHours,
+} from "./course-duration";
+
 describe("parseTime", () => {
-  it("devrait parser une heure valide", () => {
-    expect(parseTime("10:30")).toBe(10 * 60 + 30);
+  it("lit HH:MM et HH:MM:SS (format Postgres)", () => {
+    expect(parseTime("10:30")).toBe(630);
     expect(parseTime("00:00")).toBe(0);
     expect(parseTime("23:59")).toBe(23 * 60 + 59);
+    expect(parseTime("09:15:00")).toBe(555);
   });
 
-  it("devrait retourner null pour une heure invalide", () => {
-    expect(parseTime(null)).toBeNull();
-    expect(parseTime("")).toBeNull();
-    expect(parseTime("25:00")).toBeNull();
-    expect(parseTime("10:60")).toBeNull();
-    expect(parseTime("invalid")).toBeNull();
+  it("renvoie null pour une heure absente ou invalide", () => {
+    for (const t of [null, undefined, "", "25:00", "10:60", "abc", "10h30"]) {
+      expect(parseTime(t)).toBeNull();
+    }
+  });
+});
+
+describe("formatTime / formatTimeRange", () => {
+  it("retire les secondes de Postgres", () => {
+    expect(formatTime("10:00:00")).toBe("10:00");
+    expect(formatTime(null)).toBe("");
+  });
+
+  it("affiche le créneau, avec ou sans fin", () => {
+    expect(formatTimeRange("10:00:00", "12:00:00")).toBe("10:00–12:00");
+    expect(formatTimeRange("10:00", null)).toBe("10:00");
+    expect(formatTimeRange(null, "12:00")).toBe("");
   });
 });
 
 describe("calculateDuration", () => {
-  it("devrait calculer une duree simple", () => {
+  it("calcule la durée en heures, à la minute près", () => {
     expect(calculateDuration("10:00", "12:00")).toBe(2);
     expect(calculateDuration("14:30", "16:00")).toBe(1.5);
+    expect(calculateDuration("10:00:00", "11:45:00")).toBe(1.75);
+    expect(calculateDuration("10:00", "10:20")).toBeCloseTo(1 / 3, 5);
   });
 
-  it("devrait arrondir a 15 min", () => {
-    // 1h12 = 72 min -> 75 min = 1.25h
-    expect(calculateDuration("10:00", "11:12")).toBe(1.25);
-    // 1h08 = 68 min -> 60 min = 1h
-    expect(calculateDuration("10:00", "11:07")).toBe(1);
-    // 1h17 = 77 min -> 75 min = 1.25h
-    expect(calculateDuration("10:00", "11:17")).toBe(1.25);
-  });
-
-  it("devrait retourner null si start >= end", () => {
+  it("renvoie null si la fin ne suit pas le début ou si une heure manque", () => {
     expect(calculateDuration("12:00", "10:00")).toBeNull();
     expect(calculateDuration("10:00", "10:00")).toBeNull();
-  });
-
-  it("devrait retourner null si heures manquantes", () => {
     expect(calculateDuration(null, "12:00")).toBeNull();
     expect(calculateDuration("10:00", null)).toBeNull();
-    expect(calculateDuration(null, null)).toBeNull();
   });
 });
 
 describe("formatDuration", () => {
-  it("devrait formater des durees en heures", () => {
-    expect(formatDuration(1)).toBe("1 h");
-    expect(formatDuration(2)).toBe("2 h");
+  it.each([
+    [1, "1 h"],
+    [1.5, "1 h 30"],
+    [2.75, "2 h 45"],
+    [0.75, "45 min"],
+    [1 + 5 / 60, "1 h 05"],
+  ])("%s → %s", (hours, label) => {
+    expect(formatDuration(hours)).toBe(label);
   });
 
-  it("devrait formater des durees avec heures et minutes", () => {
-    expect(formatDuration(1.5)).toBe("1 h 30");
-    expect(formatDuration(2.75)).toBe("2 h 45");
-  });
-
-  it("devrait formater des durees en minutes seulement", () => {
-    expect(formatDuration(0.75)).toBe("45 min");
-    expect(formatDuration(0.25)).toBe("15 min");
-  });
-
-  it("devrait retourner vide pour null", () => {
+  it("renvoie une chaîne vide pour null", () => {
     expect(formatDuration(null)).toBe("");
   });
 });
 
 describe("totalPlannedHours", () => {
-  it("devrait sommer les durees valides", () => {
-    const courses = [
-      { start_time: "10:00", end_time: "12:00" },
-      { start_time: "14:00", end_time: "16:00" },
-    ];
-    expect(totalPlannedHours(courses)).toBe(4);
-  });
-
-  it("devrait ignorer les seances sans heures valides", () => {
-    const courses = [
-      { start_time: "10:00", end_time: "12:00" },
-      { start_time: null, end_time: "16:00" },
-      { start_time: "14:00", end_time: null },
-    ];
-    expect(totalPlannedHours(courses)).toBe(2);
-  });
-
-  it("devrait retourner 0 pour une liste vide", () => {
+  it("additionne les créneaux valides et ignore les autres", () => {
+    expect(
+      totalPlannedHours([
+        { start_time: "10:00:00", end_time: "12:00:00" },
+        { start_time: "14:00", end_time: "16:00" },
+        { start_time: null, end_time: "16:00" },
+        { start_time: "14:00", end_time: null },
+        {},
+      ]),
+    ).toBe(4);
     expect(totalPlannedHours([])).toBe(0);
   });
 });
 
 describe("checkPlannedHours", () => {
-  it("devrait etre coherent si difference <= 0.5h", () => {
-    const result = checkPlannedHours(20.5, 21);
-    expect(result.consistent).toBe(true);
-    expect(result.message).toBe("");
+  it("tolère 0,5 h d'écart", () => {
+    expect(checkPlannedHours(20.5, 21)).toEqual({ consistent: true, gap: -0.5, message: "" });
+    expect(checkPlannedHours(21.5, 21).consistent).toBe(true);
   });
 
-  it("devrait detecter un manque d'heures", () => {
-    const result = checkPlannedHours(18, 21);
-    expect(result.consistent).toBe(false);
-    expect(result.message).toBe("18 h planifiees / 21 h - il manque 3 h");
+  it("signale les heures manquantes", () => {
+    const r = checkPlannedHours(18, 21);
+    expect(r.consistent).toBe(false);
+    expect(r.message).toBe("Il manque 3 h par rapport aux 21 h du module.");
   });
 
-  it("devrait detecter un excess d'heures", () => {
-    const result = checkPlannedHours(24, 21);
-    expect(result.consistent).toBe(false);
-    expect(result.message).toBe("24 h planifiees / 21 h - excess de 3 h");
-  });
-
-  it("devrait formater correctement avec des minutes", () => {
-    const result = checkPlannedHours(20.5, 21);
-    expect(result.consistent).toBe(true);
-    expect(result.message).toBe("");
-
-    const result2 = checkPlannedHours(20, 21);
-    expect(result2.consistent).toBe(false);
-    expect(result2.message).toBe("20 h planifiees / 21 h - il manque 1 h");
+  it("signale les heures en trop", () => {
+    const r = checkPlannedHours(24, 21);
+    expect(r.consistent).toBe(false);
+    expect(r.message).toBe("3 h de plus que les 21 h du module.");
   });
 });

@@ -9,10 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatTime } from "@/lib/modules/course-duration";
 import type { CourseWithResources, LinkedResource } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
 import { groupByKind } from "@/lib/resources/kind";
-import { AudienceBadge } from "@/components/resources/resource-badges";
+import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import type { Tables } from "@/types/db";
 
 type Action = (state: CourseFormState, formData: FormData) => Promise<CourseFormState>;
@@ -101,6 +102,30 @@ export function CourseForm({
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="startTime">Début</Label>
+          <Input
+            id="startTime"
+            name="startTime"
+            type="time"
+            defaultValue={formatTime(course?.start_time)}
+            aria-invalid={fe.startTime ? true : undefined}
+            aria-describedby={fe.startTime ? "startTime-error" : undefined}
+          />
+          <FieldError id="startTime" errors={fe.startTime} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="endTime">Fin</Label>
+          <Input
+            id="endTime"
+            name="endTime"
+            type="time"
+            defaultValue={formatTime(course?.end_time)}
+            aria-invalid={fe.endTime ? true : undefined}
+            aria-describedby={fe.endTime ? "endTime-error" : undefined}
+          />
+          <FieldError id="endTime" errors={fe.endTime} />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="prepStatus">Préparation</Label>
           <select
             id="prepStatus"
@@ -158,6 +183,7 @@ export function CourseForm({
                         {r.title}
                       </Label>
                       <AudienceBadge audience={r.audience} />
+                      <StatusBadge status={r.status} />
                     </li>
                   ))}
                 </ul>

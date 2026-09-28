@@ -4,6 +4,8 @@
  * `pedagogical_outline.content`) à partir du module, de ses séances et du profil.
  */
 
+import { formatTimeRange } from "@/lib/modules/course-duration";
+
 export const COURSE_TYPE_LABELS: Record<string, string> = {
   lecture: "Cours théorique",
   workshop: "Atelier / TP",
@@ -18,6 +20,9 @@ export interface OutlineSession {
   title: string;
   typeLabel: string;
   sessionDate: string | null;
+  /** Horaires `HH:MM` (US-60) ; absents des progressions générées avant. */
+  startTime?: string | null;
+  endTime?: string | null;
   objectives: string[];
   animation: string | null;
   assessment: string | null;
@@ -60,6 +65,8 @@ export interface OutlineInput {
     type: string;
     position: number;
     session_date: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
     learning_objectives: string[];
     animation_notes: string | null;
     assessment_notes: string | null;
@@ -79,6 +86,8 @@ export function buildOutlineContent(input: OutlineInput): OutlineContent {
       title: c.title,
       typeLabel: COURSE_TYPE_LABELS[c.type] ?? c.type,
       sessionDate: c.session_date,
+      startTime: c.start_time ? formatTimeRange(c.start_time, null) : null,
+      endTime: c.end_time ? formatTimeRange(c.end_time, null) : null,
       objectives: c.learning_objectives,
       animation: c.animation_notes,
       assessment: c.assessment_notes,

@@ -9,7 +9,9 @@ export async function listCoursesOn(date: string): Promise<TodayCourse[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("id, title, position, session_date, module:module_id(id, name, archived_at)")
+    .select(
+      "id, title, position, session_date, start_time, end_time, module:module_id(id, name, archived_at)",
+    )
     .eq("session_date", date);
   return (data ?? []) as unknown as TodayCourse[];
 }

@@ -1,5 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
+import { calculateDuration, formatDuration } from "@/lib/modules/course-duration";
 import type { OutlineContent } from "@/lib/ynov/outline";
 
 const styles = StyleSheet.create({
@@ -76,8 +77,12 @@ export function OutlineDocument({ content }: { content: OutlineContent }) {
             </Text>
             <Text style={styles.muted}>
               {s.typeLabel}
-              {s.sessionDate ? ` · ${fmt(s.sessionDate)}` : ""} · contenu mis à jour le{" "}
-              {fmt(s.contentLastUpdatedAt)}
+              {s.sessionDate ? ` · ${fmt(s.sessionDate)}` : ""}
+              {s.startTime ? ` · ${s.startTime}${s.endTime ? `–${s.endTime}` : ""}` : ""}
+              {calculateDuration(s.startTime, s.endTime)
+                ? ` (${formatDuration(calculateDuration(s.startTime, s.endTime))})`
+                : ""}{" "}
+              · contenu mis à jour le {fmt(s.contentLastUpdatedAt)}
             </Text>
             <Block title="Objectifs et compétences à acquérir" lines={s.objectives} />
             <Block title="Modalités d’animation" lines={s.animation ? [s.animation] : []} />

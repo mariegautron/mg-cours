@@ -50,17 +50,13 @@ export async function getModuleCourses(moduleId: string): Promise<CourseWithReso
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select(
-      "*, course_resource(resource:resource_id(id, title, kind, audience, status)), start_time, end_time",
-    )
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status))")
     .eq("module_id", moduleId)
     .order("position");
 
   return (data ?? []).map((c) => {
     const { course_resource, ...course } = c as unknown as Tables<"course"> & {
       course_resource: { resource: LinkedResource | null }[];
-      start_time: string | null;
-      end_time: string | null;
     };
     return {
       ...course,
@@ -73,17 +69,13 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select(
-      "*, course_resource(resource:resource_id(id, title, kind, audience, status)), start_time, end_time",
-    )
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status))")
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
 
   const { course_resource, ...course } = data as unknown as Tables<"course"> & {
     course_resource: { resource: LinkedResource | null }[];
-    start_time: string | null;
-    end_time: string | null;
   };
   return {
     ...course,

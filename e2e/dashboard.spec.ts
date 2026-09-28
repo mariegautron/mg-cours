@@ -64,16 +64,19 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleId = page.url().split("/").pop();
 
+  await page.getByRole("tab", { name: /Séances/ }).click();
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill(`Séance du jour ${suffix}`);
   await page.getByLabel("Date", { exact: true }).fill(today);
+  await page.getByLabel("Début").fill("14:00");
+  await page.getByLabel("Fin").fill("16:00");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText(`Séance du jour ${suffix}`).first()).toBeVisible();
 
   await page.goto("/dashboard");
   const card = page.getByRole("region", { name: "Aujourd’hui" });
   const item = card.getByRole("listitem").filter({ hasText: `Séance du jour ${suffix}` });
-  await expect(item.getByText(`Module Jour J ${suffix}`)).toBeVisible();
+  await expect(item.getByText(`14:00–16:00 · Module Jour J ${suffix}`)).toBeVisible();
   await expect(item.getByRole("link", { name: /^Faire cours/ })).toHaveAttribute(
     "href",
     new RegExp(`^/present/modules/${moduleId}/courses/[0-9a-f-]{36}$`),

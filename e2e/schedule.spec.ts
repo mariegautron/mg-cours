@@ -49,6 +49,20 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   for (const n of [1, 2, 3]) await expect(page.getByText(`Séance ${n}`).first()).toBeVisible();
   await expect(page.getByText("À préparer").first()).toBeVisible();
 
+  // US-60 : 3 créneaux de 2 h sur 6 h annoncées → cohérent ; une séance raccourcie → avertissement.
+  await expect(page.getByText(/6 h planifiées \/ 6 h/)).toBeVisible();
+  await expect(page.getByText("À vérifier")).toHaveCount(0);
+  await page.getByRole("link", { name: "Modifier Séance 1" }).click();
+  await expect(page.getByLabel("Début")).toHaveValue("10:00");
+  await page.getByLabel("Fin").fill("09:00");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(page.getByText("La fin doit être après le début.")).toBeVisible();
+  await page.getByLabel("Fin").fill("11:00");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("tab", { name: /Séances/ }).click();
+  await expect(page.getByText(/5 h planifiées \/ 6 h/)).toBeVisible();
+  await expect(page.getByText(/Il manque 1 h par rapport aux 6 h du module/)).toBeVisible();
+
   // Module existant : la numérotation continue.
   await page.goto(`${moduleUrl}/schedule`);
   await page.getByRole("button", { name: "Ajouter une ligne" }).click();

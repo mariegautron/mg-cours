@@ -22,7 +22,11 @@ import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { checkPlannedHours, totalPlannedHours } from "@/lib/modules/course-duration";
+import {
+  checkPlannedHours,
+  formatDuration,
+  totalPlannedHours,
+} from "@/lib/modules/course-duration";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
@@ -166,9 +170,15 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             </h2>
             {courses.length ? (
               <p className="text-muted-foreground text-sm">
-                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""} ·{" "}
-                {plannedHours > 0 ? `${plannedHours} h planifiées` : "0 h planifiée"}
-                {hoursCheck.message ? ` / ${mod.total_hours} h - ${hoursCheck.message}` : ""}
+                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""}
+                {plannedHours > 0
+                  ? ` · ${formatDuration(plannedHours)} planifiées / ${mod.total_hours} h`
+                  : ""}
+              </p>
+            ) : null}
+            {plannedHours > 0 && !hoursCheck.consistent ? (
+              <p role="status" className="text-destructive text-sm">
+                <span className="font-medium">À vérifier :</span> {hoursCheck.message}
               </p>
             ) : null}
             {toBuild > 0 ? (

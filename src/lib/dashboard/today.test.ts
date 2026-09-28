@@ -15,6 +15,8 @@ const course = (
   title: `Séance ${id}`,
   position,
   session_date: date,
+  start_time: null as string | null,
+  end_time: null as string | null,
   module: { id: `m-${module}`, name: module, archived_at: archived },
 });
 
@@ -33,6 +35,18 @@ describe("todaySessions", () => {
       "2026-10-12",
     );
     expect(list.map((c) => c.id)).toEqual(["a", "b1", "b2"]);
+  });
+
+  it("classe d'abord par heure de début, les séances sans horaire à la fin", () => {
+    const list = todaySessions(
+      [
+        course("sans", "2026-10-12", "Accessibilité"),
+        { ...course("apres", "2026-10-12", "Accessibilité", 2), start_time: "14:00:00" },
+        { ...course("matin", "2026-10-12", "Scrum", 1), start_time: "09:00:00" },
+      ],
+      "2026-10-12",
+    );
+    expect(list.map((c) => c.id)).toEqual(["matin", "apres", "sans"]);
   });
 
   it("utilise la date de Paris : 23 h 30 UTC la veille = déjà le jour J", () => {

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listCoursesOn } from "@/lib/dashboard/queries";
 import { todaySessions } from "@/lib/dashboard/today";
+import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
@@ -110,7 +111,12 @@ export default async function DashboardPage() {
                 className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
               >
                 <div>
-                  <p className="text-muted-foreground text-sm">{c.module.name}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {formatTimeRange(c.start_time, c.end_time)
+                      ? `${formatTimeRange(c.start_time, c.end_time)} · `
+                      : ""}
+                    {c.module.name}
+                  </p>
                   <p className="font-heading text-lg font-semibold">{c.title}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">

@@ -64,3 +64,17 @@ describe("buildOutlineContent", () => {
     });
   });
 });
+
+describe("buildOutlineContent — horaires (US-60)", () => {
+  it("reprend début et fin de chaque séance, sans les secondes de Postgres", () => {
+    const c = buildOutlineContent({
+      ...base,
+      courses: [
+        { ...course("Cadrage", 1), start_time: "10:00:00", end_time: "12:00:00" },
+        course("Sans horaire", 2),
+      ],
+    });
+    expect(c.sessions[0]).toMatchObject({ startTime: "10:00", endTime: "12:00" });
+    expect(c.sessions[1]).toMatchObject({ startTime: null, endTime: null });
+  });
+});
