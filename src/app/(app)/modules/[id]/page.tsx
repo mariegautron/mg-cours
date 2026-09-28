@@ -37,12 +37,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 const TRAME_MESSAGE: Record<TrameAlertLevel, (days: number | null) => string> = {
-  sent: () => "Progression pedagogique envoyee.",
-  overdue: (d) => `Echeance depassee depuis ${Math.abs(d ?? 0)} jour(s) - a envoyer sans attendre.`,
-  urgent: (d) => `Echeance dans ${d} jour(s) (J-15/J-7) - a envoyer rapidement.`,
-  warning: (d) => `Echeance dans ${d} jour(s) - pensez a la preparer.`,
-  ok: (d) => `Echeance dans ${d} jour(s).`,
-  unknown: () => "Renseignez la date de la 1re seance pour calculer l'echeance.",
+  sent: () => "Progression pédagogique envoyée.",
+  overdue: (d) => `Échéance dépassée depuis ${Math.abs(d ?? 0)} jour(s) — à envoyer sans attendre.`,
+  urgent: (d) => `Échéance dans ${d} jour(s) (J-15/J-7) — à envoyer rapidement.`,
+  warning: (d) => `Échéance dans ${d} jour(s) — pensez à la préparer.`,
+  ok: (d) => `Échéance dans ${d} jour(s).`,
+  unknown: () => "Renseignez la date de la 1re séance pour calculer l’échéance.",
 };
 
 const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outline" | "secondary"> = {
@@ -79,18 +79,18 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     <TabsContent value="progression" className="space-y-4">
       <section aria-labelledby="trame">
         <h2 id="trame" className="mb-1 scroll-mt-16 text-lg font-medium">
-          Progression pedagogique
+          Progression pédagogique
         </h2>
         {depositedOutline ? (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">
-              Progression envoyee (PDF depose le{" "}
+              Progression envoyée (PDF déposé le{" "}
               {new Date(depositedOutline.created_at).toLocaleDateString("fr-FR")})
             </Badge>
             <Button asChild size="sm" variant="secondary">
               <a href={`/api/modules/${mod.id}/documents/${depositedOutline.id}`}>
                 <Download aria-hidden />
-                Telecharger
+                Télécharger
               </a>
             </Button>
             <Button asChild size="sm" variant="secondary">
@@ -101,7 +101,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               >
                 <ExternalLink aria-hidden />
                 Voir
-                <span className="sr-only"> - s&apos;ouvre dans un nouvel onglet</span>
+                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
               </a>
             </Button>
           </div>
@@ -112,24 +112,24 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             </Badge>
             {trame.dueDate ? (
               <span className="text-muted-foreground text-sm">
-                Echeance : {trame.dueDate.toLocaleDateString("fr-FR")}
+                Échéance : {trame.dueDate.toLocaleDateString("fr-FR")}
               </span>
             ) : null}
           </div>
         )}
         {outline && depositedOutline ? (
           <p className="text-muted-foreground mt-2 text-sm">
-            Progression generee depuis les seances le{" "}
-            {new Date(outline.generated_at).toLocaleDateString("fr-FR")} (brouillon, non envoyee).
+            Progression générée depuis les séances le{" "}
+            {new Date(outline.generated_at).toLocaleDateString("fr-FR")} (brouillon, non envoyée).
           </p>
         ) : outline ? (
           <p className="text-muted-foreground mt-2 text-sm">
             Genere le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
             {outline.sent_at
-              ? ` - envoyee le ${new Date(outline.sent_at).toLocaleDateString("fr-FR")}`
+              ? ` · envoyée le ${new Date(outline.sent_at).toLocaleDateString("fr-FR")}`
               : ""}
             {outline.validated_at
-              ? ` - validee le ${new Date(outline.validated_at).toLocaleDateString("fr-FR")}`
+              ? ` · validée le ${new Date(outline.validated_at).toLocaleDateString("fr-FR")}`
               : ""}
             .
           </p>
@@ -146,18 +146,18 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     </TabsContent>
   );
 
-  // Onglet Seances
+  // Onglet Séances
   const coursesTab = (
     <TabsContent value="courses" className="space-y-4">
       <section aria-labelledby="courses">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 id="courses" className="scroll-mt-16 text-lg font-medium">
-              Seances ({courses.length})
+              Séances ({courses.length})
             </h2>
             {courses.length ? (
               <p className="text-muted-foreground text-sm">
-                {readyCourses}/{courses.length} prete{readyCourses > 1 ? "s" : ""} - {plannedHours > 0 ? `${plannedHours} h planifiees` : "0 h planifiee"}
+                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""} · {plannedHours > 0 ? `${plannedHours} h planifiées` : "0 h planifiée"}
                 {hoursCheck.message ? ` / ${mod.total_hours} h - ${hoursCheck.message}` : ""}
               </p>
             ) : null}
@@ -165,7 +165,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           <Button asChild size="sm">
             <Link href={`/modules/${mod.id}/courses/new`}>
               <Plus aria-hidden />
-              Ajouter une seance
+              Ajouter une séance
             </Link>
           </Button>
         </div>
@@ -182,7 +182,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             <Button asChild size="sm" variant="secondary">
               <a href={`/api/modules/${mod.id}/courses?format=zip`}>
                 <Download aria-hidden />
-                Un PDF par seance (zip)
+                Un PDF par séance (zip)
               </a>
             </Button>
           </div>
@@ -191,7 +191,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     </TabsContent>
   );
 
-  // Onglet Groupes + Evaluations
+  // Onglet Groupes et évaluations
   const groupsEvaluationsTab = (
     <TabsContent value="groups-evaluations" className="space-y-4">
       <section aria-labelledby="groups">
@@ -208,8 +208,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
         </div>
         {groups.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-            Aucun groupe pour l&apos;instant. Creez un groupe (TP, TD, projet) pour y rattacher les
-            etudiants et saisir les notes.
+            Aucun groupe pour l’instant. Créez un groupe (TP, TD, projet) pour y rattacher les
+            étudiant·es et saisir les notes.
           </p>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -221,7 +221,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
                 >
                   <p className="font-medium">{g.name}</p>
                   <p className="text-muted-foreground text-sm">
-                    {g.members.length} etudiant{g.members.length > 1 ? "s" : ""}
+                    {g.members.length} étudiant·e{g.members.length > 1 ? "s" : ""}
                   </p>
                 </Link>
               </li>
@@ -234,11 +234,11 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 id="assessments" className="scroll-mt-16 text-lg font-medium">
-              Evaluations
+              Évaluations
             </h2>
             <p className="text-muted-foreground text-sm">
-              {assessments.length} evaluation{assessments.length > 1 ? "s" : ""}
-              {assessments.length ? ` (${gradedAssessments} avec des notes saisies)` : ""} -{" "}
+              {assessments.length} évaluation{assessments.length > 1 ? "s" : ""}
+              {assessments.length ? ` (${gradedAssessments} avec des notes saisies)` : ""} ·{" "}
               {notes.enteredTotal}/{notes.requirement.total} note
               {notes.requirement.total > 1 ? "s" : ""} requise
               {notes.requirement.total > 1 ? "s" : ""} obtenue
@@ -246,7 +246,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             </p>
           </div>
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/modules/${mod.id}/assessments`}>Voir les evaluations</Link>
+            <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
           </Button>
         </div>
       </section>
@@ -266,7 +266,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               <a href={mod.slides_url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink aria-hidden />
                 Ouvrir les slides (Figma)
-                <span className="sr-only"> - s&apos;ouvre dans un nouvel onglet</span>
+                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
               </a>
             </Button>
           </p>
@@ -315,14 +315,14 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   return (
     <div className="max-w-3xl space-y-8">
       <div className="space-y-2">
-        <nav aria-label="Fil d'Ariane" className="text-muted-foreground text-sm">
+        <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
           <ol className="flex flex-wrap items-center gap-1">
             <li>
               <Link
                 href={mod.archived_at ? "/modules?filter=archived" : "/modules"}
                 className="hover:text-foreground underline-offset-2 hover:underline"
               >
-                {mod.archived_at ? "Modules archives" : "Modules"}
+                {mod.archived_at ? "Modules archivés" : "Modules"}
               </Link>
             </li>
             <li aria-hidden>
@@ -340,15 +340,15 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           <div>
             <h1 className="text-2xl font-semibold">{mod.name}</h1>
             <p className="text-muted-foreground">
-              {mod.school?.name ?? "Ecole non renseignee"} - {mod.level ?? "-"} - {mod.year}
-              {mod.ycode ? ` - YCODE ${mod.ycode}` : ""}
+              {mod.school?.name ?? "École non renseignée"} · {mod.level ?? "—"} · {mod.year}
+              {mod.ycode ? ` · YCODE ${mod.ycode}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
               <Link href={`/present/modules/${mod.id}`}>
                 <Presentation aria-hidden />
-                Presenter le module
+                Présenter le module
               </Link>
             </Button>
             <Button asChild variant="secondary">
@@ -368,10 +368,10 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
         >
           <div>
             <h2 id="upcoming" className="text-primary text-sm font-medium">
-              {upcoming.isToday ? "Seance du jour" : "Prochaine seance"}
+              {upcoming.isToday ? "Séance du jour" : "Prochaine séance"}
             </h2>
             <p className="font-heading text-lg font-semibold">
-              Seance {upcoming.number} - {upcoming.course.title}
+              Séance {upcoming.number} — {upcoming.course.title}
             </p>
             {!upcoming.isToday && upcoming.course.session_date ? (
               <p className="text-muted-foreground text-sm">
@@ -399,7 +399,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           {notes.requirement.total > 1 ? "s" : ""} ({notes.requirement.group} groupe
           {notes.requirement.group > 1 ? "s" : ""} + {notes.requirement.individual} individuelle
           {notes.requirement.individual > 1 ? "s" : ""})
-          {!notes.requirement.exact ? " - hors palier, a confirmer" : ""}
+          {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
         <Badge variant="outline">{ICEBERG_LABELS[mod.iceberg_state]}</Badge>
       </div>
@@ -409,8 +409,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           <p className="flex items-start gap-2 text-sm">
             <Archive aria-hidden className="mt-0.5 size-4 shrink-0" />
             <span>
-              <strong>Module archive</strong> le{" "}
-              {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il n&apos;apparait plus dans le
+              <strong>Module archivé</strong> le{" "}
+              {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il n’apparaît plus dans le
               tableau de bord ni dans la facturation.
             </span>
           </p>
@@ -424,10 +424,10 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             Progression
           </TabsTrigger>
           <TabsTrigger value="courses" className="text-sm">
-            Seances ({courses.length})
+              Séances ({courses.length})
           </TabsTrigger>
           <TabsTrigger value="groups-evaluations" className="text-sm">
-            Groupes ({groups.length}) & Evaluations
+            Groupes ({groups.length}) et évaluations
           </TabsTrigger>
           <TabsTrigger value="admin" className="text-sm">
             Administratif
