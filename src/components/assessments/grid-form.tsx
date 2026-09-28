@@ -23,6 +23,12 @@ import type { GridWithCriteria } from "@/lib/assessments/queries";
 
 type Action = (state: GridFormState, formData: FormData) => Promise<GridFormState>;
 
+interface LevelRow {
+  key: string;
+  points: string;
+  description: string;
+}
+
 interface Row {
   /** Clé stable pour React et le focus, distincte de `id` (un nouveau critère n'a pas d'id). */
   key: string;
@@ -30,10 +36,17 @@ interface Row {
   label: string;
   weight: string;
   description: string;
+  levels: LevelRow[];
+}
+
+/** Barème d'un critère : palier le plus haut s'il y a des paliers, sinon les points saisis. */
+function criterionPoints(row: Row): number {
+  if (row.levels.length) return Math.max(0, ...row.levels.map((l) => Number(l.points) || 0));
+  return Number(row.weight) || 0;
 }
 
 function emptyRow(): Row {
-  return { key: crypto.randomUUID(), label: "", weight: "", description: "" };
+  return { key: crypto.randomUUID(), label: "", weight: "", description: "", levels: [] };
 }
 
 export function GridForm({ action, grid }: { action: Action; grid?: GridWithCriteria }) {
@@ -53,6 +66,11 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
           label: c.label,
           weight: String(c.weight),
           description: c.description ?? "",
+          levels: c.levels.map((l) => ({
+            key: l.id,
+            points: String(l.points),
+            description: l.description,
+          })),
         }))
       : [emptyRow()],
   );
@@ -72,7 +90,7 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
     focusKeyRef.current = null;
   }, [rows]);
 
-  const total = rows.reduce((sum, r) => sum + (Number(r.weight) || 0), 0);
+  const total = rows.reduce((sum, r) => sum + criterionPoints(r), 0);
 
   function updateRow(key: string, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -119,8 +137,12 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
         const payload = rows.map((r) => ({
           id: r.id,
           label: r.label.trim(),
-          weight: Number(r.weight),
+          weight: r.levels.length ? criterionPoints(r) : Number(r.weight),
           description: r.description.trim(),
+          levels: r.levels.map((l) => ({
+            points: Number(l.points),
+            description: l.description.trim(),
+          })),
         }));
         const hidden = e.currentTarget.elements.namedItem("criteriaJson") as HTMLInputElement;
         hidden.value = JSON.stringify(payload);
@@ -165,6 +187,7 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
               onRemove={() => removeRow(row.key)}
               onMoveUp={() => move(row.key, -1)}
               onMoveDown={() => move(row.key, 1)}
+              announce={setAnnouncement}
             />
           ))}
         </ul>
@@ -225,6 +248,7 @@ function CriterionRow({
   onRemove,
   onMoveUp,
   onMoveDown,
+  announce,
 }: {
   row: Row;
   index: number;
@@ -233,8 +257,39 @@ function CriterionRow({
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  announce: (message: string) => void;
 }) {
   const uid = useId();
+  const focusLevelRef = useRef<string | null>(null);
+  const hasLevels = row.levels.length > 0;
+
+  useEffect(() => {
+    if (!focusLevelRef.current) return;
+    document.getElementById(`level-points-${focusLevelRef.current}`)?.focus();
+    focusLevelRef.current = null;
+  }, [row.levels]);
+
+  function addLevel() {
+    const level: LevelRow = { key: crypto.randomUUID(), points: "", description: "" };
+    focusLevelRef.current = level.key;
+    onChange({ levels: [...row.levels, level] });
+    announce(`Palier ajouté au critère ${index + 1}.`);
+  }
+
+  function updateLevel(key: string, patch: Partial<LevelRow>) {
+    onChange({ levels: row.levels.map((l) => (l.key === key ? { ...l, ...patch } : l)) });
+  }
+
+  function removeLevel(key: string) {
+    const position = row.levels.findIndex((l) => l.key === key);
+    const remaining = row.levels.filter((l) => l.key !== key);
+    const next = remaining[position] ?? remaining[position - 1];
+    // Sans palier restant, le focus revient sur le bouton d'ajout.
+    if (next) focusLevelRef.current = next.key;
+    else document.getElementById(`${uid}-add-level`)?.focus();
+    onChange({ levels: remaining });
+    announce(`Palier ${position + 1} du critère ${index + 1} supprimé.`);
+  }
 
   return (
     <li className="space-y-2 rounded-lg border p-3">
@@ -255,8 +310,10 @@ function CriterionRow({
             type="number"
             min={0.5}
             step="0.5"
-            value={row.weight}
+            value={hasLevels ? String(criterionPoints(row)) : row.weight}
             onChange={(e) => onChange({ weight: e.target.value })}
+            readOnly={hasLevels}
+            aria-describedby={hasLevels ? `${uid}-weight-hint` : undefined}
             required
           />
         </div>
@@ -292,6 +349,72 @@ function CriterionRow({
           </Button>
         </div>
       </div>
+      {hasLevels ? (
+        <p id={`${uid}-weight-hint`} className="text-muted-foreground text-sm">
+          Points = palier le plus haut.
+        </p>
+      ) : null}
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Paliers du critère {index + 1}</legend>
+        {hasLevels ? (
+          <ul className="space-y-2">
+            {row.levels.map((level, j) => (
+              <li key={level.key} className="flex flex-wrap items-end gap-2">
+                <div className="w-24 space-y-1">
+                  <Label htmlFor={`level-points-${level.key}`}>
+                    Valeur du palier {j + 1} (critère {index + 1})
+                  </Label>
+                  <Input
+                    id={`level-points-${level.key}`}
+                    type="number"
+                    min={0}
+                    step="0.5"
+                    value={level.points}
+                    onChange={(e) => updateLevel(level.key, { points: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="min-w-48 flex-1 space-y-1">
+                  <Label htmlFor={`level-description-${level.key}`}>
+                    Description du palier {j + 1} (critère {index + 1})
+                  </Label>
+                  <Textarea
+                    id={`level-description-${level.key}`}
+                    rows={2}
+                    maxLength={2000}
+                    value={level.description}
+                    onChange={(e) => updateLevel(level.key, { description: e.target.value })}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => removeLevel(level.key)}
+                  aria-label={`Supprimer le palier ${j + 1} du critère ${index + 1}`}
+                >
+                  <Trash2 aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Sans palier, les points se saisissent librement à la correction.
+          </p>
+        )}
+        <Button
+          id={`${uid}-add-level`}
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={addLevel}
+        >
+          <Plus aria-hidden />
+          Ajouter un palier
+          <span className="sr-only"> au critère {index + 1}</span>
+        </Button>
+      </fieldset>
       <details>
         <summary className="text-muted-foreground cursor-pointer text-sm">
           Description {row.description ? "" : "(facultative)"}

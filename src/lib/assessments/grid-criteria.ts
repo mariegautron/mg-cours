@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { levelsMax, levelsSchema, sortLevels, type LevelInput } from "@/lib/assessments/levels";
+
 export interface CriterionInput {
   /** Absent (nouveau critère) ou identifiant existant. Un identifiant d'une autre grille est ignoré
    * (traité comme une création) : voir `diffCriteria`. */
@@ -7,20 +9,32 @@ export interface CriterionInput {
   label: string;
   weight: number;
   description: string;
+  /** Paliers (points + description). Vide : saisie numérique libre. Avec paliers, `weight` = palier le plus haut. */
+  levels?: LevelInput[];
 }
 
 export const criteriaInputSchema = z
   .array(
-    z.object({
-      id: z.string().uuid().optional(),
-      label: z.string().trim().min(1, "Libellé manquant.").max(200),
-      weight: z.number().positive("Points invalides.").max(1000),
-      description: z
-        .string()
-        .trim()
-        .max(4000, "Description trop longue (4 000 caractères max).")
-        .default(""),
-    }),
+    z
+      .object({
+        id: z.string().uuid().optional(),
+        label: z.string().trim().min(1, "Libellé manquant.").max(200),
+        weight: z.number().positive("Points invalides.").max(1000),
+        description: z
+          .string()
+          .trim()
+          .max(4000, "Description trop longue (4 000 caractères max).")
+          .default(""),
+        levels: levelsSchema.default([]),
+      })
+      .transform((c) => {
+        const max = levelsMax(c.levels);
+        return {
+          ...c,
+          weight: max ?? c.weight,
+          levels: sortLevels(c.levels),
+        };
+      }),
   )
   .min(1, "Ajoutez au moins un critère.");
 
@@ -45,13 +59,20 @@ export interface ExistingCriterion {
 }
 
 export interface CriteriaDiff {
-  toInsert: { label: string; weight: number; description: string | null; position: number }[];
+  toInsert: {
+    label: string;
+    weight: number;
+    description: string | null;
+    position: number;
+    levels: LevelInput[];
+  }[];
   toUpdate: {
     id: string;
     label: string;
     weight: number;
     description: string | null;
     position: number;
+    levels: LevelInput[];
   }[];
   /** Identifiants de critères existants absents de la liste soumise. */
   toDelete: string[];
@@ -73,11 +94,12 @@ export function diffCriteria(
 
   submitted.forEach((c, position) => {
     const description = c.description || null;
+    const levels = c.levels ?? [];
     if (c.id && existingIds.has(c.id)) {
       matchedIds.add(c.id);
-      toUpdate.push({ id: c.id, label: c.label, weight: c.weight, description, position });
+      toUpdate.push({ id: c.id, label: c.label, weight: c.weight, description, position, levels });
     } else {
-      toInsert.push({ label: c.label, weight: c.weight, description, position });
+      toInsert.push({ label: c.label, weight: c.weight, description, position, levels });
     }
   });
 

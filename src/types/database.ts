@@ -273,6 +273,47 @@ export type Database = {
           },
         ]
       }
+      criterion_level: {
+        Row: {
+          created_at: string
+          description: string
+          grid_criterion_id: string
+          id: string
+          owner_id: string
+          points: number
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          grid_criterion_id: string
+          id?: string
+          owner_id?: string
+          points: number
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          grid_criterion_id?: string
+          id?: string
+          owner_id?: string
+          points?: number
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "criterion_level_grid_criterion_id_fkey"
+            columns: ["grid_criterion_id"]
+            isOneToOne: false
+            referencedRelation: "grid_criterion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grade: {
         Row: {
           assessment_id: string
@@ -698,6 +739,48 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_resource: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          owner_id: string
+          resource_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          resource_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          resource_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_resource_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_resource_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource"
             referencedColumns: ["id"]
           },
         ]

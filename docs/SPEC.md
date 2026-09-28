@@ -307,6 +307,13 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
 - Grille réutilisable : nom, description, éditeur de liste de critères (libellé, points,
   description repliable pour les niveaux de notation, ex. « 6 pts : excellent ») ; barème = somme
   des points ; réordonnancement par boutons (haut/bas, clavier), ajout, suppression.
+- **Paliers par critère (US-81)** : chaque critère peut avoir ses propres paliers (points +
+  description, de 1 à 20, ex. 6/4/2/0 ou 2/1/0), ajoutés ou supprimés dans l'éditeur (focus et
+  annonce vocale gérés). Le barème du critère est alors le palier le plus haut (champ « Points » en
+  lecture seule). Sans palier, la saisie numérique libre reste inchangée. Les paliers se
+  réécrivent à chaque enregistrement : `grade.scores` stocke des points, jamais un identifiant de
+  palier, donc aucune saisie n'est perdue. Descriptions visibles sur `/assessments/grids`.
+  Logique pure : `src/lib/assessments/levels.ts` ; e2e : `e2e/grid-levels.spec.ts`.
 - Modifier une grille **conserve l'identifiant** de chaque critère inchangé (mise à jour, pas
   recréation) : les descriptions ne sont pas perdues et le détail des notes déjà saisies
   (`grade.scores`, rangé par identifiant de critère) reste rattaché.

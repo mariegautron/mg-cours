@@ -9,19 +9,38 @@ import {
 } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
+export type CriterionWithLevels = Tables<"grid_criterion"> & {
+  /** Paliers du plus haut au plus bas (vide : saisie numérique libre). */
+  levels: Tables<"criterion_level">[];
+};
+
 export interface GridWithCriteria extends Tables<"grading_grid"> {
-  criteria: Tables<"grid_criterion">[];
+  criteria: CriterionWithLevels[];
+}
+
+type RawCriterion = Tables<"grid_criterion"> & { criterion_level: Tables<"criterion_level">[] };
+
+function toCriteria(raw: RawCriterion[]): CriterionWithLevels[] {
+  return raw
+    .map(({ criterion_level, ...c }) => ({
+      ...c,
+      levels: [...criterion_level].sort((a, b) => b.points - a.points),
+    }))
+    .sort((a, b) => a.position - b.position);
 }
 
 export async function listGrids(): Promise<GridWithCriteria[]> {
   const supabase = await createClient();
-  const { data } = await supabase.from("grading_grid").select("*, grid_criterion(*)").order("name");
+  const { data } = await supabase
+    .from("grading_grid")
+    .select("*, grid_criterion(*, criterion_level(*))")
+    .order("name");
 
   return (data ?? []).map((g) => {
     const { grid_criterion, ...grid } = g as unknown as Tables<"grading_grid"> & {
-      grid_criterion: Tables<"grid_criterion">[];
+      grid_criterion: RawCriterion[];
     };
-    return { ...grid, criteria: grid_criterion.sort((a, b) => a.position - b.position) };
+    return { ...grid, criteria: toCriteria(grid_criterion) };
   });
 }
 
@@ -29,15 +48,15 @@ export async function getGrid(id: string): Promise<GridWithCriteria | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("grading_grid")
-    .select("*, grid_criterion(*)")
+    .select("*, grid_criterion(*, criterion_level(*))")
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
 
   const { grid_criterion, ...grid } = data as unknown as Tables<"grading_grid"> & {
-    grid_criterion: Tables<"grid_criterion">[];
+    grid_criterion: RawCriterion[];
   };
-  return { ...grid, criteria: grid_criterion.sort((a, b) => a.position - b.position) };
+  return { ...grid, criteria: toCriteria(grid_criterion) };
 }
 
 export interface CommentFilters {
@@ -184,7 +203,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
   const { data } = await supabase
     .from("assessment")
     .select(
-      "*, assessment_group(student_group:student_group_id(*, group_member(student:student_id(*)))), grading_grid:grading_grid_id(*, grid_criterion(*))",
+      "*, assessment_group(student_group:student_group_id(*, group_member(student:student_id(*)))), grading_grid:grading_grid_id(*, grid_criterion(*, criterion_level(*)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -196,7 +215,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
         | (Tables<"student_group"> & { group_member: { student: Tables<"student"> | null }[] })
         | null;
     }[];
-    grading_grid: (Tables<"grading_grid"> & { grid_criterion: Tables<"grid_criterion">[] }) | null;
+    grading_grid: (Tables<"grading_grid"> & { grid_criterion: RawCriterion[] }) | null;
   };
 
   const groups = assessment_group
@@ -211,7 +230,7 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
   const grading_grid = raw.grading_grid
     ? {
         ...raw.grading_grid,
-        criteria: raw.grading_grid.grid_criterion.sort((a, b) => a.position - b.position),
+        criteria: toCriteria(raw.grading_grid.grid_criterion),
       }
     : null;
 

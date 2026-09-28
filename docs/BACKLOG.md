@@ -224,6 +224,21 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-59  | Planning à la création du module : saisie en tableau ou collage, aperçu, séances vides numérotées « Séance 1…N » (« À préparer »), 1re séance → J-15 ; possible sur un module existant | ✅     |
 | US-57  | Ressource « à construire » : `resource.status` (`progress` / `ready`) + `intent_note`, création rapide, filtre sur `/resources`, compteur sur le module ; `studentFacing()` exclut `progress` (projection, PDF cours) | ✅     |
 
+## E13 — Évaluations, lot A « grilles et correction » (US-81 à US-87)
+
+Source : page Notion « MG COURS — Audit UX… », section « Chantier Évaluations ». Lots B (US-88 à US-93) et
+C (US-94 à US-100) : non commencés.
+
+| US     | Contenu                                                                                                                                                                      | Statut |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-81  | Paliers par critère : `criterion_level` (points + description, nombre libre : 6/4/2/0, 8/6/4/2/0, 2/1/0…), barème du critère = palier le plus haut, éditeur (ajout / suppression), affichage sur `/assessments/grids` | ✅     |
+| US-82  | Axes avec sous-totaux, référence libre par critère, bonus hors barème, critère « validé d'office » ; total ramené sur 20 puis plafonné à 20                                    | ⏳     |
+| US-83  | Noter par palier : un clic attribue les points et propose la description comme base du commentaire ; total et sous-totaux en direct                                            | ⏳     |
+| US-84  | Commentaires réutilisables : enregistrer une sélection de texte, rattachée à un critère et à une matière, insertion en un clic, plus utilisées d'abord                         | ⏳     |
+| US-85  | Commentaire par critère + « Points forts » + « Progrès » + commentaire libre, repris dans le PDF et l'e-mail de résultats ; note de groupe identique pour tous les membres      | ⏳     |
+| US-86  | Correction sans perte en une page : enregistrement automatique, « 12/30 corrigées », avertissement avant de quitter, navigation clavier, observations du carnet visibles       | ⏳     |
+| US-87  | Absences : présent·e / absent·e non prévenu·e (0 auto) / excusé·e (hors moyenne) ; 0 individuel dans une note de groupe ; pondération individuelle justifiée                   | ⏳     |
+
 ## Vision suivante (validée 26/09)
 
 Partir des **attendus de l'école** déposés sur le module pour **construire les cours en piochant** dans les

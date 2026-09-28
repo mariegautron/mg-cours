@@ -69,10 +69,20 @@ export default async function GridsPage() {
                   <DeleteGridButton id={g.id} />
                 </div>
               </div>
-              <ul className="text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <ul className="text-muted-foreground mt-2 space-y-2 text-sm">
                 {g.criteria.map((c) => (
                   <li key={c.id}>
                     {c.label} ({c.weight})
+                    {c.levels.length ? (
+                      <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                        {c.levels.map((l) => (
+                          <li key={l.id}>
+                            <span className="text-foreground font-medium">{l.points} pt</span>
+                            {l.description ? ` — ${l.description}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 ))}
               </ul>

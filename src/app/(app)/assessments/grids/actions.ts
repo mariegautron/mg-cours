@@ -9,6 +9,7 @@ import {
   type CriterionInput,
   type ExistingCriterion,
 } from "@/lib/assessments/grid-criteria";
+import type { LevelInput } from "@/lib/assessments/levels";
 import { readGridForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,6 +30,37 @@ function validateCriteria(raw: string): { criteria: CriterionInput[] } | { error
   return readCriteriaInput(raw);
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Remplace les paliers des critères donnés. Les notes (`grade.scores`) stockent des points, pas des
+ * identifiants de palier : réécrire les paliers ne perd donc aucune saisie.
+ */
+async function replaceLevels(
+  supabase: Supabase,
+  levelsByCriterion: Map<string, LevelInput[]>,
+): Promise<boolean> {
+  const ids = [...levelsByCriterion.keys()];
+  if (ids.length === 0) return true;
+  const { error: deleteError } = await supabase
+    .from("criterion_level")
+    .delete()
+    .in("grid_criterion_id", ids);
+  if (deleteError) return false;
+
+  const rows = ids.flatMap((id) =>
+    (levelsByCriterion.get(id) ?? []).map((l, position) => ({
+      grid_criterion_id: id,
+      points: l.points,
+      description: l.description,
+      position,
+    })),
+  );
+  if (rows.length === 0) return true;
+  const { error } = await supabase.from("criterion_level").insert(rows);
+  return !error;
+}
+
 export async function createGrid(_prev: GridFormState, formData: FormData): Promise<GridFormState> {
   const parsed = readGridForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
@@ -44,16 +76,24 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
     .single();
   if (error || !data) return { error: "Enregistrement impossible." };
 
-  const { error: criteriaError } = await supabase.from("grid_criterion").insert(
-    validated.criteria.map((c, i) => ({
-      grading_grid_id: data.id,
-      label: c.label,
-      weight: c.weight,
-      description: c.description || null,
-      position: i,
-    })),
+  const { data: created, error: criteriaError } = await supabase
+    .from("grid_criterion")
+    .insert(
+      validated.criteria.map((c, i) => ({
+        grading_grid_id: data.id,
+        label: c.label,
+        weight: c.weight,
+        description: c.description || null,
+        position: i,
+      })),
+    )
+    .select("id, position");
+  if (criteriaError || !created) return { error: "Enregistrement impossible." };
+
+  const levels = new Map(
+    created.map((row) => [row.id, validated.criteria[row.position].levels ?? []]),
   );
-  if (criteriaError) return { error: "Enregistrement impossible." };
+  if (!(await replaceLevels(supabase, levels))) return { error: "Enregistrement impossible." };
 
   revalidatePath("/assessments/grids");
   redirect("/assessments/grids");
@@ -153,7 +193,10 @@ export async function updateGrid(
     .eq("id", id);
   if (gridError) return { error: "Enregistrement impossible." };
 
+  const levelsByCriterion = new Map<string, LevelInput[]>();
+
   for (const c of diff.toUpdate) {
+    levelsByCriterion.set(c.id, c.levels);
     const { error } = await supabase
       .from("grid_criterion")
       .update({
@@ -167,16 +210,27 @@ export async function updateGrid(
   }
 
   if (diff.toInsert.length) {
-    const { error } = await supabase.from("grid_criterion").insert(
-      diff.toInsert.map((c) => ({
-        grading_grid_id: id,
-        label: c.label,
-        weight: c.weight,
-        description: c.description,
-        position: c.position,
-      })),
-    );
-    if (error) return { error: "Enregistrement impossible." };
+    const { data: inserted, error } = await supabase
+      .from("grid_criterion")
+      .insert(
+        diff.toInsert.map((c) => ({
+          grading_grid_id: id,
+          label: c.label,
+          weight: c.weight,
+          description: c.description,
+          position: c.position,
+        })),
+      )
+      .select("id, position");
+    if (error || !inserted) return { error: "Enregistrement impossible." };
+    for (const row of inserted) {
+      const source = diff.toInsert.find((c) => c.position === row.position);
+      levelsByCriterion.set(row.id, source?.levels ?? []);
+    }
+  }
+
+  if (!(await replaceLevels(supabase, levelsByCriterion))) {
+    return { error: "Enregistrement impossible." };
   }
 
   if (diff.toDelete.length) {
