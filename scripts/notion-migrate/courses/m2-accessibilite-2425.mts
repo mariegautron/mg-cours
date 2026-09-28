@@ -572,15 +572,16 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       is_group_grade: true,
       date: DAYS[3].date,
       grading_grid_id: projectGrid.gridId,
-      max_score: 30,
+      max_score: 20,
     },
-    `Projet fil rouge — sujet ${projectSubject.body.length} car., barème /30, ${groupNumbers.length} groupes`,
+    `Projet fil rouge — sujet ${projectSubject.body.length} car., barème /20, ${groupNumbers.length} groupes`,
     groupNumbers,
   );
   for (const suivi of pagesIn("Suivi corrections")) {
     const n = Number(/^Projet groupe (\d+)$/.exec(suivi.title)?.[1]);
     if (!n) continue;
-    const value = parseScore(suivi.properties["Note /30"]);
+    const raw30 = parseScore(suivi.properties["Note /30"]);
+    const value = parseScore(suivi.properties["Note /20"]);
     if (value === null || !groupIds.get(n)) {
       imp.warnings.push(`${suivi.title} : groupe ou note introuvable (ignoré).`);
       continue;
@@ -594,9 +595,9 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       rows.map((r, i) => [projectGrid.ids[i], r.score] as const).filter(([, s]) => s !== null),
     );
     const sum = rows.reduce((s, r) => s + (r.score ?? 0), 0);
-    if (Math.abs(sum - value) > 0.01)
+    if (raw30 !== null && Math.abs(sum - raw30) > 0.01)
       imp.warnings.push(
-        `${suivi.title} : somme des critères ${sum} ≠ note ${value}/30 (note conservée).`,
+        `${suivi.title} : somme des critères ${sum} ≠ note brute ${raw30}/30 (note /20 arrondie conservée).`,
       );
     const g = groupPages.get(n)?.properties ?? {};
     const projectLinks = [
@@ -619,10 +620,10 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       g["Appréciation de groupe"] && `**Appréciation du groupe**\n${g["Appréciation de groupe"]}`,
       projectLinks && `**Projet**\n${projectLinks}`,
       detailFeedback(rows),
+      raw30 !== null && `Note brute (bonus compris) : ${raw30}/30, ramenée à ${value}/20.`,
     ]
       .filter(Boolean)
       .join("\n\n");
-    const official = parseScore(suivi.properties["Note /20"]);
     await imp.ensure(
       "grade",
       "notion",
@@ -635,7 +636,7 @@ export async function migrate(ctx: CourseContext): Promise<void> {
         scores,
         feedback,
       },
-      `Projet fil rouge › Groupe ${n} : ${value}/30${official !== null ? ` (${official}/20 reportée)` : ""} (${Object.keys(scores).length} critères)`,
+      `Projet fil rouge › Groupe ${n} : ${value}/20${raw30 !== null ? ` (brute ${raw30}/30)` : ""} (${Object.keys(scores).length} critères)`,
     );
   }
 
@@ -744,6 +745,6 @@ export async function migrate(ctx: CourseContext): Promise<void> {
     imp.warnings.push(`${droppedImages} image(s) retirée(s) des sujets d'évaluation.`);
   for (const issue of imageIssues) imp.warnings.push(`Image non importée — ${issue}`);
   imp.warnings.push(
-    "Projet fil rouge : grille annoncée /30, critères = 29 + bonus 0,5 (section CI/CD annoncée 3 points, critères 2) ; notes /30 de Notion conservées.",
+    "Projet fil rouge : grille annoncée /30, critères = 29 + bonus 0,5 (section CI/CD annoncée 3 points, critères 2) ; notes /20 de Notion (arrondies) conservées.",
   );
 }
