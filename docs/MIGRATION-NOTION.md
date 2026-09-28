@@ -585,3 +585,17 @@ compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelle
   groupes, bonus appréciés hors grille) → **note Notion conservée**.
 - Lecteur Notion : propriétés texte multi-lignes (appréciations) désormais lues (elles
   faisaient ignorer tout le bloc de propriétés).
+
+#### M2 — écriture (29/09)
+
+- Décisions PO : note du projet = **Note /20 de Notion** (arrondie ; brute /30 en commentaire) ;
+  facture 25-08-3 payée ; YCODE inconnu (à saisir dans l'app) ; références externes = `resource`
+  kind `reference` (32 sans séance liée, bibliothèque seulement).
+- Simulation réelle validée puis `--apply` exécuté sans erreur : 1 module, 4 séances,
+  43 ressources créées (14 de la bibliothèque déjà importées avec le B2, réutilisées),
+  5 groupes, 30 étudiant·es, 2 grilles / 37 critères, 3 évaluations, 40 notes, 2 documents.
+- Cloud : migrations `course_start_end_time` et `resource_status` poussées (elles appelaient
+  à tort `mg_apply_conventions` sur des tables existantes ; corrigé, commit 2173bf4) — les
+  séances des modules archivés étaient à 0 tant qu'elles manquaient.
+- Carte source → cible : `docs/MIGRATION-SOURCES.md`.
+
