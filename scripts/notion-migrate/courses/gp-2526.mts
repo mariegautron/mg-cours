@@ -36,7 +36,7 @@ export interface CourseContext {
   csv: (databaseId: string) => string;
   /** Pages présentes dans l'export. */
   has: (id: string) => boolean;
-  moodle: MoodleCourse;
+  moodle: MoodleCourse | null;
   outlinePdf: string | null;
   invoicePdf: string | null;
 }
@@ -368,7 +368,9 @@ const QCM = {
 };
 
 export async function migrate(ctx: CourseContext): Promise<void> {
-  const { imp, page, moodle } = ctx;
+  const { imp, page } = ctx;
+  const moodle = ctx.moodle;
+  if (!moodle) throw new Error("--moodle requis pour ce cours (sauvegarde .mbz)");
   const imageIssues: string[] = [];
   let droppedImages = 0;
 

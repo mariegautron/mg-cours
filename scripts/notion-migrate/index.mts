@@ -14,6 +14,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import * as b2 from "./courses/b2-accessibilite-2526.mts";
 import * as gp from "./courses/gp-2526.mts";
+import * as m2 from "./courses/m2-accessibilite-2425.mts";
 import { Importer } from "./lib/importer.mts";
 import { readMoodleBackup, type MoodleCourse } from "./lib/moodle.mts";
 import { databaseCsv, indexExport, readPage, type NotionPage } from "./lib/notion.mts";
@@ -24,7 +25,7 @@ interface MigrationContext {
   page: (id: string) => NotionPage;
   csv: (databaseId: string) => string;
   has: (id: string) => boolean;
-  moodle: MoodleCourse;
+  moodle: MoodleCourse | null;
   participantsCsv: string | null;
   outlinePdf: string | null;
   invoicePdf: string | null;
@@ -34,6 +35,7 @@ interface MigrationContext {
 const COURSES: Record<string, { migrate: (ctx: MigrationContext) => Promise<void> }> = {
   "b2-accessibilite-2526": b2,
   "gp-2526": gp,
+  "m2-accessibilite-2425": m2,
 };
 
 function args(): Record<string, string | true> {
@@ -65,8 +67,7 @@ async function main() {
   const a = args();
   const course = COURSES[String(a.course)];
   if (!course) throw new Error(`--course requis parmi : ${Object.keys(COURSES).join(", ")}`);
-  for (const k of ["env", "notion", "moodle"])
-    if (typeof a[k] !== "string") throw new Error(`--${k} requis`);
+  for (const k of ["env", "notion"]) if (typeof a[k] !== "string") throw new Error(`--${k} requis`);
 
   const env = loadEnv(a.env as string);
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -98,7 +99,7 @@ async function main() {
     page: (id) => readPage(index, id),
     csv: (id) => databaseCsv(index, id),
     has: (id) => index.has(id),
-    moodle: readMoodleBackup(a.moodle as string),
+    moodle: typeof a.moodle === "string" ? readMoodleBackup(a.moodle) : null,
     participantsCsv: typeof a.participants === "string" ? a.participants : null,
     outlinePdf: typeof a["outline-pdf"] === "string" ? a["outline-pdf"] : null,
     invoicePdf: typeof a["invoice-pdf"] === "string" ? a["invoice-pdf"] : null,

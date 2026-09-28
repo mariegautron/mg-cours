@@ -230,3 +230,173 @@ export function parseCorrectionTable(body: string): {
   const global = /^##\s*\**Commentaire global\**\s*$([\s\S]*)/m.exec(body)?.[1] ?? "";
   return { rows, global: global.split(/^---$/m)[0].trim() };
 }
+
+export interface RubricRow {
+  section: string;
+  label: string;
+  description: string;
+  reference: string;
+  weight: number;
+  bonus: boolean;
+  score: number | null;
+  comment: string;
+}
+
+/**
+ * Tableaux de grille Notion par section (« ### 1. 🧱 Titre (8 points) » puis un tableau
+ * Critère | Critères évalués | Référence RGAA | Barème | Commentaires, ou Critère | Points |
+ * Détail attendu | Commentaires). Barème « /0.5 », « +0.5 » (bonus) ou note « 0.75/1 ».
+ * Les cellules peuvent s'étendre sur plusieurs lignes ; les lignes TOTAL sont ignorées.
+ */
+export function parseRubricTables(body: string): RubricRow[] {
+  const out: RubricRow[] = [];
+  let section = "";
+  let headers: string[] = [];
+  let pending = "";
+  const col = (names: RegExp) => headers.findIndex((h) => names.test(h));
+  const flush = (raw: string) => {
+    const cells = raw
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+    if (!headers.length) {
+      headers = cells.map((c) => cleanInline(c).toLowerCase());
+      return;
+    }
+    if (cells.every((c) => /^-+$/.test(c))) return;
+    const label = cleanInline(cells[0] ?? "").replace(/^\d+\.\s*/, "");
+    if (!label || /^total/i.test(label)) return;
+    const iScore = col(/barème|points/);
+    const iDesc = col(/critères évalués|détail attendu|attendus/);
+    const iRef = col(/référence/);
+    const iComment = col(/commentaire/);
+    const scoreCell = cleanInline(cells[iScore] ?? "");
+    const frac = /(-?[\d.,]+)?\s*\/\s*([\d.,]+)/.exec(scoreCell);
+    const bonus = /^\+/.test(scoreCell);
+    const weight = frac
+      ? Number(frac[2].replace(",", "."))
+      : Number((/[\d.,]+/.exec(scoreCell)?.[0] ?? "0").replace(",", "."));
+    out.push({
+      section,
+      label,
+      description: (cells[iDesc] ?? "").trim(),
+      reference: cleanInline(cells[iRef] ?? ""),
+      weight,
+      bonus,
+      score: frac?.[1] !== undefined ? Number(frac[1].replace(",", ".")) : null,
+      comment: iComment >= 0 ? (cells[iComment] ?? "").trim() : "",
+    });
+  };
+  for (const line of body.split("\n")) {
+    const h = /^###\s+(?:\d+\.\s*)?(.+?)\s*$/.exec(line);
+    if (h && !pending) {
+      section = cleanInline(h[1])
+        .replace(/^[^\p{L}\d]+/u, "")
+        .replace(/\s*\(.*\)\s*$/, "");
+      headers = [];
+      continue;
+    }
+    if (!pending && !line.startsWith("|")) {
+      if (line.trim() === "") headers = headers.length ? headers : [];
+      continue;
+    }
+    pending = pending ? `${pending}\n${line}` : line;
+    if (line.trimEnd().endsWith("|")) {
+      flush(pending);
+      pending = "";
+    }
+  }
+  return out;
+}
+
+export interface PdfProgressionDay {
+  number: number;
+  title: string;
+  objectives: string[];
+  animation: string;
+  assessment: string;
+  material: string;
+}
+
+/**
+ * Trame YNOV exportée en PDF (texte `pdftotext -layout`) : « JOUR n » puis « Titre de la séance »,
+ * « Objectifs… », « Modalités d'animation », « Modalités d'évaluation », « Matériel nécessaire »,
+ * listes à puces « • » dont l'indentation donne le niveau.
+ */
+export function parsePdfProgression(text: string): PdfProgressionDay[] {
+  const lines = text
+    .split("\n")
+    .filter((l) => !/Page \d+ sur \d+|Mise à jour le|Phase de face à face/.test(l));
+  const days: { number: number; lines: string[] }[] = [];
+  for (const l of lines) {
+    const m = /^\s*JOUR\s*(?:n°)?\s*(\d+)\s*$/i.exec(l);
+    if (m) days.push({ number: Number(m[1]), lines: [] });
+    else days.at(-1)?.lines.push(l);
+  }
+  return days.map(({ number, lines: dl }) => {
+    type Item = { indent: number; text: string };
+    const sections = new Map<string, Item[]>();
+    let current = "";
+    let title = "";
+    let inTitle = false;
+    for (const raw of dl) {
+      if (!raw.trim()) continue;
+      const indent = raw.search(/\S/);
+      const t = raw.trim();
+      const head =
+        /^•\s*(Titre de la séance|Objectifs[^:]*|Modalités d.animation|Modalités d.évaluation|Matériel nécessaire)\s*:\s*(.*)$/i.exec(
+          t,
+        );
+      if (head) {
+        const key = head[1].toLowerCase();
+        inTitle = key.startsWith("titre");
+        if (inTitle) title = head[2];
+        else {
+          current = key.startsWith("objectifs")
+            ? "objectifs"
+            : key.includes("animation")
+              ? "animation"
+              : key.includes("évaluation")
+                ? "evaluation"
+                : "materiel";
+          sections.set(current, []);
+        }
+        continue;
+      }
+      if (inTitle) {
+        title = `${title} ${t}`.trim();
+        continue;
+      }
+      const items = sections.get(current);
+      if (!items) continue;
+      if (t.startsWith("•")) items.push({ indent, text: t.replace(/^•\s*/, "") });
+      else if (items.length) items[items.length - 1].text += ` ${t}`;
+    }
+    const toMarkdown = (items: Item[] = []) => {
+      // Les sauts de page décalent parfois l'indentation de 1 à 3 colonnes : niveaux regroupés.
+      const levels: number[] = [];
+      for (const n of [...new Set(items.map((i) => i.indent))].sort((a, b) => a - b))
+        if (!levels.length || n - levels[levels.length - 1] > 3) levels.push(n);
+      const level = (n: number) => levels.filter((l) => l <= n + 3).length - 1;
+      return items
+        .map((i) => `${"  ".repeat(Math.max(0, level(i.indent)))}- ${i.text.replace(/\s+/g, " ")}`)
+        .join("\n");
+    };
+    const obj = sections.get("objectifs") ?? [];
+    const base = Math.min(...obj.map((i) => i.indent));
+    const objectives: string[] = [];
+    for (const i of obj) {
+      const text = i.text.replace(/\s+/g, " ").trim();
+      if (i.indent === base || !objectives.length) objectives.push(text);
+      else objectives[objectives.length - 1] += ` ${text.replace(/,$/, "")} ;`;
+    }
+    return {
+      number,
+      title: title.replace(/\s+/g, " ").trim(),
+      objectives: objectives.map((o) => o.replace(/\s*;$/, "")),
+      animation: toMarkdown(sections.get("animation")),
+      assessment: toMarkdown(sections.get("evaluation")),
+      material: toMarkdown(sections.get("materiel")),
+    };
+  });
+}

@@ -118,3 +118,62 @@ export function questionBankMarkdown(title: string, questions: MoodleQuestion[])
   }
   return parts.join("\n\n");
 }
+
+/**
+ * Export « XHTML » d'une banque Moodle (quand la sauvegarde .mbz n'est pas disponible) :
+ * énoncés et choix, **sans les bonnes réponses** (le format ne les contient pas).
+ */
+export function xhtmlQuestionBankMarkdown(
+  title: string,
+  html: string,
+): { markdown: string; count: number } {
+  const blocks = html.split(/<div class="question">/).slice(1);
+  const parts: string[] = [];
+  for (const b of blocks) {
+    const body = b.split(/<\/div>\s*(?:<!--|$)/)[0];
+    const name = htmlToMarkdown(/<h3>([\s\S]*?)<\/h3>/.exec(body)?.[1] ?? "").replace(/\n+/g, " ");
+    const text = htmlToMarkdown(
+      (/<p class="questiontext">([\s\S]*?)<\/p>\s*(?:<ul|<!--|$)/.exec(body)?.[1] ?? "").replace(
+        /<img[^>]*>/g,
+        "*(image dans Moodle)*",
+      ),
+    );
+    const type = /export of essay/.test(body)
+      ? "question ouverte"
+      : /class="match"/.test(body)
+        ? "association"
+        : /class="truefalse"|type="radio"[^>]*value="(?:true|false)"/i.test(body)
+          ? "vrai / faux"
+          : /type="checkbox"/.test(body)
+            ? "choix multiple"
+            : "choix unique";
+    const lines = [`### ${name}`, `*${type}*`, "", text];
+    if (type === "association") {
+      const stems = [...body.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) =>
+        htmlToMarkdown(m[1]).replace(/\n+/g, " "),
+      );
+      const options = [
+        ...new Set(
+          [...body.matchAll(/<option[^>]*>([\s\S]*?)<\/option>/g)]
+            .map((m) => htmlToMarkdown(m[1]).trim())
+            .filter((o) => o && !/^choisir/i.test(o)),
+        ),
+      ];
+      if (stems.length) lines.push("", "Éléments :", ...stems.map((s) => `- ${s}`));
+      if (options.length) lines.push("", "Propositions :", ...options.map((o) => `- ${o}`));
+    } else {
+      const choices = [...body.matchAll(/<li>([\s\S]*?)<\/li>/g)]
+        .map((m) => htmlToMarkdown(m[1]).replace(/\n+/g, " ").trim())
+        .filter(Boolean);
+      if (choices.length) lines.push("", ...choices.map((c) => `- ○ ${c}`));
+    }
+    parts.push(lines.join("\n"));
+  }
+  return {
+    count: parts.length,
+    markdown: [
+      `${parts.length} questions issues de la banque Moodle « ${title} » (export HTML : les bonnes réponses n'y figurent pas).`,
+      ...parts,
+    ].join("\n\n"),
+  };
+}

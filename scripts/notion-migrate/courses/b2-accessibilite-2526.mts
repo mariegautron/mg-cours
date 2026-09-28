@@ -24,7 +24,7 @@ import { parseCsv, parseGrid, parseProgression } from "../lib/parsers.mts";
 export interface CourseContext {
   imp: Importer;
   page: (id: string) => NotionPage;
-  moodle: MoodleCourse;
+  moodle: MoodleCourse | null;
   participantsCsv: string | null;
   outlinePdf: string | null;
   invoicePdf: string | null;
@@ -209,7 +209,9 @@ const normalizeGroup = (g: string) => {
 };
 
 export async function migrate(ctx: CourseContext): Promise<void> {
-  const { imp, page, moodle } = ctx;
+  const { imp, page } = ctx;
+  const moodle = ctx.moodle;
+  if (!moodle) throw new Error("--moodle requis pour ce cours (sauvegarde .mbz)");
 
   // ── Module ───────────────────────────────────────────────────────────────
   const { data: school } = await imp.sb

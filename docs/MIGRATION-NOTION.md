@@ -542,3 +542,46 @@ compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelle
   type, matière et visibilité selon `docs/specs/ressources-classement.md` (passe
   `classifyResources`, ne remplit que les champs vides / non retouchés). 9 ressources en
   « Enseignante uniquement ». Nouvelle matière « Agilité » (Focus Scrum).
+
+### Cours 3 — [2025] Ynov M2 Accessibilité (proposition en cours, 28/09)
+
+- Progression envoyée (PDF, 6 p., 13/06/2025) : 4 jours — J1 « Introduction à
+  l'accessibilité numérique et lancement du projet », J2 « Structuration sémantique,
+  navigation accessible et introduction à la qualité technique », J3 « Formulaires et
+  composants accessibles (modale, onglets, recherche) », J4 « Soutenances de projet et
+  évaluation finale individuelle » ; objectifs, modalités d'animation, matériel par jour ;
+  évaluations : projet (groupe) + oral (groupe, grille de soutenance) + **QCM individuel
+  /20**. Les pages « Jour N » de Notion étant quasi vides, la progression PDF sera la source
+  des séances (dates tirées des activités Notion : 11/06, 30/06, 01/07, 08/07/2025).
+- Décisions PO (28/09) : QCM noté **sur 100** (notes Moodle d'origine, barème 100, ramené
+  sur 20 par l'app) ; source des notes de QCM = **export Moodle** (1 écart avec Notion : 85
+  → 88,50) ; profil technique → notes personnelles de l'étudiant·e (avec l'appréciation) ;
+  participants Moodle non utilisés (Notion a les 30 étudiant·es et leurs 5 groupes) ;
+  banque de 60 questions → ressource (bonnes réponses à lire dans la sauvegarde `.mbz`).
+- Pas de sauvegarde Moodle (cours fait dans Notion) : banque de questions lue dans l'export
+  HTML, **sans les bonnes réponses** ; `--moodle` devenu facultatif.
+- Facture **25-08-3** (Nantes Ynov Campus) → document du module ; YCODE inconnu (à saisir
+  dans l'app).
+
+#### Plan — `courses/m2-accessibilite-2425.mts` (28/09)
+
+- **Module** « Accessibilité & Qualité Web » · Mastère 2 (DEVWEB, DEVLMIOT) · 2024-25 ·
+  28 h × 60 €/h · 11/06 → 08/07/2025 · payé, archivé, documents administratifs cochés ·
+  slides Figma (`slides_url`).
+- **4 journées** : titre, objectifs, animation, évaluation, matériel depuis la progression
+  PDF ; déroulé horodaté des activités Notion ajouté à l'animation.
+- **Ressources** : 20 activités ≥ 800 car. (cours, 1 atelier), 34 références externes
+  (paires Chrome / Firefox fusionnées, doublons d'URL écartés, liens déjà importés avec le
+  B2 réutilisés ; « Numérique responsable » pour Shift Project / Ledger of Harms), 3 briefs
+  projet, banque QCM (60 questions, enseignante) ; 15 images.
+- **5 groupes**, **30 étudiant·es** (« Prénom N. », promo, appréciation + profil technique
+  en notes personnelles).
+- **Grilles** : projet fil rouge (30 critères = 29 + bonus 0,5) ; soutenance orale (7
+  critères /20).
+- **Notes** : projet /30 (5 notes de groupe, détail par critère, commentaire final,
+  appréciation du groupe, technos et liens du projet) ; oral /20 (5, détail + commentaire
+  global) ; QCM /100 (30, export Moodle).
+- Écarts : les notes /30 de Notion dépassent la somme des critères (+0,5 à +3 selon les
+  groupes, bonus appréciés hors grille) → **note Notion conservée**.
+- Lecteur Notion : propriétés texte multi-lignes (appréciations) désormais lues (elles
+  faisaient ignorer tout le bloc de propriétés).

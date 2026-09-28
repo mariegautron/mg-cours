@@ -75,12 +75,24 @@ export function readPage(index: Map<string, string>, rawId: string): NotionPage 
   // Bloc de propriétés de base Notion : lignes « Clé: valeur » juste sous le titre.
   const properties: Record<string, string> = {};
   const prop = /^([^#>*\-\s|`][^:]{0,60}): (.*)$/;
+  // Une valeur texte multi-ligne continue sur les lignes suivantes : acceptée seulement si une
+  // autre propriété suit (sinon c'est le début du contenu).
   let j = i;
-  while (j < lines.length && prop.test(lines[j])) {
-    const [, k, v] = prop.exec(lines[j])!;
-    properties[k.trim()] = v.trim();
+  let last = "";
+  let pendingContinuation = false;
+  while (j < lines.length && lines[j].trim() !== "") {
+    const m = prop.exec(lines[j]);
+    if (m) {
+      last = m[1].trim();
+      properties[last] = m[2].trim();
+      pendingContinuation = false;
+    } else if (last) {
+      properties[last] += `\n${lines[j].trim()}`;
+      pendingContinuation = true;
+    } else break;
     j++;
   }
+  if (pendingContinuation) j = i; // bloc invalide : pas de propriétés
   if (j > i && (j === lines.length || lines[j].trim() === "")) i = j;
   else for (const k of Object.keys(properties)) delete properties[k];
 
