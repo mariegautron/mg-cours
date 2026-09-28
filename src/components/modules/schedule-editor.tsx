@@ -234,7 +234,7 @@ export function ScheduleEditor({
         >
           Ajouter ces créneaux au tableau
         </Button>
-        <div role="status" className="text-sm">
+        <div aria-live="polite" className="text-sm">
           {pasteNotice}
         </div>
         {ignored.length ? (
