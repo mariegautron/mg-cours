@@ -220,6 +220,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US     | Contenu                                                                                                                                                                         | Statut |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | US-79  | Verification heures modules : liste les modules crees depuis une fiche importe et signale ceux dont le total d'heures parait faux ; ne corrige rien sans accord explicite | ✅     |
+| US-60  | Horaires et duree par seance : colonnes course.start_time / end_time (time, nullable), duree par seance, affichage 18 h planifiees / 21 h avec avertissement | ✅     |
 
 ## Vision suivante (validée 26/09)
 
