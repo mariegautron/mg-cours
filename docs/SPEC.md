@@ -138,8 +138,7 @@ glisser-déposer, formats et taille affichés, envoi dès la sélection, état �
 annoncé) et `FileCard` (type · taille · date + actions nommées).
 
 - Fil d'Ariane `Modules › {nom}` (« Modules archivés » si archivé) ; bandeau « Module archivé le
-  … » + « Restaurer le module » ; sous-navigation d'ancres collante (Progression · Séances · Groupes ·
-  Évaluations · Documents · Facturation · Administratif · Actions). Ordre des sections = ordre
+  … » + « Restaurer le module » ; sous-navigation par onglets (Progression · Seances · Groupes & Evaluations · Administratif). Ordre des sections = ordre
   d'usage : Séances avant Documents.
 - En-tête : école, niveau, année, YCODE ; badges heures / **minimum de notes requises**
   (`requiredNotes`, ex. 21 h → « 3 notes min. (2 groupes + 1 individuelle) ») / état iceberg.
