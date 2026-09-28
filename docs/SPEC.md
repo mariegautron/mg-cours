@@ -134,6 +134,11 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Fiche pédagogique PDF (US-79)** : préremplit nom (« Nom long » ou « Intitulé »), niveau
+  (« Niveau Mastère 1 »), YCODE, année et heures. Le total est le premier volume après « Volume
+  heures totales » ; FFP / TDP sont facultatifs et lus seulement s'ils correspondent aux valeurs
+  (« FFP TDP / 28h 10h 18h »). Le tableau des unités pédagogiques n'est jamais lu pour les heures
+  (`src/lib/modules/fiche.ts`).
 - **Planning (US-59)** : à la création, tableau de créneaux (date, début, fin ; « Ajouter une
   ligne », « + 7 jours » pour dupliquer) ou collage (« 01/10/2026 10:00-12:00 », « 01/10 10h-12h »…),
   avec aperçu des séances et des lignes non reconnues. Les séances vides sont créées d'un coup
