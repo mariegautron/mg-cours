@@ -86,6 +86,20 @@ const COURSE_TYPES = ["lecture", "workshop", "project", "assessment", "demo", "a
 export const PREP_STATUSES = ["todo", "in_progress", "ready"] as const;
 export type PrepStatus = (typeof PREP_STATUSES)[number];
 
+/** Format d'heure : HH:MM, optionnel. */
+const optionalTime = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ? v : null))
+  .pipe(
+    z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Format invalide : HH:MM attendu.")
+      .nullable(),
+  );
+
 export const PREP_STATUS_LABELS: Record<PrepStatus, string> = {
   todo: "À préparer",
   in_progress: "En préparation",
@@ -97,6 +111,8 @@ export const courseSchema = z.object({
   type: z.enum(COURSE_TYPES).default("lecture"),
   position: z.coerce.number().int().min(0).max(1000).default(0),
   sessionDate: optionalDate,
+  startTime: optionalTime,
+  endTime: optionalTime,
   prepStatus: z.enum(PREP_STATUSES).default("todo"),
   learningObjectives: z.array(z.string().min(1)).max(30).default([]),
   animationNotes: z.string().trim().max(4000).optional().or(z.literal("")),
@@ -121,6 +137,8 @@ export function readCourseForm(formData: FormData) {
     type: formData.get("type") ?? "lecture",
     position: formData.get("position") ?? "0",
     sessionDate: formData.get("sessionDate") ?? "",
+    startTime: formData.get("startTime") ?? "",
+    endTime: formData.get("endTime") ?? "",
     prepStatus: formData.get("prepStatus") ?? "todo",
     learningObjectives: parseLines(String(formData.get("learningObjectives") ?? "")),
     animationNotes: formData.get("animationNotes") ?? "",

@@ -9,6 +9,7 @@ import { AudienceBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { CourseWithResources } from "@/lib/modules/queries";
+
 import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
 import { COMPLETION_LABELS, type CourseCompletion } from "@/lib/notebook/notebook";
 import { groupByKind } from "@/lib/resources/kind";
@@ -41,6 +42,8 @@ const formatDate = (iso: string) =>
     month: "short",
     year: "numeric",
   });
+
+
 
 export function CourseList({
   moduleId,

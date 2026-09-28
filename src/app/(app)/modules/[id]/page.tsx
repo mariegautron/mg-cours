@@ -21,6 +21,7 @@ import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { checkPlannedHours, totalPlannedHours } from "@/lib/modules/course-duration";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
@@ -69,6 +70,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
   const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
+  const plannedHours = totalPlannedHours(courses);
+  const hoursCheck = checkPlannedHours(plannedHours, mod.total_hours);
   const upcoming = mod.archived_at ? null : highlightedSession(courses, todayInParis());
 
   // Onglet Progression
@@ -154,7 +157,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             </h2>
             {courses.length ? (
               <p className="text-muted-foreground text-sm">
-                {readyCourses}/{courses.length} prete{readyCourses > 1 ? "s" : ""}
+                {readyCourses}/{courses.length} prete{readyCourses > 1 ? "s" : ""} - {plannedHours > 0 ? `${plannedHours} h planifiees` : "0 h planifiee"}
+                {hoursCheck.message ? ` / ${mod.total_hours} h - ${hoursCheck.message}` : ""}
               </p>
             ) : null}
           </div>
