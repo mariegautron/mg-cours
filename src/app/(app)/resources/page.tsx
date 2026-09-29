@@ -14,7 +14,10 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { createDraftResource } from "@/app/(app)/resources/actions";
+import { AddToModule } from "@/components/resources/add-to-module";
+import { listActiveModules } from "@/lib/modules/queries";
 import { readResourceFilters, type ResourceGrouping } from "@/lib/resources/filters";
 import {
   AUDIENCE_LABELS,
@@ -72,12 +75,25 @@ function ResourceCard({ r }: { r: ResourceWithUsage }) {
   );
 }
 
-function CardGrid({ items }: { items: ResourceWithUsage[] }) {
+function CardGrid({
+  items,
+  modules,
+}: {
+  items: ResourceWithUsage[];
+  modules: { id: string; name: string; year: number }[];
+}) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((r) => (
         <li key={r.id}>
           <ResourceCard r={r} />
+          <div className="mt-2">
+            <AddToModule
+              resourceId={r.id}
+              modules={modules}
+              action={addResourceToModule.bind(null, r.id)}
+            />
+          </div>
         </li>
       ))}
     </ul>
@@ -87,7 +103,11 @@ function CardGrid({ items }: { items: ResourceWithUsage[] }) {
 export default async function ResourcesPage({ searchParams }: PageProps<"/resources">) {
   const { filters, group } = readResourceFilters(await searchParams);
 
-  const [resources, facets] = await Promise.all([listResources(filters), resourceFacets()]);
+  const [resources, facets, modules] = await Promise.all([
+    listResources(filters),
+    resourceFacets(),
+    listActiveModules(),
+  ]);
   const groups: ResourceGroup<ResourceWithUsage>[] | null =
     group === "kind"
       ? groupByKind(resources)
@@ -258,12 +278,12 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
                   ({g.items.length})
                 </span>
               </h2>
-              <CardGrid items={g.items} />
+              <CardGrid items={g.items} modules={modules} />
             </section>
           ))}
         </div>
       ) : (
-        <CardGrid items={resources} />
+        <CardGrid items={resources} modules={modules} />
       )}
     </div>
   );

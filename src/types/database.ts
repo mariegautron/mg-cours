@@ -231,6 +231,48 @@ export type Database = {
           },
         ]
       }
+      course_expectation: {
+        Row: {
+          course_id: string
+          created_at: string
+          expectation_id: string
+          id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          expectation_id: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          expectation_id?: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_expectation_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_expectation_expectation_id_fkey"
+            columns: ["expectation_id"]
+            isOneToOne: false
+            referencedRelation: "module_expectation"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_resource: {
         Row: {
           course_id: string
@@ -321,12 +363,15 @@ export type Database = {
         Row: {
           assessment_id: string
           created_at: string
+          criterion_comments: Json
           feedback: string | null
           id: string
           is_group_grade: boolean
           owner_id: string
           predefined_comment_ids: string[]
+          progress: string | null
           scores: Json
+          strengths: string | null
           student_group_id: string | null
           student_id: string | null
           updated_at: string
@@ -335,12 +380,15 @@ export type Database = {
         Insert: {
           assessment_id: string
           created_at?: string
+          criterion_comments?: Json
           feedback?: string | null
           id?: string
           is_group_grade?: boolean
           owner_id?: string
           predefined_comment_ids?: string[]
+          progress?: string | null
           scores?: Json
+          strengths?: string | null
           student_group_id?: string | null
           student_id?: string | null
           updated_at?: string
@@ -349,12 +397,15 @@ export type Database = {
         Update: {
           assessment_id?: string
           created_at?: string
+          criterion_comments?: Json
           feedback?: string | null
           id?: string
           is_group_grade?: boolean
           owner_id?: string
           predefined_comment_ids?: string[]
+          progress?: string | null
           scores?: Json
+          strengths?: string | null
           student_group_id?: string | null
           student_id?: string | null
           updated_at?: string
@@ -793,6 +844,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "module_document_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_expectation: {
+        Row: {
+          created_at: string
+          hours: number | null
+          id: string
+          kind: Database["public"]["Enums"]["expectation_kind"]
+          label: string
+          modality: string | null
+          module_id: string
+          owner_id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hours?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["expectation_kind"]
+          label: string
+          modality?: string | null
+          module_id: string
+          owner_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hours?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["expectation_kind"]
+          label?: string
+          modality?: string | null
+          module_id?: string
+          owner_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_expectation_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "module"
@@ -1296,6 +1394,7 @@ export type Database = {
         | "assessment"
         | "demo"
         | "applied"
+      expectation_kind: "objective" | "unit"
       group_type: "tp" | "td" | "project"
       iceberg_state:
         | "fiche_received"
@@ -1476,6 +1575,7 @@ export const Constants = {
         "demo",
         "applied",
       ],
+      expectation_kind: ["objective", "unit"],
       group_type: ["tp", "td", "project"],
       iceberg_state: [
         "fiche_received",

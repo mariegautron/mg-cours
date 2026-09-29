@@ -21,6 +21,7 @@ import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RetainedResources } from "@/components/modules/retained-resources";
 import { ModuleTabs } from "@/components/modules/module-tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import {
@@ -29,7 +30,12 @@ import {
   totalPlannedHours,
 } from "@/lib/modules/course-duration";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
-import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
+import {
+  getModule,
+  getModuleCourses,
+  getModuleDocuments,
+  getRetainedResources,
+} from "@/lib/modules/queries";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -67,11 +73,12 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
 
 export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [mod, courses, groups, documents] = await Promise.all([
+  const [mod, courses, groups, documents, retained] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     listModuleGroups(id),
     getModuleDocuments(id),
+    getRetainedResources(id),
   ]);
   if (!mod) notFound();
 
@@ -162,7 +169,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
 
   // Onglet Séances
   const coursesTab = (
-    <TabsContent value="courses" className="space-y-4">
+    <TabsContent value="courses" className="space-y-6">
+      <RetainedResources moduleId={mod.id} resources={retained} />
       <section aria-labelledby="courses">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>

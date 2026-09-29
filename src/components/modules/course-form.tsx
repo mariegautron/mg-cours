@@ -1,19 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import type { CourseFormState } from "@/app/(app)/modules/[id]/courses/actions";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ResourcePicker } from "@/components/modules/resource-picker";
 import { formatTime } from "@/lib/modules/course-duration";
 import type { CourseWithResources, LinkedResource } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
-import { groupByKind } from "@/lib/resources/kind";
-import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
 
 type Action = (state: CourseFormState, formData: FormData) => Promise<CourseFormState>;
@@ -41,20 +40,30 @@ export function CourseForm({
   moduleId,
   course,
   resources,
+  retainedIds = [],
   nextPosition,
 }: {
   action: Action;
   moduleId: string;
   course?: CourseWithResources;
   resources: LinkedResource[];
+  /** Ressources retenues du module (US-55) : proposées en premier. */
+  retainedIds?: string[];
   nextPosition: number;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
-  const selected = new Set(course?.resources.map((r) => r.id) ?? []);
+  // Garde anti-perte : toute saisie non enregistrée prévient avant de quitter la page.
+  const [dirty, setDirty] = useState(false);
+  useUnsavedChangesGuard(dirty);
 
   return (
-    <form action={formAction} className="max-w-2xl space-y-6">
+    <form
+      action={formAction}
+      className="max-w-2xl space-y-6"
+      onChange={() => setDirty(true)}
+      onSubmit={() => setDirty(false)}
+    >
       <div className="space-y-2">
         <Label htmlFor="title">Titre de la séance</Label>
         <Input
@@ -153,45 +162,11 @@ export function CourseForm({
         />
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Ressources utilisées</legend>
-        {resources.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Aucune ressource disponible —{" "}
-            <Link href="/resources/new" className="underline underline-offset-2">
-              en créer une
-            </Link>
-            .
-          </p>
-        ) : (
-          <div className="max-h-80 space-y-4 overflow-y-auto rounded-md border p-3">
-            {groupByKind(resources).map((group) => (
-              <fieldset key={group.key} className="space-y-2">
-                <legend className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                  {group.label}
-                </legend>
-                <ul className="space-y-2">
-                  {group.items.map((r) => (
-                    <li key={r.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`resource-${r.id}`}
-                        name="resourceIds"
-                        value={r.id}
-                        defaultChecked={selected.has(r.id)}
-                      />
-                      <Label htmlFor={`resource-${r.id}`} className="font-normal">
-                        {r.title}
-                      </Label>
-                      <AudienceBadge audience={r.audience} />
-                      <StatusBadge status={r.status} />
-                    </li>
-                  ))}
-                </ul>
-              </fieldset>
-            ))}
-          </div>
-        )}
-      </fieldset>
+      <ResourcePicker
+        resources={resources}
+        retainedIds={retainedIds}
+        initialSelected={course?.resources.map((r) => r.id) ?? []}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="animationNotes">Modalités d’animation</Label>
@@ -227,7 +202,16 @@ export function CourseForm({
           {pending ? "Enregistrement…" : "Enregistrer"}
         </Button>
         <Button type="button" variant="ghost" asChild>
-          <Link href={`/modules/${moduleId}`}>Annuler</Link>
+          <Link
+            href={`/modules/${moduleId}#courses`}
+            onClick={(e) => {
+              if (dirty && !window.confirm("Abandonner les modifications non enregistrées ?")) {
+                e.preventDefault();
+              }
+            }}
+          >
+            Annuler
+          </Link>
         </Button>
       </div>
     </form>

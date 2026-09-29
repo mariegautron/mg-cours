@@ -39,7 +39,7 @@ export async function getModule(id: string): Promise<ModuleWithSchool | null> {
 
 export type LinkedResource = Pick<
   Tables<"resource">,
-  "id" | "title" | "kind" | "audience" | "status"
+  "id" | "title" | "kind" | "audience" | "status" | "category"
 >;
 
 export type CourseWithResources = Tables<"course"> & {
@@ -50,7 +50,7 @@ export async function getModuleCourses(moduleId: string): Promise<CourseWithReso
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status))")
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status, category))")
     .eq("module_id", moduleId)
     .order("position");
 
@@ -69,7 +69,7 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
-    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status))")
+    .select("*, course_resource(resource:resource_id(id, title, kind, audience, status, category))")
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
@@ -88,9 +88,34 @@ export async function listActiveResources(): Promise<LinkedResource[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("resource")
-    .select("id, title, kind, audience, status")
+    .select("id, title, kind, audience, status, category")
     .is("archived_at", null)
     .order("title");
+  return data ?? [];
+}
+
+/** Ressources retenues du module (US-55), dans l'ordre où elles ont été retenues. */
+export async function getRetainedResources(moduleId: string): Promise<LinkedResource[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module_resource")
+    .select("created_at, resource:resource_id(id, title, kind, audience, status, category)")
+    .eq("module_id", moduleId)
+    .order("created_at");
+  return ((data ?? []) as unknown as { resource: LinkedResource | null }[])
+    .map((row) => row.resource)
+    .filter((r) => r !== null);
+}
+
+/** Modules actifs (nom, année) où l'on peut retenir une ressource. */
+export async function listActiveModules(): Promise<{ id: string; name: string; year: number }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module")
+    .select("id, name, year")
+    .is("archived_at", null)
+    .order("year", { ascending: false })
+    .order("name");
   return data ?? [];
 }
 
@@ -170,4 +195,17 @@ export async function getModuleResourcesFull(moduleId: string): Promise<Tables<"
     }
   }
   return Array.from(seen.values());
+}
+
+export type ModuleExpectation = Tables<"module_expectation">;
+
+/** Attendus de l'école pour le module (US-53) : objectifs, puis unités, dans l'ordre saisi. */
+export async function getModuleExpectations(moduleId: string): Promise<ModuleExpectation[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module_expectation")
+    .select("*")
+    .eq("module_id", moduleId)
+    .order("position");
+  return data ?? [];
 }

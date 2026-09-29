@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 // Identifiants du seed.
@@ -52,7 +53,7 @@ test("classe une ressource (type, matière, visibilité), filtre et regroupe la 
   await page.getByLabel("Type").selectOption("teacher_notes");
   await expect(page.getByRole("radio", { name: /Enseignante uniquement/ })).toBeChecked();
   await page.getByLabel("Matière").fill(subject);
-  await page.getByRole("tab", { name: "Aperçu" }).click();
+  await openTab(page, "Aperçu");
   await expect(page.getByText("Rien à afficher pour l’instant.")).toBeVisible();
   expect(
     (

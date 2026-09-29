@@ -9,6 +9,7 @@ import {
   upsertFile,
   type ResourceFile,
 } from "@/lib/resources/files";
+import { isResourceKind, TEACHER_KINDS, type ResourceKind } from "@/lib/resources/kind";
 import { readResourceForm } from "@/lib/resources/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -106,6 +107,48 @@ export async function createDraftResource(formData: FormData): Promise<void> {
   });
   if (error) return;
   revalidatePath("/resources");
+}
+
+export interface InlineResourceResult {
+  error?: string;
+  resource?: {
+    id: string;
+    title: string;
+    kind: ResourceKind;
+    audience: "students" | "teacher";
+    status: "ready" | "progress";
+    category: string | null;
+  };
+}
+
+/**
+ * Création d'une ressource depuis le formulaire de séance (US-62) : titre et type suffisent, elle
+ * est créée « à construire » (jamais projetée) et se complète ensuite dans Ressources.
+ */
+export async function createResourceInline(input: {
+  title: string;
+  kind: string;
+}): Promise<InlineResourceResult> {
+  const title = input.title.trim();
+  if (!title || title.length > 200)
+    return { error: "Le titre est obligatoire (200 caractères max)." };
+  if (!isResourceKind(input.kind)) return { error: "Choisissez un type." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("resource")
+    .insert({
+      title,
+      kind: input.kind,
+      status: "progress",
+      audience: TEACHER_KINDS.includes(input.kind) ? "teacher" : "students",
+    })
+    .select("id, title, kind, audience, status, category")
+    .single();
+  if (error || !data || !data.kind) return { error: "Création impossible. Réessayez." };
+
+  revalidatePath("/resources");
+  return { resource: { ...data, kind: data.kind } };
 }
 
 async function setArchived(id: string, archived: boolean) {

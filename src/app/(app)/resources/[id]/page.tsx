@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { History, Pencil, Presentation } from "lucide-react";
 
+import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
+import { AddToModule } from "@/components/resources/add-to-module";
+import { listActiveModules } from "@/lib/modules/queries";
 import { Markdown, markdownOutline } from "@/components/markdown";
 import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { ResourceActions } from "@/components/resources/resource-actions";
@@ -23,7 +26,11 @@ export async function generateMetadata({
 
 export default async function ResourcePage({ params }: PageProps<"/resources/[id]">) {
   const { id } = await params;
-  const [resource, modules] = await Promise.all([getResource(id), getResourceModules(id)]);
+  const [resource, modules, activeModules] = await Promise.all([
+    getResource(id),
+    getResourceModules(id),
+    listActiveModules(),
+  ]);
   if (!resource) notFound();
   const files = parseResourceFiles(resource.files);
   const outline = resource.content ? markdownOutline(resource.content, "c") : [];
@@ -43,6 +50,13 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
             <StatusBadge status={resource.status} />
             {resource.category ? <Badge variant="secondary">{resource.category}</Badge> : null}
           </div>
+          {resource.archived_at ? null : (
+            <AddToModule
+              resourceId={resource.id}
+              modules={activeModules}
+              action={addResourceToModule.bind(null, resource.id)}
+            />
+          )}
           {resource.intent_note ? (
             <p className="max-w-prose text-sm">
               <strong>À construire :</strong> {resource.intent_note}

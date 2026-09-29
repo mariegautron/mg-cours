@@ -268,6 +268,8 @@ export async function duplicateModule(
         title: c.title,
         position: c.position,
         session_date: c.session_date,
+        start_time: c.start_time,
+        end_time: c.end_time,
         type: c.type,
         learning_objectives: c.learning_objectives,
         animation_notes: c.animation_notes,
@@ -287,6 +289,17 @@ export async function duplicateModule(
         })),
       );
     }
+  }
+
+  // Les ressources retenues suivent le module dupliqué (US-55).
+  const { data: retained } = await supabase
+    .from("module_resource")
+    .select("resource_id")
+    .eq("module_id", sourceId);
+  if (retained?.length) {
+    await supabase
+      .from("module_resource")
+      .insert(retained.map((r) => ({ module_id: newModule.id, resource_id: r.resource_id })));
   }
 
   revalidatePath("/modules");

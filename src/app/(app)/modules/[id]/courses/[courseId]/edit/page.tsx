@@ -3,7 +3,12 @@ import { notFound } from "next/navigation";
 
 import { updateCourse } from "@/app/(app)/modules/[id]/courses/actions";
 import { CourseForm } from "@/components/modules/course-form";
-import { getCourse, getModule, listActiveResources } from "@/lib/modules/queries";
+import {
+  getCourse,
+  getModule,
+  getRetainedResources,
+  listActiveResources,
+} from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Modifier la séance" };
 
@@ -11,10 +16,11 @@ export default async function EditCoursePage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/edit">) {
   const { id, courseId } = await params;
-  const [mod, course, resources] = await Promise.all([
+  const [mod, course, resources, retained] = await Promise.all([
     getModule(id),
     getCourse(courseId),
     listActiveResources(),
+    getRetainedResources(id),
   ]);
   if (!mod || !course || course.module_id !== id) notFound();
 
@@ -26,6 +32,7 @@ export default async function EditCoursePage({
         moduleId={id}
         course={course}
         resources={resources}
+        retainedIds={retained.map((r) => r.id)}
         nextPosition={course.position}
       />
     </div>
