@@ -619,3 +619,17 @@ les a posés (aucune retouche faite dans l'app n'est écrasée). Script :
 6. **Années scolaires** : `student_year` (année du module ; 2025-26 B2 et GP, 2024-25 M2) pour
    les étudiant·es importé·es ; les scripts d'import l'écrivent désormais eux-mêmes.
 
+#### Compléments 2 (29/09) — `--course complements-2`
+
+Projet fil rouge en jalons (US-88), thèmes (US-89), sujets liés aux séances (US-90) :
+
+- **Projets** : GP « Appel d'offres SantaConnect » (brief + mails client) ; M2 « Projet fil
+  rouge — site accessible » (brief). B2 : pas de projet (TP audit, écrit individuel, oral).
+- **Évaluations** (10) : rôle (jalon / oral / individuelle) et rang pour GP et M2 ; toutes
+  rattachées à leur séance ; état « fourni ».
+- **M2** : 3 thèmes (JustiFacile, ClimActif, AssurLibre), 5 groupes affectés en mode
+  « volontaires » (source : colonne « Briefs projets » de Notion).
+- Non importés faute de source : ordre de passage des oraux (colonne vide), dates de rendu,
+  photos. Objectif / rendu / « évalué » non extraits (déjà dans le sujet).
+- Horaires M2 de Notion conservés (29 h pour 28 h facturées). **B2 : horaires à saisir.**
+
