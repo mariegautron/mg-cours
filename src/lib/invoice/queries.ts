@@ -2,7 +2,8 @@ import { moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, listModules, type ModuleWithSchool } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/settings/queries";
-import { invoiceBlockers, missingInvoiceData, type InvoiceContext } from "@/lib/ynov/invoice";
+import type { InvoiceContext } from "@/lib/ynov/invoice";
+import { nextStep, type NextStep } from "@/lib/ynov/next-step";
 import type { Tables } from "@/types/db";
 
 /** Rassemble tout ce qu'il faut pour évaluer/émettre la facture d'un module. */
@@ -65,11 +66,11 @@ export async function listInvoiceNumbers(): Promise<string[]> {
 }
 
 export type BillingRow =
-  | { kind: "invoiced"; module: ModuleWithSchool; invoice: Tables<"invoice"> }
-  | { kind: "ready"; module: ModuleWithSchool }
-  | { kind: "blocked"; module: ModuleWithSchool; reasons: number };
+  | { kind: "invoiced"; module: ModuleWithSchool; invoice: Tables<"invoice">; next: NextStep }
+  | { kind: "ready"; module: ModuleWithSchool; next: NextStep }
+  | { kind: "blocked"; module: ModuleWithSchool; reasons: string[]; next: NextStep };
 
-/** Vue d'ensemble : pour chaque module, facturé / prêt à facturer / bloqué (nb de raisons). */
+/** Vue d'ensemble : pour chaque module, facturé / prêt à facturer / bloqué (raisons détaillées). */
 export async function listBillingOverview(): Promise<BillingRow[]> {
   const supabase = await createClient();
   const [modules, { data: invoices }] = await Promise.all([
@@ -80,11 +81,19 @@ export async function listBillingOverview(): Promise<BillingRow[]> {
 
   return Promise.all(
     modules.map(async (m): Promise<BillingRow> => {
-      const invoice = byModule.get(m.id);
-      if (invoice) return { kind: "invoiced", module: m, invoice };
+      const invoice = byModule.get(m.id) ?? null;
       const ctx = await loadInvoiceContext(m.id);
-      const reasons = ctx ? invoiceBlockers(ctx).length + missingInvoiceData(ctx).length : 1;
-      return reasons === 0 ? { kind: "ready", module: m } : { kind: "blocked", module: m, reasons };
+      const next: NextStep = ctx
+        ? nextStep(ctx, invoice)
+        : {
+            label: "Prochaine étape : compléter le module",
+            done: false,
+            reasons: ["Module introuvable."],
+          };
+      if (invoice) return { kind: "invoiced", module: m, invoice, next };
+      return next.reasons.length === 0
+        ? { kind: "ready", module: m, next }
+        : { kind: "blocked", module: m, reasons: next.reasons, next };
     }),
   );
 }

@@ -49,28 +49,40 @@ export default async function BillingPage() {
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.module.id}>
-              <Link
-                href={`/modules/${r.module.id}/billing`}
-                className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
-              >
-                <div>
-                  <p className="font-medium">{r.module.name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {r.module.school?.name ?? "École non renseignée"} · {r.module.year}
-                  </p>
+              <div className="rounded-lg border">
+                <Link
+                  href={`/modules/${r.module.id}/billing`}
+                  className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg p-3 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <div>
+                    <p className="font-medium">{r.module.name}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {r.module.school?.name ?? "École non renseignée"} · {r.module.year}
+                    </p>
+                  </div>
+                  {r.kind === "invoiced" ? (
+                    <Badge variant={r.invoice.status === "paid" ? "secondary" : "outline"}>
+                      {r.invoice.number} · {STATUS_LABEL[r.invoice.status]}
+                    </Badge>
+                  ) : r.kind === "ready" ? (
+                    <Badge>Prêt à facturer</Badge>
+                  ) : (
+                    <Badge variant="outline">
+                      Bloqué — {r.reasons.length} point{r.reasons.length > 1 ? "s" : ""} à traiter
+                    </Badge>
+                  )}
+                </Link>
+                <div className="space-y-1 px-3 pb-3 text-sm">
+                  <p className="font-medium">{r.next.label}</p>
+                  {r.kind === "blocked" ? (
+                    <ul className="text-muted-foreground list-disc pl-5">
+                      {r.reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
-                {r.kind === "invoiced" ? (
-                  <Badge variant={r.invoice.status === "paid" ? "secondary" : "outline"}>
-                    {r.invoice.number} · {STATUS_LABEL[r.invoice.status]}
-                  </Badge>
-                ) : r.kind === "ready" ? (
-                  <Badge>Prêt à facturer</Badge>
-                ) : (
-                  <Badge variant="outline">
-                    Bloqué — {r.reasons} point{r.reasons > 1 ? "s" : ""} à traiter
-                  </Badge>
-                )}
-              </Link>
+              </div>
             </li>
           ))}
         </ul>

@@ -109,9 +109,9 @@ describe("barème", () => {
 
 describe("criteriaTotal", () => {
   it("somme les points des critères et ignore les bonus (hors barème)", () => {
-    expect(
-      criteriaTotal([{ weight: 8 }, { weight: 12 }, { weight: 0.5, is_bonus: true }]),
-    ).toBe(20);
+    expect(criteriaTotal([{ weight: 8 }, { weight: 12 }, { weight: 0.5, is_bonus: true }])).toBe(
+      20,
+    );
   });
 
   it("renvoie null sans critère noté (aucun critère, ou bonus seuls)", () => {

@@ -134,6 +134,14 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Prochaine étape (US-72)** : le badge d'état iceberg de la fiche module est remplacé par
+  « Prochaine étape : … », calculée par `nextStep()` (`src/lib/ynov/next-step.ts`) depuis les
+  blocages réels (`invoiceBlockers`, `missingInvoiceData`) et le statut de la facture :
+  envoyer la progression pédagogique → saisir les notes manquantes (x/y) → cocher le document
+  administratif « … » → compléter les informations de facturation → générer la facture → envoyer
+  la facture → suivre le paiement → « Facture payée ». `/billing` affiche, pour chaque module, la
+  prochaine étape et la liste des raisons du blocage, sans ouvrir le module. L'état iceberg reste
+  en base (il pilote J-15 et la progression envoyée) mais n'est plus affiché.
 - **Importer des séances d'un autre module (US-58)** : bouton « Depuis un autre module » de
   l'onglet Séances → `/modules/[id]/import-courses` : choix du module source (actifs et archivés,
   avec leur nombre de séances), séances à cocher (« Tout cocher »), aperçu en direct (« 3 séances

@@ -42,7 +42,8 @@ import {
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
-import { ICEBERG_LABELS } from "@/lib/ynov/iceberg";
+import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
+import { nextStep } from "@/lib/ynov/next-step";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
 export async function generateMetadata({
@@ -86,8 +87,14 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   ]);
   if (!mod) notFound();
 
-  const [assessments, outline] = await Promise.all([listModuleAssessments(id), getOutline(id)]);
+  const [assessments, outline, invoiceCtx, invoice] = await Promise.all([
+    listModuleAssessments(id),
+    getOutline(id),
+    loadInvoiceContext(id),
+    getInvoiceByModule(id),
+  ]);
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
+  const next = invoiceCtx ? nextStep(invoiceCtx, invoice) : null;
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
   const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
@@ -463,7 +470,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           {notes.requirement.individual > 1 ? "s" : ""})
           {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
-        <Badge variant="outline">{ICEBERG_LABELS[mod.iceberg_state]}</Badge>
+        {next ? <Badge variant={next.done ? "secondary" : "outline"}>{next.label}</Badge> : null}
       </div>
 
       {mod.archived_at ? (

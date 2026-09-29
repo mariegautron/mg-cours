@@ -250,11 +250,12 @@ C (US-94 à US-100) : non commencés.
 
 Source : page Notion « MG COURS — Audit UX… », section « Mises à jour du 29/09/2026 ».
 
-| US    | Contenu                                                                                                                                                                                                               | Statut |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| US-56 | Recherche dans le contenu : titre, description, tags et contenu Markdown (sans accent ni casse, tous les mots), sur `/resources`, dans le sélecteur de séance et le rapprochement ; extrait de correspondance affiché | ✅     |
-| US-61 | Réordonner les séances : boutons monter / descendre au clavier (focus suivi, annonce), renumérotation 1..N, champ « Position » retiré, nouvelle séance en dernier                                                     | ✅     |
-| US-58 | Importer des séances d'un autre module : module source, séances à cocher, aperçu ; reprend titre, modalité, objectifs, notes et liens ressources, jamais dates, horaires, statut, carnet ni observations | ✅ |
+| US    | Contenu                                                                                                                                                                                                                         | Statut |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-56 | Recherche dans le contenu : titre, description, tags et contenu Markdown (sans accent ni casse, tous les mots), sur `/resources`, dans le sélecteur de séance et le rapprochement ; extrait de correspondance affiché           | ✅     |
+| US-61 | Réordonner les séances : boutons monter / descendre au clavier (focus suivi, annonce), renumérotation 1..N, champ « Position » retiré, nouvelle séance en dernier                                                               | ✅     |
+| US-58 | Importer des séances d'un autre module : module source, séances à cocher, aperçu ; reprend titre, modalité, objectifs, notes et liens ressources, jamais dates, horaires, statut, carnet ni observations                        | ✅     |
+| US-72 | Prochaine étape claire : badge iceberg remplacé par « Prochaine étape : … » (blocages réels : progression, notes, documents, données de facturation, statut de la facture) ; `/billing` liste les raisons du blocage par module | ✅     |
 
 ## Vision suivante (validée 26/09)
 
