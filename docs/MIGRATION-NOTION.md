@@ -633,3 +633,19 @@ Projet fil rouge en jalons (US-88), thèmes (US-89), sujets liés aux séances (
   photos. Objectif / rendu / « évalué » non extraits (déjà dans le sujet).
 - Horaires M2 de Notion conservés (29 h pour 28 h facturées). **B2 : horaires à saisir.**
 
+#### ⏸️ Pause (29/09) — reprise après les devs de la PO
+
+État : B2, Gestion de projet et M2 importés, complétés (paliers, axes, commentaires par
+critère, phrases, horaires, projets, thèmes). Reste à faire, dans l'ordre :
+
+1. **Re-vérifier les nouvelles fonctionnalités** livrées entre-temps (`git log` depuis
+   `4d85b79`, nouvelles migrations `supabase/migrations/` > `20261013000000`) et adapter les
+   3 cours si besoin (même méthode : simulation, écriture après OK).
+2. **B2** : horaires des 5 séances (aucun dans Notion : à donner par la PO ou à saisir dans l'app).
+3. **Page Archives « [Ynov] Accessibilité & Qualité Web »** (`1b3903c74f13808bac1ac1a9c7291e96`) :
+   grilles de conception /80, note projet, 11 commentaires prédéfinis « erreurs fréquentes »,
+   consignes — proposition, validation, simulation, écriture.
+4. Bibliothèque : pages non liées à un cours (proposition à la PO).
+5. Fonctionnalité QCM : migrer les banques (B2 ? GP 69 questions avec réponses, M2 60 sans
+   réponses) une fois livrée (`docs/specs/qcm-banque-questions.md`).
+
