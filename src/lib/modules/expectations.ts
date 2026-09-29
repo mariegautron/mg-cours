@@ -1,0 +1,143 @@
+/**
+ * US-53 : attendus de la fiche YNOV. Fonctions pures : objectifs pédagogiques du module et
+ * objectif de chaque unité pédagogique. Les unités (modalité FFP/TDP, heures) ne sont que des
+ * repères : seul le total d'heures du module est contraignant.
+ */
+
+export type ExpectationKind = "objective" | "unit";
+export type Modality = "FFP" | "TDP";
+
+export interface ExpectationDraft {
+  kind: ExpectationKind;
+  label: string;
+  hours: number | null;
+  modality: Modality | null;
+}
+
+const MAX_LABEL = 1000;
+
+const UNITS_HEADING = /unit[ée]s?\s+p[ée]dagogiques?/i;
+const OBJECTIVES_HEADING = /objectifs?\s+p[ée]dagogiques?(?:\s+du\s+module)?\s*:?/i;
+/** Titres qui closent la section des objectifs. */
+const SECTION_END =
+  /(?:^|\n)\s*(?:unit[ée]s?\s+p[ée]dagogiques?|[ée]valuation|modalit[ée]s?|pr[ée]requis|comp[ée]tences|contenu|bibliographie|dur[ée]es?\s+totales?|volume\s+heures?)\b/i;
+const BULLET = /^[\s]*(?:[-•*·▪●◦–—]|\d{1,2}\s*[.)])\s+/;
+
+const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
+
+const cap = (label: string) => (label.length > MAX_LABEL ? label.slice(0, MAX_LABEL) : label);
+
+function objective(label: string): ExpectationDraft {
+  return { kind: "objective", label: cap(label), hours: null, modality: null };
+}
+
+/** Une ligne = un attendu ; puces et numéros retirés, lignes vides ignorées. */
+export function parseExpectationLines(text: string): ExpectationDraft[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => oneLine(l.replace(BULLET, "")))
+    .filter((l) => l.length >= 3)
+    .map(objective);
+}
+
+/** Découpe une section d'objectifs en puces, en recollant les retours à la ligne du PDF. */
+function splitObjectives(section: string): string[] {
+  const lines = section
+    .split(/\r?\n/)
+    .map((l) => l.trimEnd())
+    .filter((l) => l.trim());
+  if (lines.length === 1) {
+    // PDF fusionné : puces (« • », « - ») ou phrases.
+    const one = lines[0];
+    const bullets = one
+      .split(/(?:^|\s+)(?:[•▪●◦]|[-–—])\s+/)
+      .map(oneLine)
+      .filter(Boolean);
+    if (bullets.length > 1 || /^\s*(?:[•▪●◦]|[-–—])\s/.test(one)) return bullets;
+    return one
+      .split(/(?<=[.;])\s+(?=[A-ZÀ-Ý])/)
+      .map(oneLine)
+      .filter(Boolean);
+  }
+  const items: string[] = [];
+  for (const line of lines) {
+    if (BULLET.test(line) || items.length === 0 || /[.;:]$/.test(items[items.length - 1])) {
+      items.push(line.replace(BULLET, ""));
+    } else {
+      // Ligne de continuation d'une puce coupée par la mise en page.
+      items[items.length - 1] += ` ${line.trim()}`;
+    }
+  }
+  return items.map(oneLine).filter(Boolean);
+}
+
+function readObjectives(text: string): ExpectationDraft[] {
+  const heading = OBJECTIVES_HEADING.exec(text);
+  if (!heading) return [];
+  const after = text.slice(heading.index + heading[0].length);
+  // Titre de section en début de ligne ; « Unités pédagogiques » coupe aussi en plein texte
+  // (PDF fusionné sans retour à la ligne).
+  const cuts = [SECTION_END.exec(after)?.index, UNITS_HEADING.exec(after)?.index].filter(
+    (i): i is number => i !== undefined,
+  );
+  const section = cuts.length ? after.slice(0, Math.min(...cuts)) : after;
+  return splitObjectives(section)
+    .filter((l) => l.length >= 3)
+    .map(objective);
+}
+
+const UNIT_ROW = /(?:^|\s)(\d{1,2})\s*[.)]?\s+(FFP|TDP)\s+(\d{1,3}(?:[.,]\d)?)\s*h(?:eures?)?\b/gi;
+
+/** Lignes du tableau des unités : « 1 FFP 3h Cadrage du besoin ». */
+function readUnits(text: string): ExpectationDraft[] {
+  const heading = UNITS_HEADING.exec(text);
+  if (!heading) return [];
+  const table = text.slice(heading.index + heading[0].length);
+  const rows = [...table.matchAll(UNIT_ROW)];
+  return rows.flatMap((row, i) => {
+    const start = row.index + row[0].length;
+    const end = i + 1 < rows.length ? rows[i + 1].index : table.length;
+    const label = oneLine(table.slice(start, end));
+    return [
+      {
+        kind: "unit" as const,
+        label: cap(label || `Unité ${row[1]}`),
+        hours: Number(row[3].replace(",", ".")),
+        modality: row[2].toUpperCase() as Modality,
+      },
+    ];
+  });
+}
+
+/** Attendus lus dans le texte d'une fiche : objectifs du module, puis une entrée par unité. */
+export function parseExpectationsFromFiche(text: string): ExpectationDraft[] {
+  const clean = text.replace(/\r\n?/g, "\n").replace(/[  ]/g, " ");
+  return [...readObjectives(clean), ...readUnits(clean)];
+}
+
+export interface SkeletonSession {
+  title: string;
+  objective: string;
+}
+
+const MAX_TITLE = 80;
+
+/**
+ * « Proposer un squelette de séances depuis les unités » : une séance vide par unité, titrée
+ * d'après son objectif. Repère indicatif, entièrement modifiable ensuite.
+ */
+export function unitsToSkeleton(
+  units: { kind: ExpectationKind; label: string }[],
+): SkeletonSession[] {
+  return units
+    .filter((u) => u.kind === "unit")
+    .map((u) => ({
+      title: u.label.length > MAX_TITLE ? `${u.label.slice(0, MAX_TITLE - 1).trimEnd()}…` : u.label,
+      objective: u.label,
+    }));
+}
+
+/** Total des heures des unités — indicatif, jamais comparé au volume du module. */
+export function unitsHours(units: { kind: ExpectationKind; hours: number | null }[]): number {
+  return units.reduce((sum, u) => sum + (u.kind === "unit" ? (u.hours ?? 0) : 0), 0);
+}

@@ -206,7 +206,7 @@ Détail : `docs/DEPLOY.md`.
 | E10-02 | « Faire cours » une séance + encart séance du jour / prochaine séance                      | ✅     |
 | E10-03 | « Présenter le module » aux étudiant·es (`module.student_intro`, programme, évaluation)    | ✅     |
 | E10-04 | Présenter une ressource seule (refus si « Enseignante uniquement »)                        | ✅     |
-| E10-05 | Fiche module en onglets (Progression · Séances · Groupes et évaluations · Administratif)  | 🔧     |
+| E10-05 | Fiche module en onglets (Progression · Séances · Groupes et évaluations · Administratif)  | ✅     |
 | US-40a | **Urgent après le 12/10** : lien étudiant·es partageable (jeton, lecture seule, révocable) | ⏳     |
 | —      | Proposition (non urgent) : blocs « Prof » masqués dans le Markdown en vue étudiant·es      | 💡     |
 
@@ -223,6 +223,13 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-60  | Horaires et durée par séance : `course.start_time` / `end_time` (time, nullable), saisie sur la séance, « 18 h planifiées / 21 h » + avertissement, horaires dans le PDF de progression et sur la carte « Aujourd'hui » | ✅     |
 | US-59  | Planning à la création du module : saisie en tableau ou collage, aperçu, séances vides numérotées « Séance 1…N » (« À préparer »), 1re séance → J-15 ; possible sur un module existant | ✅     |
 | US-57  | Ressource « à construire » : `resource.status` (`progress` / `ready`) + `intent_note`, création rapide, filtre sur `/resources`, compteur sur le module ; `studentFacing()` exclut `progress` (projection, PDF cours) | ✅     |
+| US-62  | Lier des ressources sans quitter la séance : recherche et filtres (titre, type, matière, retenues du module), groupement par type, création inline, garde anti-perte | ✅     |
+| US-55  | Ressources retenues : table `module_resource` (unique module + ressource), « Ajouter au module… » depuis `/resources` et la fiche ressource, section « Ressources retenues » du module, proposées en tête dans le formulaire de séance | ✅     |
+| US-53  | Lire les attendus de la fiche YNOV : `module_expectation` (objectifs pédagogiques + objectif de chaque unité), lecture du PDF déposé ou d'un texte collé (une ligne = un attendu), aperçu modifiable, lien vers le PDF d'origine ; UP = repères indicatifs (aucune alerte), option « squelette de séances » | ✅     |
+| US-54  | Rapprocher attendus et ressources (mots-clés, sans IA) : écran `/modules/[id]/matching`, ressources proposées par attendu (type, modules où elles servent), « Retenir » (US-55) / « À construire » (US-57), attendus couverts par séance (`course_expectation`), bilan « 4 couverts, 2 à construire » | ✅     |
+| US-64  | Vue présentatrice : deux fenêtres synchronisées (BroadcastChannel), notes de séance, corrigés, horloge et temps restant | ⏳     |
+| US-68  | Reprise à la séance suivante : diapo « Pour aujourd'hui, vous deviez… » (`next_time`), points reportés et retour d'expérience en vue privée | ⏳     |
+| US-80b | Promotion par année scolaire : `student_year`, reprise de `scholar_group`, inscription d'une année, filtre `/students` | ⏳     |
 
 ## E13 — Évaluations, lot A « grilles et correction » (US-81 à US-87)
 

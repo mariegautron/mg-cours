@@ -21,6 +21,7 @@ import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExpectationsSummary } from "@/components/modules/expectations-summary";
 import { RetainedResources } from "@/components/modules/retained-resources";
 import { ModuleTabs } from "@/components/modules/module-tabs";
 import { TabsContent } from "@/components/ui/tabs";
@@ -34,6 +35,7 @@ import {
   getModule,
   getModuleCourses,
   getModuleDocuments,
+  getModuleExpectations,
   getRetainedResources,
 } from "@/lib/modules/queries";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
@@ -73,12 +75,13 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
 
 export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [mod, courses, groups, documents, retained] = await Promise.all([
+  const [mod, courses, groups, documents, retained, expectations] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     listModuleGroups(id),
     getModuleDocuments(id),
     getRetainedResources(id),
+    getModuleExpectations(id),
   ]);
   if (!mod) notFound();
 
@@ -97,7 +100,8 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
 
   // Onglet Progression
   const progressionTab = (
-    <TabsContent value="progression" className="space-y-4">
+    <TabsContent value="progression" className="space-y-6">
+      <ExpectationsSummary moduleId={mod.id} expectations={expectations} />
       <section aria-labelledby="trame">
         <h2 id="trame" className="mb-1 scroll-mt-16 text-lg font-medium">
           Progression pédagogique

@@ -134,6 +134,34 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Liaison des ressources d'une séance (US-62)** : dans le formulaire de séance, recherche par titre
+  (sans casse ni accents), filtres Type, Matière et « Retenues du module », groupement par type
+  (groupe « Retenues du module » en tête), compteur de ressources affichées / liées, création
+  d'une ressource sur place (titre + type, créée « À construire »). La sélection survit au
+  filtrage ; la première ressource liée est la principale. Garde anti-perte (`beforeunload` et
+  confirmation sur « Annuler »). Composant : `src/components/modules/resource-picker.tsx`.
+- **Attendus de l'école (US-53)** : section « Attendus de l'école » en tête de l'onglet Progression
+  (résumé, accès) et écran `/modules/[id]/expectations`. Lecture du **PDF déposé** (« Attendus de
+  l'école », lien « Ouvrir le PDF d'origine ») ou d'un **texte collé** (une ligne = un attendu) ;
+  aperçu entièrement modifiable (objectifs, unités avec modalité FFP/TDP et heures, ajout /
+  suppression) avant « Enregistrer ». Une relecture garde l'identité des attendus identiques. Les
+  unités sont des **repères indicatifs** : aucune alerte si elles s'écartent de la progression,
+  seul le total d'heures du module est contraignant. Option « Proposer un squelette de séances
+  depuis les unités » (séances vides à la suite des existantes, renommables). Logique pure :
+  `src/lib/modules/expectations.ts` ; écritures : `src/app/(app)/modules/[id]/expectations/actions.ts`.
+- **Rapprochement (US-54)** : `/modules/[id]/matching` (bouton « Rapprocher avec les ressources » de
+  la section Attendus). Pour chaque attendu, jusqu'à 5 ressources dont les **tags, le titre, la
+  description ou le contenu** partagent ses mots-clés (sans IA : casse, accents et mots vides
+  ignorés, pluriels simples), avec type, mots communs et modules où elles servent déjà.
+  « Retenir » (→ ressources retenues) ; « À construire » crée une ressource « à construire » d'après
+  l'attendu et la retient ; « Couvert par la séance » (cases à cocher). États : **Couvert** (séance
+  ou ressource prête retenue), **À construire**, **Sans ressource**. Bilan « 4 couverts, 2 à
+  construire » et liste des non couverts. Logique pure : `src/lib/modules/matching.ts`.
+- **Ressources retenues (US-55)** : « Ajouter au module… » (liste des modules actifs) sur chaque
+  carte de `/resources` et sur la fiche ressource ; section « Ressources retenues » en tête de
+  l'onglet Séances (lien, badges, « Retirer ») ; dans le formulaire de séance, groupe « Retenues du
+  module » en premier. Dupliquer un module reprend ses ressources retenues (et les horaires des
+  séances). Écritures : `src/app/(app)/modules/[id]/retained/actions.ts`.
 - **Fiche pédagogique PDF (US-79)** : préremplit nom (« Nom long » ou « Intitulé »), niveau
   (« Niveau Mastère 1 »), YCODE, année et heures. Le total est le premier volume après « Volume
   heures totales » ; FFP / TDP sont facultatifs et lus seulement s'ils correspondent aux valeurs
@@ -156,8 +184,13 @@ glisser-déposer, formats et taille affichés, envoi dès la sélection, état �
 annoncé) et `FileCard` (type · taille · date + actions nommées).
 
 - Fil d'Ariane `Modules › {nom}` (« Modules archivés » si archivé) ; bandeau « Module archivé le
-  … » + « Restaurer le module » ; sous-navigation par onglets (Progression · Seances · Groupes & Evaluations · Administratif). Ordre des sections = ordre
-  d'usage : Séances avant Documents.
+  … » + « Restaurer le module » ; **onglets** (Progression · Séances · Groupes et évaluations ·
+  Administratif, `ModuleTabs`). Motif ARIA tabs (Radix : flèches, Début/Fin, tabindex,
+  `aria-selected`, `aria-controls`). L'onglet actif suit l'ancre de l'URL (`#courses` → Séances,
+  `#billing` / `#documents` → Administratif, `#groups` / `#assessments` → Groupes et évaluations, avec
+  défilement jusqu'à la section) et l'ancre suit l'onglet choisi (rechargement, lien partagé).
+  Table des ancres : `src/lib/modules/tabs.ts`. Après création ou modification d'une séance, retour
+  sur `#courses`.
 - En-tête : école, niveau, année, YCODE ; badges heures / **minimum de notes requises**
   (`requiredNotes`, ex. 21 h → « 3 notes min. (2 groupes + 1 individuelle) ») / état iceberg.
 - **Progression pédagogique** : badge d'échéance (`trameStatus`) —
