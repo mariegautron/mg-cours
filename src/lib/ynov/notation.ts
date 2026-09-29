@@ -17,9 +17,12 @@ export const INDIVIDUAL_COEFFICIENT = 3;
 /** Barème YNOV / Hyperplanning : toutes les notes sont remontées sur 20. */
 export const DEFAULT_MAX_SCORE = 20;
 
-/** Total des points d'une grille (`null` sans critère). */
-export function criteriaTotal(criteria: readonly { weight: number }[]): number | null {
-  return criteria.length ? criteria.reduce((sum, c) => sum + c.weight, 0) : null;
+/** Total des points d'une grille (`null` sans critère). Les bonus sont hors barème. */
+export function criteriaTotal(
+  criteria: readonly { weight: number; is_bonus?: boolean }[],
+): number | null {
+  const scored = criteria.filter((c) => !c.is_bonus);
+  return scored.length ? scored.reduce((sum, c) => sum + c.weight, 0) : null;
 }
 
 /**

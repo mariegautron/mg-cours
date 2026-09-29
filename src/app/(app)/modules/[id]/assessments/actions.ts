@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
-import { criteriaTotal, effectiveMaxScore, scaleGridTotal } from "@/lib/ynov/notation";
+import { computeTotals, readScores } from "@/lib/assessments/scoring";
 
 export interface AssessmentFormState {
   error?: string;
@@ -19,6 +19,25 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Critères validés d'office conservés : ceux qui appartiennent à la grille choisie (changer de grille
+ * en retire les critères de l'ancienne) et qui ne sont pas des bonus.
+ */
+async function keepAutoValidated(
+  supabase: Supabase,
+  gridId: string | null,
+  ids: string[],
+): Promise<string[]> {
+  if (!gridId || ids.length === 0) return [];
+  const { data } = await supabase
+    .from("grid_criterion")
+    .select("id")
+    .eq("grading_grid_id", gridId)
+    .eq("is_bonus", false)
+    .in("id", ids);
+  return (data ?? []).map((c) => c.id);
+}
 
 /** Vrai si tous les groupes appartiennent au module (la RLS garantit déjà la propriété). */
 async function groupsBelongToModule(supabase: Supabase, moduleId: string, groupIds: string[]) {
@@ -44,6 +63,12 @@ export async function createAssessment(
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
   }
 
+  const autoValidated = await keepAutoValidated(
+    supabase,
+    parsed.data.gradingGridId,
+    parsed.data.autoValidatedCriterionIds,
+  );
+
   const { data, error } = await supabase
     .from("assessment")
     .insert({
@@ -57,6 +82,7 @@ export async function createAssessment(
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
       max_score: parsed.data.maxScore,
+      auto_validated_criterion_ids: autoValidated,
     })
     .select("id")
     .single();
@@ -90,6 +116,12 @@ export async function updateAssessment(
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
   }
 
+  const autoValidated = await keepAutoValidated(
+    supabase,
+    parsed.data.gradingGridId,
+    parsed.data.autoValidatedCriterionIds,
+  );
+
   const { error } = await supabase
     .from("assessment")
     .update({
@@ -102,6 +134,7 @@ export async function updateAssessment(
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
       max_score: parsed.data.maxScore,
+      auto_validated_criterion_ids: autoValidated,
     })
     .eq("id", assessmentId);
 
@@ -157,58 +190,55 @@ export interface GradeFormState {
   saved?: boolean;
 }
 
-function computeGradeFromForm(formData: FormData): {
-  value: number | null;
-  scores: Record<string, number>;
-} {
-  const scoreEntries = Array.from(formData.entries()).filter(([k]) => k.startsWith("score_"));
-  if (scoreEntries.length > 0) {
-    const scores: Record<string, number> = {};
-    let total = 0;
-    for (const [key, raw] of scoreEntries) {
-      const num = Number(raw);
-      if (Number.isNaN(num)) continue;
-      const criterionId = key.slice("score_".length);
-      scores[criterionId] = num;
-      total += num;
-    }
-    return { value: total, scores };
-  }
-  const raw = formData.get("value");
-  const num = typeof raw === "string" && raw !== "" ? Number(raw) : null;
-  return { value: num !== null && !Number.isNaN(num) ? num : null, scores: {} };
-}
-
 async function saveGrade(
   moduleId: string,
   assessmentId: string,
   target: { studentId: string | null; studentGroupId: string | null },
   formData: FormData,
 ): Promise<GradeFormState> {
-  const { value: raw, scores } = computeGradeFromForm(formData);
-  if (raw === null) return { error: "Saisissez une note." };
-
   const feedback = String(formData.get("feedback") ?? "").trim();
   const predefinedCommentIds = formData.getAll("predefinedCommentIds").map(String);
 
   const supabase = await createClient();
   const { data: assessment } = await supabase
     .from("assessment")
-    .select("max_score, grading_grid:grading_grid_id(grid_criterion(weight))")
+    .select(
+      "max_score, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, weight, axis_id, is_bonus))",
+    )
     .eq("id", assessmentId)
     .maybeSingle();
   if (!assessment) return { error: "Évaluation introuvable." };
 
-  // Grille notée sur un autre barème (ex. grille /30 notée /20) : total ramené au barème.
-  const grid = assessment.grading_grid as { grid_criterion: { weight: number }[] } | null;
-  const gridTotal = criteriaTotal(grid?.grid_criterion ?? []);
-  const value =
-    Object.keys(scores).length > 0 && gridTotal
-      ? scaleGridTotal(raw, gridTotal, assessment.max_score)
-      : raw;
-  const maxScore = effectiveMaxScore(assessment.max_score, gridTotal);
-  if (value < 0 || value > maxScore) {
-    return { error: `La note doit être comprise entre 0 et ${maxScore}.` };
+  const grid = assessment.grading_grid as {
+    grid_criterion: { id: string; weight: number; axis_id: string | null; is_bonus: boolean }[];
+  } | null;
+  const criteria = (grid?.grid_criterion ?? []).map((c) => ({
+    id: c.id,
+    weight: c.weight,
+    axisId: c.axis_id,
+    isBonus: c.is_bonus,
+  }));
+
+  let value: number;
+  let scores: Record<string, number> = {};
+  if (criteria.length > 0) {
+    // Total (bonus inclus) ramené au barème puis plafonné à ce barème (`computeTotals`).
+    const autoValidatedIds = assessment.auto_validated_criterion_ids;
+    scores = readScores(formData.entries(), criteria);
+    for (const id of autoValidatedIds) delete scores[id];
+    value = computeTotals(criteria, scores, {
+      autoValidatedIds,
+      maxScore: assessment.max_score,
+    }).value;
+  } else {
+    const raw = formData.get("value");
+    const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;
+    if (!Number.isFinite(num)) return { error: "Saisissez une note." };
+    const maxScore = assessment.max_score ?? 20;
+    if (num < 0 || num > maxScore) {
+      return { error: `La note doit être comprise entre 0 et ${maxScore}.` };
+    }
+    value = num;
   }
   const match = target.studentId
     ? { assessment_id: assessmentId, student_id: target.studentId }

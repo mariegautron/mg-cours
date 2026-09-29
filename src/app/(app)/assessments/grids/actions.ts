@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  diffAxes,
   diffCriteria,
+  readAxesInput,
   readCriteriaInput,
+  type AxisInput,
   type CriterionInput,
   type ExistingCriterion,
 } from "@/lib/assessments/grid-criteria";
@@ -26,8 +29,69 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
   );
 }
 
-function validateCriteria(raw: string): { criteria: CriterionInput[] } | { error: string } {
-  return readCriteriaInput(raw);
+function validateCriteria(
+  raw: string,
+  rawAxes: string,
+): { criteria: CriterionInput[]; axes: AxisInput[] } | { error: string } {
+  const criteria = readCriteriaInput(raw);
+  if ("error" in criteria) return criteria;
+  const axes = readAxesInput(rawAxes);
+  if ("error" in axes) return axes;
+  return { criteria: criteria.criteria, axes: axes.axes };
+}
+
+/**
+ * Enregistre les axes de la grille (identifiants conservés, comme pour les critères) et renvoie la
+ * correspondance clé d'éditeur → identifiant, ou `null` en cas d'échec. Un critère qui pointe vers
+ * un axe supprimé ou inconnu perd son axe (`on delete set null`).
+ */
+async function saveAxes(
+  supabase: Supabase,
+  gridId: string,
+  submitted: AxisInput[],
+): Promise<Map<string, string> | null> {
+  const { data: existing } = await supabase
+    .from("grid_axis")
+    .select("id")
+    .eq("grading_grid_id", gridId);
+  const diff = diffAxes(existing ?? [], submitted);
+  const keyToId = new Map<string, string>();
+
+  for (const a of diff.toUpdate) {
+    const { error } = await supabase
+      .from("grid_axis")
+      .update({ label: a.label, position: a.position })
+      .eq("id", a.id);
+    if (error) return null;
+    keyToId.set(a.key, a.id);
+  }
+  if (diff.toInsert.length) {
+    const { data, error } = await supabase
+      .from("grid_axis")
+      .insert(
+        diff.toInsert.map((a) => ({
+          grading_grid_id: gridId,
+          label: a.label,
+          position: a.position,
+        })),
+      )
+      .select("id, position");
+    if (error || !data) return null;
+    for (const row of data) {
+      const source = diff.toInsert.find((a) => a.position === row.position);
+      if (source) keyToId.set(source.key, row.id);
+    }
+  }
+  return keyToId;
+}
+
+async function deleteAxes(supabase: Supabase, gridId: string, keepIds: Set<string>) {
+  const { data: existing } = await supabase
+    .from("grid_axis")
+    .select("id")
+    .eq("grading_grid_id", gridId);
+  const stale = (existing ?? []).map((a) => a.id).filter((id) => !keepIds.has(id));
+  if (stale.length) await supabase.from("grid_axis").delete().in("id", stale);
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -65,7 +129,7 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
   const parsed = readGridForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
-  const validated = validateCriteria(parsed.data.criteriaJson);
+  const validated = validateCriteria(parsed.data.criteriaJson, parsed.data.axesJson);
   if ("error" in validated) return { error: validated.error };
 
   const supabase = await createClient();
@@ -76,6 +140,9 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
     .single();
   if (error || !data) return { error: "Enregistrement impossible." };
 
+  const axisIds = await saveAxes(supabase, data.id, validated.axes);
+  if (!axisIds) return { error: "Enregistrement impossible." };
+
   const { data: created, error: criteriaError } = await supabase
     .from("grid_criterion")
     .insert(
@@ -85,6 +152,9 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
         weight: c.weight,
         description: c.description || null,
         position: i,
+        axis_id: (c.axisKey && axisIds.get(c.axisKey)) || null,
+        reference: c.reference || null,
+        is_bonus: c.isBonus ?? false,
       })),
     )
     .select("id, position");
@@ -160,7 +230,7 @@ export async function updateGrid(
   const parsed = readGridForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
-  const validated = validateCriteria(parsed.data.criteriaJson);
+  const validated = validateCriteria(parsed.data.criteriaJson, parsed.data.axesJson);
   if ("error" in validated) return { error: validated.error };
 
   const supabase = await createClient();
@@ -193,6 +263,10 @@ export async function updateGrid(
     .eq("id", id);
   if (gridError) return { error: "Enregistrement impossible." };
 
+  const axisIds = await saveAxes(supabase, id, validated.axes);
+  if (!axisIds) return { error: "Enregistrement impossible." };
+  const axisIdOf = (key: string | null) => (key && axisIds.get(key)) || null;
+
   const levelsByCriterion = new Map<string, LevelInput[]>();
 
   for (const c of diff.toUpdate) {
@@ -204,6 +278,9 @@ export async function updateGrid(
         weight: c.weight,
         description: c.description,
         position: c.position,
+        axis_id: axisIdOf(c.axisKey),
+        reference: c.reference,
+        is_bonus: c.isBonus,
       })
       .eq("id", c.id);
     if (error) return { error: "Enregistrement impossible." };
@@ -219,6 +296,9 @@ export async function updateGrid(
           weight: c.weight,
           description: c.description,
           position: c.position,
+          axis_id: axisIdOf(c.axisKey),
+          reference: c.reference,
+          is_bonus: c.isBonus,
         })),
       )
       .select("id, position");
@@ -238,6 +318,8 @@ export async function updateGrid(
     const { error } = await supabase.from("grid_criterion").delete().in("id", diff.toDelete);
     if (error) return { error: "Enregistrement impossible." };
   }
+
+  await deleteAxes(supabase, id, new Set(axisIds.values()));
 
   revalidatePath("/assessments/grids");
   redirect("/assessments/grids");

@@ -12,6 +12,8 @@ async function login(page: import("@playwright/test").Page) {
 
 test("une grille se saisit avec des paliers propres à chaque critère", async ({ page }) => {
   test.setTimeout(60_000);
+  // Thème clair : le contraste de la barre latérale en thème dark est vérifié dans design.spec.ts.
+  await page.addInitScript(() => window.localStorage.setItem("theme", "light"));
   await login(page);
   const gridName = `Grille Paliers ${Date.now()}`;
 

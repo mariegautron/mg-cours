@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import type { AssessmentFormState } from "@/app/(app)/modules/[id]/assessments/actions";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { AssessmentDetail } from "@/lib/assessments/queries";
+import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
 import type { Tables } from "@/types/db";
 
 type Action = (state: AssessmentFormState, formData: FormData) => Promise<AssessmentFormState>;
@@ -32,11 +32,16 @@ export function AssessmentForm({
   action: Action;
   moduleId: string;
   groups: Pick<Tables<"student_group">, "id" | "name">[];
-  grids: Pick<Tables<"grading_grid">, "id" | "name">[];
+  grids: Pick<GridWithCriteria, "id" | "name" | "criteria" | "axes">[];
   assessment?: AssessmentDetail;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
+  const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? "");
+  const gridCriteria = (grids.find((g) => g.id === gridId)?.criteria ?? []).filter(
+    (c) => !c.is_bonus,
+  );
+  const autoValidated = new Set(assessment?.auto_validated_criterion_ids ?? []);
   // Un seul groupe dans le module : pré-coché à la création.
   const selectedGroupIds = new Set(
     assessment ? assessment.groups.map((g) => g.id) : groups.length === 1 ? [groups[0].id] : [],
@@ -153,7 +158,8 @@ export function AssessmentForm({
           <select
             id="gradingGridId"
             name="gradingGridId"
-            defaultValue={assessment?.grading_grid_id ?? ""}
+            value={gridId}
+            onChange={(e) => setGridId(e.target.value)}
             className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
           >
             <option value="">Aucune — note directe</option>
@@ -164,6 +170,32 @@ export function AssessmentForm({
             ))}
           </select>
         </div>
+        {gridCriteria.length > 0 ? (
+          <fieldset key={gridId} className="space-y-2 sm:col-span-2">
+            <legend className="text-sm leading-none font-medium">
+              Critères validés d’office pour cette évaluation
+            </legend>
+            <p className="text-muted-foreground text-sm">
+              Un critère validé d’office reçoit son palier le plus haut sans saisie (ex. déjà validé
+              lors d’une phase précédente).
+            </p>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {gridCriteria.map((c) => (
+                <li key={c.id}>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      name="autoValidatedCriterionIds"
+                      value={c.id}
+                      defaultChecked={autoValidated.has(c.id)}
+                    />
+                    {c.label}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+        ) : null}
       </div>
 
       <label className="flex items-center gap-2 text-sm">

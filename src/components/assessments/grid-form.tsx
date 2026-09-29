@@ -29,6 +29,13 @@ interface LevelRow {
   description: string;
 }
 
+interface AxisRow {
+  /** Clé stable (l'identifiant pour un axe existant), envoyée avec les critères qui s'y rattachent. */
+  key: string;
+  id?: string;
+  label: string;
+}
+
 interface Row {
   /** Clé stable pour React et le focus, distincte de `id` (un nouveau critère n'a pas d'id). */
   key: string;
@@ -37,6 +44,10 @@ interface Row {
   weight: string;
   description: string;
   levels: LevelRow[];
+  /** Clé de l'axe (`AxisRow.key`), chaîne vide : sans axe. */
+  axisKey: string;
+  reference: string;
+  isBonus: boolean;
 }
 
 /** Barème d'un critère : palier le plus haut s'il y a des paliers, sinon les points saisis. */
@@ -46,7 +57,16 @@ function criterionPoints(row: Row): number {
 }
 
 function emptyRow(): Row {
-  return { key: crypto.randomUUID(), label: "", weight: "", description: "", levels: [] };
+  return {
+    key: crypto.randomUUID(),
+    label: "",
+    weight: "",
+    description: "",
+    levels: [],
+    axisKey: "",
+    reference: "",
+    isBonus: false,
+  };
 }
 
 export function GridForm({ action, grid }: { action: Action; grid?: GridWithCriteria }) {
@@ -71,9 +91,16 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
             points: String(l.points),
             description: l.description,
           })),
+          axisKey: c.axis_id ?? "",
+          reference: c.reference ?? "",
+          isBonus: c.is_bonus,
         }))
       : [emptyRow()],
   );
+  const [axes, setAxes] = useState<AxisRow[]>(() =>
+    (grid?.axes ?? []).map((a) => ({ key: a.id, id: a.id, label: a.label })),
+  );
+  const focusAxisRef = useRef<string | null>(null);
 
   // Ouvre la confirmation dès que l'action serveur la demande (pas de useEffect : la
   // réponse de l'action arrive déjà en dehors du rendu, donc l'ajuster ici ne boucle pas).
@@ -90,7 +117,45 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
     focusKeyRef.current = null;
   }, [rows]);
 
-  const total = rows.reduce((sum, r) => sum + criterionPoints(r), 0);
+  useEffect(() => {
+    if (!focusAxisRef.current) return;
+    document.getElementById(`axis-label-${focusAxisRef.current}`)?.focus();
+    focusAxisRef.current = null;
+  }, [axes]);
+
+  const total = rows.reduce((sum, r) => sum + (r.isBonus ? 0 : criterionPoints(r)), 0);
+  const bonusTotal = rows.reduce((sum, r) => sum + (r.isBonus ? criterionPoints(r) : 0), 0);
+
+  function addAxis() {
+    const axis: AxisRow = { key: crypto.randomUUID(), label: "" };
+    focusAxisRef.current = axis.key;
+    setAxes((as) => [...as, axis]);
+    setAnnouncement("Axe ajouté.");
+  }
+
+  function removeAxis(key: string) {
+    const index = axes.findIndex((a) => a.key === key);
+    const removed = axes[index];
+    const next = axes.filter((a) => a.key !== key);
+    const fallback = next[index] ?? next[index - 1];
+    if (fallback) focusAxisRef.current = fallback.key;
+    else document.getElementById("add-axis")?.focus();
+    setAxes(next);
+    // Les critères de cet axe redeviennent « sans axe ».
+    setRows((rs) => rs.map((r) => (r.axisKey === key ? { ...r, axisKey: "" } : r)));
+    setAnnouncement(`Axe « ${removed.label || "sans nom"} » supprimé.`);
+  }
+
+  function moveAxis(key: string, direction: -1 | 1) {
+    setAxes((as) => {
+      const index = as.findIndex((a) => a.key === key);
+      const target = index + direction;
+      if (target < 0 || target >= as.length) return as;
+      const next = [...as];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
 
   function updateRow(key: string, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -139,6 +204,9 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
           label: r.label.trim(),
           weight: r.levels.length ? criterionPoints(r) : Number(r.weight),
           description: r.description.trim(),
+          axisKey: r.axisKey || null,
+          reference: r.reference.trim(),
+          isBonus: r.isBonus,
           levels: r.levels.map((l) => ({
             points: Number(l.points),
             description: l.description.trim(),
@@ -146,10 +214,15 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
         }));
         const hidden = e.currentTarget.elements.namedItem("criteriaJson") as HTMLInputElement;
         hidden.value = JSON.stringify(payload);
+        const axesHidden = e.currentTarget.elements.namedItem("axesJson") as HTMLInputElement;
+        axesHidden.value = JSON.stringify(
+          axes.map((a) => ({ key: a.key, id: a.id, label: a.label.trim() })),
+        );
       }}
       className="max-w-2xl space-y-6"
     >
       <input type="hidden" name="criteriaJson" />
+      <input type="hidden" name="axesJson" />
       <input ref={confirmInputRef} type="hidden" name="confirmDeleteCriteria" />
 
       <div className="space-y-2">
@@ -172,6 +245,69 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
       </div>
 
       <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold">Axes (facultatif)</legend>
+        <p className="text-muted-foreground text-sm">
+          Regroupez les critères par axe : chaque axe affiche son sous-total à la correction.
+        </p>
+        {axes.length > 0 ? (
+          <ul className="space-y-2">
+            {axes.map((axis, i) => (
+              <li key={axis.key} className="flex flex-wrap items-end gap-2">
+                <div className="min-w-40 flex-1 space-y-1">
+                  <Label htmlFor={`axis-label-${axis.key}`}>Nom de l’axe {i + 1}</Label>
+                  <Input
+                    id={`axis-label-${axis.key}`}
+                    value={axis.label}
+                    onChange={(e) =>
+                      setAxes((as) =>
+                        as.map((a) => (a.key === axis.key ? { ...a, label: e.target.value } : a)),
+                      )
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    disabled={i === 0}
+                    onClick={() => moveAxis(axis.key, -1)}
+                    aria-label={`Monter l’axe ${i + 1}`}
+                  >
+                    <ArrowUp aria-hidden />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    disabled={i === axes.length - 1}
+                    onClick={() => moveAxis(axis.key, 1)}
+                    aria-label={`Descendre l’axe ${i + 1}`}
+                  >
+                    <ArrowDown aria-hidden />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeAxis(axis.key)}
+                    aria-label={`Supprimer l’axe ${i + 1}`}
+                  >
+                    <Trash2 aria-hidden />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <Button id="add-axis" type="button" size="sm" variant="secondary" onClick={addAxis}>
+          <Plus aria-hidden />
+          Ajouter un axe
+        </Button>
+      </fieldset>
+
+      <fieldset className="space-y-3">
         <legend className="text-sm font-semibold">Critères</legend>
         <div aria-live="polite" className="sr-only">
           {announcement}
@@ -188,6 +324,7 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
               onMoveUp={() => move(row.key, -1)}
               onMoveDown={() => move(row.key, 1)}
               announce={setAnnouncement}
+              axes={axes}
             />
           ))}
         </ul>
@@ -195,7 +332,10 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
           <Plus aria-hidden />
           Ajouter un critère
         </Button>
-        <p className="text-muted-foreground text-sm">Barème total : {total} points.</p>
+        <p className="text-muted-foreground text-sm">
+          Barème total : {total} points
+          {bonusTotal > 0 ? ` (+ ${bonusTotal} de bonus hors barème)` : ""}.
+        </p>
         {fe.criteriaJson?.length ? (
           <p role="alert" className="text-destructive text-sm">
             {fe.criteriaJson.join(" ")}
@@ -249,6 +389,7 @@ function CriterionRow({
   onMoveUp,
   onMoveDown,
   announce,
+  axes,
 }: {
   row: Row;
   index: number;
@@ -258,6 +399,7 @@ function CriterionRow({
   onMoveUp: () => void;
   onMoveDown: () => void;
   announce: (message: string) => void;
+  axes: AxisRow[];
 }) {
   const uid = useId();
   const focusLevelRef = useRef<string | null>(null);
@@ -348,6 +490,44 @@ function CriterionRow({
             <Trash2 aria-hidden />
           </Button>
         </div>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        {axes.length > 0 ? (
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-axis`}>Axe du critère {index + 1}</Label>
+            <select
+              id={`${uid}-axis`}
+              value={row.axisKey}
+              onChange={(e) => onChange({ axisKey: e.target.value })}
+              className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            >
+              <option value="">Sans axe</option>
+              {axes.map((a, i) => (
+                <option key={a.key} value={a.key}>
+                  {a.label || `Axe ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+        <div className="min-w-32 flex-1 space-y-1">
+          <Label htmlFor={`${uid}-reference`}>Référence du critère {index + 1}</Label>
+          <Input
+            id={`${uid}-reference`}
+            value={row.reference}
+            maxLength={200}
+            placeholder="Ex. RGAA 1.3.1"
+            onChange={(e) => onChange({ reference: e.target.value })}
+          />
+        </div>
+        <label className="flex items-center gap-2 pb-2 text-sm">
+          <input
+            type="checkbox"
+            checked={row.isBonus}
+            onChange={(e) => onChange({ isBonus: e.target.checked })}
+          />
+          Bonus hors barème<span className="sr-only"> (critère {index + 1})</span>
+        </label>
       </div>
       {hasLevels ? (
         <p id={`${uid}-weight-hint`} className="text-muted-foreground text-sm">

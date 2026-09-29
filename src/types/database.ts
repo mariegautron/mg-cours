@@ -36,6 +36,7 @@ export type Database = {
     Tables: {
       assessment: {
         Row: {
+          auto_validated_criterion_ids: string[]
           coefficient: number
           created_at: string
           date: string | null
@@ -53,6 +54,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_validated_criterion_ids?: string[]
           coefficient?: number
           created_at?: string
           date?: string | null
@@ -70,6 +72,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_validated_criterion_ids?: string[]
           coefficient?: number
           created_at?: string
           date?: string | null
@@ -408,41 +411,95 @@ export type Database = {
         }
         Relationships: []
       }
-      grid_criterion: {
+      grid_axis: {
         Row: {
           created_at: string
-          description: string | null
           grading_grid_id: string
           id: string
           label: string
           owner_id: string
           position: number
           updated_at: string
-          weight: number
         }
         Insert: {
           created_at?: string
-          description?: string | null
           grading_grid_id: string
           id?: string
           label: string
           owner_id?: string
           position?: number
           updated_at?: string
-          weight?: number
         }
         Update: {
           created_at?: string
-          description?: string | null
           grading_grid_id?: string
           id?: string
           label?: string
           owner_id?: string
           position?: number
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grid_axis_grading_grid_id_fkey"
+            columns: ["grading_grid_id"]
+            isOneToOne: false
+            referencedRelation: "grading_grid"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grid_criterion: {
+        Row: {
+          axis_id: string | null
+          created_at: string
+          description: string | null
+          grading_grid_id: string
+          id: string
+          is_bonus: boolean
+          label: string
+          owner_id: string
+          position: number
+          reference: string | null
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          axis_id?: string | null
+          created_at?: string
+          description?: string | null
+          grading_grid_id: string
+          id?: string
+          is_bonus?: boolean
+          label: string
+          owner_id?: string
+          position?: number
+          reference?: string | null
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          axis_id?: string | null
+          created_at?: string
+          description?: string | null
+          grading_grid_id?: string
+          id?: string
+          is_bonus?: boolean
+          label?: string
+          owner_id?: string
+          position?: number
+          reference?: string | null
+          updated_at?: string
           weight?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "grid_criterion_axis_id_fkey"
+            columns: ["axis_id"]
+            isOneToOne: false
+            referencedRelation: "grid_axis"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "grid_criterion_grading_grid_id_fkey"
             columns: ["grading_grid_id"]

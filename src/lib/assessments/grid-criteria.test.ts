@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { diffCriteria, readCriteriaInput, type ExistingCriterion } from "./grid-criteria";
+import {
+  diffAxes,
+  diffCriteria,
+  readAxesInput,
+  readCriteriaInput,
+  type ExistingCriterion,
+} from "./grid-criteria";
 
 const existing: ExistingCriterion[] = [
   { id: "a", label: "Présentation", weight: 4, description: null },
@@ -33,6 +39,9 @@ describe("diffCriteria", () => {
       description: null,
       position: 0,
       levels: [],
+      axisKey: null,
+      reference: null,
+      isBonus: false,
     });
     expect(diff.toInsert).toEqual([]);
     expect(diff.toDelete).toEqual([]);
@@ -57,7 +66,16 @@ describe("diffCriteria", () => {
       { label: "Bonus", weight: 2, description: "" },
     ]);
     expect(diff.toInsert).toEqual([
-      { label: "Bonus", weight: 2, description: null, position: 3, levels: [] },
+      {
+        label: "Bonus",
+        weight: 2,
+        description: null,
+        position: 3,
+        levels: [],
+        axisKey: null,
+        reference: null,
+        isBonus: false,
+      },
     ]);
     expect(diff.toDelete).toEqual([]);
   });
@@ -77,7 +95,16 @@ describe("diffCriteria", () => {
       { id: "zzzz-inconnu", label: "Copié d'une autre grille", weight: 3, description: "" },
     ]);
     expect(diff.toInsert).toEqual([
-      { label: "Copié d'une autre grille", weight: 3, description: null, position: 3, levels: [] },
+      {
+        label: "Copié d'une autre grille",
+        weight: 3,
+        description: null,
+        position: 3,
+        levels: [],
+        axisKey: null,
+        reference: null,
+        isBonus: false,
+      },
     ]);
     expect(diff.toDelete).toEqual([]);
   });
@@ -105,7 +132,17 @@ describe("readCriteriaInput", () => {
       JSON.stringify([{ label: "Présentation", weight: 4, description: "" }]),
     );
     expect(result).toEqual({
-      criteria: [{ label: "Présentation", weight: 4, description: "", levels: [] }],
+      criteria: [
+        {
+          label: "Présentation",
+          weight: 4,
+          description: "",
+          levels: [],
+          axisKey: null,
+          reference: "",
+          isBonus: false,
+        },
+      ],
     });
   });
 
@@ -131,6 +168,9 @@ describe("readCriteriaInput", () => {
           label: "Structure",
           weight: 6,
           description: "",
+          axisKey: null,
+          reference: "",
+          isBonus: false,
           levels: [
             { points: 6, description: "Correcte" },
             { points: 4, description: "Approximative" },
@@ -181,5 +221,75 @@ describe("readCriteriaInput", () => {
     expect(
       "error" in readCriteriaInput(JSON.stringify([{ label: "X", weight: 0, description: "" }])),
     ).toBe(true);
+  });
+});
+
+describe("axes, références et bonus", () => {
+  it("lit l'axe, la référence et le bonus d'un critère", () => {
+    const result = readCriteriaInput(
+      JSON.stringify([
+        {
+          label: "Lien d'évitement",
+          weight: 1,
+          description: "",
+          axisKey: "k1",
+          reference: "  RGAA 12.6.1  ",
+          isBonus: true,
+        },
+      ]),
+    );
+    expect(result).toMatchObject({
+      criteria: [{ axisKey: "k1", reference: "RGAA 12.6.1", isBonus: true }],
+    });
+  });
+
+  it("transmet axe, référence et bonus dans le diff", () => {
+    const diff = diffCriteria(existing, [
+      {
+        id: "a",
+        label: "Présentation",
+        weight: 4,
+        description: "",
+        axisKey: "k1",
+        reference: "1.3.1",
+        isBonus: true,
+      },
+    ]);
+    expect(diff.toUpdate[0]).toMatchObject({ axisKey: "k1", reference: "1.3.1", isBonus: true });
+  });
+
+  it("refuse une référence trop longue", () => {
+    const long = "x".repeat(201);
+    expect(
+      "error" in
+        readCriteriaInput(
+          JSON.stringify([{ label: "X", weight: 1, description: "", reference: long }]),
+        ),
+    ).toBe(true);
+  });
+});
+
+describe("readAxesInput / diffAxes", () => {
+  it("une chaîne vide vaut aucun axe ; un JSON invalide ou un axe sans nom est refusé", () => {
+    expect(readAxesInput("")).toEqual({ axes: [] });
+    expect(readAxesInput("nope")).toEqual({ error: "Axes invalides." });
+    expect("error" in readAxesInput(JSON.stringify([{ key: "k", label: " " }]))).toBe(true);
+  });
+
+  it("conserve les identifiants existants, crée les nouveaux, supprime les absents", () => {
+    const diff = diffAxes(
+      [{ id: "x1" }, { id: "x2" }],
+      [
+        { key: "k2", id: "x2", label: "Formulaires" },
+        { key: "k3", label: "Nouveau" },
+        { key: "k4", id: "autre-grille", label: "Copié" },
+      ],
+    );
+    expect(diff.toUpdate).toEqual([{ key: "k2", id: "x2", label: "Formulaires", position: 0 }]);
+    expect(diff.toInsert).toEqual([
+      { key: "k3", label: "Nouveau", position: 1 },
+      { key: "k4", label: "Copié", position: 2 },
+    ]);
+    expect(diff.toDelete).toEqual(["x1"]);
   });
 });

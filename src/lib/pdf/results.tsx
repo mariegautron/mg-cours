@@ -1,6 +1,7 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
-import type { ResultSheet } from "@/lib/assessments/results";
+import type { ResultCriterionLine, ResultSheet } from "@/lib/assessments/results";
+import { formatNumber } from "@/lib/assessments/scoring";
 import { MarkdownPdf } from "@/lib/pdf/markdown-view";
 
 const styles = StyleSheet.create({
@@ -15,64 +16,103 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
+  axis: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingVertical: 3,
+    fontFamily: "Helvetica-Bold",
+    backgroundColor: "#f3f3f3",
+  },
+  ref: { color: "#555", fontSize: 9 },
+  overflow: { marginTop: 2, color: "#555" },
   total: { marginTop: 10, fontSize: 14, fontFamily: "Helvetica-Bold" },
   h: { fontFamily: "Helvetica-Bold", marginTop: 14, marginBottom: 3 },
 });
 
+/** Points d'un critère : « 4 / 6 », « +0,5 » pour un bonus, « validé d'office » sinon. */
+function criterionPoints(c: ResultCriterionLine): string {
+  const points = c.points === null ? "—" : formatNumber(c.points);
+  if (c.isBonus) return `${points} (bonus, max +${formatNumber(c.max)})`;
+  return `${points} / ${formatNumber(c.max)}${c.autoValidated ? " (validé d’office)" : ""}`;
+}
+
 const fmtDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("fr-FR", { timeZone: "UTC" }) : null;
+
+function axisSubtotal(sheet: ResultSheet, label: string | null): string {
+  const a = sheet.axes.find((x) => x.label === label);
+  if (!a) return "";
+  const bonus = a.bonusMax > 0 ? ` + ${formatNumber(a.bonusPoints)} de bonus` : "";
+  return `${formatNumber(a.points)} / ${formatNumber(a.max)}${bonus}`;
+}
 
 export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
   return (
     <Document title={`Résultats — ${sheets[0]?.title ?? ""}`}>
-      {sheets.map((s, i) => (
-        <Page key={i} size="A4" style={styles.page}>
-          <Text style={styles.title}>{s.title}</Text>
-          <Text style={styles.sub}>
-            {[s.moduleName, fmtDate(s.date)].filter(Boolean).join(" · ")}
-          </Text>
-          <Text style={styles.who}>
-            {s.isGroupGrade ? "Groupe : " : ""}
-            {s.recipients.map((r) => r.name).join(", ")}
-          </Text>
+      {sheets.map((s, i) => {
+        const hasAxes = s.axes.some((a) => a.label);
+        return (
+          <Page key={i} size="A4" style={styles.page}>
+            <Text style={styles.title}>{s.title}</Text>
+            <Text style={styles.sub}>
+              {[s.moduleName, fmtDate(s.date)].filter(Boolean).join(" · ")}
+            </Text>
+            <Text style={styles.who}>
+              {s.isGroupGrade ? "Groupe : " : ""}
+              {s.recipients.map((r) => r.name).join(", ")}
+            </Text>
 
-          {s.subject ? (
-            <View>
-              <Text style={styles.h}>Sujet</Text>
-              <MarkdownPdf source={s.subject} />
-            </View>
-          ) : null}
+            {s.subject ? (
+              <View>
+                <Text style={styles.h}>Sujet</Text>
+                <MarkdownPdf source={s.subject} />
+              </View>
+            ) : null}
 
-          {s.criteria.map((c) => (
-            <View key={c.label} style={styles.row}>
-              <Text>{c.label}</Text>
-              <Text>
-                {c.points ?? "—"} / {c.max}
-              </Text>
-            </View>
-          ))}
+            {s.criteria.map((c, j) => (
+              <View key={c.label + j}>
+                {hasAxes && (j === 0 || c.axis !== s.criteria[j - 1].axis) ? (
+                  <View style={styles.axis}>
+                    <Text>{c.axis ?? "Autres critères"}</Text>
+                    <Text>{axisSubtotal(s, c.axis)}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.row}>
+                  <View>
+                    <Text>{c.label}</Text>
+                    {c.reference ? <Text style={styles.ref}>Référence : {c.reference}</Text> : null}
+                  </View>
+                  <Text>{criterionPoints(c)}</Text>
+                </View>
+              </View>
+            ))}
 
-          <Text style={styles.total}>
-            Note : {s.value ?? "—"} / {s.maxScore}
-            {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
-          </Text>
+            <Text style={styles.total}>
+              Note : {s.value ?? "—"} / {s.maxScore}
+              {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
+            </Text>
+            {s.overflow ? (
+              <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
+            ) : null}
 
-          {s.feedback ? (
-            <View>
-              <Text style={styles.h}>Appréciation</Text>
-              <Text>{s.feedback}</Text>
-            </View>
-          ) : null}
-          {s.comments.length > 0 ? (
-            <View>
-              <Text style={styles.h}>Commentaires</Text>
-              {s.comments.map((c, j) => (
-                <Text key={j}>- {c}</Text>
-              ))}
-            </View>
-          ) : null}
-        </Page>
-      ))}
+            {s.feedback ? (
+              <View>
+                <Text style={styles.h}>Appréciation</Text>
+                <Text>{s.feedback}</Text>
+              </View>
+            ) : null}
+            {s.comments.length > 0 ? (
+              <View>
+                <Text style={styles.h}>Commentaires</Text>
+                {s.comments.map((c, j) => (
+                  <Text key={j}>- {c}</Text>
+                ))}
+              </View>
+            ) : null}
+          </Page>
+        );
+      })}
     </Document>
   );
 }

@@ -11,6 +11,12 @@ export interface CriterionInput {
   description: string;
   /** Paliers (points + description). Vide : saisie numérique libre. Avec paliers, `weight` = palier le plus haut. */
   levels?: LevelInput[];
+  /** Clé de l'axe (`AxisInput.key`) ou absente : critère sans axe. */
+  axisKey?: string | null;
+  /** Référence libre (ex. « RGAA 1.3.1 »). */
+  reference?: string;
+  /** Bonus : hors barème, jamais compté dans le dénominateur. */
+  isBonus?: boolean;
 }
 
 export const criteriaInputSchema = z
@@ -26,6 +32,17 @@ export const criteriaInputSchema = z
           .max(4000, "Description trop longue (4 000 caractères max).")
           .default(""),
         levels: levelsSchema.default([]),
+        axisKey: z
+          .string()
+          .min(1)
+          .nullish()
+          .transform((v) => v ?? null),
+        reference: z
+          .string()
+          .trim()
+          .max(200, "Référence trop longue (200 caractères max).")
+          .default(""),
+        isBonus: z.boolean().default(false),
       })
       .transform((c) => {
         const max = levelsMax(c.levels);
@@ -51,6 +68,67 @@ export function readCriteriaInput(raw: string): { criteria: CriterionInput[] } |
   return { criteria: result.data };
 }
 
+export interface AxisInput {
+  /** Clé stable côté éditeur : un nouvel axe n'a pas encore d'identifiant. */
+  key: string;
+  id?: string;
+  label: string;
+}
+
+const axesInputSchema = z
+  .array(
+    z.object({
+      key: z.string().min(1),
+      id: z.string().uuid().optional(),
+      label: z.string().trim().min(1, "Nom d'axe manquant.").max(200),
+    }),
+  )
+  .max(30, "30 axes maximum.");
+
+/** Lit le JSON des axes (`axesJson`) ; une chaîne vide vaut « aucun axe ». */
+export function readAxesInput(raw: string): { axes: AxisInput[] } | { error: string } {
+  if (!raw.trim()) return { axes: [] };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { error: "Axes invalides." };
+  }
+  const result = axesInputSchema.safeParse(parsed);
+  if (!result.success) return { error: result.error.issues[0]?.message ?? "Axes invalides." };
+  return { axes: result.data };
+}
+
+export interface AxesDiff {
+  toInsert: { key: string; label: string; position: number }[];
+  toUpdate: { key: string; id: string; label: string; position: number }[];
+  toDelete: string[];
+}
+
+/** Même logique que `diffCriteria` : un identifiant d'une autre grille est traité comme une création. */
+export function diffAxes(
+  existing: readonly { id: string }[],
+  submitted: readonly AxisInput[],
+): AxesDiff {
+  const existingIds = new Set(existing.map((a) => a.id));
+  const toInsert: AxesDiff["toInsert"] = [];
+  const toUpdate: AxesDiff["toUpdate"] = [];
+  const matched = new Set<string>();
+  submitted.forEach((a, position) => {
+    if (a.id && existingIds.has(a.id)) {
+      matched.add(a.id);
+      toUpdate.push({ key: a.key, id: a.id, label: a.label, position });
+    } else {
+      toInsert.push({ key: a.key, label: a.label, position });
+    }
+  });
+  return {
+    toInsert,
+    toUpdate,
+    toDelete: existing.filter((a) => !matched.has(a.id)).map((a) => a.id),
+  };
+}
+
 export interface ExistingCriterion {
   id: string;
   label: string;
@@ -65,6 +143,9 @@ export interface CriteriaDiff {
     description: string | null;
     position: number;
     levels: LevelInput[];
+    axisKey: string | null;
+    reference: string | null;
+    isBonus: boolean;
   }[];
   toUpdate: {
     id: string;
@@ -73,6 +154,9 @@ export interface CriteriaDiff {
     description: string | null;
     position: number;
     levels: LevelInput[];
+    axisKey: string | null;
+    reference: string | null;
+    isBonus: boolean;
   }[];
   /** Identifiants de critères existants absents de la liste soumise. */
   toDelete: string[];
@@ -95,11 +179,24 @@ export function diffCriteria(
   submitted.forEach((c, position) => {
     const description = c.description || null;
     const levels = c.levels ?? [];
+    const extra = {
+      levels,
+      axisKey: c.axisKey ?? null,
+      reference: c.reference || null,
+      isBonus: c.isBonus ?? false,
+    };
     if (c.id && existingIds.has(c.id)) {
       matchedIds.add(c.id);
-      toUpdate.push({ id: c.id, label: c.label, weight: c.weight, description, position, levels });
+      toUpdate.push({
+        id: c.id,
+        label: c.label,
+        weight: c.weight,
+        description,
+        position,
+        ...extra,
+      });
     } else {
-      toInsert.push({ label: c.label, weight: c.weight, description, position, levels });
+      toInsert.push({ label: c.label, weight: c.weight, description, position, ...extra });
     }
   });
 

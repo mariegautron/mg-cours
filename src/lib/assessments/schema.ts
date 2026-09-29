@@ -6,6 +6,8 @@ export const gridSchema = z.object({
   // Sérialisé par l'éditeur de liste de critères (voir grid-form.tsx) ; validé plus précisément
   // par `readCriteriaInput` (src/lib/assessments/grid-criteria.ts) une fois le JSON parsé.
   criteriaJson: z.string().trim().min(1, "Ajoutez au moins un critère."),
+  // Axes (US-82), même principe : validé par `readAxesInput`.
+  axesJson: z.string().default(""),
   confirmDeleteCriteria: z.coerce.boolean().default(false),
 });
 
@@ -14,6 +16,7 @@ export function readGridForm(formData: FormData) {
     name: formData.get("name") ?? "",
     description: formData.get("description") ?? "",
     criteriaJson: formData.get("criteriaJson") ?? "",
+    axesJson: formData.get("axesJson") ?? "",
     confirmDeleteCriteria: formData.get("confirmDeleteCriteria") === "1",
   });
 }
@@ -98,6 +101,11 @@ export const assessmentSchema = z.object({
     .transform((v) => v || null),
   isGroupGrade: z.coerce.boolean().default(false),
   maxScore: optionalMaxScore,
+  /** Critères de la grille validés d'office pour cette évaluation (US-82). */
+  autoValidatedCriterionIds: z
+    .array(z.string().uuid())
+    .transform((ids) => Array.from(new Set(ids)))
+    .default([]),
 });
 
 export function readAssessmentForm(formData: FormData) {
@@ -112,5 +120,6 @@ export function readAssessmentForm(formData: FormData) {
     gradingGridId: formData.get("gradingGridId") ?? "",
     isGroupGrade: formData.get("isGroupGrade") === "on",
     maxScore: formData.get("maxScore") ?? "",
+    autoValidatedCriterionIds: formData.getAll("autoValidatedCriterionIds").map(String),
   });
 }

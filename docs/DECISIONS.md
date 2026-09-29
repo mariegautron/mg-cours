@@ -162,3 +162,14 @@ distincte du type (`kind`) — un corrigé peut être publié (quiz NR), un « p
 client). Tout ce qui sort vers les étudiant·es passe par `studentFacing()` : présentation, export PDF des cours, futurs
 liens. La migration marque d'office `teacher` les titres « Corrigé… » et le tag « banque de questions » ; le script de
 migration Notion affine. Proposition non retenue pour le 12/10 : blocs « Prof » masqués à l'intérieur d'un contenu.
+
+## ADR-022 — Bonus hors barème, total plafonné, validé d'office par évaluation (US-82)
+
+Les grilles de Marie ont des axes avec sous-totaux, des références RGAA et des bonus (« +0,5 »). Choisi : un bonus
+(`grid_criterion.is_bonus`) n'entre jamais dans le dénominateur (`criteriaTotal` l'exclut) mais s'ajoute au total ;
+le total est ramené au barème de l'évaluation puis **plafonné à ce barème** (décision de Marie le 29/09 : « le bonus
+est une compensation, jamais au-dessus de 20 »), le dépassement restant affiché. « Validé d'office pour cette phase »
+est porté par l'**évaluation** (`assessment.auto_validated_criterion_ids`), pas par la grille, réutilisée d'une phase
+à l'autre ; il donne le barème du critère au calcul (`effectivePoints`), sans écrire dans `grade.scores` : retirer la
+case ne laisse aucune fausse saisie. Tout le calcul est pur (`src/lib/assessments/scoring.ts`), partagé par
+l'action serveur, le formulaire (total en direct) et le PDF, pour que les trois affichent le même nombre.

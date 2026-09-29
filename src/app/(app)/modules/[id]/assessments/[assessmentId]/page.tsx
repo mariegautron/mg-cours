@@ -102,6 +102,7 @@ export default async function AssessmentPage({
               maxScore={assessment.maxScore}
               grade={grades.find((g) => g.student_group_id === group.id)}
               comments={comments}
+              autoValidatedIds={assessment.auto_validated_criterion_ids}
             />
           ))}
         </div>
@@ -128,6 +129,7 @@ export default async function AssessmentPage({
                     maxScore={assessment.maxScore}
                     grade={grades.find((g) => g.student_id === m.id)}
                     comments={comments}
+                    autoValidatedIds={assessment.auto_validated_criterion_ids}
                   />
                 ))
               )}

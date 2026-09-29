@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  criteriaTotal,
   effectiveMaxScore,
   noteProgress,
   requiredNotes,
@@ -103,5 +104,18 @@ describe("barème", () => {
     expect(scaleGridTotal(24, 30, 20)).toBe(16);
     expect(scaleGridTotal(24, 30, null)).toBe(24);
     expect(scaleGridTotal(24, 30, 30)).toBe(24);
+  });
+});
+
+describe("criteriaTotal", () => {
+  it("somme les points des critères et ignore les bonus (hors barème)", () => {
+    expect(
+      criteriaTotal([{ weight: 8 }, { weight: 12 }, { weight: 0.5, is_bonus: true }]),
+    ).toBe(20);
+  });
+
+  it("renvoie null sans critère noté (aucun critère, ou bonus seuls)", () => {
+    expect(criteriaTotal([])).toBeNull();
+    expect(criteriaTotal([{ weight: 0.5, is_bonus: true }])).toBeNull();
   });
 });

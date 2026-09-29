@@ -349,6 +349,19 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Axes, références, bonus, validé d'office (US-82)** : l'éditeur de grille range les critères dans
+  des axes (nom, ordre, rattachement par liste déroulante), donne une référence libre (ex. « RGAA
+  1.3.1 ») et une case « Bonus hors barème » (jamais compté dans le barème). Le formulaire
+  d'évaluation propose « Critères validés d'office pour cette évaluation » (par évaluation, pas par
+  grille : la grille se réutilise d'une phase à l'autre). À la saisie, les critères sont rangés par axe
+  avec sous-total en direct, un critère validé d'office s'affiche « Validé d'office : 8 / 8 » sans champ,
+  et le total se recalcule à chaque frappe. Le PDF de résultats reprend axes, sous-totaux, références,
+  bonus et « validé d'office ». Logique pure : `src/lib/assessments/scoring.ts`
+  (`computeTotals`, `groupByAxis`, `readScores`) ; e2e : `e2e/grid-axes.spec.ts`.
+- **Plafond (décision de Marie)** : le total, bonus inclus, est ramené sur le barème puis plafonné à
+  ce barème ; le dépassement reste affiché (« 20,5 → plafonné à 20 » en saisie et dans le PDF). Le
+  bonus compense, il ne fait jamais dépasser 20 (ADR-022).
+
 ### Règles
 
 - Une « note » au sens YNOV = une **évaluation** (une évaluation individuelle produit une ligne

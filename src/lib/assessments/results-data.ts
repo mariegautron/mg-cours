@@ -21,6 +21,7 @@ export async function loadResultSheets(
     assessment,
     groups: assessment.groups,
     criteria: assessment.grading_grid?.criteria ?? [],
+    axes: assessment.grading_grid?.axes ?? [],
     grades,
     comments,
   });

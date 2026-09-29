@@ -232,7 +232,7 @@ C (US-94 à US-100) : non commencés.
 | US     | Contenu                                                                                                                                                                      | Statut |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | US-81  | Paliers par critère : `criterion_level` (points + description, nombre libre : 6/4/2/0, 8/6/4/2/0, 2/1/0…), barème du critère = palier le plus haut, éditeur (ajout / suppression), affichage sur `/assessments/grids` | ✅     |
-| US-82  | Axes avec sous-totaux, référence libre par critère, bonus hors barème, critère « validé d'office » ; total ramené sur 20 puis plafonné à 20                                    | ⏳     |
+| US-82  | Axes avec sous-totaux (`grid_axis`), référence libre, bonus hors barème (`is_bonus`), critère « validé d'office » par évaluation ; total ramené sur 20 puis **plafonné à 20**, dépassement affiché (« 20,5 → plafonné à 20 ») | ✅     |
 | US-83  | Noter par palier : un clic attribue les points et propose la description comme base du commentaire ; total et sous-totaux en direct                                            | ⏳     |
 | US-84  | Commentaires réutilisables : enregistrer une sélection de texte, rattachée à un critère et à une matière, insertion en un clic, plus utilisées d'abord                         | ⏳     |
 | US-85  | Commentaire par critère + « Points forts » + « Progrès » + commentaire libre, repris dans le PDF et l'e-mail de résultats ; note de groupe identique pour tous les membres      | ⏳     |
