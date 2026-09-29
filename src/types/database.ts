@@ -1542,6 +1542,250 @@ export type Database = {
           },
         ]
       }
+      quiz: {
+        Row: {
+          assessment_id: string
+          closes_at: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          instructions: string
+          opens_at: string | null
+          owner_id: string
+          show_results: Database["public"]["Enums"]["quiz_results_mode"]
+          shuffle_choices: boolean
+          shuffle_questions: boolean
+          status: Database["public"]["Enums"]["quiz_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          closes_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instructions?: string
+          opens_at?: string | null
+          owner_id?: string
+          show_results?: Database["public"]["Enums"]["quiz_results_mode"]
+          shuffle_choices?: boolean
+          shuffle_questions?: boolean
+          status?: Database["public"]["Enums"]["quiz_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          closes_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          instructions?: string
+          opens_at?: string | null
+          owner_id?: string
+          show_results?: Database["public"]["Enums"]["quiz_results_mode"]
+          shuffle_choices?: boolean
+          shuffle_questions?: boolean
+          status?: Database["public"]["Enums"]["quiz_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: true
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempt: {
+        Row: {
+          answers: Json
+          auto_score: number | null
+          calls_count: number
+          calls_window_start: string | null
+          created_at: string
+          deadline_at: string | null
+          draw_seed: string
+          drawn: Json
+          id: string
+          last_saved_at: string | null
+          late_answers: Json | null
+          manual_scores: Json
+          owner_id: string
+          question_count: number
+          quiz_id: string
+          result: Json | null
+          reused_count: number
+          review_complete: boolean
+          revoked_at: string | null
+          score: number | null
+          sent_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["quiz_attempt_status"]
+          student_id: string
+          submitted_at: string | null
+          submitted_late: boolean
+          time_multiplier: number
+          token_hash: string
+          total_points: number
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          answers?: Json
+          auto_score?: number | null
+          calls_count?: number
+          calls_window_start?: string | null
+          created_at?: string
+          deadline_at?: string | null
+          draw_seed: string
+          drawn: Json
+          id?: string
+          last_saved_at?: string | null
+          late_answers?: Json | null
+          manual_scores?: Json
+          owner_id?: string
+          question_count: number
+          quiz_id: string
+          result?: Json | null
+          reused_count?: number
+          review_complete?: boolean
+          revoked_at?: string | null
+          score?: number | null
+          sent_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["quiz_attempt_status"]
+          student_id: string
+          submitted_at?: string | null
+          submitted_late?: boolean
+          time_multiplier?: number
+          token_hash: string
+          total_points: number
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          answers?: Json
+          auto_score?: number | null
+          calls_count?: number
+          calls_window_start?: string | null
+          created_at?: string
+          deadline_at?: string | null
+          draw_seed?: string
+          drawn?: Json
+          id?: string
+          last_saved_at?: string | null
+          late_answers?: Json | null
+          manual_scores?: Json
+          owner_id?: string
+          question_count?: number
+          quiz_id?: string
+          result?: Json | null
+          reused_count?: number
+          review_complete?: boolean
+          revoked_at?: string | null
+          score?: number | null
+          sent_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["quiz_attempt_status"]
+          student_id?: string
+          submitted_at?: string | null
+          submitted_late?: boolean
+          time_multiplier?: number
+          token_hash?: string
+          total_points?: number
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempt_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempt_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_draw_rule: {
+        Row: {
+          category: string | null
+          count: number
+          created_at: string
+          id: string
+          owner_id: string
+          points_each: number
+          position: number
+          quiz_id: string
+          tags: string[]
+          types: Database["public"]["Enums"]["question_type"][]
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          count: number
+          created_at?: string
+          id?: string
+          owner_id?: string
+          points_each: number
+          position: number
+          quiz_id: string
+          tags?: string[]
+          types?: Database["public"]["Enums"]["question_type"][]
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          count?: number
+          created_at?: string
+          id?: string
+          owner_id?: string
+          points_each?: number
+          position?: number
+          quiz_id?: string
+          tags?: string[]
+          types?: Database["public"]["Enums"]["question_type"][]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_draw_rule_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_ip_failure: {
+        Row: {
+          failures: number
+          ip_hash: string
+          window_start: string
+        }
+        Insert: {
+          failures?: number
+          ip_hash: string
+          window_start?: string
+        }
+        Update: {
+          failures?: number
+          ip_hash?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       resource: {
         Row: {
           archived_at: string | null
@@ -1922,6 +2166,27 @@ export type Database = {
         Args: { table_names: string[] }
         Returns: undefined
       }
+      mg_quiz_clean_answers: {
+        Args: { p_answers: Json; p_count: number }
+        Returns: Json
+      }
+      mg_quiz_family_closed: { Args: { p_quiz_id: string }; Returns: boolean }
+      mg_quiz_ip_failure: {
+        Args: { p_ip_hash: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
+      mg_quiz_public_questions: { Args: { p_drawn: Json }; Returns: Json }
+      mg_quiz_save: {
+        Args: { p_answers: Json; p_token_hash: string }
+        Returns: Json
+      }
+      mg_quiz_session: { Args: { p_token_hash: string }; Returns: Json }
+      mg_quiz_start: { Args: { p_token_hash: string }; Returns: Json }
+      mg_quiz_submit: {
+        Args: { p_answers?: Json; p_token_hash: string }
+        Returns: Json
+      }
+      mg_quiz_view: { Args: { p_attempt_id: string }; Returns: Json }
     }
     Enums: {
       assessment_prep_status: "to_build" | "ready" | "provided"
@@ -1974,6 +2239,9 @@ export type Database = {
         | "true_false"
         | "numerical"
         | "open"
+      quiz_attempt_status: "ready" | "in_progress" | "submitted"
+      quiz_results_mode: "never" | "after_submit" | "after_close"
+      quiz_status: "draft" | "published" | "closed"
       resource_audience: "students" | "teacher"
       resource_kind:
         | "course"
@@ -2171,6 +2439,9 @@ export const Constants = {
         "numerical",
         "open",
       ],
+      quiz_attempt_status: ["ready", "in_progress", "submitted"],
+      quiz_results_mode: ["never", "after_submit", "after_close"],
+      quiz_status: ["draft", "published", "closed"],
       resource_audience: ["students", "teacher"],
       resource_kind: [
         "course",

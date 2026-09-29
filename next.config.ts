@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Passation d'un QCM : le jeton est dans l'URL, il ne doit fuir ni par Referer ni par un cache.
+        source: "/q/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },

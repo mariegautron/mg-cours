@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileDown, Mic, Pencil, Presentation } from "lucide-react";
+import { Download, FileDown, ListChecks, Mic, Pencil, Presentation } from "lucide-react";
 
 import {
   buildSessionSections,
@@ -180,6 +180,14 @@ export default async function AssessmentPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {!assessment.is_group_grade ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${id}/assessments/${assessmentId}/quiz`}>
+                <ListChecks aria-hidden />
+                QCM en ligne
+              </Link>
+            </Button>
+          ) : null}
           {isOralAssessment(assessment) ? (
             <Button asChild size="sm">
               <Link href={`/modules/${id}/assessments/${assessmentId}/oral`}>

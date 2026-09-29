@@ -736,3 +736,14 @@ jamais comme la version envoyée.
   (annonce polie), part des points facultative par choix (vide = répartie, négatif = pénalité).
 - `/questions/import` : Moodle XML en deux temps, « Vérifier le fichier » (aucune écriture : à importer,
   déjà dans la banque, non reprises avec la raison) puis « Importer ».
+
+## QCM en ligne (E16, US-95)
+
+- `/modules/[id]/assessments/[assessmentId]/quiz` (bouton « QCM en ligne » sur une évaluation individuelle) : créer le
+  QCM, configurer (durée, fenêtre, consignes, mélange, ce que voient les étudiant·es, règles de tirage avec le nombre
+  de questions disponibles et le total de points), publier / repasser en brouillon / clôturer ; « Préparer les tirages et
+  les liens » (CSV autonome ou e-mail, rappel « Ce lien est personnel : ne le partage pas. ») ; suivi par copie (état,
+  note, nouveau lien, révoquer, refaire le tirage, rendre la copie, rouvrir, tiers-temps, modifications tardives).
+- `/…/quiz/attempts/[attemptId]` : relecture des réponses libres (points bornés au barème), corrigé de la copie.
+- `/q/[token]` (public, hors garde d'authentification) : consignes → questions (`fieldset` / `legend`, clavier) →
+  confirmation « Rendre ta copie ? » → résultat selon le réglage ; chrono serveur annoncé poliment à 5 min et 1 min.

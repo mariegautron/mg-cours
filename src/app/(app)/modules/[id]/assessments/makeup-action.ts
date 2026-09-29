@@ -109,10 +109,14 @@ export async function prepareMakeup(moduleId: string, originalId: string): Promi
     }
   }
 
-  // Nouveau tirage pour un QCM (US-95) : sans effet tant que l'original n'est pas un QCM.
-  await redrawQuizForMakeup({ originalId, makeupId, studentIds: toAdd });
+  // QCM d'origine : le rattrapage reçoit son propre QCM (nouveau tirage, questions déjà vues évitées).
+  const quiz = await redrawQuizForMakeup({ originalId, makeupId, studentIds: toAdd });
 
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}/assessments/${originalId}`);
-  redirect(`/modules/${moduleId}/assessments/${makeupId}/edit`);
+  redirect(
+    quiz.quiz
+      ? `/modules/${moduleId}/assessments/${makeupId}/quiz`
+      : `/modules/${moduleId}/assessments/${makeupId}/edit`,
+  );
 }

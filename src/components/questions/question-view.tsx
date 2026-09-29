@@ -1,5 +1,6 @@
 import { Markdown } from "@/components/markdown";
 import { QUESTION_TYPE_LABELS, type QuestionType } from "@/lib/questions/types";
+import type { StoredAnswer } from "@/lib/quiz/types";
 
 export interface QuestionViewProps {
   /** Préfixe unique des identifiants (plusieurs questions sur une page). */
@@ -11,6 +12,9 @@ export interface QuestionViewProps {
   /** Choix sans aucune indication de bonne réponse : ce composant sert aussi la passation. */
   choices: { id: string; text: string }[];
   points?: number | null;
+  /** Mode passation : réponse courante et rappel à chaque changement (sinon aperçu non interactif). */
+  answer?: StoredAnswer | null;
+  onAnswer?: (answer: StoredAnswer) => void;
 }
 
 /**
@@ -24,7 +28,11 @@ export function QuestionView({
   statement,
   choices,
   points,
+  answer,
+  onAnswer,
 }: QuestionViewProps) {
+  const controlled = onAnswer !== undefined;
+  const picked = answer && "choices" in answer ? answer.choices : [];
   const statementId = `${idPrefix}-statement`;
   const multiple = type === "multiple_choice";
   return (
@@ -55,6 +63,13 @@ export function QuestionView({
             id={`${idPrefix}-answer`}
             name={`${idPrefix}-answer`}
             rows={5}
+            {...(controlled
+              ? {
+                  value: answer && "text" in answer ? answer.text : "",
+                  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    onAnswer({ text: e.target.value }),
+                }
+              : {})}
             className="border-input w-full rounded-md border bg-transparent p-2 text-sm"
           />
         </div>
@@ -68,6 +83,13 @@ export function QuestionView({
             name={`${idPrefix}-answer`}
             type="text"
             inputMode="decimal"
+            {...(controlled
+              ? {
+                  value: answer && "number" in answer ? answer.number : "",
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+                    onAnswer({ number: e.target.value }),
+                }
+              : {})}
             className="border-input h-9 w-40 rounded-md border bg-transparent px-3 text-sm"
           />
         </div>
@@ -80,6 +102,21 @@ export function QuestionView({
                 name={`${idPrefix}-choice`}
                 value={c.id}
                 type={multiple ? "checkbox" : "radio"}
+                {...(controlled
+                  ? {
+                      checked: picked.includes(Number(c.id)),
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                        const id = Number(c.id);
+                        onAnswer({
+                          choices: multiple
+                            ? e.target.checked
+                              ? [...picked, id]
+                              : picked.filter((x) => x !== id)
+                            : [id],
+                        });
+                      },
+                    }
+                  : {})}
                 className="mt-1 size-4"
               />
               <label htmlFor={`${idPrefix}-${c.id}`} className="text-sm">

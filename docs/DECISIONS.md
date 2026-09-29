@@ -173,3 +173,15 @@ est porté par l'**évaluation** (`assessment.auto_validated_criterion_ids`), pa
 à l'autre ; il donne le barème du critère au calcul (`effectivePoints`), sans écrire dans `grade.scores` : retirer la
 case ne laisse aucune fausse saisie. Tout le calcul est pur (`src/lib/assessments/scoring.ts`), partagé par
 l'action serveur, le formulaire (total en direct) et le PDF, pour que les trois affichent le même nombre.
+
+## ADR — Passation des QCM sans compte, par lien personnel (US-95)
+
+**Contexte** : les étudiant·es n'ont pas de compte ; il faut les faire passer un QCM et corriger sans exposer les
+tables ni les corrigés.
+**Décision** : lien personnel avec jeton de 256 bits stocké haché ; accès anonyme réduit à 4 fonctions SQL
+`security definer` qui reçoivent le haché ; tirage individuel figé par copie (`quiz_attempt.drawn`) ; correction en
+TypeScript testé côté serveur ; corrigé conditionné à la clôture de toute la famille (rattrapages compris) ; limite par
+jeton dans le SQL et par IP (jetons invalides seulement) côté serveur. `quiz_access` et `quiz_attempt` de la spec
+d'origine sont fusionnées (une ligne par étudiant·e : invitation + copie).
+**Conséquences** : voir `docs/SECURITY-QCM.md`. Le compteur et la moyenne n'ont une note qu'une fois les réponses libres
+relues.
