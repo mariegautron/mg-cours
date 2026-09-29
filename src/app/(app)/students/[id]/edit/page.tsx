@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 
 import { updateStudent } from "@/app/(app)/students/actions";
 import { StudentForm } from "@/components/students/student-form";
-import { getStudent } from "@/lib/students/queries";
+import { getStudent, getStudentYears } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Modifier l’étudiant·e" };
 
 export default async function EditStudentPage({ params }: PageProps<"/students/[id]/edit">) {
   const { id } = await params;
-  const student = await getStudent(id);
+  const [student, years] = await Promise.all([getStudent(id), getStudentYears(id)]);
   if (!student) notFound();
 
   return (
@@ -17,7 +17,7 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
       <h1 className="text-2xl font-semibold">
         Modifier « {student.first_name} {student.last_name} »
       </h1>
-      <StudentForm action={updateStudent.bind(null, id)} student={student} />
+      <StudentForm action={updateStudent.bind(null, id)} student={student} years={years} />
     </div>
   );
 }

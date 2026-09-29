@@ -362,6 +362,7 @@ export type Database = {
       grade: {
         Row: {
           assessment_id: string
+          attendance: Database["public"]["Enums"]["attendance_status"]
           created_at: string
           criterion_comments: Json
           feedback: string | null
@@ -379,6 +380,7 @@ export type Database = {
         }
         Insert: {
           assessment_id: string
+          attendance?: Database["public"]["Enums"]["attendance_status"]
           created_at?: string
           criterion_comments?: Json
           feedback?: string | null
@@ -396,6 +398,7 @@ export type Database = {
         }
         Update: {
           assessment_id?: string
+          attendance?: Database["public"]["Enums"]["attendance_status"]
           created_at?: string
           criterion_comments?: Json
           feedback?: string | null
@@ -1324,6 +1327,44 @@ export type Database = {
           },
         ]
       }
+      student_year: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          scholar_group: string | null
+          student_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          scholar_group?: string | null
+          student_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          scholar_group?: string | null
+          student_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_year_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_profile: {
         Row: {
           activity_number: string | null
@@ -1384,6 +1425,7 @@ export type Database = {
       }
     }
     Enums: {
+      attendance_status: "present" | "absent_unexcused" | "absent_excused"
       comment_category: "positive" | "negative" | "advice"
       course_completion: "done" | "partial" | "not_done"
       course_resource_role: "primary" | "secondary"
@@ -1564,6 +1606,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      attendance_status: ["present", "absent_unexcused", "absent_excused"],
       comment_category: ["positive", "negative", "advice"],
       course_completion: ["done", "partial", "not_done"],
       course_resource_role: ["primary", "secondary"],

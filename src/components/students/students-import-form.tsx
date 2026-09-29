@@ -12,6 +12,9 @@ import {
 import { FileDropZone } from "@/components/files/file-drop-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { schoolYearLabel } from "@/lib/students/groups";
+import { currentSchoolYear, schoolYearOptions } from "@/lib/students/years";
 
 const previewInitial: ImportPreviewState = {};
 const confirmInitial: ImportConfirmState = {};
@@ -32,6 +35,9 @@ export function StudentsImportForm() {
         <p role="status" className="text-sm">
           {confirmState.created} étudiant·e{confirmState.created > 1 ? "s" : ""} importé·e
           {confirmState.created > 1 ? "s" : ""}.
+          {confirmState.enrolled
+            ? ` ${confirmState.enrolled} étudiant·e${confirmState.enrolled > 1 ? "s" : ""} déjà en base inscrit·e${confirmState.enrolled > 1 ? "s" : ""} à ${schoolYearLabel(confirmState.year ?? currentSchoolYear())}.`
+            : ""}
         </p>
         <Button asChild>
           <Link href="/students">Voir la liste</Link>
@@ -44,6 +50,25 @@ export function StudentsImportForm() {
     return (
       <form action={previewAction} className="max-w-md space-y-4">
         <div className="space-y-2">
+          <Label htmlFor="year">Année scolaire</Label>
+          <select
+            id="year"
+            name="year"
+            defaultValue={currentSchoolYear()}
+            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+          >
+            {schoolYearOptions().map((y) => (
+              <option key={y} value={y}>
+                {schoolYearLabel(y)}
+              </option>
+            ))}
+          </select>
+          <p className="text-muted-foreground text-sm">
+            La promotion du fichier est enregistrée pour cette année, y compris pour les étudiant·es
+            déjà en base (leurs autres années ne changent pas).
+          </p>
+        </div>
+        <div className="space-y-2">
           <FileDropZone
             id="file"
             label="Fichier CSV ou XLSX"
@@ -53,8 +78,8 @@ export function StudentsImportForm() {
             onFile={(_file, input) => input.form?.requestSubmit()}
           />
           <p className="text-muted-foreground text-sm">
-            Colonnes reconnues : nom, prénom, e-mail, numéro étudiant, groupe (accents et casse
-            ignorés).
+            Colonnes reconnues : nom, prénom, e-mail, numéro étudiant, groupe ou promotion (accents
+            et casse ignorés).
           </p>
         </div>
         {previewState.error ? (
@@ -67,16 +92,25 @@ export function StudentsImportForm() {
   }
 
   const existing = new Set(previewState.existingEmails ?? []);
-  const validCount = previewState.rows.filter(
-    (r) => r.errors.length === 0 && (!r.email || !existing.has(r.email)),
+  const enrolled = new Set(previewState.enrolledEmails ?? []);
+  const yearLabel = schoolYearLabel(previewState.year ?? currentSchoolYear());
+  const valid = previewState.rows.filter((r) => r.errors.length === 0);
+  const newCount = valid.filter((r) => !r.email || !existing.has(r.email)).length;
+  const enrollCount = valid.filter(
+    (r) => r.email && existing.has(r.email) && !enrolled.has(r.email),
   ).length;
-  const duplicateCount = previewState.rows.filter((r) => r.email && existing.has(r.email)).length;
+  const doneCount = valid.filter((r) => r.email && enrolled.has(r.email)).length;
+  const validCount = newCount + enrollCount;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{validCount} à importer</Badge>
-        {duplicateCount > 0 ? <Badge variant="outline">{duplicateCount} déjà en base</Badge> : null}
+        <Badge variant="outline">Année {yearLabel}</Badge>
+        <Badge variant="secondary">{newCount} à importer</Badge>
+        {enrollCount > 0 ? (
+          <Badge variant="secondary">{enrollCount} déjà en base, à inscrire</Badge>
+        ) : null}
+        {doneCount > 0 ? <Badge variant="outline">{doneCount} déjà inscrit·e·s</Badge> : null}
         {previewState.rows.some((r) => r.errors.length > 0) ? (
           <Badge variant="destructive">
             {previewState.rows.filter((r) => r.errors.length > 0).length} en erreur
@@ -116,7 +150,11 @@ export function StudentsImportForm() {
                     {r.errors.length > 0 ? (
                       <span className="text-destructive">{r.errors.join(", ")}</span>
                     ) : isDuplicate ? (
-                      <span className="text-muted-foreground">déjà en base</span>
+                      <span className="text-muted-foreground">
+                        {enrolled.has(r.email!)
+                          ? `déjà inscrit·e à ${yearLabel}`
+                          : `déjà en base : inscription à ${yearLabel}`}
+                      </span>
                     ) : (
                       <span>à importer</span>
                     )}
@@ -130,6 +168,7 @@ export function StudentsImportForm() {
 
       <form action={confirmAction} className="flex flex-wrap items-center gap-3">
         <input type="hidden" name="rows" value={JSON.stringify(previewState.rows)} />
+        <input type="hidden" name="year" value={previewState.year} />
         <Button type="submit" disabled={confirmPending || validCount === 0}>
           {confirmPending ? "Import…" : `Confirmer l’import (${validCount})`}
         </Button>

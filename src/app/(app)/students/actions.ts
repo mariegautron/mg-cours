@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { parseStudentsFile, type ParsedStudentRow } from "@/lib/students/import";
 import { readStudentForm } from "@/lib/students/schema";
+import { currentSchoolYear } from "@/lib/students/years";
 import { createClient } from "@/lib/supabase/server";
 
 export interface StudentFormState {
@@ -18,6 +19,35 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
   );
 }
 
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Promotion d'une année scolaire (US-80b). Une promotion saisie crée ou met à jour l'inscription de
+ * l'année ; vidée, elle efface la promotion d'une inscription existante sans en créer.
+ */
+async function savePromotion(
+  supabase: Supabase,
+  studentId: string,
+  year: number,
+  scholarGroup: string | null,
+) {
+  if (scholarGroup) {
+    const { error } = await supabase
+      .from("student_year")
+      .upsert(
+        { student_id: studentId, year, scholar_group: scholarGroup },
+        { onConflict: "student_id,year" },
+      );
+    return error;
+  }
+  const { error } = await supabase
+    .from("student_year")
+    .update({ scholar_group: null })
+    .eq("student_id", studentId)
+    .eq("year", year);
+  return error;
+}
+
 export async function createStudent(
   _prev: StudentFormState,
   formData: FormData,
@@ -26,14 +56,28 @@ export async function createStudent(
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
   const supabase = await createClient();
-  const { error } = await supabase.from("student").insert({
-    first_name: parsed.data.firstName,
-    last_name: parsed.data.lastName,
-    email: parsed.data.email || null,
-    student_number: parsed.data.studentNumber || null,
-    scholar_group: parsed.data.scholarGroup || null,
-    personal_notes: parsed.data.personalNotes || null,
-  });
+  const { data: created, error } = await supabase
+    .from("student")
+    .insert({
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
+      email: parsed.data.email || null,
+      student_number: parsed.data.studentNumber || null,
+      personal_notes: parsed.data.personalNotes || null,
+    })
+    .select("id")
+    .single();
+
+  if (!error && created) {
+    const promoError = await savePromotion(
+      supabase,
+      created.id,
+      parsed.data.schoolYear ?? currentSchoolYear(),
+      parsed.data.scholarGroup || null,
+    );
+    if (promoError)
+      return { error: "Étudiant·e créé·e, mais la promotion n’a pas pu être enregistrée." };
+  }
 
   if (error) {
     return {
@@ -64,10 +108,19 @@ export async function updateStudent(
       last_name: parsed.data.lastName,
       email: parsed.data.email || null,
       student_number: parsed.data.studentNumber || null,
-      scholar_group: parsed.data.scholarGroup || null,
       personal_notes: parsed.data.personalNotes || null,
     })
     .eq("id", id);
+
+  if (!error) {
+    const promoError = await savePromotion(
+      supabase,
+      id,
+      parsed.data.schoolYear ?? currentSchoolYear(),
+      parsed.data.scholarGroup || null,
+    );
+    if (promoError) return { error: "Enregistrement de la promotion impossible. Réessayez." };
+  }
 
   if (error) {
     return {
@@ -94,8 +147,17 @@ export async function deleteStudent(id: string) {
 export interface ImportPreviewState {
   error?: string;
   rows?: ParsedStudentRow[];
-  /** e-mails déjà présents en base, pour affichage dans l'aperçu. */
+  /** Année scolaire choisie pour l'import (année de rentrée). */
+  year?: number;
+  /** e-mails déjà présents en base : ces étudiant·es seront inscrit·es à l'année, sans doublon. */
   existingEmails?: string[];
+  /** e-mails déjà inscrits à cette année avec la même promotion : rien à faire. */
+  enrolledEmails?: string[];
+}
+
+function readYear(formData: FormData): number {
+  const raw = Number(formData.get("year"));
+  return Number.isInteger(raw) && raw >= 2000 && raw <= 2100 ? raw : currentSchoolYear();
 }
 
 /** Étape 1 : parse le fichier et renvoie un aperçu, sans rien écrire. */
@@ -107,6 +169,7 @@ export async function previewStudentsImport(
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Choisissez un fichier CSV ou XLSX." };
   }
+  const year = readYear(formData);
 
   let rows: ParsedStudentRow[];
   try {
@@ -125,24 +188,58 @@ export async function previewStudentsImport(
   const emails = rows.map((r) => r.email).filter((e): e is string => !!e);
   const { data: existing } =
     emails.length > 0
-      ? await supabase.from("student").select("email").in("email", emails)
+      ? await supabase.from("student").select("id, email").in("email", emails)
       : { data: [] };
 
-  return { rows, existingEmails: (existing ?? []).map((e) => e.email!).filter(Boolean) };
+  const existingRows = (existing ?? []).filter((e) => e.email);
+  const { data: enrolled } = existingRows.length
+    ? await supabase
+        .from("student_year")
+        .select("student_id, scholar_group")
+        .eq("year", year)
+        .in(
+          "student_id",
+          existingRows.map((e) => e.id),
+        )
+    : { data: [] };
+  const groupById = new Map((enrolled ?? []).map((e) => [e.student_id, e.scholar_group]));
+  const byEmail = new Map(rows.map((r) => [r.email, r.scholarGroup]));
+  const enrolledEmails = existingRows
+    .filter((e) => {
+      if (!groupById.has(e.id)) return false;
+      const wanted = byEmail.get(e.email);
+      return !wanted || wanted === groupById.get(e.id);
+    })
+    .map((e) => e.email!);
+
+  return {
+    rows,
+    year,
+    existingEmails: existingRows.map((e) => e.email!),
+    enrolledEmails,
+  };
 }
 
 export interface ImportConfirmState {
   error?: string;
   created?: number;
+  /** Étudiant·es déjà en base inscrit·es (ou mis·es à jour) pour l'année choisie. */
+  enrolled?: number;
+  year?: number;
 }
 
-/** Étape 2 : réinsère les lignes validées côté client (JSON caché) et écrit en base. */
+/**
+ * Étape 2 : réinsère les lignes validées côté client (JSON caché) et écrit en base. Les
+ * étudiant·es déjà en base ne sont pas dupliqué·es : leur promotion de l'année choisie est
+ * ajoutée ou mise à jour (US-80b), sans toucher au reste de leur fiche ni aux autres années.
+ */
 export async function confirmStudentsImport(
   _prev: ImportConfirmState,
   formData: FormData,
 ): Promise<ImportConfirmState> {
   const raw = formData.get("rows");
   if (typeof raw !== "string") return { error: "Import invalide. Recommencez." };
+  const year = readYear(formData);
 
   let rows: ParsedStudentRow[];
   try {
@@ -158,25 +255,65 @@ export async function confirmStudentsImport(
   const emails = validRows.map((r) => r.email).filter((e): e is string => !!e);
   const { data: existing } =
     emails.length > 0
-      ? await supabase.from("student").select("email").in("email", emails)
+      ? await supabase.from("student").select("id, email").in("email", emails)
       : { data: [] };
-  const existingSet = new Set((existing ?? []).map((e) => e.email));
+  const idByEmail = new Map((existing ?? []).map((e) => [e.email, e.id]));
 
-  const toInsert = validRows
-    .filter((r) => !r.email || !existingSet.has(r.email))
-    .map((r) => ({
-      first_name: r.firstName,
-      last_name: r.lastName,
-      email: r.email,
-      student_number: r.studentNumber,
-      scholar_group: r.scholarGroup,
-    }));
+  const newRows = validRows.filter((r) => !r.email || !idByEmail.has(r.email));
+  const existingRows = validRows.filter((r) => r.email && idByEmail.has(r.email));
 
-  if (toInsert.length === 0) return { error: "Tous les e-mails existent déjà." };
+  // Nouveaux : création, puis inscription à l'année (l'ordre de retour suit celui de l'envoi).
+  const enrollments: { student_id: string; year: number; scholar_group: string | null }[] = [];
+  if (newRows.length) {
+    const { data: created, error } = await supabase
+      .from("student")
+      .insert(
+        newRows.map((r) => ({
+          first_name: r.firstName,
+          last_name: r.lastName,
+          email: r.email,
+          student_number: r.studentNumber,
+        })),
+      )
+      .select("id");
+    if (error || !created || created.length !== newRows.length) {
+      return { error: "Import impossible. Réessayez." };
+    }
+    created.forEach((s, i) =>
+      enrollments.push({ student_id: s.id, year, scholar_group: newRows[i].scholarGroup }),
+    );
+  }
 
-  const { error } = await supabase.from("student").insert(toInsert);
-  if (error) return { error: "Import impossible. Réessayez." };
+  // Déjà en base : inscription à l'année choisie, sans écraser une promotion par du vide.
+  let enrolled = 0;
+  if (existingRows.length) {
+    const ids = existingRows.map((r) => idByEmail.get(r.email!)!);
+    const { data: already } = await supabase
+      .from("student_year")
+      .select("student_id, scholar_group")
+      .eq("year", year)
+      .in("student_id", ids);
+    const groupById = new Map((already ?? []).map((a) => [a.student_id, a.scholar_group]));
+    for (const r of existingRows) {
+      const id = idByEmail.get(r.email!)!;
+      const known = groupById.has(id);
+      if (known && (!r.scholarGroup || r.scholarGroup === groupById.get(id))) continue;
+      enrollments.push({ student_id: id, year, scholar_group: r.scholarGroup });
+      enrolled++;
+    }
+  }
+
+  if (enrollments.length) {
+    const { error } = await supabase
+      .from("student_year")
+      .upsert(enrollments, { onConflict: "student_id,year" });
+    if (error) return { error: "Inscription à l’année impossible. Réessayez." };
+  }
+
+  if (newRows.length === 0 && enrolled === 0) {
+    return { error: "Tout le monde est déjà inscrit·e à cette année." };
+  }
 
   revalidatePath("/students");
-  return { created: toInsert.length };
+  return { created: newRows.length, enrolled, year };
 }

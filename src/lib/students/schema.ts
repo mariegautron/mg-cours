@@ -6,6 +6,8 @@ export const studentSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail invalide.").optional().or(z.literal("")),
   studentNumber: z.string().trim().max(50).optional().or(z.literal("")),
   scholarGroup: z.string().trim().max(100).optional().or(z.literal("")),
+  /** Année scolaire (de rentrée) à laquelle s'applique la promotion. */
+  schoolYear: z.coerce.number().int().min(2000).max(2100).optional(),
   personalNotes: z.string().trim().max(4000).optional().or(z.literal("")),
 });
 
@@ -18,6 +20,7 @@ export function readStudentForm(formData: FormData) {
     email: formData.get("email") ?? "",
     studentNumber: formData.get("studentNumber") ?? "",
     scholarGroup: formData.get("scholarGroup") ?? "",
+    schoolYear: formData.get("schoolYear") || undefined,
     personalNotes: formData.get("personalNotes") ?? "",
   });
 }

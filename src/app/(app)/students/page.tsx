@@ -14,7 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
-import { listScholarGroups, listStudents } from "@/lib/students/queries";
+import { schoolYearLabel } from "@/lib/students/groups";
+import { listScholarGroups, listStudentYears, listStudents } from "@/lib/students/queries";
+import { promotionToShow } from "@/lib/students/years";
 
 export const metadata: Metadata = { title: "Étudiants" };
 
@@ -23,11 +25,14 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
   const q = typeof sp.q === "string" ? sp.q : "";
   const scholarGroup = typeof sp.scholarGroup === "string" ? sp.scholarGroup : "";
   const moduleId = typeof sp.moduleId === "string" ? sp.moduleId : "";
+  const yearParam = typeof sp.year === "string" && sp.year !== "" ? Number(sp.year) : NaN;
+  const year = Number.isInteger(yearParam) ? yearParam : undefined;
 
-  const [students, scholarGroups, modules] = await Promise.all([
-    listStudents({ q, scholarGroup, moduleId }),
-    listScholarGroups(),
+  const [students, scholarGroups, modules, years] = await Promise.all([
+    listStudents({ q, scholarGroup, moduleId, year }),
+    listScholarGroups(year),
     listModules(),
+    listStudentYears(),
   ]);
 
   return (
@@ -57,6 +62,22 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
         <div className="space-y-1">
           <Label htmlFor="q">Recherche</Label>
           <Input id="q" name="q" defaultValue={q} placeholder="Nom, prénom, e-mail…" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="year">Année scolaire</Label>
+          <select
+            id="year"
+            name="year"
+            defaultValue={year ?? ""}
+            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+          >
+            <option value="">Toutes</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {schoolYearLabel(y)}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="space-y-1">
           <Label htmlFor="scholarGroup">Promotion</Label>
@@ -121,11 +142,15 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                   {s.first_name} {s.last_name}
                 </h2>
                 {s.email ? <p className="text-muted-foreground text-sm">{s.email}</p> : null}
-                {s.scholar_group ? (
-                  <Badge variant="secondary" className="mt-2">
-                    {s.scholar_group}
-                  </Badge>
-                ) : null}
+                {(() => {
+                  const promo = promotionToShow(s.years, year);
+                  return promo ? (
+                    <Badge variant="secondary" className="mt-2">
+                      {promo.group}
+                      {year === undefined ? ` · ${promo.label}` : ""}
+                    </Badge>
+                  ) : null;
+                })()}
               </Link>
             </li>
           ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import type { StudentFormState } from "@/app/(app)/students/actions";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { schoolYearLabel } from "@/lib/students/groups";
+import { currentSchoolYear, schoolYearOptions, type StudentYear } from "@/lib/students/years";
 import type { Tables } from "@/types/db";
 
 type Action = (state: StudentFormState, formData: FormData) => Promise<StudentFormState>;
@@ -21,9 +23,21 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   );
 }
 
-export function StudentForm({ action, student }: { action: Action; student?: Tables<"student"> }) {
+export function StudentForm({
+  action,
+  student,
+  years = [],
+}: {
+  action: Action;
+  student?: Tables<"student">;
+  /** Promotion de chaque année scolaire de l'étudiant·e (US-80b). */
+  years?: StudentYear[];
+}) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
+  const promoByYear = new Map(years.map((y) => [y.year, y.scholar_group ?? ""]));
+  const [schoolYear, setSchoolYear] = useState(currentSchoolYear());
+  const [promo, setPromo] = useState(promoByYear.get(currentSchoolYear()) ?? "");
 
   return (
     <form action={formAction} className="max-w-xl space-y-6">
@@ -70,12 +84,37 @@ export function StudentForm({ action, student }: { action: Action; student?: Tab
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="schoolYear">Année scolaire</Label>
+          <select
+            id="schoolYear"
+            name="schoolYear"
+            value={schoolYear}
+            onChange={(e) => {
+              const y = Number(e.target.value);
+              setSchoolYear(y);
+              setPromo(promoByYear.get(y) ?? "");
+            }}
+            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+          >
+            {schoolYearOptions(years.map((y) => y.year)).map((y) => (
+              <option key={y} value={y}>
+                {schoolYearLabel(y)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="scholarGroup">Promotion / groupe</Label>
           <Input
             id="scholarGroup"
             name="scholarGroup"
-            defaultValue={student?.scholar_group ?? ""}
+            value={promo}
+            onChange={(e) => setPromo(e.target.value)}
+            aria-describedby="scholarGroup-hint"
           />
+          <p id="scholarGroup-hint" className="text-muted-foreground text-sm">
+            Enregistrée pour l’année choisie : les autres années ne changent pas.
+          </p>
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="personalNotes">Notes personnelles</Label>

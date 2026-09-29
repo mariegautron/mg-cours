@@ -319,18 +319,24 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
 
 ### Liste `/students`
 
-- Cartes : prénom + nom, e-mail, promotion. Recherche plein texte (nom/prénom/e-mail),
-  filtres promotion et **module** (via l'appartenance aux groupes du module).
+- Cartes : prénom + nom, e-mail, promotion (celle de l'année filtrée, sinon la plus récente avec
+  son année). Recherche plein texte (nom/prénom/e-mail), filtres **année scolaire** (US-80b),
+  promotion (celles de l'année choisie) et **module** (via l'appartenance aux groupes du module).
 
 ### Création `/students/new` · Édition `/students/[id]/edit`
 
 - Champs : prénom, nom (obligatoires), e-mail (optionnel, unique), numéro étudiant,
-  promotion/groupe scolaire, notes personnelles.
+  **année scolaire + promotion/groupe** (US-80b : la promotion est enregistrée pour l'année
+  choisie dans `student_year`, sans toucher aux autres années ; le formulaire recharge la
+  promotion de l'année sélectionnée), notes personnelles.
 
 ### Détail `/students/[id]`
 
 - Coordonnées, groupes auxquels iel appartient (tous modules confondus, lien vers chacun),
   notes personnelles, suppression (confirmation).
+- **Promotions (US-80b)** : liste des promotions par année scolaire (la plus récente en premier),
+  badge « Promotion · année » sous le nom, et la promotion de l'année rappelée dans le sous-titre
+  « Année 2025-26 · M1 Dev » des groupes. Logique pure : `src/lib/students/years.ts`.
 - **Groupes par année scolaire (US-80a)** : un sous-titre « Année 2025-26 » par année (la plus
   récente en premier, « Sans module » à la fin) ; chaque groupe s'affiche « Groupe · Module ·
   2025-26 », trié par module puis par nom de groupe. L'année vient de `module.year` via le
@@ -339,10 +345,13 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
 ### Import `/students/import`
 
 - Étape 1 : dépôt d'un fichier **CSV ou XLSX** (zone de dépôt, analyse dès la sélection), colonnes reconnues par alias tolérant aux
-  accents/casse (nom, prénom, email, numéro étudiant, groupe) → aperçu ligne par ligne
-  (à importer / déjà en base / en erreur), **rien n'est écrit à cette étape**.
-- Étape 2 : confirmation → n'insère que les lignes valides et non déjà présentes
-  (déduplication par e-mail, fichier et base).
+  accents/casse (nom, prénom, email, numéro étudiant, groupe ou promotion) et **année scolaire**
+  à choisir (par défaut l'année en cours) → aperçu ligne par ligne (à importer / déjà en base, à
+  inscrire / déjà inscrit·e / en erreur), **rien n'est écrit à cette étape**.
+- Étape 2 : confirmation → crée les nouvelles personnes (déduplication par e-mail, fichier et base)
+  et **inscrit à l'année choisie celles qui sont déjà en base** (US-80b : leur promotion de cette
+  année est ajoutée ou mise à jour, jamais effacée par une cellule vide ; leur fiche et leurs
+  autres années ne changent pas).
 - Les CSV texte sont décodés en UTF-8 explicitement avant parsing (voir `DECISIONS.md`).
 
 ### Groupes (`/modules/[id]/groups/…`, intégré à la page module)

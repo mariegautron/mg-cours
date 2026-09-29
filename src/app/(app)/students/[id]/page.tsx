@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import { listStudentObservations } from "@/lib/notebook/queries";
 import { groupsBySchoolYear } from "@/lib/students/groups";
-import { getStudent, getStudentGroups } from "@/lib/students/queries";
+import { getStudent, getStudentGroups, getStudentYears } from "@/lib/students/queries";
+import { promotions } from "@/lib/students/years";
 
 export async function generateMetadata({ params }: PageProps<"/students/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -19,11 +20,13 @@ export async function generateMetadata({ params }: PageProps<"/students/[id]">):
 
 export default async function StudentPage({ params }: PageProps<"/students/[id]">) {
   const { id } = await params;
-  const [student, groups, observations] = await Promise.all([
+  const [student, groups, observations, years] = await Promise.all([
     getStudent(id),
     getStudentGroups(id),
     listStudentObservations(id),
+    getStudentYears(id),
   ]);
+  const promos = promotions(years);
   if (!student) notFound();
 
   return (
@@ -37,8 +40,10 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
             {student.email ?? "Pas d’e-mail"}
             {student.student_number ? ` · ${student.student_number}` : ""}
           </p>
-          {student.scholar_group ? (
-            <Badge variant="secondary">{student.scholar_group}</Badge>
+          {promos[0] ? (
+            <Badge variant="secondary">
+              {promos[0].group} · {promos[0].label}
+            </Badge>
           ) : null}
         </div>
         <Button asChild variant="secondary">
@@ -48,6 +53,23 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           </Link>
         </Button>
       </div>
+
+      <section aria-labelledby="promotions">
+        <h2 id="promotions" className="mb-2 text-lg font-medium">
+          Promotions
+        </h2>
+        {promos.length === 0 ? (
+          <p className="text-muted-foreground text-sm">Aucune promotion enregistrée.</p>
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {promos.map((p) => (
+              <li key={p.year}>
+                <span className="text-muted-foreground">{p.label}</span> : {p.group}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section aria-labelledby="groups">
         <h2 id="groups" className="mb-2 text-lg font-medium">
@@ -63,7 +85,9 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
                   id={`groups-${y.label}`}
                   className="text-muted-foreground mb-1 text-sm font-medium"
                 >
-                  {y.year === null ? y.label : `Année ${y.label}`}
+                  {y.year === null
+                    ? y.label
+                    : `Année ${y.label}${promos.find((p) => p.year === y.year) ? ` · ${promos.find((p) => p.year === y.year)!.group}` : ""}`}
                 </h3>
                 <ul className="space-y-1 text-sm">
                   {y.groups.map((g) => (
