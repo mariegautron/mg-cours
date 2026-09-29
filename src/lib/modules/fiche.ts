@@ -13,6 +13,11 @@ export interface FicheData {
   hoursTd?: number;
   hoursTp?: number;
   schoolName?: string;
+  /** Description du cours, telle que l'école la rédige. */
+  description?: string;
+  /** Objectifs pédagogiques, un par élément (puces retirées). */
+  objectives?: string[];
+  prerequisites?: string[];
 }
 
 const clean = (s: string) =>
@@ -110,6 +115,39 @@ const LEVEL_START =
   /^(?:Mast[eè]re?|Master|Bachelor|Licence|Bac\s*\+?\s*\d|B[123]\b|M[12]\b|MBA|Ing[ée]nieur|BTS)/i;
 const NEXT_LABEL = String.raw`(?=\s+(?:Nom|Niveau|Code|Volume|Dur[ée]es?|Ann[ée]e|YCODE|FFP|TDP|Intitul[ée]|Unit[ée]s?)\b|\n|$)`;
 
+/** Libellés de rubrique qui ferment la rubrique en cours, même sur un texte sans retour à la ligne. */
+const SECTION_STOP = String.raw`(?:Description\s+du\s+cours|Objectifs?\s+p[ée]dagogiques?|Pr[ée][-\s]?requis|Comp[ée]tences?\s+vis[ée]es?|Contenus?\s+(?:du\s+cours|p[ée]dagogiques?)|Modalit[ée]s?\s+(?:d[’']?[ée]valuation|p[ée]dagogiques?)|Unit[ée]s?\s+p[ée]dagogiques?|Volume\s+(?:horaire|heures)|Nom\s+long|Bibliographie|Code\s+module|Intitul[ée]\s+du\s+module)`;
+
+const BULLET = /[•●▪◦]/;
+
+/** Texte d'une rubrique : du libellé jusqu'au libellé de rubrique suivant, ou la fin. */
+function sectionText(text: string, heading: RegExp): string | null {
+  const start = heading.exec(text);
+  if (!start) return null;
+  const rest = text.slice(start.index + start[0].length).replace(/^\s*:?\s*/, "");
+  const stop = new RegExp(String.raw`(?:^|\s)${SECTION_STOP}(?![\wÀ-ÿ])`, "i").exec(rest);
+  return (stop ? rest.slice(0, stop.index) : rest).trim();
+}
+
+/** Éléments d'une liste : une puce ou une ligne par élément, lignes de suite rattachées à leur puce. */
+function listItems(block: string, max: number): string[] {
+  const lines = block
+    .replace(new RegExp(String.raw`\s*(${BULLET.source})\s*`, "g"), "\n$1 ")
+    .split("\n")
+    .map(clean)
+    .filter(Boolean);
+  const bulleted = lines.some((l) => BULLET.test(l[0]));
+  const items: string[] = [];
+  for (const line of lines) {
+    const isBullet = BULLET.test(line[0]);
+    const text = isBullet ? clean(line.slice(1)) : line;
+    if (!text) continue;
+    if (bulleted && !isBullet && items.length) items[items.length - 1] += ` ${text}`;
+    else items.push(text);
+  }
+  return items.filter((i) => i.length <= 400).slice(0, max);
+}
+
 export function parseFiche(rawText: string, schoolNames: string[] = []): FicheData {
   const text = rawText.replace(/\r\n?/g, "\n").replace(/[  ]/g, " ");
   const out: FicheData = {};
@@ -148,6 +186,22 @@ export function parseFiche(rawText: string, schoolNames: string[] = []): FicheDa
   }
 
   Object.assign(out, readHours(beforeUnitsTable(text)));
+
+  const description = sectionText(text, /Description\s+du\s+cours/i);
+  if (description) {
+    const value = clean(description.replace(/\n+/g, " "));
+    if (value.length >= 10) out.description = value.slice(0, 1500);
+  }
+  const objectives = sectionText(text, /Objectifs?\s+p[ée]dagogiques?/i);
+  if (objectives) {
+    const items = listItems(objectives, 20);
+    if (items.length) out.objectives = items;
+  }
+  const prerequisites = sectionText(text, /Pr[ée][-\s]?requis/i);
+  if (prerequisites) {
+    const items = listItems(prerequisites, 10);
+    if (items.length) out.prerequisites = items;
+  }
 
   const lower = text.toLowerCase();
   const school = schoolNames.find((n) => n && lower.includes(n.toLowerCase()));

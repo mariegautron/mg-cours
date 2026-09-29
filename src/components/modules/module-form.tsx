@@ -1,15 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import type { ModuleFormState } from "@/app/(app)/modules/actions";
 import { FichePrefill } from "@/components/modules/fiche-prefill";
 import { ScheduleEditor } from "@/components/modules/schedule-editor";
+import { StudentIntroSuggest } from "@/components/modules/student-intro-suggest";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { FicheData } from "@/lib/modules/fiche";
 import type { Tables } from "@/types/db";
 
 type Action = (state: ModuleFormState, formData: FormData) => Promise<ModuleFormState>;
@@ -34,10 +36,11 @@ export function ModuleForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
+  const [fiche, setFiche] = useState<FicheData | null>(null);
 
   return (
     <>
-      <FichePrefill schools={schools} formId="module-form" keepFile={!mod} />
+      <FichePrefill schools={schools} formId="module-form" keepFile={!mod} onRead={setFiche} />
       <form id="module-form" action={formAction} className="max-w-2xl space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
@@ -216,6 +219,7 @@ export function ModuleForm({
               Markdown, projeté au début de « Présenter le module » (avant le programme et
               l’évaluation).
             </p>
+            <StudentIntroSuggest fiche={fiche} />
           </div>
         </div>
 

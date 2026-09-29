@@ -19,9 +19,15 @@ const LABELS: Record<keyof FicheData, string> = {
   hoursTd: "Heures TD",
   hoursTp: "Heures TP",
   schoolName: "École",
+  description: "Description",
+  objectives: "Objectifs",
+  prerequisites: "Prérequis",
 };
 
-const INPUT_IDS: Record<Exclude<keyof FicheData, "schoolName">, string> = {
+/** Lus pour la présentation aux étudiant·es, pas pour un champ du formulaire. */
+type IntroKey = "description" | "objectives" | "prerequisites";
+
+const INPUT_IDS: Record<Exclude<keyof FicheData, "schoolName" | IntroKey>, string> = {
   name: "name",
   ycode: "ycode",
   level: "level",
@@ -49,10 +55,13 @@ export function FichePrefill({
   schools,
   formId,
   keepFile,
+  onRead,
 }: {
   schools: { id: string; name: string }[];
   formId: string;
   keepFile: boolean;
+  /** Reçoit ce que la fiche contient, pour proposer la présentation aux étudiant·es. */
+  onRead?: (fiche: FicheData) => void;
 }) {
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -87,11 +96,13 @@ export function FichePrefill({
       return setMessage({ kind: "error", text: result.error ?? "Lecture impossible." });
     }
 
+    onRead?.(result.data);
     const filled: string[] = [];
     for (const [key, value] of Object.entries(result.data) as [
       keyof FicheData,
       string | number,
     ][]) {
+      if (key === "description" || key === "objectives" || key === "prerequisites") continue;
       if (key === "schoolName") {
         const school = schools.find((s) => s.name === value);
         if (school && setField("schoolId", school.id)) filled.push(LABELS[key]);
@@ -104,9 +115,19 @@ export function FichePrefill({
       : keepFile
         ? " La fiche n’a pas pu être mise de côté : dépose-la ensuite dans l’onglet Administratif."
         : "";
+    const forIntro = (["description", "objectives", "prerequisites"] as const)
+      .filter((k) => result.data?.[k])
+      .map((k) => LABELS[k].toLowerCase());
     setMessage({
       kind: "ok",
-      text: `Préremplis : ${filled.join(", ")}. Vérifie chaque champ avant d’enregistrer.${saved}`,
+      text:
+        (filled.length
+          ? `Préremplis : ${filled.join(", ")}. Vérifie chaque champ avant d’enregistrer.`
+          : "Aucun champ à préremplir.") +
+        (forIntro.length
+          ? ` Lus pour la présentation aux étudiant·es : ${forIntro.join(", ")}.`
+          : "") +
+        saved,
     });
   }
 

@@ -232,6 +232,14 @@ chacune liées à une ou plusieurs ressources réutilisables.
   heures totales » ; FFP / TDP sont facultatifs et lus seulement s'ils correspondent aux valeurs
   (« FFP TDP / 28h 10h 18h »). Le tableau des unités pédagogiques n'est jamais lu pour les heures
   (`src/lib/modules/fiche.ts`).
+- **Présentation aux étudiant·es préremplie (US-104)** : `parseFiche` lit aussi la description du cours, les
+  objectifs pédagogiques (une puce = un objectif, y compris sur un texte fusionné) et les prérequis
+  (`src/lib/modules/fiche.ts`). Une fois la fiche déposée, le bouton « Proposer un texte depuis la fiche »,
+  sous le champ Markdown, y écrit un **brouillon** (`buildStudentIntro`, `src/lib/modules/student-intro.ts`) :
+  « ## Bienvenue ! », phrase d'ouverture (nom du module + 1re phrase de la description), objectifs en liste,
+  prérequis, volume horaire. Vouvoiement et écriture inclusive au point médian (les mots de la fiche au masculin
+  pluriel passent par `inclusify`). Un texte déjà saisi n'est remplacé qu'après confirmation
+  (« Garder mon texte » a le focus) ; rien n'est enregistré avant le bouton du formulaire.
 - **Import Hyperplanning (US-103)** : dans le bloc Planning (création **et** page « Planning » d'un module
   existant), zone de dépôt du PDF « Services intervenant » de l'école. Lecture côté serveur
   (`readHyperplanning`, `unpdf` comme la fiche pédagogique), puis `parseHyperplanningServices` : un bloc par
