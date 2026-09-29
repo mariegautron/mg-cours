@@ -30,7 +30,7 @@ const OUTWARD = [
 ];
 
 const PRIVATE =
-  /student_observation|observation_tag|retro_note|not_covered|\bcompletion\b|lib\/notebook|components\/notebook/;
+  /student_observation|observation_tag|retro_note|experience_note|not_covered|\bcompletion\b|lib\/notebook|components\/notebook/;
 
 /**
  * `next_time` (« À faire pour la prochaine fois ») est autorisé sur UNE diapositive projetée

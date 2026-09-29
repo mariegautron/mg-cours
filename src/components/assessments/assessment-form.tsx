@@ -170,6 +170,25 @@ export function AssessmentForm({
         </div>
       </fieldset>
 
+      <div className="space-y-2">
+        <Label htmlFor="experienceNote">Retour d’expérience (privé)</Label>
+        <p id="experienceNote-hint" className="text-muted-foreground text-sm">
+          Ce qui a marché, ce qui a coincé, à changer la prochaine fois. Jamais montré aux
+          étudiant·es ; à relire quand tu dupliques le module, et non copié.
+        </p>
+        <Textarea
+          id="experienceNote"
+          name="experienceNote"
+          rows={3}
+          maxLength={5000}
+          defaultValue={assessment?.experience_note ?? ""}
+          aria-describedby={
+            fe.experienceNote ? "experienceNote-hint experienceNote-error" : "experienceNote-hint"
+          }
+        />
+        <FieldError id="experienceNote" errors={fe.experienceNote} />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="type">Type</Label>

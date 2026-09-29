@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
+import { copiedFile, planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
+import { parseResourceFiles } from "@/lib/resources/files";
 import { planSessions, readScheduleRows, type ScheduleRow } from "@/lib/modules/schedule-parser";
 import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -258,6 +261,7 @@ export async function duplicateModule(
     .eq("module_id", sourceId)
     .order("position");
 
+  const courseIds = new Map<string, string>();
   for (const c of (courses ?? []) as (Tables<"course"> & {
     course_resource: { resource_id: string; role: string }[];
   })[]) {
@@ -280,6 +284,7 @@ export async function duplicateModule(
       .select("id")
       .single();
 
+    if (newCourse) courseIds.set(c.id, newCourse.id);
     if (newCourse && c.course_resource.length) {
       await supabase.from("course_resource").insert(
         c.course_resource.map((cr) => ({
@@ -302,6 +307,85 @@ export async function duplicateModule(
       .insert(retained.map((r) => ({ module_id: newModule.id, resource_id: r.resource_id })));
   }
 
+  await duplicateEvaluations(supabase, sourceId, newModule.id, courseIds);
+
   revalidatePath("/modules");
   redirect(`/modules/${newModule.id}`);
+}
+
+/**
+ * Projet fil rouge, thèmes, évaluations (sujet, grille, coefficient, fichiers) : sans notes, sans
+ * dates, sans groupes ni affectations (US-98). Les grilles sont référencées, pas dupliquées.
+ */
+async function duplicateEvaluations(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sourceId: string,
+  targetId: string,
+  courseIds: ReadonlyMap<string, string>,
+) {
+  const { data: auth } = await supabase.auth.getUser();
+  const ownerId = auth.user?.id;
+
+  let projectId: string | null = null;
+  const { data: project } = await supabase
+    .from("module_project")
+    .select("*")
+    .eq("module_id", sourceId)
+    .maybeSingle();
+  if (project) {
+    const { data: newProject } = await supabase
+      .from("module_project")
+      .insert({
+        module_id: targetId,
+        title: project.title,
+        brief_md: project.brief_md,
+        client_context_md: project.client_context_md,
+      })
+      .select("id")
+      .single();
+    projectId = newProject?.id ?? null;
+    if (projectId) {
+      const { data: themes } = await supabase
+        .from("project_theme")
+        .select("*")
+        .eq("project_id", project.id)
+        .order("position");
+      if (themes?.length) {
+        await supabase.from("project_theme").insert(
+          themes.map((t) => ({
+            project_id: projectId!,
+            title: t.title,
+            description_md: t.description_md,
+            position: t.position,
+          })),
+        );
+      }
+    }
+  }
+
+  const { data: assessments } = await supabase
+    .from("assessment")
+    .select("*")
+    .eq("module_id", sourceId)
+    .order("created_at");
+
+  for (const a of assessments ?? []) {
+    const { data: created } = await supabase
+      .from("assessment")
+      .insert(planAssessmentCopy(a, { moduleId: targetId, courseIds, projectId }))
+      .select("id")
+      .single();
+    if (!created || !ownerId) continue;
+
+    // Copie réelle dans le stockage (pas une référence) : supprimer l'ancien module ou son sujet
+    // ne doit jamais casser le nouveau.
+    const storage = supabase.storage.from(ASSESSMENT_FILES_BUCKET);
+    const copied: AssessmentFile[] = [];
+    for (const file of parseResourceFiles(a.files)) {
+      const next = copiedFile(file, ownerId, created.id);
+      const { error } = await storage.copy(file.path, next.path);
+      if (!error) copied.push(next);
+    }
+    if (copied.length) await supabase.from("assessment").update({ files: copied }).eq("id", created.id);
+  }
 }

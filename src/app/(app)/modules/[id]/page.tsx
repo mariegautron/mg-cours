@@ -31,6 +31,7 @@ import {
   formatDuration,
   totalPlannedHours,
 } from "@/lib/modules/course-duration";
+import { experienceNotes } from "@/lib/modules/duplicate-evaluations";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import {
   getModule,
@@ -375,6 +376,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           <ModuleDangerZone
             id={mod.id}
             year={mod.year}
+            assessmentExperience={experienceNotes(assessments)}
             experience={courses.flatMap((c, i) =>
               c.retro_note?.trim()
                 ? [{ number: i + 1, title: c.title, text: c.retro_note.trim() }]

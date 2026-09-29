@@ -43,7 +43,8 @@ export type Database = {
           date: string | null
           deliverable_md: string | null
           duration_minutes: number | null
-          evaluated_md: string | null
+evaluated_md: string | null
+          experience_note: string | null
           files: Json
           grading_grid_id: string | null
           id: string
@@ -71,7 +72,8 @@ export type Database = {
           date?: string | null
           deliverable_md?: string | null
           duration_minutes?: number | null
-          evaluated_md?: string | null
+evaluated_md?: string | null
+          experience_note?: string | null
           files?: Json
           grading_grid_id?: string | null
           id?: string
@@ -99,7 +101,8 @@ export type Database = {
           date?: string | null
           deliverable_md?: string | null
           duration_minutes?: number | null
-          evaluated_md?: string | null
+evaluated_md?: string | null
+          experience_note?: string | null
           files?: Json
           grading_grid_id?: string | null
           id?: string

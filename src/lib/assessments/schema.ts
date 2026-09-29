@@ -132,6 +132,14 @@ export const assessmentSchema = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => v || null),
+  /** Retour d'expérience privé (US-98) : relu à la duplication du module, jamais copié. */
+  experienceNote: z
+    .string()
+    .trim()
+    .max(5000, "Le retour d’expérience dépasse 5 000 caractères.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
   courseId: z
     .string()
     .uuid()
@@ -161,6 +169,7 @@ export function readAssessmentForm(formData: FormData) {
     objective: formData.get("objective") ?? "",
     deliverableMd: formData.get("deliverableMd") ?? "",
     evaluatedMd: formData.get("evaluatedMd") ?? "",
+    experienceNote: formData.get("experienceNote") ?? "",
     courseId: formData.get("courseId") ?? "",
     prepStatus: formData.get("prepStatus") ?? "to_build",
     autoValidatedCriterionIds: formData.getAll("autoValidatedCriterionIds").map(String),

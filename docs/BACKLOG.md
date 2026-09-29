@@ -234,7 +234,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 ## E13 — Évaluations, lot A « grilles et correction » (US-81 à US-87)
 
 Source : page Notion « MG COURS — Audit UX… », section « Chantier Évaluations ». Lot B (US-88 à US-93) :
-voir E15. Lot C (US-94 à US-100) : non commencé.
+voir E15. Lot C (US-94 à US-100) : voir E16.
 
 | US    | Contenu                                                                                                                                                                                                                                                                                                                                                                                                         | Statut |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -273,6 +273,22 @@ Source : page Notion « MG COURS — Audit UX… », section « Chantier Évalua
 | US-91 | Grille remise aux étudiant·es : export PDF (`GridHandoutDocument`, `buildGridHandout`) avec axes et sous-totaux, critères, descriptions, références, paliers, bonus et barème, **sans aucune note ni commentaire** (le type `GridHandout` ne peut pas en porter, test à l'appui) ; bouton « Grille pour les étudiant·es (PDF) » sur `/assessments/grids` (`/api/grids/[id]/pdf`) et sur la fiche de l'évaluation (`/api/modules/[id]/assessments/[assessmentId]/grid`, refusé tant que le sujet est « à construire »)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ✅     |
 | US-92 | Oral de fin de projet, écran dédié `/modules/[id]/assessments/[assessmentId]/oral` (« Faire passer l'oral », bouton sur les notes de groupe de rôle oral ou de type « oral ») : ordre de passage (`oral_slot` : volontaires par rang, puis tirage reproductible avec graine ; refaire l'ordre demande confirmation, le serveur refuse sinon), heure de début, durée globale modifiable par créneau, horaires déduits, monter / descendre ; chronomètre accessible (horloge par horodatages, annonces polies à 5 min et à la fin, alerte à 1 minute, `role=timer` silencieux, pulsation seulement sous `motion-safe`) ; grille ouverte sur le groupe qui passe en **réutilisant `GradingSession` / `GradeForm`** (enregistrement automatique, garde anti-perte, pondération individuelle justifiée US-87 ; `activeId` masque les autres copies sans les démonter), « Groupe suivant » / « Groupe précédent » / « Terminer l'oral » ; sections de correction partagées (`buildSessionSections`) | ✅     |
 | US-93 | Suivi des rendus par jalon et par groupe : `project_submission` (date de réception, lien http(s) Moodle / dépôt Git, `javascript:` refusé), section « Rendus — n/N reçus » sur la fiche d'une évaluation de projet ; suivi privé, jamais exporté                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ✅     |
+
+## E16 — Évaluations, lot C « QCM, rattrapage, restitution, réutilisation » (US-94 à US-100)
+
+Décisions de Marie (29/09) : QCM à tirage individuel figé par tentative (barème par règle « N questions de
+telle catégorie, X points chacune ») ; rattrapage réservé aux absent·es excusé·es d'un sujet individuel ;
+restitution transparente ; phrases et grilles à Marie, non copiées avec le module ; l'interface tutoie.
+
+| US     | Contenu | Statut |
+| ------ | ------- | ------ |
+| US-98  | Dupliquer un module copie aussi projet, thèmes, évaluations (sujet, grille, coefficient, fichiers copiés dans le stockage, séance et projet remappés) ; ni notes, ni dates, ni groupes, ni affectations ; retour d'expérience privé par évaluation (`assessment.experience_note`) relu avant la duplication, jamais copié (migration `20261014000000`) | ✅ |
+| US-99  | Migrer les grilles Notion par script (idempotent via `import_ref`) | À faire |
+| US-97  | Restitution : fiche par étudiant·e (PDF et e-mail) | À faire |
+| US-96  | Rattrapage d'un sujet individuel | À faire |
+| US-94  | Banque de questions (`docs/specs/qcm-banque-questions.md`) | À faire |
+| US-95  | QCM à tirage individuel, passation par lien personnel | À faire |
+| US-100 | Aide à la saisie Hyperplanning (optionnel) | À faire |
 
 ## Vision suivante (validée 26/09)
 

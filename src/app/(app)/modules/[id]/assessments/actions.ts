@@ -77,12 +77,14 @@ const subjectColumns = (d: {
   objective: string | null;
   deliverableMd: string | null;
   evaluatedMd: string | null;
+  experienceNote: string | null;
   courseId: string | null;
   prepStatus: string;
 }) => ({
   objective: d.objective,
   deliverable_md: d.deliverableMd,
   evaluated_md: d.evaluatedMd,
+  experience_note: d.experienceNote,
   course_id: d.courseId,
   prep_status: d.prepStatus as "to_build" | "ready" | "provided",
 });

@@ -25,15 +25,23 @@ export interface ExperienceNote {
   text: string;
 }
 
+export interface AssessmentExperienceNote {
+  title: string;
+  text: string;
+}
+
 export function ModuleDangerZone({
   id,
   year,
   experience = [],
+  assessmentExperience = [],
 }: {
   id: string;
   year: number;
   /** Retours d'expérience privés des séances, à relire avant de dupliquer (US-68). */
   experience?: ExperienceNote[];
+  /** Retours d'expérience privés des évaluations, à relire avant de dupliquer (US-98). */
+  assessmentExperience?: AssessmentExperienceNote[];
 }) {
   const [pending, startTransition] = useTransition();
   const [dupState, dupAction, dupPending] = useActionState(
@@ -43,14 +51,14 @@ export function ModuleDangerZone({
 
   return (
     <div className="space-y-6">
-      {experience.length ? (
+      {experience.length || assessmentExperience.length ? (
         <section aria-labelledby="experience" className="space-y-2 rounded-lg border p-4">
           <h3 id="experience" className="font-medium">
             Retour d’expérience de cette année
           </h3>
           <p className="text-muted-foreground text-sm">
-            Notes privées prises à la clôture des séances : à relire avant de reprendre le module.
-            Elles ne sont pas copiées dans la nouvelle année.
+            Notes privées prises à la clôture des séances et sur les évaluations : à relire avant
+            de reprendre le module. Elles ne sont pas copiées dans la nouvelle année.
           </p>
           <ul className="space-y-2 text-sm">
             {experience.map((n) => (
@@ -58,6 +66,12 @@ export function ModuleDangerZone({
                 <p className="font-medium">
                   Séance {n.number} : {n.title}
                 </p>
+                <p className="whitespace-pre-wrap">{n.text}</p>
+              </li>
+            ))}
+            {assessmentExperience.map((n, i) => (
+              <li key={`${i}-${n.title}`}>
+                <p className="font-medium">Évaluation : {n.title}</p>
                 <p className="whitespace-pre-wrap">{n.text}</p>
               </li>
             ))}
@@ -80,8 +94,10 @@ export function ModuleDangerZone({
         ) : null}
       </form>
       <p className="text-muted-foreground text-sm">
-        Copie le module (métadonnées, cours et ressources liées) vers une nouvelle année ; les dates
-        et le statut repartent à zéro.
+        Copie le module (métadonnées, cours et ressources liées, projet, thèmes, évaluations avec
+        leur sujet, leurs fichiers, leur grille et leur coefficient) vers une nouvelle année. Ni
+        notes, ni dates, ni groupes : ils repartent à zéro. Tes grilles et tes phrases réutilisables
+        sont à toi, elles servent telles quelles.
       </p>
 
       <AlertDialog>
