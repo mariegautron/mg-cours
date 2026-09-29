@@ -382,6 +382,16 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Commentaire structuré (US-85)** : sous chaque critère, une zone « Commentaire — {critère} » (avec ses
+  phrases repliées, limitées à ce critère ; « Insérer dans le commentaire » y place la description du
+  palier choisi), puis un bloc « Bilan » : « Points forts » (phrases positives), « Progrès » (conseils et
+  points à travailler) et « Commentaire libre ». Stockage : `grade.criterion_comments` (jsonb
+  `{critère: texte}`), `strengths`, `progress`, `feedback`. Le PDF de résultats (et donc l'e-mail, qui
+  joint ce PDF) reprend la structure : pour chaque critère le **palier obtenu** (description) et le
+  **commentaire**, puis Points forts, Progrès, Commentaire ; une saisie hors paliers n'affiche pas de
+  palier. **Note de groupe** : une seule fiche, identique pour tous les membres du groupe (destinataires
+  = les membres). Logique pure : `src/lib/assessments/feedback.ts` (`readFeedback`) et
+  `buildResultSheets` ; e2e : `e2e/grade-feedback.spec.ts` (individuelle et groupe).
 - **Phrases réutilisables (US-84)** : sous l'appréciation, « Phrases réutilisables » liste les phrases
   enregistrées (les plus utilisées d'abord ; à usage égal, celles de la matière du module, puis la plus
   récente) avec un filtre par critère (Toutes / Générales / un critère). Un clic **insère** la phrase au

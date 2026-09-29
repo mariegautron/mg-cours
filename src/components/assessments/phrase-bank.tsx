@@ -37,6 +37,9 @@ export function PhraseBank<T extends Phrase>({
   value,
   onValueChange,
   textareaRef,
+  label,
+  fixedCriterion,
+  categories,
 }: {
   phrases: T[];
   criteria: { id: string; label: string }[];
@@ -45,6 +48,12 @@ export function PhraseBank<T extends Phrase>({
   value: string;
   onValueChange: (value: string) => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
+  /** Champ concerné, pour nommer la région (ex. « Points forts »). */
+  label?: string;
+  /** Phrases d'un seul critère (champ de commentaire d'un critère) : pas de filtre à choisir. */
+  fixedCriterion?: { id: string; label: string };
+  /** Types de phrases proposés (ex. seulement « positif » pour les points forts). */
+  categories?: Phrase["category"][];
 }) {
   const uid = useId();
   const [list, setList] = useState<Phrase[]>(() => rankPhrases(phrases, subject));
@@ -67,8 +76,9 @@ export function PhraseBank<T extends Phrase>({
     return () => textarea?.removeEventListener("focus", onFocus);
   }, [textareaRef]);
 
-  const filter: CriterionFilter =
-    filterKey === "all"
+  const filter: CriterionFilter = fixedCriterion
+    ? { kind: "criterion", id: fixedCriterion.id, label: fixedCriterion.label }
+    : filterKey === "all"
       ? { kind: "all" }
       : filterKey === "general"
         ? { kind: "general" }
@@ -77,7 +87,8 @@ export function PhraseBank<T extends Phrase>({
             id: filterKey,
             label: criteria.find((c) => c.id === filterKey)?.label ?? "",
           };
-  const matching = filterPhrases(list, filter);
+  const pool = categories ? list.filter((p) => categories.includes(p.category)) : list;
+  const matching = filterPhrases(pool, filter);
   const shown = expanded ? matching : matching.slice(0, VISIBLE);
 
   function insert(phrase: Phrase) {
@@ -105,9 +116,10 @@ export function PhraseBank<T extends Phrase>({
     setError("");
     setDraft({
       text,
-      criterionId: filterKey !== "all" && filterKey !== "general" ? filterKey : "",
+      criterionId:
+        fixedCriterion?.id ?? (filterKey !== "all" && filterKey !== "general" ? filterKey : ""),
       subject: subject ?? "",
-      category: "advice",
+      category: categories?.[0] ?? "advice",
     });
     requestAnimationFrame(() => draftTextRef.current?.focus());
   }
@@ -139,32 +151,34 @@ export function PhraseBank<T extends Phrase>({
   return (
     <section aria-labelledby={`${uid}-title`} className="space-y-2 rounded-md border p-3">
       <h4 id={`${uid}-title`} className="text-sm font-medium">
-        Phrases réutilisables
+        Phrases réutilisables{label ? ` — ${label}` : ""}
       </h4>
 
       <div className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1">
-          <Label htmlFor={`${uid}-filter`} className="text-xs">
-            Critère
-          </Label>
-          <select
-            id={`${uid}-filter`}
-            value={filterKey}
-            onChange={(e) => {
-              setFilterKey(e.target.value);
-              setExpanded(false);
-            }}
-            className="border-input h-8 rounded-md border bg-transparent px-2 text-sm"
-          >
-            <option value="all">Toutes</option>
-            <option value="general">Générales</option>
-            {criteria.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {fixedCriterion ? null : (
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-filter`} className="text-xs">
+              Critère
+            </Label>
+            <select
+              id={`${uid}-filter`}
+              value={filterKey}
+              onChange={(e) => {
+                setFilterKey(e.target.value);
+                setExpanded(false);
+              }}
+              className="border-input h-8 rounded-md border bg-transparent px-2 text-sm"
+            >
+              <option value="all">Toutes</option>
+              <option value="general">Générales</option>
+              {criteria.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <Button ref={saveButtonRef} type="button" size="sm" variant="outline" onClick={openSave}>
           Enregistrer la sélection comme phrase
         </Button>
@@ -266,9 +280,19 @@ export function PhraseBank<T extends Phrase>({
                 }
                 className="border-input h-9 w-full rounded-md border bg-transparent px-2 text-sm"
               >
-                <option value="positive">Positif</option>
-                <option value="advice">Conseil</option>
-                <option value="negative">Négatif</option>
+                {(
+                  [
+                    ["positive", "Positif"],
+                    ["advice", "Conseil"],
+                    ["negative", "Négatif"],
+                  ] as const
+                )
+                  .filter(([value]) => !categories || categories.includes(value))
+                  .map(([value, text]) => (
+                    <option key={value} value={value}>
+                      {text}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>

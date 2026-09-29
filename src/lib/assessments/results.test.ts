@@ -41,7 +41,14 @@ const base = {
   ],
 };
 
-const line = { axis: null, reference: null, isBonus: false, autoValidated: false };
+const line = {
+  axis: null,
+  reference: null,
+  isBonus: false,
+  autoValidated: false,
+  level: null,
+  comment: null,
+};
 
 describe("buildResultSheets", () => {
   it("note individuelle : une fiche par étudiant·e noté·e, détail par critère et commentaires connus", () => {
@@ -242,5 +249,81 @@ describe("buildResultSheets — axes, bonus, validé d'office", () => {
 
   it("n'affiche pas de dépassement si la note enregistrée ne correspond plus à la grille", () => {
     expect(build({ c2: 10, c3: 0.5 }, 12).overflow).toBeNull();
+  });
+});
+
+describe("buildResultSheets — commentaire structuré (US-85)", () => {
+  const criteria = [
+    {
+      id: "c1",
+      label: "Structure",
+      weight: 6,
+      levels: [
+        { points: 6, description: "Structure correcte" },
+        { points: 4, description: "Structure approximative" },
+        { points: 0, description: "" },
+      ],
+    },
+    { id: "c2", label: "Bouton", weight: 2 },
+  ];
+  const assessment = {
+    title: "Individuelle",
+    subject: null,
+    date: null,
+    is_group_grade: false,
+    max_score: null,
+  };
+  const structured = {
+    scores: { c1: 4, c2: 2 },
+    value: 6,
+    criterion_comments: { c1: "Le header manque.", c2: "  ", inconnu: 3 },
+    strengths: "Code propre",
+    progress: "Tester davantage",
+    feedback: "Continuez ainsi.",
+  };
+
+  it("reprend palier obtenu, commentaire du critère, points forts, progrès et commentaire libre", () => {
+    const sheet = buildResultSheets({
+      ...base,
+      criteria,
+      assessment,
+      grades: [grade({ student_id: "s1", ...structured })],
+    })[0];
+    expect(sheet.criteria[0]).toMatchObject({
+      label: "Structure",
+      points: 4,
+      level: { points: 4, description: "Structure approximative" },
+      comment: "Le header manque.",
+    });
+    // Critère sans palier ni commentaire (texte blanc ignoré).
+    expect(sheet.criteria[1]).toMatchObject({ level: null, comment: null });
+    expect(sheet.strengths).toBe("Code propre");
+    expect(sheet.progress).toBe("Tester davantage");
+    expect(sheet.feedback).toBe("Continuez ainsi.");
+  });
+
+  it("pas de palier obtenu pour une saisie hors paliers ou un critère non noté", () => {
+    const sheet = buildResultSheets({
+      ...base,
+      criteria,
+      assessment,
+      grades: [grade({ student_id: "s1", scores: { c1: 3 }, value: 3, criterion_comments: {} })],
+    })[0];
+    expect(sheet.criteria[0]).toMatchObject({ points: 3, level: null, comment: null });
+    expect(sheet.criteria[1].points).toBeNull();
+    expect(sheet.strengths).toBeNull();
+  });
+
+  it("note de groupe : la même fiche structurée pour tous les membres", () => {
+    const sheets = buildResultSheets({
+      ...base,
+      criteria,
+      assessment: { ...assessment, is_group_grade: true },
+      grades: [grade({ student_group_id: "grp", is_group_grade: true, ...structured })],
+    });
+    expect(sheets).toHaveLength(1);
+    expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test", "Noa Test"]);
+    expect(sheets[0].strengths).toBe("Code propre");
+    expect(sheets[0].criteria[0].comment).toBe("Le header manque.");
   });
 });

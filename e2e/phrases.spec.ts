@@ -16,23 +16,32 @@ test("phrases réutilisables : enregistrer une sélection, insérer en un clic, 
 
   const sentence = `Pense aux labels ${suffix}.`;
   const edited = `Texte modifié ${suffix}.`;
-  const comment = page.getByLabel("Appréciation");
+  const comment = page.getByLabel("Commentaire libre", { exact: true });
+  const bankOf = async () => {
+    // Les phrases sont repliées sous chaque zone de commentaire.
+    const bank = page.getByRole("region", { name: "Phrases réutilisables — Commentaire libre" });
+    if (!(await bank.isVisible())) {
+      await page.getByText("Phrases pour « Commentaire libre »").click();
+    }
+    return bank;
+  };
   await comment.fill(`Bon travail. ${sentence}`);
   // Sélection de la seconde phrase seulement.
   await comment.evaluate((el: HTMLTextAreaElement) => {
     el.focus();
     el.setSelectionRange(13, el.value.length);
   });
-  await page.getByRole("button", { name: "Enregistrer la sélection comme phrase" }).click();
+  const bank = await bankOf();
+  await bank.getByRole("button", { name: "Enregistrer la sélection comme phrase" }).click();
 
   // Le formulaire reprend la sélection et propose la matière courante (nom du module).
   await expect(page.getByLabel("Texte de la phrase")).toHaveValue(sentence);
   await expect(page.getByLabel("Matière de la phrase")).toHaveValue(setup.moduleName);
   await page.getByLabel("Critère de la phrase").selectOption({ label: "Structure" });
-  await page.getByRole("button", { name: "Enregistrer la phrase" }).click();
+  await bank.getByRole("button", { name: "Enregistrer la phrase" }).click();
   await expect(page.getByText("Phrase enregistrée.")).toBeAttached();
 
-  const phrase = page.getByRole("button", {
+  const phrase = bank.getByRole("button", {
     name: new RegExp(`Insérer : ${sentence.replace(".", "\\.")}`),
   });
   await expect(phrase).toBeVisible();
@@ -52,9 +61,9 @@ test("phrases réutilisables : enregistrer une sélection, insérer en un clic, 
   await expect(phrase).toContainText("utilisée 2 fois");
 
   // Filtre par critère : « Générales » ne montre pas cette phrase.
-  await page.getByLabel("Critère", { exact: true }).selectOption({ label: "Générales" });
+  await bank.getByLabel("Critère", { exact: true }).selectOption({ label: "Générales" });
   await expect(phrase).toHaveCount(0);
-  await page.getByLabel("Critère", { exact: true }).selectOption({ label: "Structure" });
+  await bank.getByLabel("Critère", { exact: true }).selectOption({ label: "Structure" });
   await expect(phrase).toBeVisible();
 
   const axe = await new AxeBuilder({ page })
@@ -80,9 +89,10 @@ test("phrases réutilisables : enregistrer une sélection, insérer en un clic, 
   await expect(item).toContainText("Critère : Structure");
 
   await page.goto(setup.assessmentUrl);
-  await expect(page.getByLabel("Appréciation")).toHaveValue(written);
+  const reloaded = await bankOf();
+  await expect(comment).toHaveValue(written);
   // L'usage a été compté côté serveur (au moins une des deux insertions).
   await expect(
-    page.getByRole("button", { name: new RegExp(`Insérer : ${edited.replace(".", "\\.")}`) }),
+    reloaded.getByRole("button", { name: new RegExp(`Insérer : ${edited.replace(".", "\\.")}`) }),
   ).toContainText(/utilisée \d+ fois/);
 });

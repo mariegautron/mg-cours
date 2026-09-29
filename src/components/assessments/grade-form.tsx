@@ -1,14 +1,13 @@
 "use client";
 
-import { useActionState, useId, useRef, useState } from "react";
+import { useActionState, useId, useState } from "react";
 
-import { PhraseBank } from "@/components/assessments/phrase-bank";
+import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import type { CriterionWithLevels, GridWithCriteria } from "@/lib/assessments/queries";
 import {
   computeTotals,
@@ -16,6 +15,7 @@ import {
   formatNumber,
   groupByAxis,
 } from "@/lib/assessments/scoring";
+import { parseCriterionComments } from "@/lib/assessments/feedback";
 import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
 import { DEFAULT_MAX_SCORE, toTwenty } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
@@ -59,8 +59,13 @@ export function GradeForm({
       ]),
     ),
   );
+  // Commentaire structuré : un commentaire par critère, points forts, progrès, commentaire libre.
+  const [criterionComments, setCriterionComments] = useState(() =>
+    parseCriterionComments(grade?.criterion_comments),
+  );
+  const [strengths, setStrengths] = useState(grade?.strengths ?? "");
+  const [progress, setProgress] = useState(grade?.progress ?? "");
   const [feedback, setFeedback] = useState(grade?.feedback ?? "");
-  const feedbackRef = useRef<HTMLTextAreaElement>(null);
   const [announcement, setAnnouncement] = useState("");
   const criteria = grid?.criteria ?? [];
   const totals = computeTotals(
@@ -90,8 +95,25 @@ export function GradeForm({
   }
 
   function insertBase(c: CriterionWithLevels, text: string) {
-    setFeedback((prev) => appendComment(prev, text));
-    setAnnouncement(`Description du critère « ${c.label} » insérée dans l’appréciation.`);
+    setCriterionComments((prev) => ({ ...prev, [c.id]: appendComment(prev[c.id] ?? "", text) }));
+    setAnnouncement(`Description du palier insérée dans le commentaire de « ${c.label} ».`);
+  }
+
+  const phraseCriteria = criteria.map((c) => ({ id: c.id, label: c.label }));
+
+  function criterionComment(c: CriterionWithLevels) {
+    return (
+      <CommentField
+        name={`comment_${c.id}`}
+        label={`Commentaire — ${c.label}`}
+        value={criterionComments[c.id] ?? ""}
+        onChange={(value) => setCriterionComments((prev) => ({ ...prev, [c.id]: value }))}
+        phrases={comments}
+        criteria={phraseCriteria}
+        subject={subject}
+        fixedCriterion={{ id: c.id, label: c.label }}
+      />
+    );
   }
 
   function levelField(c: CriterionWithLevels) {
@@ -160,10 +182,11 @@ export function GradeForm({
         </div>
         {base ? (
           <Button type="button" size="sm" variant="outline" onClick={() => insertBase(c, base)}>
-            Insérer dans l’appréciation
+            Insérer dans le commentaire
             <span className="sr-only"> la description du palier choisi pour {c.label}</span>
           </Button>
         ) : null}
+        {criterionComment(c)}
       </fieldset>
     );
   }
@@ -219,6 +242,7 @@ export function GradeForm({
             </p>
           </details>
         ) : null}
+        {criterionComment(c)}
       </div>
     );
   }
@@ -288,32 +312,45 @@ export function GradeForm({
         </div>
       )}
 
-      <div className="space-y-1">
-        <Label htmlFor={`${uid}-feedback`}>Appréciation</Label>
-        <Textarea
-          id={`${uid}-feedback`}
-          name="feedback"
-          rows={2}
-          ref={feedbackRef}
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold">Bilan</legend>
+        <CommentField
+          name="strengths"
+          label="Points forts"
+          value={strengths}
+          onChange={setStrengths}
+          phrases={comments}
+          criteria={phraseCriteria}
+          subject={subject}
+          categories={["positive"]}
         />
-      </div>
-      <PhraseBank
-        phrases={comments}
-        criteria={criteria.map((c) => ({ id: c.id, label: c.label }))}
-        subject={subject}
-        value={feedback}
-        onValueChange={setFeedback}
-        textareaRef={feedbackRef}
-      />
+        <CommentField
+          name="progress"
+          label="Progrès"
+          value={progress}
+          onChange={setProgress}
+          phrases={comments}
+          criteria={phraseCriteria}
+          subject={subject}
+          categories={["advice", "negative"]}
+        />
+        <CommentField
+          name="feedback"
+          label="Commentaire libre"
+          value={feedback}
+          onChange={setFeedback}
+          phrases={comments}
+          criteria={phraseCriteria}
+          subject={subject}
+        />
+      </fieldset>
 
       {legacyComments.length > 0 ? (
         <fieldset className="space-y-1">
           <legend className="text-sm font-medium">Commentaires prédéfinis (ancien mode)</legend>
           <p className="text-muted-foreground text-xs">
             Déjà liés à cette note ; décochez pour les retirer. Les nouvelles phrases s’insèrent
-            directement dans l’appréciation.
+            directement dans les commentaires.
           </p>
           <ul className="space-y-1">
             {legacyComments.map((c) => (

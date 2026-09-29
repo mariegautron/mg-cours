@@ -73,8 +73,8 @@ test("noter par palier : un choix attribue les points, propose la description, s
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText(`Yanis Palier${suffix}`)).toBeVisible();
 
-  const structure = page.getByRole("group", { name: /Structure/ });
-  const bouton = page.getByRole("group", { name: /Bouton/ });
+  const structure = page.getByRole("group", { name: /^Structure/ });
+  const bouton = page.getByRole("group", { name: /^Bouton/ });
 
   // Un choix attribue les points et met le total à jour en direct.
   await structure.getByRole("radio", { name: /4 pt — Structure approximative/ }).check();
@@ -82,10 +82,10 @@ test("noter par palier : un choix attribue les points, propose la description, s
   await bouton.getByRole("radio", { name: "2 pt" }).check();
   await expect(page.getByText("Total : 6 / 8")).toBeVisible();
 
-  // La description du palier choisi est proposée comme base de l'appréciation, sans écraser.
-  await page.getByLabel("Appréciation").fill("Bon début.");
-  await structure.getByRole("button", { name: /Insérer dans l’appréciation/ }).click();
-  await expect(page.getByLabel("Appréciation")).toHaveValue(
+  // La description du palier choisi est proposée comme base du commentaire du critère, sans écraser.
+  await page.getByLabel("Commentaire — Structure", { exact: true }).fill("Bon début.");
+  await structure.getByRole("button", { name: /Insérer dans le commentaire/ }).click();
+  await expect(page.getByLabel("Commentaire — Structure", { exact: true })).toHaveValue(
     "Bon début.\nStructure — Structure approximative",
   );
   await expect(bouton.getByRole("button", { name: /Insérer/ })).toHaveCount(0);
@@ -108,9 +108,9 @@ test("noter par palier : un choix attribue les points, propose la description, s
   // Rechargement : les paliers choisis sont restitués.
   await page.reload();
   await expect(
-    page.getByRole("group", { name: /Structure/ }).getByRole("radio", { name: "2 pt" }),
+    page.getByRole("group", { name: /^Structure/ }).getByRole("radio", { name: "2 pt" }),
   ).toBeChecked();
   await expect(
-    page.getByRole("group", { name: /Bouton/ }).getByRole("radio", { name: "2 pt" }),
+    page.getByRole("group", { name: /^Bouton/ }).getByRole("radio", { name: "2 pt" }),
   ).toBeChecked();
 });

@@ -24,7 +24,10 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     backgroundColor: "#f3f3f3",
   },
+  criterion: { flex: 1, paddingRight: 8 },
   ref: { color: "#555", fontSize: 9 },
+  level: { color: "#333", fontSize: 10, marginTop: 2 },
+  comment: { fontSize: 10, marginTop: 2, fontFamily: "Helvetica-Oblique" },
   overflow: { marginTop: 2, color: "#555" },
   total: { marginTop: 10, fontSize: 14, fontFamily: "Helvetica-Bold" },
   h: { fontFamily: "Helvetica-Bold", marginTop: 14, marginBottom: 3 },
@@ -78,10 +81,14 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                     <Text>{axisSubtotal(s, c.axis)}</Text>
                   </View>
                 ) : null}
-                <View style={styles.row}>
-                  <View>
+                <View style={styles.row} wrap={false}>
+                  <View style={styles.criterion}>
                     <Text>{c.label}</Text>
                     {c.reference ? <Text style={styles.ref}>Référence : {c.reference}</Text> : null}
+                    {c.level?.description ? (
+                      <Text style={styles.level}>Palier obtenu : {c.level.description}</Text>
+                    ) : null}
+                    {c.comment ? <Text style={styles.comment}>{c.comment}</Text> : null}
                   </View>
                   <Text>{criterionPoints(c)}</Text>
                 </View>
@@ -96,9 +103,21 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
             ) : null}
 
+            {s.strengths ? (
+              <View>
+                <Text style={styles.h}>Points forts</Text>
+                <Text>{s.strengths}</Text>
+              </View>
+            ) : null}
+            {s.progress ? (
+              <View>
+                <Text style={styles.h}>Progrès</Text>
+                <Text>{s.progress}</Text>
+              </View>
+            ) : null}
             {s.feedback ? (
               <View>
-                <Text style={styles.h}>Appréciation</Text>
+                <Text style={styles.h}>Commentaire</Text>
                 <Text>{s.feedback}</Text>
               </View>
             ) : null}

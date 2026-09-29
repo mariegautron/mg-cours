@@ -96,7 +96,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   // Saisie : Header et footer validé d'office (8/8), sous-totaux et total en direct.
   await expect(page.getByText(`Ines Axes${suffix}`)).toBeVisible();
   await expect(page.getByText("Validé d’office : 8 / 8")).toBeVisible();
-  await expect(page.getByLabel("Header et footer")).toHaveCount(0);
+  await expect(page.getByLabel("Header et footer", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Référence : RGAA 1.3.1")).toBeVisible();
 
   await page.getByLabel("Onglets (/12)").fill("6");
@@ -105,7 +105,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   await expect(page.getByText("Total : 14 / 20")).toBeVisible();
 
   await page.getByLabel("Onglets (/12)").fill("12");
-  await page.getByLabel(/Lighthouse supérieur à 90/).fill("0.5");
+  await page.getByLabel(/^Lighthouse supérieur à 90/).fill("0.5");
   await expect(
     page.getByText("Total : 20 / 20 + 0,5 de bonus → 20 / 20 (20,5 → plafonné à 20)"),
   ).toBeVisible();

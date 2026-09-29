@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
+import { readFeedback } from "@/lib/assessments/feedback";
 import { computeTotals, readScores } from "@/lib/assessments/scoring";
 
 export interface AssessmentFormState {
@@ -196,7 +197,6 @@ async function saveGrade(
   target: { studentId: string | null; studentGroupId: string | null },
   formData: FormData,
 ): Promise<GradeFormState> {
-  const feedback = String(formData.get("feedback") ?? "").trim();
   const predefinedCommentIds = formData.getAll("predefinedCommentIds").map(String);
 
   const supabase = await createClient();
@@ -218,6 +218,11 @@ async function saveGrade(
     axisId: c.axis_id,
     isBonus: c.is_bonus,
   }));
+
+  const text = readFeedback(
+    formData,
+    criteria.map((c) => c.id),
+  );
 
   let value: number;
   let scores: Record<string, number> = {};
@@ -253,7 +258,10 @@ async function saveGrade(
     is_group_grade: target.studentId === null,
     value,
     scores,
-    feedback: feedback || null,
+    feedback: text.feedback,
+    strengths: text.strengths,
+    progress: text.progress,
+    criterion_comments: text.criterionComments,
     predefined_comment_ids: predefinedCommentIds,
   };
 

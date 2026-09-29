@@ -1,4 +1,6 @@
 import { gradingTargets } from "@/lib/assessments/targets";
+import { parseCriterionComments } from "@/lib/assessments/feedback";
+import { findLevel } from "@/lib/assessments/levels";
 import {
   computeTotals,
   describeOverflow,
@@ -19,6 +21,10 @@ export interface ResultCriterionLine {
   reference: string | null;
   isBonus: boolean;
   autoValidated: boolean;
+  /** Palier obtenu (points + description) quand le critère a des paliers et que la note en fait partie. */
+  level: { points: number; description: string } | null;
+  /** Commentaire du critère. */
+  comment: string | null;
 }
 
 export interface ResultAxisSubtotal extends Omit<AxisSubtotal, "axisId"> {
@@ -44,7 +50,13 @@ export interface ResultSheet {
   axes: ResultAxisSubtotal[];
   /** Ex. « 20,33 → plafonné à 20 » si le bonus a fait dépasser le barème. */
   overflow: string | null;
+  /** Points forts. */
+  strengths: string | null;
+  /** Progrès. */
+  progress: string | null;
+  /** Commentaire libre. */
   feedback: string | null;
+  /** Anciennes phrases liées par identifiant (avant US-84) : lecture seule. */
   comments: string[];
 }
 
@@ -57,7 +69,9 @@ interface Input {
     Partial<Pick<Tables<"assessment">, "auto_validated_criterion_ids">>;
   groups: { id: string; name: string; members: Tables<"student">[] }[];
   criteria: (Pick<Tables<"grid_criterion">, "id" | "label" | "weight"> &
-    Partial<Pick<Tables<"grid_criterion">, "axis_id" | "reference" | "is_bonus">>)[];
+    Partial<Pick<Tables<"grid_criterion">, "axis_id" | "reference" | "is_bonus">> & {
+      levels?: { points: number; description: string }[];
+    })[];
   /** Axes de la grille, dans l'ordre. */
   axes?: Pick<Tables<"grid_axis">, "id" | "label">[];
   grades: Tables<"grade">[];
@@ -92,6 +106,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
     });
     // Le dépassement n'est affiché que si la note enregistrée est bien celle qu'on recalcule
     // (la grille a pu être modifiée depuis la saisie).
+    const criterionComments = parseCriterionComments(grade.criterion_comments);
     const consistent = grade.value !== null && Math.abs(totals.value - grade.value) < 0.01;
     return {
       recipients,
@@ -116,6 +131,8 @@ export function buildResultSheets(input: Input): ResultSheet[] {
           reference: c.reference ?? null,
           isBonus: c.is_bonus ?? false,
           autoValidated,
+          level: findLevel(c.levels ?? [], autoValidated ? c.weight : scores[c.id]),
+          comment: criterionComments[c.id] ?? null,
         };
       }),
       axes: totals.axes.map(({ axisId, ...a }) => ({
@@ -123,6 +140,8 @@ export function buildResultSheets(input: Input): ResultSheet[] {
         label: axisId ? (axisLabel.get(axisId) ?? null) : null,
       })),
       overflow: consistent ? describeOverflow(totals) : null,
+      strengths: grade.strengths ?? null,
+      progress: grade.progress ?? null,
       feedback: grade.feedback,
       comments: grade.predefined_comment_ids
         .map((id) => commentText.get(id))
