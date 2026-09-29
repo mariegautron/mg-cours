@@ -440,3 +440,42 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     expect(sheets[0].attendance).toBe("absent_unexcused");
   });
 });
+
+describe("buildResultSheets — thème du projet (US-89)", () => {
+  const assessment = {
+    title: "Oral",
+    subject: null,
+    date: null,
+    is_group_grade: true,
+    max_score: null,
+  };
+
+  it("reprend le thème du groupe sur la fiche de groupe", () => {
+    const sheets = buildResultSheets({
+      ...base,
+      assessment,
+      grades: [grade({ student_group_id: "grp", is_group_grade: true })],
+      themesByGroup: { grp: "AssurLibre", autre: "JustiFacile" },
+    });
+    expect(sheets[0].theme).toBe("AssurLibre");
+  });
+
+  it("note individuelle : thème du groupe de l'étudiant·e", () => {
+    const sheets = buildResultSheets({
+      ...base,
+      assessment: { ...assessment, is_group_grade: false },
+      grades: [grade({ student_id: "s1" })],
+      themesByGroup: { grp: "ClimActif" },
+    });
+    expect(sheets[0].theme).toBe("ClimActif");
+  });
+
+  it("sans thème : null", () => {
+    const sheets = buildResultSheets({
+      ...base,
+      assessment,
+      grades: [grade({ student_group_id: "grp", is_group_grade: true })],
+    });
+    expect(sheets[0].theme).toBeNull();
+  });
+});

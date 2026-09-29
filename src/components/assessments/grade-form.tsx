@@ -64,6 +64,7 @@ export function GradeForm({
   observations = [],
   members,
   memberOverrides,
+  theme = null,
   onStatus,
   register,
   onNavigate,
@@ -90,6 +91,8 @@ export function GradeForm({
   /** Membres du groupe (note de groupe) : absence et pondération individuelle par membre. */
   members?: { id: string; name: string }[];
   memberOverrides?: Record<string, MemberOverride>;
+  /** Thème du projet fil rouge du groupe (US-89), rappelé pendant la correction. */
+  theme?: string | null;
   onStatus?: (id: string, status: CopyStatus) => void;
   register?: (id: string, controls: CopyControls | null) => void;
   onNavigate?: (direction: -1 | 1) => void;
@@ -527,6 +530,7 @@ export function GradeForm({
           </span>
         ) : null}
       </div>
+      {theme ? <p className="text-sm">Thème : {theme}</p> : null}
 
       {observations.length > 0 ? (
         <details className="rounded-md border p-2">

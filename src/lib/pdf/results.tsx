@@ -66,6 +66,7 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               {s.isGroupGrade ? "Groupe : " : ""}
               {s.recipients.map((r) => r.name).join(", ")}
             </Text>
+            {s.theme ? <Text style={styles.sub}>Thème du projet : {s.theme}</Text> : null}
 
             {s.subject ? (
               <View>

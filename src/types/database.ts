@@ -1154,6 +1154,108 @@ export type Database = {
           },
         ]
       }
+      project_theme: {
+        Row: {
+          created_at: string
+          description_md: string
+          id: string
+          owner_id: string
+          position: number
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_md?: string
+          id?: string
+          owner_id?: string
+          position?: number
+          project_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_md?: string
+          id?: string
+          owner_id?: string
+          position?: number
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_theme_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "module_project"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_theme_assignment: {
+        Row: {
+          created_at: string
+          draw_seed: string | null
+          drawn_at: string | null
+          id: string
+          method: Database["public"]["Enums"]["theme_assignment_method"]
+          owner_id: string
+          project_id: string
+          student_group_id: string
+          theme_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draw_seed?: string | null
+          drawn_at?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["theme_assignment_method"]
+          owner_id?: string
+          project_id: string
+          student_group_id: string
+          theme_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draw_seed?: string | null
+          drawn_at?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["theme_assignment_method"]
+          owner_id?: string
+          project_id?: string
+          student_group_id?: string
+          theme_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_theme_assignment_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "module_project"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_theme_assignment_student_group_id_fkey"
+            columns: ["student_group_id"]
+            isOneToOne: false
+            referencedRelation: "student_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_theme_assignment_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "project_theme"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource: {
         Row: {
           archived_at: string | null
@@ -1588,6 +1690,7 @@ export type Database = {
         | "reference"
         | "teacher_notes"
       resource_status: "progress" | "ready"
+      theme_assignment_method: "volunteer" | "draw"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1775,6 +1878,7 @@ export const Constants = {
         "teacher_notes",
       ],
       resource_status: ["progress", "ready"],
+      theme_assignment_method: ["volunteer", "draw"],
     },
   },
 } as const

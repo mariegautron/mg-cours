@@ -21,6 +21,7 @@ import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { observationsForCopy, type ObservationLine } from "@/lib/assessments/session";
 import { getModule } from "@/lib/modules/queries";
+import { themeTitleByGroup } from "@/lib/projects/queries";
 import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import { listModuleObservations } from "@/lib/notebook/queries";
 
@@ -48,6 +49,7 @@ export default async function AssessmentPage({
   const overrideRows = await listGroupGradeMembers(
     grades.filter((g) => g.student_group_id).map((g) => g.id),
   );
+  const themes = await themeTitleByGroup(assessment.project_id);
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   const hasGrades = grades.some((g) => g.value !== null);
   const recipients = hasGrades
@@ -71,6 +73,7 @@ export default async function AssessmentPage({
             id: group.id,
             title: `Note du groupe « ${group.name} »`,
             action: saveGroupGrade.bind(null, id, assessmentId, group.id),
+            theme: themes[group.id] ?? null,
             grade: grades.find((g) => g.student_group_id === group.id),
             observations: observationsForCopy(
               group.members.map((m) => m.id),
@@ -108,6 +111,7 @@ export default async function AssessmentPage({
           id: m.id,
           title: `${m.first_name} ${m.last_name}`,
           action: saveStudentGrade.bind(null, id, assessmentId, m.id),
+          theme: themes[group.id] ?? null,
           grade: grades.find((g) => g.student_id === m.id),
           observations: observationsForCopy([m.id], observations),
         })),

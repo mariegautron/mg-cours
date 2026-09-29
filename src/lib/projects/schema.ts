@@ -48,3 +48,29 @@ export function readSkeletonJson(raw: string) {
   }
   return { success: true as const, items: parsed.data };
 }
+
+const themeSchema = z.object({
+  id: z.string().uuid().nullable().default(null),
+  title: z.string().trim().min(1, "Chaque thème a un titre.").max(200),
+  descriptionMd: z.string().max(20000, "Description trop longue.").default(""),
+});
+
+export const themesSchema = z.array(themeSchema).max(12, "12 thèmes au plus.");
+
+/** Lit le JSON sérialisé par l'éditeur de thèmes. */
+export function readThemesJson(raw: string) {
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    return { success: false as const, error: "Thèmes illisibles." };
+  }
+  const parsed = themesSchema.safeParse(json);
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      error: parsed.error.issues[0]?.message ?? "Thèmes invalides.",
+    };
+  }
+  return { success: true as const, themes: parsed.data };
+}

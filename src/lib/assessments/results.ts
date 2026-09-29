@@ -39,6 +39,8 @@ export interface ResultSheet {
   isGroupGrade: boolean;
   /** Sujet complet (Markdown). */
   subject: string | null;
+  /** Thème du projet fil rouge du groupe (US-89), `null` sans thème. */
+  theme: string | null;
   moduleName: string;
   date: string | null;
   value: number | null;
@@ -88,6 +90,8 @@ interface Input {
     "grade_id" | "student_id" | "attendance" | "individual_factor" | "justification"
   >[];
   comments: Pick<Tables<"predefined_comment">, "id" | "text">[];
+  /** Titre du thème de chaque groupe (identifiant de groupe → titre), US-89. */
+  themesByGroup?: Record<string, string>;
 }
 
 /**
@@ -110,7 +114,11 @@ export function buildResultSheets(input: Input): ResultSheet[] {
   const commentText = new Map(comments.map((c) => [c.id, c.text]));
   const maxScore = effectiveMaxScore(assessment.max_score, criteriaTotal(criteria));
 
-  const sheetFor = (grade: Tables<"grade">, recipients: ResultSheet["recipients"]): ResultSheet => {
+  const sheetFor = (
+    grade: Tables<"grade">,
+    recipients: ResultSheet["recipients"],
+    groupId: string,
+  ): ResultSheet => {
     const scores = (grade.scores ?? {}) as Record<string, number>;
     const totals = computeTotals(scoringCriteria, scores, {
       autoValidatedIds,
@@ -125,6 +133,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       title: assessment.title,
       isGroupGrade: assessment.is_group_grade,
       subject: assessment.subject,
+      theme: input.themesByGroup?.[groupId] ?? null,
       moduleName: input.moduleName,
       date: assessment.date,
       value: grade.value,
@@ -181,7 +190,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       );
       // Même fiche pour tous les membres, sauf ceux dont la note diffère : absence ou pondération.
       const regular = group.members.filter((m) => !overrides.has(m.id));
-      const base = sheetFor(grade, regular.map(recipient));
+      const base = sheetFor(grade, regular.map(recipient), group.id);
       const sheets = regular.length > 0 ? [base] : [];
       for (const member of group.members) {
         const o = overrides.get(member.id);
@@ -211,10 +220,10 @@ export function buildResultSheets(input: Input): ResultSheet[] {
   }
 
   return targets
-    .flatMap((t) => t.students)
-    .flatMap((m) => {
+    .flatMap((t) => t.students.map((m) => ({ m, groupId: t.group.id })))
+    .flatMap(({ m, groupId }) => {
       const grade = input.grades.find((g) => g.student_id === m.id && g.value !== null);
-      return grade ? [sheetFor(grade, [recipient(m)])] : [];
+      return grade ? [sheetFor(grade, [recipient(m)], groupId)] : [];
     });
 }
 

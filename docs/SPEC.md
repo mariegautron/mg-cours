@@ -559,6 +559,17 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   signale ce qui manque, ce qui dépasse ou une répartition inhabituelle. Les évaluations créées visent
   tous les groupes du module (comme une évaluation créée à la main) ; le compteur X/Y de la fiche
   module n'a rien de particulier : il compte les évaluations notées.
+- « Thèmes au choix » (US-89) : éditeur de thèmes (titre, description Markdown, jusqu'à 12, ajout /
+  retrait, « Enregistrer les thèmes » ; un thème retiré libère ses groupes).
+- « Affectation des thèmes » : une ligne par groupe de projet du module avec sa liste « Thème de X »
+  (choix des volontaires saisi par Marie, badge « volontaire » / « tirage »). « Tirer au sort les groupes
+  restants (n) » affecte les groupes sans thème choisi : sans remise tant qu'un thème est libre, puis
+  répartition équitable (`drawThemes`, `src/lib/projects/draw.ts`) ; la graine est affichée
+  (« Dernier tirage : graine … ») et le tirage est reproductible. Un tirage existant ne se refait
+  qu'après confirmation (« Refaire le tirage », `AlertDialog`) ; le serveur refuse sinon ; les volontaires
+  et les thèmes choisis à la main sont conservés. Annonces dans une zone `role=status`.
+- Le thème du groupe est rappelé (« Thème : … ») sur chaque copie de la page de correction et sur la
+  fiche PDF de résultats (« Thème du projet : … »).
 - « Supprimer le projet » (confirmation) : les évaluations et leurs notes sont conservées, détachées.
 
 ## Progression pédagogique (E6)

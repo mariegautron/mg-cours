@@ -7,6 +7,8 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { Markdown } from "@/components/markdown";
 import { ProjectForm } from "@/components/projects/project-form";
 import { SkeletonEditor } from "@/components/projects/skeleton-editor";
+import { ThemeAssignment } from "@/components/projects/theme-assignment";
+import { ThemesEditor } from "@/components/projects/themes-editor";
 import { Badge } from "@/components/ui/badge";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModule } from "@/lib/modules/queries";
@@ -107,6 +109,38 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                 ))}
               </ul>
             )}
+          </section>
+
+          <section aria-labelledby="themes-heading" className="space-y-3">
+            <h2 id="themes-heading" className="text-lg font-medium">
+              Thèmes au choix ({project.themes.length})
+            </h2>
+            <ThemesEditor moduleId={mod.id} initial={project.themes} />
+          </section>
+
+          <section aria-labelledby="assignment-heading" className="space-y-3">
+            <h2 id="assignment-heading" className="text-lg font-medium">
+              Affectation des thèmes
+            </h2>
+            <ThemeAssignment
+              moduleId={mod.id}
+              themes={project.themes.map((t) => ({ id: t.id, title: t.title }))}
+              groups={project.groups.map((g) => {
+                const a = project.assignments.find((x) => x.student_group_id === g.id);
+                return {
+                  id: g.id,
+                  name: g.name,
+                  themeId: a?.theme_id ?? "",
+                  method: a?.method ?? null,
+                };
+              })}
+              drawSeed={
+                project.assignments
+                  .filter((a) => a.method === "draw" && a.draw_seed)
+                  .sort((a, b) => (b.drawn_at ?? "").localeCompare(a.drawn_at ?? ""))[0]
+                  ?.draw_seed ?? null
+              }
+            />
           </section>
 
           <section aria-labelledby="skeleton-heading" className="space-y-3">

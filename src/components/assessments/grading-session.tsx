@@ -29,6 +29,8 @@ export interface SessionItem {
   /** Note de groupe : membres et ajustements individuels enregistrés. */
   members?: { id: string; name: string }[];
   memberOverrides?: Record<string, MemberOverride>;
+  /** Thème du projet fil rouge du groupe (US-89). */
+  theme?: string | null;
 }
 
 export interface SessionSection {
@@ -270,6 +272,7 @@ export function GradingSession({
               observations={item.observations}
               members={item.members}
               memberOverrides={item.memberOverrides}
+              theme={item.theme}
               onStatus={onStatus}
               register={register}
               onNavigate={(direction) => {

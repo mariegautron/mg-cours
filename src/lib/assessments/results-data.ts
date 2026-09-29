@@ -6,6 +6,7 @@ import {
 } from "@/lib/assessments/queries";
 import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
 import { getModule } from "@/lib/modules/queries";
+import { themeTitleByGroup } from "@/lib/projects/queries";
 
 /** Fiches de résultats d'une évaluation (vide si introuvable ou aucune note saisie). */
 export async function loadResultSheets(
@@ -24,6 +25,7 @@ export async function loadResultSheets(
   const memberOverrides = await listGroupGradeMembers(
     grades.filter((g) => g.student_group_id).map((g) => g.id),
   );
+  const themesByGroup = await themeTitleByGroup(assessment.project_id);
   return buildResultSheets({
     moduleName: mod.name,
     assessment,
@@ -33,5 +35,6 @@ export async function loadResultSheets(
     grades,
     memberOverrides,
     comments,
+    themesByGroup,
   });
 }
