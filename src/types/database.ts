@@ -43,12 +43,13 @@ export type Database = {
           date: string | null
           deliverable_md: string | null
           duration_minutes: number | null
-evaluated_md: string | null
+          evaluated_md: string | null
           experience_note: string | null
           files: Json
           grading_grid_id: string | null
           id: string
           is_group_grade: boolean
+          makeup_of_id: string | null
           max_score: number | null
           module_id: string
           objective: string | null
@@ -72,12 +73,13 @@ evaluated_md: string | null
           date?: string | null
           deliverable_md?: string | null
           duration_minutes?: number | null
-evaluated_md?: string | null
+          evaluated_md?: string | null
           experience_note?: string | null
           files?: Json
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
+          makeup_of_id?: string | null
           max_score?: number | null
           module_id: string
           objective?: string | null
@@ -101,12 +103,13 @@ evaluated_md?: string | null
           date?: string | null
           deliverable_md?: string | null
           duration_minutes?: number | null
-evaluated_md?: string | null
+          evaluated_md?: string | null
           experience_note?: string | null
           files?: Json
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
+          makeup_of_id?: string | null
           max_score?: number | null
           module_id?: string
           objective?: string | null
@@ -135,6 +138,13 @@ evaluated_md?: string | null
             columns: ["grading_grid_id"]
             isOneToOne: false
             referencedRelation: "grading_grid"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_makeup_of_id_fkey"
+            columns: ["makeup_of_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
             referencedColumns: ["id"]
           },
           {
@@ -191,6 +201,48 @@ evaluated_md?: string | null
             columns: ["student_group_id"]
             isOneToOne: false
             referencedRelation: "student_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_student: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_student_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_student_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
             referencedColumns: ["id"]
           },
         ]

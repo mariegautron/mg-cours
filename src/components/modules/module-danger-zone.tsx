@@ -57,8 +57,8 @@ export function ModuleDangerZone({
             Retour d’expérience de cette année
           </h3>
           <p className="text-muted-foreground text-sm">
-            Notes privées prises à la clôture des séances et sur les évaluations : à relire avant
-            de reprendre le module. Elles ne sont pas copiées dans la nouvelle année.
+            Notes privées prises à la clôture des séances et sur les évaluations : à relire avant de
+            reprendre le module. Elles ne sont pas copiées dans la nouvelle année.
           </p>
           <ul className="space-y-2 text-sm">
             {experience.map((n) => (

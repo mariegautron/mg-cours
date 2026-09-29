@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
-import { copiedFile, planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
+import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
+import { planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { planSessions, readScheduleRows, type ScheduleRow } from "@/lib/modules/schedule-parser";
 import { readModuleForm } from "@/lib/modules/schema";
@@ -377,15 +377,14 @@ async function duplicateEvaluations(
       .single();
     if (!created || !ownerId) continue;
 
-    // Copie réelle dans le stockage (pas une référence) : supprimer l'ancien module ou son sujet
-    // ne doit jamais casser le nouveau.
-    const storage = supabase.storage.from(ASSESSMENT_FILES_BUCKET);
-    const copied: AssessmentFile[] = [];
-    for (const file of parseResourceFiles(a.files)) {
-      const next = copiedFile(file, ownerId, created.id);
-      const { error } = await storage.copy(file.path, next.path);
-      if (!error) copied.push(next);
-    }
-    if (copied.length) await supabase.from("assessment").update({ files: copied }).eq("id", created.id);
+    // Copie réelle dans le stockage : supprimer l'ancien module ne doit jamais casser le nouveau.
+    const { copied } = await copyAssessmentFiles(
+      supabase,
+      ownerId,
+      parseResourceFiles(a.files),
+      created.id,
+    );
+    if (copied.length)
+      await supabase.from("assessment").update({ files: copied }).eq("id", created.id);
   }
 }

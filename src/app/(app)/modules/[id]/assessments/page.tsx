@@ -100,6 +100,7 @@ export default async function ModuleAssessmentsPage({
                   <div>
                     <p className="font-medium">{a.title}</p>
                     <p className="text-muted-foreground text-sm">
+                      {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {a.groups.map((g) => g.name).join(", ") || "—"} ·{" "}
                       {a.is_group_grade ? "note de groupe" : "note individuelle"} · sur {a.maxScore}

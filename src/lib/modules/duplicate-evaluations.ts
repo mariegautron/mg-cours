@@ -36,9 +36,10 @@ export function planAssessmentCopy(
     grading_grid_id: source.grading_grid_id,
     auto_validated_criterion_ids: source.auto_validated_criterion_ids,
     course_id: source.course_id ? (ctx.courseIds.get(source.course_id) ?? null) : null,
+    // Rattachée au projet copié, ou à aucun projet (jamais un rôle de projet sans projet).
     project_id: source.project_id ? ctx.projectId : null,
-    project_role: source.project_id ? source.project_role : null,
-    project_position: source.project_id ? source.project_position : null,
+    project_role: source.project_id && ctx.projectId ? source.project_role : null,
+    project_position: source.project_id && ctx.projectId ? source.project_position : null,
     // Un sujet déjà fourni est prêt à l'être de nouveau ; il n'a pas encore été fourni cette année.
     prep_status: source.prep_status === "provided" ? "ready" : source.prep_status,
     // Volontairement absents : date, oral_start_time, results_sent_at, experience_note, files

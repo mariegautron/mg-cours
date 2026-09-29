@@ -11,6 +11,7 @@ import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons"
 import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
+import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/assessments/queries";
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
+import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { assessmentFileUrl } from "@/lib/assessments/files";
 import { isOralAssessment } from "@/lib/assessments/oral";
@@ -82,6 +84,45 @@ export default async function AssessmentPage({
       };
     });
   }
+  // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur un
+  // rattrapage, rappel de l'originale.
+  const memberNames = new Map(
+    assessment.groups.flatMap((g) =>
+      g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+    ),
+  );
+  let makeupPanel: React.ReactNode = null;
+  let makeupOf: { id: string; title: string } | null = null;
+  if (assessment.makeup_of_id) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("assessment")
+      .select("id, title")
+      .eq("id", assessment.makeup_of_id)
+      .maybeSingle();
+    makeupOf = data;
+  } else if (!assessment.is_group_grade) {
+    const supabase = await createClient();
+    const { data: existing } = await supabase
+      .from("assessment")
+      .select("id, title")
+      .eq("makeup_of_id", assessmentId)
+      .maybeSingle();
+    const { count } = existing
+      ? await supabase
+          .from("assessment_student")
+          .select("id", { count: "exact", head: true })
+          .eq("assessment_id", existing.id)
+      : { count: 0 };
+    makeupPanel = (
+      <MakeupPanel
+        moduleId={id}
+        assessmentId={assessmentId}
+        excused={excusedStudentIds(grades).map((sid) => memberNames.get(sid) ?? "Étudiant·e")}
+        makeup={existing ? { ...existing, enrolled: count ?? 0 } : null}
+      />
+    );
+  }
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   const hasGrades = grades.some((g) => g.value !== null);
   const recipients = hasGrades
@@ -114,6 +155,19 @@ export default async function AssessmentPage({
             {[assessment.type, groupNames].filter(Boolean).join(" · ")}
             {assessment.date ? ` · ${new Date(assessment.date).toLocaleDateString("fr-FR")}` : ""}
           </p>
+          {makeupOf ? (
+            <p className="mt-1 text-sm">
+              Rattrapage de{" "}
+              <Link
+                href={`/modules/${id}/assessments/${makeupOf.id}`}
+                className="underline underline-offset-2"
+              >
+                {makeupOf.title}
+              </Link>{" "}
+              pour : {Array.from(memberNames.values()).join(", ") || "personne pour l’instant"}.
+              Même grille, même coefficient : sa note remplace l’absence excusée.
+            </p>
+          ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">Coefficient {assessment.coefficient}</Badge>
             <Badge variant="outline">Sur {assessment.maxScore}</Badge>
@@ -243,6 +297,8 @@ export default async function AssessmentPage({
           <Submissions moduleId={id} assessmentId={assessmentId} rows={submissionRows} />
         </section>
       ) : null}
+
+      {makeupPanel}
 
       <ResultsActions
         moduleId={id}

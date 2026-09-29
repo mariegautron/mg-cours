@@ -98,7 +98,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
   const next = invoiceCtx ? nextStep(invoiceCtx, invoice) : null;
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
-  const gradedAssessments = assessments.filter((a) => a.gradeCount > 0).length;
+  const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
   const toBuild = new Set(
     courses.flatMap((c) => c.resources.filter((r) => r.status === "progress").map((r) => r.id)),

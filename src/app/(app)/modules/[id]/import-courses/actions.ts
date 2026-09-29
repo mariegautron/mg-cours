@@ -58,15 +58,13 @@ export async function importCourses(
     if (error || !created) return { error: "L’import a échoué. Réessayez." };
 
     if (resourceLinks.length) {
-      const { error: linkError } = await supabase
-        .from("course_resource")
-        .insert(
-          resourceLinks.map((l) => ({
-            course_id: created.id,
-            resource_id: l.resource_id,
-            role: l.role,
-          })),
-        );
+      const { error: linkError } = await supabase.from("course_resource").insert(
+        resourceLinks.map((l) => ({
+          course_id: created.id,
+          resource_id: l.resource_id,
+          role: l.role,
+        })),
+      );
       if (linkError) return { error: "Les ressources d’une séance n’ont pas pu être liées." };
     }
   }

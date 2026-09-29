@@ -648,4 +648,3 @@ critère, phrases, horaires, projets, thèmes). Reste à faire, dans l'ordre :
 4. Bibliothèque : pages non liées à un cours (proposition à la PO).
 5. Fonctionnalité QCM : migrer les banques (B2 ? GP 69 questions avec réponses, M2 60 sans
    réponses) une fois livrée (`docs/specs/qcm-banque-questions.md`).
-

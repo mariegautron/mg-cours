@@ -83,6 +83,8 @@ describe("planAssessmentCopy", () => {
   it("sans projet dans la copie, l'évaluation n'est plus rattachée", () => {
     const row = planAssessmentCopy(source, { ...ctx, projectId: null });
     expect(row.project_id).toBeNull();
+    expect(row.project_role).toBeNull();
+    expect(row.project_position).toBeNull();
   });
 });
 
@@ -93,7 +95,11 @@ describe("copie des fichiers", () => {
 
   it("garde nom, taille et type", () => {
     expect(
-      copiedFile({ path: "o1/a1/x.zip", name: "x.zip", size: 1, mime: "application/zip" }, "o1", "a2"),
+      copiedFile(
+        { path: "o1/a1/x.zip", name: "x.zip", size: 1, mime: "application/zip" },
+        "o1",
+        "a2",
+      ),
     ).toEqual({ path: "o1/a2/x.zip", name: "x.zip", size: 1, mime: "application/zip" });
   });
 });

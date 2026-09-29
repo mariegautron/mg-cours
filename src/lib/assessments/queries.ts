@@ -255,6 +255,21 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
 
   const maxScore = effectiveMaxScore(raw.max_score, criteriaTotal(grading_grid?.criteria ?? []));
 
+  // Un rattrapage ne concerne que les absent·es excusé·es qui y sont inscrit·es (US-96).
+  if (raw.makeup_of_id) {
+    const { data: enrolled } = await supabase
+      .from("assessment_student")
+      .select("student_id")
+      .eq("assessment_id", id);
+    const ids = new Set((enrolled ?? []).map((e) => e.student_id));
+    return {
+      ...raw,
+      groups: groups.map((g) => ({ ...g, members: g.members.filter((m) => ids.has(m.id)) })),
+      grading_grid,
+      maxScore,
+    };
+  }
+
   return { ...raw, groups, grading_grid, maxScore };
 }
 
@@ -287,8 +302,10 @@ export async function moduleNoteProgress(
   loaded?: AssessmentWithMeta[],
 ): Promise<NoteProgress> {
   const assessments = loaded ?? (await listModuleAssessments(moduleId));
-  const group = assessments.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
-  const individual = assessments.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
+  // Un rattrapage remplace l'absence excusée de l'original : il ne compte pas comme une note de plus.
+  const counted = assessments.filter((a) => !a.makeup_of_id);
+  const group = counted.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
+  const individual = counted.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
   return noteProgress(totalHours, { group, individual });
 }
 

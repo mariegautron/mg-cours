@@ -53,7 +53,11 @@ export default async function ImportCoursesPage({
           Aucun autre module ne contient de séance pour l’instant.
         </p>
       ) : (
-        <form className="flex flex-wrap items-end gap-3" role="search" aria-label="Choix du module source">
+        <form
+          className="flex flex-wrap items-end gap-3"
+          role="search"
+          aria-label="Choix du module source"
+        >
           <div className="space-y-1">
             <Label htmlFor="source">Module source</Label>
             <select

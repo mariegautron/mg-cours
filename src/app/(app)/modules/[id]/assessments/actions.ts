@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
+import { makeupInvariants } from "@/lib/assessments/makeup";
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { parseResourceFiles, upsertFile } from "@/lib/resources/files";
 import { createClient } from "@/lib/supabase/server";
@@ -169,6 +170,20 @@ export async function updateAssessment(
     parsed.data.autoValidatedCriterionIds,
   );
 
+  // Un rattrapage garde la grille, le coefficient et le barème de l'évaluation d'origine (US-96).
+  const { data: makeupRow } = await supabase
+    .from("assessment")
+    .select("makeup_of_id")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  const { data: origin } = makeupRow?.makeup_of_id
+    ? await supabase
+        .from("assessment")
+        .select("grading_grid_id, coefficient, max_score, auto_validated_criterion_ids")
+        .eq("id", makeupRow.makeup_of_id)
+        .maybeSingle()
+    : { data: null };
+
   const { error } = await supabase
     .from("assessment")
     .update({
@@ -183,10 +198,11 @@ export async function updateAssessment(
       max_score: parsed.data.maxScore,
       auto_validated_criterion_ids: autoValidated,
       ...subjectColumns(parsed.data),
+      ...(origin ? makeupInvariants(origin) : {}),
     })
     .eq("id", assessmentId);
 
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: `Enregistrement impossible : ${error.message}.` };
 
   const { data: current } = await supabase
     .from("assessment_group")
@@ -228,14 +244,14 @@ export async function updateAssessment(
 export async function deleteAssessment(moduleId: string, assessmentId: string) {
   "use server";
   const supabase = await createClient();
-  const { data: assessment } = await supabase
+  // Le rattrapage disparaît avec son évaluation d'origine (cascade) : ses fichiers aussi.
+  const { data: assessments } = await supabase
     .from("assessment")
     .select("files")
-    .eq("id", assessmentId)
-    .maybeSingle();
+    .or(`id.eq.${assessmentId},makeup_of_id.eq.${assessmentId}`);
   const { error } = await supabase.from("assessment").delete().eq("id", assessmentId);
   // Les fichiers du sujet ne servent plus à rien : on les retire du stockage privé.
-  const paths = parseResourceFiles(assessment?.files).map((f) => f.path);
+  const paths = (assessments ?? []).flatMap((a) => parseResourceFiles(a.files).map((f) => f.path));
   if (!error && paths.length) await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
   revalidatePath(`/modules/${moduleId}/assessments`);
   redirect(`/modules/${moduleId}/assessments`);
