@@ -197,6 +197,12 @@ chacune liées à une ou plusieurs ressources réutilisables.
   seul le total d'heures du module est contraignant. Option « Proposer un squelette de séances
   depuis les unités » (séances vides à la suite des existantes, renommables). Logique pure :
   `src/lib/modules/expectations.ts` ; écritures : `src/app/(app)/modules/[id]/expectations/actions.ts`.
+  **Fiche importée à la création (E18, US-101)** : le PDF déposé sur « Préremplir depuis la fiche
+  pédagogique » est conservé avec le module (document « Attendus de l'école ») et ses objectifs /
+  unités sont enregistrés à la création (`importFicheForModule`, `src/lib/modules/fiche-document.ts`,
+  chemins et messages purs dans `fiche-import.ts`). Sans objectifs reconnus, pas de repli « une ligne =
+  un attendu » (il enregistrerait l'en-tête) : la fiche module affiche « attendus à relire » avec un
+  lien vers l'écran de lecture. Redirection `?fiche=read|review|failed`.
 - **Rapprochement (US-54)** : `/modules/[id]/matching` (bouton « Rapprocher avec les ressources » de
   la section Attendus). Pour chaque attendu, jusqu'à 5 ressources dont les **tags, le titre, la
   description ou le contenu** partagent ses mots-clés (sans IA : casse, accents et mots vides

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  draftsFromText,
   parseExpectationLines,
   parseExpectationsFromFiche,
   unitsHours,
@@ -115,5 +116,18 @@ describe("parseExpectationsFromFiche — puces « - » sur une seule ligne", () 
       "Recueillir un besoin client",
       "Evaluer la faisabilite technique",
     ]);
+  });
+});
+
+describe("draftsFromText", () => {
+  it("préfère la fiche complète", () => {
+    expect(draftsFromText(FICHE).some((d) => d.kind === "unit")).toBe(true);
+  });
+  it("retombe sur une ligne par attendu", () => {
+    const drafts = draftsFromText("Recueillir un besoin\nÉvaluer la faisabilité");
+    expect(drafts.map((d) => d.label)).toEqual(["Recueillir un besoin", "Évaluer la faisabilité"]);
+  });
+  it("texte sans contenu : aucun attendu", () => {
+    expect(draftsFromText("  \n ")).toEqual([]);
   });
 });

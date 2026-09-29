@@ -37,8 +37,8 @@ export function ModuleForm({
 
   return (
     <>
-      <FichePrefill schools={schools} />
-      <form action={formAction} className="max-w-2xl space-y-6">
+      <FichePrefill schools={schools} formId="module-form" keepFile={!mod} />
+      <form id="module-form" action={formAction} className="max-w-2xl space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Nom du module</Label>

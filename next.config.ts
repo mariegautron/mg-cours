@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Les fiches PDF (4 Mo max) transitent par une Server Action de lecture : le défaut est 1 Mo.
+  experimental: { serverActions: { bodySizeLimit: "5mb" } },
   serverExternalPackages: [
     "@stafyniaksacha/facturx",
     "libxml2-wasm",

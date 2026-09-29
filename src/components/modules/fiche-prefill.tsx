@@ -5,6 +5,9 @@ import { useState } from "react";
 import { extractFiche } from "@/app/(app)/modules/fiche-actions";
 import { FileDropZone } from "@/components/files/file-drop-zone";
 import type { FicheData } from "@/lib/modules/fiche";
+import { pendingFichePath, type PendingFiche } from "@/lib/modules/fiche-import";
+import { mimeOf, safeName } from "@/lib/storage/files";
+import { createClient } from "@/lib/supabase/client";
 
 const LABELS: Record<keyof FicheData, string> = {
   name: "Nom",
@@ -38,9 +41,34 @@ function setField(id: string, value: string) {
   return true;
 }
 
-export function FichePrefill({ schools }: { schools: { id: string; name: string }[] }) {
+/**
+ * À la création, le PDF est aussi déposé (dossier « pending » du stockage) et référencé par un champ
+ * caché du formulaire : l'action de création le conserve comme fiche du module et en lit les attendus.
+ */
+export function FichePrefill({
+  schools,
+  formId,
+  keepFile,
+}: {
+  schools: { id: string; name: string }[];
+  formId: string;
+  keepFile: boolean;
+}) {
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [stored, setStored] = useState<PendingFiche | null>(null);
+
+  async function store(file: File): Promise<PendingFiche | null> {
+    const supabase = createClient();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return null;
+    const bucket = supabase.storage.from("module-documents");
+    if (stored) await bucket.remove([stored.path]);
+    const mime = mimeOf(file);
+    const path = pendingFichePath(auth.user.id, crypto.randomUUID(), safeName(file.name));
+    const { error } = await bucket.upload(path, file, { contentType: mime });
+    return error ? null : { path, name: file.name, size: file.size, mime };
+  }
 
   async function read(file: File, input: HTMLInputElement) {
     input.value = "";
@@ -48,8 +76,12 @@ export function FichePrefill({ schools }: { schools: { id: string; name: string 
     setMessage(null);
     const formData = new FormData();
     formData.set("file", file);
-    const result = await extractFiche(formData);
+    const [result, kept] = await Promise.all([
+      extractFiche(formData),
+      keepFile ? store(file) : Promise.resolve(null),
+    ]);
     setPending(null);
+    setStored(kept);
 
     if (result.error || !result.data) {
       return setMessage({ kind: "error", text: result.error ?? "Lecture impossible." });
@@ -67,9 +99,14 @@ export function FichePrefill({ schools }: { schools: { id: string; name: string 
         filled.push(LABELS[key]);
       }
     }
+    const saved = kept
+      ? " La fiche sera conservée avec le module et ses attendus seront lus."
+      : keepFile
+        ? " La fiche n’a pas pu être mise de côté : dépose-la ensuite dans l’onglet Administratif."
+        : "";
     setMessage({
       kind: "ok",
-      text: `Préremplis : ${filled.join(", ")}. Vérifiez chaque champ avant d’enregistrer.`,
+      text: `Préremplis : ${filled.join(", ")}. Vérifie chaque champ avant d’enregistrer.${saved}`,
     });
   }
 
@@ -80,14 +117,20 @@ export function FichePrefill({ schools }: { schools: { id: string; name: string 
           Préremplir depuis la fiche pédagogique
         </h2>
         <p className="text-muted-foreground text-sm">
-          Déposez le PDF de l’école : le nom, le YCODE, le niveau et les heures sont lus quand ils
-          sont trouvés. Le fichier n’est pas conservé (déposez-le ensuite dans « Documents »).
+          Dépose le PDF de l’école : le nom, le YCODE, le niveau et les heures sont lus quand ils
+          sont trouvés.{" "}
+          {keepFile
+            ? "Le fichier est conservé avec le module (« Attendus de l’école ») et ses attendus sont lus à l’enregistrement."
+            : "Le fichier n’est pas conservé : dépose-le ensuite dans l’onglet Administratif."}
         </p>
       </div>
+      {stored ? (
+        <input type="hidden" name="ficheDoc" form={formId} value={JSON.stringify(stored)} />
+      ) : null}
       <FileDropZone
         id="ficheFile"
         label="Fiche pédagogique (PDF, 4 Mo max)"
-        hint="lecture immédiate, le fichier n’est pas conservé"
+        hint={keepFile ? "lecture immédiate, fichier conservé avec le module" : "lecture immédiate"}
         accept=".pdf"
         busy={pending ? `Lecture de « ${pending} »…` : null}
         onFile={(file, input) => void read(file, input)}

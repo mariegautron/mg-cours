@@ -115,6 +115,12 @@ export function parseExpectationsFromFiche(text: string): ExpectationDraft[] {
   return [...readObjectives(clean), ...readUnits(clean)];
 }
 
+/** Attendus lus dans un texte : fiche complète si on y trouve des objectifs/unités, sinon une ligne par attendu. */
+export function draftsFromText(text: string): ExpectationDraft[] {
+  const fromFiche = parseExpectationsFromFiche(text);
+  return fromFiche.length ? fromFiche : parseExpectationLines(text);
+}
+
 export interface SkeletonSession {
   title: string;
   objective: string;

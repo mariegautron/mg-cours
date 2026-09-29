@@ -6,8 +6,7 @@ import { extractText } from "unpdf";
 import { z } from "zod";
 
 import {
-  parseExpectationLines,
-  parseExpectationsFromFiche,
+  draftsFromText,
   unitsToSkeleton,
   type ExpectationDraft,
 } from "@/lib/modules/expectations";
@@ -21,12 +20,6 @@ export interface ReadExpectationsResult {
 export interface SaveExpectationsState {
   error?: string;
   saved?: boolean;
-}
-
-/** Attendus lus dans un texte : fiche complète si on y trouve des objectifs/unités, sinon une ligne par attendu. */
-function draftsFromText(text: string): ExpectationDraft[] {
-  const fromFiche = parseExpectationsFromFiche(text);
-  return fromFiche.length ? fromFiche : parseExpectationLines(text);
 }
 
 /** Lit la fiche PDF déposée (« Attendus de l'école ») du module. */

@@ -44,6 +44,7 @@ import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
+import { ficheNotice } from "@/lib/modules/fiche-import";
 import { nextStep } from "@/lib/ynov/next-step";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
@@ -76,8 +77,15 @@ const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outlin
     unknown: "outline",
   };
 
-export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ModulePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ fiche?: string }>;
+}) {
   const { id } = await params;
+  const ficheMessage = ficheNotice((await searchParams).fiche);
   const [mod, courses, groups, documents, retained, expectations] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -436,6 +444,24 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+
+      {ficheMessage ? (
+        <p
+          role="status"
+          className={
+            ficheMessage.tone === "ok"
+              ? "rounded-lg border p-3 text-sm"
+              : "border-destructive/50 rounded-lg border p-3 text-sm"
+          }
+        >
+          {ficheMessage.text}{" "}
+          {ficheMessage.tone === "warn" ? (
+            <Link href={`/modules/${mod.id}/expectations`} className="underline underline-offset-2">
+              Ouvrir les attendus
+            </Link>
+          ) : null}
+        </p>
+      ) : null}
 
       {upcoming ? (
         <section

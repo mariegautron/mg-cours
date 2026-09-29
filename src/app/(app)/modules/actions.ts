@@ -7,6 +7,8 @@ import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
 import { planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { planSessions, readScheduleRows, type ScheduleRow } from "@/lib/modules/schedule-parser";
+import { importFicheForModule } from "@/lib/modules/fiche-document";
+import { readPendingFiche, type FicheImportStatus } from "@/lib/modules/fiche-import";
 import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
@@ -98,8 +100,18 @@ export async function createModule(
     }
   }
 
+  // Fiche YNOV importée pendant la saisie : conservée avec ses attendus, jamais perdue en silence.
+  const ficheRaw = String(formData.get("ficheDoc") ?? "");
+  let ficheStatus: FicheImportStatus | null = null;
+  if (ficheRaw) {
+    const { data: auth } = await supabase.auth.getUser();
+    const fiche = auth.user ? readPendingFiche(ficheRaw, auth.user.id) : null;
+    ficheStatus =
+      fiche && auth.user ? await importFicheForModule(supabase, auth.user.id, data.id, fiche) : "failed";
+  }
+
   revalidatePath("/modules");
-  redirect(`/modules/${data.id}`);
+  redirect(`/modules/${data.id}${ficheStatus ? `?fiche=${ficheStatus}` : ""}`);
 }
 
 /** Ajoute des séances vides à un module existant à partir d'un planning. */
