@@ -50,21 +50,33 @@ const B2_GRIDS = [
 ];
 const M2_PROJECT_GRID = "20b903c74f1380ae91e6fef0882cee74";
 
-/** « **8 pts** texte… » → paliers (points + texte) et texte d'introduction du critère. */
+/**
+ * « **8 pts** texte… » → paliers (points + texte) et texte d'introduction du critère.
+ * Un palier en fourchette (« **0–1 pt** ») donne un palier par valeur entière, avec le même texte :
+ * la grille d'oral de Marie n'a pas de palier « 1 » distinct du « 0 » sur ses deux derniers critères.
+ */
 export function splitLevels(description: string): {
   lead: string;
   levels: { points: number; description: string }[];
 } {
-  const marker = /\*\*\s*(\d+(?:[.,]\d+)?)\s*pts?\s*\*\*/g;
+  const marker = /\*\*\s*(\d+(?:[.,]\d+)?)(?:\s*[–-]\s*(\d+(?:[.,]\d+)?))?\s*pts?\s*\*\*/g;
   const hits = [...description.matchAll(marker)];
   if (!hits.length) return { lead: description, levels: [] };
-  const levels = hits.map((m, i) => ({
-    points: Number(m[1].replace(",", ".")),
-    description: description
+  const levels = hits.flatMap((m, i) => {
+    const text = description
       .slice(m.index + m[0].length, hits[i + 1]?.index ?? description.length)
       .replace(/\n{3,}/g, "\n\n")
-      .trim(),
-  }));
+      .trim();
+    const low = Number(m[1].replace(",", "."));
+    const high = m[2] === undefined ? low : Number(m[2].replace(",", "."));
+    const [from, to] = low <= high ? [low, high] : [high, low];
+    // Fourchette d'entiers (0–1, 1–2…), du plus haut au plus bas ; sinon le seul palier annoncé.
+    const values =
+      to > from && Number.isInteger(from) && Number.isInteger(to) && to - from <= 3
+        ? Array.from({ length: to - from + 1 }, (_, k) => to - k)
+        : [to];
+    return values.map((points) => ({ points, description: text }));
+  });
   return { lead: description.slice(0, hits[0].index).trim(), levels };
 }
 
