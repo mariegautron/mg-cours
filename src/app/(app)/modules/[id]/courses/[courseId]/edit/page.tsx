@@ -33,7 +33,6 @@ export default async function EditCoursePage({
         course={course}
         resources={resources}
         retainedIds={retained.map((r) => r.id)}
-        nextPosition={course.position}
       />
     </div>
   );

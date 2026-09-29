@@ -41,7 +41,6 @@ export function CourseForm({
   course,
   resources,
   retainedIds = [],
-  nextPosition,
 }: {
   action: Action;
   moduleId: string;
@@ -49,7 +48,6 @@ export function CourseForm({
   resources: PickerSource[];
   /** Ressources retenues du module (US-55) : proposées en premier. */
   retainedIds?: string[];
-  nextPosition: number;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
@@ -91,15 +89,6 @@ export function CourseForm({
               </option>
             ))}
           </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="position">Position</Label>
-          <Input
-            id="position"
-            name="position"
-            type="number"
-            defaultValue={course?.position ?? nextPosition}
-          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="sessionDate">Date</Label>

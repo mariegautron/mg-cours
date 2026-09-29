@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { moveInOrder, nextPosition, renumber, type MoveDirection } from "@/lib/modules/reorder";
 import { readCourseForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,13 +43,18 @@ export async function createCourse(
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
   const supabase = await createClient();
+  // Une nouvelle séance arrive en dernier ; on la déplace ensuite avec monter / descendre (US-61).
+  const { data: existing } = await supabase
+    .from("course")
+    .select("position")
+    .eq("module_id", moduleId);
   const { data, error } = await supabase
     .from("course")
     .insert({
       module_id: moduleId,
       title: parsed.data.title,
       type: parsed.data.type,
-      position: parsed.data.position,
+      position: nextPosition((existing ?? []).map((c) => c.position)),
       session_date: parsed.data.sessionDate,
       start_time: parsed.data.startTime,
       end_time: parsed.data.endTime,
@@ -84,7 +90,6 @@ export async function updateCourse(
     .update({
       title: parsed.data.title,
       type: parsed.data.type,
-      position: parsed.data.position,
       session_date: parsed.data.sessionDate,
       start_time: parsed.data.startTime,
       end_time: parsed.data.endTime,
@@ -111,4 +116,41 @@ export async function deleteCourse(moduleId: string, courseId: string) {
   const supabase = await createClient();
   await supabase.from("course").delete().eq("id", courseId);
   revalidatePath(`/modules/${moduleId}`);
+}
+
+export interface MoveCourseResult {
+  error?: string;
+  /** Rang (à partir de 1) et nombre de séances après le déplacement. */
+  position?: number;
+  total?: number;
+}
+
+/** US-61 : monte ou descend une séance d'un rang ; les positions sont renumérotées de 1 à N. */
+export async function moveCourse(
+  moduleId: string,
+  courseId: string,
+  direction: MoveDirection,
+): Promise<MoveCourseResult> {
+  if (direction !== "up" && direction !== "down") return { error: "Déplacement inconnu." };
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course")
+    .select("id")
+    .eq("module_id", moduleId)
+    .order("position")
+    .order("created_at");
+  const ids = (data ?? []).map((c) => c.id);
+  if (!ids.includes(courseId)) return { error: "Séance introuvable." };
+
+  const reordered = moveInOrder(ids, courseId, direction);
+  const results = await Promise.all(
+    renumber(reordered).map(({ id, position }) =>
+      supabase.from("course").update({ position }).eq("id", id).eq("module_id", moduleId),
+    ),
+  );
+  if (results.some((r) => r.error)) return { error: "Déplacement impossible. Réessayez." };
+
+  revalidatePath(`/modules/${moduleId}`);
+  return { position: reordered.indexOf(courseId) + 1, total: ids.length };
 }

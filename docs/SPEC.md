@@ -134,6 +134,12 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Ordre des séances (US-61)** : onglet Séances, boutons « Monter » / « Descendre » sur chaque
+  séance (accessibles au clavier, désactivés en bout de liste, le focus suit la séance déplacée,
+  annonce « … est maintenant la séance 2 sur 5 »). Les positions sont renumérotées de 1 à N sans
+  trou ; une nouvelle séance arrive en dernier ; le champ « Position » a disparu du formulaire.
+  Logique pure : `src/lib/modules/reorder.ts` ; écriture : `moveCourse` dans
+  `src/app/(app)/modules/[id]/courses/actions.ts`.
 - **Recherche dans les ressources (US-56)** : `/resources`, le sélecteur de séance (US-62) et le
   rapprochement (US-54) cherchent dans le titre, la description, les tags et le **contenu Markdown**,
   sans casse ni accents ; tous les mots saisis doivent apparaître (dans n'importe quel champ). Un
@@ -224,7 +230,7 @@ annoncé) et `FileCard` (type · taille · date + actions nommées).
 ### Séance `/modules/[id]/courses/new` · `/modules/[id]/courses/[courseId]/edit`
 
 - Champs : titre, modalité (cours théorique / atelier-TP / projet / évaluation /
-  démonstration / cours appliqué), position, date, préparation, objectifs pédagogiques (une ligne par
+  démonstration / cours appliqué), date, préparation, objectifs pédagogiques (une ligne par
   objectif), ressources liées (cases à cocher), modalités d'animation/d'évaluation, matériel.
 - **Horaires (US-60)** : début et fin facultatifs (`start_time` / `end_time`, fin après le début,
   début obligatoire si fin). Durée par séance dans la liste ; l'onglet Séances affiche « 18 h

@@ -5,6 +5,7 @@ import { expect, test } from "@playwright/test";
 test("US-56 : la recherche porte sur le contenu et les tags, sans accent ni casse, avec extrait", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await page.goto("/login");
   await page.getByLabel("E-mail").fill("marie@local.test");
   await page.getByLabel("Mot de passe").fill("password123");

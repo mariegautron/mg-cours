@@ -52,7 +52,8 @@ export async function getModuleCourses(moduleId: string): Promise<CourseWithReso
     .from("course")
     .select("*, course_resource(resource:resource_id(id, title, kind, audience, status, category))")
     .eq("module_id", moduleId)
-    .order("position");
+    .order("position")
+    .order("created_at");
 
   return (data ?? []).map((c) => {
     const { course_resource, ...course } = c as unknown as Tables<"course"> & {

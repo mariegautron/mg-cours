@@ -110,7 +110,6 @@ export const courseSchema = z
   .object({
     title: z.string().trim().min(1, "Le titre est obligatoire.").max(200),
     type: z.enum(COURSE_TYPES).default("lecture"),
-    position: z.coerce.number().int().min(0).max(1000).default(0),
     sessionDate: optionalDate,
     startTime: optionalTime,
     endTime: optionalTime,
@@ -144,7 +143,6 @@ export function readCourseForm(formData: FormData) {
   return courseSchema.safeParse({
     title: formData.get("title") ?? "",
     type: formData.get("type") ?? "lecture",
-    position: formData.get("position") ?? "0",
     sessionDate: formData.get("sessionDate") ?? "",
     startTime: formData.get("startTime") ?? "",
     endTime: formData.get("endTime") ?? "",
