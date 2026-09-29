@@ -14,6 +14,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import * as b2 from "./courses/b2-accessibilite-2526.mts";
 import * as complements from "./courses/complements.mts";
+import * as complements2 from "./courses/complements-2.mts";
 import * as gp from "./courses/gp-2526.mts";
 import * as m2 from "./courses/m2-accessibilite-2425.mts";
 import { Importer } from "./lib/importer.mts";
@@ -38,6 +39,7 @@ const COURSES: Record<string, { migrate: (ctx: MigrationContext) => Promise<void
   "gp-2526": gp,
   "m2-accessibilite-2425": m2,
   complements,
+  "complements-2": complements2,
 };
 
 function args(): Record<string, string | true> {

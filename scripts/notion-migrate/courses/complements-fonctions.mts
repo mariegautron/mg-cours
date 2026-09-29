@@ -15,7 +15,12 @@ export interface ComplementContext {
 
 type Row = Record<string, unknown>;
 
-async function select(imp: Importer, table: string, columns: string, match: Row): Promise<Row[]> {
+export async function select(
+  imp: Importer,
+  table: string,
+  columns: string,
+  match: Row,
+): Promise<Row[]> {
   let query = imp.sb.from(table).select(columns).eq("owner_id", imp.ownerId);
   for (const [k, v] of Object.entries(match)) query = query.eq(k, v as string);
   const { data, error } = await query.limit(5000);
@@ -24,7 +29,13 @@ async function select(imp: Importer, table: string, columns: string, match: Row)
 }
 
 /** Applique `patch` (déjà filtré sur les champs à compléter) et le consigne au rapport. */
-async function complete(imp: Importer, table: string, id: string, patch: Row, label: string) {
+export async function complete(
+  imp: Importer,
+  table: string,
+  id: string,
+  patch: Row,
+  label: string,
+) {
   if (!Object.keys(patch).length) return;
   imp.report.push({ table, action: "compléter", label });
   await imp.update(table, id, patch, label);
@@ -334,7 +345,7 @@ async function m2QuestionBank({ imp }: ComplementContext) {
 
 // ── 4. Horaires des séances (début / fin) ──────────────────────────────────
 
-const GP_SESSIONS = [
+export const GP_SESSIONS = [
   "29f903c74f13816e84d0d4001606cf2c",
   "29f903c74f13817a9d5fc1d3ebda6f38",
   "29f903c74f1381be9b90ec157d82c5e3",
