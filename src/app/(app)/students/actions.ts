@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { parseStudentsFile, type ParsedStudentRow } from "@/lib/students/import";
+import {
+  planGroupImport,
+  promotionOf,
+  readGroupMode,
+  type GroupColumnMode,
+  type GroupImportPlan,
+} from "@/lib/students/module-groups";
 import { readStudentForm } from "@/lib/students/schema";
 import { currentSchoolYear } from "@/lib/students/years";
 import { createClient } from "@/lib/supabase/server";
@@ -153,6 +160,29 @@ export interface ImportPreviewState {
   existingEmails?: string[];
   /** e-mails déjà inscrits à cette année avec la même promotion : rien à faire. */
   enrolledEmails?: string[];
+  /** US-77 : sens de la colonne « groupe », module cible et groupe global. */
+  mode?: GroupColumnMode;
+  moduleId?: string;
+  moduleName?: string;
+  allGroupName?: string;
+  /** Aperçu des groupes du module concernés. */
+  groupPlan?: GroupImportPlan;
+}
+
+interface GroupTarget {
+  mode: GroupColumnMode;
+  moduleId: string | null;
+  allGroupName: string;
+}
+
+/** Lit le sens de la colonne « groupe » ; sans module choisi, on retombe sur la promotion. */
+function readGroupTarget(formData: FormData): GroupTarget {
+  const moduleId = String(formData.get("moduleId") ?? "").trim() || null;
+  const allGroupName = String(formData.get("allGroupName") ?? "")
+    .trim()
+    .slice(0, 100);
+  if (!moduleId) return { mode: "promotion", moduleId: null, allGroupName: "" };
+  return { mode: readGroupMode(formData.get("mode")), moduleId, allGroupName };
 }
 
 function readYear(formData: FormData): number {
@@ -170,6 +200,7 @@ export async function previewStudentsImport(
     return { error: "Choisissez un fichier CSV ou XLSX." };
   }
   const year = readYear(formData);
+  const target = readGroupTarget(formData);
 
   let rows: ParsedStudentRow[];
   try {
@@ -185,6 +216,22 @@ export async function previewStudentsImport(
   if (rows.length === 0) return { error: "Le fichier ne contient aucune ligne." };
 
   const supabase = await createClient();
+  let moduleName: string | undefined;
+  let groupPlan: GroupImportPlan | undefined;
+  if (target.moduleId) {
+    const [{ data: mod }, { data: groups }] = await Promise.all([
+      supabase.from("module").select("name").eq("id", target.moduleId).maybeSingle(),
+      supabase.from("student_group").select("name").eq("module_id", target.moduleId),
+    ]);
+    if (!mod) return { error: "Module introuvable." };
+    moduleName = mod.name;
+    groupPlan = planGroupImport(
+      rows.filter((r) => r.errors.length === 0),
+      target,
+      groups ?? [],
+    );
+  }
+
   const emails = rows.map((r) => r.email).filter((e): e is string => !!e);
   const { data: existing } =
     emails.length > 0
@@ -203,7 +250,7 @@ export async function previewStudentsImport(
         )
     : { data: [] };
   const groupById = new Map((enrolled ?? []).map((e) => [e.student_id, e.scholar_group]));
-  const byEmail = new Map(rows.map((r) => [r.email, r.scholarGroup]));
+  const byEmail = new Map(rows.map((r) => [r.email, promotionOf(r, target.mode)]));
   const enrolledEmails = existingRows
     .filter((e) => {
       if (!groupById.has(e.id)) return false;
@@ -217,6 +264,11 @@ export async function previewStudentsImport(
     year,
     existingEmails: existingRows.map((e) => e.email!),
     enrolledEmails,
+    mode: target.mode,
+    moduleId: target.moduleId ?? undefined,
+    moduleName,
+    allGroupName: target.allGroupName,
+    groupPlan,
   };
 }
 
@@ -226,6 +278,10 @@ export interface ImportConfirmState {
   /** Étudiant·es déjà en base inscrit·es (ou mis·es à jour) pour l'année choisie. */
   enrolled?: number;
   year?: number;
+  /** US-77 : appartenances ajoutées et groupes créés dans le module. */
+  memberships?: number;
+  groupsCreated?: number;
+  moduleName?: string;
 }
 
 /**
@@ -240,6 +296,7 @@ export async function confirmStudentsImport(
   const raw = formData.get("rows");
   if (typeof raw !== "string") return { error: "Import invalide. Recommencez." };
   const year = readYear(formData);
+  const target = readGroupTarget(formData);
 
   let rows: ParsedStudentRow[];
   try {
@@ -264,6 +321,7 @@ export async function confirmStudentsImport(
 
   // Nouveaux : création, puis inscription à l'année (l'ordre de retour suit celui de l'envoi).
   const enrollments: { student_id: string; year: number; scholar_group: string | null }[] = [];
+  const createdIds: string[] = [];
   if (newRows.length) {
     const { data: created, error } = await supabase
       .from("student")
@@ -279,8 +337,13 @@ export async function confirmStudentsImport(
     if (error || !created || created.length !== newRows.length) {
       return { error: "Import impossible. Réessayez." };
     }
+    createdIds.push(...created.map((s) => s.id));
     created.forEach((s, i) =>
-      enrollments.push({ student_id: s.id, year, scholar_group: newRows[i].scholarGroup }),
+      enrollments.push({
+        student_id: s.id,
+        year,
+        scholar_group: promotionOf(newRows[i], target.mode),
+      }),
     );
   }
 
@@ -297,8 +360,9 @@ export async function confirmStudentsImport(
     for (const r of existingRows) {
       const id = idByEmail.get(r.email!)!;
       const known = groupById.has(id);
-      if (known && (!r.scholarGroup || r.scholarGroup === groupById.get(id))) continue;
-      enrollments.push({ student_id: id, year, scholar_group: r.scholarGroup });
+      const promotion = promotionOf(r, target.mode);
+      if (known && (!promotion || promotion === groupById.get(id))) continue;
+      enrollments.push({ student_id: id, year, scholar_group: promotion });
       enrolled++;
     }
   }
@@ -310,10 +374,56 @@ export async function confirmStudentsImport(
     if (error) return { error: "Inscription à l’année impossible. Réessayez." };
   }
 
-  if (newRows.length === 0 && enrolled === 0) {
+  // US-77 : groupes du module (créés au besoin) puis appartenances, recalculés côté serveur.
+  let memberships = 0;
+  let groupsCreated = 0;
+  let moduleName: string | undefined;
+  if (target.moduleId) {
+    const [{ data: mod }, { data: groups }] = await Promise.all([
+      supabase.from("module").select("id, name").eq("id", target.moduleId).maybeSingle(),
+      supabase.from("student_group").select("id, name").eq("module_id", target.moduleId),
+    ]);
+    if (!mod) return { error: "Module introuvable." };
+    moduleName = mod.name;
+
+    const plan = planGroupImport(validRows, target, groups ?? []);
+    const idByGroup = new Map((groups ?? []).map((g) => [g.name, g.id]));
+    const toCreate = plan.groups.filter((g) => g.isNew).map((g) => g.name);
+    if (toCreate.length) {
+      const { data: made, error } = await supabase
+        .from("student_group")
+        .insert(
+          toCreate.map((name) => ({ module_id: target.moduleId!, name, type: "tp" as const })),
+        )
+        .select("id, name");
+      if (error || !made) return { error: "Création des groupes impossible. Réessayez." };
+      for (const g of made) idByGroup.set(g.name, g.id);
+      groupsCreated = made.length;
+    }
+
+    const studentByRow = new Map<number, string>();
+    newRows.forEach((r, i) => studentByRow.set(r.rowNumber, createdIds[i]));
+    for (const r of existingRows) studentByRow.set(r.rowNumber, idByEmail.get(r.email!)!);
+
+    const links = plan.memberships.flatMap((m) => {
+      const student_id = studentByRow.get(m.rowNumber);
+      const student_group_id = idByGroup.get(m.groupName);
+      return student_id && student_group_id ? [{ student_id, student_group_id }] : [];
+    });
+    if (links.length) {
+      const { error } = await supabase
+        .from("group_member")
+        .upsert(links, { onConflict: "student_group_id,student_id", ignoreDuplicates: true });
+      if (error) return { error: "Ajout aux groupes impossible. Réessayez." };
+    }
+    memberships = links.length;
+    revalidatePath(`/modules/${target.moduleId}`);
+  }
+
+  if (newRows.length === 0 && enrolled === 0 && memberships === 0) {
     return { error: "Tout le monde est déjà inscrit·e à cette année." };
   }
 
   revalidatePath("/students");
-  return { created: newRows.length, enrolled, year };
+  return { created: newRows.length, enrolled, year, memberships, groupsCreated, moduleName };
 }

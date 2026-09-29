@@ -36,11 +36,9 @@ test("crée un·e étudiant·e, un groupe, et les relie", async ({ page }) => {
   await page.getByRole("button", { name: "Créer le groupe" }).click();
 
   await expect(page.getByRole("heading", { name: groupName })).toBeVisible();
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: `Léa Martin${suffix}` })
-    .getByRole("button", { name: /Ajouter/ })
-    .click();
+  await page.getByLabel("Rechercher un·e étudiant·e").fill(`Martin${suffix}`);
+  await page.getByLabel(`Léa Martin${suffix}`).check();
+  await page.getByRole("button", { name: /Ajouter la sélection \(1\)/ }).click();
   await expect(page.getByText("Membres (1)")).toBeVisible();
   await expect(page.getByRole("link", { name: `Léa Martin${suffix}` })).toBeVisible();
 

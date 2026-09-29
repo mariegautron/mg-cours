@@ -60,6 +60,37 @@ export async function addMember(moduleId: string, groupId: string, studentId: st
   revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
 }
 
+/** US-77 : ajout en masse ; les étudiant·es déjà membres sont ignoré·es. */
+export async function addMembers(
+  moduleId: string,
+  groupId: string,
+  studentIds: string[],
+): Promise<{ error?: string; added?: number }> {
+  "use server";
+  const ids = [...new Set(studentIds)].slice(0, 500);
+  if (ids.length === 0) return { error: "Sélectionnez au moins un·e étudiant·e." };
+
+  const supabase = await createClient();
+  // Le groupe doit appartenir au module et à l'utilisatrice connectée (la RLS filtre le reste).
+  const { data: group } = await supabase
+    .from("student_group")
+    .select("id")
+    .eq("id", groupId)
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!group) return { error: "Groupe introuvable." };
+
+  const { error } = await supabase.from("group_member").upsert(
+    ids.map((student_id) => ({ student_group_id: groupId, student_id })),
+    { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
+  );
+  if (error) return { error: "Ajout impossible. Réessayez." };
+
+  revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
+  revalidatePath(`/modules/${moduleId}`);
+  return { added: ids.length };
+}
+
 export async function removeMember(moduleId: string, groupId: string, studentId: string) {
   "use server";
   const supabase = await createClient();

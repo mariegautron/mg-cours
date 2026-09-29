@@ -14,12 +14,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { schoolYearLabel } from "@/lib/students/groups";
+import { describeGroupPlan } from "@/lib/students/module-groups";
 import { currentSchoolYear, schoolYearOptions } from "@/lib/students/years";
 
 const previewInitial: ImportPreviewState = {};
 const confirmInitial: ImportConfirmState = {};
 
-export function StudentsImportForm() {
+export function StudentsImportForm({
+  modules,
+}: {
+  modules: { id: string; name: string; year: number }[];
+}) {
   const [previewState, previewAction, previewPending] = useActionState(
     previewStudentsImport,
     previewInitial,
@@ -37,6 +42,9 @@ export function StudentsImportForm() {
           {confirmState.created > 1 ? "s" : ""}.
           {confirmState.enrolled
             ? ` ${confirmState.enrolled} étudiant·e${confirmState.enrolled > 1 ? "s" : ""} déjà en base inscrit·e${confirmState.enrolled > 1 ? "s" : ""} à ${schoolYearLabel(confirmState.year ?? currentSchoolYear())}.`
+            : ""}
+          {confirmState.moduleName
+            ? ` ${confirmState.memberships ?? 0} appartenance${(confirmState.memberships ?? 0) > 1 ? "s" : ""} aux groupes de « ${confirmState.moduleName} »${confirmState.groupsCreated ? ` (${confirmState.groupsCreated} groupe${confirmState.groupsCreated > 1 ? "s" : ""} créé${confirmState.groupsCreated > 1 ? "s" : ""})` : ""}.`
             : ""}
         </p>
         <Button asChild>
@@ -68,6 +76,60 @@ export function StudentsImportForm() {
             déjà en base (leurs autres années ne changent pas).
           </p>
         </div>
+        <fieldset className="space-y-3 rounded-md border p-3">
+          <legend className="px-1 text-sm font-medium">Groupes d’un module (facultatif)</legend>
+          <div className="space-y-2">
+            <Label htmlFor="moduleId">Module</Label>
+            <select
+              id="moduleId"
+              name="moduleId"
+              defaultValue=""
+              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+            >
+              <option value="">Aucun : promotion seulement</option>
+              {modules.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.year})
+                </option>
+              ))}
+            </select>
+          </div>
+          <fieldset className="space-y-1">
+            <legend className="text-sm">La colonne « groupe » du fichier correspond à…</legend>
+            <div className="flex items-center gap-2">
+              <input
+                type="radio"
+                id="mode-promotion"
+                name="mode"
+                value="promotion"
+                defaultChecked
+              />
+              <Label htmlFor="mode-promotion" className="font-normal">
+                la promotion
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="radio" id="mode-module-group" name="mode" value="module_group" />
+              <Label htmlFor="mode-module-group" className="font-normal">
+                un groupe du module (créé s’il n’existe pas)
+              </Label>
+            </div>
+          </fieldset>
+          <div className="space-y-2">
+            <Label htmlFor="allGroupName">Ajouter tout le monde au groupe</Label>
+            <input
+              id="allGroupName"
+              name="allGroupName"
+              maxLength={100}
+              placeholder="Ex. Classe entière"
+              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+            />
+            <p className="text-muted-foreground text-sm">
+              Nécessite un module. Le groupe est créé s’il n’existe pas ; les groupes créés sont de
+              type TP.
+            </p>
+          </div>
+        </fieldset>
         <div className="space-y-2">
           <FileDropZone
             id="file"
@@ -117,6 +179,15 @@ export function StudentsImportForm() {
           </Badge>
         ) : null}
       </div>
+
+      {previewState.groupPlan ? (
+        <section aria-labelledby="group-plan" className="space-y-1 rounded-md border p-3">
+          <h2 id="group-plan" className="text-sm font-medium">
+            Groupes de « {previewState.moduleName} »
+          </h2>
+          <p className="text-sm">{describeGroupPlan(previewState.groupPlan)}</p>
+        </section>
+      ) : null}
 
       <div className="max-h-96 overflow-y-auto rounded-md border">
         <table className="w-full text-sm">
@@ -169,7 +240,19 @@ export function StudentsImportForm() {
       <form action={confirmAction} className="flex flex-wrap items-center gap-3">
         <input type="hidden" name="rows" value={JSON.stringify(previewState.rows)} />
         <input type="hidden" name="year" value={previewState.year} />
-        <Button type="submit" disabled={confirmPending || validCount === 0}>
+        {previewState.moduleId ? (
+          <>
+            <input type="hidden" name="moduleId" value={previewState.moduleId} />
+            <input type="hidden" name="mode" value={previewState.mode} />
+            <input type="hidden" name="allGroupName" value={previewState.allGroupName ?? ""} />
+          </>
+        ) : null}
+        <Button
+          type="submit"
+          disabled={
+            confirmPending || (validCount === 0 && !previewState.groupPlan?.memberships.length)
+          }
+        >
           {confirmPending ? "Import…" : `Confirmer l’import (${validCount})`}
         </Button>
         <Button type="button" variant="ghost" asChild>

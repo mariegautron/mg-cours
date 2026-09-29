@@ -134,6 +134,16 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Import vers les groupes du module (US-77)** : sur `/students/import`, bloc « Groupes d'un module
+  (facultatif) » : choix du module, sens de la colonne « groupe » (**la promotion**, comme avant, ou
+  **un groupe du module**, créé s'il n'existe pas, reconnu sans casse ni accents), et « Ajouter tout
+  le monde au groupe X » (créé au besoin). L'aperçu annonce « 3 groupes à créer (…), 1 existant
+  (…) ; N appartenances » ; l'import est recalculé côté serveur (jamais confiance au client).
+  Groupes créés de type TP. En mode groupe du module, la colonne n'écrit aucune promotion. Page du
+  groupe : ajout de membres **en masse** (recherche nom / prénom / e-mail / numéro, « Tout
+  sélectionner » sur les résultats, « Ajouter la sélection (n) »). Logique pure :
+  `src/lib/students/module-groups.ts` ; écritures : `students/actions.ts`, `groups/actions.ts`
+  (`addMembers`).
 - **Prochaine étape (US-72)** : le badge d'état iceberg de la fiche module est remplacé par
   « Prochaine étape : … », calculée par `nextStep()` (`src/lib/ynov/next-step.ts`) depuis les
   blocages réels (`invoiceBlockers`, `missingInvoiceData`) et le statut de la facture :

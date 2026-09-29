@@ -1,11 +1,15 @@
 "use client";
 
-import { useTransition } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { UserMinus, UserPlus } from "lucide-react";
+import { UserMinus } from "lucide-react";
 
-import { addMember, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
+import { addMembers, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { filterStudents } from "@/lib/students/module-groups";
 import type { Tables } from "@/types/db";
 
 export function GroupMembers({
@@ -22,6 +26,38 @@ export function GroupMembers({
   const [pending, startTransition] = useTransition();
   const memberIds = new Set(members.map((m) => m.id));
   const available = candidates.filter((c) => !memberIds.has(c.id));
+  const id = useId();
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const visible = useMemo(() => filterStudents(available, query), [available, query]);
+  const selectedCount = available.filter((c) => selected.has(c.id)).length;
+
+  const toggle = (studentId: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(studentId);
+      else next.delete(studentId);
+      return next;
+    });
+
+  const addSelected = () => {
+    const ids = available.filter((c) => selected.has(c.id)).map((c) => c.id);
+    setError("");
+    setMessage("");
+    startTransition(async () => {
+      const result = await addMembers(moduleId, groupId, ids);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setSelected(new Set());
+      setMessage(
+        `${result.added} étudiant·e${(result.added ?? 0) > 1 ? "s" : ""} ajouté·e·s au groupe.`,
+      );
+    });
+  };
 
   return (
     <div className="grid gap-6 sm:grid-cols-2">
@@ -66,25 +102,76 @@ export function GroupMembers({
             .
           </p>
         ) : (
-          <ul className="max-h-72 space-y-1 overflow-y-auto rounded-md border p-2">
-            {available.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
-                <span>
-                  {c.first_name} {c.last_name}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={pending}
-                  aria-label={`Ajouter ${c.first_name} ${c.last_name} au groupe`}
-                  onClick={() => startTransition(() => void addMember(moduleId, groupId, c.id))}
-                >
-                  <UserPlus aria-hidden />
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor={`${id}-q`}>Rechercher un·e étudiant·e</Label>
+              <Input
+                id={`${id}-q`}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Nom, prénom, e-mail, numéro…"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={visible.length === 0}
+                onClick={() =>
+                  setSelected((prev) => new Set([...prev, ...visible.map((c) => c.id)]))
+                }
+              >
+                Tout sélectionner ({visible.length})
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={selectedCount === 0}
+                onClick={() => setSelected(new Set())}
+              >
+                Tout désélectionner
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={pending || selectedCount === 0}
+                onClick={addSelected}
+              >
+                Ajouter la sélection ({selectedCount})
+              </Button>
+            </div>
+            <p role="status" className="text-muted-foreground text-sm">
+              {visible.length} étudiant·e{visible.length > 1 ? "s" : ""} affiché·e
+              {visible.length > 1 ? "s" : ""}
+              {message ? ` · ${message}` : ""}
+            </p>
+            {error ? (
+              <p role="alert" className="text-destructive text-sm">
+                {error}
+              </p>
+            ) : null}
+            {visible.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Aucun·e étudiant·e ne correspond.</p>
+            ) : (
+              <ul className="max-h-72 space-y-1 overflow-y-auto rounded-md border p-2">
+                {visible.map((c) => (
+                  <li key={c.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      id={`${id}-s-${c.id}`}
+                      checked={selected.has(c.id)}
+                      onCheckedChange={(v) => toggle(c.id, v === true)}
+                    />
+                    <Label htmlFor={`${id}-s-${c.id}`} className="font-normal">
+                      {c.first_name} {c.last_name}
+                    </Label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
     </div>
