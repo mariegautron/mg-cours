@@ -52,3 +52,6 @@ next-env.d.ts
 
 # next 16 auto-generated agent pointer (no tool branding in this repo)
 /CLAUDE.md
+
+# Worktrees des sessions parallèles
+.claude/worktrees/
