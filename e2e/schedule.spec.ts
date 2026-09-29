@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -45,7 +46,7 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   const moduleUrl = page.url();
   await expect(page.getByText(/Échéance/).first()).toBeVisible();
 
-  await page.getByRole("tab", { name: /Séances/ }).click();
+  await openTab(page, /Séances/);
   for (const n of [1, 2, 3]) await expect(page.getByText(`Séance ${n}`).first()).toBeVisible();
   await expect(page.getByText("À préparer").first()).toBeVisible();
 
@@ -59,7 +60,7 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await expect(page.getByText("La fin doit être après le début.")).toBeVisible();
   await page.getByLabel("Fin").fill("11:00");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.getByRole("tab", { name: /Séances/ }).click();
+  await openTab(page, /Séances/);
   await expect(page.getByText(/5 h planifiées \/ 6 h/)).toBeVisible();
   await expect(page.getByText(/Il manque 1 h par rapport aux 6 h du module/)).toBeVisible();
 
@@ -72,6 +73,6 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await expect(page.getByText(/Séance 4/)).toBeVisible();
   await page.getByRole("button", { name: "Créer les séances" }).click();
   await page.waitForURL(/#courses$/);
-  await page.getByRole("tab", { name: /Séances/ }).click();
+  await openTab(page, /Séances/);
   await expect(page.getByText("Séance 4").first()).toBeVisible();
 });

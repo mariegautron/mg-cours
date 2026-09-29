@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 // Pour un module déjà réalisé, la progression déposée en PDF fait foi : la génération depuis les
@@ -20,15 +21,18 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   await page.waitForLoadState("networkidle");
 
   // Une séance, pour que la génération produise un vrai PDF.
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText("Séance 1")).toBeVisible();
 
+  await openTab(page, "Progression");
   // Avant tout dépôt : le bouton porte encore le libellé « Générer la progression ».
   await expect(page.getByRole("button", { name: "Générer la progression" })).toBeVisible();
 
-  // Dépôt de la progression réellement envoyée à l'école (module déjà réalisé).
+  // Dépôt de la progression réellement envoyée à l'école (module déjà réalisé) : carte Documents.
+  await openTab(page, "Administratif");
   await page.getByLabel(/Déposer un fichier \(progression/i).setInputFiles({
     name: "trame-envoyee.pdf",
     mimeType: "application/pdf",
@@ -36,6 +40,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   });
   await expect(page.getByText("trame-envoyee.pdf").first()).toBeVisible();
 
+  await openTab(page, "Progression");
   const trameSection = page.getByRole("region", {
     name: "Progression pédagogique",
     exact: true,
@@ -68,10 +73,11 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   await expect(trameSection.getByText(/Progression envoyée \(PDF déposé le/)).toBeVisible();
 
   // Le document déposé est toujours présent dans la carte Documents.
+  await openTab(page, "Administratif");
   await expect(page.getByText("trame-envoyee.pdf").first()).toBeVisible();
 
   // US-70 : le dépôt vaut envoi, la condition de facturation est remplie.
-  await page.goto(`${page.url()}/billing`);
+  await page.goto(`${page.url().split("#")[0]}/billing`);
   await expect(
     page.getByRole("listitem").filter({ hasText: "Progression pédagogique envoyée : fait" }),
   ).toBeVisible();

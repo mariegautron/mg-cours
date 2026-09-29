@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -35,6 +36,7 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
 
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Ajouter un groupe" }).click();
   await page.getByLabel("Nom du groupe").fill(`Groupe Carnet ${suffix}`);
   await page.getByRole("button", { name: "Créer le groupe" }).click();
@@ -46,9 +48,11 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await expect(page.getByText("Membres (1)")).toBeVisible();
 
   await page.goto(moduleUrl);
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill(`Séance carnet ${suffix}`);
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: `Carnet de séance : Séance carnet ${suffix}` }).click();
   await expect(
     page.getByRole("heading", { name: `Carnet — Séance carnet ${suffix}` }),
@@ -77,10 +81,12 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
 
   // Badge de statut sur la liste des séances.
   await page.goto(moduleUrl);
+  await openTab(page, /Séances/);
   await expect(page.getByText("Partiellement faite", { exact: true })).toBeVisible();
 
   // Rien du carnet dans la présentation.
   await page.goto(moduleUrl);
+  await openTab(page, /Séances/);
   const present = await page
     .getByRole("link", { name: `Faire cours : Séance carnet ${suffix}` })
     .getAttribute("href");

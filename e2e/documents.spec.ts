@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 test("dépose, télécharge et supprime les attendus de l’école d’un module", async ({ page }) => {
@@ -19,10 +20,12 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
 
   await page.waitForLoadState("networkidle");
   await page.waitForLoadState("networkidle");
+  await openTab(page, /Administratif/);
   await expect(page.getByRole("link", { name: /Ouvrir les slides/ })).toHaveAttribute(
     "href",
     "https://www.figma.com/deck/abc123",
   );
+  await openTab(page, /Administratif/);
   await page.getByLabel(/Déposer un fichier \(attendus/).setInputFiles({
     name: "attendus-ecole.pdf",
     mimeType: "application/pdf",
@@ -53,7 +56,7 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await expect(page.getByText("attendus-ecole.pdf")).toHaveCount(0);
 
   // Facture émise hors application : dépôt sur la page Facturation, puis module payé.
-  await page.goto(`${page.url().replace(/\/$/, "")}/billing`);
+  await page.goto(`${page.url().split("#")[0]}/billing`);
   await page.waitForLoadState("networkidle");
   await page.getByLabel(/Déposer un fichier \(facture/).setInputFiles({
     name: "facture-26-03-6.pdf",

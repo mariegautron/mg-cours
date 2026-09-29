@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: Page) {
@@ -57,6 +58,7 @@ test("faire cours : déroulé projeté d'une séance, sans les ressources enseig
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
 
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Rôles et responsabilités");
   await page.getByLabel("Date", { exact: true }).fill("2099-01-15");
@@ -70,6 +72,7 @@ test("faire cours : déroulé projeté d'une séance, sans les ressources enseig
   // Mise en avant de la prochaine séance.
   await expect(page.getByRole("heading", { name: "Prochaine séance" })).toBeVisible();
 
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Faire cours : Rôles et responsabilités" }).click();
   await expect(page.getByRole("heading", { name: "Rôles et responsabilités" })).toBeVisible();
   await expect(page.getByText("Construire une matrice RACI")).toBeVisible();

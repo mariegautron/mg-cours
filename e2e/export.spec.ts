@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => {
@@ -21,8 +22,10 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
   await page.getByLabel("Nombre d’heures total").fill("21");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  await openTab(page, /Séances/);
   await expect(page.getByRole("link", { name: "Un seul PDF" })).toHaveCount(0);
 
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel(resourceTitle).check();
@@ -30,11 +33,13 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
   await expect(page.getByText("Séance 1")).toBeVisible();
 
   const pdf = page.waitForEvent("download");
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Un seul PDF" }).click();
   const pdfDownload = await pdf;
   expect(pdfDownload.suggestedFilename()).toMatch(/^cours-.*\.pdf$/);
 
   const zip = page.waitForEvent("download");
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: /Un PDF par séance/ }).click();
   expect((await zip).suggestedFilename()).toMatch(/^cours-.*\.zip$/);
 });

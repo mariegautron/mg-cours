@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -63,6 +64,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await page.goto(moduleUrl);
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Ajouter un groupe" }).click();
   await page.getByLabel("Nom du groupe").fill(`Groupe F ${suffix}`);
   await page.getByRole("button", { name: "Créer le groupe" }).click();
@@ -89,6 +91,8 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
 
   // Progression envoyée + documents administratifs.
   await page.goto(moduleUrl);
+  await page.waitForLoadState("networkidle");
+  await openTab(page, "Progression");
   await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();

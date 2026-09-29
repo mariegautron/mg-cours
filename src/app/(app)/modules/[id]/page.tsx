@@ -21,7 +21,8 @@ import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModuleTabs } from "@/components/modules/module-tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import {
   checkPlannedHours,
   formatDuration,
@@ -137,7 +138,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
           </p>
         ) : outline ? (
           <p className="text-muted-foreground mt-2 text-sm">
-            Genere le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
+            Générée le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
             {outline.sent_at
               ? ` · envoyée le ${new Date(outline.sent_at).toLocaleDateString("fr-FR")}`
               : ""}
@@ -452,26 +453,19 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
         </div>
       ) : null}
 
-      <Tabs defaultValue="progression" className="space-y-4">
-        <TabsList className="bg-background sticky top-0 z-10 -mx-2 rounded-b-lg border-b px-2 py-2 shadow-sm">
-          <TabsTrigger value="progression" className="text-sm">
-            Progression
-          </TabsTrigger>
-          <TabsTrigger value="courses" className="text-sm">
-            Séances ({courses.length})
-          </TabsTrigger>
-          <TabsTrigger value="groups-evaluations" className="text-sm">
-            Groupes ({groups.length}) et évaluations
-          </TabsTrigger>
-          <TabsTrigger value="admin" className="text-sm">
-            Administratif
-          </TabsTrigger>
-        </TabsList>
+      <ModuleTabs
+        labels={{
+          progression: "Progression",
+          courses: `Séances (${courses.length})`,
+          "groups-evaluations": `Groupes (${groups.length}) et évaluations`,
+          admin: "Administratif",
+        }}
+      >
         {progressionTab}
         {coursesTab}
         {groupsEvaluationsTab}
         {adminTab}
-      </Tabs>
+      </ModuleTabs>
     </div>
   );
 }

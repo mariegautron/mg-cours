@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 test("archive un module : masqué de la liste puis visible dans l’onglet « Archivés »", async ({
@@ -20,6 +21,7 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ar
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
 
+  await openTab(page, /Administratif/);
   await page.getByRole("button", { name: "Archiver le module" }).click();
   await expect(page.getByRole("button", { name: "Restaurer le module" })).toBeVisible();
 

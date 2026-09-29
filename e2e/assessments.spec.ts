@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -42,6 +43,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
 
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Ajouter un groupe" }).click();
   const groupName = `Groupe Éval ${suffix}`;
   await page.getByLabel("Nom du groupe").fill(groupName);
@@ -111,6 +113,7 @@ test("une évaluation sur plusieurs groupes compte pour une seule note", async (
   const groupNames = [`Projet A ${suffix}`, `Projet B ${suffix}`];
   for (const name of groupNames) {
     await page.goto(moduleUrl);
+    await openTab(page, /Groupes/);
     await page.getByRole("link", { name: "Ajouter un groupe" }).click();
     await page.getByLabel("Nom du groupe").fill(name);
     await page.getByRole("button", { name: "Créer le groupe" }).click();

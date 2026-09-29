@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -37,6 +38,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await expect(page.getByText(/Échéance/).first()).toBeVisible();
 
   // Séance liée à la ressource.
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel(resourceTitle).check();
@@ -48,6 +50,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await expect(page.getByRole("link", { name: resourceTitle })).toBeVisible();
 
   // Document administratif.
+  await openTab(page, "Administratif");
   await page.getByLabel("Fiche de positionnement").click();
   await expect(page.getByLabel("Fiche de positionnement")).toBeChecked();
 
@@ -64,9 +67,8 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
     .analyze();
   expect(axeDark.violations).toEqual([]);
 
-  // Navigation : fil d'Ariane + sous-navigation d'ancres.
-  const sections = page.getByRole("navigation", { name: "Sections du module" });
-  await sections.getByRole("link", { name: "Séances" }).click();
+  // Navigation : fil d'Ariane + onglets (l'onglet choisi apparaît dans l'ancre).
+  await openTab(page, /Séances/);
   await expect(page).toHaveURL(/#courses$/);
   await expect(
     page.getByRole("navigation", { name: "Fil d’Ariane" }).getByRole("link", { name: "Modules" }),

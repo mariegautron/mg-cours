@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -43,6 +44,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
 
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Ajouter un groupe" }).click();
   const groupName = `Groupe Grille ${suffix}`;
   await page.getByLabel("Nom du groupe").fill(groupName);
@@ -83,6 +85,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await expect(page.getByRole("heading", { name: "Grilles de correction" })).toBeVisible();
 
   await page.goto(moduleUrl);
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");
@@ -115,6 +118,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
 
   // La note détaillée du critère supprimé a disparu, la note globale (value) est conservée.
   await page.goto(moduleUrl);
+  await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");

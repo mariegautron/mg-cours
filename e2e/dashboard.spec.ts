@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -64,7 +65,7 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleId = page.url().split("/").pop();
 
-  await page.getByRole("tab", { name: /Séances/ }).click();
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill(`Séance du jour ${suffix}`);
   await page.getByLabel("Date", { exact: true }).fill(today);

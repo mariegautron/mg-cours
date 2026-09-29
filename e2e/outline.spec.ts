@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -26,6 +27,7 @@ test("génère la progression pédagogique PDF, la télécharge et la marque env
   const moduleUrl = page.url();
   const moduleId = moduleUrl.split("/").pop()!;
 
+  await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel("Objectifs pédagogiques").fill("Valeurs et principes\nRôles Scrum");
@@ -36,6 +38,7 @@ test("génère la progression pédagogique PDF, la télécharge et la marque env
   const before = await page.request.get(`/api/modules/${moduleId}/outline`);
   expect(before.status()).toBe(404);
 
+  await openTab(page, "Progression");
   await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
 
