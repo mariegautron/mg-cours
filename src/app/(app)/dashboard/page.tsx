@@ -5,8 +5,8 @@ import { BookMarked, CalendarCheck, NotebookPen, Play, Receipt, TimerReset } fro
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listCoursesOn } from "@/lib/dashboard/queries";
-import { todaySessions } from "@/lib/dashboard/today";
+import { listCoursesAfter, listCoursesOn } from "@/lib/dashboard/queries";
+import { nextSession, noSessionSentence, todaySessions } from "@/lib/dashboard/today";
 import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
@@ -60,13 +60,16 @@ function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
 
 export default async function DashboardPage() {
   const today = todayInParis();
-  const [modules, billing, profile, coursesToday] = await Promise.all([
+  const [modules, billing, profile, coursesToday, coursesAfter] = await Promise.all([
     listModules(),
     listBillingOverview(),
     getProfile(),
     listCoursesOn(today),
+    listCoursesAfter(today),
   ]);
   const sessions = todaySessions(coursesToday, today);
+  // Sans cours aujourd'hui, la carte dit quand est la suite (jamais de silence : « ça a chargé ? »).
+  const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
   const toInvoice = billing.filter((b) => b.kind === "ready");
   const toSend = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "ready");
   const toCollect = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "sent");
@@ -77,26 +80,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-card halo relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-3xl border p-6 sm:p-8">
-        <div
-          aria-hidden
-          className="bg-violet/20 pointer-events-none absolute -top-16 -right-10 size-64 rounded-full blur-3xl"
-        />
-        <div className="relative max-w-xl space-y-2">
-          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            {firstName ? `Bonjour ${firstName} !` : "Bonjour !"}
-          </h1>
-          <p className="text-muted-foreground text-base">
-            {summary === "pressing"
-              ? "Une progression pédagogique demande ton attention avant l’échéance."
-              : summary === "upcoming"
-                ? "Une progression pédagogique est à préparer : échéance dans moins de 15 jours."
-                : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
-          </p>
-        </div>
-        <Mascot mood={alertMascotMood(summary)} className="relative size-28 sm:size-32" />
-      </div>
-
       {sessions.length ? (
         <section aria-labelledby="today" className="bg-card halo space-y-3 rounded-2xl border p-5">
           <div className="flex items-center gap-3">
@@ -140,8 +123,49 @@ export default async function DashboardPage() {
             ))}
           </ul>
         </section>
-      ) : null}
+      ) : (
+        <section aria-labelledby="today" className="bg-card space-y-3 rounded-2xl border p-5">
+          <div className="flex items-center gap-3">
+            <span className="bg-primary/15 text-primary flex size-9 items-center justify-center rounded-xl">
+              <CalendarCheck aria-hidden className="size-5" />
+            </span>
+            <h2 id="today" className="text-base font-semibold">
+              Aujourd’hui
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>{noSessionSentence(upcoming)}</p>
+            {upcoming ? (
+              <Button asChild variant="secondary">
+                <Link href={`/present/modules/${upcoming.module.id}/courses/${upcoming.id}`}>
+                  <Play aria-hidden />
+                  Faire cours<span className="sr-only"> : {upcoming.title}</span>
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        </section>
+      )}
 
+      <div className="bg-card halo relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-3xl border p-6 sm:p-8">
+        <div
+          aria-hidden
+          className="bg-violet/20 pointer-events-none absolute -top-16 -right-10 size-64 rounded-full blur-3xl"
+        />
+        <div className="relative max-w-xl space-y-2">
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            {firstName ? `Bonjour ${firstName} !` : "Bonjour !"}
+          </h1>
+          <p className="text-muted-foreground text-base">
+            {summary === "pressing"
+              ? "Une progression pédagogique demande ton attention avant l’échéance."
+              : summary === "upcoming"
+                ? "Une progression pédagogique est à préparer : échéance dans moins de 15 jours."
+                : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
+          </p>
+        </div>
+        <Mascot mood={alertMascotMood(summary)} className="relative size-28 sm:size-32" />
+      </div>
       <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Modules actifs"

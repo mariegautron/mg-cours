@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { ExpectationsSummary } from "@/components/modules/expectations-summary";
 import { RetainedResources } from "@/components/modules/retained-resources";
 import { ModuleTabs } from "@/components/modules/module-tabs";
+import { defaultModuleTab } from "@/lib/modules/tabs";
 import { TabsContent } from "@/components/ui/tabs";
 import {
   checkPlannedHours,
@@ -277,7 +278,11 @@ export default async function ModulePage({
             </Button>
           </div>
         </div>
-        <CourseList moduleId={mod.id} courses={courses} />
+        <CourseList
+          moduleId={mod.id}
+          courses={courses}
+          highlightedId={upcoming?.course.id ?? null}
+        />
         {courses.length ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
@@ -566,6 +571,7 @@ export default async function ModulePage({
       ) : null}
 
       <ModuleTabs
+        defaultTab={defaultModuleTab(trame.level)}
         labels={{
           progression: "Progression",
           courses: `Séances (${courses.length})`,

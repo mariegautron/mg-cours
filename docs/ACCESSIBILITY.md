@@ -63,3 +63,7 @@ deux thèmes (`e2e/design.spec.ts`). Toute nouvelle couleur doit être revérifi
 - **Erreurs** : `role="alert"` (`ActionError`), cause simple et issue en lien ; « Ta saisie est conservée »
   seulement si le formulaire garde ses champs (`keepFormValues`).
 - **Page introuvable / erreur** : titre `h1` qui reçoit le focus (erreur), issue claire, sans écran technique.
+- **Cibles tactiles** : 44 px sur le carnet de séance et la présentation (`Button` `touch`, `touch-lg`,
+  `icon-touch`) ; le reste de l'app garde les tailles compactes, à traiter écran par écran.
+- **Lien d'évitement** (RGAA 12.7) : « Aller au contenu », premier arrêt clavier, visible au focus, cible `#contenu`
+  (`e2e/skip-link.spec.ts`).

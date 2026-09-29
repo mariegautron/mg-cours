@@ -47,7 +47,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
       `Réaliser un audit ${word}\nMaîtriser la fiscalité internationale quxblorf${stamp}\nPrésenter un projet en soutenance`,
     );
   await page.getByRole("button", { name: "Lire ce texte" }).click();
-  await expect(page.getByText(/3 objectif\(s\) et 0 unité\(s\) lus/)).toBeVisible();
+  await expect(page.getByText(/3 objectifs et 0 unité lus/)).toBeVisible();
   await page.getByRole("button", { name: "Enregistrer les attendus" }).click();
   await expect(page.getByText("Attendus enregistrés.")).toBeVisible();
 

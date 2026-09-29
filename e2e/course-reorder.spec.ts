@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
-test("US-61 : monter / descendre une séance au clavier, renumérotation, plus de champ Position", async ({
+test("US-61 : monter / descendre une séance au clavier depuis le menu « ⋯ », renumérotation, plus de champ Position", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -34,22 +34,46 @@ test("US-61 : monter / descendre une séance au clavier, renumérotation, plus d
     level: 3,
   });
   await expect(titles).toHaveText(["Alpha", "Bravo", "Charlie"]);
-  await expect(page.getByRole("button", { name: /^Monter la séance 1/ })).toBeDisabled();
-  await expect(page.getByRole("button", { name: /^Descendre la séance 3/ })).toBeDisabled();
+  // Les actions secondaires vivent dans un menu « ⋯ » par séance (une seule action primaire visible).
+  const actions = (title: string) =>
+    page.getByRole("button", { name: new RegExp(`^Actions de la séance \\d : ${title}`) });
+  await actions("Alpha").click();
+  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await page.keyboard.press("Escape");
+  await actions("Charlie").click();
+  await expect(page.getByRole("menuitem", { name: /^Descendre/ })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await page.keyboard.press("Escape");
 
-  // Au clavier : Charlie monte deux fois, le focus le suit.
-  const up = () => page.getByRole("button", { name: /^Monter la séance \d : Charlie/ });
-  await up().focus();
+  // Au clavier : Charlie monte deux fois, le focus revient sur le menu de la séance.
+  await actions("Charlie").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toBeVisible();
+  await page.getByRole("menuitem", { name: /^Monter/ }).focus();
   await page.keyboard.press("Enter");
   await expect(titles).toHaveText(["Alpha", "Charlie", "Bravo"]);
   await expect(page.getByRole("status").filter({ hasText: "séance 2 sur 3" })).toHaveCount(1);
-  await expect(up()).toBeFocused();
+  await expect(actions("Charlie")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toBeVisible();
+  await page.getByRole("menuitem", { name: /^Monter/ }).focus();
   await page.keyboard.press("Enter");
   await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
-  // En haut de liste : le focus passe au bouton « Descendre ».
+  await expect(actions("Charlie")).toBeFocused();
+
+  // Supprimer demande confirmation en nommant la séance ; « Annuler » ne supprime rien.
+  await actions("Bravo").click();
+  await page.getByRole("menuitem", { name: /^Supprimer/ }).click();
   await expect(
-    page.getByRole("button", { name: /^Descendre la séance 1 : Charlie/ }),
-  ).toBeFocused();
+    page.getByRole("alertdialog", { name: "Supprimer la séance « Bravo » ?" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Annuler" }).click();
+  await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -59,7 +83,8 @@ test("US-61 : monter / descendre une séance au clavier, renumérotation, plus d
   // L'ordre persiste et modifier une séance ne le change pas.
   await page.goto(`${moduleUrl}#courses`);
   await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
-  await page.getByRole("link", { name: "Modifier Alpha" }).click();
+  await actions("Alpha").click();
+  await page.getByRole("menuitem", { name: /^Modifier/ }).click();
   await page.getByLabel("Titre de la séance").fill("Alpha 2");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/#courses$/);

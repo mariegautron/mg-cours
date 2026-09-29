@@ -85,6 +85,7 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
 
   // Résumé sur la fiche module.
   await page.goto(moduleUrl);
+  await openTab(page, "Progression");
   await expect(page.getByText("2 objectifs pédagogiques · 2 unités")).toBeVisible();
 
   // Squelette : une séance vide par unité.

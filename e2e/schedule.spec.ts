@@ -53,7 +53,8 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   // US-60 : 3 créneaux de 2 h sur 6 h annoncées → cohérent ; une séance raccourcie → avertissement.
   await expect(page.getByText(/6 h planifiées \/ 6 h/)).toBeVisible();
   await expect(page.getByText("À vérifier")).toHaveCount(0);
-  await page.getByRole("link", { name: "Modifier Séance 1" }).click();
+  await page.getByRole("button", { name: /^Actions de la séance 1 : Séance 1/ }).click();
+  await page.getByRole("menuitem", { name: /^Modifier/ }).click();
   await expect(page.getByLabel("Début")).toHaveValue("10:00");
   await page.getByLabel("Fin").fill("09:00");
   await page.getByRole("button", { name: "Enregistrer" }).click();

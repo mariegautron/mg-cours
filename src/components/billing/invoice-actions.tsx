@@ -38,9 +38,12 @@ import {
 export function GenerateInvoiceButton({
   moduleId,
   disabled,
+  describedBy,
 }: {
   moduleId: string;
   disabled: boolean;
+  /** Identifiant du texte qui explique pourquoi le bouton est désactivé. */
+  describedBy?: string;
 }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<BillingActionState | null>(null);
@@ -52,6 +55,7 @@ export function GenerateInvoiceButton({
         pending={pending}
         pendingLabel="Génération de la facture…"
         disabled={disabled}
+        aria-describedby={describedBy}
         onClick={() => start(async () => setState(await generateInvoice(moduleId)))}
       >
         <FileCheck2 aria-hidden />

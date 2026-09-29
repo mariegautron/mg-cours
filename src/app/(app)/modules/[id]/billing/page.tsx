@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleCheck, CircleDashed } from "lucide-react";
 
 import { GenerateInvoiceButton, InvoiceActions } from "@/components/billing/invoice-actions";
 import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
@@ -51,12 +51,16 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
     {
       ok: !blockers.includes(OUTLINE_NOT_SENT),
       label: "Progression pédagogique envoyée",
+      action: { href: `/modules/${id}#progression`, label: "Marquer comme envoyée" },
     },
     {
       ok: ctx.notes.satisfied,
       label: `Notes saisies (${ctx.notes.enteredTotal}/${ctx.notes.requiredTotal} requises)`,
+      action: { href: `/modules/${id}/assessments`, label: "Saisir une note" },
     },
   ];
+  // Résumé en tête de page : combien de points restent, et l'action principale juste à côté.
+  const points = blockers.length + missing.length;
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -76,6 +80,31 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
         >
           Module terminé. Tu peux l’archiver.
         </Celebration>
+      ) : null}
+
+      {!invoice ? (
+        <section
+          aria-labelledby="billing-status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+        >
+          <div>
+            <h2 id="billing-status" className="text-lg font-medium">
+              {canGenerate
+                ? "Prêt à facturer ✓"
+                : `${points} point${points > 1 ? "s" : ""} à traiter`}
+            </h2>
+            <p id="billing-status-text" className="text-muted-foreground text-sm">
+              {canGenerate
+                ? "Tout est en place : tu peux créer la facture."
+                : "Traite-les ci-dessous : la facture se débloque ensuite."}
+            </p>
+          </div>
+          <GenerateInvoiceButton
+            moduleId={id}
+            disabled={!canGenerate}
+            describedBy="billing-status-text"
+          />
+        </section>
       ) : null}
 
       {invoice ? (
@@ -135,17 +164,19 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               {conditions.map((c) => (
                 <li key={c.label} className="flex items-center gap-2">
                   {c.ok ? (
-                    <CircleCheck
-                      aria-hidden
-                      className="size-4 text-emerald-600 dark:text-emerald-400"
-                    />
+                    <CircleCheck aria-hidden className="text-success size-4" />
                   ) : (
-                    <CircleAlert aria-hidden className="text-destructive size-4" />
+                    <CircleDashed aria-hidden className="text-warning size-4" />
                   )}
                   <span>
                     {c.label}
                     <span className="sr-only">{c.ok ? " : fait" : " : à faire"}</span>
                   </span>
+                  {c.ok ? null : (
+                    <Link href={c.action.href} className="underline underline-offset-2">
+                      {c.action.label} →
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -163,7 +194,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               <p className="text-sm">Toutes les informations requises sont renseignées.</p>
             ) : (
               <>
-                <ul className="text-destructive list-inside list-disc text-sm">
+                <ul className="text-warning list-inside list-disc text-sm">
                   {missing.map((m) => (
                     <li key={m}>{m}</li>
                   ))}
@@ -182,8 +213,6 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               </>
             )}
           </section>
-
-          <GenerateInvoiceButton moduleId={id} disabled={!canGenerate} />
         </>
       )}
 

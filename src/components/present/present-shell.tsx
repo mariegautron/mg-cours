@@ -191,7 +191,7 @@ export function PresentShell({
   return (
     <div ref={rootRef} className="bg-background text-foreground flex min-h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="touch">
           <Link href={backHref}>
             <X aria-hidden />
             Quitter<span className="sr-only"> la présentation, retour à {backLabel}</span>
@@ -203,7 +203,7 @@ export function PresentShell({
         <div role="group" aria-label="Affichage" className="flex gap-1">
           <Button
             type="button"
-            size="sm"
+            size="touch"
             variant={mode === "document" ? "secondary" : "ghost"}
             aria-pressed={mode === "document"}
             onClick={() => changeMode("document")}
@@ -213,7 +213,7 @@ export function PresentShell({
           </Button>
           <Button
             type="button"
-            size="sm"
+            size="touch"
             variant={mode === "slides" ? "secondary" : "ghost"}
             aria-pressed={mode === "slides"}
             onClick={() => changeMode("slides")}
@@ -225,7 +225,7 @@ export function PresentShell({
         {sections.length > 1 ? (
           <Button
             type="button"
-            size="sm"
+            size="touch"
             variant="ghost"
             aria-expanded={tocOpen}
             aria-controls="present-toc"
@@ -238,7 +238,7 @@ export function PresentShell({
         <div role="group" aria-label="Taille du texte" className="flex items-center gap-1">
           <Button
             type="button"
-            size="icon"
+            size="icon-touch"
             variant="ghost"
             aria-label="Réduire le texte"
             disabled={scaleIndex === 0}
@@ -249,7 +249,7 @@ export function PresentShell({
           <span className="w-12 text-center text-sm tabular-nums">{Math.round(scale * 100)} %</span>
           <Button
             type="button"
-            size="icon"
+            size="icon-touch"
             variant="ghost"
             aria-label="Agrandir le texte"
             disabled={scaleIndex === SCALES.length - 1}
@@ -261,7 +261,7 @@ export function PresentShell({
         {presenterHref ? (
           <Button
             type="button"
-            size="sm"
+            size="touch"
             variant="ghost"
             onClick={() =>
               window.open(presenterHref, "mg-presenter", "popup,width=1100,height=800")
@@ -272,10 +272,10 @@ export function PresentShell({
             <span className="sr-only"> (nouvelle fenêtre)</span>
           </Button>
         ) : null}
-        <ThemeToggle />
+        <ThemeToggle size="icon-touch" />
         <Button
           type="button"
-          size="icon"
+          size="icon-touch"
           variant="ghost"
           aria-label="Plein écran (touche F)"
           onClick={toggleFullscreen}
@@ -293,7 +293,12 @@ export function PresentShell({
           <ol className="flex flex-wrap gap-2">
             {sections.map((label, i) => (
               <li key={i}>
-                <Button type="button" size="sm" variant="outline" onClick={() => jumpToSection(i)}>
+                <Button
+                  type="button"
+                  size="touch"
+                  variant="outline"
+                  onClick={() => jumpToSection(i)}
+                >
                   {label}
                 </Button>
               </li>
@@ -338,6 +343,7 @@ export function PresentShell({
           <Button
             type="button"
             variant="ghost"
+            size="touch-lg"
             disabled={index === 0}
             onClick={() => go(index - 1)}
           >
@@ -359,6 +365,7 @@ export function PresentShell({
           <Button
             type="button"
             variant="ghost"
+            size="touch-lg"
             disabled={index === total - 1}
             onClick={() => go(index + 1)}
           >

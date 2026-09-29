@@ -89,6 +89,27 @@ vouvoiement est froid et le passage de l'un à l'autre déstabilise.
 - **Aperçus en nouvel onglet** des documents générés : `PreviewLink` ouvre l'onglet tout de suite sur
   « Préparation de l'aperçu… » (jamais d'onglet blanc) ; Ctrl/⌘ + clic reste un lien ordinaire.
 
+## Ergonomie tactile, navigation et états « à faire »
+
+- **Cibles tactiles** : `Button` garde ses tailles compactes (données calmes) mais offre `touch` (44 px),
+  `touch-lg` (56 px, précédent / suivant en présentation) et `icon-touch` (44 px). Elles ne s'appliquent qu'au
+  carnet de séance et à la présentation, utilisés debout, au doigt ou à distance ; le reste de l'app n'est pas
+  touché.
+- **Lien d'évitement** : « Aller au contenu » est le premier arrêt clavier de la coque `(app)`, visible au focus,
+  et déplace le focus sur `#contenu`.
+- **Une action primaire par vue** : sur la liste des séances, « Faire cours » est primaire sur la séance du jour
+  (ou la prochaine) seulement ; Modifier, Monter, Descendre et Supprimer vivent dans le menu « ⋯ » de la séance
+  (Supprimer garde sa confirmation qui nomme la séance).
+- **Tokens sémantiques** : `--warning` (ambre, « à faire ») et `--success` (menthe, « fait ») s'ajoutent au rouge
+  d'erreur `--destructive`. Ce sont des alias de `--sun` et `--mint`, dont les contrastes sont déjà vérifiés
+  (≥ 6:1) dans les deux thèmes. Une chose à faire n'est pas une erreur : pas de rouge.
+- **Facturation d'un module** : résumé (« Prêt à facturer ✓ » ou « N points à traiter ») et action principale en
+  tête de page ; chaque condition non remplie porte son lien (« Saisir une note → »).
+- **Tableau de bord** : la carte « Aujourd'hui » vient en premier ; sans cours, elle dit quand est la suite au lieu
+  de se taire. Rien d'autre n'a été changé (la refonte du tableau de bord sera cadrée avec Marie).
+- **Fiche module** : elle s'ouvre sur l'onglet qui demande une action (`defaultModuleTab`), l'ancre de l'URL
+  (`#billing`…) restant prioritaire.
+
 ## Accessibilité du design
 
 - Couleur jamais seule : les statuts sont toujours doublés d'un libellé (« J-4 », « Trame envoyée »…).

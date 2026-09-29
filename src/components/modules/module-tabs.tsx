@@ -26,12 +26,15 @@ const getServerHash = () => "";
 export function ModuleTabs({
   labels,
   children,
+  defaultTab = DEFAULT_MODULE_TAB,
 }: {
   labels: Record<ModuleTab, string>;
   children: ReactNode;
+  /** Onglet ouvert sans ancre dans l'URL (celui qui demande une action, voir `defaultModuleTab`). */
+  defaultTab?: ModuleTab;
 }) {
   const hash = useSyncExternalStore(subscribe, getHash, getServerHash);
-  const tab = hash ? tabFromHash(hash) : DEFAULT_MODULE_TAB;
+  const tab = hash ? tabFromHash(hash, defaultTab) : defaultTab;
 
   useEffect(() => {
     if (!isSectionAnchor(hash)) return;

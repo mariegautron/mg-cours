@@ -110,13 +110,13 @@ export function PresenterView({
   return (
     <div className="bg-background text-foreground flex min-h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-3 border-b px-4 py-2">
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="touch">
           <Link href={backHref}>Quitter la vue présentatrice</Link>
         </Button>
         <h1 className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium">
           Vue présentatrice · {title}
         </h1>
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="touch">
           <a href={projectedHref} target="_blank" rel="noreferrer">
             <Presentation aria-hidden />
             Ouvrir la fenêtre projetée
@@ -147,13 +147,19 @@ export function PresenterView({
             <Button
               type="button"
               variant="secondary"
+              size="touch-lg"
               disabled={index === 0}
               onClick={() => go(index - 1)}
             >
               <ChevronLeft aria-hidden />
               Précédente
             </Button>
-            <Button type="button" disabled={index >= total - 1} onClick={() => go(index + 1)}>
+            <Button
+              type="button"
+              size="touch-lg"
+              disabled={index >= total - 1}
+              onClick={() => go(index + 1)}
+            >
               Suivante
               <ChevronRight aria-hidden />
             </Button>

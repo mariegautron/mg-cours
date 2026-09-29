@@ -102,6 +102,7 @@ test("E18 : la fiche importée à la création est conservée, avec ses attendus
   // On rouvre le module : attendus présents et PDF téléchargeable.
   const moduleUrl = page.url().split("?")[0];
   await page.goto(moduleUrl);
+  await openTab(page, "Progression");
   await expect(page.getByText("2 objectifs pédagogiques · 2 unités")).toBeVisible();
 
   // Parcours « Où j'en suis » : fiche et attendus faits, on passe au rapprochement.

@@ -58,6 +58,14 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
     page.getByRole("heading", { name: `Carnet — Séance carnet ${suffix}` }),
   ).toBeVisible();
 
+  // Carnet utilisé debout, au téléphone : chaque action fait au moins 44 px de haut.
+  for (const target of [
+    page.getByRole("link", { name: /Ouvrir la présentation/ }),
+    page.getByRole("button", { name: "Enregistrer la clôture" }),
+  ]) {
+    expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+
   // Observation : filtre par nom, un appui ouvre le formulaire, un appui sur l'étiquette enregistre.
   await page.getByLabel("Filtrer par nom").fill("zoe carnet");
   await page.getByRole("button", { name: `${student} : ajouter une observation` }).click();

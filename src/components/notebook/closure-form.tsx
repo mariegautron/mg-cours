@@ -68,7 +68,7 @@ export function ClosureForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+        <PendingButton type="submit" size="touch" pending={pending} pendingLabel="Enregistrement…">
           Enregistrer la clôture
         </PendingButton>
         <p role="status" className="text-sm">

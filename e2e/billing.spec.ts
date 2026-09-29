@@ -57,6 +57,11 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await expect(page.getByRole("heading", { name: /Facturation —/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Générer la facture" })).toBeDisabled();
   await expect(page.getByText(/Progression pédagogique envoyée/)).toBeVisible();
+  // Résumé en tête de page : combien de points restent, et l'action de chaque condition (« à faire »,
+  // pas une erreur).
+  await expect(page.getByRole("heading", { name: /^\d+ points? à traiter$/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Marquer comme envoyée →/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Saisir une note →/ })).toBeVisible();
 
   // Étudiant·e + groupe + 2 évaluations notées.
   await page.goto("/students/new");
@@ -117,6 +122,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
 
   // Tout est vert : génération de la facture.
   await expect(page.getByText("Toutes les informations requises sont renseignées.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Prêt à facturer ✓" })).toBeVisible();
   const generate = page.getByRole("button", { name: "Générer la facture" });
   await expect(generate).toBeEnabled();
   await generate.click();

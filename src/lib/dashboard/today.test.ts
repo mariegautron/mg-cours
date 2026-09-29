@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { todayInParis } from "@/lib/modules/next-session";
 
-import { todaySessions } from "./today";
+import { nextSession, noSessionSentence, todaySessions } from "./today";
 
 const course = (
   id: string,
@@ -53,5 +53,42 @@ describe("todaySessions", () => {
     const today = todayInParis(new Date("2026-10-11T23:30:00Z"));
     expect(today).toBe("2026-10-12");
     expect(todaySessions([course("a", "2026-10-12", "Scrum")], today)).toHaveLength(1);
+  });
+});
+
+describe("nextSession", () => {
+  const today = "2026-10-12";
+
+  it("prend la séance datée la plus proche après aujourd'hui, modules actifs seulement", () => {
+    const next = nextSession(
+      [
+        course("passee", "2026-10-01", "Scrum"),
+        course("aujourdhui", "2026-10-12", "Scrum"),
+        course("archivee", "2026-10-13", "Vieux", 1, "2026-06-01T00:00:00Z"),
+        course("loin", "2026-11-03", "Agile", 2),
+        course("proche", "2026-10-15", "Agile", 3),
+        course("sans-date", null, "Agile", 4),
+      ],
+      today,
+    );
+    expect(next?.id).toBe("proche");
+  });
+
+  it("renvoie null quand rien n'est à venir", () => {
+    expect(nextSession([course("a", "2026-10-12", "Scrum")], today)).toBeNull();
+    expect(nextSession([], today)).toBeNull();
+  });
+});
+
+describe("noSessionSentence", () => {
+  it("dit qu'il n'y a pas cours et quand est la suite", () => {
+    const next = nextSession([course("s3", "2026-10-15", "Agile & Scrum", 3)], "2026-10-12");
+    expect(noSessionSentence(next)).toBe(
+      "Pas de cours aujourd’hui. Prochain : jeudi 15 octobre, Agile & Scrum — Séance 3.",
+    );
+  });
+
+  it("reste utile sans séance à venir", () => {
+    expect(noSessionSentence(null)).toBe("Pas de cours aujourd’hui.");
   });
 });

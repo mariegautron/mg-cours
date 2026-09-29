@@ -14,6 +14,8 @@
   --color-coral: var(--coral);
   --color-mint: var(--mint);
   --color-sun: var(--sun);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
   --color-sky: var(--sky);
   --color-glow: var(--glow);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -96,6 +98,10 @@
   --sun: oklch(0.45 0.1 85);
   --sky: oklch(0.45 0.12 240);
   --glow: oklch(0.6 0.2 285 / 18%);
+  /* Tokens sémantiques : « à faire » (ambre) et « fait » (menthe), distincts de l'erreur (rouge).
+     Alias des accents ci-dessus, dont le contraste est déjà vérifié dans les deux thèmes. */
+  --warning: var(--sun);
+  --success: var(--mint);
 }
 
 .dark {

@@ -2,13 +2,39 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, CalendarDays, NotebookPen, Pencil, Play, Plus } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  CalendarDays,
+  Ellipsis,
+  NotebookPen,
+  Pencil,
+  Play,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 import { deleteCourse, moveCourse } from "@/app/(app)/modules/[id]/courses/actions";
-import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { calculateDuration, formatDuration, formatTimeRange } from "@/lib/modules/course-duration";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import type { MoveDirection } from "@/lib/modules/reorder";
@@ -48,11 +74,16 @@ const formatDate = (iso: string) =>
 export function CourseList({
   moduleId,
   courses,
+  highlightedId = null,
 }: {
   moduleId: string;
   courses: CourseWithResources[];
+  /** Séance du jour (ou la prochaine) : la seule dont « Faire cours » est l'action principale. */
+  highlightedId?: string | null;
 }) {
   const [pending, startTransition] = useTransition();
+  // Suppression : un seul dialogue de confirmation pour toute la liste, ouvert depuis le menu « ⋯ ».
+  const [deleting, setDeleting] = useState<CourseWithResources | null>(null);
   const [announcement, setAnnouncement] = useState("");
   // Séance et sens à refocaliser une fois la liste réordonnée (le déplacement recrée le nœud).
   const focusAfter = useRef<{ id: string; direction: MoveDirection } | null>(null);
@@ -62,12 +93,7 @@ export function CourseList({
     const target = focusAfter.current;
     if (!target) return;
     focusAfter.current = null;
-    const same = document.getElementById(`move-${target.direction}-${target.id}`);
-    const other = document.getElementById(
-      `move-${target.direction === "up" ? "down" : "up"}-${target.id}`,
-    );
-    const button = same instanceof HTMLButtonElement && !same.disabled ? same : other;
-    button?.focus();
+    document.getElementById(`actions-${target.id}`)?.focus();
   }, [order]);
 
   const move = (course: CourseWithResources, direction: MoveDirection) => {
@@ -133,55 +159,60 @@ export function CourseList({
                   {PREP_STATUS_LABELS[c.prep_status as PrepStatus] ?? c.prep_status}
                 </Badge>
                 <Badge variant="secondary">{COURSE_TYPE_LABELS[c.type] ?? c.type}</Badge>
-                <Button asChild size="sm">
+                <Button
+                  asChild
+                  size="sm"
+                  variant={c.id === highlightedId ? "default" : "secondary"}
+                >
                   <Link href={`/present/modules/${moduleId}/courses/${c.id}`}>
                     <Play aria-hidden />
                     Faire cours<span className="sr-only"> : {c.title}</span>
                   </Link>
                 </Button>
-                <Button asChild size="sm" variant="secondary">
+                <Button asChild size="sm" variant="ghost">
                   <Link href={`/modules/${moduleId}/courses/${c.id}/notebook`}>
                     <NotebookPen aria-hidden />
                     Carnet<span className="sr-only"> de séance : {c.title}</span>
                   </Link>
                 </Button>
-                <Button
-                  id={`move-up-${c.id}`}
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={i === 0 || pending}
-                  onClick={() => move(c, "up")}
-                  aria-label={`Monter la séance ${i + 1} : ${c.title}`}
-                >
-                  <ArrowUp aria-hidden />
-                </Button>
-                <Button
-                  id={`move-down-${c.id}`}
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={i === courses.length - 1 || pending}
-                  onClick={() => move(c, "down")}
-                  aria-label={`Descendre la séance ${i + 1} : ${c.title}`}
-                >
-                  <ArrowDown aria-hidden />
-                </Button>
-                <Button asChild variant="ghost" size="icon">
-                  <Link
-                    href={`/modules/${moduleId}/courses/${c.id}/edit`}
-                    aria-label={`Modifier ${c.title}`}
-                  >
-                    <Pencil aria-hidden />
-                  </Link>
-                </Button>
-                <ConfirmDeleteButton
-                  iconOnly
-                  itemName={c.title}
-                  title={`Supprimer la séance « ${c.title} » ?`}
-                  description="La séance et ses liens vers les ressources seront supprimés (les ressources elles-mêmes sont conservées)."
-                  onConfirm={() => deleteCourse(moduleId, c.id)}
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      id={`actions-${c.id}`}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-busy={pending || undefined}
+                      aria-label={`Actions de la séance ${i + 1} : ${c.title}`}
+                    >
+                      <Ellipsis aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/modules/${moduleId}/courses/${c.id}/edit`}>
+                        <Pencil aria-hidden />
+                        Modifier<span className="sr-only"> la séance {i + 1}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={i === 0 || pending} onSelect={() => move(c, "up")}>
+                      <ArrowUp aria-hidden />
+                      Monter<span className="sr-only"> la séance {i + 1}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={i === courses.length - 1 || pending}
+                      onSelect={() => move(c, "down")}
+                    >
+                      <ArrowDown aria-hidden />
+                      Descendre<span className="sr-only"> la séance {i + 1}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(c)}>
+                      <Trash2 aria-hidden />
+                      Supprimer<span className="sr-only"> la séance {i + 1}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -227,6 +258,33 @@ export function CourseList({
           </li>
         ))}
       </ol>
+      <AlertDialog
+        open={deleting !== null}
+        onOpenChange={(open) => (open ? null : setDeleting(null))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la séance « {deleting?.title} » ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La séance et ses liens vers les ressources seront supprimés (les ressources
+              elles-mêmes sont conservées).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                const course = deleting;
+                if (course)
+                  startTransition(async () => void (await deleteCourse(moduleId, course.id)));
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

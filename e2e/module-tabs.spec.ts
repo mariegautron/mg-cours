@@ -24,15 +24,16 @@ test("E10-05 : fiche module en onglets, clavier ARIA et ancres qui ouvrent le bo
   const tablist = page.getByRole("tablist", { name: "Sections du module" });
   const tabs = tablist.getByRole("tab");
   await expect(tabs).toHaveCount(4);
-  await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
-  await expect(tabs.nth(1)).toHaveAttribute("tabindex", "-1");
-  const panelId = await tabs.nth(0).getAttribute("aria-controls");
+  // Sans échéance de progression, la fiche s'ouvre sur « Séances » (le geste fréquent).
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.nth(0)).toHaveAttribute("tabindex", "-1");
+  const panelId = await tabs.nth(1).getAttribute("aria-controls");
   await expect(page.locator(`#${panelId}`)).toHaveAttribute("role", "tabpanel");
 
-  await tabs.nth(0).focus();
+  await tabs.nth(1).focus();
   await page.keyboard.press("ArrowRight");
-  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-  await expect(tabs.nth(1)).toBeFocused();
+  await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.nth(2)).toBeFocused();
   await page.keyboard.press("End");
   await expect(tabs.nth(3)).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("Home");

@@ -26,12 +26,15 @@ export function ConfirmDeleteButton({
   description,
   onConfirm,
   iconOnly = false,
+  touch = false,
 }: {
   itemName: string;
   title: string;
   description: string;
   onConfirm: () => Promise<unknown> | void;
   iconOnly?: boolean;
+  /** Cible tactile de 44 px (carnet de séance, utilisé debout au téléphone). */
+  touch?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -41,7 +44,7 @@ export function ConfirmDeleteButton({
         <PendingButton
           type="button"
           variant="ghost"
-          size={iconOnly ? "icon" : "sm"}
+          size={touch ? (iconOnly ? "icon-touch" : "touch") : iconOnly ? "icon" : "sm"}
           pending={pending}
           pendingLabel="Suppression…"
           aria-label={iconOnly ? `Supprimer ${itemName}` : undefined}

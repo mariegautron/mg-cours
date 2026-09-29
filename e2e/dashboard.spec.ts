@@ -91,3 +91,18 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   await item.getByRole("link", { name: /^Faire cours/ }).click();
   await page.waitForURL(/\/present\/modules\/.+\/courses\//);
 });
+
+test("la carte « Aujourd’hui » précède le bandeau d’accueil, avec ou sans cours", async ({
+  page,
+}) => {
+  await login(page);
+  const card = page.getByRole("heading", { name: "Aujourd’hui", level: 2 });
+  await expect(card).toBeVisible();
+  const [cardBox, titleBox] = await Promise.all([
+    card.boundingBox(),
+    page.getByRole("heading", { level: 1 }).boundingBox(),
+  ]);
+  expect(cardBox!.y).toBeLessThan(titleBox!.y);
+  // Jamais de silence : une phrase quand il n'y a pas cours, ou le bouton de la séance.
+  await expect(page.getByText(/Pas de cours aujourd’hui|Faire cours/).first()).toBeVisible();
+});

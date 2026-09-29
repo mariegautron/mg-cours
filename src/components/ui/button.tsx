@@ -27,6 +27,11 @@ const buttonVariants = cva(
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         icon: "size-8",
+        // Vues tactiles (carnet de séance, présentation) : cible d'au moins 44 px (ACCESSIBILITY.md).
+        touch: "h-11 min-w-11 gap-2 px-4 [&_svg:not([class*='size-'])]:size-5",
+        // Précédent / suivant en présentation : plus grands que le reste des contrôles.
+        "touch-lg": "h-14 min-w-14 gap-2 px-6 text-base [&_svg:not([class*='size-'])]:size-6",
+        "icon-touch": "size-11 [&_svg:not([class*='size-'])]:size-5",
         "icon-xs":
           "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         "icon-sm":

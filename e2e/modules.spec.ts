@@ -75,7 +75,10 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   ).toHaveAttribute("href", "/modules");
 
   // Suppression d'une séance : confirmation obligatoire.
-  await page.getByRole("button", { name: "Supprimer Introduction à l’Agilité" }).click();
+  await page
+    .getByRole("button", { name: /^Actions de la séance 1 : Introduction à l’Agilité/ })
+    .click();
+  await page.getByRole("menuitem", { name: /^Supprimer/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
   await expect(page.getByText("Aucune séance pour l’instant")).toBeVisible();
 });

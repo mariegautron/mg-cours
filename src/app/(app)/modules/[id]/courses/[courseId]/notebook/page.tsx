@@ -80,7 +80,7 @@ export default async function CourseNotebookPage({
           <EyeOff aria-hidden className="size-4 shrink-0" />
           Vue privée : à ouvrir sur ton téléphone ou dans une 2e fenêtre, jamais au projecteur.
         </p>
-        <Button asChild variant="secondary" size="sm">
+        <Button asChild variant="secondary" size="touch">
           <a
             href={`/present/modules/${id}/courses/${courseId}`}
             target="_blank"
@@ -140,6 +140,7 @@ export default async function CourseNotebookPage({
                   </div>
                   <ConfirmDeleteButton
                     iconOnly
+                    touch
                     itemName={`l’observation sur ${name} (${time(o.created_at)})`}
                     title="Supprimer cette observation ?"
                     description="Elle disparaîtra aussi du journal de la fiche étudiant·e."

@@ -126,7 +126,7 @@ export function ObservationPanel({ action, students }: { action: Action; student
                             pendingLabel="Enregistrement…"
                             disabled={pending && pressedTag !== t.value}
                             onClick={() => setPressedTag(t.value)}
-                            className="min-h-11"
+                            size="touch"
                           >
                             {t.label}
                           </PendingButton>
