@@ -98,3 +98,35 @@ describe("carnet de séance : données privées", () => {
     expect(JSON.stringify(content)).not.toMatch(/SECRET|partial/);
   });
 });
+
+describe("vue présentatrice (US-64) : la fenêtre projetée ne montre que du contenu étudiant·es", () => {
+  const read = (path: string) => readFileSync(join(ROOT, path), "utf8");
+  const PROJECTED = "src/app/(present)/present/modules/[id]/courses/[courseId]/page.tsx";
+  const PRESENTER = "src/app/(present)/present/modules/[id]/courses/[courseId]/presenter/page.tsx";
+
+  it("la fenêtre projetée filtre ses ressources par studentFacing() et ignore les notes", () => {
+    const source = read(PROJECTED);
+    expect(source).toMatch(/studentFacing\(/);
+    expect(source).not.toMatch(/animation_notes|assessment_notes|material|audience/);
+  });
+
+  it("le déroulé projeté ne reçoit que des ressources déjà filtrées par la page", () => {
+    const presenter = read(PRESENTER);
+    // Les diapositives de la vue présentatrice sont les mêmes que celles projetées…
+    expect(presenter).toMatch(/resources: studentFacing\(allResources\)/);
+    // …et les ressources réservées ne passent que par la liste de la vue présentatrice.
+    expect(read("src/components/present/course-deck.tsx")).not.toMatch(/audience|teacher/);
+  });
+
+  it("seul le code de synchronisation parle au canal, avec des indices uniquement", () => {
+    const users = [
+      "src/components/present/present-shell.tsx",
+      "src/components/present/presenter-view.tsx",
+    ];
+    for (const file of users) {
+      const posts = [...read(file).matchAll(/postMessage\(([^)]*)\)/g)].map((m) => m[1]);
+      expect(posts.length).toBeGreaterThan(0);
+      for (const payload of posts) expect(payload).toMatch(/^\{ type: "(state|go|hello)"/);
+    }
+  });
+});

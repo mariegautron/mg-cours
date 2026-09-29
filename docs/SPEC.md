@@ -262,6 +262,20 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
 - Sommaire par section, thème clair/sombre, barre de progression, « Diapositive n sur N »
   annoncé (`aria-live`), « Quitter » → fiche. Mode et taille mémorisés (`localStorage`).
 
+### Vue présentatrice (US-64) — `/present/modules/[id]/courses/[courseId]/presenter`
+
+- Bouton « Vue présentatrice » de la fenêtre projetée : ouvre une seconde fenêtre (même origine,
+  même navigateur), synchronisée par `BroadcastChannel` (`mg-present:{courseId}`). Seuls des
+  **indices de diapositive** circulent (`state` / `go` / `hello`, validés par `parseSyncMessage`,
+  `src/lib/present/sync.ts`) : jamais de contenu, jamais de donnée du carnet.
+- La présentatrice montre la diapositive courante et la suivante, les **notes de séance**
+  (modalités d'animation et d'évaluation, matériel), les ressources **« Enseignante uniquement »**
+  (corrigés, jamais projetées), l'**heure** (Paris) et le **temps restant** jusqu'à l'heure de fin
+  (US-60, le jour de la séance). Elle pilote la fenêtre projetée (Précédente / Suivante, ← → Début
+  Fin) et reprend là où celle-ci en est.
+- Garde-fou : le déroulé projeté (`buildCourseDeck`) ne reçoit que des ressources filtrées par
+  `studentFacing()` (étudiant·es et prêtes) ; testé dans `src/lib/notebook/privacy.test.ts`.
+
 ## Carnet de séance (US-65 + US-67) — `/modules/[id]/courses/[courseId]/notebook`
 
 Vue **privée**, pensée pour le téléphone ou une 2e fenêtre, **jamais projetée**. Accès : bouton

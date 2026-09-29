@@ -8,6 +8,7 @@ import {
   Expand,
   ListTree,
   Minus,
+  MonitorUp,
   Plus,
   Presentation,
   ScrollText,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { clampIndex, parseSyncMessage } from "@/lib/present/sync";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -67,18 +69,26 @@ export function PresentShell({
   backLabel,
   sections,
   slides,
+  syncChannel,
+  presenterHref,
 }: {
   title: string;
   backHref: string;
   backLabel: string;
   sections: string[];
   slides: PresentSlide[];
+  /** Canal de synchronisation avec la vue présentatrice (US-64), s'il y en a une. */
+  syncChannel?: string;
+  /** Lien de la vue présentatrice : ouverte dans une seconde fenêtre. */
+  presenterHref?: string;
 }) {
   const [mode, setMode] = useState<Mode>("document");
   const [scaleIndex, setScaleIndex] = useState(2);
   const [index, setIndex] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const indexRef = useRef(0);
   const total = slides.length;
 
   useEffect(() => {
@@ -91,6 +101,33 @@ export function PresentShell({
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  // Vue présentatrice (US-64) : la fenêtre projetée annonce sa diapositive et obéit aux « go ».
+  useEffect(() => {
+    if (!syncChannel || typeof BroadcastChannel === "undefined") return;
+    const channel = new BroadcastChannel(syncChannel);
+    channelRef.current = channel;
+    channel.onmessage = (event) => {
+      const message = parseSyncMessage(event.data);
+      if (!message) return;
+      if (message.type === "go") {
+        setMode("slides");
+        setIndex(clampIndex(message.index, total));
+      } else if (message.type === "hello") {
+        channel.postMessage({ type: "state", index: indexRef.current, total });
+      }
+    };
+    channel.postMessage({ type: "state", index: indexRef.current, total });
+    return () => {
+      channel.close();
+      channelRef.current = null;
+    };
+  }, [syncChannel, total]);
+
+  useEffect(() => {
+    indexRef.current = index;
+    channelRef.current?.postMessage({ type: "state", index, total });
+  }, [index, total]);
 
   const changeMode = useCallback((next: Mode) => {
     setMode(next);
@@ -221,6 +258,20 @@ export function PresentShell({
             <Plus aria-hidden />
           </Button>
         </div>
+        {presenterHref ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              window.open(presenterHref, "mg-presenter", "popup,width=1100,height=800")
+            }
+          >
+            <MonitorUp aria-hidden />
+            Vue présentatrice
+            <span className="sr-only"> (nouvelle fenêtre)</span>
+          </Button>
+        ) : null}
         <ThemeToggle />
         <Button
           type="button"
