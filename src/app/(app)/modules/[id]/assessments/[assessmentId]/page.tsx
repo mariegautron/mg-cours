@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileDown, Pencil, Presentation } from "lucide-react";
+import { Download, FileDown, Mic, Pencil, Presentation } from "lucide-react";
 
-import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
+import {
+  buildSessionSections,
+  toObservationLines,
+} from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
-import { GradingSession, type SessionSection } from "@/components/assessments/grading-session";
+import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +22,8 @@ import {
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
-import { observationsForCopy, type ObservationLine } from "@/lib/assessments/session";
 import { assessmentFileUrl } from "@/lib/assessments/files";
+import { isOralAssessment } from "@/lib/assessments/oral";
 import {
   canPresent,
   evaluatedCriteria,
@@ -30,7 +33,6 @@ import {
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
-import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import { listModuleObservations } from "@/lib/notebook/queries";
 
 export async function generateMetadata({
@@ -65,66 +67,15 @@ export default async function AssessmentPage({
     ? resultsRecipients((await loadResultSheets(id, assessmentId)) ?? [])
     : { emails: 0, withoutEmail: [] };
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
-  const observations: ObservationLine[] = moduleObservations.map((o) => ({
-    id: o.id,
-    studentId: o.student_id,
-    studentName: o.student ? `${o.student.first_name} ${o.student.last_name}` : "",
-    tag: OBSERVATION_TAG_LABELS[o.tag] ?? o.tag,
-    note: o.note,
-    createdAt: o.created_at,
-  }));
-  const sections: SessionSection[] = assessment.is_group_grade
-    ? [
-        {
-          id: "groups",
-          title: null,
-          items: targets.map(({ group }) => ({
-            id: group.id,
-            title: `Note du groupe « ${group.name} »`,
-            action: saveGroupGrade.bind(null, id, assessmentId, group.id),
-            theme: themes[group.id] ?? null,
-            grade: grades.find((g) => g.student_group_id === group.id),
-            observations: observationsForCopy(
-              group.members.map((m) => m.id),
-              observations,
-            ),
-            members: group.members.map((m) => ({
-              id: m.id,
-              name: `${m.first_name} ${m.last_name}`,
-            })),
-            memberOverrides: Object.fromEntries(
-              overrideRows
-                .filter(
-                  (o) => o.grade_id === grades.find((g) => g.student_group_id === group.id)?.id,
-                )
-                .map((o) => [
-                  o.student_id,
-                  {
-                    attendance: o.attendance,
-                    factor: o.individual_factor,
-                    justification: o.justification,
-                  },
-                ]),
-            ),
-          })),
-        },
-      ]
-    : targets.map(({ group, students }) => ({
-        id: group.id,
-        title: group.name,
-        empty:
-          group.members.length === 0
-            ? "Ce groupe n’a aucun membre pour l’instant."
-            : "Membres déjà notés dans un autre groupe ci-dessus.",
-        items: students.map((m) => ({
-          id: m.id,
-          title: `${m.first_name} ${m.last_name}`,
-          action: saveStudentGrade.bind(null, id, assessmentId, m.id),
-          theme: themes[group.id] ?? null,
-          grade: grades.find((g) => g.student_id === m.id),
-          observations: observationsForCopy([m.id], observations),
-        })),
-      }));
+  const observations = toObservationLines(moduleObservations);
+  const sections = buildSessionSections({
+    moduleId: id,
+    assessment,
+    grades,
+    overrideRows,
+    observations,
+    themes,
+  });
   const groupNames = assessment.groups.map((g) => g.name).join(", ");
   const subjectParts = subjectSections(assessment);
   const criteria = evaluatedCriteria(assessment.grading_grid?.criteria ?? []);
@@ -153,7 +104,15 @@ export default async function AssessmentPage({
             ) : null}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {isOralAssessment(assessment) ? (
+            <Button asChild size="sm">
+              <Link href={`/modules/${id}/assessments/${assessmentId}/oral`}>
+                <Mic aria-hidden />
+                Faire passer l’oral
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild variant="secondary" size="sm">
             <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
               <Pencil aria-hidden />

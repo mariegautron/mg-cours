@@ -54,6 +54,8 @@ export function GradingSession({
   comments,
   autoValidatedIds,
   subject,
+  activeId,
+  onActivate,
 }: {
   sections: SessionSection[];
   grid: GridWithCriteria | null;
@@ -61,6 +63,13 @@ export function GradingSession({
   comments: Tables<"predefined_comment">[];
   autoValidatedIds: string[];
   subject: string | null;
+  /**
+   * Oral (US-92) : une seule copie visible, celle du groupe qui passe. Les autres restent montées
+   * (masquées), donc leur saisie, l'enregistrement automatique et la garde anti-perte continuent.
+   */
+  activeId?: string;
+  /** Appelé quand la navigation (liste des copies, précédente / suivante) choisit une autre copie. */
+  onActivate?: (id: string) => void;
 }) {
   const uid = useId();
   const items = sections.flatMap((s) => s.items);
@@ -100,9 +109,18 @@ export function GradingSession({
   }
 
   function focusCopy(id: string) {
-    const heading = document.getElementById(`copy-${id}-title`);
-    heading?.scrollIntoView({ block: "start" });
-    heading?.focus();
+    const focus = () => {
+      const heading = document.getElementById(`copy-${id}-title`);
+      heading?.scrollIntoView({ block: "start" });
+      heading?.focus();
+    };
+    if (onActivate) {
+      onActivate(id);
+      // La copie choisie n'est visible qu'après le rendu suivant.
+      setTimeout(focus, 0);
+    } else {
+      focus();
+    }
   }
 
   function moveCriterion(direction: -1 | 1) {
@@ -114,7 +132,7 @@ export function GradingSession({
     if (next) setCriterionId(next);
   }
 
-  const canFocusCriterion = criteria.length > 0;
+  const canFocusCriterion = criteria.length > 0 && activeId === undefined;
   const focused = view === "criterion" && canFocusCriterion ? criterionId : null;
 
   return (
@@ -257,31 +275,32 @@ export function GradingSession({
             <p className="text-muted-foreground">{section.empty}</p>
           ) : null}
           {section.items.map((item) => (
-            <GradeForm
-              key={item.id}
-              id={item.id}
-              action={item.action}
-              title={item.title}
-              grid={grid}
-              maxScore={maxScore}
-              grade={item.grade}
-              comments={comments}
-              autoValidatedIds={autoValidatedIds}
-              subject={subject}
-              focusCriterionId={focused}
-              observations={item.observations}
-              members={item.members}
-              memberOverrides={item.memberOverrides}
-              theme={item.theme}
-              onStatus={onStatus}
-              register={register}
-              onNavigate={(direction) => {
-                const next = neighborId(ids, item.id, direction);
-                if (next) focusCopy(next);
-              }}
-              hasPrev={neighborId(ids, item.id, -1) !== null}
-              hasNext={neighborId(ids, item.id, 1) !== null}
-            />
+            <div key={item.id} hidden={activeId !== undefined && item.id !== activeId}>
+              <GradeForm
+                id={item.id}
+                action={item.action}
+                title={item.title}
+                grid={grid}
+                maxScore={maxScore}
+                grade={item.grade}
+                comments={comments}
+                autoValidatedIds={autoValidatedIds}
+                subject={subject}
+                focusCriterionId={focused}
+                observations={item.observations}
+                members={item.members}
+                memberOverrides={item.memberOverrides}
+                theme={item.theme}
+                onStatus={onStatus}
+                register={register}
+                onNavigate={(direction) => {
+                  const next = neighborId(ids, item.id, direction);
+                  if (next) focusCopy(next);
+                }}
+                hasPrev={neighborId(ids, item.id, -1) !== null}
+                hasNext={neighborId(ids, item.id, 1) !== null}
+              />
+            </div>
           ))}
         </section>
       ))}

@@ -51,6 +51,7 @@ export type Database = {
           max_score: number | null
           module_id: string
           objective: string | null
+          oral_start_time: string | null
           owner_id: string
           prep_status: Database["public"]["Enums"]["assessment_prep_status"]
           project_id: string | null
@@ -78,6 +79,7 @@ export type Database = {
           max_score?: number | null
           module_id: string
           objective?: string | null
+          oral_start_time?: string | null
           owner_id?: string
           prep_status?: Database["public"]["Enums"]["assessment_prep_status"]
           project_id?: string | null
@@ -105,6 +107,7 @@ export type Database = {
           max_score?: number | null
           module_id?: string
           objective?: string | null
+          oral_start_time?: string | null
           owner_id?: string
           prep_status?: Database["public"]["Enums"]["assessment_prep_status"]
           project_id?: string | null
@@ -1076,6 +1079,63 @@ export type Database = {
           },
         ]
       }
+      oral_slot: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          order_method: Database["public"]["Enums"]["oral_order_method"]
+          order_seed: string | null
+          owner_id: string
+          position: number
+          status: Database["public"]["Enums"]["oral_slot_status"]
+          student_group_id: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_method: Database["public"]["Enums"]["oral_order_method"]
+          order_seed?: string | null
+          owner_id?: string
+          position: number
+          status?: Database["public"]["Enums"]["oral_slot_status"]
+          student_group_id: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          order_method?: Database["public"]["Enums"]["oral_order_method"]
+          order_seed?: string | null
+          owner_id?: string
+          position?: number
+          status?: Database["public"]["Enums"]["oral_slot_status"]
+          student_group_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_slot_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oral_slot_student_group_id_fkey"
+            columns: ["student_group_id"]
+            isOneToOne: false
+            referencedRelation: "student_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedagogical_outline: {
         Row: {
           content: Json
@@ -1703,6 +1763,8 @@ export type Database = {
         | "difficulty"
         | "absent_late"
         | "other"
+      oral_order_method: "volunteer" | "draw"
+      oral_slot_status: "waiting" | "done"
       outline_status: "draft" | "sent" | "validated"
       project_role: "milestone" | "oral" | "individual"
       resource_audience: "students" | "teacher"
@@ -1891,6 +1953,8 @@ export const Constants = {
         "absent_late",
         "other",
       ],
+      oral_order_method: ["volunteer", "draw"],
+      oral_slot_status: ["waiting", "done"],
       outline_status: ["draft", "sent", "validated"],
       project_role: ["milestone", "oral", "individual"],
       resource_audience: ["students", "teacher"],

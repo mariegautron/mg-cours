@@ -575,6 +575,26 @@ attachment`, `Content-Type: application/octet-stream`, `X-Content-Type-Options: 
   total. Jamais de note, de commentaire, de critère « validé d'office » ni de carnet (`buildGridHandout`,
   `src/lib/assessments/grid-handout.ts`).
 
+## Oral de fin de projet (E15, US-92) — `/modules/[id]/assessments/[assessmentId]/oral`
+
+- Bouton **« Faire passer l'oral »** sur la fiche d'une note de groupe qui est l'oral d'un projet (ou de
+  type « oral »).
+- « Ordre de passage et créneaux » : rangs des groupes volontaires (1, 2, 3…), les autres sont tirés au
+  sort (graine affichée, reproductible) ; **« Établir l'ordre de passage »**. Ensuite : liste ordonnée
+  (badge volontaire / tirage / passé, horaires), durée par créneau (« Durée de X (min) », vide = durée de
+  l'évaluation, sinon 15 min), boutons monter / descendre nommés, heure de début et durée par groupe.
+  **« Refaire l'ordre »** : confirmation (`AlertDialog`), le serveur refuse sans elle ; les notes sont
+  conservées.
+- Passage en cours : « Passage n sur N — Groupe », thème, membres, **chronomètre** (Démarrer / Pause /
+  Reprendre / Remettre à zéro ; durée du créneau ; temps lu sur l'horloge, sans dérive). `role=timer`
+  silencieux ; annonces polies (5 min pour un passage ≥ 10 min, temps écoulé), **alerte à 1 minute**
+  (`role=alert`, « Dernière minute. » visible, couleur + texte), pulsation seulement sous
+  `prefers-reduced-motion: no-preference`.
+- Grille de correction ouverte sur le groupe qui passe : mêmes composants que la correction (enregistrement
+  automatique 1,5 s, « Enregistrer tout », garde anti-perte, pondération individuelle justifiée). Les
+  autres groupes restent montés, masqués : rien n'est perdu en changeant de groupe. **« Groupe suivant »**
+  marque le groupe passé et ouvre le suivant (« Terminer l'oral » au dernier), « Groupe précédent ».
+
 ## Projet fil rouge (E15, US-88) — `/modules/[id]/project`
 
 - Accès depuis la section « Évaluations » de la fiche module et depuis `/modules/[id]/assessments`
