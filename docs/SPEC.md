@@ -595,6 +595,13 @@ attachment`, `Content-Type: application/octet-stream`, `X-Content-Type-Options: 
   autres groupes restent montés, masqués : rien n'est perdu en changeant de groupe. **« Groupe suivant »**
   marque le groupe passé et ouvre le suivant (« Terminer l'oral » au dernier), « Groupe précédent ».
 
+## Suivi des rendus (E15, US-93)
+
+- Fiche d'une évaluation rattachée à un projet : section **« Rendus — n/N rendus reçus »**, une ligne par
+  groupe visé : « Reçu le (groupe) » (date, vide = rendu retiré), « Lien du rendu (groupe) » (http(s)
+  seulement), bouton nommé « Enregistrer le rendu de … », lien « Ouvrir le rendu de … (nouvel onglet) ».
+  Annonces `role=status` / erreurs `role=alert`. Suivi privé : jamais exporté ni projeté.
+
 ## Projet fil rouge (E15, US-88) — `/modules/[id]/project`
 
 - Accès depuis la section « Évaluations » de la fiche module et depuis `/modules/[id]/assessments`

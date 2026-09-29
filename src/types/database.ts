@@ -1239,6 +1239,54 @@ export type Database = {
           },
         ]
       }
+      project_submission: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          received_on: string
+          student_group_id: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          received_on: string
+          student_group_id: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          received_on?: string
+          student_group_id?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_submission_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_submission_student_group_id_fkey"
+            columns: ["student_group_id"]
+            isOneToOne: false
+            referencedRelation: "student_group"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_theme: {
         Row: {
           created_at: string

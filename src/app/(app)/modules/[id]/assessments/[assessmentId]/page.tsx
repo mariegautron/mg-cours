@@ -8,6 +8,7 @@ import {
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
+import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
 import { ResultsActions } from "@/components/assessments/results-actions";
@@ -30,6 +31,8 @@ import {
   PREP_STATUS_LABELS,
   subjectSections,
 } from "@/lib/assessments/subject";
+import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
+import { createClient } from "@/lib/supabase/server";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
@@ -61,6 +64,24 @@ export default async function AssessmentPage({
     grades.filter((g) => g.student_group_id).map((g) => g.id),
   );
   const themes = await themeTitleByGroup(assessment.project_id);
+  // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
+  let submissionRows: SubmissionRow[] = [];
+  if (assessment.project_id) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("project_submission")
+      .select("student_group_id, received_on, url")
+      .eq("assessment_id", assessmentId);
+    submissionRows = assessment.groups.map((g) => {
+      const r = data?.find((x) => x.student_group_id === g.id);
+      return {
+        groupId: g.id,
+        groupName: g.name,
+        receivedOn: r?.received_on ?? null,
+        url: r?.url ?? null,
+      };
+    });
+  }
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   const hasGrades = grades.some((g) => g.value !== null);
   const recipients = hasGrades
@@ -213,6 +234,15 @@ export default async function AssessmentPage({
           </div>
         ) : null}
       </section>
+
+      {assessment.project_id && submissionRows.length > 0 ? (
+        <section aria-labelledby="submissions" className="space-y-3">
+          <h2 id="submissions" className="text-lg font-medium">
+            Rendus — {submissionSummary(submissionRows)}
+          </h2>
+          <Submissions moduleId={id} assessmentId={assessmentId} rows={submissionRows} />
+        </section>
+      ) : null}
 
       <ResultsActions
         moduleId={id}
