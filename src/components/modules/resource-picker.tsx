@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { LinkedResource } from "@/lib/modules/queries";
+import type { LinkedResource, PickerSource } from "@/lib/modules/queries";
 import { splitRetained } from "@/lib/modules/retained";
 import { groupByKind, KIND_LABELS, RESOURCE_KINDS, type ResourceKind } from "@/lib/resources/kind";
 import {
@@ -18,6 +18,9 @@ import {
   pickerCategories,
   type PickerFilters,
 } from "@/lib/resources/picker";
+import { SEARCH_FIELD_LABELS, searchResource } from "@/lib/resources/search";
+
+type PickerItem = LinkedResource & Partial<Pick<PickerSource, "description" | "tags" | "content">>;
 
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
@@ -31,12 +34,12 @@ export function ResourcePicker({
   retainedIds,
   initialSelected,
 }: {
-  resources: LinkedResource[];
+  resources: PickerSource[];
   retainedIds: string[];
   initialSelected: string[];
 }) {
   const id = useId();
-  const [items, setItems] = useState(resources);
+  const [items, setItems] = useState<PickerItem[]>(resources);
   const [selected, setSelected] = useState<string[]>(initialSelected);
   const [filters, setFilters] = useState<PickerFilters>(NO_PICKER_FILTERS);
   const [draftTitle, setDraftTitle] = useState("");
@@ -60,6 +63,17 @@ export function ResourcePicker({
       ...groupByKind(split.others),
     ];
   }, [visible, retained]);
+  const excerptOf = (r: PickerItem) => {
+    const { excerpt } = searchResource(r, filters.q);
+    if (!excerpt) return null;
+    return (
+      <span className="text-muted-foreground basis-full pl-6 text-xs">
+        {SEARCH_FIELD_LABELS[excerpt.field]} : {excerpt.before}
+        <mark className="bg-yellow-200 text-black">{excerpt.match}</mark>
+        {excerpt.after}
+      </span>
+    );
+  };
   const byId = useMemo(() => new Map(items.map((r) => [r.id, r])), [items]);
 
   const toggle = (resourceId: string, on: boolean) =>
@@ -111,7 +125,7 @@ export function ResourcePicker({
               e.stopPropagation(); // filtrer n'est pas une modification de la séance
               set({ q: e.target.value });
             }}
-            placeholder="Titre…"
+            placeholder="Titre, tag, contenu…"
             onKeyDown={(e) => {
               if (e.key === "Enter") e.preventDefault();
             }}
@@ -197,7 +211,7 @@ export function ResourcePicker({
               </legend>
               <ul className="space-y-2">
                 {group.items.map((r) => (
-                  <li key={r.id} className="flex items-center gap-2">
+                  <li key={r.id} className="flex flex-wrap items-center gap-2">
                     <Checkbox
                       id={`${id}-resource-${r.id}`}
                       checked={selected.includes(r.id)}
@@ -208,6 +222,7 @@ export function ResourcePicker({
                     </Label>
                     <AudienceBadge audience={r.audience} />
                     <StatusBadge status={r.status} />
+                    {excerptOf(r)}
                   </li>
                 ))}
               </ul>

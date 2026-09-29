@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ResourcePicker } from "@/components/modules/resource-picker";
 import { formatTime } from "@/lib/modules/course-duration";
-import type { CourseWithResources, LinkedResource } from "@/lib/modules/queries";
+import type { CourseWithResources, PickerSource } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
@@ -46,7 +46,7 @@ export function CourseForm({
   action: Action;
   moduleId: string;
   course?: CourseWithResources;
-  resources: LinkedResource[];
+  resources: PickerSource[];
   /** Ressources retenues du module (US-55) : proposées en premier. */
   retainedIds?: string[];
   nextPosition: number;

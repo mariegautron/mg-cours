@@ -47,6 +47,12 @@ describe("matchResources", () => {
     expect(matches[0].score).toBeGreaterThan(matches[1].score);
   });
 
+  it("affiche un extrait du contenu où figure le mot commun (US-56)", () => {
+    const matches = matchResources("Auditer l'accessibilité d'un site", list);
+    const notes = matches.find((m) => m.resource.id === "3");
+    expect(notes?.excerpt).toMatchObject({ field: "content", match: "accessibilité" });
+  });
+
   it("ne propose rien sans mot commun ni sans mot-clé dans l'attendu", () => {
     expect(matchResources("Comprendre la fiscalité internationale", list)).toEqual([]);
     expect(matchResources("de la et", list)).toEqual([]);

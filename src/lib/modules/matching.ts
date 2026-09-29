@@ -1,3 +1,5 @@
+import { excerptForTerms, type SearchExcerpt } from "@/lib/resources/search";
+
 /**
  * US-54 : rapprochement attendus ↔ ressources. Mots-clés en commun, sans IA : insensible aux
  * accents et à la casse, mots vides ignorés, pluriels simples ramenés au singulier.
@@ -46,6 +48,8 @@ export interface ResourceMatch<R> {
   /** Mots-clés de l'attendu retrouvés dans la ressource. */
   shared: string[];
   score: number;
+  /** US-56 : extrait (tag, description ou contenu) où figure un mot commun. */
+  excerpt: SearchExcerpt | null;
 }
 
 /** Poids d'un mot-clé retrouvé : tag > titre > description > contenu. */
@@ -89,7 +93,9 @@ export function matchResources<R extends MatchableResource>(
         score += weight;
       }
     }
-    if (score >= MIN_SCORE) matches.push({ resource, shared, score });
+    if (score >= MIN_SCORE) {
+      matches.push({ resource, shared, score, excerpt: excerptForTerms(resource, shared) });
+    }
   }
   return matches
     .sort((a, b) => b.score - a.score || a.resource.title.localeCompare(b.resource.title, "fr"))

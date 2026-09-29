@@ -83,15 +83,25 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   };
 }
 
+/** Ressource du sélecteur : champs cherchés en plus (US-56). */
+export type PickerSource = LinkedResource &
+  Pick<Tables<"resource">, "description" | "tags" | "content">;
+
+/** Contenu Markdown gardé par ressource pour la recherche du sélecteur (envoyé au navigateur). */
+const PICKER_CONTENT_LIMIT = 20000;
+
 /** Ressources actives, pour le sélecteur d'un cours. */
-export async function listActiveResources(): Promise<LinkedResource[]> {
+export async function listActiveResources(): Promise<PickerSource[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("resource")
-    .select("id, title, kind, audience, status, category")
+    .select("id, title, kind, audience, status, category, description, tags, content")
     .is("archived_at", null)
     .order("title");
-  return data ?? [];
+  return (data ?? []).map((r) => ({
+    ...r,
+    content: r.content?.slice(0, PICKER_CONTENT_LIMIT) ?? null,
+  }));
 }
 
 /** Ressources retenues du module (US-55), dans l'ordre où elles ont été retenues. */

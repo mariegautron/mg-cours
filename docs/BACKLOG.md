@@ -246,6 +246,14 @@ C (US-94 à US-100) : non commencés.
 | US-86  | Correction sans perte en une page (`GradingSession`) : avancement « 12/30 corrigées » en direct, enregistrement automatique par copie (1,5 s), « Enregistrer tout », avertissement avant de quitter (`use-unsaved-guard`), copies précédente/suivante au clavier, vue « un critère pour toute la classe », observations du carnet consultables ; une copie sans critère noté n'a pas de note (jamais un faux 0) | ✅     |
 | US-87  | Absences : `grade.attendance` (présent·e / absent·e non prévenu·e = 0 auto / excusé·e = hors moyenne) ; note de groupe : `group_grade_member` (absence et pondération individuelle en %, justification obligatoire, affichée dans le résultat) sans jamais modifier la note du groupe ; moyennes et fiches de résultats à jour | ✅     |
 
+## E14 — Audit UX, vague 3 (ressources, séances, facturation, étudiant·es)
+
+Source : page Notion « MG COURS — Audit UX… », section « Mises à jour du 29/09/2026 ».
+
+| US     | Contenu                                                                                                                                                                                   | Statut |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-56  | Recherche dans le contenu : titre, description, tags et contenu Markdown (sans accent ni casse, tous les mots), sur `/resources`, dans le sélecteur de séance et le rapprochement ; extrait de correspondance affiché | ✅     |
+
 ## Vision suivante (validée 26/09)
 
 Partir des **attendus de l'école** déposés sur le module pour **construire les cours en piochant** dans les

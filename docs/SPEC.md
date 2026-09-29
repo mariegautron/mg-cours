@@ -134,6 +134,13 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Recherche dans les ressources (US-56)** : `/resources`, le sélecteur de séance (US-62) et le
+  rapprochement (US-54) cherchent dans le titre, la description, les tags et le **contenu Markdown**,
+  sans casse ni accents ; tous les mots saisis doivent apparaître (dans n'importe quel champ). Un
+  **extrait** (« Contenu : …**mot**… », balise `mark`) montre où le mot a été trouvé quand ce n'est
+  pas le titre. Logique pure : `src/lib/resources/search.ts` ; le filtrage se fait côté serveur en
+  TypeScript (Postgres ne replie pas les accents), le sélecteur reçoit le contenu tronqué à 20 000
+  caractères par ressource.
 - **Liaison des ressources d'une séance (US-62)** : dans le formulaire de séance, recherche par titre
   (sans casse ni accents), filtres Type, Matière et « Retenues du module », groupement par type
   (groupe « Retenues du module » en tête), compteur de ressources affichées / liées, création

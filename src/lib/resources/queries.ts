@@ -2,10 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
 import type { ResourceListFilters } from "./filters";
+import { searchResources, type SearchExcerpt } from "./search";
 
 export interface ResourceWithUsage extends Tables<"resource"> {
   /** Nombre de modules distincts où la ressource est utilisée. */
   moduleCount: number;
+  /** US-56 : extrait où figure la recherche (hors titre), s'il y en a une. */
+  excerpt?: SearchExcerpt | null;
 }
 
 /** Nombre de modules distincts par ressource, via course_resource → course. */
@@ -33,10 +36,6 @@ export async function listResources(
   let query = supabase.from("resource").select("*").order("updated_at", { ascending: false });
 
   if (!filters.archived) query = query.is("archived_at", null);
-  if (filters.q) {
-    const like = `%${filters.q}%`;
-    query = query.or(`title.ilike.${like},description.ilike.${like}`);
-  }
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.tag) query = query.contains("tags", [filters.tag]);
   if (filters.kind === "none") query = query.is("kind", null);
@@ -45,7 +44,13 @@ export async function listResources(
   if (filters.status) query = query.eq("status", filters.status);
 
   const [{ data }, usage] = await Promise.all([query, moduleUsage()]);
-  return (data ?? []).map((r) => ({ ...r, moduleCount: usage.get(r.id) ?? 0 }));
+  // La recherche (titre, description, tags, contenu ; sans accent ni casse) se fait ici : le
+  // volume est celui d'une bibliothèque personnelle et Postgres ne replie pas les accents.
+  return searchResources(data ?? [], filters.q ?? "").map(({ resource, excerpt }) => ({
+    ...resource,
+    moduleCount: usage.get(resource.id) ?? 0,
+    excerpt,
+  }));
 }
 
 /** Catégories et tags distincts présents en base (pour les filtres). */

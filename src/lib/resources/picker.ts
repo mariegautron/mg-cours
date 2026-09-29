@@ -1,4 +1,7 @@
 import type { ResourceKind } from "./kind";
+import { normalizeSearch, searchResource } from "./search";
+
+export { normalizeSearch };
 
 /**
  * US-62 : recherche et filtres du sélecteur de ressources d'une séance. Fonctions pures.
@@ -9,10 +12,14 @@ export interface PickerResource {
   title: string;
   kind: ResourceKind | null;
   category: string | null;
+  /** US-56 : la recherche porte aussi sur ces champs. */
+  description?: string | null;
+  tags?: string[] | null;
+  content?: string | null;
 }
 
 export interface PickerFilters {
-  /** Texte cherché dans le titre (sans tenir compte de la casse ni des accents). */
+  /** Texte cherché dans le titre, les tags, la description et le contenu (casse et accents ignorés). */
   q: string;
   /** `""` = tous les types, `"none"` = pas encore classées. */
   kind: ResourceKind | "none" | "";
@@ -29,19 +36,13 @@ export const NO_PICKER_FILTERS: PickerFilters = {
   retainedOnly: false,
 };
 
-/** Minuscules sans accents, espaces réduits : « Éthique  Web » → « ethique web ». */
-export function normalizeSearch(text: string): string {
-  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
 export function filterPickerResources<T extends PickerResource>(
   resources: T[],
   filters: PickerFilters,
   retainedIds: ReadonlySet<string>,
 ): T[] {
-  const needle = normalizeSearch(filters.q);
   return resources.filter((r) => {
-    if (needle && !normalizeSearch(r.title).includes(needle)) return false;
+    if (!searchResource(r, filters.q).matched) return false;
     if (filters.kind === "none" ? r.kind !== null : filters.kind && r.kind !== filters.kind) {
       return false;
     }

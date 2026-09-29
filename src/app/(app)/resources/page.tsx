@@ -30,6 +30,7 @@ import {
   UNCLASSIFIED_LABEL,
   type ResourceGroup,
 } from "@/lib/resources/kind";
+import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/resources/queries";
 
 export const metadata: Metadata = { title: "Ressources" };
@@ -54,6 +55,13 @@ function ResourceCard({ r }: { r: ResourceWithUsage }) {
       </div>
       {r.description ? (
         <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{r.description}</p>
+      ) : null}
+      {r.excerpt ? (
+        <p className="text-muted-foreground mt-2 text-xs">
+          {SEARCH_FIELD_LABELS[r.excerpt.field]} : {r.excerpt.before}
+          <mark className="bg-yellow-200 text-black">{r.excerpt.match}</mark>
+          {r.excerpt.after}
+        </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-1">
         <KindBadge kind={r.kind} />
@@ -137,7 +145,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
       >
         <div className="space-y-1">
           <Label htmlFor="q">Recherche</Label>
-          <Input id="q" name="q" defaultValue={filters.q} placeholder="Titre, description…" />
+          <Input id="q" name="q" defaultValue={filters.q} placeholder="Titre, tag, contenu…" />
         </div>
         <div className="space-y-1">
           <Label htmlFor="kind">Type</Label>

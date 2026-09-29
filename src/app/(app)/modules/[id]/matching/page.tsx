@@ -19,6 +19,7 @@ import {
   summarizeCoverage,
   type CoverageState,
 } from "@/lib/modules/matching";
+import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { getExpectationCourses, listCandidateResources } from "@/lib/modules/matching-queries";
 import {
   getModule,
@@ -135,7 +136,7 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
 
                   {matches.length ? (
                     <ul className="divide-y rounded-md border">
-                      {matches.map(({ resource, shared }) => {
+                      {matches.map(({ resource, shared, excerpt }) => {
                         const isRetained = retainedIds.has(resource.id);
                         return (
                           <li
@@ -159,6 +160,13 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
                                   ? `Sert déjà dans : ${resource.moduleNames.join(", ")}`
                                   : "Pas encore utilisée"}
                               </p>
+                              {excerpt ? (
+                                <p className="text-muted-foreground text-xs">
+                                  {SEARCH_FIELD_LABELS[excerpt.field]} : {excerpt.before}
+                                  <mark className="bg-yellow-200 text-black">{excerpt.match}</mark>
+                                  {excerpt.after}
+                                </p>
+                              ) : null}
                             </div>
                             {isRetained ? (
                               <Badge variant="secondary">Retenue</Badge>
