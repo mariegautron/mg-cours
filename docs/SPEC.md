@@ -302,6 +302,19 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   `src/lib/notebook/privacy.test.ts` (lecture des sources d'export + builders) et e2e (HTML de
   la présentation sans aucun texte du carnet).
 
+### Reprise à la séance suivante (US-68)
+
+- La consigne « À faire pour la prochaine fois » saisie à la clôture d'une séance devient la
+  diapositive **« Pour aujourd'hui, vous deviez… »** de la séance suivante (après l'ouverture,
+  aussi dans la vue présentatrice). Une ligne = un point (`src/lib/present/reprise.ts`).
+- **Garde-fou** : `next_time` n'est lu que par ce fichier — ni PDF, ni e-mail, ni autre page ;
+  les points reportés, le retour d'expérience et le statut de clôture ne sortent jamais
+  (`src/lib/notebook/privacy.test.ts`).
+- **Vue privée** (carnet) : bloc « Reprise de la séance précédente » avec les points non traités,
+  ce qui était demandé pour aujourd'hui et le retour d'expérience de la séance précédente.
+- **Duplication d'un module** : les retours d'expérience de l'année sont affichés à relire dans la
+  zone « Dupliquer » (onglet Administratif) ; ils ne sont pas copiés dans le nouveau module.
+
 ## Étudiants + Groupes (E4)
 
 ### Liste `/students`

@@ -353,7 +353,15 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
         </h2>
         <div className="space-y-6">
           {mod.archived_at ? null : <ArchiveModuleButton id={mod.id} archived={false} />}
-          <ModuleDangerZone id={mod.id} year={mod.year} />
+          <ModuleDangerZone
+            id={mod.id}
+            year={mod.year}
+            experience={courses.flatMap((c, i) =>
+              c.retro_note?.trim()
+                ? [{ number: i + 1, title: c.title, text: c.retro_note.trim() }]
+                : [],
+            )}
+          />
         </div>
       </section>
     </TabsContent>

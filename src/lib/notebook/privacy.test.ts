@@ -18,6 +18,7 @@ const OUTWARD = [
   "src/app/api",
   "src/app/(present)",
   "src/components/present",
+  "src/lib/present",
   "src/lib/modules/course-export.ts",
   "src/lib/ynov/outline.ts",
   "src/lib/outline",
@@ -29,7 +30,13 @@ const OUTWARD = [
 ];
 
 const PRIVATE =
-  /student_observation|observation_tag|retro_note|not_covered|next_time|\bcompletion\b|lib\/notebook|components\/notebook/;
+  /student_observation|observation_tag|retro_note|not_covered|\bcompletion\b|lib\/notebook|components\/notebook/;
+
+/**
+ * `next_time` (« À faire pour la prochaine fois ») est autorisé sur UNE diapositive projetée
+ * (US-68), lue par ce seul fichier : ni PDF, ni e-mail, ni autre page.
+ */
+const NEXT_TIME_ALLOWED = "src/lib/present/reprise.ts";
 
 function files(path: string): string[] {
   const abs = join(ROOT, path);
@@ -45,6 +52,14 @@ describe("carnet de séance : données privées", () => {
     expect(sources.length).toBeGreaterThan(10);
     const leaks = sources.filter((f) => PRIVATE.test(readFileSync(join(ROOT, f), "utf8")));
     expect(leaks).toEqual([]);
+  });
+
+  it("next_time n'est lu que par la diapositive de reprise (US-68)", () => {
+    const sources = OUTWARD.flatMap(files).filter(
+      (f) => /\.(ts|tsx)$/.test(f) && !f.endsWith(".test.ts"),
+    );
+    const readers = sources.filter((f) => /next_time/.test(readFileSync(join(ROOT, f), "utf8")));
+    expect(readers).toEqual([NEXT_TIME_ALLOWED]);
   });
 
   const SECRET = {

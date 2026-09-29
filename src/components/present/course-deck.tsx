@@ -13,6 +13,7 @@ export function buildCourseDeck({
   position,
   next,
   resources,
+  resumeLines = [],
 }: {
   moduleName: string;
   course: { title: string; session_date: string | null; learning_objectives: string[] };
@@ -20,6 +21,8 @@ export function buildCourseDeck({
   position: number;
   next: { title: string; session_date: string | null } | undefined;
   resources: Tables<"resource">[];
+  /** Consigne de la séance précédente (US-68), déjà réduite à des lignes de texte. */
+  resumeLines?: string[];
 }): { sections: string[]; slides: PresentSlide[] } {
   const sections = ["Ouverture"];
   const slides: PresentSlide[] = [
@@ -29,6 +32,9 @@ export function buildCourseDeck({
       subtitle: course.session_date ? formatLongDate(course.session_date) : null,
     }),
   ];
+  if (resumeLines.length) {
+    slides.push(listSlide(0, "Pour aujourd’hui, vous deviez…", resumeLines));
+  }
   if (course.learning_objectives.length) {
     slides.push(listSlide(0, "Objectifs de la séance", course.learning_objectives));
   }

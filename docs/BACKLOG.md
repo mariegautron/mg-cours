@@ -228,7 +228,7 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 | US-53  | Lire les attendus de la fiche YNOV : `module_expectation` (objectifs pédagogiques + objectif de chaque unité), lecture du PDF déposé ou d'un texte collé (une ligne = un attendu), aperçu modifiable, lien vers le PDF d'origine ; UP = repères indicatifs (aucune alerte), option « squelette de séances » | ✅     |
 | US-54  | Rapprocher attendus et ressources (mots-clés, sans IA) : écran `/modules/[id]/matching`, ressources proposées par attendu (type, modules où elles servent), « Retenir » (US-55) / « À construire » (US-57), attendus couverts par séance (`course_expectation`), bilan « 4 couverts, 2 à construire » | ✅     |
 | US-64  | Vue présentatrice : deux fenêtres synchronisées (BroadcastChannel), notes de séance, corrigés, horloge et temps restant | ✅     |
-| US-68  | Reprise à la séance suivante : diapo « Pour aujourd'hui, vous deviez… » (`next_time`), points reportés et retour d'expérience en vue privée | ⏳     |
+| US-68  | Reprise à la séance suivante : diapo « Pour aujourd'hui, vous deviez… » (`next_time`), points reportés et retour d'expérience en vue privée | ✅     |
 | US-80b | Promotion par année scolaire : `student_year`, reprise de `scholar_group`, inscription d'une année, filtre `/students` | ⏳     |
 
 ## E13 — Évaluations, lot A « grilles et correction » (US-81 à US-87)

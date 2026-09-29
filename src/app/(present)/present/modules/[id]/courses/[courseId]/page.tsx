@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresentShell } from "@/components/present/present-shell";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
 
@@ -38,6 +39,7 @@ export default async function PresentCoursePage({
     position,
     next,
     resources,
+    resumeLines: previousNextTime(courses, position),
   });
 
   return (

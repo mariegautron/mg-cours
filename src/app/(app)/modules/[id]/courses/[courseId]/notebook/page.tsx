@@ -44,6 +44,14 @@ export default async function CourseNotebookPage({
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
+  const previous = position > 0 ? courses[position - 1] : null;
+  const carriedOver = previous
+    ? [
+        { label: "Points non traités, à reporter", text: previous.not_covered },
+        { label: "Demandé pour aujourd’hui", text: previous.next_time },
+        { label: "Retour d’expérience de la séance précédente", text: previous.retro_note },
+      ].filter((n) => n.text?.trim())
+    : [];
   const students = notebookStudents(groups).map(({ id, first_name, last_name }) => ({
     id,
     first_name,
@@ -83,6 +91,25 @@ export default async function CourseNotebookPage({
           </a>
         </Button>
       </div>
+
+      {previous && carriedOver.length ? (
+        <section aria-labelledby="carried" className="space-y-3 rounded-lg border p-4">
+          <h2 id="carried" className="text-lg font-medium">
+            Reprise de la séance précédente
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Séance {position} : {previous.title}
+          </p>
+          <dl className="space-y-3 text-sm">
+            {carriedOver.map((n) => (
+              <div key={n.label}>
+                <dt className="font-medium">{n.label}</dt>
+                <dd className="whitespace-pre-wrap">{n.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       <section aria-labelledby="observations" className="space-y-3">
         <h2 id="observations" className="text-lg font-medium">

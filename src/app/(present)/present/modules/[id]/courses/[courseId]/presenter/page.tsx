@@ -5,6 +5,7 @@ import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresenterView } from "@/components/present/presenter-view";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { todayInParis } from "@/lib/modules/next-session";
+import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
 
@@ -33,6 +34,7 @@ export default async function PresenterPage({
     position,
     next: courses[position + 1],
     resources: studentFacing(allResources),
+    resumeLines: previousNextTime(courses, position),
   });
 
   const notes = [
