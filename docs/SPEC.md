@@ -349,6 +349,14 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Noter par palier (US-83)** : un critère à paliers se note avec de vrais **boutons radio** (un par
+  palier, « 6 pt — description », plus « Pas encore noté »), regroupés dans un `fieldset` dont la légende
+  est le critère : flèches du clavier natives, points et total mis à jour à chaque choix. Le palier
+  choisi propose « Insérer dans l'appréciation » : « Critère — description » est ajouté à la fin de
+  l'appréciation sans rien écraser (annonce vocale). Des points enregistrés qui ne correspondent (plus)
+  à aucun palier restent proposés (« saisie précédente, hors des paliers actuels ») : enregistrer ne
+  les efface jamais. Sans palier : champ numérique. Logique pure : `findLevel`, `levelCommentBase`,
+  `appendComment` (`src/lib/assessments/levels.ts`) ; e2e : `e2e/grade-levels.spec.ts`.
 - **Axes, références, bonus, validé d'office (US-82)** : l'éditeur de grille range les critères dans
   des axes (nom, ordre, rattachement par liste déroulante), donne une référence libre (ex. « RGAA
   1.3.1 ») et une case « Bonus hors barème » (jamais compté dans le barème). Le formulaire

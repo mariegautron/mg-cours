@@ -15,6 +15,7 @@ import {
   formatNumber,
   groupByAxis,
 } from "@/lib/assessments/scoring";
+import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
 import { DEFAULT_MAX_SCORE, toTwenty } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
@@ -52,6 +53,8 @@ export function GradeForm({
       ]),
     ),
   );
+  const [feedback, setFeedback] = useState(grade?.feedback ?? "");
+  const [announcement, setAnnouncement] = useState("");
   const criteria = grid?.criteria ?? [];
   const totals = computeTotals(
     criteria.map((c) => ({
@@ -79,9 +82,89 @@ export function GradeForm({
     return `${formatNumber(a.points)} / ${formatNumber(a.max)}${bonus}`;
   }
 
+  function insertBase(c: CriterionWithLevels, text: string) {
+    setFeedback((prev) => appendComment(prev, text));
+    setAnnouncement(`Description du critère « ${c.label} » insérée dans l’appréciation.`);
+  }
+
+  function levelField(c: CriterionWithLevels) {
+    const current = inputs[c.id] ?? "";
+    const numeric = current.trim() === "" ? null : Number(current.replace(",", "."));
+    const selected = findLevel(c.levels, numeric);
+    // Points enregistrés qui ne correspondent (plus) à aucun palier : proposés tels quels pour
+    // qu'enregistrer la note ne les efface jamais.
+    const orphan = numeric !== null && Number.isFinite(numeric) && !selected ? numeric : null;
+    const base = levelCommentBase(c.label, selected);
+    const name = `score_${c.id}`;
+    const option = (value: string, checked: boolean, id: string, children: React.ReactNode) => (
+      <label
+        key={id}
+        htmlFor={id}
+        className="hover:bg-muted/50 has-[:checked]:border-primary flex cursor-pointer items-start gap-2 rounded-md border border-transparent p-1.5 text-sm"
+      >
+        <input
+          id={id}
+          type="radio"
+          name={name}
+          value={value}
+          checked={checked}
+          onChange={() => setInputs((prev) => ({ ...prev, [c.id]: value }))}
+          className="mt-1"
+        />
+        <span>{children}</span>
+      </label>
+    );
+
+    return (
+      <fieldset key={c.id} className="space-y-1 sm:col-span-2">
+        <legend className="text-sm font-medium">
+          {c.label}{" "}
+          <span className="text-muted-foreground">
+            {c.is_bonus ? `(bonus, jusqu’à +${c.weight})` : `(/${c.weight})`}
+          </span>
+        </legend>
+        {c.reference ? (
+          <p className="text-muted-foreground text-xs">Référence : {c.reference}</p>
+        ) : null}
+        <div className="space-y-0.5">
+          {c.levels.map((l) =>
+            option(
+              String(l.points),
+              selected?.id === l.id,
+              `${uid}-level_${l.id}`,
+              <>
+                <strong>{formatNumber(l.points)} pt</strong>
+                {l.description ? ` — ${l.description}` : ""}
+              </>,
+            ),
+          )}
+          {orphan !== null
+            ? option(
+                String(orphan),
+                true,
+                `${uid}-orphan_${c.id}`,
+                <>
+                  <strong>{formatNumber(orphan)} pt</strong> — saisie précédente, hors des paliers
+                  actuels
+                </>,
+              )
+            : null}
+          {option("", current.trim() === "", `${uid}-none_${c.id}`, "Pas encore noté")}
+        </div>
+        {base ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => insertBase(c, base)}>
+            Insérer dans l’appréciation
+            <span className="sr-only"> la description du palier choisi pour {c.label}</span>
+          </Button>
+        ) : null}
+      </fieldset>
+    );
+  }
+
   function criterionField(c: CriterionWithLevels) {
     const validated = !c.is_bonus && autoValidatedIds.includes(c.id);
     const hintId = `${uid}-hint_${c.id}`;
+    if (!validated && c.levels.length > 0) return levelField(c);
     return (
       <div key={c.id} className="space-y-1">
         {validated ? (
@@ -204,7 +287,8 @@ export function GradeForm({
           id={`${uid}-feedback`}
           name="feedback"
           rows={2}
-          defaultValue={grade?.feedback ?? ""}
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
         />
       </div>
 
@@ -229,6 +313,10 @@ export function GradeForm({
           </ul>
         </fieldset>
       ) : null}
+
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
 
       {state.error ? (
         <p role="alert" className="text-destructive text-sm">

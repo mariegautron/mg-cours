@@ -34,3 +34,30 @@ export function sortLevels<T extends { points: number }>(levels: readonly T[]): 
 export function levelsMax(levels: readonly { points: number }[]): number | null {
   return levels.length ? Math.max(...levels.map((l) => l.points)) : null;
 }
+
+/** Palier correspondant exactement à des points saisis, ou `null` (saisie hors paliers). */
+export function findLevel<T extends { points: number }>(
+  levels: readonly T[],
+  points: number | null | undefined,
+): T | null {
+  if (points === null || points === undefined || !Number.isFinite(points)) return null;
+  return levels.find((l) => Math.abs(l.points - points) < 0.001) ?? null;
+}
+
+/**
+ * Base de commentaire proposée quand on choisit un palier : « Critère — description du palier ».
+ * `null` si le palier n'a pas de description.
+ */
+export function levelCommentBase(
+  criterionLabel: string,
+  level: { description: string } | null,
+): string | null {
+  const description = level?.description.trim();
+  return description ? `${criterionLabel} — ${description}` : null;
+}
+
+/** Ajoute un texte à un commentaire existant, sur une nouvelle ligne (jamais d'écrasement). */
+export function appendComment(current: string, addition: string): string {
+  const base = current.trimEnd();
+  return base ? `${base}\n${addition}` : addition;
+}
