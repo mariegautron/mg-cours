@@ -46,7 +46,7 @@ const QUESTIONS_HTML = join(homedir(), "Bureau/exports/moodle/m2-questions.html"
 const MOODLE_COURSE = "nantesynovcampus2024devwebmast2m2s2-elective2";
 
 /** Journées (pages « Jour N ») : dates de la facture 25-08-3 (7 h chacune). */
-const DAYS = [
+export const DAYS = [
   { id: "204903c74f138025871bd1100069c76b", date: "2025-06-11", type: "lecture" },
   { id: "204903c74f1380629f20e21670da0be7", date: "2025-06-30", type: "applied" },
   { id: "204903c74f13809a8b11cda6ad3fcaf5", date: "2025-07-01", type: "workshop" },
@@ -57,7 +57,7 @@ const DAYS = [
  * Activités de chaque journée (base Notion consultée le 23/09) : les pages déplacées dans la
  * bibliothèque n'apparaissent plus dans les relations de l'export.
  */
-const DAY_ACTIVITIES: Record<number, string[]> = {
+export const DAY_ACTIVITIES: Record<number, string[]> = {
   1: [
     "205903c74f13806ab389ee0a21054e25", // Cartes Latitudes
     "20d903c74f1380aa8eccce3fdc8b7856", // Introduction au numérique responsable
@@ -468,6 +468,13 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       },
       `${label} — ${promo || "promo ?"} — ${group ? `Groupe ${group}` : "sans groupe"}${profile ? ` — ${profile}` : ""}`,
     );
+    if (promo)
+      await imp.link(
+        "student_year",
+        { student_id: id, year: 2024, scholar_group: `M2 ${promo}` },
+        "student_id,year",
+        `${label} → 2024-25 : M2 ${promo}`,
+      );
     studentByName.set(norm(`${last} ${first}`), { id, label });
     studentByName.set(norm(`${first} ${last}`), { id, label });
     if (group)

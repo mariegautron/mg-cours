@@ -431,6 +431,12 @@ export async function migrate(ctx: CourseContext): Promise<void> {
         `${label} — ${group}`,
       );
       students.set(key, { id: studentId, group, label });
+      await imp.link(
+        "student_year",
+        { student_id: studentId, year: 2025, scholar_group: `B2 ${promo}` },
+        "student_id,year",
+        `${label} → 2025-26 : B2 ${promo}`,
+      );
       if (!projectGroup)
         await imp.unlink(
           "group_member",

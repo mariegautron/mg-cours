@@ -599,3 +599,23 @@ compris). Moodle servira à confirmer le YCODE, le QCM et les notes individuelle
   séances des modules archivés étaient à 0 tant qu'elles manquaient.
 - Carte source → cible : `docs/MIGRATION-SOURCES.md`.
 
+#### Compléments après les nouvelles fonctionnalités (29/09) — `--course complements`
+
+Passe unique, idempotente, qui ne complète que les champs vides ou restés tels que l'import
+les a posés (aucune retouche faite dans l'app n'est écrasée). Script :
+`courses/complements-fonctions.mts`.
+
+1. **Grilles** : B2 (3 grilles) → paliers (`criterion_level`) tirés des niveaux « 8 pts / 6 pts… »,
+   description ramenée à l'énoncé ; M2 projet → 6 axes (`grid_axis`), références RGAA
+   (`reference`), critère « Bonus EcoIndex » en `is_bonus`. GP : rien (grilles sans niveaux
+   ni sections).
+2. **Commentaire par critère** : le bloc « Détail par critère » des notes de groupe (GP, M2)
+   passe dans `grade.criterion_comments` ; `feedback` ne garde que le commentaire libre.
+3. **Phrases réutilisables (GP, 20)** : matière « Gestion de projet » + critère lié quand il
+   est sans ambiguïté.
+4. **Banque QCM du M2** : passée « à construire » (réponses absentes) avec note d'intention.
+5. **Horaires** : début / fin des séances GP (Notion) et M2 (de la 1re à la dernière
+   activité du jour). **B2 : aucun horaire dans Notion** → à saisir dans l'app.
+6. **Années scolaires** : `student_year` (année du module ; 2025-26 B2 et GP, 2024-25 M2) pour
+   les étudiant·es importé·es ; les scripts d'import l'écrivent désormais eux-mêmes.
+

@@ -227,7 +227,7 @@ const PDFS = [
 ] as const;
 
 /** Remarques récurrentes des corrections 2025-26, reformulées en commentaires prédéfinis. */
-const PREDEFINED_COMMENTS: {
+export const PREDEFINED_COMMENTS: {
   text: string;
   category: "positive" | "negative" | "advice";
   tags: string[];
@@ -675,6 +675,13 @@ export async function migrate(ctx: CourseContext): Promise<void> {
       `${label} — ${promo || "promo ?"} — ${group ? `Groupe ${group}` : "sans groupe"}${appreciation ? " — appréciation" : ""}`,
     );
     students.push({ id, label, group, qcm: parseScore(p.properties["Note individuelle"]) });
+    if (promo)
+      await imp.link(
+        "student_year",
+        { student_id: id, year: 2025, scholar_group: `M1 ${promo}` },
+        "student_id,year",
+        `${label} → 2025-26 : M1 ${promo}`,
+      );
     if (group && groupIds.get(group))
       await imp.link(
         "group_member",
