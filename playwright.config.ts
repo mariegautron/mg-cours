@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3100;
+// Port et dossier de build surchargeables (E2E_PORT, NEXT_DIST_DIR) pour lancer les e2e depuis
+// deux copies de travail ou deux sessions sans que l'une réécrase le serveur de l'autre.
+const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 
 export default defineConfig({
