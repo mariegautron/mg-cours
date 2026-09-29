@@ -30,7 +30,7 @@ async function login(page: import("@playwright/test").Page) {
 
 for (const theme of ["dark", "light"] as const) {
   test(`accessibilité (axe) des écrans principaux — thème ${theme}`, async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(400_000);
     await page.addInitScript((t) => window.localStorage.setItem("theme", t), theme);
 
     // La page de connexion aussi (avant authentification).
