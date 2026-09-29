@@ -83,7 +83,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
             </h2>
             {project.assessments.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Aucune évaluation rattachée. Proposez le squelette ci-dessous.
+                Aucune évaluation rattachée. Propose le squelette ci-dessous.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -149,7 +149,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
             </h2>
             <p className="text-muted-foreground text-sm">
               Déduit des notes exigées pour {mod.total_hours} h : 1 évaluation individuelle, 1 oral,
-              et un jalon pour chaque note restante. Modifiez avant de créer.
+              et un jalon pour chaque note restante. Modifie avant de créer.
             </p>
             <SkeletonEditor
               resetKey={project.assessments.map((a) => a.id).join(",")}

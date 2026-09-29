@@ -34,8 +34,8 @@ export default async function PresentAssessmentPage({
         <h1 className="text-2xl font-semibold">{assessment.title}</h1>
         <p role="status">
           {canPresent(assessment.prep_status)
-            ? "Ce sujet est vide : renseignez la consigne avant de le projeter."
-            : "Ce sujet est encore « à construire » : passez-le à « Prête » avant de le projeter."}
+            ? "Ce sujet est vide : renseigne la consigne avant de le projeter."
+            : "Ce sujet est encore « à construire » : passe-le à « Prête » avant de le projeter."}
         </p>
         <Button asChild variant="secondary">
           <Link href={backHref}>Retour à l’évaluation</Link>

@@ -7,6 +7,7 @@ import { serverEnv } from "@/lib/env";
 import { buildFacturX } from "@/lib/invoice/facturx";
 import { getInvoiceByModule, listInvoiceNumbers, loadInvoiceContext } from "@/lib/invoice/queries";
 import { advanceModule } from "@/lib/modules/advance";
+import { EMAIL_NOT_ENABLED, failure, NOT_FOUND } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildInvoiceSnapshot,
@@ -35,13 +36,15 @@ function refresh(moduleId: string) {
  */
 export async function generateInvoice(moduleId: string): Promise<BillingActionState> {
   const ctx = await loadInvoiceContext(moduleId);
-  if (!ctx) return { error: "Module introuvable." };
+  if (!ctx) return { error: NOT_FOUND.module };
 
   if (await getInvoiceByModule(moduleId))
     return { error: "Une facture existe déjà pour ce module." };
 
   const reasons = [...invoiceBlockers(ctx), ...missingInvoiceData(ctx)];
-  if (reasons.length > 0) return { error: "Impossible de générer la facture.", reasons };
+  if (reasons.length > 0) {
+    return { error: "On n’a pas pu créer la facture : il reste des points à traiter.", reasons };
+  }
 
   const supabase = await createClient();
   const issuedOn = new Date().toISOString().slice(0, 10);
@@ -80,23 +83,28 @@ export async function generateInvoice(moduleId: string): Promise<BillingActionSt
       refresh(moduleId);
       return { ok: true };
     }
-    if (error.code !== "23505") return { error: "Enregistrement impossible. Réessayez." };
+    if (error.code !== "23505") {
+      console.error("[facture] enregistrement impossible", error);
+      return { error: failure("enregistrer la facture") };
+    }
     if (error.message.includes("invoice_module_uidx")) {
       return { error: "Une facture existe déjà pour ce module." };
     }
   }
-  return { error: "Numérotation impossible. Réessayez." };
+  return { error: failure("numéroter la facture") };
 }
 
 /** Envoie la facture Factur-X à l'e-mail de facturation de l'école (un seul fichier joint). */
 export async function sendInvoiceByEmail(moduleId: string): Promise<BillingActionState> {
   const { RESEND_API_KEY, RESEND_FROM } = serverEnv();
   if (!RESEND_API_KEY || !RESEND_FROM) {
-    return { error: "Envoi d’e-mails non configuré (RESEND_API_KEY / RESEND_FROM)." };
+    // La cause technique va dans les journaux du serveur, pas dans l'interface.
+    console.error("[e-mail] envoi désactivé : RESEND_API_KEY ou RESEND_FROM manquant");
+    return { error: EMAIL_NOT_ENABLED };
   }
 
   const invoice = await getInvoiceByModule(moduleId);
-  if (!invoice?.snapshot) return { error: "Facture introuvable." };
+  if (!invoice?.snapshot) return { error: NOT_FOUND.invoice };
   if (invoice.status === "sent" || invoice.status === "paid") {
     return { error: "Cette facture a déjà été envoyée." };
   }
@@ -112,7 +120,13 @@ export async function sendInvoiceByEmail(moduleId: string): Promise<BillingActio
     text: `Bonjour,\n\nVeuillez trouver ci-joint la facture ${snapshot.number} (${snapshot.line.designation}).\n\nBien cordialement,\n${snapshot.seller.name}`,
     attachments: [{ filename: `facture-${snapshot.number}.pdf`, content: Buffer.from(pdf) }],
   });
-  if (error) return { error: "Échec de l’envoi de l’e-mail." };
+  if (error) {
+    console.error("[e-mail] échec de l’envoi de la facture", error);
+    return {
+      error:
+        "On n’a pas pu envoyer l’e-mail : la facture n’est pas marquée comme envoyée. Réessaie dans un instant, ou télécharge le PDF et envoie-le toi-même.",
+    };
+  }
 
   return markSent(moduleId, invoice.id);
 }
@@ -123,7 +137,7 @@ async function markSent(moduleId: string, invoiceId: string): Promise<BillingAct
     .from("invoice")
     .update({ status: "sent", sent_at: new Date().toISOString() })
     .eq("id", invoiceId);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer la facture comme envoyée") };
   await advanceModule(moduleId, "invoice_sent");
   refresh(moduleId);
   return { ok: true };
@@ -132,14 +146,14 @@ async function markSent(moduleId: string, invoiceId: string): Promise<BillingAct
 /** Marque envoyée sans e-mail (dépôt manuel sur la Plateforme Agréée). */
 export async function markInvoiceSent(moduleId: string): Promise<BillingActionState> {
   const invoice = await getInvoiceByModule(moduleId);
-  if (!invoice) return { error: "Facture introuvable." };
+  if (!invoice) return { error: NOT_FOUND.invoice };
   if (invoice.status !== "ready") return { error: "Cette facture a déjà été envoyée." };
   return markSent(moduleId, invoice.id);
 }
 
 export async function markInvoicePaid(moduleId: string): Promise<BillingActionState> {
   const invoice = await getInvoiceByModule(moduleId);
-  if (!invoice) return { error: "Facture introuvable." };
+  if (!invoice) return { error: NOT_FOUND.invoice };
   if (invoice.status !== "sent") return { error: "La facture doit d’abord être envoyée." };
 
   const supabase = await createClient();
@@ -147,7 +161,7 @@ export async function markInvoicePaid(moduleId: string): Promise<BillingActionSt
     .from("invoice")
     .update({ status: "paid", paid_on: new Date().toISOString().slice(0, 10) })
     .eq("id", invoice.id);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer la facture comme payée") };
   await advanceModule(moduleId, "paid");
   refresh(moduleId);
   return { ok: true };
@@ -164,7 +178,7 @@ export async function markExternalInvoicePaid(moduleId: string): Promise<Billing
     .select("id", { count: "exact", head: true })
     .eq("module_id", moduleId)
     .eq("kind", "external_invoice");
-  if (!count) return { error: "Déposez d’abord le PDF de la facture." };
+  if (!count) return { error: "Dépose d’abord le PDF de la facture." };
 
   await advanceModule(moduleId, "paid");
   refresh(moduleId);
@@ -174,13 +188,13 @@ export async function markExternalInvoicePaid(moduleId: string): Promise<Billing
 /** Supprime une facture non envoyée (une facture envoyée est définitive). */
 export async function deleteInvoice(moduleId: string): Promise<BillingActionState> {
   const invoice = await getInvoiceByModule(moduleId);
-  if (!invoice) return { error: "Facture introuvable." };
+  if (!invoice) return { error: NOT_FOUND.invoice };
   if (invoice.status !== "ready") {
     return { error: "Une facture envoyée ne peut pas être supprimée." };
   }
   const supabase = await createClient();
   const { error } = await supabase.from("invoice").delete().eq("id", invoice.id);
-  if (error) return { error: "Suppression impossible." };
+  if (error) return { error: failure("supprimer la facture") };
   refresh(moduleId);
   return { ok: true };
 }

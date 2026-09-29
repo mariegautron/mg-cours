@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { planCourseImport } from "@/lib/modules/course-import";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface ImportCoursesState {
   error?: string;
@@ -18,8 +19,8 @@ export async function importCourses(
   formData: FormData,
 ): Promise<ImportCoursesState> {
   const courseIds = formData.getAll("courseIds").map(String);
-  if (courseIds.length === 0) return { error: "Cochez au moins une séance à importer." };
-  if (sourceId === moduleId) return { error: "Choisissez un autre module." };
+  if (courseIds.length === 0) return { error: "Coche au moins une séance à importer." };
+  if (sourceId === moduleId) return { error: "Choisis un autre module." };
 
   const supabase = await createClient();
   // Les deux modules doivent appartenir à l'utilisatrice connectée (la RLS ne renvoie rien sinon).
@@ -27,7 +28,7 @@ export async function importCourses(
     supabase.from("module").select("id").eq("id", moduleId).maybeSingle(),
     supabase.from("module").select("id").eq("id", sourceId).maybeSingle(),
   ]);
-  if (!target || !source) return { error: "Module introuvable." };
+  if (!target || !source) return { error: NOT_FOUND.module };
 
   const [{ data: sourceCourses }, { data: existing }] = await Promise.all([
     supabase
@@ -55,7 +56,7 @@ export async function importCourses(
       .insert({ ...row, module_id: moduleId })
       .select("id")
       .single();
-    if (error || !created) return { error: "L’import a échoué. Réessayez." };
+    if (error || !created) return { error: failure("importer les séances", { kept: true }) };
 
     if (resourceLinks.length) {
       const { error: linkError } = await supabase.from("course_resource").insert(

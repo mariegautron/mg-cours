@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import type { SettingsFormState } from "@/app/(app)/settings/actions";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import {
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: SettingsFormState, formData: FormData) => Promise<SettingsFormState>;
 
@@ -102,7 +104,11 @@ export function SchoolForm({
         </p>
       </div>
 
-      <form action={formAction} onChange={() => setDirty(true)} className="space-y-8">
+      <form
+        onSubmit={keepFormValues(formAction)}
+        onChange={() => setDirty(true)}
+        className="space-y-8"
+      >
         <Group legend="L’école">
           <div className="space-y-2">
             <Label htmlFor="name">
@@ -158,7 +164,7 @@ export function SchoolForm({
                 aria-describedby="paIdentifier-hint"
               />
               <Hint id="paIdentifier">
-                Adresse de dépôt de vos factures électroniques (Factur-X), fournie par l’école.
+                Adresse de dépôt de tes factures électroniques (Factur-X), fournie par l’école.
               </Hint>
             </div>
           </div>
@@ -178,11 +184,7 @@ export function SchoolForm({
           </div>
         </Group>
 
-        {state.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
-          </p>
-        ) : null}
+        {state.error ? <ActionError error={state.error} /> : null}
         <div className="flex flex-wrap gap-3">
           <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
             {school ? "Enregistrer les modifications" : "Créer l’école"}
@@ -200,7 +202,7 @@ export function SchoolForm({
           <AlertDialogHeader>
             <AlertDialogTitle>Abandonner les modifications ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Vos modifications ne seront pas enregistrées.
+              Tes modifications ne seront pas enregistrées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

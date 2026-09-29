@@ -13,7 +13,7 @@ describe("readResourceForm — type et visibilité", () => {
     const parsed = readResourceForm(form({ title: "RACI" }));
     expect(parsed.success).toBe(false);
     expect(!parsed.success && parsed.error.flatten().fieldErrors.kind).toEqual([
-      "Choisissez le type de ressource.",
+      "Choisis le type de ressource.",
     ]);
   });
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { CheckCheck, FileText, Send } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
+import { Celebration } from "@/components/celebration";
 import {
   generateOutline,
   markOutlineSent,
@@ -10,6 +12,17 @@ import {
   type OutlineActionState,
 } from "@/app/(app)/modules/[id]/outline/actions";
 import { DownloadButton } from "@/components/download-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PendingButton } from "@/components/ui/pending-button";
 
 const initial: OutlineActionState = {};
@@ -32,14 +45,11 @@ export function OutlineActions({
     generateOutline.bind(null, moduleId),
     initial,
   );
-  const [sentState, sentAction, sentPending] = useActionState(
-    markOutlineSent.bind(null, moduleId),
-    initial,
-  );
-  const [valState, valAction, valPending] = useActionState(
-    markOutlineValidated.bind(null, moduleId),
-    initial,
-  );
+  const [sentState, sentAction] = useActionState(markOutlineSent.bind(null, moduleId), initial);
+  const [valState, valAction] = useActionState(markOutlineValidated.bind(null, moduleId), initial);
+  // « Marquer comme envoyée / validée » ne se défait pas : un dialogue court demande confirmation.
+  const [sentPending, startSent] = useTransition();
+  const [valPending, startValidated] = useTransition();
   const error = genState.error ?? sentState.error ?? valState.error;
 
   return (
@@ -72,30 +82,63 @@ export function OutlineActions({
           </DownloadButton>
         ) : null}
         {status === "draft" && !hasDepositedOutline && !archived ? (
-          <form action={sentAction}>
-            <PendingButton
-              type="submit"
-              size="sm"
-              pending={sentPending}
-              pendingLabel="Enregistrement…"
-            >
-              <Send aria-hidden />
-              Marquer comme envoyée
-            </PendingButton>
-          </form>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <PendingButton
+                type="button"
+                size="sm"
+                pending={sentPending}
+                pendingLabel="Enregistrement…"
+              >
+                <Send aria-hidden />
+                Marquer comme envoyée
+              </PendingButton>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Tu as bien envoyé la progression à l’école ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Les rappels J-15 et J-7 s’arrêtent, et ça ne se défait pas. Si tu ne l’as pas
+                  encore envoyée, télécharge le PDF et envoie-le d’abord.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Pas encore</AlertDialogCancel>
+                <AlertDialogAction onClick={() => startSent(() => sentAction())}>
+                  Oui, je l’ai envoyée
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : null}
         {status === "sent" ? (
-          <form action={valAction}>
-            <PendingButton
-              type="submit"
-              size="sm"
-              pending={valPending}
-              pendingLabel="Enregistrement…"
-            >
-              <CheckCheck aria-hidden />
-              Marquer comme validée
-            </PendingButton>
-          </form>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <PendingButton
+                type="button"
+                size="sm"
+                pending={valPending}
+                pendingLabel="Enregistrement…"
+              >
+                <CheckCheck aria-hidden />
+                Marquer comme validée
+              </PendingButton>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>L’école a bien validé la progression ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tu ne pourras pas revenir en arrière une fois validée.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Pas encore</AlertDialogCancel>
+                <AlertDialogAction onClick={() => startValidated(() => valAction())}>
+                  Oui, elle est validée
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : null}
       </div>
       {hasDepositedOutline && !archived ? (
@@ -103,11 +146,12 @@ export function OutlineActions({
           La progression déposée reste la version envoyée à l’école.
         </p>
       ) : null}
-      {error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {error}
-        </p>
-      ) : null}
+      <div aria-live="polite">
+        {sentState.done ? (
+          <Celebration>Progression envoyée. Les rappels s’arrêtent : bien joué.</Celebration>
+        ) : null}
+      </div>
+      {error ? <ActionError error={error} /> : null}
     </div>
   );
 }

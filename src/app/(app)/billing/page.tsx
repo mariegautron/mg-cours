@@ -37,7 +37,7 @@ export default async function BillingPage() {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Aucun module</EmptyTitle>
-            <EmptyDescription>Créez un module pour préparer sa facturation.</EmptyDescription>
+            <EmptyDescription>Crée un module pour préparer sa facturation.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>

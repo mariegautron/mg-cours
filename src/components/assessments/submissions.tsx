@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { saveSubmission } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/submissions-action";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
@@ -68,11 +69,7 @@ function Row({
       <div role="status" aria-live="polite">
         {state.message ? <p className="mt-1 text-sm">{state.message}</p> : null}
       </div>
-      {state.error ? (
-        <p role="alert" className="text-destructive mt-1 text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} className="mt-1" /> : null}
     </li>
   );
 }

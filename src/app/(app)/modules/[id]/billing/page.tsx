@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { CircleAlert, CircleCheck } from "lucide-react";
 
 import { GenerateInvoiceButton, InvoiceActions } from "@/components/billing/invoice-actions";
+import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
+import { Celebration } from "@/components/celebration";
 import { Badge } from "@/components/ui/badge";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { ExternalInvoicePaid } from "@/components/billing/external-invoice-paid";
@@ -66,6 +68,15 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
           </Link>
         </p>
       </div>
+
+      {(invoice?.status === "paid" || mod.iceberg_state === "paid") && !mod.archived_at ? (
+        // Fin du parcours iceberg : facture payée. Un état de fin sobre, avec la suite logique.
+        <Celebration
+          action={<ArchiveModuleButton id={id} archived={false} compact name={mod.name} />}
+        >
+          Module terminé. Tu peux l’archiver.
+        </Celebration>
+      ) : null}
 
       {invoice ? (
         <section aria-labelledby="invoice" className="space-y-4 rounded-lg border p-4">
@@ -182,8 +193,8 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
             Facture émise hors application
           </h2>
           <p className="text-muted-foreground text-sm">
-            Facture faite avec un autre outil : déposez le PDF pour le conserver ici, puis marquez
-            le module comme payé une fois réglé.
+            Facture faite avec un autre outil : dépose le PDF pour le conserver ici, puis marque le
+            module comme payé une fois réglé.
           </p>
         </div>
         <DocumentSlot

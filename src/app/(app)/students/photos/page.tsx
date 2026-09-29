@@ -14,8 +14,8 @@ export default function ImportPhotosPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">Importer les photos (trombinoscope)</h1>
         <p className="text-muted-foreground">
-          Les photos sont privées : visibles uniquement par vous, jamais dans les exports, e-mails
-          ou présentations.
+          Les photos sont privées : visibles uniquement par toi, jamais dans les exports, e-mails ou
+          présentations.
         </p>
       </div>
       <PhotosImportForm />

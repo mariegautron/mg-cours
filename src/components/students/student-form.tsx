@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { StudentFormState } from "@/app/(app)/students/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { schoolYearLabel } from "@/lib/students/groups";
 import { currentSchoolYear, schoolYearOptions, type StudentYear } from "@/lib/students/years";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: StudentFormState, formData: FormData) => Promise<StudentFormState>;
 
@@ -41,7 +43,7 @@ export function StudentForm({
   const [promo, setPromo] = useState(promoByYear.get(currentSchoolYear()) ?? "");
 
   return (
-    <form action={formAction} className="max-w-xl space-y-6">
+    <form onSubmit={keepFormValues(formAction)} className="max-w-xl space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="firstName">Prénom</Label>
@@ -128,11 +130,7 @@ export function StudentForm({
         </div>
       </div>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
 
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

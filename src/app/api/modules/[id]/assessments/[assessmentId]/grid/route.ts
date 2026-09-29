@@ -21,7 +21,7 @@ export async function GET(
   if (!assessment.grading_grid) return new Response("Aucune grille choisie", { status: 409 });
   // Un sujet « à construire » n'est pas encore destiné aux étudiant·es.
   if (!canPresent(assessment.prep_status)) {
-    return new Response("Sujet à construire : passez-le à « Prête » avant de l’exporter", {
+    return new Response("Sujet à construire : passe-le à « Prête » avant de l’exporter", {
       status: 409,
     });
   }

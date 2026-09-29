@@ -14,7 +14,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const next = String(formData.get("next") ?? "/dashboard");
 
   if (!email || !password) {
-    return { error: "Renseignez votre e-mail et votre mot de passe." };
+    return { error: "Renseigne ton e-mail et ton mot de passe." };
   }
 
   const supabase = await createClient();

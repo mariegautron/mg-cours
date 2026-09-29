@@ -7,6 +7,7 @@ import { phraseInputSchema, type PhraseInput } from "@/lib/assessments/phrases";
 import { readCommentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface CommentFormState {
   error?: string;
@@ -33,7 +34,7 @@ export async function createComment(
     tags: parsed.data.tags,
     subject: parsed.data.subject,
   });
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/assessments/comments");
   redirect("/assessments/comments");
@@ -57,7 +58,7 @@ export async function updateComment(
       subject: parsed.data.subject,
     })
     .eq("id", id);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/assessments/comments");
   redirect("/assessments/comments");
@@ -92,7 +93,7 @@ export async function savePhrase(input: PhraseInput): Promise<SavePhraseResult> 
       .select("label")
       .eq("id", parsed.data.criterionId)
       .maybeSingle();
-    if (!criterion) return { error: "Critère introuvable." };
+    if (!criterion) return { error: NOT_FOUND.criterion };
     criterionLabel = criterion.label;
   }
 
@@ -107,7 +108,7 @@ export async function savePhrase(input: PhraseInput): Promise<SavePhraseResult> 
     })
     .select("*")
     .single();
-  if (error || !data) return { error: "Enregistrement impossible." };
+  if (error || !data) return { error: failure("enregistrer") };
 
   revalidatePath("/assessments/comments");
   return { phrase: data };

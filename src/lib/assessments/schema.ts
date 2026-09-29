@@ -7,7 +7,7 @@ export const gridSchema = z.object({
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   // Sérialisé par l'éditeur de liste de critères (voir grid-form.tsx) ; validé plus précisément
   // par `readCriteriaInput` (src/lib/assessments/grid-criteria.ts) une fois le JSON parsé.
-  criteriaJson: z.string().trim().min(1, "Ajoutez au moins un critère."),
+  criteriaJson: z.string().trim().min(1, "Ajoute au moins un critère."),
   // Axes (US-82), même principe : validé par `readAxesInput`.
   axesJson: z.string().default(""),
   confirmDeleteCriteria: z.coerce.boolean().default(false),
@@ -100,7 +100,7 @@ export const assessmentSchema = z.object({
   durationMinutes: optionalMinutes,
   studentGroupIds: z
     .array(z.string().uuid("Groupe invalide."))
-    .min(1, "Choisissez au moins un groupe.")
+    .min(1, "Choisis au moins un groupe.")
     .transform((ids) => Array.from(new Set(ids))),
   gradingGridId: z
     .string()

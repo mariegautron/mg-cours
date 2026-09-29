@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { DOCUMENT_KINDS, type DocumentKind } from "@/lib/modules/documents";
 import { advanceModule } from "@/lib/modules/advance";
 import { createClient } from "@/lib/supabase/server";
+import { failure, SESSION_EXPIRED } from "@/lib/messages";
 
 /**
  * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur
@@ -19,7 +20,7 @@ export async function registerModuleDocument(
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   if (!file.path.startsWith(`${auth.user.id}/${moduleId}/`)) return { error: "Chemin invalide." };
 
   const { error } = await supabase.from("module_document").insert({
@@ -32,7 +33,7 @@ export async function registerModuleDocument(
   });
   if (error) {
     await supabase.storage.from("module-documents").remove([file.path]);
-    return { error: "Enregistrement impossible. Réessayez." };
+    return { error: failure("enregistrer") };
   }
 
   if (kind === "outline_sent") {

@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { resultsEmailSubject, resultsEmailText } from "@/lib/assessments/results-email";
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { serverEnv } from "@/lib/env";
+import { EMAIL_NOT_ENABLED } from "@/lib/messages";
 import { ResultsDocument } from "@/lib/pdf/results";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,9 +34,9 @@ export async function sendResultsEmail(
 ): Promise<EmailState> {
   const { RESEND_API_KEY, RESEND_FROM } = serverEnv();
   if (!RESEND_API_KEY || !RESEND_FROM) {
-    return {
-      error: "L’envoi d’e-mails n’est pas configuré (RESEND_API_KEY et RESEND_FROM manquent).",
-    };
+    // La cause technique va dans les journaux du serveur, pas dans l'interface.
+    console.error("[e-mail] envoi désactivé : RESEND_API_KEY ou RESEND_FROM manquant");
+    return { error: EMAIL_NOT_ENABLED };
   }
 
   const sheets = await loadResultSheets(moduleId, assessmentId);
@@ -62,9 +63,10 @@ export async function sendResultsEmail(
         attachments: [{ filename: "resultats.pdf", content: pdf }],
       });
       if (error) {
+        console.error(`[e-mail] échec de l’envoi à ${r.name}`, error);
         if (sent > 0) await recordSent(moduleId, assessmentId);
         return {
-          error: `L’envoi à ${r.name} a échoué (${error.message}). ${sent} e-mail${sent > 1 ? "s" : ""} déjà parti${sent > 1 ? "s" : ""} : ne relance pas tout l’envoi sans vérifier.`,
+          error: `On n’a pas pu envoyer l’e-mail à ${r.name}. ${sent} e-mail${sent > 1 ? "s" : ""} déjà parti${sent > 1 ? "s" : ""} : ne relance pas tout l’envoi sans vérifier.`,
           sent,
           skipped,
         };

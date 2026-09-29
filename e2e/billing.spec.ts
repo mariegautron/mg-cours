@@ -97,6 +97,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
   await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
+  await page.getByRole("button", { name: "Oui, je l’ai envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();
 
   // Documents administratifs cochés directement sur la page Facturation (US-71).
@@ -173,6 +174,9 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await expect(page.getByText("Envoyée", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Marquer comme payée" }).click();
   await expect(page.getByText("Payée", { exact: true })).toBeVisible();
+  // Fin du parcours : jalon célébré sobrement, avec la suite logique.
+  await expect(page.getByText("Module terminé. Tu peux l’archiver.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Archiver le module" })).toBeVisible();
 
   // Vue d'ensemble.
   await page.goto("/billing");

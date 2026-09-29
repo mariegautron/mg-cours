@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, Dices } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   buildOralOrder,
   moveOralSlot,
@@ -98,7 +99,7 @@ export function OralPlan({
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Groupes volontaires</legend>
         <p className="text-muted-foreground text-sm">
-          Donnez un rang (1, 2, 3…) aux groupes qui veulent passer en premier ; les autres passent
+          Donne un rang (1, 2, 3…) aux groupes qui veulent passer en premier ; les autres passent
           dans un ordre tiré au sort.
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
@@ -191,7 +192,7 @@ export function OralPlan({
           </ol>
           {missing.length > 0 ? (
             <p role="status" className="text-sm">
-              {missing.map((g) => g.name).join(", ")} : sans créneau. Refaites l’ordre pour les
+              {missing.map((g) => g.name).join(", ")} : sans créneau. Refais l’ordre pour les
               ajouter.
             </p>
           ) : null}
@@ -237,11 +238,7 @@ export function OralPlan({
         </div>
       )}
 
-      {submitted && orderState.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {orderState.error}
-        </p>
-      ) : null}
+      {submitted && orderState.error ? <ActionError error={orderState.error} /> : null}
       {orderState.message ? (
         <p role="status" className="text-sm">
           {orderState.message}
@@ -270,11 +267,7 @@ export function OralPlan({
           Enregistrer les horaires
         </Button>
       </form>
-      {settingsState.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {settingsState.error}
-        </p>
-      ) : null}
+      {settingsState.error ? <ActionError error={settingsState.error} /> : null}
       {settingsState.message ? (
         <p role="status" className="text-sm">
           {settingsState.message}
@@ -284,11 +277,7 @@ export function OralPlan({
       <div role="status" aria-live="polite">
         {result.message ? <p className="text-sm">{result.message}</p> : null}
       </div>
-      {result.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {result.error}
-        </p>
-      ) : null}
+      {result.error ? <ActionError error={result.error} /> : null}
     </div>
   );
 }

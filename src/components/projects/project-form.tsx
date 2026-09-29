@@ -2,11 +2,13 @@
 
 import { useActionState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { saveProject } from "@/app/(app)/modules/[id]/project/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   if (!errors?.length) return null;
@@ -29,7 +31,7 @@ export function ProjectForm({
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={keepFormValues(formAction)} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="title">Titre du projet</Label>
         <Input
@@ -78,11 +80,7 @@ export function ProjectForm({
         <FieldError id="clientContextMd" errors={fe.clientContextMd} />
       </div>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {state.saved ? (
         <p role="status" className="text-sm">
           Projet enregistré.

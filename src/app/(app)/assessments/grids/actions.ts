@@ -15,6 +15,7 @@ import {
 import type { LevelInput } from "@/lib/assessments/levels";
 import { readGridForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure } from "@/lib/messages";
 
 export interface GridFormState {
   error?: string;
@@ -138,10 +139,10 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
     .insert({ name: parsed.data.name, description: parsed.data.description || null })
     .select("id")
     .single();
-  if (error || !data) return { error: "Enregistrement impossible." };
+  if (error || !data) return { error: failure("enregistrer") };
 
   const axisIds = await saveAxes(supabase, data.id, validated.axes);
-  if (!axisIds) return { error: "Enregistrement impossible." };
+  if (!axisIds) return { error: failure("enregistrer") };
 
   const { data: created, error: criteriaError } = await supabase
     .from("grid_criterion")
@@ -158,12 +159,12 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
       })),
     )
     .select("id, position");
-  if (criteriaError || !created) return { error: "Enregistrement impossible." };
+  if (criteriaError || !created) return { error: failure("enregistrer") };
 
   const levels = new Map(
     created.map((row) => [row.id, validated.criteria[row.position].levels ?? []]),
   );
-  if (!(await replaceLevels(supabase, levels))) return { error: "Enregistrement impossible." };
+  if (!(await replaceLevels(supabase, levels))) return { error: failure("enregistrer") };
 
   revalidatePath("/assessments/grids");
   redirect("/assessments/grids");
@@ -249,7 +250,7 @@ export async function updateGrid(
       const list = used.labels.map((l) => `« ${l} »`).join(", ");
       return {
         confirmRequired: true,
-        error: `${used.count} note${used.count > 1 ? "s utilisent" : " utilise"} le critère ${list} : sa suppression effacera ce détail (la note globale est conservée). Confirmez pour continuer.`,
+        error: `${used.count} note${used.count > 1 ? "s utilisent" : " utilise"} le critère ${list} : sa suppression effacera ce détail (la note globale est conservée). Confirme pour continuer.`,
       };
     }
   } else if (diff.toDelete.length) {
@@ -261,10 +262,10 @@ export async function updateGrid(
     .from("grading_grid")
     .update({ name: parsed.data.name, description: parsed.data.description || null })
     .eq("id", id);
-  if (gridError) return { error: "Enregistrement impossible." };
+  if (gridError) return { error: failure("enregistrer") };
 
   const axisIds = await saveAxes(supabase, id, validated.axes);
-  if (!axisIds) return { error: "Enregistrement impossible." };
+  if (!axisIds) return { error: failure("enregistrer") };
   const axisIdOf = (key: string | null) => (key && axisIds.get(key)) || null;
 
   const levelsByCriterion = new Map<string, LevelInput[]>();
@@ -283,7 +284,7 @@ export async function updateGrid(
         is_bonus: c.isBonus,
       })
       .eq("id", c.id);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
 
   if (diff.toInsert.length) {
@@ -302,7 +303,7 @@ export async function updateGrid(
         })),
       )
       .select("id, position");
-    if (error || !inserted) return { error: "Enregistrement impossible." };
+    if (error || !inserted) return { error: failure("enregistrer") };
     for (const row of inserted) {
       const source = diff.toInsert.find((c) => c.position === row.position);
       levelsByCriterion.set(row.id, source?.levels ?? []);
@@ -310,13 +311,13 @@ export async function updateGrid(
   }
 
   if (!(await replaceLevels(supabase, levelsByCriterion))) {
-    return { error: "Enregistrement impossible." };
+    return { error: failure("enregistrer") };
   }
 
   if (diff.toDelete.length) {
     await cleanupGradeScores(supabase, affectedGradeIds, diff.toDelete);
     const { error } = await supabase.from("grid_criterion").delete().in("id", diff.toDelete);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
 
   await deleteAxes(supabase, id, new Set(axisIds.values()));

@@ -125,7 +125,7 @@ export const courseSchema = z
     path: ["endTime"],
   })
   .refine((c) => !c.endTime || c.startTime, {
-    message: "Renseignez aussi l’heure de début.",
+    message: "Renseigne aussi l’heure de début.",
     path: ["startTime"],
   });
 

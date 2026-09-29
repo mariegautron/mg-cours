@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { draftsFromText, unitsToSkeleton, type ExpectationDraft } from "@/lib/modules/expectations";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface ReadExpectationsResult {
   error?: string;
@@ -24,7 +25,7 @@ export async function readExpectationsFromDocument(
 ): Promise<ReadExpectationsResult> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
 
   const { data: doc } = await supabase
     .from("module_document")
@@ -36,7 +37,7 @@ export async function readExpectationsFromDocument(
     .maybeSingle();
   if (!doc) return { error: "Aucune fiche déposée sur ce module." };
   if (doc.mime !== "application/pdf" && !/\.pdf$/i.test(doc.name)) {
-    return { error: "Seuls les PDF sont lus : collez le texte de la fiche ci-dessous." };
+    return { error: "Seuls les PDF sont lus : colle le texte de la fiche ci-dessous." };
   }
 
   const { data: file, error } = await supabase.storage.from("module-documents").download(doc.path);
@@ -46,12 +47,12 @@ export async function readExpectationsFromDocument(
   try {
     text = (await extractText(new Uint8Array(await file.arrayBuffer()), { mergePages: true })).text;
   } catch {
-    return { error: "Ce PDF n’a pas pu être lu. Collez le texte de la fiche ci-dessous." };
+    return { error: "Ce PDF n’a pas pu être lu. Colle le texte de la fiche ci-dessous." };
   }
   const drafts = draftsFromText(text);
   if (!drafts.length) {
     return {
-      error: "Aucun attendu reconnu dans ce PDF. Collez le texte ou saisissez-les à la main.",
+      error: "Aucun attendu reconnu dans ce PDF. Colle le texte ou saisis-les à la main.",
     };
   }
   return { drafts };
@@ -61,7 +62,7 @@ export async function readExpectationsFromDocument(
 export async function readExpectationsFromText(text: string): Promise<ReadExpectationsResult> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   if (text.length > 100_000) return { error: "Texte trop long." };
   const drafts = draftsFromText(text);
   if (!drafts.length) return { error: "Aucun attendu reconnu dans ce texte." };
@@ -97,13 +98,13 @@ export async function saveExpectations(
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   const { data: mod } = await supabase
     .from("module")
     .select("id, owner_id")
     .eq("id", moduleId)
     .maybeSingle();
-  if (!mod || mod.owner_id !== auth.user.id) return { error: "Module introuvable." };
+  if (!mod || mod.owner_id !== auth.user.id) return { error: NOT_FOUND.module };
 
   const { data: existing } = await supabase
     .from("module_expectation")
@@ -115,7 +116,7 @@ export async function saveExpectations(
   const removed = [...existingIds].filter((id) => !keptIds.has(id));
   if (removed.length) {
     const { error } = await supabase.from("module_expectation").delete().in("id", removed);
-    if (error) return { error: "Enregistrement impossible. Réessayez." };
+    if (error) return { error: failure("enregistrer", { kept: true }) };
   }
 
   for (const [position, r] of rows.entries()) {
@@ -130,7 +131,7 @@ export async function saveExpectations(
       r.id && existingIds.has(r.id)
         ? await supabase.from("module_expectation").update(values).eq("id", r.id)
         : await supabase.from("module_expectation").insert({ module_id: moduleId, ...values });
-    if (error) return { error: "Enregistrement impossible. Réessayez." };
+    if (error) return { error: failure("enregistrer", { kept: true }) };
   }
 
   revalidatePath(`/modules/${moduleId}`);

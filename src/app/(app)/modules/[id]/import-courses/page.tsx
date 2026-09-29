@@ -43,7 +43,7 @@ export default async function ImportCoursesPage({
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">Importer des séances d’un autre module</h1>
         <p className="text-muted-foreground">
-          Reprenez le contenu de séances déjà préparées : elles sont ajoutées à la suite de celles
+          Reprends le contenu de séances déjà préparées : elles sont ajoutées à la suite de celles
           de ce module, à préparer.
         </p>
       </div>

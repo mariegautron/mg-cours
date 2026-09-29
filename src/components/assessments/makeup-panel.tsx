@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { RotateCcw } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   prepareMakeup,
   type MakeupState,
@@ -71,11 +72,7 @@ export function MakeupPanel({ moduleId, assessmentId, excused, makeup }: MakeupP
           </PendingButton>
         </form>
       ) : null}
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
     </section>
   );
 }

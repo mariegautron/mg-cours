@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { CircleCheck } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   markExternalInvoicePaid,
   type BillingActionState,
@@ -33,11 +34,7 @@ export function ExternalInvoicePaid({ moduleId, paid }: { moduleId: string; paid
       >
         Marquer le module comme payé
       </PendingButton>
-      {state?.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state?.error ? <ActionError error={state.error} /> : null}
     </div>
   );
 }

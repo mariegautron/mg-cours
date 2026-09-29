@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ActionError } from "@/components/action-error";
 import {
   closeQuiz,
   createQuiz,
@@ -47,9 +48,7 @@ export default async function QuizPage({
   );
   const errorBox =
     typeof error === "string" ? (
-      <p role="alert" className="border-destructive text-destructive rounded-md border p-3 text-sm">
-        {error}
-      </p>
+      <ActionError error={error} className="border-destructive rounded-md border p-3" />
     ) : null;
 
   if (!quiz) {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { othersLabel } from "@/lib/ynov/trame";
 import type { ModuleExpectation } from "@/lib/modules/queries";
 
 /** Attendus de l'école sur la fiche module (US-53) : résumé et accès à la lecture / correction. */
@@ -36,7 +37,7 @@ export function ExpectationsSummary({
       </div>
       {expectations.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Aucun attendu enregistré. Lisez la fiche YNOV pour retrouver les objectifs à couvrir.
+          Aucun attendu enregistré. Lis la fiche YNOV pour retrouver les objectifs à couvrir.
         </p>
       ) : (
         <div className="space-y-1 text-sm">
@@ -50,7 +51,7 @@ export function ExpectationsSummary({
             ))}
           </ul>
           {objectives.length > 3 ? (
-            <p className="text-muted-foreground">… et {objectives.length - 3} autre(s).</p>
+            <p className="text-muted-foreground">… et {othersLabel(objectives.length - 3)}.</p>
           ) : null}
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { saveThemes } from "@/app/(app)/modules/[id]/project/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -93,11 +94,7 @@ export function ThemesEditor({
         </ul>
       )}
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {state.saved ? (
         <p role="status" className="text-sm">
           Thèmes enregistrés.

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { CourseFormState } from "@/app/(app)/modules/[id]/courses/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -15,6 +16,7 @@ import type { CourseWithResources, PickerSource } from "@/lib/modules/queries";
 import { PREP_STATUS_LABELS } from "@/lib/modules/schema";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: CourseFormState, formData: FormData) => Promise<CourseFormState>;
 
@@ -58,10 +60,12 @@ export function CourseForm({
 
   return (
     <form
-      action={formAction}
       className="max-w-2xl space-y-6"
       onChange={() => setDirty(true)}
-      onSubmit={() => setDirty(false)}
+      onSubmit={(event) => {
+        setDirty(false);
+        keepFormValues(formAction)(event);
+      }}
     >
       <div className="space-y-2">
         <Label htmlFor="title">Titre de la séance</Label>
@@ -181,11 +185,7 @@ export function CourseForm({
         <Textarea id="material" name="material" rows={2} defaultValue={course?.material ?? ""} />
       </div>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
 
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

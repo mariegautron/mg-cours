@@ -53,7 +53,7 @@ export const criteriaInputSchema = z
         };
       }),
   )
-  .min(1, "Ajoutez au moins un critère.");
+  .min(1, "Ajoute au moins un critère.");
 
 /** Lit le JSON envoyé par l'éditeur de liste (`criteriaJson`) et le valide. */
 export function readCriteriaInput(raw: string): { criteria: CriterionInput[] } | { error: string } {

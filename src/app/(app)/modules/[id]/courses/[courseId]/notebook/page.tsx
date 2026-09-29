@@ -78,7 +78,7 @@ export default async function CourseNotebookPage({
         <h1 className="text-2xl font-semibold">Carnet — {course.title}</h1>
         <p className="text-muted-foreground flex items-center gap-2 text-sm">
           <EyeOff aria-hidden className="size-4 shrink-0" />
-          Vue privée : à ouvrir sur votre téléphone ou dans une 2e fenêtre, jamais au projecteur.
+          Vue privée : à ouvrir sur ton téléphone ou dans une 2e fenêtre, jamais au projecteur.
         </p>
         <Button asChild variant="secondary" size="sm">
           <a

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { startQuiz } from "@/app/q/[token]/actions";
 import { Button } from "@/components/ui/button";
 
@@ -67,11 +68,7 @@ export function QuizStart({
       <Button type="button" onClick={start} disabled={pending}>
         {pending ? "Ouverture…" : "Commencer"}
       </Button>
-      {error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {error}
-        </p>
-      ) : null}
+      {error ? <ActionError error={error} /> : null}
     </section>
   );
 }

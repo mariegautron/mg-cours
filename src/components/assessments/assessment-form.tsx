@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { AssessmentFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: AssessmentFormState, formData: FormData) => Promise<AssessmentFormState>;
 
@@ -53,7 +55,7 @@ export function AssessmentForm({
   );
 
   return (
-    <form action={formAction} className="max-w-xl space-y-6">
+    <form onSubmit={keepFormValues(formAction)} className="max-w-xl space-y-6">
       <div className="space-y-2">
         <Label htmlFor="title">Titre</Label>
         <Input
@@ -69,7 +71,7 @@ export function AssessmentForm({
       <fieldset className="space-y-4">
         <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>
         <p className="text-muted-foreground text-sm">
-          Rien de ce qui touche à vos notes ou au carnet n’apparaît dans le sujet. Les fichiers
+          Rien de ce qui touche à tes notes ou au carnet n’apparaît dans le sujet. Les fichiers
           joints se déposent depuis la page de l’évaluation, une fois enregistrée.
         </p>
 
@@ -247,7 +249,7 @@ export function AssessmentForm({
         >
           <legend className="text-sm leading-none font-medium">Groupes</legend>
           <p className="text-muted-foreground text-sm">
-            Cochez tous les groupes notés sur cette évaluation : elle compte pour une seule note.
+            Coche tous les groupes notés sur cette évaluation : elle compte pour une seule note.
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {groups.map((g) => (
@@ -320,11 +322,7 @@ export function AssessmentForm({
         Note de groupe (une note par groupe coché, coefficient ×1 au lieu de ×3)
       </label>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
 
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

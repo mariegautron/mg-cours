@@ -46,7 +46,7 @@ const optionalText = (max: number) =>
 
 export const observationSchema = z.object({
   studentId: z.uuid("Étudiant·e invalide."),
-  tag: z.enum(TAG_VALUES, "Choisissez une étiquette."),
+  tag: z.enum(TAG_VALUES, "Choisis une étiquette."),
   note: optionalText(1000),
 });
 

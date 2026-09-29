@@ -4,6 +4,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import type { GridFormState } from "@/app/(app)/assessments/grids/actions";
 import {
   AlertDialog,
@@ -248,7 +249,7 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold">Axes (facultatif)</legend>
         <p className="text-muted-foreground text-sm">
-          Regroupez les critères par axe : chaque axe affiche son sous-total à la correction.
+          Regroupe les critères par axe : chaque axe affiche son sous-total à la correction.
         </p>
         {axes.length > 0 ? (
           <ul className="space-y-2">
@@ -344,11 +345,7 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
         ) : null}
       </fieldset>
 
-      {state.error && !state.confirmRequired ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error && !state.confirmRequired ? <ActionError error={state.error} /> : null}
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           Enregistrer

@@ -96,3 +96,44 @@ export function outlineAlertSummary(
   if (alerts.some((a) => a.level !== "warning")) return "pressing";
   return alerts.length ? "upcoming" : "none";
 }
+
+/** « 1 jour », « 12 jours » : l'accord réel, jamais « jour(s) ». */
+export function daysLabel(n: number): string {
+  const days = Math.abs(n);
+  return `${days} jour${days > 1 ? "s" : ""}`;
+}
+
+/** « 1 autre », « 3 autres » (liste tronquée). */
+export function othersLabel(n: number): string {
+  return `${n} autre${n > 1 ? "s" : ""}`;
+}
+
+/**
+ * Phrase d'état de la progression pédagogique (fiche module). J-7 = « urgent », J-15 =
+ * « à préparer » : le message dit les jours restants, sans coller les deux repères.
+ */
+export function trameMessage(level: TrameAlertLevel, daysUntilDue: number | null): string {
+  const days = daysUntilDue ?? 0;
+  const until = days === 0 ? "aujourd’hui" : `dans ${daysLabel(days)}`;
+  switch (level) {
+    case "sent":
+      return "Progression pédagogique envoyée.";
+    case "overdue":
+      return `Échéance dépassée depuis ${daysLabel(days)} — à envoyer sans attendre.`;
+    case "urgent":
+      return `Échéance ${until} — à envoyer rapidement.`;
+    case "warning":
+      return `Échéance ${until} — pense à la préparer.`;
+    case "ok":
+      return `Échéance ${until}.`;
+    case "unknown":
+      return "Renseigne la date de la 1re séance pour calculer l’échéance.";
+  }
+}
+
+/** Humeur de la mascotte du tableau de bord : « alert » seulement à J-7 et en retard. */
+export function alertMascotMood(
+  summary: ReturnType<typeof outlineAlertSummary>,
+): "happy" | "thinking" | "alert" {
+  return summary === "pressing" ? "alert" : summary === "upcoming" ? "thinking" : "happy";
+}

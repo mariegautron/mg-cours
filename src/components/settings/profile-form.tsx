@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { saveProfile, type SettingsFormState } from "@/app/(app)/settings/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { groupIban, parseBankDetails } from "@/lib/settings/bank";
 import { profileCompleteness } from "@/lib/settings/completeness";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 const initial: SettingsFormState = {};
 
@@ -89,7 +91,11 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
         )}
       </div>
 
-      <form action={formAction} onChange={() => setDirty(true)} className="space-y-6">
+      <form
+        onSubmit={keepFormValues(formAction)}
+        onChange={() => setDirty(true)}
+        className="space-y-6"
+      >
         <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
           <Group legend="Identité">
             <div className="space-y-2">
@@ -140,7 +146,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
                   aria-describedby={describedBy("activityNumber", true, fe.activityNumber)}
                 />
                 <Hint id="activityNumber">
-                  11 chiffres, délivré par la DREETS. Laissez vide si vous n’êtes pas organisme de
+                  11 chiffres, délivré par la DREETS. Laisse vide si tu n’es pas organisme de
                   formation.
                 </Hint>
                 <FieldError id="activityNumber" errors={fe.activityNumber} />
@@ -158,7 +164,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
                 TVA non applicable (art. 293 B du CGI)
               </label>
               <p id="vatExempt-hint" className="text-muted-foreground pl-6 text-sm">
-                La mention « TVA non applicable, art. 293 B du CGI » figurera sur vos factures.
+                La mention « TVA non applicable, art. 293 B du CGI » figurera sur tes factures.
               </p>
             </div>
             {vatExempt ? (
@@ -203,7 +209,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
 
           <Group legend="Coordonnées bancaires">
             <p className="text-muted-foreground -mt-1 text-sm">
-              Visible uniquement par vous ; reprise sur vos factures.
+              Visible uniquement par toi ; reprise sur tes factures.
             </p>
             <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
               <div className="space-y-2">
@@ -237,11 +243,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
           </Group>
         </div>
 
-        {state.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
-          </p>
-        ) : null}
+        {state.error ? <ActionError error={state.error} /> : null}
         <div className="flex flex-wrap items-center gap-3">
           <PendingButton
             type="submit"

@@ -8,6 +8,7 @@ import type { FicheData } from "@/lib/modules/fiche";
 import { pendingFichePath, type PendingFiche } from "@/lib/modules/fiche-import";
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
+import { failure } from "@/lib/messages";
 
 const LABELS: Record<keyof FicheData, string> = {
   name: "Nom",
@@ -93,7 +94,7 @@ export function FichePrefill({
     setStored(kept);
 
     if (result.error || !result.data) {
-      return setMessage({ kind: "error", text: result.error ?? "Lecture impossible." });
+      return setMessage({ kind: "error", text: result.error ?? failure("lire le fichier") });
     }
 
     onRead?.(result.data);

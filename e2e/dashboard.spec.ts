@@ -35,12 +35,12 @@ test("US-74 : une progression à J-15 est signalée, jamais « Tout est en ordre
   await page.goto("/dashboard");
   const card = page.getByRole("region", { name: "Progressions pédagogiques à envoyer" });
   // La carte n'affiche que les 5 plus pressantes : sur une base de test chargée, le module peut
-  // être résumé dans « + N autre(s) ». Le tri et les niveaux sont couverts par Vitest.
+  // être résumé dans « + N autres ». Le tri et les niveaux sont couverts par Vitest.
   const item = card.getByRole("listitem").filter({ hasText: name });
   if (await item.count()) {
     await expect(item.getByText(/^À préparer · J-1[01]$/)).toBeVisible();
   } else {
-    await expect(card.getByText(/autre\(s\)/)).toBeVisible();
+    await expect(card.getByText(/\d+ autres?/)).toBeVisible();
   }
   await expect(page.getByText(/Tout est en ordre/)).toHaveCount(0);
 

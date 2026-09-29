@@ -32,8 +32,8 @@ export default async function PresentResourcePage({
         </h1>
         <p className="text-muted-foreground">
           {resource.audience === "teacher"
-            ? `« ${resource.title} » est marquée « Enseignante uniquement » : elle n’est jamais projetée ni diffusée aux étudiant·es. Changez sa visibilité pour la présenter.`
-            : `« ${resource.title} » est encore « À construire » : elle n’est jamais projetée ni diffusée aux étudiant·es. Passez-la en « Prête » pour la présenter.`}
+            ? `« ${resource.title} » est marquée « Enseignante uniquement » : elle n’est jamais projetée ni diffusée aux étudiant·es. Change sa visibilité pour la présenter.`
+            : `« ${resource.title} » est encore « À construire » : elle n’est jamais projetée ni diffusée aux étudiant·es. Passe-la en « Prête » pour la présenter.`}
         </p>
         <Link href={`/resources/${resource.id}`} className="underline underline-offset-2">
           Retour à la ressource

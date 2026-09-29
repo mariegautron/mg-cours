@@ -15,6 +15,7 @@ import {
   type QuestionInput,
   type QuestionType,
 } from "@/lib/questions/types";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 interface ChoiceState {
   key: number;
@@ -99,7 +100,7 @@ export function QuestionForm({
         : [];
 
   return (
-    <form action={action} className="max-w-2xl space-y-6">
+    <form onSubmit={keepFormValues(action)} className="max-w-2xl space-y-6">
       {state.errors?.length ? (
         <div
           role="alert"

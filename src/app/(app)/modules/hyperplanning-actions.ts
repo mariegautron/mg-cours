@@ -3,6 +3,7 @@
 import { readPdfText } from "@/app/(app)/modules/pdf-text";
 import { parseHyperplanningServices, type HyperplanningService } from "@/lib/modules/hyperplanning";
 import { createClient } from "@/lib/supabase/server";
+import { SESSION_EXPIRED } from "@/lib/messages";
 
 export interface HyperplanningResult {
   error?: string;
@@ -14,7 +15,7 @@ export interface HyperplanningResult {
 export async function readHyperplanning(formData: FormData): Promise<HyperplanningResult> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
 
   const pdf = await readPdfText(formData.get("file"));
   if ("error" in pdf) return { error: pdf.error };

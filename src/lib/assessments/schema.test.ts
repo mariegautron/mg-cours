@@ -11,7 +11,7 @@ describe("gridSchema", () => {
     expect(parsed.success).toBe(false);
     expect(parsed.error?.flatten().fieldErrors.name).toEqual(["Le nom est obligatoire."]);
     expect(parsed.error?.flatten().fieldErrors.criteriaJson).toEqual([
-      "Ajoutez au moins un critère.",
+      "Ajoute au moins un critère.",
     ]);
   });
 
@@ -49,7 +49,7 @@ describe("readAssessmentForm", () => {
     const parsed = readAssessmentForm(form([]));
     expect(parsed.success).toBe(false);
     expect(parsed.error?.flatten().fieldErrors.studentGroupIds).toEqual([
-      "Choisissez au moins un groupe.",
+      "Choisis au moins un groupe.",
     ]);
   });
 

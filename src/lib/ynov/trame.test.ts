@@ -1,7 +1,53 @@
 import { describe, expect, it } from "vitest";
 
 import type { IcebergState } from "./iceberg";
-import { outlineAlerts, outlineAlertSummary, trameDueDate, trameStatus } from "./trame";
+import {
+  alertMascotMood,
+  daysLabel,
+  othersLabel,
+  outlineAlerts,
+  outlineAlertSummary,
+  trameDueDate,
+  trameMessage,
+  trameStatus,
+} from "./trame";
+
+describe("libellés de la progression pédagogique", () => {
+  it("accorde les jours et tutoie", () => {
+    expect(daysLabel(1)).toBe("1 jour");
+    expect(daysLabel(12)).toBe("12 jours");
+    expect(daysLabel(-3)).toBe("3 jours");
+    expect(trameMessage("warning", 12)).toBe("Échéance dans 12 jours — pense à la préparer.");
+    expect(trameMessage("warning", 1)).toBe("Échéance dans 1 jour — pense à la préparer.");
+    expect(trameMessage("overdue", -1)).toBe(
+      "Échéance dépassée depuis 1 jour — à envoyer sans attendre.",
+    );
+    expect(trameMessage("unknown", null)).toBe(
+      "Renseigne la date de la 1re séance pour calculer l’échéance.",
+    );
+  });
+
+  it("ne mélange plus J-15 et J-7 dans le message d'urgence", () => {
+    const urgent = trameMessage("urgent", 5);
+    expect(urgent).toBe("Échéance dans 5 jours — à envoyer rapidement.");
+    expect(urgent).not.toMatch(/J-15|J-7|jour\(s\)/);
+  });
+
+  it("dit « aujourd’hui » le jour même", () => {
+    expect(trameMessage("urgent", 0)).toBe("Échéance aujourd’hui — à envoyer rapidement.");
+  });
+
+  it("accorde « autre(s) »", () => {
+    expect(othersLabel(1)).toBe("1 autre");
+    expect(othersLabel(4)).toBe("4 autres");
+  });
+
+  it("réserve la mascotte « alert » à l'urgence (J-7, retard) ; J-15 la fait réfléchir", () => {
+    expect(alertMascotMood("pressing")).toBe("alert");
+    expect(alertMascotMood("upcoming")).toBe("thinking");
+    expect(alertMascotMood("none")).toBe("happy");
+  });
+});
 
 describe("trameDueDate", () => {
   it("= 1re séance − 15 jours", () => {

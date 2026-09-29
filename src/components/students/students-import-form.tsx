@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import {
   confirmStudentsImport,
   previewStudentsImport,
@@ -13,6 +14,7 @@ import { FileDropZone } from "@/components/files/file-drop-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { plural } from "@/lib/plural";
 import { schoolYearLabel } from "@/lib/students/groups";
 import { describeGroupPlan } from "@/lib/students/module-groups";
 import { currentSchoolYear, schoolYearOptions } from "@/lib/students/years";
@@ -144,11 +146,7 @@ export function StudentsImportForm({
             et casse ignorés).
           </p>
         </div>
-        {previewState.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {previewState.error}
-          </p>
-        ) : null}
+        {previewState.error ? <ActionError error={previewState.error} /> : null}
       </form>
     );
   }
@@ -172,7 +170,9 @@ export function StudentsImportForm({
         {enrollCount > 0 ? (
           <Badge variant="secondary">{enrollCount} déjà en base, à inscrire</Badge>
         ) : null}
-        {doneCount > 0 ? <Badge variant="outline">{doneCount} déjà inscrit·e·s</Badge> : null}
+        {doneCount > 0 ? (
+          <Badge variant="outline">{plural(doneCount, "déjà inscrit·e", "déjà inscrit·es")}</Badge>
+        ) : null}
         {previewState.rows.some((r) => r.errors.length > 0) ? (
           <Badge variant="destructive">
             {previewState.rows.filter((r) => r.errors.length > 0).length} en erreur
@@ -260,11 +260,7 @@ export function StudentsImportForm({
               volontaire pour réinitialiser l'état des deux useActionState (aperçu + import) */}
           <a href="/students/import">Choisir un autre fichier</a>
         </Button>
-        {confirmState.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {confirmState.error}
-          </p>
-        ) : null}
+        {confirmState.error ? <ActionError error={confirmState.error} /> : null}
       </form>
     </div>
   );

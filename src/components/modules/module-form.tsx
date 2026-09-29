@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { ModuleFormState } from "@/app/(app)/modules/actions";
 import { FichePrefill } from "@/components/modules/fiche-prefill";
 import { ScheduleEditor } from "@/components/modules/schedule-editor";
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { FicheData } from "@/lib/modules/fiche";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: ModuleFormState, formData: FormData) => Promise<ModuleFormState>;
 
@@ -42,7 +44,7 @@ export function ModuleForm({
   return (
     <>
       <FichePrefill schools={schools} formId="module-form" keepFile={!mod} onRead={setFiche} />
-      <form id="module-form" action={formAction} className="max-w-2xl space-y-6">
+      <form id="module-form" onSubmit={keepFormValues(formAction)} className="max-w-2xl space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Nom du module</Label>
@@ -224,18 +226,14 @@ export function ModuleForm({
           </div>
         </div>
 
-        {state.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
-          </p>
-        ) : null}
+        {state.error ? <ActionError error={state.error} /> : null}
 
         {mod ? null : (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium">Planning (facultatif)</legend>
             <p className="text-muted-foreground text-sm">
-              Les séances vides sont créées d’un coup, numérotées « Séance 1…N » et à préparer. Vous
-              pourrez aussi le faire plus tard depuis le module.
+              Les séances vides sont créées d’un coup, numérotées « Séance 1…N » et à préparer. Tu
+              pourras aussi le faire plus tard depuis le module.
             </p>
             <ScheduleEditor />
           </fieldset>

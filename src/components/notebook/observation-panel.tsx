@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -72,15 +73,11 @@ export function ObservationPanel({ action, students }: { action: Action; student
       <p role="status" className="min-h-5 text-sm font-medium">
         {state.message ?? ""}
       </p>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
 
       {students.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Aucun·e étudiant·e : ajoutez d’abord des membres aux groupes du module.
+          Aucun·e étudiant·e : ajoute d’abord des membres aux groupes du module.
         </p>
       ) : (
         <ul className="divide-y rounded-lg border">

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Mail } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   sendResultsEmail,
   type EmailState,
@@ -119,11 +120,7 @@ export function ResultsActions({
           </AlertDialogContent>
         </AlertDialog>
       </div>
-      {state?.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state?.error ? <ActionError error={state.error} /> : null}
       {recipients.emails === 0 ? (
         <p className="text-muted-foreground text-sm">
           Aucun·e étudiant·e noté·e n’a d’adresse e-mail : envoi impossible.

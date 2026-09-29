@@ -4,6 +4,7 @@ import { useId, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { UserMinus, UserPlus } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { addMembers, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -109,7 +110,7 @@ export function GroupMembers({
           <p className="text-muted-foreground text-sm">
             Tou·te·s les étudiant·es sont déjà dans ce groupe, ou{" "}
             <Link href="/students/new" className="underline underline-offset-2">
-              créez-en un·e
+              crée-en un·e
             </Link>
             .
           </p>
@@ -162,11 +163,7 @@ export function GroupMembers({
               {visible.length > 1 ? "s" : ""}
               {message ? ` · ${message}` : ""}
             </p>
-            {error ? (
-              <p role="alert" className="text-destructive text-sm">
-                {error}
-              </p>
-            ) : null}
+            {error ? <ActionError error={error} /> : null}
             {visible.length === 0 ? (
               <p className="text-muted-foreground text-sm">Aucun·e étudiant·e ne correspond.</p>
             ) : (

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Copy, Download, Eye } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { deleteResourceFile, registerResourceFile } from "@/app/(app)/resources/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { FileCard } from "@/components/files/file-card";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/resources/files";
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
+import { failure, SESSION_EXPIRED } from "@/lib/messages";
 
 export function ResourceFiles({
   resourceId,
@@ -48,7 +50,7 @@ export function ResourceFiles({
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       setUploading(null);
-      return setState({ error: "Session expirée." });
+      return setState({ error: SESSION_EXPIRED });
     }
     const mime = mimeOf(file);
     const path = `${auth.user.id}/${resourceId}/${crypto.randomUUID()}-${safeName(file.name)}`;
@@ -58,7 +60,7 @@ export function ResourceFiles({
       .upload(path, file, { contentType: mime });
     if (uploadError) {
       setUploading(null);
-      return setState({ error: "Dépôt impossible. Réessayez." });
+      return setState({ error: failure("déposer le fichier") });
     }
 
     const result = await registerResourceFile(resourceId, {
@@ -77,9 +79,9 @@ export function ResourceFiles({
     try {
       const src = encodeURIComponent(name).replace(/\(/g, "%28").replace(/\)/g, "%29");
       await navigator.clipboard.writeText(`![${name.replace(/[[\]]/g, "")}](${src})`);
-      setState({ status: `Syntaxe de l’image « ${name} » copiée : collez-la dans le contenu.` });
+      setState({ status: `Syntaxe de l’image « ${name} » copiée : colle-la dans le contenu.` });
     } catch {
-      setState({ error: "Copie impossible." });
+      setState({ error: failure("copier le fichier") });
     }
   }
 
@@ -135,11 +137,7 @@ export function ResourceFiles({
         busy={uploading ? `Dépôt de « ${uploading} » en cours…` : null}
         onFile={(file, input) => void upload(file, input)}
       />
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {state.status ? (
         <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
           {state.status}

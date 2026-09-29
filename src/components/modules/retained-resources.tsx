@@ -24,8 +24,8 @@ export function RetainedResources({
           <Link href="/resources" className="underline underline-offset-2">
             Ressources
           </Link>
-          , « Ajouter au module… » les met de côté ici ; elles seront proposées en premier quand
-          vous lierez une séance.
+          , « Ajouter au module… » les met de côté ici ; elles seront proposées en premier quand tu
+          lieras une séance.
         </p>
       ) : (
         <ul className="divide-y rounded-lg border">

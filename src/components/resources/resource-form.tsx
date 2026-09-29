@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { ResourceFormState } from "@/app/(app)/resources/actions";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: ResourceFormState, formData: FormData) => Promise<ResourceFormState>;
 
@@ -71,7 +73,11 @@ export function ResourceForm({
   }
 
   return (
-    <form action={formAction} onChange={() => setDirty(true)} className="max-w-4xl space-y-6">
+    <form
+      onSubmit={keepFormValues(formAction)}
+      onChange={() => setDirty(true)}
+      className="max-w-4xl space-y-6"
+    >
       <div className="space-y-2">
         <Label htmlFor="title">Titre</Label>
         <Input
@@ -128,7 +134,7 @@ export function ResourceForm({
             ))}
           </datalist>
           <p id="category-hint" className="text-muted-foreground text-sm">
-            Choisissez une matière proposée ou saisissez-en une nouvelle.
+            Choisis une matière proposée ou saisis-en une nouvelle.
           </p>
         </div>
       </div>
@@ -304,11 +310,7 @@ export function ResourceForm({
         </div>
       </div>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
 
       <div className="bg-background/95 sticky bottom-0 -mx-1 flex gap-3 border-t px-1 py-3 backdrop-blur">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

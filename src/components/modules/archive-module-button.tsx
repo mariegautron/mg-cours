@@ -11,9 +11,12 @@ export function ArchiveModuleButton({
   id,
   archived,
   compact = false,
+  name,
 }: {
   id: string;
   archived: boolean;
+  /** Nom du module, repris dans le retour d'action (« Module « Agile » archivé »). */
+  name?: string;
   /** Sans texte d'aide (ex. bandeau « module archivé »). */
   compact?: boolean;
 }) {
@@ -23,13 +26,13 @@ export function ArchiveModuleButton({
     startTransition(async () => {
       if (archived) {
         await unarchiveModule(id);
-        toast.success("Module restauré", {
+        toast.success(name ? `Module « ${name} » restauré` : "Module restauré", {
           description:
             "Il réapparaît dans le tableau de bord, la facturation et les modules actifs.",
         });
       } else {
         await archiveModule(id);
-        toast.success("Module archivé", {
+        toast.success(name ? `Module « ${name} » archivé` : "Module archivé", {
           description: "Il n’apparaît plus que dans l’onglet « Archivés » de la liste des modules.",
           action: { label: "Annuler", onClick: () => void unarchiveModule(id) },
         });

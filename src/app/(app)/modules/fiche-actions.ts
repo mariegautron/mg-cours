@@ -3,6 +3,7 @@
 import { readPdfText } from "@/app/(app)/modules/pdf-text";
 import { parseFiche, type FicheData } from "@/lib/modules/fiche";
 import { createClient } from "@/lib/supabase/server";
+import { SESSION_EXPIRED } from "@/lib/messages";
 
 export interface FicheResult {
   error?: string;
@@ -13,7 +14,7 @@ export interface FicheResult {
 export async function extractFiche(formData: FormData): Promise<FicheResult> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
 
   const pdf = await readPdfText(formData.get("file"));
   if ("error" in pdf) return { error: pdf.error };

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Dices } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   drawGroupThemes,
   setGroupTheme,
@@ -62,7 +63,7 @@ export function ThemeAssignment({
   if (groups.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        Aucun groupe de projet dans ce module : créez-les dans l’onglet Groupes.
+        Aucun groupe de projet dans ce module : crée-les dans l’onglet Groupes.
       </p>
     );
   }
@@ -152,7 +153,7 @@ export function ThemeAssignment({
       </div>
       {themes.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Ajoutez des thèmes pour pouvoir les affecter.
+          Ajoute des thèmes pour pouvoir les affecter.
         </p>
       ) : undecided > 0 ? (
         <p className="text-muted-foreground text-sm">
@@ -164,11 +165,7 @@ export function ThemeAssignment({
       <div role="status" aria-live="polite">
         {result.message ? <p className="text-sm">{result.message}</p> : null}
       </div>
-      {result.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {result.error}
-        </p>
-      ) : null}
+      {result.error ? <ActionError error={result.error} /> : null}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { readHyperplanning } from "@/app/(app)/modules/hyperplanning-actions";
 import { FileDropZone } from "@/components/files/file-drop-zone";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   type SlotMode,
 } from "@/lib/modules/hyperplanning";
 import type { ScheduleRow } from "@/lib/modules/schedule-parser";
+import { failure } from "@/lib/messages";
 
 const frDay = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("fr-FR", {
@@ -73,7 +75,7 @@ export function HyperplanningImport({
     const result = await readHyperplanning(formData);
     setPending(null);
     if (result.error || !result.services) {
-      return setError(result.error ?? "Lecture impossible.");
+      return setError(result.error ?? failure("lire le fichier"));
     }
     const found = matchServices(result.services, getModuleName());
     setParsed({
@@ -131,13 +133,7 @@ export function HyperplanningImport({
         />
       )}
 
-      <div aria-live="polite">
-        {error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        ) : null}
-      </div>
+      <div aria-live="polite">{error ? <ActionError error={error} /> : null}</div>
 
       {parsed ? (
         <div className="space-y-3 text-sm">

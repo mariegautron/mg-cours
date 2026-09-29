@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { createSkeleton } from "@/app/(app)/modules/[id]/project/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -69,7 +70,7 @@ export function SkeletonEditor({
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Toutes les évaluations du squelette existent déjà. Ajoutez-en si besoin.
+          Toutes les évaluations du squelette existent déjà. Ajoute-en si besoin.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -149,11 +150,7 @@ export function SkeletonEditor({
         {balance.message ? ` ${balance.message}` : ""}
       </p>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {state.created ? (
         <p role="status" className="text-sm">
           {state.created} évaluation{state.created > 1 ? "s créées" : " créée"}.

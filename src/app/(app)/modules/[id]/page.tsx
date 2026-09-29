@@ -51,7 +51,7 @@ import { ModuleJourney } from "@/components/modules/module-journey";
 import { isOutlineSent } from "@/lib/ynov/iceberg";
 import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import { moduleSteps } from "@/lib/ynov/module-steps";
-import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
+import { trameMessage, trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
 export async function generateMetadata({
   params,
@@ -62,15 +62,6 @@ export async function generateMetadata({
   const mod = await getModule(id);
   return { title: mod?.name ?? "Module" };
 }
-
-const TRAME_MESSAGE: Record<TrameAlertLevel, (days: number | null) => string> = {
-  sent: () => "Progression pédagogique envoyée.",
-  overdue: (d) => `Échéance dépassée depuis ${Math.abs(d ?? 0)} jour(s) — à envoyer sans attendre.`,
-  urgent: (d) => `Échéance dans ${d} jour(s) (J-15/J-7) — à envoyer rapidement.`,
-  warning: (d) => `Échéance dans ${d} jour(s) — pensez à la préparer.`,
-  ok: (d) => `Échéance dans ${d} jour(s).`,
-  unknown: () => "Renseignez la date de la 1re séance pour calculer l’échéance.",
-};
 
 const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outline" | "secondary"> =
   {
@@ -197,7 +188,7 @@ export default async function ModulePage({
         ) : (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={TRAME_VARIANT[trame.level]}>
-              {TRAME_MESSAGE[trame.level](trame.daysUntilDue)}
+              {trameMessage(trame.level, trame.daysUntilDue)}
             </Badge>
             {trame.dueDate ? (
               <span className="text-muted-foreground text-sm">
@@ -326,7 +317,7 @@ export default async function ModulePage({
         </div>
         {groups.length === 0 ? (
           <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-            Aucun groupe pour l’instant. Créez un groupe (TP, TD, projet) pour y rattacher les
+            Aucun groupe pour l’instant. Crée un groupe (TP, TD, projet) pour y rattacher les
             étudiant·es et saisir les notes.
           </p>
         ) : (
@@ -428,7 +419,9 @@ export default async function ModulePage({
           Actions
         </h2>
         <div className="space-y-6">
-          {mod.archived_at ? null : <ArchiveModuleButton id={mod.id} archived={false} />}
+          {mod.archived_at ? null : (
+            <ArchiveModuleButton id={mod.id} archived={false} name={mod.name} />
+          )}
           <ModuleDangerZone
             id={mod.id}
             year={mod.year}
@@ -568,7 +561,7 @@ export default async function ModulePage({
               tableau de bord ni dans la facturation.
             </span>
           </p>
-          <ArchiveModuleButton id={mod.id} archived compact />
+          <ArchiveModuleButton id={mod.id} archived compact name={mod.name} />
         </div>
       ) : null}
 

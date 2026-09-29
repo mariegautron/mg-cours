@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
+import { plural } from "@/lib/plural";
 import { schoolYearLabel } from "@/lib/students/groups";
 import { listScholarGroups, listStudentYears, listStudents } from "@/lib/students/queries";
 import { promotionToShow } from "@/lib/students/years";
@@ -41,7 +42,9 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Étudiants</h1>
-          <p className="text-muted-foreground">{students.length} étudiant·e·s.</p>
+          <p className="text-muted-foreground">
+            {plural(students.length, "étudiant·e", "étudiant·es")}.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="secondary">
@@ -128,7 +131,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
           <EmptyHeader>
             <EmptyTitle>Aucun·e étudiant·e</EmptyTitle>
             <EmptyDescription>
-              Ajoutez-les un·e par un·e ou importez une liste CSV/XLSX.
+              Ajoute-les un·e par un·e ou importe une liste CSV/XLSX.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

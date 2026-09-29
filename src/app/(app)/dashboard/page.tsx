@@ -12,7 +12,13 @@ import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
 import { getProfile } from "@/lib/settings/queries";
-import { outlineAlerts, outlineAlertSummary, type OutlineAlert } from "@/lib/ynov/trame";
+import {
+  alertMascotMood,
+  othersLabel,
+  outlineAlerts,
+  outlineAlertSummary,
+  type OutlineAlert,
+} from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -88,10 +94,7 @@ export default async function DashboardPage() {
                 : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
           </p>
         </div>
-        <Mascot
-          mood={summary === "none" ? "party" : "alert"}
-          className="relative size-28 sm:size-32"
-        />
+        <Mascot mood={alertMascotMood(summary)} className="relative size-28 sm:size-32" />
       </div>
 
       {sessions.length ? (
@@ -169,7 +172,7 @@ export default async function DashboardPage() {
                 </li>
               ))}
               {alerts.length > 5 ? (
-                <li className="text-muted-foreground">+ {alerts.length - 5} autre(s)</li>
+                <li className="text-muted-foreground">+ {othersLabel(alerts.length - 5)}</li>
               ) : null}
             </ul>
           )}

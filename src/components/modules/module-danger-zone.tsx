@@ -3,6 +3,7 @@
 import { useActionState, useTransition } from "react";
 import { CopyPlus, Trash2 } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import { deleteModule, duplicateModule, type DuplicateState } from "@/app/(app)/modules/actions";
 import {
   AlertDialog,
@@ -88,11 +89,7 @@ export function ModuleDangerZone({
           <CopyPlus aria-hidden />
           {dupPending ? "Duplication…" : "Dupliquer le module"}
         </Button>
-        {dupState.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {dupState.error}
-          </p>
-        ) : null}
+        {dupState.error ? <ActionError error={dupState.error} /> : null}
       </form>
       <p className="text-muted-foreground text-sm">
         Copie le module (métadonnées, cours et ressources liées, projet, thèmes, évaluations avec

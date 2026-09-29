@@ -26,7 +26,7 @@ export default async function NewAssessmentPage({
       <h1 className="text-2xl font-semibold">Nouvelle évaluation — {mod.name}</h1>
       {groups.length === 0 ? (
         <p className="text-muted-foreground">
-          Créez d’abord un groupe pour ce module (page du module → section Groupes).
+          Crée d’abord un groupe pour ce module (page du module → section Groupes).
         </p>
       ) : (
         <AssessmentForm

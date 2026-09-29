@@ -57,7 +57,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         <div>
           <h1 className="text-2xl font-semibold">Modules</h1>
           <p className="text-muted-foreground">
-            Tous vos modules, toutes écoles et toutes années confondues.
+            Tous tes modules, toutes écoles et toutes années confondues.
           </p>
         </div>
         <Button asChild>
@@ -97,8 +97,8 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
             <EmptyHeader>
               <EmptyTitle>Aucun module actif</EmptyTitle>
               <EmptyDescription>
-                {plural(archived.length, "module archivé")}. Créez un module pour la nouvelle année
-                ou retrouvez vos modules passés.
+                {plural(archived.length, "module archivé")}. Crée un module pour la nouvelle année
+                ou retrouve tes modules passés.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="flex-row flex-wrap justify-center">
@@ -114,7 +114,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           <Empty>
             <EmptyHeader>
               <EmptyTitle>Aucun module</EmptyTitle>
-              <EmptyDescription>Créez votre premier module pour commencer.</EmptyDescription>
+              <EmptyDescription>Crée ton premier module pour commencer.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
@@ -131,7 +131,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
             <EmptyHeader>
               <EmptyTitle>Aucun module archivé</EmptyTitle>
               <EmptyDescription>
-                Archivez un module depuis sa fiche une fois l’année terminée.
+                Archive un module depuis sa fiche une fois l’année terminée.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -140,7 +140,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Aucun module</EmptyTitle>
-            <EmptyDescription>Créez votre premier module pour commencer.</EmptyDescription>
+            <EmptyDescription>Crée ton premier module pour commencer.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (

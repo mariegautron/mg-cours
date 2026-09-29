@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ActionError } from "@/components/action-error";
 import { saveManualScores } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -55,11 +56,7 @@ export default async function AttemptPage({
         {grade.complete ? "" : " (partiel : il reste des réponses libres à relire)"}.
         {attempt.submitted_late ? " Copie rendue après l’heure limite." : ""}
       </p>
-      {typeof error === "string" ? (
-        <p role="alert" className="text-destructive text-sm">
-          {error}
-        </p>
-      ) : null}
+      {typeof error === "string" ? <ActionError error={error} /> : null}
       {attempt.late_answers ? (
         <p role="status" className="rounded-md border p-3 text-sm">
           L’étudiant·e a modifié sa copie après l’heure limite : ces modifications sont conservées

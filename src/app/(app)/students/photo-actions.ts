@@ -18,6 +18,7 @@ import {
   type PhotoMime,
 } from "@/lib/students/photo";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -68,7 +69,7 @@ export async function uploadStudentPhoto(
   formData: FormData,
 ): Promise<PhotoState> {
   const file = formData.get("photo");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choisissez une photo." };
+  if (!(file instanceof File) || file.size === 0) return { error: "Choisis une photo." };
   if (file.size > PHOTO_MAX_BYTES) return { error: "La photo dépasse 2 Mo." };
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -77,9 +78,9 @@ export async function uploadStudentPhoto(
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   if (!(await storePhoto(supabase, auth.user.id, studentId, bytes, check.mime))) {
-    return { error: "Enregistrement impossible. Réessayez." };
+    return { error: failure("enregistrer") };
   }
 
   revalidatePath("/students");
@@ -94,14 +95,14 @@ export async function deleteStudentPhoto(studentId: string): Promise<PhotoState>
     .select("photo_path")
     .eq("id", studentId)
     .maybeSingle();
-  if (!student) return { error: "Étudiant·e introuvable." };
+  if (!student) return { error: NOT_FOUND.student };
 
   if (student.photo_path) {
     const { error } = await supabase
       .from("student")
       .update({ photo_path: null })
       .eq("id", studentId);
-    if (error) return { error: "Suppression impossible. Réessayez." };
+    if (error) return { error: failure("supprimer la photo") };
     await supabase.storage.from(STUDENT_PHOTOS_BUCKET).remove([student.photo_path]);
   }
 
@@ -113,7 +114,7 @@ export async function deleteStudentPhoto(studentId: string): Promise<PhotoState>
 /** Zip de photos nommées par numéro étudiant (« A12345.jpg »). */
 export async function importPhotosZip(_prev: PhotoState, formData: FormData): Promise<PhotoState> {
   const zip = formData.get("zip");
-  if (!(zip instanceof File) || zip.size === 0) return { error: "Choisissez un fichier zip." };
+  if (!(zip instanceof File) || zip.size === 0) return { error: "Choisis un fichier zip." };
   if (zip.size > ZIP_MAX_BYTES) return { error: "Le zip dépasse 30 Mo." };
 
   let rejected = 0;
@@ -132,14 +133,14 @@ export async function importPhotosZip(_prev: PhotoState, formData: FormData): Pr
       },
     });
   } catch {
-    return { error: "Zip illisible. Vérifiez le fichier." };
+    return { error: "Zip illisible. Vérifie le fichier." };
   }
   if (count > ZIP_MAX_ENTRIES)
     return { error: `Le zip contient plus de ${ZIP_MAX_ENTRIES} fichiers.` };
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   const { data: students } = await supabase.from("student").select("id, student_number");
 
   const valid: { name: string; file: { bytes: Uint8Array; mime: PhotoMime } }[] = [];

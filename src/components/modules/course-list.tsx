@@ -86,7 +86,7 @@ export function CourseList({
       <div className="rounded-lg border border-dashed p-6 text-center">
         <p className="font-medium">Aucune séance pour l’instant</p>
         <p className="text-muted-foreground mt-1 text-sm">
-          Planifiez la première séance : elle alimente la progression pédagogique et les PDF Moodle.
+          Planifie la première séance : elle alimente la progression pédagogique et les PDF Moodle.
         </p>
         <Button asChild size="sm" className="mt-3">
           <Link href={`/modules/${moduleId}/courses/new`}>

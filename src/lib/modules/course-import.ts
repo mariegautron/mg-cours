@@ -87,7 +87,7 @@ export function describeImportedContent(
 
 /** « 3 séances seront ajoutées à la suite des 4 existantes (séances 5 à 7). » */
 export function describeImportPlan(count: number, existing: number): string {
-  if (count === 0) return "Cochez au moins une séance à importer.";
+  if (count === 0) return "Coche au moins une séance à importer.";
   const range =
     count > 1 ? `séances ${existing + 1} à ${existing + count}` : `séance ${existing + 1}`;
   const after = existing ? ` à la suite des ${existing} existante${existing > 1 ? "s" : ""}` : "";

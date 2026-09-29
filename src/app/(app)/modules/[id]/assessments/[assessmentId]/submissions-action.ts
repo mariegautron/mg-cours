@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { normalizeSubmissionUrl, submissionSchema } from "@/lib/projects/submission";
 import { createClient } from "@/lib/supabase/server";
+import { failure } from "@/lib/messages";
 
 export interface SubmissionState {
   error?: string;
@@ -33,7 +34,7 @@ export async function saveSubmission(
       .delete()
       .eq("assessment_id", assessmentId)
       .eq("student_group_id", groupId);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
     revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
     return { message: "Rendu retiré." };
   }
@@ -51,7 +52,7 @@ export async function saveSubmission(
     },
     { onConflict: "assessment_id,student_group_id" },
   );
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer") };
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   return { message: "Rendu enregistré." };
 }

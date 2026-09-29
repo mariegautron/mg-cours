@@ -73,7 +73,7 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
         <h1 className="mt-2 text-2xl font-semibold">Rapprochement attendus et ressources</h1>
         <p className="text-muted-foreground">
           Pour chaque attendu de l’école, les ressources dont les tags, le titre ou le contenu
-          partagent ses mots-clés. Retenez-en une, ou notez-la à construire.
+          partagent ses mots-clés. Retiens-en une, ou note-la à construire.
         </p>
       </div>
 

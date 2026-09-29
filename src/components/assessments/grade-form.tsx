@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
@@ -692,7 +693,7 @@ export function GradeForm({
         <fieldset className="space-y-1">
           <legend className="text-sm font-medium">Commentaires prédéfinis (ancien mode)</legend>
           <p className="text-muted-foreground text-xs">
-            Déjà liés à cette note ; décochez pour les retirer. Les nouvelles phrases s’insèrent
+            Déjà liés à cette note ; décoche pour les retirer. Les nouvelles phrases s’insèrent
             directement dans les commentaires.
           </p>
           <ul className="space-y-1">
@@ -718,18 +719,14 @@ export function GradeForm({
         {announcement}
       </p>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {dirty ? (
         <p role="status" className="text-sm text-amber-700 dark:text-amber-400">
           Modifications non enregistrées
         </p>
       ) : state.saved ? (
         <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
-          Note enregistrée.
+          Note enregistrée. {title} est à jour.
         </p>
       ) : null}
 

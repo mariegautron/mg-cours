@@ -77,7 +77,7 @@ export function FileDropZone({
           {srLabel ? <span className="sr-only"> {srLabel}</span> : null}
         </span>
         <span className="text-muted-foreground block">
-          {compact ? "Glisser ou cliquer" : "Glissez-le ici ou cliquez pour parcourir"} · {hint}
+          {compact ? "Glisser ou cliquer" : "Glisse-le ici ou clique pour parcourir"} · {hint}
         </span>
       </span>
       <input

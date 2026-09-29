@@ -273,8 +273,8 @@ export default async function AssessmentPage({
 
         {subjectParts.length === 0 && criteria.length === 0 && files.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            Aucun sujet rédigé : ouvrez « Modifier » pour ajouter l’objectif, la consigne et le
-            rendu attendu.
+            Aucun sujet rédigé : ouvre « Modifier » pour ajouter l’objectif, la consigne et le rendu
+            attendu.
           </p>
         ) : null}
 
@@ -351,7 +351,7 @@ export default async function AssessmentPage({
       />
 
       {targets.length === 0 ? (
-        <p className="text-muted-foreground">Aucun groupe visé : modifiez l’évaluation.</p>
+        <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
       ) : (
         <GradingSession
           sections={sections}

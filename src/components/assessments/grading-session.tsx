@@ -5,6 +5,7 @@ import { useCallback, useId, useRef, useState } from "react";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { GradeForm, type CopyControls } from "@/components/assessments/grade-form";
 import type { MemberOverride } from "@/lib/assessments/attendance";
+import { Celebration } from "@/components/celebration";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { GridWithCriteria } from "@/lib/assessments/queries";
@@ -101,6 +102,12 @@ export function GradingSession({
     ),
   );
   useUnsavedChangesGuard(progress.dirty > 0);
+  // Jalon : toutes les copies corrigées et enregistrées. On ne fête que le passage de « il en reste »
+  // à « tout est corrigé » pendant cette visite, pas une évaluation déjà terminée à l'ouverture.
+  const complete = progress.total > 0 && progress.done === progress.total && progress.dirty === 0;
+  const [wasIncomplete, setWasIncomplete] = useState(!complete);
+  if (!complete && !wasIncomplete) setWasIncomplete(true);
+  const celebrate = complete && wasIncomplete;
 
   function saveAll() {
     for (const copy of controls.current.values()) {
@@ -156,6 +163,11 @@ export function GradingSession({
           <Button type="button" size="sm" disabled={progress.dirty === 0} onClick={saveAll}>
             Enregistrer tout
           </Button>
+        </div>
+        <div aria-live="polite">
+          {celebrate ? (
+            <Celebration>Tout est corrigé. Tu peux envoyer les résultats.</Celebration>
+          ) : null}
         </div>
 
         {canFocusCriterion ? (

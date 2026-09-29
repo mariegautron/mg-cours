@@ -51,3 +51,15 @@ Limites honnêtes : axe détecte ~30-40 % des critères RGAA ; il ne remplace pa
 facture) ne sont pas audités en accessibilité (PDF/UA) — hors périmètre MVP.
 Le design « ludique & coloré » est appliqué (`DESIGN.md`) : axe passe à 0 violation sur 12 écrans dans les
 deux thèmes (`e2e/design.spec.ts`). Toute nouvelle couleur doit être revérifiée en AA.
+
+## Messages et états (audit UX du 29/09)
+
+- **Annonces** : la coque n'a qu'une zone d'annonce de navigation (`aria-live="polite"`, « Chargement… ») ; les
+  pages gardent leurs propres `role="status"` (compteurs, enregistrements). Un retour d'action ne doit jamais
+  ajouter un second `role="status"` ambigu : utiliser un conteneur `aria-live="polite"` (`DownloadButton`,
+  `Celebration`).
+- **Attente** : `PendingButton` (`aria-busy`, libellé « Archivage… », focus conservé, rotation neutralisée sous
+  `prefers-reduced-motion`) plutôt que `disabled`, qui fait quitter le bouton de l'ordre de tabulation.
+- **Erreurs** : `role="alert"` (`ActionError`), cause simple et issue en lien ; « Ta saisie est conservée »
+  seulement si le formulaire garde ses champs (`keepFormValues`).
+- **Page introuvable / erreur** : titre `h1` qui reçoit le focus (erreur), issue claire, sans écran technique.

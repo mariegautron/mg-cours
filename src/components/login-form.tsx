@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { ActionError } from "@/components/action-error";
 import { login, type LoginState } from "@/app/login/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
@@ -20,7 +21,7 @@ export function LoginForm() {
     <Card className="halo w-full max-w-sm">
       <CardHeader>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Bienvenue</h1>
-        <CardDescription>Connexion à votre espace pédagogique.</CardDescription>
+        <CardDescription>Connexion à ton espace pédagogique.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
@@ -39,11 +40,7 @@ export function LoginForm() {
               required
             />
           </div>
-          {state.error ? (
-            <p role="alert" className="text-destructive text-sm">
-              {state.error}
-            </p>
-          ) : null}
+          {state.error ? <ActionError error={state.error} /> : null}
           <PendingButton
             type="submit"
             className="w-full"

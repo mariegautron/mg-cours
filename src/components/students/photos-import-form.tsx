@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { importPhotosZip, type PhotoState } from "@/app/(app)/students/photo-actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +23,7 @@ export function PhotosImportForm() {
       <PendingButton type="submit" pending={pending} pendingLabel="Import…">
         Importer les photos
       </PendingButton>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       <p role="status" className="text-sm">
         {state.message ?? ""}
       </p>

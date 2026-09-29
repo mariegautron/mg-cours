@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { failure, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface RetainState {
   error?: string;
@@ -14,14 +15,14 @@ export interface RetainState {
 export async function retainResource(moduleId: string, resourceId: string): Promise<RetainState> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
 
   // Module et ressource doivent appartenir à l'utilisatrice connectée (la RLS ne renvoie rien sinon).
   const [{ data: mod }, { data: resource }] = await Promise.all([
     supabase.from("module").select("id, name").eq("id", moduleId).maybeSingle(),
     supabase.from("resource").select("id").eq("id", resourceId).maybeSingle(),
   ]);
-  if (!mod || !resource) return { error: "Module ou ressource introuvable." };
+  if (!mod || !resource) return { error: "Ce module ou cette ressource n’existe plus." };
 
   const { error } = await supabase
     .from("module_resource")
@@ -29,7 +30,7 @@ export async function retainResource(moduleId: string, resourceId: string): Prom
       { module_id: moduleId, resource_id: resourceId },
       { onConflict: "module_id,resource_id", ignoreDuplicates: true },
     );
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer") };
 
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath("/resources");
@@ -55,6 +56,6 @@ export async function addResourceToModule(
   formData: FormData,
 ): Promise<RetainState> {
   const moduleId = String(formData.get("moduleId") ?? "");
-  if (!moduleId) return { error: "Choisissez un module." };
+  if (!moduleId) return { error: "Choisis un module." };
   return retainResource(moduleId, resourceId);
 }

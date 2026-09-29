@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Download, Eye } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   deleteModuleDocument,
   registerModuleDocument,
@@ -16,6 +17,7 @@ import type { DocumentKind } from "@/lib/modules/documents";
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/db";
+import { failure, SESSION_EXPIRED } from "@/lib/messages";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const EXTENSIONS = /\.(pdf|docx?|odt)$/i;
@@ -52,7 +54,7 @@ export function DocumentSlot({
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       setUploading(null);
-      return setState({ error: "Session expirée." });
+      return setState({ error: SESSION_EXPIRED });
     }
     const mime = mimeOf(file);
     const path = `${auth.user.id}/${moduleId}/${crypto.randomUUID()}-${safeName(file.name)}`;
@@ -62,7 +64,7 @@ export function DocumentSlot({
       .upload(path, file, { contentType: mime });
     if (uploadError) {
       setUploading(null);
-      return setState({ error: "Dépôt impossible. Réessayez." });
+      return setState({ error: failure("déposer le fichier") });
     }
 
     const result = await registerModuleDocument(moduleId, kind, {
@@ -143,11 +145,7 @@ export function DocumentSlot({
         onFile={(file, input) => void upload(file, input)}
       />
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       {state.saved ? (
         <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
           Document déposé.

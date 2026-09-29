@@ -93,7 +93,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Aucun commentaire</EmptyTitle>
-            <EmptyDescription>Créez-en pour gagner du temps lors des corrections.</EmptyDescription>
+            <EmptyDescription>Crée-en pour gagner du temps lors des corrections.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>

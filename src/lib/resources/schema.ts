@@ -20,7 +20,7 @@ export const resourceSchema = z.object({
   content: z.string().max(100_000).optional().or(z.literal("")),
   url: z.string().trim().url("URL invalide.").optional().or(z.literal("")),
   kind: z.enum(Constants.public.Enums.resource_kind, {
-    error: "Choisissez le type de ressource.",
+    error: "Choisis le type de ressource.",
   }),
   audience: z.enum(Constants.public.Enums.resource_audience).default("students"),
   /** Matière. */

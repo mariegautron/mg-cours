@@ -40,9 +40,7 @@ export default async function GridsPage() {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Aucune grille</EmptyTitle>
-            <EmptyDescription>
-              Créez une grille pour l’appliquer à vos évaluations.
-            </EmptyDescription>
+            <EmptyDescription>Crée une grille pour l’appliquer à tes évaluations.</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>

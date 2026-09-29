@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { moveInOrder, nextPosition, renumber, type MoveDirection } from "@/lib/modules/reorder";
 import { readCourseForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface CourseFormState {
   error?: string;
@@ -67,7 +68,7 @@ export async function createCourse(
     .select("id")
     .single();
 
-  if (error || !data) return { error: "Enregistrement impossible. Réessayez." };
+  if (error || !data) return { error: failure("enregistrer", { kept: true }) };
 
   await syncResources(supabase, data.id, parsed.data.resourceIds);
 
@@ -103,7 +104,7 @@ export async function updateCourse(
     })
     .eq("id", courseId);
 
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   await syncResources(supabase, courseId, parsed.data.resourceIds);
 
@@ -141,7 +142,7 @@ export async function moveCourse(
     .order("position")
     .order("created_at");
   const ids = (data ?? []).map((c) => c.id);
-  if (!ids.includes(courseId)) return { error: "Séance introuvable." };
+  if (!ids.includes(courseId)) return { error: NOT_FOUND.course };
 
   const reordered = moveInOrder(ids, courseId, direction);
   const results = await Promise.all(
@@ -149,7 +150,7 @@ export async function moveCourse(
       supabase.from("course").update({ position }).eq("id", id).eq("module_id", moduleId),
     ),
   );
-  if (results.some((r) => r.error)) return { error: "Déplacement impossible. Réessayez." };
+  if (results.some((r) => r.error)) return { error: failure("déplacer la séance") };
 
   revalidatePath(`/modules/${moduleId}`);
   return { position: reordered.indexOf(courseId) + 1, total: ids.length };

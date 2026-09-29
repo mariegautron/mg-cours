@@ -83,7 +83,7 @@ export default async function ExpectationsPage({
             {courses.length
               ? `à la suite des ${courses.length} séance${courses.length > 1 ? "s" : ""} existante${courses.length > 1 ? "s" : ""}`
               : "le module n’a pas encore de séance"}
-            ). Un repère seulement : renommez, fusionnez ou supprimez ces séances librement.
+            ). Un repère seulement : renomme, fusionne ou supprime ces séances librement.
           </p>
           <form action={proposeSkeleton.bind(null, mod.id)}>
             <Button type="submit" variant="secondary">

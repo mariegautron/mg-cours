@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import { createResourceInline } from "@/app/(app)/resources/actions";
 import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -19,6 +20,7 @@ import {
   type PickerFilters,
 } from "@/lib/resources/picker";
 import { SEARCH_FIELD_LABELS, searchResource } from "@/lib/resources/search";
+import { failure } from "@/lib/messages";
 
 type PickerItem = LinkedResource & Partial<Pick<PickerSource, "description" | "tags" | "content">>;
 
@@ -90,7 +92,7 @@ export function ResourcePicker({
     startTransition(async () => {
       const result = await createResourceInline({ title: draftTitle, kind: draftKind });
       if (result.error || !result.resource) {
-        setError(result.error ?? "Création impossible.");
+        setError(result.error ?? failure("créer"));
         return;
       }
       const created = result.resource;
@@ -192,7 +194,7 @@ export function ResourcePicker({
 
       {items.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          Aucune ressource disponible — créez-en une ci-dessous ou depuis{" "}
+          Aucune ressource disponible — crée-en une ci-dessous ou depuis{" "}
           <Link href="/resources/new" className="underline underline-offset-2">
             Ressources
           </Link>
@@ -287,13 +289,9 @@ export function ResourcePicker({
           </PendingButton>
         </div>
         <p className="text-muted-foreground mt-2 text-sm">
-          Créée « À construire » (jamais projetée) : complétez-la ensuite dans Ressources.
+          Créée « À construire » (jamais projetée) : complète-la ensuite dans Ressources.
         </p>
-        {error ? (
-          <p role="alert" className="text-destructive mt-2 text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <ActionError error={error} className="mt-2" /> : null}
         <p aria-live="polite" className="mt-2 text-sm">
           {message}
         </p>

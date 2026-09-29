@@ -46,7 +46,7 @@ export default async function AssessmentsPage() {
           <EmptyHeader>
             <EmptyTitle>Aucune évaluation</EmptyTitle>
             <EmptyDescription>
-              Créez-en une depuis la page d’un module (onglet Évaluations).
+              Crée-en une depuis la page d’un module (onglet Évaluations).
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { setAdminDoc, type AdminDocState } from "@/app/(app)/modules/actions";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -52,11 +53,7 @@ export function AdminDocsChecklist({
       <p role="status" className="text-muted-foreground min-h-5 text-sm">
         {pending ? "Enregistrement…" : state.saved ? `Enregistré : ${state.label}.` : null}
       </p>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
     </div>
   );
 }

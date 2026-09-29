@@ -2,6 +2,7 @@
 
 import { useActionState, useTransition } from "react";
 
+import { ActionError } from "@/components/action-error";
 import {
   deleteStudentPhoto,
   uploadStudentPhoto,
@@ -55,14 +56,10 @@ export function StudentPhotoManager({
           ) : null}
         </form>
         <p className="text-muted-foreground text-sm">
-          JPEG, PNG ou WebP, 2 Mo maximum. Visible uniquement par vous : jamais dans les exports,
+          JPEG, PNG ou WebP, 2 Mo maximum. Visible uniquement par toi : jamais dans les exports,
           e-mails ou présentations.
         </p>
-        {state.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
-          </p>
-        ) : null}
+        {state.error ? <ActionError error={state.error} /> : null}
         <p role="status" className="text-sm">
           {state.message ?? ""}
         </p>

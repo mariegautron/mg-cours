@@ -16,6 +16,7 @@ import {
 } from "@/lib/assessments/attendance";
 import { readFeedback } from "@/lib/assessments/feedback";
 import { computeTotals, hasScoredInput, readScores } from "@/lib/assessments/scoring";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface AssessmentFormState {
   error?: string;
@@ -132,14 +133,14 @@ export async function createAssessment(
     .select("id")
     .single();
 
-  if (error || !data) return { error: "Enregistrement impossible." };
+  if (error || !data) return { error: failure("enregistrer", { kept: true }) };
 
   const { error: groupsError } = await supabase
     .from("assessment_group")
     .insert(groupIds.map((student_group_id) => ({ assessment_id: data.id, student_group_id })));
   if (groupsError) {
     await supabase.from("assessment").delete().eq("id", data.id);
-    return { error: "Enregistrement impossible." };
+    return { error: failure("enregistrer", { kept: true }) };
   }
 
   revalidatePath(`/modules/${moduleId}/assessments`);
@@ -202,7 +203,10 @@ export async function updateAssessment(
     })
     .eq("id", assessmentId);
 
-  if (error) return { error: `Enregistrement impossible : ${error.message}.` };
+  if (error) {
+    console.error("[évaluation] enregistrement impossible", error);
+    return { error: failure("enregistrer l’évaluation", { kept: true }) };
+  }
 
   const { data: current } = await supabase
     .from("assessment_group")
@@ -216,7 +220,7 @@ export async function updateAssessment(
     const { error: addError } = await supabase
       .from("assessment_group")
       .insert(added.map((student_group_id) => ({ assessment_id: assessmentId, student_group_id })));
-    if (addError) return { error: "Enregistrement impossible." };
+    if (addError) return { error: failure("enregistrer", { kept: true }) };
   }
   if (removed.length) {
     // Les notes de groupe des groupes retirés disparaissent (sinon elles compteraient encore) ;
@@ -233,7 +237,7 @@ export async function updateAssessment(
         .eq("assessment_id", assessmentId)
         .in("student_group_id", removed),
     ]);
-    if (removeError || gradeError) return { error: "Enregistrement impossible." };
+    if (removeError || gradeError) return { error: failure("enregistrer", { kept: true }) };
   }
 
   revalidatePath(`/modules/${moduleId}/assessments`);
@@ -282,7 +286,7 @@ async function saveGrade(
     )
     .eq("id", assessmentId)
     .maybeSingle();
-  if (!assessment) return { error: "Évaluation introuvable." };
+  if (!assessment) return { error: NOT_FOUND.assessment };
 
   const grid = assessment.grading_grid as {
     grid_criterion: { id: string; weight: number; axis_id: string | null; is_bonus: boolean }[];
@@ -315,7 +319,7 @@ async function saveGrade(
   } else {
     const raw = formData.get("value");
     const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;
-    if (!Number.isFinite(num)) return { error: "Saisissez une note." };
+    if (!Number.isFinite(num)) return { error: "Saisis une note." };
     const maxScore = assessment.max_score ?? 20;
     if (num < 0 || num > maxScore) {
       return { error: `La note doit être comprise entre 0 et ${maxScore}.` };
@@ -364,7 +368,7 @@ async function saveGrade(
   const saved = existing
     ? await supabase.from("grade").update(row).eq("id", existing.id).select("id").single()
     : await supabase.from("grade").insert(row).select("id").single();
-  if (saved.error || !saved.data) return { error: "Enregistrement impossible." };
+  if (saved.error || !saved.data) return { error: failure("enregistrer") };
 
   if (memberOverrides && "overrides" in memberOverrides) {
     const gradeId = saved.data.id;
@@ -372,7 +376,7 @@ async function saveGrade(
       .from("group_grade_member")
       .delete()
       .eq("grade_id", gradeId);
-    if (clearError) return { error: "Enregistrement impossible." };
+    if (clearError) return { error: failure("enregistrer") };
     if (memberOverrides.overrides.size > 0) {
       const { error: insertError } = await supabase.from("group_grade_member").insert(
         [...memberOverrides.overrides].map(([studentId, o]) => ({
@@ -383,7 +387,7 @@ async function saveGrade(
           justification: o.justification,
         })),
       );
-      if (insertError) return { error: "Enregistrement impossible." };
+      if (insertError) return { error: failure("enregistrer") };
     }
   }
 
@@ -423,7 +427,7 @@ export async function registerAssessmentFile(
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   if (!file.path.startsWith(`${auth.user.id}/${assessmentId}/`))
     return { error: "Chemin invalide." };
 
@@ -435,7 +439,7 @@ export async function registerAssessmentFile(
     .maybeSingle();
   if (!assessment) {
     await storage.remove([file.path]);
-    return { error: "Évaluation introuvable." };
+    return { error: NOT_FOUND.assessment };
   }
 
   const { files, replacedPath } = upsertFile(parseResourceFiles(assessment.files), {
@@ -447,7 +451,7 @@ export async function registerAssessmentFile(
   const { error } = await supabase.from("assessment").update({ files }).eq("id", assessmentId);
   if (error) {
     await storage.remove([file.path]);
-    return { error: "Enregistrement impossible. Réessayez." };
+    return { error: failure("enregistrer") };
   }
   if (replacedPath) await storage.remove([replacedPath]);
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { readGroupForm } from "@/lib/students/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface GroupFormState {
   error?: string;
@@ -37,7 +38,7 @@ export async function createGroup(
       error:
         error?.code === "23505"
           ? "Un groupe porte déjà ce nom dans ce module."
-          : "Enregistrement impossible.",
+          : failure("enregistrer"),
     };
   }
 
@@ -68,7 +69,7 @@ export async function addMembers(
 ): Promise<{ error?: string; added?: number }> {
   "use server";
   const ids = [...new Set(studentIds)].slice(0, 500);
-  if (ids.length === 0) return { error: "Sélectionnez au moins un·e étudiant·e." };
+  if (ids.length === 0) return { error: "Sélectionne au moins un·e étudiant·e." };
 
   const supabase = await createClient();
   // Le groupe doit appartenir au module et à l'utilisatrice connectée (la RLS filtre le reste).
@@ -78,13 +79,13 @@ export async function addMembers(
     .eq("id", groupId)
     .eq("module_id", moduleId)
     .maybeSingle();
-  if (!group) return { error: "Groupe introuvable." };
+  if (!group) return { error: NOT_FOUND.group };
 
   const { error } = await supabase.from("group_member").upsert(
     ids.map((student_id) => ({ student_group_id: groupId, student_id })),
     { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
   );
-  if (error) return { error: "Ajout impossible. Réessayez." };
+  if (error) return { error: failure("ajouter les membres") };
 
   revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
   revalidatePath(`/modules/${moduleId}`);

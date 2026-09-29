@@ -8,6 +8,7 @@ import {
   readObservationForm,
 } from "@/lib/notebook/notebook";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface NotebookState {
   error?: string;
@@ -44,7 +45,7 @@ export async function addObservation(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Saisie invalide." };
   const { studentId, tag, note } = parsed.data;
 
-  if (!(await courseBelongsToModule(moduleId, courseId))) return { error: "Séance introuvable." };
+  if (!(await courseBelongsToModule(moduleId, courseId))) return { error: NOT_FOUND.course };
 
   const supabase = await createClient();
   const { data: membership } = await supabase
@@ -68,7 +69,7 @@ export async function addObservation(
     tag,
     note,
   });
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer") };
 
   refresh(moduleId, courseId);
   revalidatePath(`/students/${studentId}`);
@@ -115,8 +116,8 @@ export async function saveCourseClosure(
     .eq("module_id", moduleId)
     .select("id")
     .maybeSingle();
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
-  if (!data) return { error: "Séance introuvable." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  if (!data) return { error: NOT_FOUND.course };
 
   refresh(moduleId, courseId);
   return { message: "Clôture enregistrée.", savedAt: Date.now() };

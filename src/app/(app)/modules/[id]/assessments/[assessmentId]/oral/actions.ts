@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { moveSlot, orderOral, parseClock } from "@/lib/assessments/oral";
 import { createClient } from "@/lib/supabase/server";
+import { failure } from "@/lib/messages";
 
 export interface OralState {
   error?: string;
@@ -46,14 +47,14 @@ export async function buildOralOrder(
     .select("id", { count: "exact", head: true })
     .eq("assessment_id", assessmentId);
   if ((count ?? 0) > 0 && !confirm) {
-    return { error: "Un ordre existe déjà : confirmez pour le refaire." };
+    return { error: "Un ordre existe déjà : confirme pour le refaire." };
   }
 
   const ranks = groupIds
     .map((id) => ({ id, rank: Number(String(formData.get(`rank-${id}`) ?? "").trim()) }))
     .filter((r) => Number.isInteger(r.rank) && r.rank > 0);
   if (new Set(ranks.map((r) => r.rank)).size !== ranks.length) {
-    return { error: "Deux volontaires ont le même rang : donnez à chacun un rang différent." };
+    return { error: "Deux volontaires ont le même rang : donne à chacun un rang différent." };
   }
   const volunteers = ranks.sort((a, b) => a.rank - b.rank).map((r) => r.id);
 
@@ -62,7 +63,7 @@ export async function buildOralOrder(
 
   if ((count ?? 0) > 0) {
     const { error } = await supabase.from("oral_slot").delete().eq("assessment_id", assessmentId);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
   const { error } = await supabase.from("oral_slot").insert(
     order.map((o, i) => ({
@@ -73,7 +74,7 @@ export async function buildOralOrder(
       order_seed: seed,
     })),
   );
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer") };
 
   refresh(moduleId, assessmentId);
   return {
@@ -101,7 +102,7 @@ export async function saveOralSettings(
     .from("assessment")
     .update({ oral_start_time: startRaw || null, duration_minutes: duration })
     .eq("id", assessmentId);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer") };
 
   refresh(moduleId, assessmentId);
   return { message: "Horaires enregistrés." };
@@ -123,7 +124,7 @@ export async function setSlotDuration(
     .update({ duration_minutes: minutes })
     .eq("id", slotId)
     .eq("assessment_id", assessmentId);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer") };
   refresh(moduleId, assessmentId);
   return { message: "Durée enregistrée." };
 }
@@ -153,7 +154,7 @@ export async function moveOralSlot(
         .eq("id", s.id),
     ),
   );
-  if (results.some((r) => r.error)) return { error: "Enregistrement impossible." };
+  if (results.some((r) => r.error)) return { error: failure("enregistrer") };
   refresh(moduleId, assessmentId);
   return { message: "Ordre modifié." };
 }
@@ -171,7 +172,7 @@ export async function setSlotStatus(
     .update({ status })
     .eq("id", slotId)
     .eq("assessment_id", assessmentId);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer") };
   refresh(moduleId, assessmentId);
   return {};
 }

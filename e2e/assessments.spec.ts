@@ -83,7 +83,9 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
     .analyze();
   expect(dialogAxe.violations).toEqual([]);
   await dialog.getByRole("button", { name: "Envoyer à 1 destinataire" }).click();
-  await expect(page.getByText(/Envoi d’e-mails non configuré/)).toBeVisible();
+  await expect(page.getByText(/L’envoi d’e-mails n’est pas encore activé/)).toBeVisible();
+  // Aucune variable d'environnement dans l'interface : la cause technique reste dans les journaux.
+  await expect(page.getByText(/RESEND_/)).toHaveCount(0);
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

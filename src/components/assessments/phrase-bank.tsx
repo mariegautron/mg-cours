@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition, type RefObject } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { recordPhraseUse, savePhrase } from "@/app/(app)/assessments/comments/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -16,6 +17,7 @@ import {
   type CriterionFilter,
   type Phrase,
 } from "@/lib/assessments/phrases";
+import { failure } from "@/lib/messages";
 
 const VISIBLE = 6;
 
@@ -140,7 +142,7 @@ export function PhraseBank<T extends Phrase>({
         category: draft.category,
       });
       if (result.error || !result.phrase) {
-        setError(result.error ?? "Enregistrement impossible.");
+        setError(result.error ?? failure("enregistrer"));
         return;
       }
       setList((prev) => [result.phrase as Phrase, ...prev]);
@@ -297,11 +299,7 @@ export function PhraseBank<T extends Phrase>({
               </select>
             </div>
           </div>
-          {error ? (
-            <p role="alert" className="text-destructive text-sm">
-              {error}
-            </p>
-          ) : null}
+          {error ? <ActionError error={error} /> : null}
           <div className="flex gap-2">
             <PendingButton
               type="button"

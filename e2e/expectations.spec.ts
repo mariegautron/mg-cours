@@ -57,7 +57,7 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
   await page.goto(`${moduleUrl}/expectations`);
   await expect(page.getByRole("link", { name: /Ouvrir le PDF d’origine/ })).toBeVisible();
   await page.getByRole("button", { name: /Lire « fiche-ynov\.pdf »/ }).click();
-  await expect(page.getByText(/2 objectif\(s\) et 2 unité\(s\) lus/)).toBeVisible();
+  await expect(page.getByText(/2 objectifs et 2 unités lus/)).toBeVisible();
   await expect(page.getByLabel("Objectif 1", { exact: true })).toHaveValue(
     "Recueillir un besoin client",
   );

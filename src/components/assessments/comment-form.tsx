@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { CommentFormState } from "@/app/(app)/assessments/comments/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Tables } from "@/types/db";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: CommentFormState, formData: FormData) => Promise<CommentFormState>;
 
@@ -30,7 +32,7 @@ export function CommentForm({
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={formAction} className="max-w-xl space-y-6">
+    <form onSubmit={keepFormValues(formAction)} className="max-w-xl space-y-6">
       <div className="space-y-2">
         <Label htmlFor="text">Texte</Label>
         <Textarea id="text" name="text" rows={3} required defaultValue={comment?.text ?? ""} />
@@ -81,11 +83,7 @@ export function CommentForm({
           />
         </div>
       </div>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           Enregistrer

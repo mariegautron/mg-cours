@@ -19,7 +19,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <div>
         <h1 className="text-2xl font-semibold">Réglages</h1>
         <p className="text-muted-foreground">
-          Vos informations administratives et les écoles avec lesquelles vous travaillez.
+          Tes informations administratives et les écoles avec lesquelles tu travailles.
         </p>
       </div>
 
@@ -41,7 +41,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             <h2 id="schools" className="text-lg font-medium">
               Écoles
             </h2>
-            <p className="text-muted-foreground text-sm">Les écoles que vous facturez.</p>
+            <p className="text-muted-foreground text-sm">Les écoles que tu factures.</p>
           </div>
           <Button asChild variant="secondary">
             <Link href="/settings/schools/new">

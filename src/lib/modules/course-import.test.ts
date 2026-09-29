@@ -97,7 +97,7 @@ describe("describeImportedContent", () => {
 
 describe("describeImportPlan", () => {
   it("annonce le nombre et les numéros", () => {
-    expect(describeImportPlan(0, 2)).toBe("Cochez au moins une séance à importer.");
+    expect(describeImportPlan(0, 2)).toBe("Coche au moins une séance à importer.");
     expect(describeImportPlan(1, 0)).toBe("1 séance sera ajoutée (séance 1).");
     expect(describeImportPlan(3, 4)).toBe(
       "3 séances seront ajoutées à la suite des 4 existantes (séances 5 à 7).",

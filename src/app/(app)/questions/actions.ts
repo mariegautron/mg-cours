@@ -27,10 +27,12 @@ export async function saveQuestion(
   const supabase = await createClient();
   if (id) {
     const result = await updateQuestion(supabase, id, read.input);
-    if (result.error) return { errors: [`Enregistrement impossible : ${result.error}.`] };
+    if (result.error)
+      return { errors: [`On n’a pas pu enregistrer la question : ${result.error}.`] };
   } else {
     const result = await insertQuestion(supabase, read.input);
-    if ("error" in result) return { errors: [`Enregistrement impossible : ${result.error}.`] };
+    if ("error" in result)
+      return { errors: [`On n’a pas pu enregistrer la question : ${result.error}.`] };
     id = result.id;
   }
   revalidatePath("/questions");

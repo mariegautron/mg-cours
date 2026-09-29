@@ -14,6 +14,7 @@ import {
 import { readStudentForm } from "@/lib/students/schema";
 import { currentSchoolYear } from "@/lib/students/years";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface StudentFormState {
   error?: string;
@@ -91,7 +92,7 @@ export async function createStudent(
       error:
         error.code === "23505"
           ? "Un·e étudiant·e avec cet e-mail existe déjà."
-          : "Enregistrement impossible.",
+          : failure("enregistrer", { kept: true }),
     };
   }
 
@@ -126,7 +127,7 @@ export async function updateStudent(
       parsed.data.schoolYear ?? currentSchoolYear(),
       parsed.data.scholarGroup || null,
     );
-    if (promoError) return { error: "Enregistrement de la promotion impossible. Réessayez." };
+    if (promoError) return { error: failure("enregistrer la promotion", { kept: true }) };
   }
 
   if (error) {
@@ -134,7 +135,7 @@ export async function updateStudent(
       error:
         error.code === "23505"
           ? "Un·e étudiant·e avec cet e-mail existe déjà."
-          : "Enregistrement impossible.",
+          : failure("enregistrer", { kept: true }),
     };
   }
 
@@ -197,7 +198,7 @@ export async function previewStudentsImport(
 ): Promise<ImportPreviewState> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choisissez un fichier CSV ou XLSX." };
+    return { error: "Choisis un fichier CSV ou XLSX." };
   }
   const year = readYear(formData);
   const target = readGroupTarget(formData);
@@ -210,7 +211,7 @@ export async function previewStudentsImport(
     // on décode nous-mêmes en UTF-8 avant de parser (voir src/lib/students/import.ts).
     rows = parseStudentsFile(isCsv ? new TextDecoder("utf-8").decode(buffer) : buffer);
   } catch {
-    return { error: "Fichier illisible. Vérifiez le format (CSV ou XLSX)." };
+    return { error: "Fichier illisible. Vérifie le format (CSV ou XLSX)." };
   }
 
   if (rows.length === 0) return { error: "Le fichier ne contient aucune ligne." };
@@ -223,7 +224,7 @@ export async function previewStudentsImport(
       supabase.from("module").select("name").eq("id", target.moduleId).maybeSingle(),
       supabase.from("student_group").select("name").eq("module_id", target.moduleId),
     ]);
-    if (!mod) return { error: "Module introuvable." };
+    if (!mod) return { error: NOT_FOUND.module };
     moduleName = mod.name;
     groupPlan = planGroupImport(
       rows.filter((r) => r.errors.length === 0),
@@ -294,7 +295,7 @@ export async function confirmStudentsImport(
   formData: FormData,
 ): Promise<ImportConfirmState> {
   const raw = formData.get("rows");
-  if (typeof raw !== "string") return { error: "Import invalide. Recommencez." };
+  if (typeof raw !== "string") return { error: "Import invalide. Recommence." };
   const year = readYear(formData);
   const target = readGroupTarget(formData);
 
@@ -302,7 +303,7 @@ export async function confirmStudentsImport(
   try {
     rows = JSON.parse(raw);
   } catch {
-    return { error: "Import invalide. Recommencez." };
+    return { error: "Import invalide. Recommence." };
   }
 
   const validRows = rows.filter((r) => r.errors.length === 0);
@@ -335,7 +336,7 @@ export async function confirmStudentsImport(
       )
       .select("id");
     if (error || !created || created.length !== newRows.length) {
-      return { error: "Import impossible. Réessayez." };
+      return { error: failure("importer les étudiant·es") };
     }
     createdIds.push(...created.map((s) => s.id));
     created.forEach((s, i) =>
@@ -371,7 +372,7 @@ export async function confirmStudentsImport(
     const { error } = await supabase
       .from("student_year")
       .upsert(enrollments, { onConflict: "student_id,year" });
-    if (error) return { error: "Inscription à l’année impossible. Réessayez." };
+    if (error) return { error: failure("inscrire les étudiant·es à l’année") };
   }
 
   // US-77 : groupes du module (créés au besoin) puis appartenances, recalculés côté serveur.
@@ -383,7 +384,7 @@ export async function confirmStudentsImport(
       supabase.from("module").select("id, name").eq("id", target.moduleId).maybeSingle(),
       supabase.from("student_group").select("id, name").eq("module_id", target.moduleId),
     ]);
-    if (!mod) return { error: "Module introuvable." };
+    if (!mod) return { error: NOT_FOUND.module };
     moduleName = mod.name;
 
     const plan = planGroupImport(validRows, target, groups ?? []);
@@ -396,7 +397,7 @@ export async function confirmStudentsImport(
           toCreate.map((name) => ({ module_id: target.moduleId!, name, type: "tp" as const })),
         )
         .select("id, name");
-      if (error || !made) return { error: "Création des groupes impossible. Réessayez." };
+      if (error || !made) return { error: failure("créer les groupes") };
       for (const g of made) idByGroup.set(g.name, g.id);
       groupsCreated = made.length;
     }
@@ -414,7 +415,7 @@ export async function confirmStudentsImport(
       const { error } = await supabase
         .from("group_member")
         .upsert(links, { onConflict: "student_group_id,student_id", ignoreDuplicates: true });
-      if (error) return { error: "Ajout aux groupes impossible. Réessayez." };
+      if (error) return { error: failure("ajouter aux groupes") };
     }
     memberships = links.length;
     revalidatePath(`/modules/${target.moduleId}`);

@@ -4,6 +4,7 @@ import { useActionState, useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   readExpectationsFromDocument,
   readExpectationsFromText,
@@ -22,6 +23,9 @@ import {
 } from "@/lib/modules/expectations";
 import { normalizeSearch } from "@/lib/resources/picker";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
+import { plural } from "@/lib/plural";
+import { keepFormValues } from "@/lib/use-kept-form";
+import { failure } from "@/lib/messages";
 
 interface Row {
   key: string;
@@ -91,7 +95,7 @@ export function ExpectationsEditor({
 
   const applyRead = (result: ReadExpectationsResult) => {
     if (result.error || !result.drafts) {
-      setError(result.error ?? "Lecture impossible.");
+      setError(result.error ?? failure("lire le fichier"));
       setNotice("");
       return;
     }
@@ -108,7 +112,7 @@ export function ExpectationsEditor({
       );
     });
     setNotice(
-      `${drafts.filter((d) => d.kind === "objective").length} objectif(s) et ${drafts.filter((d) => d.kind === "unit").length} unité(s) lus. Vérifiez, corrigez, puis enregistrez.`,
+      `${plural(drafts.filter((d) => d.kind === "objective").length, "objectif")} et ${plural(drafts.filter((d) => d.kind === "unit").length, "unité")} lus. Vérifie, corrige, puis enregistre.`,
     );
   };
 
@@ -220,14 +224,14 @@ export function ExpectationsEditor({
             </a>
             {!document.readable ? (
               <span className="text-muted-foreground text-sm">
-                Ce fichier n’est pas un PDF : collez son texte ci-dessous.
+                Ce fichier n’est pas un PDF : colle son texte ci-dessous.
               </span>
             ) : null}
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Aucune fiche déposée. Déposez-la dans « Attendus de l’école » (onglet Administratif) ou
-            collez son texte ci-dessous.
+            Aucune fiche déposée. Dépose-la dans « Attendus de l’école » (onglet Administratif) ou
+            colle son texte ci-dessous.
           </p>
         )}
         <div className="space-y-2">
@@ -255,14 +259,16 @@ export function ExpectationsEditor({
         <p aria-live="polite" className="text-sm">
           {notice}
         </p>
-        {error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        ) : null}
+        {error ? <ActionError error={error} /> : null}
       </section>
 
-      <form action={formAction} className="space-y-6" onSubmit={() => setDirty(false)}>
+      <form
+        className="space-y-6"
+        onSubmit={(event) => {
+          setDirty(false);
+          keepFormValues(formAction)(event);
+        }}
+      >
         <input type="hidden" name="expectationsJson" value={payload} />
 
         <section aria-labelledby={`${id}-objectives`} className="space-y-3">
@@ -285,8 +291,8 @@ export function ExpectationsEditor({
             Unités pédagogiques ({units.length})
           </h2>
           <p className="text-muted-foreground text-sm">
-            Repères indicatifs : modalité et heures peuvent différer de votre progression sans
-            aucune alerte. Seul le total du module ({moduleHours} h) est contraignant.
+            Repères indicatifs : modalité et heures peuvent différer de ta progression sans aucune
+            alerte. Seul le total du module ({moduleHours} h) est contraignant.
             {units.length ? ` Les unités comptent ${indicative} h à titre indicatif.` : ""}
           </p>
           {units.length ? (
@@ -298,11 +304,7 @@ export function ExpectationsEditor({
           </Button>
         </section>
 
-        {state.error ? (
-          <p role="alert" className="text-destructive text-sm">
-            {state.error}
-          </p>
-        ) : null}
+        {state.error ? <ActionError error={state.error} /> : null}
 
         <div className="flex gap-3">
           <Button type="submit" disabled={saving}>

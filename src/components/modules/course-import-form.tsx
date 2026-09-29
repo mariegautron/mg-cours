@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { ImportCoursesState } from "@/app/(app)/modules/[id]/import-courses/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -14,6 +15,7 @@ import {
   NOT_IMPORTED_LABEL,
   type ImportableCourse,
 } from "@/lib/modules/course-import";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 const COURSE_TYPE_LABELS: Record<string, string> = {
   lecture: "Cours théorique",
@@ -51,7 +53,7 @@ export function CourseImportForm({
     });
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={keepFormValues(formAction)} className="space-y-4">
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">Séances de « {sourceName} » à importer</legend>
         <div className="flex gap-2">
@@ -119,11 +121,7 @@ export function CourseImportForm({
         </p>
       </section>
 
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       <div className="flex gap-3">
         <PendingButton
           type="submit"

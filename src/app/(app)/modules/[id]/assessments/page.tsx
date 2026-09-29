@@ -81,7 +81,7 @@ export default async function ModuleAssessmentsPage({
           <Empty>
             <EmptyHeader>
               <EmptyTitle>Aucune évaluation</EmptyTitle>
-              <EmptyDescription>Créez la première pour ce module.</EmptyDescription>
+              <EmptyDescription>Crée la première pour ce module.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>

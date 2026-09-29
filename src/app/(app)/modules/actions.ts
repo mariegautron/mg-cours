@@ -14,6 +14,7 @@ import { readModuleForm } from "@/lib/modules/schema";
 import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import type { Tables } from "@/types/db";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface ModuleFormState {
   error?: string;
@@ -48,7 +49,7 @@ function toRow(input: ReturnType<typeof readModuleForm>["data"]) {
   };
 }
 
-const SCHEDULE_ERROR = "Le planning est illisible. Vérifiez les dates et les horaires.";
+const SCHEDULE_ERROR = "Le planning est illisible. Vérifie les dates et les horaires.";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -90,14 +91,14 @@ export async function createModule(
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("module").insert(row).select("id").single();
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   if (scheduleRows.length) {
     const { error: coursesError } = await insertScheduleCourses(supabase, data.id, scheduleRows, 0);
     if (coursesError) {
       // Pas de module à moitié créé : on retire le module et on laisse la saisie en place.
       await supabase.from("module").delete().eq("id", data.id);
-      return { error: "Les séances n’ont pas pu être créées. Réessayez." };
+      return { error: failure("créer les séances", { kept: true }) };
     }
   }
 
@@ -128,18 +129,18 @@ export async function addScheduleToModule(
   // Dates d'un import Hyperplanning confirmé (aperçu et écarts déjà montrés à l'écran).
   const confirmedDates = readModuleDates(String(formData.get("datesJson") ?? ""));
   if (confirmedDates === null) return { error: SCHEDULE_ERROR };
-  if (!rows.length) return { error: "Ajoutez au moins un créneau." };
+  if (!rows.length) return { error: "Ajoute au moins un créneau." };
 
   const supabase = await createClient();
   // Le module doit appartenir à l'utilisatrice connectée : la RLS ne renvoie rien sinon.
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   const { data: mod } = await supabase
     .from("module")
     .select("id, owner_id, first_session_date")
     .eq("id", moduleId)
     .maybeSingle();
-  if (!mod || mod.owner_id !== auth.user.id) return { error: "Module introuvable." };
+  if (!mod || mod.owner_id !== auth.user.id) return { error: NOT_FOUND.module };
 
   const { count } = await supabase
     .from("course")
@@ -147,7 +148,7 @@ export async function addScheduleToModule(
     .eq("module_id", moduleId);
 
   const { plan, error } = await insertScheduleCourses(supabase, moduleId, rows, count ?? 0);
-  if (error) return { error: "Les séances n’ont pas pu être créées. Réessayez." };
+  if (error) return { error: failure("créer les séances", { kept: true }) };
 
   if (confirmedDates) {
     await supabase
@@ -184,7 +185,7 @@ export async function updateModule(
 
   const supabase = await createClient();
   const { error } = await supabase.from("module").update(toRow(parsed.data)!).eq("id", id);
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/modules");
   revalidatePath(`/modules/${id}`);
@@ -231,10 +232,10 @@ export async function setAdminDoc(id: string, key: string, value: boolean): Prom
   if (!REQUIRED_ADMIN_DOCS.some((d) => d.key === key)) return { error: "Document inconnu." };
   const supabase = await createClient();
   const { data: mod } = await supabase.from("module").select("admin_docs").eq("id", id).single();
-  if (!mod) return { error: "Module introuvable." };
+  if (!mod) return { error: NOT_FOUND.module };
   const adminDocs = { ...((mod.admin_docs as Record<string, boolean>) ?? {}), [key]: value };
   const { error } = await supabase.from("module").update({ admin_docs: adminDocs }).eq("id", id);
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer") };
   revalidatePath(`/modules/${id}`);
   revalidatePath(`/modules/${id}/billing`);
   revalidatePath("/billing");
@@ -258,7 +259,7 @@ export async function duplicateModule(
 
   const supabase = await createClient();
   const { data: source } = await supabase.from("module").select("*").eq("id", sourceId).single();
-  if (!source) return { error: "Module introuvable." };
+  if (!source) return { error: NOT_FOUND.module };
 
   const { data: newModule, error: moduleError } = await supabase
     .from("module")
@@ -280,7 +281,7 @@ export async function duplicateModule(
     .select("id")
     .single();
 
-  if (moduleError || !newModule) return { error: "Duplication impossible. Réessayez." };
+  if (moduleError || !newModule) return { error: failure("dupliquer le module") };
 
   const { data: courses } = await supabase
     .from("course")

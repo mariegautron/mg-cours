@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import { saveQuiz, submitQuiz } from "@/app/q/[token]/actions";
 import { Markdown } from "@/components/markdown";
 import { QuestionView } from "@/components/questions/question-view";
@@ -249,11 +250,7 @@ export function QuizRunner({
         ) : (
           <Button type="submit">Rendre ma copie</Button>
         )}
-        {submitError ? (
-          <p role="alert" className="text-destructive text-sm">
-            {submitError}
-          </p>
-        ) : null}
+        {submitError ? <ActionError error={submitError} /> : null}
       </form>
     </div>
   );

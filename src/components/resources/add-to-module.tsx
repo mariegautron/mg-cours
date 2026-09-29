@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import type { RetainState } from "@/app/(app)/modules/[id]/retained/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
@@ -53,11 +54,7 @@ export function AddToModule({
       <p aria-live="polite" className="text-sm">
         {state.done ?? ""}
       </p>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
     </form>
   );
 }

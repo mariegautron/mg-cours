@@ -12,6 +12,7 @@ import {
 import { isResourceKind, TEACHER_KINDS, type ResourceKind } from "@/lib/resources/kind";
 import { readResourceForm } from "@/lib/resources/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface ResourceFormState {
   error?: string;
@@ -51,7 +52,7 @@ export async function createResource(
     .select("id")
     .single();
 
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/resources");
   redirect(`/resources/${data.id}`);
@@ -84,7 +85,7 @@ export async function updateResource(
     })
     .eq("id", id);
 
-  if (error) return { error: "Enregistrement impossible. Réessayez." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/resources");
   revalidatePath(`/resources/${id}`);
@@ -132,7 +133,7 @@ export async function createResourceInline(input: {
   const title = input.title.trim();
   if (!title || title.length > 200)
     return { error: "Le titre est obligatoire (200 caractères max)." };
-  if (!isResourceKind(input.kind)) return { error: "Choisissez un type." };
+  if (!isResourceKind(input.kind)) return { error: "Choisis un type." };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -145,7 +146,7 @@ export async function createResourceInline(input: {
     })
     .select("id, title, kind, audience, status, category")
     .single();
-  if (error || !data || !data.kind) return { error: "Création impossible. Réessayez." };
+  if (error || !data || !data.kind) return { error: failure("créer la ressource") };
 
   revalidatePath("/resources");
   return { resource: { ...data, kind: data.kind } };
@@ -197,7 +198,7 @@ export async function registerResourceFile(
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { error: "Session expirée." };
+  if (!auth.user) return { error: SESSION_EXPIRED };
   if (!file.path.startsWith(`${auth.user.id}/${resourceId}/`)) return { error: "Chemin invalide." };
 
   const storage = supabase.storage.from(RESOURCE_FILES_BUCKET);
@@ -208,7 +209,7 @@ export async function registerResourceFile(
     .maybeSingle();
   if (!resource) {
     await storage.remove([file.path]);
-    return { error: "Ressource introuvable." };
+    return { error: NOT_FOUND.resource };
   }
 
   const { files, replacedPath } = upsertFile(parseResourceFiles(resource.files), {
@@ -220,7 +221,7 @@ export async function registerResourceFile(
   const { error } = await supabase.from("resource").update({ files: files }).eq("id", resourceId);
   if (error) {
     await storage.remove([file.path]);
-    return { error: "Enregistrement impossible. Réessayez." };
+    return { error: failure("enregistrer") };
   }
   if (replacedPath) await storage.remove([replacedPath]);
 

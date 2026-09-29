@@ -93,7 +93,7 @@ export function readMemberOverrides(
       const percent = Number(rawFactor.replace(",", "."));
       if (!Number.isFinite(percent) || percent < 0 || percent > MAX_PERCENT) {
         return {
-          error: `Pondération de ${member.name} : saisissez un pourcentage entre 0 et ${MAX_PERCENT}.`,
+          error: `Pondération de ${member.name} : saisis un pourcentage entre 0 et ${MAX_PERCENT}.`,
         };
       }
       factor = round2(percent / 100);

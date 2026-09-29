@@ -3,11 +3,13 @@
 import { useActionState } from "react";
 import Link from "next/link";
 
+import { ActionError } from "@/components/action-error";
 import type { GroupFormState } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: GroupFormState, formData: FormData) => Promise<GroupFormState>;
 
@@ -22,7 +24,7 @@ export function GroupForm({ action, moduleId }: { action: Action; moduleId: stri
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form action={formAction} className="max-w-md space-y-6">
+    <form onSubmit={keepFormValues(formAction)} className="max-w-md space-y-6">
       <div className="space-y-2">
         <Label htmlFor="name">Nom du groupe</Label>
         <Input
@@ -52,11 +54,7 @@ export function GroupForm({ action, moduleId }: { action: Action; moduleId: stri
           ))}
         </select>
       </div>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           Créer le groupe

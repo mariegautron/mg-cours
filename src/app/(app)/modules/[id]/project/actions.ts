@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { drawThemes } from "@/lib/projects/draw";
 import { readProjectForm, readSkeletonJson, readThemesJson } from "@/lib/projects/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure, NOT_FOUND } from "@/lib/messages";
 
 export interface ProjectFormState {
   error?: string;
@@ -42,7 +43,7 @@ export async function saveProject(
     },
     { onConflict: "module_id" },
   );
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath(`/modules/${moduleId}/project`);
   return { saved: true };
@@ -63,7 +64,7 @@ export async function createSkeleton(
     .select("id")
     .eq("module_id", moduleId)
     .maybeSingle();
-  if (!project) return { error: "Enregistrez d’abord le projet." };
+  if (!project) return { error: "Enregistre d’abord le projet." };
 
   const [{ data: groups }, { count: existing }] = await Promise.all([
     supabase.from("student_group").select("id").eq("module_id", moduleId),
@@ -89,7 +90,7 @@ export async function createSkeleton(
       })),
     )
     .select("id");
-  if (error || !created) return { error: "Création impossible." };
+  if (error || !created) return { error: failure("créer les évaluations") };
 
   // Comme une évaluation créée à la main : tous les groupes du module sont visés, Marie retire
   // ceux qui ne le sont pas depuis la fiche de l'évaluation.
@@ -110,7 +111,7 @@ export async function createSkeleton(
           "id",
           created.map((a) => a.id),
         );
-      return { error: "Création impossible." };
+      return { error: failure("créer les évaluations") };
     }
   }
 
@@ -165,7 +166,7 @@ export async function saveThemes(
   if (!parsed.success) return { error: parsed.error };
 
   const { supabase, projectId } = await projectIdOf(moduleId);
-  if (!projectId) return { error: "Enregistrez d’abord le projet." };
+  if (!projectId) return { error: "Enregistre d’abord le projet." };
 
   const { data: current } = await supabase
     .from("project_theme")
@@ -178,7 +179,7 @@ export async function saveThemes(
 
   if (removed.length) {
     const { error } = await supabase.from("project_theme").delete().in("id", removed);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
   for (const [position, theme] of parsed.themes.entries()) {
     const values = {
@@ -190,7 +191,7 @@ export async function saveThemes(
       theme.id && currentIds.has(theme.id)
         ? await supabase.from("project_theme").update(values).eq("id", theme.id)
         : await supabase.from("project_theme").insert({ ...values, project_id: projectId });
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
 
   revalidatePath(`/modules/${moduleId}/project`);
@@ -209,7 +210,7 @@ export async function setGroupTheme(
   themeId: string,
 ): Promise<AssignmentResult> {
   const { supabase, projectId } = await projectIdOf(moduleId);
-  if (!projectId) return { error: "Projet introuvable." };
+  if (!projectId) return { error: NOT_FOUND.project };
 
   if (!themeId) {
     const { error } = await supabase
@@ -217,7 +218,7 @@ export async function setGroupTheme(
       .delete()
       .eq("project_id", projectId)
       .eq("student_group_id", groupId);
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   } else {
     const [{ count: themeOk }, { count: groupOk }] = await Promise.all([
       supabase
@@ -244,7 +245,7 @@ export async function setGroupTheme(
       },
       { onConflict: "project_id,student_group_id" },
     );
-    if (error) return { error: "Enregistrement impossible." };
+    if (error) return { error: failure("enregistrer") };
   }
 
   revalidatePath(`/modules/${moduleId}/project`);
@@ -260,19 +261,19 @@ export async function drawGroupThemes(
   confirmRedraw: boolean,
 ): Promise<AssignmentResult> {
   const { supabase, projectId } = await projectIdOf(moduleId);
-  if (!projectId) return { error: "Projet introuvable." };
+  if (!projectId) return { error: NOT_FOUND.project };
 
   const [{ data: themes }, { data: groups }, { data: assignments }] = await Promise.all([
     supabase.from("project_theme").select("id").eq("project_id", projectId),
     supabase.from("student_group").select("id").eq("module_id", moduleId).eq("type", "project"),
     supabase.from("project_theme_assignment").select("*").eq("project_id", projectId),
   ]);
-  if (!themes?.length) return { error: "Ajoutez d’abord des thèmes." };
+  if (!themes?.length) return { error: "Ajoute d’abord des thèmes." };
   if (!groups?.length) return { error: "Aucun groupe de projet dans ce module." };
 
   const previousDraws = (assignments ?? []).filter((a) => a.method === "draw");
   if (previousDraws.length > 0 && !confirmRedraw) {
-    return { error: "Un tirage existe déjà : confirmez pour le refaire." };
+    return { error: "Un tirage existe déjà : confirme pour le refaire." };
   }
 
   const groupIds = groups.map((g) => g.id);
@@ -296,7 +297,7 @@ export async function drawGroupThemes(
       .delete()
       .eq("project_id", projectId)
       .eq("method", "draw");
-    if (error) return { error: "Tirage impossible." };
+    if (error) return { error: failure("faire le tirage") };
   }
   const drawnAt = new Date().toISOString();
   const { error } = await supabase.from("project_theme_assignment").upsert(
@@ -310,7 +311,7 @@ export async function drawGroupThemes(
     })),
     { onConflict: "project_id,student_group_id" },
   );
-  if (error) return { error: "Tirage impossible." };
+  if (error) return { error: failure("faire le tirage") };
 
   revalidatePath(`/modules/${moduleId}/project`);
   return {

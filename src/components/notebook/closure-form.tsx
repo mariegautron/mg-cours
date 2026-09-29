@@ -2,11 +2,13 @@
 
 import { useActionState } from "react";
 
+import { ActionError } from "@/components/action-error";
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { COMPLETION_OPTIONS, type CourseCompletion } from "@/lib/notebook/notebook";
+import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: NotebookState, formData: FormData) => Promise<NotebookState>;
 
@@ -25,7 +27,7 @@ export function ClosureForm({
   const [state, formAction, pending] = useActionState(action, {});
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={keepFormValues(formAction)} className="space-y-5">
       <fieldset>
         <legend className="mb-2 text-sm font-medium">La séance a été…</legend>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
@@ -61,7 +63,7 @@ export function ClosureForm({
           aria-describedby="retroNote-hint"
         />
         <p id="retroNote-hint" className="text-muted-foreground text-xs">
-          Pour vous seule : ce qui a marché, ce qu’il faudra changer la prochaine fois.
+          Pour toi seule : ce qui a marché, ce qu’il faudra changer la prochaine fois.
         </p>
       </div>
 
@@ -73,11 +75,7 @@ export function ClosureForm({
           {state.message ?? ""}
         </p>
       </div>
-      {state.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state.error ? <ActionError error={state.error} /> : null}
     </form>
   );
 }

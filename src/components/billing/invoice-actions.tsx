@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { BadgeEuro, Ellipsis, ExternalLink, FileCheck2, FileCode, Mail, Send } from "lucide-react";
 
+import { ActionError } from "@/components/action-error";
 import {
   deleteInvoice,
   generateInvoice,
@@ -207,22 +208,18 @@ export function InvoiceActions({
           <ConfirmDeleteButton
             itemName={`la facture ${number}`}
             title={`Supprimer la facture ${number} ?`}
-            description="La facture n’a pas été envoyée : elle sera supprimée et son numéro pourra être réattribué. Vous pourrez la générer à nouveau."
+            description="La facture n’a pas été envoyée : elle sera supprimée et son numéro pourra être réattribué. Tu pourras la générer à nouveau."
             onConfirm={() => run("delete", deleteInvoice)}
           />
         ) : null}
       </div>
       {!recipientEmail && status === "ready" ? (
         <p className="text-muted-foreground text-sm">
-          Aucun e-mail de facturation pour l’école : renseignez-le dans Réglages, ou marquez la
+          Aucun e-mail de facturation pour l’école : renseigne-le dans Réglages, ou marque la
           facture comme envoyée après un dépôt manuel.
         </p>
       ) : null}
-      {state?.error ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.error}
-        </p>
-      ) : null}
+      {state?.error ? <ActionError error={state.error} /> : null}
     </div>
   );
 }

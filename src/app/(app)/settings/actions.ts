@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { formatBankDetails } from "@/lib/settings/bank";
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
+import { failure } from "@/lib/messages";
 
 export interface SettingsFormState {
   error?: string;
@@ -45,7 +46,7 @@ export async function saveProfile(
   const { error } = existing
     ? await supabase.from("teacher_profile").update(row).eq("id", existing.id)
     : await supabase.from("teacher_profile").insert(row);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/settings");
   return { saved: true };
@@ -67,7 +68,7 @@ export async function createSchool(
     billing_email: d.billingEmail || null,
     pa_identifier: d.paIdentifier || null,
   });
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/settings");
   redirect(`/settings?saved=${encodeURIComponent(d.name)}`);
@@ -93,7 +94,7 @@ export async function updateSchool(
       pa_identifier: d.paIdentifier || null,
     })
     .eq("id", id);
-  if (error) return { error: "Enregistrement impossible." };
+  if (error) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/settings");
   redirect(`/settings?saved=${encodeURIComponent(d.name)}`);
