@@ -64,7 +64,7 @@ test("US-77 : import vers les groupes d'un module et ajout de membres en masse",
   await page.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
 
   await page.getByLabel("Rechercher un·e étudiant·e").fill(`alpha${stamp} `);
-  await expect(page.getByLabel(new RegExp(`Ana Alpha${stamp}`))).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: new RegExp(`Ana Alpha${stamp}`) })).toBeVisible();
   await page.getByRole("button", { name: /Tout sélectionner \(1\)/ }).click();
   await page.getByRole("button", { name: /Ajouter la sélection \(1\)/ }).click();
   await expect(page.getByRole("heading", { name: "Membres (1)" })).toBeVisible();

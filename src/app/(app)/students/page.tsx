@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Camera, Plus, Upload } from "lucide-react";
 
+import { StudentPhoto } from "@/components/students/student-photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,13 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
           <h1 className="text-2xl font-semibold">Étudiants</h1>
           <p className="text-muted-foreground">{students.length} étudiant·e·s.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="secondary">
+            <Link href="/students/photos">
+              <Camera aria-hidden />
+              Importer les photos
+            </Link>
+          </Button>
           <Button asChild variant="secondary">
             <Link href="/students/import">
               <Upload aria-hidden />
@@ -138,10 +145,15 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                 href={`/students/${s.id}`}
                 className="hover:bg-accent focus-visible:ring-ring block h-full rounded-lg border p-4 focus-visible:ring-2 focus-visible:outline-none"
               >
-                <h2 className="font-medium">
-                  {s.first_name} {s.last_name}
-                </h2>
-                {s.email ? <p className="text-muted-foreground text-sm">{s.email}</p> : null}
+                <div className="flex items-center gap-3">
+                  <StudentPhoto student={s} size="md" />
+                  <div>
+                    <h2 className="font-medium">
+                      {s.first_name} {s.last_name}
+                    </h2>
+                    {s.email ? <p className="text-muted-foreground text-sm">{s.email}</p> : null}
+                  </div>
+                </div>
                 {(() => {
                   const promo = promotionToShow(s.years, year);
                   return promo ? (

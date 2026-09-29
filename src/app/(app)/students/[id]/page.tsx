@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
+import { StudentPhotoManager } from "@/components/students/student-photo-manager";
 import { StudentActions } from "@/components/students/student-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           </Link>
         </Button>
       </div>
+
+      <StudentPhotoManager student={student} />
 
       <section aria-labelledby="promotions">
         <h2 id="promotions" className="mb-2 text-lg font-medium">

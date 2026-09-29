@@ -1249,6 +1249,7 @@ export type Database = {
           last_name: string
           owner_id: string
           personal_notes: string | null
+          photo_path: string | null
           photo_url: string | null
           scholar_group: string | null
           student_number: string | null
@@ -1262,6 +1263,7 @@ export type Database = {
           last_name: string
           owner_id?: string
           personal_notes?: string | null
+          photo_path?: string | null
           photo_url?: string | null
           scholar_group?: string | null
           student_number?: string | null
@@ -1275,6 +1277,7 @@ export type Database = {
           last_name?: string
           owner_id?: string
           personal_notes?: string | null
+          photo_path?: string | null
           photo_url?: string | null
           scholar_group?: string | null
           student_number?: string | null

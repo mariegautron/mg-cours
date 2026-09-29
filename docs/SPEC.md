@@ -134,6 +134,15 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Trombinoscope (US-66)** : `student.photo_path`, bucket privé `student-photos` (2 Mo, JPEG / PNG /
+  WebP ; type vérifié par les premiers octets, pas d'SVG). Ajout, remplacement et suppression sur la
+  fiche étudiant·e ; import d'un **zip nommé par numéro étudiant** sur `/students/photos` (max
+  30 Mo / 500 fichiers ; rapport : ajoutées, sans numéro correspondant, numéros ambigus, refusées).
+  Affichage sur la liste, la fiche et le carnet (observations) ; texte alternatif = le nom, initiales
+  sans photo. Les images passent par `/api/students/[id]/photo` (session requise, redirection vers un
+  lien signé de 60 s) : aucun lien signé dans le HTML, **jamais dans les exports, PDF, e-mails ou
+  présentations**. Logique pure : `src/lib/students/photo.ts` ; écritures :
+  `src/app/(app)/students/photo-actions.ts`. Migration `20261008000000_student_photo.sql`.
 - **Import vers les groupes du module (US-77)** : sur `/students/import`, bloc « Groupes d'un module
   (facultatif) » : choix du module, sens de la colonne « groupe » (**la promotion**, comme avant, ou
   **un groupe du module**, créé s'il n'existe pas, reconnu sans casse ni accents), et « Ajouter tout

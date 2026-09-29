@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { UserRound } from "lucide-react";
 
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface Student {
   id: string;
   first_name: string;
   last_name: string;
+  photo_path: string | null;
 }
 
 /**
@@ -98,7 +99,7 @@ export function ObservationPanel({ action, students }: { action: Action; student
                   onClick={() => setOpenId(open ? null : s.id)}
                   className="hover:bg-muted focus-visible:ring-ring flex min-h-12 w-full items-center gap-2 px-3 text-left focus-visible:ring-2 focus-visible:outline-none"
                 >
-                  <UserRound aria-hidden className="text-muted-foreground size-4" />
+                  <StudentPhoto student={s} size="sm" />
                   <span className="font-medium">{name}</span>
                   <span className="sr-only"> : ajouter une observation</span>
                 </button>

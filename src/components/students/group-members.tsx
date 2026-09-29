@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { UserMinus } from "lucide-react";
+import { UserMinus, UserPlus } from "lucide-react";
 
 import { addMembers, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,8 @@ export function GroupMembers({
       return next;
     });
 
-  const addSelected = () => {
-    const ids = available.filter((c) => selected.has(c.id)).map((c) => c.id);
+  const addSelected = (only?: string[]) => {
+    const ids = only ?? available.filter((c) => selected.has(c.id)).map((c) => c.id);
     setError("");
     setMessage("");
     startTransition(async () => {
@@ -138,7 +138,7 @@ export function GroupMembers({
                 type="button"
                 size="sm"
                 disabled={pending || selectedCount === 0}
-                onClick={addSelected}
+                onClick={() => addSelected()}
               >
                 Ajouter la sélection ({selectedCount})
               </Button>
@@ -164,9 +164,19 @@ export function GroupMembers({
                       checked={selected.has(c.id)}
                       onCheckedChange={(v) => toggle(c.id, v === true)}
                     />
-                    <Label htmlFor={`${id}-s-${c.id}`} className="font-normal">
+                    <Label htmlFor={`${id}-s-${c.id}`} className="flex-1 font-normal">
                       {c.first_name} {c.last_name}
                     </Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={pending}
+                      aria-label={`Ajouter ${c.first_name} ${c.last_name} au groupe`}
+                      onClick={() => addSelected([c.id])}
+                    >
+                      <UserPlus aria-hidden />
+                    </Button>
                   </li>
                 ))}
               </ul>

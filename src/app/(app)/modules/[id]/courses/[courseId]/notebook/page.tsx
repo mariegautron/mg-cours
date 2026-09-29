@@ -52,10 +52,11 @@ export default async function CourseNotebookPage({
         { label: "Retour d’expérience de la séance précédente", text: previous.retro_note },
       ].filter((n) => n.text?.trim())
     : [];
-  const students = notebookStudents(groups).map(({ id, first_name, last_name }) => ({
+  const students = notebookStudents(groups).map(({ id, first_name, last_name, photo_path }) => ({
     id,
     first_name,
     last_name,
+    photo_path,
   }));
 
   return (
