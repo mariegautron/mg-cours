@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -211,7 +213,7 @@ export interface AssessmentDetail extends Tables<"assessment"> {
   maxScore: number;
 }
 
-export async function getAssessment(id: string): Promise<AssessmentDetail | null> {
+async function loadAssessment(id: string): Promise<AssessmentDetail | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("assessment")
@@ -272,6 +274,9 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
 
   return { ...raw, groups, grading_grid, maxScore };
 }
+
+/** Mis en cache le temps d'une requête : `generateMetadata` et la page partagent le même appel. */
+export const getAssessment = cache(loadAssessment);
 
 /** Ajustements individuels (absence, pondération) des notes de groupe données. */
 export async function listGroupGradeMembers(

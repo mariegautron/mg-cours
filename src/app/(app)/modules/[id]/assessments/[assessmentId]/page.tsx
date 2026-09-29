@@ -42,6 +42,59 @@ import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
 
+type AssessmentGroups = NonNullable<Awaited<ReturnType<typeof getAssessment>>>["groups"];
+
+async function loadSubmissionRows(assessmentId: string, groups: AssessmentGroups) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("project_submission")
+    .select("student_group_id, received_on, url")
+    .eq("assessment_id", assessmentId);
+  return groups.map((g): SubmissionRow => {
+    const r = data?.find((x) => x.student_group_id === g.id);
+    return {
+      groupId: g.id,
+      groupName: g.name,
+      receivedOn: r?.received_on ?? null,
+      url: r?.url ?? null,
+    };
+  });
+}
+
+async function loadMakeupInfo(
+  assessment: NonNullable<Awaited<ReturnType<typeof getAssessment>>>,
+  assessmentId: string,
+): Promise<{
+  original: { id: string; title: string } | null;
+  panel: { existing: { id: string; title: string; enrolled: number } | null } | null;
+}> {
+  const supabase = await createClient();
+  if (assessment.makeup_of_id) {
+    const { data } = await supabase
+      .from("assessment")
+      .select("id, title")
+      .eq("id", assessment.makeup_of_id)
+      .maybeSingle();
+    return { original: data, panel: null };
+  }
+  if (assessment.is_group_grade) return { original: null, panel: null };
+  const { data: existing } = await supabase
+    .from("assessment")
+    .select("id, title")
+    .eq("makeup_of_id", assessmentId)
+    .maybeSingle();
+  const { count } = existing
+    ? await supabase
+        .from("assessment_student")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", existing.id)
+    : { count: 0 };
+  return {
+    original: null,
+    panel: { existing: existing ? { ...existing, enrolled: count ?? 0 } : null },
+  };
+}
+
 export async function generateMetadata({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">): Promise<Metadata> {
@@ -64,73 +117,40 @@ export default async function AssessmentPage({
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
-  const overrideRows = await listGroupGradeMembers(
-    grades.filter((g) => g.student_group_id).map((g) => g.id),
-  );
-  const themes = await themeTitleByGroup(assessment.project_id);
-  // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
-  let submissionRows: SubmissionRow[] = [];
-  if (assessment.project_id) {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("project_submission")
-      .select("student_group_id, received_on, url")
-      .eq("assessment_id", assessmentId);
-    submissionRows = assessment.groups.map((g) => {
-      const r = data?.find((x) => x.student_group_id === g.id);
-      return {
-        groupId: g.id,
-        groupName: g.name,
-        receivedOn: r?.received_on ?? null,
-        url: r?.url ?? null,
-      };
-    });
-  }
-  // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur un
-  // rattrapage, rappel de l'originale.
   const memberNames = new Map(
     assessment.groups.flatMap((g) =>
       g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
     ),
   );
+  const hasGrades = grades.some((g) => g.value !== null);
+  // Les six lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
+  const [overrideRows, themes, submissionRows, makeup, loadedSheets] = await Promise.all([
+    listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
+    themeTitleByGroup(assessment.project_id),
+    // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
+    assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
+    // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
+    // un rattrapage, rappel de l'originale.
+    loadMakeupInfo(assessment, assessmentId),
+    // Fiches de résultats : notes saisies ou absences excusées (elles sont mentionnées).
+    hasGrades || grades.some((g) => g.attendance === "absent_excused")
+      ? loadResultSheets(id, assessmentId)
+      : null,
+  ]);
   let makeupPanel: React.ReactNode = null;
-  let makeupOf: { id: string; title: string } | null = null;
-  if (assessment.makeup_of_id) {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("assessment")
-      .select("id, title")
-      .eq("id", assessment.makeup_of_id)
-      .maybeSingle();
-    makeupOf = data;
-  } else if (!assessment.is_group_grade) {
-    const supabase = await createClient();
-    const { data: existing } = await supabase
-      .from("assessment")
-      .select("id, title")
-      .eq("makeup_of_id", assessmentId)
-      .maybeSingle();
-    const { count } = existing
-      ? await supabase
-          .from("assessment_student")
-          .select("id", { count: "exact", head: true })
-          .eq("assessment_id", existing.id)
-      : { count: 0 };
+  const makeupOf = makeup.original;
+  if (makeup.panel) {
     makeupPanel = (
       <MakeupPanel
         moduleId={id}
         assessmentId={assessmentId}
         excused={excusedStudentIds(grades).map((sid) => memberNames.get(sid) ?? "Étudiant·e")}
-        makeup={existing ? { ...existing, enrolled: count ?? 0 } : null}
+        makeup={makeup.panel.existing}
       />
     );
   }
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
-  const hasGrades = grades.some((g) => g.value !== null);
-  const sheets =
-    hasGrades || grades.some((g) => g.attendance === "absent_excused")
-      ? ((await loadResultSheets(id, assessmentId)) ?? [])
-      : [];
+  const sheets = loadedSheets ?? [];
   const recipients = hasGrades ? resultsRecipients(sheets) : { emails: 0, withoutEmail: [] };
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
   const observations = toObservationLines(moduleObservations);

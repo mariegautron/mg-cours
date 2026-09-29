@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import {
   toExportCourses,
   type CourseExport,
@@ -28,7 +30,8 @@ export async function listSchools(): Promise<Pick<Tables<"school">, "id" | "name
   return data ?? [];
 }
 
-export async function getModule(id: string): Promise<ModuleWithSchool | null> {
+/** Mis en cache le temps d'une requête : `generateMetadata` et la page partagent le même appel. */
+export const getModule = cache(async (id: string): Promise<ModuleWithSchool | null> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("module")
@@ -36,7 +39,7 @@ export async function getModule(id: string): Promise<ModuleWithSchool | null> {
     .eq("id", id)
     .maybeSingle();
   return data as ModuleWithSchool | null;
-}
+});
 
 export type LinkedResource = Pick<
   Tables<"resource">,

@@ -191,7 +191,21 @@
   }
 }
 
+@keyframes nav-progress {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(0.92);
+  }
+}
+
 @layer utilities {
+  /* Filet de navigation : avance vers 92 % et attend la fin du chargement. Sous
+     prefers-reduced-motion, la règle globale ci-dessus le fige directement à sa fin. */
+  .animate-nav-progress {
+    animation: nav-progress 8s cubic-bezier(0.1, 0.6, 0.2, 1) both;
+  }
   .animate-float {
     animation: float 5s ease-in-out infinite;
   }

@@ -301,6 +301,18 @@ Session de dépannage du 29/09. Un commit par point.
 | US-103 | Planning et dates du module depuis l'export Hyperplanning « Services intervenant » (PDF) : `parseHyperplanningServices` (multi-matières, jours abrégés, lignes dupliquées, en-tête / pied de page, avertissement d'heures), fusion des créneaux consécutifs d'une journée en séance, `moduleDatesFromSlots` (début, 1re séance, fin ; la 1re séance recalcule l'échéance J-15) ; aperçu et écarts de dates avant toute écriture, à la création et sur un module existant ; e2e + axe                                                                                                                                       | ✅     |
 | US-104 | « Présentation aux étudiant·es » préremplie depuis la fiche (`buildStudentIntro`, vouvoiement, écriture inclusive) ; `parseFiche` lit description, objectifs et prérequis                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ✅     |
 
+## E17 — Correctifs UX/UI avant lancement (audit senior du 29/09) 🚧
+
+Source : page Notion « MG COURS — Audit UX/UI senior complet (29/09/2026) » et ses volets 2 (parcours,
+boutons, empathie) et 3 (personas, chargements). Chaque constat a été **revérifié dans le code** avant
+correction (les lots A et B ont déjà résolu ou déplacé une partie). Décision de Marie : l'interface **tutoie**
+partout (`docs/DESIGN.md`, section « Ton »). Hors périmètre, à cadrer avec Marie : gabarit `PageHeader`,
+pagination et tri, sous-navigation « Bibliothèque », refonte du tableau de bord.
+
+| Lot | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                               | Statut |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | États de route et chargements : `loading.tsx` (racine `(app)`, tableau de bord, fiche module, évaluation, facturation, présentation), `error.tsx` et `not-found.tsx` (racine et `(app)`), filet de progression + zone `role=status` unique « Chargement… » (`NavigationStatusProvider`, `useLinkStatus`), `getModule` et `getAssessment` mis en cache (`cache` de React), lectures de la fiche module et de l'évaluation en parallèle | ✅     |
+
 ## Vision suivante (validée 26/09)
 
 Partir des **attendus de l'école** déposés sur le module pour **construire les cours en piochant** dans les

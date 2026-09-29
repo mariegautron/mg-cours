@@ -41,6 +41,20 @@ les contrastes avant usage en texte.
 - **Motion** : `animate-float` (mascotte), `animate-pop-in` (cartes), survol en léger soulèvement.
   Toutes neutralisées par la règle globale `prefers-reduced-motion` (`globals.css`).
 
+## États de route et attente
+
+- **Chargement** : chaque segment lourd (tableau de bord, fiche module, évaluation, facturation, présentation)
+  a son `loading.tsx` ; `PageSkeleton` (titre + 3 blocs) réserve la place, il est `aria-hidden`.
+- **Indicateur de navigation** : `NavigationStatusProvider` (coque `(app)`) affiche un filet de progression en
+  haut de l'écran (après 150 ms, pour ne pas clignoter) et porte **la seule** zone `role="status"` de la
+  coque, qui annonce « Chargement… ». Les liens (`LinkPending`, via `useLinkStatus`) et les squelettes
+  (`RouteLoadingMarker`) déclarent leur attente ; aucun autre composant n'annonce un chargement de route.
+- **Erreur / introuvable** : `error.tsx` et `not-found.tsx` (racine et `(app)`) disent en une phrase que les
+  données ne sont pas perdues et proposent une issue (« Réessayer », « Retour au tableau de bord »). Le message
+  technique n'est jamais affiché. Next 16 : l'erreur reçoit `retry()` (et `reset()`).
+- **Motion** : le filet avance en CSS (`animate-nav-progress`) ; sous `prefers-reduced-motion` la règle globale
+  le fige à sa fin, il reste simplement affiché.
+
 ## Accessibilité du design
 
 - Couleur jamais seule : les statuts sont toujours doublés d'un libellé (« J-4 », « Trame envoyée »…).

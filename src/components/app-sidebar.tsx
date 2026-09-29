@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
+import { LinkPending } from "@/components/navigation-status";
 import {
   Sidebar,
   SidebarContent,
@@ -79,6 +80,7 @@ export function AppSidebar() {
                           <item.icon aria-hidden className="size-4" />
                         </span>
                         <span className="font-medium">{item.label}</span>
+                        <LinkPending />
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

@@ -90,22 +90,31 @@ export default async function ModulePage({
 }) {
   const { id } = await params;
   const ficheMessage = ficheNotice((await searchParams).fiche);
-  const [mod, courses, groups, documents, retained, expectations] = await Promise.all([
+  const [
+    mod,
+    courses,
+    groups,
+    documents,
+    retained,
+    expectations,
+    assessments,
+    outline,
+    invoiceCtx,
+    invoice,
+  ] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     listModuleGroups(id),
     getModuleDocuments(id),
     getRetainedResources(id),
     getModuleExpectations(id),
-  ]);
-  if (!mod) notFound();
-
-  const [assessments, outline, invoiceCtx, invoice] = await Promise.all([
     listModuleAssessments(id),
     getOutline(id),
     loadInvoiceContext(id),
     getInvoiceByModule(id),
   ]);
+  if (!mod) notFound();
+
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
