@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
+import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import type { Tables } from "@/types/db";
 
 type Action = (state: AssessmentFormState, formData: FormData) => Promise<AssessmentFormState>;
@@ -27,12 +28,15 @@ export function AssessmentForm({
   moduleId,
   groups,
   grids,
+  courses = [],
   assessment,
 }: {
   action: Action;
   moduleId: string;
   groups: Pick<Tables<"student_group">, "id" | "name">[];
   grids: Pick<GridWithCriteria, "id" | "name" | "criteria" | "axes">[];
+  /** Séances du module (rattachement du sujet, US-90). */
+  courses?: Pick<Tables<"course">, "id" | "title">[];
   assessment?: AssessmentDetail;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -61,21 +65,110 @@ export function AssessmentForm({
         <FieldError id="title" errors={fe.title} />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="subject">Sujet (Markdown)</Label>
-        <p id="subject-hint" className="text-muted-foreground text-sm">
-          Consignes complètes : titres (#), listes (-), **gras**, `code`… 20 000 caractères maximum.
+      <fieldset className="space-y-4">
+        <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>
+        <p className="text-muted-foreground text-sm">
+          Rien de ce qui touche à vos notes ou au carnet n’apparaît dans le sujet. Les fichiers
+          joints se déposent depuis la page de l’évaluation, une fois enregistrée.
         </p>
-        <Textarea
-          id="subject"
-          name="subject"
-          rows={10}
-          maxLength={20000}
-          defaultValue={assessment?.subject ?? ""}
-          aria-describedby={fe.subject ? "subject-hint subject-error" : "subject-hint"}
-        />
-        <FieldError id="subject" errors={fe.subject} />
-      </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="objective">Objectif</Label>
+          <Textarea
+            id="objective"
+            name="objective"
+            rows={2}
+            maxLength={2000}
+            defaultValue={assessment?.objective ?? ""}
+            aria-describedby={fe.objective ? "objective-error" : undefined}
+          />
+          <FieldError id="objective" errors={fe.objective} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="subject">Consigne (Markdown)</Label>
+          <p id="subject-hint" className="text-muted-foreground text-sm">
+            Consignes complètes : titres (#), listes (-), **gras**, `code`… 20 000 caractères
+            maximum.
+          </p>
+          <Textarea
+            id="subject"
+            name="subject"
+            rows={10}
+            maxLength={20000}
+            defaultValue={assessment?.subject ?? ""}
+            aria-describedby={fe.subject ? "subject-hint subject-error" : "subject-hint"}
+          />
+          <FieldError id="subject" errors={fe.subject} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="deliverableMd">Rendu attendu (Markdown)</Label>
+          <Textarea
+            id="deliverableMd"
+            name="deliverableMd"
+            rows={4}
+            maxLength={20000}
+            defaultValue={assessment?.deliverable_md ?? ""}
+            aria-describedby={fe.deliverableMd ? "deliverableMd-error" : undefined}
+          />
+          <FieldError id="deliverableMd" errors={fe.deliverableMd} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="evaluatedMd">Ce qui sera évalué (Markdown)</Label>
+          <p id="evaluatedMd-hint" className="text-muted-foreground text-sm">
+            Les critères de la grille choisie ci-dessous sont annoncés en plus de ce texte.
+          </p>
+          <Textarea
+            id="evaluatedMd"
+            name="evaluatedMd"
+            rows={4}
+            maxLength={20000}
+            defaultValue={assessment?.evaluated_md ?? ""}
+            aria-describedby={
+              fe.evaluatedMd ? "evaluatedMd-hint evaluatedMd-error" : "evaluatedMd-hint"
+            }
+          />
+          <FieldError id="evaluatedMd" errors={fe.evaluatedMd} />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="courseId">Séance</Label>
+            <select
+              id="courseId"
+              name="courseId"
+              defaultValue={assessment?.course_id ?? ""}
+              aria-describedby={fe.courseId ? "courseId-error" : undefined}
+              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+            >
+              <option value="">Aucune séance</option>
+              {courses.map((c, i) => (
+                <option key={c.id} value={c.id}>
+                  Séance {i + 1} — {c.title}
+                </option>
+              ))}
+            </select>
+            <FieldError id="courseId" errors={fe.courseId} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="prepStatus">État de préparation</Label>
+            <select
+              id="prepStatus"
+              name="prepStatus"
+              defaultValue={assessment?.prep_status ?? "to_build"}
+              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+            >
+              {PREP_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {PREP_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">

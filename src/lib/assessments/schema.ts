@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PREP_STATUSES } from "@/lib/assessments/subject";
+
 export const gridSchema = z.object({
   name: z.string().trim().min(1, "Le nom est obligatoire.").max(200),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
@@ -108,6 +110,35 @@ export const assessmentSchema = z.object({
     .transform((v) => v || null),
   isGroupGrade: z.coerce.boolean().default(false),
   maxScore: optionalMaxScore,
+  /** Sujet (US-90) : objectif, rendu attendu, ce qui sera évalué, séance et état de préparation. */
+  objective: z
+    .string()
+    .trim()
+    .max(2000, "L’objectif dépasse 2 000 caractères.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
+  deliverableMd: z
+    .string()
+    .trim()
+    .max(20000, "Le rendu attendu dépasse 20 000 caractères.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
+  evaluatedMd: z
+    .string()
+    .trim()
+    .max(20000, "« Ce qui sera évalué » dépasse 20 000 caractères.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
+  courseId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
+  prepStatus: z.enum(PREP_STATUSES as [string, ...string[]]).default("to_build"),
   /** Critères de la grille validés d'office pour cette évaluation (US-82). */
   autoValidatedCriterionIds: z
     .array(z.string().uuid())
@@ -127,6 +158,11 @@ export function readAssessmentForm(formData: FormData) {
     gradingGridId: formData.get("gradingGridId") ?? "",
     isGroupGrade: formData.get("isGroupGrade") === "on",
     maxScore: formData.get("maxScore") ?? "",
+    objective: formData.get("objective") ?? "",
+    deliverableMd: formData.get("deliverableMd") ?? "",
+    evaluatedMd: formData.get("evaluatedMd") ?? "",
+    courseId: formData.get("courseId") ?? "",
+    prepStatus: formData.get("prepStatus") ?? "to_build",
     autoValidatedCriterionIds: formData.getAll("autoValidatedCriterionIds").map(String),
   });
 }

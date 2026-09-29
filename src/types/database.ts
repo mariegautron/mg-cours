@@ -38,15 +38,21 @@ export type Database = {
         Row: {
           auto_validated_criterion_ids: string[]
           coefficient: number
+          course_id: string | null
           created_at: string
           date: string | null
+          deliverable_md: string | null
           duration_minutes: number | null
+          evaluated_md: string | null
+          files: Json
           grading_grid_id: string | null
           id: string
           is_group_grade: boolean
           max_score: number | null
           module_id: string
+          objective: string | null
           owner_id: string
+          prep_status: Database["public"]["Enums"]["assessment_prep_status"]
           project_id: string | null
           project_position: number | null
           project_role: Database["public"]["Enums"]["project_role"] | null
@@ -59,15 +65,21 @@ export type Database = {
         Insert: {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
+          course_id?: string | null
           created_at?: string
           date?: string | null
+          deliverable_md?: string | null
           duration_minutes?: number | null
+          evaluated_md?: string | null
+          files?: Json
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
           max_score?: number | null
           module_id: string
+          objective?: string | null
           owner_id?: string
+          prep_status?: Database["public"]["Enums"]["assessment_prep_status"]
           project_id?: string | null
           project_position?: number | null
           project_role?: Database["public"]["Enums"]["project_role"] | null
@@ -80,15 +92,21 @@ export type Database = {
         Update: {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
+          course_id?: string | null
           created_at?: string
           date?: string | null
+          deliverable_md?: string | null
           duration_minutes?: number | null
+          evaluated_md?: string | null
+          files?: Json
           grading_grid_id?: string | null
           id?: string
           is_group_grade?: boolean
           max_score?: number | null
           module_id?: string
+          objective?: string | null
           owner_id?: string
+          prep_status?: Database["public"]["Enums"]["assessment_prep_status"]
           project_id?: string | null
           project_position?: number | null
           project_role?: Database["public"]["Enums"]["project_role"] | null
@@ -99,6 +117,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "assessment_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assessment_grading_grid_id_fkey"
             columns: ["grading_grid_id"]
@@ -1638,6 +1663,7 @@ export type Database = {
       }
     }
     Enums: {
+      assessment_prep_status: "to_build" | "ready" | "provided"
       attendance_status: "present" | "absent_unexcused" | "absent_excused"
       comment_category: "positive" | "negative" | "advice"
       course_completion: "done" | "partial" | "not_done"
@@ -1821,6 +1847,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      assessment_prep_status: ["to_build", "ready", "provided"],
       attendance_status: ["present", "absent_unexcused", "absent_excused"],
       comment_category: ["positive", "negative", "advice"],
       course_completion: ["done", "partial", "not_done"],

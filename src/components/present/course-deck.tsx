@@ -1,9 +1,16 @@
-import { coverSlide, formatLongDate, listSlide, resourceSlides } from "@/components/present/deck";
+import {
+  coverSlide,
+  formatLongDate,
+  listSlide,
+  resourceSlides,
+  subjectSlides,
+  type SubjectDeckInput,
+} from "@/components/present/deck";
 import type { PresentSlide } from "@/components/present/present-shell";
 import type { Tables } from "@/types/db";
 
 /**
- * Déroulé projeté d'une séance : titre → objectifs → ressources étudiant·es → clôture.
+ * Déroulé projeté d'une séance : titre → objectifs → ressources étudiant·es → sujets → clôture.
  * `resources` DOIT déjà être filtré par `studentFacing()` : ce déroulé est projeté.
  * Partagé par la fenêtre projetée et la vue présentatrice, qui montrent les mêmes diapositives.
  */
@@ -14,6 +21,7 @@ export function buildCourseDeck({
   next,
   resources,
   resumeLines = [],
+  subjects = [],
 }: {
   moduleName: string;
   course: { title: string; session_date: string | null; learning_objectives: string[] };
@@ -23,6 +31,8 @@ export function buildCourseDeck({
   resources: Tables<"resource">[];
   /** Consigne de la séance précédente (US-68), déjà réduite à des lignes de texte. */
   resumeLines?: string[];
+  /** Sujets des évaluations rattachées à la séance (déjà réduits au contenu étudiant·es, US-90). */
+  subjects?: SubjectDeckInput[];
 }): { sections: string[]; slides: PresentSlide[] } {
   const sections = ["Ouverture"];
   const slides: PresentSlide[] = [
@@ -51,6 +61,11 @@ export function buildCourseDeck({
   for (const resource of resources) {
     sections.push(resource.title);
     slides.push(...resourceSlides(sections.length - 1, resource));
+  }
+
+  for (const subject of subjects) {
+    sections.push(`Sujet — ${subject.title}`);
+    slides.push(...subjectSlides(sections.length - 1, subject));
   }
 
   sections.push("Clôture");

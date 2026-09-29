@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
 import { readAssessmentForm } from "@/lib/assessments/schema";
+import { parseResourceFiles, upsertFile } from "@/lib/resources/files";
 import { createClient } from "@/lib/supabase/server";
 import {
   individualValueFor,
@@ -56,6 +58,35 @@ async function groupsBelongToModule(supabase: Supabase, moduleId: string, groupI
   return count === groupIds.length;
 }
 
+/** Vrai si la séance appartient au module (`null` : pas de séance, toujours valide). */
+async function courseBelongsToModule(
+  supabase: Supabase,
+  moduleId: string,
+  courseId: string | null,
+) {
+  if (!courseId) return true;
+  const { count } = await supabase
+    .from("course")
+    .select("id", { count: "exact", head: true })
+    .eq("module_id", moduleId)
+    .eq("id", courseId);
+  return count === 1;
+}
+
+const subjectColumns = (d: {
+  objective: string | null;
+  deliverableMd: string | null;
+  evaluatedMd: string | null;
+  courseId: string | null;
+  prepStatus: string;
+}) => ({
+  objective: d.objective,
+  deliverable_md: d.deliverableMd,
+  evaluated_md: d.evaluatedMd,
+  course_id: d.courseId,
+  prep_status: d.prepStatus as "to_build" | "ready" | "provided",
+});
+
 export async function createAssessment(
   moduleId: string,
   _prev: AssessmentFormState,
@@ -68,6 +99,9 @@ export async function createAssessment(
   const supabase = await createClient();
   if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
+  }
+  if (!(await courseBelongsToModule(supabase, moduleId, parsed.data.courseId))) {
+    return { fieldErrors: { courseId: ["Séance inconnue pour ce module."] } };
   }
 
   const autoValidated = await keepAutoValidated(
@@ -90,6 +124,7 @@ export async function createAssessment(
       is_group_grade: parsed.data.isGroupGrade,
       max_score: parsed.data.maxScore,
       auto_validated_criterion_ids: autoValidated,
+      ...subjectColumns(parsed.data),
     })
     .select("id")
     .single();
@@ -122,6 +157,9 @@ export async function updateAssessment(
   if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
   }
+  if (!(await courseBelongsToModule(supabase, moduleId, parsed.data.courseId))) {
+    return { fieldErrors: { courseId: ["Séance inconnue pour ce module."] } };
+  }
 
   const autoValidated = await keepAutoValidated(
     supabase,
@@ -142,6 +180,7 @@ export async function updateAssessment(
       is_group_grade: parsed.data.isGroupGrade,
       max_score: parsed.data.maxScore,
       auto_validated_criterion_ids: autoValidated,
+      ...subjectColumns(parsed.data),
     })
     .eq("id", assessmentId);
 
@@ -187,7 +226,15 @@ export async function updateAssessment(
 export async function deleteAssessment(moduleId: string, assessmentId: string) {
   "use server";
   const supabase = await createClient();
-  await supabase.from("assessment").delete().eq("id", assessmentId);
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("files")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  const { error } = await supabase.from("assessment").delete().eq("id", assessmentId);
+  // Les fichiers du sujet ne servent plus à rien : on les retire du stockage privé.
+  const paths = parseResourceFiles(assessment?.files).map((f) => f.path);
+  if (!error && paths.length) await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
   revalidatePath(`/modules/${moduleId}/assessments`);
   redirect(`/modules/${moduleId}/assessments`);
 }
@@ -345,4 +392,67 @@ export async function saveStudentGrade(
   formData: FormData,
 ): Promise<GradeFormState> {
   return saveGrade(moduleId, assessmentId, { studentId, studentGroupId: null }, formData);
+}
+
+/**
+ * Le fichier part directement du navigateur vers Supabase Storage (les fonctions serveur plafonnent
+ * les requêtes à quelques Mo). Cette action l'ajoute ensuite à assessment.files ; un fichier du même
+ * nom remplace l'ancien.
+ */
+export async function registerAssessmentFile(
+  assessmentId: string,
+  file: AssessmentFile,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: "Session expirée." };
+  if (!file.path.startsWith(`${auth.user.id}/${assessmentId}/`))
+    return { error: "Chemin invalide." };
+
+  const storage = supabase.storage.from(ASSESSMENT_FILES_BUCKET);
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("files, module_id")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  if (!assessment) {
+    await storage.remove([file.path]);
+    return { error: "Évaluation introuvable." };
+  }
+
+  const { files, replacedPath } = upsertFile(parseResourceFiles(assessment.files), {
+    path: file.path,
+    name: file.name.slice(0, 255),
+    size: file.size,
+    mime: file.mime,
+  });
+  const { error } = await supabase.from("assessment").update({ files }).eq("id", assessmentId);
+  if (error) {
+    await storage.remove([file.path]);
+    return { error: "Enregistrement impossible. Réessayez." };
+  }
+  if (replacedPath) await storage.remove([replacedPath]);
+
+  revalidatePath(`/modules/${assessment.module_id}/assessments/${assessmentId}`);
+  return {};
+}
+
+export async function deleteAssessmentFile(assessmentId: string, path: string) {
+  const supabase = await createClient();
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("files, module_id")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  if (!assessment) return;
+  const files = parseResourceFiles(assessment.files);
+  if (!files.some((f) => f.path === path)) return;
+
+  const { error } = await supabase
+    .from("assessment")
+    .update({ files: files.filter((f) => f.path !== path) })
+    .eq("id", assessmentId);
+  if (error) return;
+  await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove([path]);
+  revalidatePath(`/modules/${assessment.module_id}/assessments/${assessmentId}`);
 }

@@ -543,6 +543,25 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   `grade` par étudiant·e mais ne compte que pour 1 note ; une évaluation sur 6 groupes aussi).
 - `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).
 
+## Sujet d'une évaluation (E15, US-90)
+
+- Formulaire d'évaluation : groupe « Sujet fourni aux étudiant·es » — Objectif, Consigne (Markdown, champ
+  `subject`), Rendu attendu, Ce qui sera évalué (Markdown), **Séance** (séances du module) et **État de
+  préparation** (À construire / Prête / Fournie). Les fichiers se déposent depuis « Modifier » (section
+  « Fichiers joints au sujet », composant `FileDropZone`) : PDF, Word, présentation, image, HTML, texte, ZIP,
+  50 Mo max, un fichier du même nom est remplacé ; suppression avec confirmation.
+- Les fichiers sont stockés dans le bucket privé `assessment-files` et servis par
+  `/api/assessments/[id]/files/[name]` **en téléchargement forcé uniquement** (`Content-Disposition:
+attachment`, `Content-Type: application/octet-stream`, `X-Content-Type-Options: nosniff`, CSP `sandbox`) :
+  un `.html` fourni comme extrait de code ne s'exécute jamais dans l'application. Supprimer l'évaluation
+  supprime ses fichiers.
+- Fiche de l'évaluation : section « Sujet » (état, séance, objectif, consigne, rendu, évalué, critères de
+  la grille avec leur barème, fichiers) et bouton **« Présenter le sujet »** (`/present/modules/[id]/assessments/[assessmentId]`)
+  dès que l'état n'est plus « À construire » ; sinon un message explique pourquoi.
+- « Faire cours » : les sujets des évaluations rattachées à la séance (état « Prête » ou « Fournie ») sont
+  ajoutés au déroulé projeté et à la vue présentatrice, après les ressources. Contenu étudiant·es
+  seulement : ni notes, ni carnet, ni ressources « Enseignante uniquement », ni fichiers joints.
+
 ## Projet fil rouge (E15, US-88) — `/modules/[id]/project`
 
 - Accès depuis la section « Évaluations » de la fiche module et depuis `/modules/[id]/assessments`

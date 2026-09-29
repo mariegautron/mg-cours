@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresentShell } from "@/components/present/present-shell";
+import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
@@ -22,10 +23,11 @@ export default async function PresentCoursePage({
   params,
 }: PageProps<"/present/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
-  const [mod, courses, allResources] = await Promise.all([
+  const [mod, courses, allResources, subjects] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     getCourseResourcesFull(courseId),
+    loadCourseSubjects(id, courseId),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
@@ -40,6 +42,7 @@ export default async function PresentCoursePage({
     next,
     resources,
     resumeLines: previousNextTime(courses, position),
+    subjects,
   });
 
   return (

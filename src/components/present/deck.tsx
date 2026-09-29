@@ -2,6 +2,7 @@ import { ExternalLink, FileText } from "lucide-react";
 
 import { Markdown } from "@/components/markdown";
 import type { PresentSlide } from "@/components/present/present-shell";
+import type { SubjectSection } from "@/lib/assessments/subject";
 import { parseMarkdown } from "@/lib/pdf/markdown";
 import { slideTitle, splitSlides } from "@/lib/present/slides";
 import {
@@ -181,4 +182,54 @@ export function resourceSlides(section: number, resource: Tables<"resource">): P
   }
 
   return slides;
+}
+
+/** Sujet d'une évaluation prêt à projeter (contenu étudiant·es uniquement). */
+export interface SubjectDeckInput {
+  title: string;
+  type: string | null;
+  durationMinutes: number | null;
+  sections: SubjectSection[];
+  /** Critères de la grille annoncés : libellé et barème, jamais de note. */
+  criteria: { label: string; points: number; bonus: boolean }[];
+}
+
+/**
+ * Diapositives du sujet d'une évaluation : intercalaire, puis objectif, consigne, rendu attendu et
+ * ce qui sera évalué (avec les critères de la grille). Les fichiers joints ne sont ni affichés ni
+ * projetés : ils se téléchargent depuis la page de l'évaluation.
+ */
+export function subjectSlides(section: number, subject: SubjectDeckInput): PresentSlide[] {
+  const slides: PresentSlide[] = [
+    coverSlide(section, {
+      eyebrow: subject.type ? `Sujet · ${subject.type}` : "Sujet",
+      title: subject.title,
+      subtitle: subject.durationMinutes ? `Durée : ${subject.durationMinutes} min` : null,
+    }),
+  ];
+  for (const part of subject.sections) {
+    slides.push(...markdownSlides(section, `## ${part.heading}\n\n${part.text}`));
+    if (part.key === "evaluated" && subject.criteria.length) {
+      slides.push(criteriaSlide(section, subject.criteria));
+    }
+  }
+  if (!subject.sections.some((p) => p.key === "evaluated") && subject.criteria.length) {
+    slides.push({
+      ...criteriaSlide(section, subject.criteria),
+    });
+  }
+  return slides;
+}
+
+function criteriaSlide(
+  section: number,
+  criteria: { label: string; points: number; bonus: boolean }[],
+): PresentSlide {
+  return listSlide(
+    section,
+    "Critères de la grille",
+    criteria.map(
+      (c) => `${c.label} — ${c.points} pt${c.points > 1 ? "s" : ""}${c.bonus ? " (bonus)" : ""}`,
+    ),
+  );
 }

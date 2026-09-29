@@ -83,3 +83,48 @@ describe("assessmentSchema — sujet", () => {
     expect(parsed.success).toBe(false);
   });
 });
+
+describe("readAssessmentForm — sujet (US-90)", () => {
+  const G1 = "11111111-1111-4111-8111-111111111111";
+  const C1 = "33333333-3333-4333-8333-333333333333";
+  const form = (extra: Record<string, string>) => {
+    const fd = new FormData();
+    fd.set("title", "Évaluation individuelle");
+    fd.append("studentGroupIds", G1);
+    for (const [k, v] of Object.entries(extra)) fd.set(k, v);
+    return fd;
+  };
+
+  it("champs du sujet vides → null, état « à construire » par défaut", () => {
+    const parsed = readAssessmentForm(form({}));
+    expect(parsed.success && parsed.data).toMatchObject({
+      objective: null,
+      deliverableMd: null,
+      evaluatedMd: null,
+      courseId: null,
+      prepStatus: "to_build",
+    });
+  });
+
+  it("lit séance, objectif, rendu, évalué et état", () => {
+    const parsed = readAssessmentForm(
+      form({
+        objective: " Corriger un extrait ",
+        deliverableMd: "Code corrigé",
+        evaluatedMd: "Pertinence",
+        courseId: C1,
+        prepStatus: "ready",
+      }),
+    );
+    expect(parsed.success && parsed.data).toMatchObject({
+      objective: "Corriger un extrait",
+      courseId: C1,
+      prepStatus: "ready",
+    });
+  });
+
+  it("refuse un état inconnu ou une séance qui n'est pas un identifiant", () => {
+    expect(readAssessmentForm(form({ prepStatus: "done" })).success).toBe(false);
+    expect(readAssessmentForm(form({ courseId: "abc" })).success).toBe(false);
+  });
+});

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Download, Pencil, Presentation } from "lucide-react";
 
 import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
@@ -20,7 +20,15 @@ import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { observationsForCopy, type ObservationLine } from "@/lib/assessments/session";
-import { getModule } from "@/lib/modules/queries";
+import { assessmentFileUrl } from "@/lib/assessments/files";
+import {
+  canPresent,
+  evaluatedCriteria,
+  PREP_STATUS_LABELS,
+  subjectSections,
+} from "@/lib/assessments/subject";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import { listModuleObservations } from "@/lib/notebook/queries";
@@ -37,12 +45,13 @@ export default async function AssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
-  const [assessment, grades, comments, mod, moduleObservations] = await Promise.all([
+  const [assessment, grades, comments, mod, moduleObservations, courses] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
     listComments(),
     getModule(id),
     listModuleObservations(id),
+    getModuleCourses(id),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
@@ -117,6 +126,12 @@ export default async function AssessmentPage({
         })),
       }));
   const groupNames = assessment.groups.map((g) => g.name).join(", ");
+  const subjectParts = subjectSections(assessment);
+  const criteria = evaluatedCriteria(assessment.grading_grid?.criteria ?? []);
+  const files = parseResourceFiles(assessment.files);
+  const courseIndex = courses.findIndex((c) => c.id === assessment.course_id);
+  const course = courseIndex === -1 ? null : courses[courseIndex];
+  const courseNumber = courseIndex + 1;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -149,14 +164,86 @@ export default async function AssessmentPage({
         </div>
       </div>
 
-      {assessment.subject ? (
-        <section aria-labelledby="subject">
-          <h2 id="subject" className="mb-2 text-lg font-medium">
-            Sujet
-          </h2>
-          <Markdown source={assessment.subject} />
-        </section>
-      ) : null}
+      <section aria-labelledby="subject" className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="subject" className="text-lg font-medium">
+              Sujet
+            </h2>
+            <Badge variant={assessment.prep_status === "to_build" ? "outline" : "secondary"}>
+              {PREP_STATUS_LABELS[assessment.prep_status]}
+            </Badge>
+            {course ? (
+              <span className="text-muted-foreground text-sm">
+                Séance {courseNumber} — {course.title}
+              </span>
+            ) : null}
+          </div>
+          {canPresent(assessment.prep_status) ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                <Presentation aria-hidden />
+                Présenter le sujet
+              </Link>
+            </Button>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Le sujet se projette une fois « Prête » ou « Fournie ».
+            </p>
+          )}
+        </div>
+
+        {subjectParts.length === 0 && criteria.length === 0 && files.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Aucun sujet rédigé : ouvrez « Modifier » pour ajouter l’objectif, la consigne et le
+            rendu attendu.
+          </p>
+        ) : null}
+
+        {subjectParts.map((part) => (
+          <div key={part.key}>
+            <h3 className="mb-1 font-medium">{part.heading}</h3>
+            {part.markdown ? <Markdown source={part.text} /> : <p>{part.text}</p>}
+          </div>
+        ))}
+
+        {criteria.length > 0 ? (
+          <div>
+            <h3 className="mb-1 font-medium">
+              Critères de la grille « {assessment.grading_grid?.name} »
+            </h3>
+            <ul className="list-disc space-y-1 pl-6 text-sm">
+              {criteria.map((c) => (
+                <li key={c.label}>
+                  {c.label} — {c.points} pt{c.points > 1 ? "s" : ""}
+                  {c.bonus ? " (bonus)" : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {files.length > 0 ? (
+          <div>
+            <h3 className="mb-1 font-medium">Fichiers joints</h3>
+            <ul className="space-y-1 text-sm">
+              {files.map((f) => (
+                <li key={f.path}>
+                  <a
+                    href={assessmentFileUrl(assessmentId, f.name)}
+                    download
+                    className="inline-flex items-center gap-1 underline underline-offset-2"
+                  >
+                    <Download aria-hidden className="size-4" />
+                    {f.name}
+                    <span className="sr-only"> (télécharger)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
 
       <ResultsActions
         moduleId={id}

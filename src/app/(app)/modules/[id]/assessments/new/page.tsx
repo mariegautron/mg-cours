@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { listGrids } from "@/lib/assessments/queries";
-import { getModule } from "@/lib/modules/queries";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Nouvelle évaluation" };
@@ -13,10 +13,11 @@ export default async function NewAssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/new">) {
   const { id } = await params;
-  const [mod, groups, grids] = await Promise.all([
+  const [mod, groups, grids, courses] = await Promise.all([
     getModule(id),
     listModuleGroups(id),
     listGrids(),
+    getModuleCourses(id),
   ]);
   if (!mod) notFound();
 
@@ -33,6 +34,7 @@ export default async function NewAssessmentPage({
           moduleId={id}
           groups={groups}
           grids={grids}
+          courses={courses}
         />
       )}
     </div>
