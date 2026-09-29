@@ -47,7 +47,7 @@ export function ResultsActions({
   if (!hasGrades) {
     return (
       <p className="text-muted-foreground text-sm">
-        Saisissez au moins une note pour exporter ou envoyer les résultats.
+        Saisis au moins une note pour exporter ou envoyer les résultats.
       </p>
     );
   }
@@ -77,8 +77,9 @@ export function ResultsActions({
             <AlertDialogHeader>
               <AlertDialogTitle>Envoyer les résultats par e-mail ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Chaque étudiant·e reçoit sa fiche de résultat en PDF. {recipients.emails}{" "}
-                destinataire{recipients.emails > 1 ? "s" : ""}.
+                Chaque étudiant·e reçoit un e-mail personnel (jamais les adresses des autres) avec
+                sa fiche : note, palier de chaque critère, commentaires, points forts et progrès, en
+                PDF aussi. {recipients.emails} destinataire{recipients.emails > 1 ? "s" : ""}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             {sentAt ? (

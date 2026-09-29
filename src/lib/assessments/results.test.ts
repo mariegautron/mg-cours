@@ -47,6 +47,7 @@ const line = {
   isBonus: false,
   autoValidated: false,
   level: null,
+  levels: [],
   comment: null,
 };
 
@@ -64,7 +65,9 @@ describe("buildResultSheets", () => {
       grades: [grade({ student_id: "s1" })],
     });
     expect(sheets).toHaveLength(1);
-    expect(sheets[0].recipients).toEqual([{ name: "Lea Test", email: "lea@x.fr" }]);
+    expect(sheets[0].recipients).toEqual([
+      { name: "Lea Test", firstName: "Lea", email: "lea@x.fr" },
+    ]);
     expect(sheets[0].maxScore).toBe(10);
     expect(sheets[0].valueOn20).toBe(16);
     expect(sheets[0].criteria).toEqual([
@@ -302,6 +305,21 @@ describe("buildResultSheets — commentaire structuré (US-85)", () => {
     expect(sheet.feedback).toBe("Continuez ainsi.");
   });
 
+  it("montre la grille en entier : tous les paliers, du plus haut au plus bas, l'obtenu repéré", () => {
+    const sheet = buildResultSheets({
+      ...base,
+      criteria,
+      assessment,
+      grades: [grade({ student_id: "s1", ...structured })],
+    })[0];
+    expect(sheet.criteria[0].levels.map((l) => [l.points, l.obtained])).toEqual([
+      [6, false],
+      [4, true],
+      [0, false],
+    ]);
+    expect(sheet.criteria[1].levels).toEqual([]);
+  });
+
   it("pas de palier obtenu pour une saisie hors paliers ou un critère non noté", () => {
     const sheet = buildResultSheets({
       ...base,
@@ -398,7 +416,7 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     expect(sheets[2].adjustment).toBeNull();
   });
 
-  it("note de groupe : pas de fiche pour un·e absent·e excusé·e (rattrapage à venir)", () => {
+  it("note de groupe : un·e absent·e excusé·e a une fiche sans note, avec la mention de l'absence", () => {
     const sheets = buildResultSheets({
       ...members,
       criteria,
@@ -409,7 +427,14 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     expect(sheets.flatMap((s) => s.recipients.map((r) => r.name))).toEqual([
       "Lea Test",
       "Ali Test",
+      "Noa Test",
     ]);
+    const excused = sheets[1];
+    expect(excused.attendance).toBe("absent_excused");
+    expect(excused.value).toBeNull();
+    expect(excused.valueOn20).toBeNull();
+    // La note du groupe n'est jamais modifiée pour les autres membres.
+    expect(sheets[0].value).toBe(16);
   });
 
   it("note de groupe : sans ajustement, une seule fiche pour tout le groupe", () => {
@@ -423,7 +448,7 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     expect(sheets[0].recipients).toHaveLength(3);
   });
 
-  it("note individuelle : absent·e non prévenu·e = fiche à 0 ; excusé·e = pas de fiche", () => {
+  it("note individuelle : absent·e non prévenu·e = fiche à 0 ; excusé·e = fiche sans note", () => {
     const individual = { ...groupAssessment, is_group_grade: false };
     const sheets = buildResultSheets({
       ...members,
@@ -434,10 +459,13 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
         grade({ student_id: "s2", attendance: "absent_excused", value: null, scores: {} }),
       ],
     });
-    expect(sheets).toHaveLength(1);
+    expect(sheets).toHaveLength(2);
     expect(sheets[0].recipients[0].name).toBe("Lea Test");
     expect(sheets[0].value).toBe(0);
     expect(sheets[0].attendance).toBe("absent_unexcused");
+    expect(sheets[1].recipients[0].name).toBe("Noa Test");
+    expect(sheets[1].value).toBeNull();
+    expect(sheets[1].attendance).toBe("absent_excused");
   });
 });
 

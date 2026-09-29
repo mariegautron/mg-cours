@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
   notice: { marginBottom: 8, padding: 6, backgroundColor: "#f3f3f3" },
   ref: { color: "#555", fontSize: 9 },
   level: { color: "#333", fontSize: 10, marginTop: 2 },
+  gridLevel: { color: "#555", fontSize: 8, marginTop: 1 },
   comment: { fontSize: 10, marginTop: 2, fontFamily: "Helvetica-Oblique" },
   overflow: { marginTop: 2, color: "#555" },
   total: { marginTop: 10, fontSize: 14, fontFamily: "Helvetica-Bold" },
@@ -75,6 +76,12 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               </View>
             ) : null}
 
+            {s.attendance === "absent_excused" ? (
+              <Text style={styles.notice}>
+                Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera
+                celle du rattrapage.
+              </Text>
+            ) : null}
             {s.attendance === "absent_unexcused" ? (
               <Text style={styles.notice}>
                 Absence non prévenue : la note est de 0 (règle de l’école).
@@ -106,29 +113,41 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                       <Text style={styles.level}>Palier obtenu : {c.level.description}</Text>
                     ) : null}
                     {c.comment ? <Text style={styles.comment}>{c.comment}</Text> : null}
+                    {c.levels.length > 1
+                      ? c.levels.map((l) => (
+                          <Text key={l.points} style={styles.gridLevel}>
+                            {l.obtained ? "> " : "  "}
+                            {formatNumber(l.points)} pt{l.points > 1 ? "s" : ""}
+                            {l.description ? ` : ${l.description}` : ""}
+                            {l.obtained ? " (obtenu)" : ""}
+                          </Text>
+                        ))
+                      : null}
                   </View>
                   <Text>{criterionPoints(c)}</Text>
                 </View>
               </View>
             ))}
 
-            <Text style={styles.total}>
-              Note : {s.value ?? "—"} / {s.maxScore}
-              {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
-            </Text>
+            {s.attendance === "absent_excused" ? null : (
+              <Text style={styles.total}>
+                Note : {s.value ?? "—"} / {s.maxScore}
+                {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
+              </Text>
+            )}
             {s.overflow ? (
               <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
             ) : null}
 
             {s.strengths ? (
               <View>
-                <Text style={styles.h}>Points forts</Text>
+                <Text style={styles.h}>Tes points forts</Text>
                 <Text>{s.strengths}</Text>
               </View>
             ) : null}
             {s.progress ? (
               <View>
-                <Text style={styles.h}>Progrès</Text>
+                <Text style={styles.h}>Tes progrès</Text>
                 <Text>{s.progress}</Text>
               </View>
             ) : null}

@@ -1,7 +1,7 @@
 import { gradingTargets } from "@/lib/assessments/targets";
 import { groupMemberValue, type Attendance } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
-import { findLevel } from "@/lib/assessments/levels";
+import { findLevel, sortLevels } from "@/lib/assessments/levels";
 import {
   computeTotals,
   describeOverflow,
@@ -24,6 +24,8 @@ export interface ResultCriterionLine {
   autoValidated: boolean;
   /** Palier obtenu (points + description) quand le critère a des paliers et que la note en fait partie. */
   level: { points: number; description: string } | null;
+  /** Tous les paliers du critère, du plus haut au plus bas : la grille est montrée en entier. */
+  levels: { points: number; description: string; obtained: boolean }[];
   /** Commentaire du critère. */
   comment: string | null;
 }
@@ -34,7 +36,7 @@ export interface ResultAxisSubtotal extends Omit<AxisSubtotal, "axisId"> {
 
 export interface ResultSheet {
   /** Destinataires (1 pour une note individuelle, tous les membres pour une note de groupe). */
-  recipients: { name: string; email: string | null }[];
+  recipients: { name: string; firstName?: string; email: string | null }[];
   title: string;
   isGroupGrade: boolean;
   /** Sujet complet (Markdown). */
@@ -53,7 +55,10 @@ export interface ResultSheet {
   axes: ResultAxisSubtotal[];
   /** Ex. « 20,33 → plafonné à 20 » si le bonus a fait dépasser le barème. */
   overflow: string | null;
-  /** Présence : « absent·e non prévenu·e » = note 0 (l'excusé·e n'a pas de fiche). */
+  /**
+   * Présence : « absent·e non prévenu·e » = note 0 ; « absent·e excusé·e » = fiche sans note, avec la
+   * mention de l'absence (la note sera celle du rattrapage).
+   */
   attendance: Attendance;
   /** Pondération individuelle dans une note de groupe (oral), avec sa justification. */
   adjustment: { factor: number; justification: string } | null;
@@ -141,6 +146,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       valueOn20: grade.value === null ? null : toTwenty(grade.value, maxScore),
       criteria: criteria.map((c, i) => {
         const autoValidated = !c.is_bonus && autoValidatedIds.includes(c.id);
+        const level = findLevel(c.levels ?? [], autoValidated ? c.weight : scores[c.id]);
         return {
           label: c.label,
           points:
@@ -152,7 +158,11 @@ export function buildResultSheets(input: Input): ResultSheet[] {
           reference: c.reference ?? null,
           isBonus: c.is_bonus ?? false,
           autoValidated,
-          level: findLevel(c.levels ?? [], autoValidated ? c.weight : scores[c.id]),
+          level,
+          levels: sortLevels(c.levels ?? []).map((l) => ({
+            ...l,
+            obtained: l.points === level?.points,
+          })),
           comment: criterionComments[c.id] ?? null,
         };
       }),
@@ -175,6 +185,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
 
   const recipient = (m: Tables<"student">) => ({
     name: `${m.first_name} ${m.last_name}`,
+    firstName: m.first_name,
     email: m.email,
   });
   const targets = gradingTargets(assessment.is_group_grade, input.groups);
@@ -194,8 +205,21 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       const sheets = regular.length > 0 ? [base] : [];
       for (const member of group.members) {
         const o = overrides.get(member.id);
-        // Absent·e excusé·e : pas de note, donc pas de fiche (rattrapage à venir).
-        if (!o || o.attendance === "absent_excused") continue;
+        if (!o) continue;
+        // Absent·e excusé·e : fiche sans note, avec la mention de l'absence (rattrapage à venir).
+        if (o.attendance === "absent_excused") {
+          sheets.push({
+            ...base,
+            recipients: [recipient(member)],
+            value: null,
+            valueOn20: null,
+            overflow: null,
+            attendance: "absent_excused",
+            groupValue: null,
+            adjustment: null,
+          });
+          continue;
+        }
         const value = groupMemberValue(grade.value, maxScore, {
           attendance: o.attendance,
           factor: o.individual_factor,
@@ -222,7 +246,9 @@ export function buildResultSheets(input: Input): ResultSheet[] {
   return targets
     .flatMap((t) => t.students.map((m) => ({ m, groupId: t.group.id })))
     .flatMap(({ m, groupId }) => {
-      const grade = input.grades.find((g) => g.student_id === m.id && g.value !== null);
+      const grade = input.grades.find(
+        (g) => g.student_id === m.id && (g.value !== null || g.attendance === "absent_excused"),
+      );
       return grade ? [sheetFor(grade, [recipient(m)], groupId)] : [];
     });
 }
