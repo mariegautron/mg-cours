@@ -107,7 +107,9 @@ export async function createModule(
     const { data: auth } = await supabase.auth.getUser();
     const fiche = auth.user ? readPendingFiche(ficheRaw, auth.user.id) : null;
     ficheStatus =
-      fiche && auth.user ? await importFicheForModule(supabase, auth.user.id, data.id, fiche) : "failed";
+      fiche && auth.user
+        ? await importFicheForModule(supabase, auth.user.id, data.id, fiche)
+        : "failed";
   }
 
   revalidatePath("/modules");

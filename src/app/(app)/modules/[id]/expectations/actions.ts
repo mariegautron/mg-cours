@@ -5,11 +5,7 @@ import { redirect } from "next/navigation";
 import { extractText } from "unpdf";
 import { z } from "zod";
 
-import {
-  draftsFromText,
-  unitsToSkeleton,
-  type ExpectationDraft,
-} from "@/lib/modules/expectations";
+import { draftsFromText, unitsToSkeleton, type ExpectationDraft } from "@/lib/modules/expectations";
 import { createClient } from "@/lib/supabase/server";
 
 export interface ReadExpectationsResult {

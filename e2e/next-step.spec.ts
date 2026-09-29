@@ -20,9 +20,17 @@ test("US-72 : « Prochaine étape » sur le module et raisons du blocage sur la 
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
+  // E18 : le badge de l'en-tête reprend l'étape courante du parcours « Où j'en suis ».
   await expect(
-    page.getByText("Prochaine étape : envoyer la progression pédagogique"),
+    page.getByText("Prochaine étape : lire les attendus de la fiche", { exact: true }),
   ).toBeVisible();
+  const journey = page.getByRole("region", { name: "Où j’en suis" });
+  await expect(journey.getByRole("link", { name: "Lire les attendus de la fiche" })).toBeVisible();
+  await expect(journey.getByRole("listitem")).toHaveCount(10);
+  await expect(journey.locator("[aria-current=step]")).toContainText(
+    "Fiche de l’école et attendus",
+  );
+  await expect(journey.getByText("Fait", { exact: true })).toHaveCount(0);
 
   await page.goto("/billing");
   const item = page.getByRole("listitem").filter({ hasText: name });

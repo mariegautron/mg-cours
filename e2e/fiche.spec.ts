@@ -103,6 +103,17 @@ test("E18 : la fiche importée à la création est conservée, avec ses attendus
   const moduleUrl = page.url().split("?")[0];
   await page.goto(moduleUrl);
   await expect(page.getByText("2 objectifs pédagogiques · 2 unités")).toBeVisible();
+
+  // Parcours « Où j'en suis » : fiche et attendus faits, on passe au rapprochement.
+  const journey = page.getByRole("region", { name: "Où j’en suis" });
+  await expect(journey.locator("[aria-current=step]")).toContainText("Rapprocher les ressources");
+  await expect(journey.getByRole("link", { name: "Rapprocher mes ressources" })).toBeVisible();
+  await expect(journey.getByText("4 attendus")).toBeVisible();
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
   await openTab(page, "Administratif");
   const link = page.getByRole("link", { name: /Télécharger fiche-conservee\.pdf/ });
   await expect(link).toBeVisible();

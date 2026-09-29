@@ -45,7 +45,11 @@ import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { ficheNotice } from "@/lib/modules/fiche-import";
-import { nextStep } from "@/lib/ynov/next-step";
+import { getModuleCoverage } from "@/lib/modules/coverage-queries";
+import { ModuleJourney } from "@/components/modules/module-journey";
+import { isOutlineSent } from "@/lib/ynov/iceberg";
+import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
+import { moduleSteps } from "@/lib/ynov/module-steps";
 import { trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
 export async function generateMetadata({
@@ -103,7 +107,6 @@ export default async function ModulePage({
     getInvoiceByModule(id),
   ]);
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
-  const next = invoiceCtx ? nextStep(invoiceCtx, invoice) : null;
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
   const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
@@ -114,6 +117,40 @@ export default async function ModulePage({
   const plannedHours = totalPlannedHours(courses);
   const hoursCheck = checkPlannedHours(plannedHours, mod.total_hours);
   const upcoming = mod.archived_at ? null : highlightedSession(courses, todayInParis());
+
+  // « Où j'en suis » : parcours du module, source unique du badge « Prochaine étape ».
+  const coverage = await getModuleCoverage(id, expectations, retained);
+  const adminDocsDone = (mod.admin_docs as Record<string, boolean>) ?? {};
+  const journey = moduleSteps({
+    moduleId: mod.id,
+    archived: !!mod.archived_at,
+    hasFiche: documents.some((d) => d.kind === "school_expectations"),
+    expectationsCount: expectations.length,
+    coverage,
+    courses: {
+      total: courses.length,
+      ready: readyCourses,
+      // Clôture du carnet : une séance clôturée « faite » ou « partielle » a bien eu lieu.
+      done: courses.filter((c) => c.completion === "done" || c.completion === "partial").length,
+    },
+    outlineGeneratedAt: outline?.generated_at ?? null,
+    outlineSent: isOutlineSent(mod.iceberg_state) || !!depositedOutline,
+    outlineDueDate: trame.dueDate ? trame.dueDate.toISOString() : null,
+    notes: {
+      entered: notes.enteredTotal,
+      required: notes.requirement.total,
+      satisfied: notes.satisfied,
+    },
+    plannedAssessments: assessments.filter((a) => !a.makeup_of_id && a.course_id).length,
+    adminDocs: {
+      done: REQUIRED_ADMIN_DOCS.filter((d) => adminDocsDone[d.key]).length,
+      total: REQUIRED_ADMIN_DOCS.length,
+    },
+    invoice: invoice?.status ?? null,
+    billingReady: invoiceCtx
+      ? invoiceBlockers(invoiceCtx).length + missingInvoiceData(invoiceCtx).length === 0
+      : false,
+  });
 
   // Onglet Progression
   const progressionTab = (
@@ -503,8 +540,12 @@ export default async function ModulePage({
           {notes.requirement.individual > 1 ? "s" : ""})
           {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
-        {next ? <Badge variant={next.done ? "secondary" : "outline"}>{next.label}</Badge> : null}
+        {journey.badge ? (
+          <Badge variant={journey.current ? "outline" : "secondary"}>{journey.badge}</Badge>
+        ) : null}
       </div>
+
+      <ModuleJourney journey={journey} />
 
       {mod.archived_at ? (
         <div className="bg-muted flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed p-4">

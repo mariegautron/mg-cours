@@ -153,7 +153,18 @@ chacune liées à une ou plusieurs ressources réutilisables.
   sélectionner » sur les résultats, « Ajouter la sélection (n) »). Logique pure :
   `src/lib/students/module-groups.ts` ; écritures : `students/actions.ts`, `groups/actions.ts`
   (`addMembers`).
-- **Prochaine étape (US-72)** : le badge d'état iceberg de la fiche module est remplacé par
+- **Où j'en suis (E18, US-102)** : section « Où j'en suis » sur la fiche module (sous les badges) :
+  parcours en 10 étapes (fiche et attendus → rapprocher → séances → prévoir les évaluations et le fil rouge → générer la progression → l'envoyer
+  → faire cours → évaluer → documents administratifs → facturer), calculé par la fonction pure
+  `moduleSteps(ctx)` (`src/lib/ynov/module-steps.ts`). Chaque étape : état écrit en texte (Fait /
+  À faire / En cours / En attente), détail chiffré (« 6 attendus », « 3/6 faites »…) et un lien
+  d'action. La première étape non terminée est mise en avant (bouton primaire, `aria-current="step"`).
+  Souple : progression envoyée ou déposée = préparation validée ; facture émise = étapes 1 à 8
+  validées ; module archivé = pas de parcours. « Faites » = séances clôturées faite / partielle
+  au carnet. Le badge « Prochaine étape » de l'en-tête reprend la même valeur. Composant :
+  `module-journey.tsx` ; couverture : `coverage-queries.ts`. `/billing` garde `nextStep()` ci-dessous.
+- **Prochaine étape (US-72)** : `/billing` utilise `nextStep()` ; sur la fiche module, le badge vient
+  désormais de `moduleSteps()` (voir ci-dessus). Historique : le badge d'état iceberg de la fiche module est remplacé par
   « Prochaine étape : … », calculée par `nextStep()` (`src/lib/ynov/next-step.ts`) depuis les
   blocages réels (`invoiceBlockers`, `missingInvoiceData`) et le statut de la facture :
   envoyer la progression pédagogique → saisir les notes manquantes (x/y) → cocher le document
