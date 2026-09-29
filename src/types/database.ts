@@ -1444,6 +1444,104 @@ export type Database = {
           },
         ]
       }
+      question: {
+        Row: {
+          archived_at: string | null
+          category: string
+          created_at: string
+          default_points: number
+          general_feedback: string
+          id: string
+          name: string
+          numeric_tolerance: number | null
+          numeric_value: number | null
+          owner_id: string
+          statement: string
+          tags: string[]
+          type: Database["public"]["Enums"]["question_type"]
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          default_points?: number
+          general_feedback?: string
+          id?: string
+          name: string
+          numeric_tolerance?: number | null
+          numeric_value?: number | null
+          owner_id?: string
+          statement: string
+          tags?: string[]
+          type: Database["public"]["Enums"]["question_type"]
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          default_points?: number
+          general_feedback?: string
+          id?: string
+          name?: string
+          numeric_tolerance?: number | null
+          numeric_value?: number | null
+          owner_id?: string
+          statement?: string
+          tags?: string[]
+          type?: Database["public"]["Enums"]["question_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      question_choice: {
+        Row: {
+          created_at: string
+          feedback: string
+          fraction: number
+          id: string
+          is_correct: boolean
+          owner_id: string
+          position: number
+          question_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string
+          fraction?: number
+          id?: string
+          is_correct?: boolean
+          owner_id?: string
+          position: number
+          question_id: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string
+          fraction?: number
+          id?: string
+          is_correct?: boolean
+          owner_id?: string
+          position?: number
+          question_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_choice_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "question"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource: {
         Row: {
           archived_at: string | null
@@ -1870,6 +1968,12 @@ export type Database = {
       oral_slot_status: "waiting" | "done"
       outline_status: "draft" | "sent" | "validated"
       project_role: "milestone" | "oral" | "individual"
+      question_type:
+        | "single_choice"
+        | "multiple_choice"
+        | "true_false"
+        | "numerical"
+        | "open"
       resource_audience: "students" | "teacher"
       resource_kind:
         | "course"
@@ -2060,6 +2164,13 @@ export const Constants = {
       oral_slot_status: ["waiting", "done"],
       outline_status: ["draft", "sent", "validated"],
       project_role: ["milestone", "oral", "individual"],
+      question_type: [
+        "single_choice",
+        "multiple_choice",
+        "true_false",
+        "numerical",
+        "open",
+      ],
       resource_audience: ["students", "teacher"],
       resource_kind: [
         "course",

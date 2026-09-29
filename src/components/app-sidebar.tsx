@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookMarked,
+  CircleHelp,
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
@@ -39,6 +40,7 @@ const NAV = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, tone: "violet" },
   { href: "/modules", label: "Modules", icon: BookMarked, tone: "coral" },
   { href: "/resources", label: "Ressources", icon: Library, tone: "mint" },
+  { href: "/questions", label: "Questions", icon: CircleHelp, tone: "sky" },
   { href: "/students", label: "Étudiants", icon: GraduationCap, tone: "sky" },
   { href: "/assessments", label: "Évaluations", icon: ClipboardCheck, tone: "sun" },
   { href: "/billing", label: "Facturation", icon: Receipt, tone: "coral" },

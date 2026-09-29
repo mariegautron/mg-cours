@@ -725,3 +725,14 @@ jamais comme la version envoyée.
   facture » passe par `ConfirmDeleteButton`. « Télécharger le XML » est rangé dans le menu
   « Plus » (le PDF Factur-X contient déjà le XML).
 - `/billing` : par module — facturé (n° + statut) / prêt à facturer / bloqué (nb de points).
+
+## Banque de questions (E16, US-94)
+
+- `/questions` : liste filtrable (recherche plein texte sans accent ni casse, catégorie, type, tag, archivées),
+  « Nouvelle question », « Importer (Moodle XML) », « Exporter (Moodle XML) » (selon les filtres).
+- `/questions/[id]` : aperçu tel que l'étudiant·e le voit (groupe de champs légendé, vrais boutons radio /
+  cases à cocher, aucune bonne réponse) puis corrigé réservé à Marie ; Modifier, Dupliquer, Archiver.
+- `/questions/new`, `/questions/[id]/edit` : formulaire par type ; choix ajoutés / supprimés au clavier
+  (annonce polie), part des points facultative par choix (vide = répartie, négatif = pénalité).
+- `/questions/import` : Moodle XML en deux temps, « Vérifier le fichier » (aucune écriture : à importer,
+  déjà dans la banque, non reprises avec la raison) puis « Importer ».
