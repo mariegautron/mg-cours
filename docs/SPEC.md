@@ -232,6 +232,19 @@ chacune liées à une ou plusieurs ressources réutilisables.
   heures totales » ; FFP / TDP sont facultatifs et lus seulement s'ils correspondent aux valeurs
   (« FFP TDP / 28h 10h 18h »). Le tableau des unités pédagogiques n'est jamais lu pour les heures
   (`src/lib/modules/fiche.ts`).
+- **Import Hyperplanning (US-103)** : dans le bloc Planning (création **et** page « Planning » d'un module
+  existant), zone de dépôt du PDF « Services intervenant » de l'école. Lecture côté serveur
+  (`readHyperplanning`, `unpdf` comme la fiche pédagogique), puis `parseHyperplanningServices` : un bloc par
+  matière (nom, public « Nantes | CLASSE », durée totale, créneaux « 3h00 lun. 12/10/2026 08h00 »),
+  en-tête, pied de page et lignes dupliquées ignorés, avertissement si les créneaux ne totalisent pas les
+  heures annoncées. La matière est retrouvée par le nom du module (accents, casse et « & » neutralisés) ;
+  sinon (ou nom vide) liste des matières au choix. Aperçu **avant toute écriture** : tableau des séances
+  (les créneaux consécutifs d'une même journée sont fusionnés, case pour désactiver), heures, dates proposées
+  (début, 1re séance, fin) et, sur un module existant, écart avec les dates enregistrées (« la 1re séance
+  passerait du 05/10/2026 au 12/10/2026 »). « Utiliser ces séances et ces dates » remplit le tableau de
+  créneaux (US-59) et, à la création, les dates, le nom, la promotion et les heures encore vides ; rien
+  n'est enregistré avant le bouton du formulaire. La 1re séance recalcule l'échéance de la progression (J-15)
+  et son badge. Fonctions pures dans `src/lib/modules/hyperplanning.ts`.
 - **Planning (US-59)** : à la création, tableau de créneaux (date, début, fin ; « Ajouter une
   ligne », « + 7 jours » pour dupliquer) ou collage (« 01/10/2026 10:00-12:00 », « 01/10 10h-12h »…),
   avec aperçu des séances et des lignes non reconnues. Les séances vides sont créées d'un coup

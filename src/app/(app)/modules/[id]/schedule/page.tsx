@@ -31,6 +31,14 @@ export default async function ModuleSchedulePage({ params }: PageProps<"/modules
         moduleId={mod.id}
         totalHours={mod.total_hours}
         existingCount={courses.length}
+        existing={{
+          name: mod.name,
+          dates: {
+            startDate: mod.start_date,
+            firstSessionDate: mod.first_session_date,
+            endDate: mod.end_date,
+          },
+        }}
       />
     </div>
   );

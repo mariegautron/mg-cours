@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { HyperplanningImport } from "@/components/modules/hyperplanning-import";
 import { formatDuration } from "@/lib/modules/course-duration";
+import type { HyperplanningService, ModuleDates } from "@/lib/modules/hyperplanning";
 import {
   addDays,
   duplicateRow,
@@ -40,11 +42,14 @@ const formatDay = (iso: string) =>
 export function ScheduleEditor({
   totalHours,
   existingCount = 0,
+  existing,
 }: {
   /** Heures du module, pour comparer au total planifié. */
   totalHours?: number;
   /** Séances déjà présentes : la numérotation continue à leur suite. */
   existingCount?: number;
+  /** Module existant : nom (pour trouver la matière du PDF) et dates enregistrées (pour l'écart). */
+  existing?: { name: string; dates: ModuleDates };
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -53,6 +58,8 @@ export function ScheduleEditor({
   const [pasted, setPasted] = useState("");
   const [ignored, setIgnored] = useState<IgnoredLine[]>([]);
   const [pasteNotice, setPasteNotice] = useState("");
+  const [importDates, setImportDates] = useState<ModuleDates | null>(null);
+  const [importNotice, setImportNotice] = useState("");
 
   const valid: ScheduleRow[] = useMemo(
     () =>
@@ -121,11 +128,71 @@ export function ScheduleEditor({
     else setPasted(result.ignored.map((l) => l.text).join("\n"));
   };
 
+  const formField = (fieldId: string) =>
+    root.current?.closest("form")?.elements.namedItem(fieldId) as HTMLInputElement | null;
+
+  /** Séances et dates du PDF Hyperplanning, confirmées : elles rejoignent le tableau. */
+  const applyImport = (
+    sessions: ScheduleRow[],
+    dates: ModuleDates,
+    service: HyperplanningService,
+  ) => {
+    addRows(
+      sessions.map((r) => ({
+        date: r.date,
+        startTime: r.startTime ?? "",
+        endTime: r.endTime ?? "",
+      })),
+    );
+    const filled: string[] = [];
+    if (existing) {
+      setImportDates(dates);
+    } else {
+      // Création : les dates et, si vides, le nom, la promotion et les heures remplissent le formulaire.
+      const set = (fieldId: string, value: string, onlyIfEmpty = false) => {
+        const el = formField(fieldId);
+        if (!el || (onlyIfEmpty && el.value.trim() && el.value !== "0")) return false;
+        el.value = value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      };
+      if (dates.startDate && set("startDate", dates.startDate)) filled.push("date de début");
+      if (dates.firstSessionDate && set("firstSessionDate", dates.firstSessionDate))
+        filled.push("date de la 1re séance");
+      if (dates.endDate && set("endDate", dates.endDate)) filled.push("date de fin");
+      if (set("name", service.name, true)) filled.push("nom");
+      if (set("level", service.audience.split("|").pop()?.trim() ?? "", true))
+        filled.push("promotion");
+      if (service.totalHours && set("totalHours", String(service.totalHours), true))
+        filled.push("heures totales");
+    }
+    setImportNotice(
+      `${sessions.length} séance${sessions.length > 1 ? "s" : ""} ajoutée${sessions.length > 1 ? "s" : ""} au tableau.` +
+        (existing
+          ? " Les dates du module seront mises à jour à l’enregistrement."
+          : ` Préremplis : ${filled.join(", ")}.`) +
+        " Rien n’est enregistré avant le bouton en bas de page.",
+    );
+  };
+
   const hoursGap = totalHours ? plan.totalHours - totalHours : 0;
 
   return (
     <div ref={root} className="space-y-4">
       <input type="hidden" name="scheduleJson" value={JSON.stringify(valid)} />
+      {importDates ? (
+        <input type="hidden" name="datesJson" value={JSON.stringify(importDates)} />
+      ) : null}
+
+      <HyperplanningImport
+        getModuleName={() => existing?.name ?? formField("name")?.value ?? ""}
+        current={existing?.dates}
+        existingCount={existingCount}
+        onConfirm={applyImport}
+      />
+      <div aria-live="polite" className="text-sm">
+        {importNotice}
+      </div>
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">Créneaux</legend>

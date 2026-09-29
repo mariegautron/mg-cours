@@ -47,3 +47,15 @@ les contrastes avant usage en texte.
 - Focus visible conservé (anneau `--ring` violet, contrasté).
 - Bascule clair/sombre : bouton icône avec nom accessible ; icônes pilotées en CSS (pas de flash).
 - Reste à faire par Marie : passe manuelle (zoom 200/400 %, lecteur d'écran) — cf. `ACCESSIBILITY.md`.
+
+## Ton
+
+Décision de Marie (29/09) :
+
+- **L'interface qui parle à Marie tutoie** : boutons, aides, messages d'erreur et de confirmation
+  (« Dépose le PDF », « Vérifie l'aperçu »). Pas de vouvoiement.
+- **Tout texte destiné aux étudiant·es vouvoie** : présentation du module, sujets, fiches de résultats,
+  e-mails, PDF, diapos projetées (« Ce module vous apprend à… »).
+- **Tout contenu généré est en écriture inclusive au point médian** : étudiant·es, formateur·rice, prêt·e,
+  celles et ceux… Pas de doublets lourds (« les étudiants et les étudiantes »), pas de « e » entre parenthèses.
+- **Factures et mentions légales** gardent leurs libellés légaux, sans reformulation.

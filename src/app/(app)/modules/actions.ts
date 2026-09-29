@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
+import { readModuleDates } from "@/lib/modules/hyperplanning";
 import { planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { planSessions, readScheduleRows, type ScheduleRow } from "@/lib/modules/schedule-parser";
@@ -124,6 +125,9 @@ export async function addScheduleToModule(
 ): Promise<ModuleFormState> {
   const rows = readScheduleRows(String(formData.get("scheduleJson") ?? ""));
   if (!rows) return { error: SCHEDULE_ERROR };
+  // Dates d'un import Hyperplanning confirmé (aperçu et écarts déjà montrés à l'écran).
+  const confirmedDates = readModuleDates(String(formData.get("datesJson") ?? ""));
+  if (confirmedDates === null) return { error: SCHEDULE_ERROR };
   if (!rows.length) return { error: "Ajoutez au moins un créneau." };
 
   const supabase = await createClient();
@@ -145,7 +149,16 @@ export async function addScheduleToModule(
   const { plan, error } = await insertScheduleCourses(supabase, moduleId, rows, count ?? 0);
   if (error) return { error: "Les séances n’ont pas pu être créées. Réessayez." };
 
-  if (
+  if (confirmedDates) {
+    await supabase
+      .from("module")
+      .update({
+        start_date: confirmedDates.startDate,
+        first_session_date: confirmedDates.firstSessionDate,
+        end_date: confirmedDates.endDate,
+      })
+      .eq("id", moduleId);
+  } else if (
     plan.firstSessionDate &&
     (!mod.first_session_date || plan.firstSessionDate < mod.first_session_date)
   ) {
