@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
 import { readFeedback } from "@/lib/assessments/feedback";
-import { computeTotals, readScores } from "@/lib/assessments/scoring";
+import { computeTotals, hasScoredInput, readScores } from "@/lib/assessments/scoring";
 
 export interface AssessmentFormState {
   error?: string;
@@ -224,17 +224,17 @@ async function saveGrade(
     criteria.map((c) => c.id),
   );
 
-  let value: number;
+  let value: number | null;
   let scores: Record<string, number> = {};
   if (criteria.length > 0) {
     // Total (bonus inclus) ramené au barème puis plafonné à ce barème (`computeTotals`).
     const autoValidatedIds = assessment.auto_validated_criterion_ids;
     scores = readScores(formData.entries(), criteria);
     for (const id of autoValidatedIds) delete scores[id];
-    value = computeTotals(criteria, scores, {
-      autoValidatedIds,
-      maxScore: assessment.max_score,
-    }).value;
+    // Copie sans aucun critère noté (ex. seulement des commentaires) : pas de note, jamais un faux 0.
+    value = hasScoredInput(criteria, scores, autoValidatedIds)
+      ? computeTotals(criteria, scores, { autoValidatedIds, maxScore: assessment.max_score }).value
+      : null;
   } else {
     const raw = formData.get("value");
     const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;

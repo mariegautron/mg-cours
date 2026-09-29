@@ -137,6 +137,21 @@ export function readScores(
   return scores;
 }
 
+/**
+ * Une copie est « corrigée » dès qu'au moins un critère a été noté. Exception : si tous les critères
+ * notés sont validés d'office, il n'y a rien à saisir et la copie compte comme corrigée. Sans cela, une
+ * copie vierge (ou avec seulement des commentaires) recevrait un 0 qui fausserait les moyennes.
+ */
+export function hasScoredInput(
+  criteria: readonly ScoringCriterion[],
+  scores: Readonly<Record<string, number | null | undefined>>,
+  autoValidatedIds: readonly string[] = [],
+): boolean {
+  if (Object.values(scores).some((v) => typeof v === "number" && Number.isFinite(v))) return true;
+  const scored = criteria.filter((c) => !c.isBonus);
+  return scored.length > 0 && scored.every((c) => autoValidatedIds.includes(c.id));
+}
+
 export interface AxisGroup<T, A> {
   /** `null` : critères sans axe (toujours après les axes). */
   axis: A | null;

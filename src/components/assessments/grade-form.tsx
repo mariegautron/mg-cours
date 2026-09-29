@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
@@ -8,21 +8,36 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { parseCriterionComments } from "@/lib/assessments/feedback";
+import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
 import type { CriterionWithLevels, GridWithCriteria } from "@/lib/assessments/queries";
 import {
   computeTotals,
   describeOverflow,
   formatNumber,
   groupByAxis,
+  hasScoredInput,
 } from "@/lib/assessments/scoring";
-import { parseCriterionComments } from "@/lib/assessments/feedback";
-import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
+import {
+  AUTOSAVE_DELAY_MS,
+  formSnapshot,
+  shouldAutosave,
+  type CopyStatus,
+  type ObservationLine,
+} from "@/lib/assessments/session";
 import { DEFAULT_MAX_SCORE, toTwenty } from "@/lib/ynov/notation";
 import type { Tables } from "@/types/db";
 
 type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormState>;
 
+/** Ce que la session de correction peut demander à une copie. */
+export interface CopyControls {
+  isDirty: () => boolean;
+  save: () => void;
+}
+
 export function GradeForm({
+  id,
   action,
   title,
   grid,
@@ -31,7 +46,16 @@ export function GradeForm({
   comments,
   autoValidatedIds = [],
   subject = null,
+  focusCriterionId = null,
+  observations = [],
+  onStatus,
+  register,
+  onNavigate,
+  hasPrev = false,
+  hasNext = false,
 }: {
+  /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
+  id: string;
   action: Action;
   title: string;
   grid: GridWithCriteria | null;
@@ -43,10 +67,20 @@ export function GradeForm({
   autoValidatedIds?: string[];
   /** Matière courante (nom du module) : phrases de la même matière proposées en premier. */
   subject?: string | null;
+  /** Vue « un critère pour toute la classe » : seul ce critère est affiché, le reste est conservé. */
+  focusCriterionId?: string | null;
+  /** Observations de cours (carnet) : consultation seulement. */
+  observations?: ObservationLine[];
+  onStatus?: (id: string, status: CopyStatus) => void;
+  register?: (id: string, controls: CopyControls | null) => void;
+  onNavigate?: (direction: -1 | 1) => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
   const uid = useId();
+  const formRef = useRef<HTMLFormElement>(null);
   // Anciennes sélections par identifiant : conservées (et décochables) tant que la note les porte.
   const linked = new Set(grade?.predefined_comment_ids ?? []);
   const legacyComments = comments.filter((c) => linked.has(c.id));
@@ -59,6 +93,7 @@ export function GradeForm({
       ]),
     ),
   );
+  const [directValue, setDirectValue] = useState(String(grade?.value ?? ""));
   // Commentaire structuré : un commentaire par critère, points forts, progrès, commentaire libre.
   const [criterionComments, setCriterionComments] = useState(() =>
     parseCriterionComments(grade?.criterion_comments),
@@ -68,24 +103,70 @@ export function GradeForm({
   const [feedback, setFeedback] = useState(grade?.feedback ?? "");
   const [announcement, setAnnouncement] = useState("");
   const criteria = grid?.criteria ?? [];
-  const totals = computeTotals(
-    criteria.map((c) => ({
-      id: c.id,
-      weight: c.weight,
-      axisId: c.axis_id,
-      isBonus: c.is_bonus,
-    })),
-    Object.fromEntries(
-      Object.entries(inputs)
-        .filter(([, v]) => v.trim() !== "" && Number.isFinite(Number(v.replace(",", "."))))
-        .map(([id, v]) => [id, Number(v.replace(",", "."))]),
-    ),
-    { autoValidatedIds, maxScore },
+
+  const numericScores = Object.fromEntries(
+    Object.entries(inputs)
+      .filter(([, v]) => v.trim() !== "" && Number.isFinite(Number(v.replace(",", "."))))
+      .map(([key, v]) => [key, Number(v.replace(",", "."))]),
   );
+  const scoringCriteria = criteria.map((c) => ({
+    id: c.id,
+    weight: c.weight,
+    axisId: c.axis_id,
+    isBonus: c.is_bonus,
+  }));
+  const totals = computeTotals(scoringCriteria, numericScores, { autoValidatedIds, maxScore });
+  const corrected = grid
+    ? hasScoredInput(scoringCriteria, numericScores, autoValidatedIds)
+    : directValue.trim() !== "";
   const scaled = totals.max !== totals.maxScore;
   const overflow = describeOverflow(totals);
   const groups = grid ? groupByAxis(grid.criteria, grid.axes) : [];
   const showAxes = !!grid && grid.axes.length > 0;
+
+  // Enregistrement sans perte : une copie est « à enregistrer » tant que sa saisie diffère de la
+  // dernière version enregistrée ; elle s'enregistre seule après un court délai sans modification.
+  const snapshot = formSnapshot([
+    inputs,
+    directValue,
+    criterionComments,
+    strengths,
+    progress,
+    feedback,
+  ]);
+  const [saved, setSaved] = useState(snapshot);
+  const [submitted, setSubmitted] = useState(snapshot);
+  const [lastState, setLastState] = useState(state);
+  if (state !== lastState) {
+    setLastState(state);
+    if (state.saved) setSaved(submitted);
+  }
+  const dirty = snapshot !== saved;
+  const ready = grid ? true : directValue.trim() !== "";
+
+  const dirtyRef = useRef(dirty);
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  useEffect(() => {
+    if (!shouldAutosave({ dirty, pending, ready })) return;
+    const timer = setTimeout(() => formRef.current?.requestSubmit(), AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [snapshot, dirty, pending, ready]);
+
+  useEffect(() => {
+    onStatus?.(id, { corrected, dirty });
+  }, [id, corrected, dirty, onStatus]);
+
+  useEffect(() => {
+    if (!register) return;
+    register(id, {
+      isDirty: () => dirtyRef.current,
+      save: () => formRef.current?.requestSubmit(),
+    });
+    return () => register(id, null);
+  }, [id, register]);
 
   function subtotal(axisId: string | null): string | null {
     const a = totals.axes.find((x) => x.axisId === axisId);
@@ -125,14 +206,19 @@ export function GradeForm({
     const orphan = numeric !== null && Number.isFinite(numeric) && !selected ? numeric : null;
     const base = levelCommentBase(c.label, selected);
     const name = `score_${c.id}`;
-    const option = (value: string, checked: boolean, id: string, children: React.ReactNode) => (
+    const option = (
+      value: string,
+      checked: boolean,
+      optionId: string,
+      children: React.ReactNode,
+    ) => (
       <label
-        key={id}
-        htmlFor={id}
+        key={optionId}
+        htmlFor={optionId}
         className="hover:bg-muted/50 has-[:checked]:border-primary flex cursor-pointer items-start gap-2 rounded-md border border-transparent p-1.5 text-sm"
       >
         <input
-          id={id}
+          id={optionId}
           type="radio"
           name={name}
           value={value}
@@ -247,14 +333,31 @@ export function GradeForm({
     );
   }
 
+  const totalLine = (
+    <p className="text-muted-foreground text-sm">
+      Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
+      {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}
+      {scaled || totals.capped
+        ? ` → ${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`
+        : ""}
+      {overflow ? ` (${overflow})` : ""}
+    </p>
+  );
+
+  const focused = grid && focusCriterionId ? criteria.find((c) => c.id === focusCriterionId) : null;
+
   return (
     <form
+      ref={formRef}
+      id={`copy-${id}`}
       action={formAction}
-      aria-labelledby={`${uid}-title`}
+      noValidate
+      onSubmit={() => setSubmitted(snapshot)}
+      aria-labelledby={`copy-${id}-title`}
       className="space-y-4 rounded-lg border p-4"
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 id={`${uid}-title`} className="font-medium">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 id={`copy-${id}-title`} tabIndex={-1} className="font-medium">
           {title}
         </h3>
         {grade?.value !== undefined && grade?.value !== null ? (
@@ -265,85 +368,130 @@ export function GradeForm({
         ) : null}
       </div>
 
-      {grid ? (
+      {observations.length > 0 ? (
+        <details className="rounded-md border p-2">
+          <summary className="cursor-pointer text-sm font-medium">
+            Observations de cours ({observations.length})
+          </summary>
+          <ul className="mt-2 space-y-1 text-sm">
+            {observations.map((o) => (
+              <li key={o.id}>
+                <span className="text-muted-foreground">
+                  {new Date(o.createdAt).toLocaleDateString("fr-FR")}
+                  {observations.some((x) => x.studentId !== o.studentId)
+                    ? ` · ${o.studentName}`
+                    : ""}
+                  {" · "}
+                  {o.tag}
+                </span>
+                {o.note ? ` — ${o.note}` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
+      {focused ? (
         <div className="space-y-4">
-          {groups.map((group) =>
-            showAxes ? (
-              <fieldset key={group.axis?.id ?? "none"} className="space-y-3">
-                <legend className="text-sm font-semibold">
-                  {group.axis?.label ?? "Autres critères"}
-                  <span className="text-muted-foreground font-normal">
-                    {" "}
-                    — sous-total : {subtotal(group.axis?.id ?? null)}
-                  </span>
-                </legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {group.criteria.map(criterionField)}
-                </div>
-              </fieldset>
-            ) : (
-              <div key="all" className="grid gap-3 sm:grid-cols-2">
-                {group.criteria.map(criterionField)}
-              </div>
-            ),
-          )}
-          <p className="text-muted-foreground text-sm">
-            Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
-            {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}
-            {scaled || totals.capped
-              ? ` → ${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`
-              : ""}
-            {overflow ? ` (${overflow})` : ""}
-          </p>
+          <div className="grid gap-3 sm:grid-cols-2">{criterionField(focused)}</div>
+          {totalLine}
+          {/* Les autres critères et le bilan ne sont pas affichés dans cette vue, mais leur saisie
+              est conservée et renvoyée : enregistrer ne perd rien. */}
+          {criteria
+            .filter((c) => c.id !== focused.id)
+            .map((c) => (
+              <span key={c.id} hidden>
+                {inputs[c.id] !== undefined && inputs[c.id].trim() !== "" ? (
+                  <input type="hidden" name={`score_${c.id}`} value={inputs[c.id]} />
+                ) : null}
+                <input
+                  type="hidden"
+                  name={`comment_${c.id}`}
+                  value={criterionComments[c.id] ?? ""}
+                />
+              </span>
+            ))}
+          <input type="hidden" name="strengths" value={strengths} />
+          <input type="hidden" name="progress" value={progress} />
+          <input type="hidden" name="feedback" value={feedback} />
         </div>
       ) : (
-        <div className="space-y-1">
-          <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
-          <Input
-            id={`${uid}-value`}
-            name="value"
-            type="number"
-            step="0.5"
-            min={0}
-            max={maxScore}
-            defaultValue={grade?.value ?? ""}
-            required
-          />
-        </div>
-      )}
+        <>
+          {grid ? (
+            <div className="space-y-4">
+              {groups.map((group) =>
+                showAxes ? (
+                  <fieldset key={group.axis?.id ?? "none"} className="space-y-3">
+                    <legend className="text-sm font-semibold">
+                      {group.axis?.label ?? "Autres critères"}
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        — sous-total : {subtotal(group.axis?.id ?? null)}
+                      </span>
+                    </legend>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {group.criteria.map(criterionField)}
+                    </div>
+                  </fieldset>
+                ) : (
+                  <div key="all" className="grid gap-3 sm:grid-cols-2">
+                    {group.criteria.map(criterionField)}
+                  </div>
+                ),
+              )}
+              {totalLine}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
+              <Input
+                id={`${uid}-value`}
+                name="value"
+                type="number"
+                step="0.5"
+                min={0}
+                max={maxScore}
+                value={directValue}
+                onChange={(e) => setDirectValue(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold">Bilan</legend>
-        <CommentField
-          name="strengths"
-          label="Points forts"
-          value={strengths}
-          onChange={setStrengths}
-          phrases={comments}
-          criteria={phraseCriteria}
-          subject={subject}
-          categories={["positive"]}
-        />
-        <CommentField
-          name="progress"
-          label="Progrès"
-          value={progress}
-          onChange={setProgress}
-          phrases={comments}
-          criteria={phraseCriteria}
-          subject={subject}
-          categories={["advice", "negative"]}
-        />
-        <CommentField
-          name="feedback"
-          label="Commentaire libre"
-          value={feedback}
-          onChange={setFeedback}
-          phrases={comments}
-          criteria={phraseCriteria}
-          subject={subject}
-        />
-      </fieldset>
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold">Bilan</legend>
+            <CommentField
+              name="strengths"
+              label="Points forts"
+              value={strengths}
+              onChange={setStrengths}
+              phrases={comments}
+              criteria={phraseCriteria}
+              subject={subject}
+              categories={["positive"]}
+            />
+            <CommentField
+              name="progress"
+              label="Progrès"
+              value={progress}
+              onChange={setProgress}
+              phrases={comments}
+              criteria={phraseCriteria}
+              subject={subject}
+              categories={["advice", "negative"]}
+            />
+            <CommentField
+              name="feedback"
+              label="Commentaire libre"
+              value={feedback}
+              onChange={setFeedback}
+              phrases={comments}
+              criteria={phraseCriteria}
+              subject={subject}
+            />
+          </fieldset>
+        </>
+      )}
 
       {legacyComments.length > 0 ? (
         <fieldset className="space-y-1">
@@ -380,15 +528,43 @@ export function GradeForm({
           {state.error}
         </p>
       ) : null}
-      {state.saved ? (
-        <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+      {dirty ? (
+        <p role="status" className="text-sm text-amber-700 dark:text-amber-400">
+          Modifications non enregistrées
+        </p>
+      ) : state.saved ? (
+        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
           Note enregistrée.
         </p>
       ) : null}
 
-      <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer la note"}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" size="sm" disabled={pending}>
+          {pending ? "Enregistrement…" : "Enregistrer la note"}
+        </Button>
+        {onNavigate ? (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!hasPrev}
+              onClick={() => onNavigate(-1)}
+            >
+              Copie précédente
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!hasNext}
+              onClick={() => onNavigate(1)}
+            >
+              Copie suivante
+            </Button>
+          </>
+        ) : null}
+      </div>
     </form>
   );
 }

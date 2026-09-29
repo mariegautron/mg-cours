@@ -26,7 +26,9 @@ export async function createSimpleGrid(page: Page, name: string, criteria: [stri
 export interface AssessmentSetup {
   moduleName: string;
   moduleUrl: string;
+  /** Nom complet du premier étudiant (compatibilité), et de tous les étudiants créés. */
   studentName: string;
+  studentNames: string[];
   assessmentUrl: string;
 }
 
@@ -38,13 +40,18 @@ export async function createAssessment(
   page: Page,
   gridName: string,
   suffix: number | string,
-  options: { groupGrade?: boolean } = {},
+  options: { groupGrade?: boolean; firstNames?: string[] } = {},
 ): Promise<AssessmentSetup> {
-  const studentName = `Yanis Setup${suffix}`;
-  await page.goto("/students/new");
-  await page.getByLabel("Prénom").fill("Yanis");
-  await page.getByLabel("Nom", { exact: true }).fill(`Setup${suffix}`);
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  const firstNames = options.firstNames ?? ["Yanis"];
+  const studentNames = firstNames.map((first) => `${first} Setup${suffix}`);
+  const studentName = studentNames[0];
+  for (const first of firstNames) {
+    await page.goto("/students/new");
+    await page.getByLabel("Prénom").fill(first);
+    await page.getByLabel("Nom", { exact: true }).fill(`Setup${suffix}`);
+    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.waitForURL((url) => url.pathname === "/students");
+  }
 
   const moduleName = `Module Setup ${suffix}`;
   await page.goto("/modules/new");
@@ -59,11 +66,14 @@ export async function createAssessment(
   const groupName = `Groupe Setup ${suffix}`;
   await page.getByLabel("Nom du groupe").fill(groupName);
   await page.getByRole("button", { name: "Créer le groupe" }).click();
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: studentName })
-    .getByRole("button", { name: /Ajouter/ })
-    .click();
+  for (const name of studentNames) {
+    await page
+      .getByRole("listitem")
+      .filter({ hasText: name })
+      .getByRole("button", { name: /Ajouter/ })
+      .click();
+    await page.getByText(name).first().waitFor();
+  }
 
   await page.goto(`${moduleUrl}/assessments/new`);
   await page.getByLabel("Titre").fill(`Évaluation ${suffix}`);
@@ -73,5 +83,5 @@ export async function createAssessment(
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByRole("heading", { name: `Évaluation ${suffix}` }).waitFor();
 
-  return { moduleName, moduleUrl, studentName, assessmentUrl: page.url() };
+  return { moduleName, moduleUrl, studentName, studentNames, assessmentUrl: page.url() };
 }

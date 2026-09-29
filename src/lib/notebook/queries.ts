@@ -44,3 +44,23 @@ export async function listStudentObservations(studentId: string): Promise<Studen
     .order("created_at", { ascending: false });
   return (data ?? []) as unknown as StudentObservation[];
 }
+
+export interface ModuleObservation {
+  id: string;
+  tag: ObservationTag;
+  note: string | null;
+  created_at: string;
+  student_id: string;
+  student: { first_name: string; last_name: string } | null;
+}
+
+/** Observations d'un module (toutes séances), consultables pendant la correction. */
+export async function listModuleObservations(moduleId: string): Promise<ModuleObservation[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("student_observation")
+    .select("id, tag, note, created_at, student_id, student:student_id(first_name, last_name)")
+    .eq("module_id", moduleId)
+    .order("created_at", { ascending: false });
+  return (data ?? []) as unknown as ModuleObservation[];
+}

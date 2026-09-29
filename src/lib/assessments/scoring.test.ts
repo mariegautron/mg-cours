@@ -6,6 +6,7 @@ import {
   effectivePoints,
   formatNumber,
   groupByAxis,
+  hasScoredInput,
   readScores,
 } from "./scoring";
 
@@ -164,5 +165,19 @@ describe("groupByAxis", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("hasScoredInput", () => {
+  it("vrai dès qu'un critère est noté (même à 0), faux pour une copie vierge", () => {
+    expect(hasScoredInput(criteria, {})).toBe(false);
+    expect(hasScoredInput(criteria, { a1: 0 })).toBe(true);
+    expect(hasScoredInput(criteria, { a1: null, a2: undefined })).toBe(false);
+  });
+
+  it("vrai sans saisie quand tous les critères notés sont validés d'office (bonus exclu)", () => {
+    expect(hasScoredInput(criteria, {}, ["a1", "a2", "b1", "b2"])).toBe(true);
+    expect(hasScoredInput(criteria, {}, ["a1", "a2", "b1"])).toBe(false);
+    expect(hasScoredInput([], {}, [])).toBe(false);
   });
 });

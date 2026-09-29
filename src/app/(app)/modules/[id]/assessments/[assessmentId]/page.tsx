@@ -5,7 +5,7 @@ import { Pencil } from "lucide-react";
 
 import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
-import { GradeForm } from "@/components/assessments/grade-form";
+import { GradingSession, type SessionSection } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,10 @@ import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assess
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
+import { observationsForCopy, type ObservationLine } from "@/lib/assessments/session";
 import { getModule } from "@/lib/modules/queries";
+import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { listModuleObservations } from "@/lib/notebook/queries";
 
 export async function generateMetadata({
   params,
@@ -28,11 +31,12 @@ export default async function AssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
-  const [assessment, grades, comments, mod] = await Promise.all([
+  const [assessment, grades, comments, mod, moduleObservations] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
     listComments(),
     getModule(id),
+    listModuleObservations(id),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
@@ -41,6 +45,47 @@ export default async function AssessmentPage({
   const recipients = hasGrades
     ? resultsRecipients((await loadResultSheets(id, assessmentId)) ?? [])
     : { emails: 0, withoutEmail: [] };
+  // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
+  const observations: ObservationLine[] = moduleObservations.map((o) => ({
+    id: o.id,
+    studentId: o.student_id,
+    studentName: o.student ? `${o.student.first_name} ${o.student.last_name}` : "",
+    tag: OBSERVATION_TAG_LABELS[o.tag] ?? o.tag,
+    note: o.note,
+    createdAt: o.created_at,
+  }));
+  const sections: SessionSection[] = assessment.is_group_grade
+    ? [
+        {
+          id: "groups",
+          title: null,
+          items: targets.map(({ group }) => ({
+            id: group.id,
+            title: `Note du groupe « ${group.name} »`,
+            action: saveGroupGrade.bind(null, id, assessmentId, group.id),
+            grade: grades.find((g) => g.student_group_id === group.id),
+            observations: observationsForCopy(
+              group.members.map((m) => m.id),
+              observations,
+            ),
+          })),
+        },
+      ]
+    : targets.map(({ group, students }) => ({
+        id: group.id,
+        title: group.name,
+        empty:
+          group.members.length === 0
+            ? "Ce groupe n’a aucun membre pour l’instant."
+            : "Membres déjà notés dans un autre groupe ci-dessus.",
+        items: students.map((m) => ({
+          id: m.id,
+          title: `${m.first_name} ${m.last_name}`,
+          action: saveStudentGrade.bind(null, id, assessmentId, m.id),
+          grade: grades.find((g) => g.student_id === m.id),
+          observations: observationsForCopy([m.id], observations),
+        })),
+      }));
   const groupNames = assessment.groups.map((g) => g.name).join(", ");
 
   return (
@@ -93,53 +138,15 @@ export default async function AssessmentPage({
 
       {targets.length === 0 ? (
         <p className="text-muted-foreground">Aucun groupe visé : modifiez l’évaluation.</p>
-      ) : assessment.is_group_grade ? (
-        <div className="space-y-4">
-          {targets.map(({ group }) => (
-            <GradeForm
-              key={group.id}
-              action={saveGroupGrade.bind(null, id, assessmentId, group.id)}
-              title={`Note du groupe « ${group.name} »`}
-              grid={assessment.grading_grid}
-              maxScore={assessment.maxScore}
-              grade={grades.find((g) => g.student_group_id === group.id)}
-              comments={comments}
-              autoValidatedIds={assessment.auto_validated_criterion_ids}
-              subject={mod?.name ?? null}
-            />
-          ))}
-        </div>
       ) : (
-        <div className="space-y-8">
-          {targets.map(({ group, students }) => (
-            <section key={group.id} aria-labelledby={`group-${group.id}`} className="space-y-4">
-              <h2 id={`group-${group.id}`} className="text-lg font-semibold">
-                {group.name}
-              </h2>
-              {students.length === 0 ? (
-                <p className="text-muted-foreground">
-                  {group.members.length === 0
-                    ? "Ce groupe n’a aucun membre pour l’instant."
-                    : "Membres déjà notés dans un autre groupe ci-dessus."}
-                </p>
-              ) : (
-                students.map((m) => (
-                  <GradeForm
-                    key={m.id}
-                    action={saveStudentGrade.bind(null, id, assessmentId, m.id)}
-                    title={`${m.first_name} ${m.last_name}`}
-                    grid={assessment.grading_grid}
-                    maxScore={assessment.maxScore}
-                    grade={grades.find((g) => g.student_id === m.id)}
-                    comments={comments}
-                    autoValidatedIds={assessment.auto_validated_criterion_ids}
-                    subject={mod?.name ?? null}
-                  />
-                ))
-              )}
-            </section>
-          ))}
-        </div>
+        <GradingSession
+          sections={sections}
+          grid={assessment.grading_grid}
+          maxScore={assessment.maxScore}
+          comments={comments}
+          autoValidatedIds={assessment.auto_validated_criterion_ids}
+          subject={mod?.name ?? null}
+        />
       )}
     </div>
   );

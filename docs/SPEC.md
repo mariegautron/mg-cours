@@ -409,6 +409,21 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Correction sans perte, en une page (US-86)** : la page de saisie est une session (`GradingSession`)
+  qui regroupe toutes les copies. En tête (collant) : avancement **« 12/30 corrigées »** mis à jour à
+  la frappe (une copie est corrigée dès qu'un critère est noté, ou si tous les critères sont validés
+  d'office ; un simple commentaire ne compte pas), nombre de copies à enregistrer, **« Enregistrer
+  tout »**, bascule **« Une copie à la fois » / « Un critère pour toute la classe »** (chaque copie
+  n'affiche alors que le critère choisi ; le reste de la saisie est conservé et renvoyé), liste de
+  liens vers les copies. Chaque copie s'**enregistre seule** 1,5 s après la dernière modification
+  (`AUTOSAVE_DELAY_MS`), indique « Modifications non enregistrées » puis « Note enregistrée. », et offre
+  « Copie précédente / suivante » (le focus passe au titre de l'autre copie). Tant qu'une copie est à
+  enregistrer, quitter ou recharger la page avertit (`useUnsavedChangesGuard`). Une copie sans aucun
+  critère noté est enregistrée **sans note** (`grade.value` null) : jamais un faux 0 qui fausserait les
+  moyennes (`hasScoredInput`). Les **observations de cours** (carnet, US-65) se consultent sous chaque
+  copie (« Observations de cours (n) », celles de tous les membres pour une note de groupe) ; elles
+  ne sortent jamais de l'application (PDF et e-mail ne les lisent pas : `privacy.test.ts`). Logique pure :
+  `src/lib/assessments/session.ts` ; e2e : `e2e/grading-session.spec.ts`.
 - **Commentaire structuré (US-85)** : sous chaque critère, une zone « Commentaire — {critère} » (avec ses
   phrases repliées, limitées à ce critère ; « Insérer dans le commentaire » y place la description du
   palier choisi), puis un bloc « Bilan » : « Points forts » (phrases positives), « Progrès » (conseils et
