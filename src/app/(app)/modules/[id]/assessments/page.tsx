@@ -18,6 +18,7 @@ import {
   moduleStudentAverages,
 } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
+import { PROJECT_ROLE_LABELS } from "@/lib/ynov/project-skeleton";
 
 export async function generateMetadata({
   params,
@@ -59,12 +60,17 @@ export default async function ModuleAssessmentsPage({
             ) : null}
           </div>
         </div>
-        <Button asChild size="sm">
-          <Link href={`/modules/${id}/assessments/new`}>
-            <Plus aria-hidden />
-            Nouvelle évaluation
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/modules/${id}/project`}>Projet fil rouge</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href={`/modules/${id}/assessments/new`}>
+              <Plus aria-hidden />
+              Nouvelle évaluation
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <section aria-labelledby="assessments-list">
@@ -94,6 +100,7 @@ export default async function ModuleAssessmentsPage({
                   <div>
                     <p className="font-medium">{a.title}</p>
                     <p className="text-muted-foreground text-sm">
+                      {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {a.groups.map((g) => g.name).join(", ") || "—"} ·{" "}
                       {a.is_group_grade ? "note de groupe" : "note individuelle"} · sur {a.maxScore}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}

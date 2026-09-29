@@ -47,6 +47,9 @@ export type Database = {
           max_score: number | null
           module_id: string
           owner_id: string
+          project_id: string | null
+          project_position: number | null
+          project_role: Database["public"]["Enums"]["project_role"] | null
           results_sent_at: string | null
           subject: string | null
           title: string
@@ -65,6 +68,9 @@ export type Database = {
           max_score?: number | null
           module_id: string
           owner_id?: string
+          project_id?: string | null
+          project_position?: number | null
+          project_role?: Database["public"]["Enums"]["project_role"] | null
           results_sent_at?: string | null
           subject?: string | null
           title: string
@@ -83,6 +89,9 @@ export type Database = {
           max_score?: number | null
           module_id?: string
           owner_id?: string
+          project_id?: string | null
+          project_position?: number | null
+          project_role?: Database["public"]["Enums"]["project_role"] | null
           results_sent_at?: string | null
           subject?: string | null
           title?: string
@@ -102,6 +111,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "module_project"
             referencedColumns: ["id"]
           },
         ]
@@ -952,6 +968,47 @@ export type Database = {
           },
         ]
       }
+      module_project: {
+        Row: {
+          brief_md: string
+          client_context_md: string
+          created_at: string
+          id: string
+          module_id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          brief_md?: string
+          client_context_md?: string
+          created_at?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          brief_md?: string
+          client_context_md?: string
+          created_at?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_project_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_resource: {
         Row: {
           created_at: string
@@ -1519,6 +1576,7 @@ export type Database = {
         | "absent_late"
         | "other"
       outline_status: "draft" | "sent" | "validated"
+      project_role: "milestone" | "oral" | "individual"
       resource_audience: "students" | "teacher"
       resource_kind:
         | "course"
@@ -1704,6 +1762,7 @@ export const Constants = {
         "other",
       ],
       outline_status: ["draft", "sent", "validated"],
+      project_role: ["milestone", "oral", "individual"],
       resource_audience: ["students", "teacher"],
       resource_kind: [
         "course",

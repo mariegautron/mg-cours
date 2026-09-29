@@ -306,9 +306,14 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               {notes.enteredTotal > 1 ? "s" : ""}.
             </p>
           </div>
-          <Button asChild size="sm" variant="secondary">
-            <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/project`}>Projet fil rouge</Link>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </TabsContent>

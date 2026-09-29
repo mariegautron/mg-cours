@@ -543,6 +543,24 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   `grade` par étudiant·e mais ne compte que pour 1 note ; une évaluation sur 6 groupes aussi).
 - `grade` cible soit un·e étudiant·e soit un groupe (contrainte CHECK en base).
 
+## Projet fil rouge (E15, US-88) — `/modules/[id]/project`
+
+- Accès depuis la section « Évaluations » de la fiche module et depuis `/modules/[id]/assessments`
+  (bouton « Projet fil rouge »).
+- Formulaire : titre, brief et contexte client en Markdown (« Créer le projet » puis
+  « Enregistrer le projet »), rendu Markdown sous le formulaire.
+- « Évaluations du projet » : liste (rôle : jalon / oral / évaluation individuelle, note de groupe ou
+  individuelle, date, notée / à noter) avec lien vers chaque évaluation ; les évaluations
+  apparaissent aussi sur `/assessments` avec leur rôle.
+- « Squelette proposé » : déduit des notes exigées (`projectSkeleton`, `src/lib/ynov/project-skeleton.ts`) —
+  1 évaluation individuelle, 1 oral, un jalon par note restante ; notes de groupe remplies d'abord.
+  Chaque ligne est modifiable (titre, rôle, date, note de groupe / individuelle), on peut en ajouter ou
+  en retirer ; la zone `role=status` affiche « X/Y notes YNOV exigées (n de groupe, m individuelles) » et
+  signale ce qui manque, ce qui dépasse ou une répartition inhabituelle. Les évaluations créées visent
+  tous les groupes du module (comme une évaluation créée à la main) ; le compteur X/Y de la fiche
+  module n'a rien de particulier : il compte les évaluations notées.
+- « Supprimer le projet » (confirmation) : les évaluations et leurs notes sont conservées, détachées.
+
 ## Progression pédagogique (E6)
 
 - Section « Progression pédagogique » de `/modules/[id]` : badge d'échéance (E3) + boutons

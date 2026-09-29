@@ -233,8 +233,8 @@ Source : page Notion « MG COURS — Audit UX par parcours et user stories (27/0
 
 ## E13 — Évaluations, lot A « grilles et correction » (US-81 à US-87)
 
-Source : page Notion « MG COURS — Audit UX… », section « Chantier Évaluations ». Lots B (US-88 à US-93) et
-C (US-94 à US-100) : non commencés.
+Source : page Notion « MG COURS — Audit UX… », section « Chantier Évaluations ». Lot B (US-88 à US-93) :
+voir E15. Lot C (US-94 à US-100) : non commencé.
 
 | US    | Contenu                                                                                                                                                                                                                                                                                                                                                                                                         | Statut |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -258,6 +258,21 @@ Source : page Notion « MG COURS — Audit UX… », section « Mises à jour du
 | US-72 | Prochaine étape claire : badge iceberg remplacé par « Prochaine étape : … » (blocages réels : progression, notes, documents, données de facturation, statut de la facture) ; `/billing` liste les raisons du blocage par module                                                                                                       | ✅     |
 | US-77 | Import vers les groupes du module : colonne « groupe » = promotion ou groupe du module, « ajouter tout le monde au groupe X », aperçu des groupes créés / existants ; ajout de membres en masse avec recherche dans la page du groupe                                                                                                 | ✅     |
 | US-66 | Trombinoscope : photo par étudiant·e (une par une ou zip nommé par numéro étudiant), bucket privé `student-photos`, lien signé de 60 s via route authentifiée ; visible sur liste, fiche et carnet ; jamais dans exports, e-mails ou présentations ; alt = nom ; suppression ; formats et taille limités (migration `20261008000000`) | ✅     |
+
+## E15 — Évaluations, lot B « préparer, fournir, oral » (US-88 à US-93)
+
+Source : page Notion « MG COURS — Audit UX… », section « Chantier Évaluations ». Règle de comptage (Marie) :
+1 note individuelle + 1 note d'oral + autant de jalons que de notes YNOV restantes ; chaque jalon est une
+évaluation ordinaire, le compteur X/Y reste juste. **US-69 est absorbée par US-90.**
+
+| US    | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                                 | Statut |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| US-88 | Projet fil rouge en jalons : `module_project` (titre, brief et contexte client en Markdown, un par module), évaluations rattachées (`assessment.project_id` / `project_role` : jalon, oral, individuelle) ; squelette proposé depuis les notes exigées (`projectSkeleton` : notes de groupe d'abord, puis individuelles), modifiable, compteur « X/Y notes YNOV exigées » en direct ; suppression du projet sans perdre les évaluations | ✅     |
+| US-89 | Thèmes du projet (3 au choix) et affectation aux groupes : volontaires d'abord, puis tirage reproductible (sans remise, répartition équitable), confirmation avant nouveau tirage ; thème visible en correction et dans le PDF de résultats                                                                                                                                                                                             | ⬜     |
+| US-90 | Sujet lié à la séance, avec ses fichiers (absorbe US-69) : objectif, consigne, rendu attendu, « ce qui sera évalué », fichiers joints (téléchargement forcé), état de préparation, projection depuis « Faire cours »                                                                                                                                                                                                                    | ⬜     |
+| US-91 | Grille remise aux étudiant·es : export PDF (axes, critères, paliers, références, bonus) sans notes ni commentaires                                                                                                                                                                                                                                                                                                                      | ⬜     |
+| US-92 | Oral de fin de projet : ordre de passage, créneaux, chronomètre accessible, grille ouverte sur le groupe qui passe, « groupe suivant », pondération individuelle justifiée                                                                                                                                                                                                                                                              | ⬜     |
+| US-93 | (optionnel) Suivi des rendus par jalon et par groupe                                                                                                                                                                                                                                                                                                                                                                                    | ⬜     |
 
 ## Vision suivante (validée 26/09)
 
