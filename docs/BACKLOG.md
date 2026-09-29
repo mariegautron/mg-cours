@@ -244,7 +244,7 @@ C (US-94 à US-100) : non commencés.
 | US-84  | Phrases réutilisables : « Enregistrer la sélection comme phrase » (texte, critère, matière, type), insertion en un clic au curseur (texte copié), triées par usage puis matière, filtre par critère ; `predefined_comment` étendue (`grid_criterion_id`, `criterion_label`, `subject`, `use_count`, `last_used_at`) | ✅     |
 | US-85  | Commentaire structuré : un commentaire par critère (`grade.criterion_comments`), « Points forts », « Progrès » (`strengths`, `progress`) et commentaire libre (`feedback`), chacun avec ses phrases ; repris dans le PDF de résultats (palier obtenu, commentaire du critère, points forts, progrès) ; note de groupe = même fiche pour tous les membres | ✅     |
 | US-86  | Correction sans perte en une page (`GradingSession`) : avancement « 12/30 corrigées » en direct, enregistrement automatique par copie (1,5 s), « Enregistrer tout », avertissement avant de quitter (`use-unsaved-guard`), copies précédente/suivante au clavier, vue « un critère pour toute la classe », observations du carnet consultables ; une copie sans critère noté n'a pas de note (jamais un faux 0) | ✅     |
-| US-87  | Absences : présent·e / absent·e non prévenu·e (0 auto) / excusé·e (hors moyenne) ; 0 individuel dans une note de groupe ; pondération individuelle justifiée                   | ⏳     |
+| US-87  | Absences : `grade.attendance` (présent·e / absent·e non prévenu·e = 0 auto / excusé·e = hors moyenne) ; note de groupe : `group_grade_member` (absence et pondération individuelle en %, justification obligatoire, affichée dans le résultat) sans jamais modifier la note du groupe ; moyennes et fiches de résultats à jour | ✅     |
 
 ## Vision suivante (validée 26/09)
 

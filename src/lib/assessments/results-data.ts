@@ -1,4 +1,9 @@
-import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assessments/queries";
+import {
+  getAssessment,
+  getGradesByAssessment,
+  listComments,
+  listGroupGradeMembers,
+} from "@/lib/assessments/queries";
 import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
 import { getModule } from "@/lib/modules/queries";
 
@@ -16,6 +21,9 @@ export async function loadResultSheets(
   if (!mod || !assessment || assessment.module_id !== moduleId || assessment.groups.length === 0) {
     return null;
   }
+  const memberOverrides = await listGroupGradeMembers(
+    grades.filter((g) => g.student_group_id).map((g) => g.id),
+  );
   return buildResultSheets({
     moduleName: mod.name,
     assessment,
@@ -23,6 +31,7 @@ export async function loadResultSheets(
     criteria: assessment.grading_grid?.criteria ?? [],
     axes: assessment.grading_grid?.axes ?? [],
     grades,
+    memberOverrides,
     comments,
   });
 }

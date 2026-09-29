@@ -327,3 +327,116 @@ describe("buildResultSheets — commentaire structuré (US-85)", () => {
     expect(sheets[0].criteria[0].comment).toBe("Le header manque.");
   });
 });
+
+describe("buildResultSheets — absences et pondération individuelle (US-87)", () => {
+  const criteria = [{ id: "c1", label: "Présentation", weight: 20 }];
+  const groupAssessment = {
+    title: "Oral",
+    subject: null,
+    date: null,
+    is_group_grade: true,
+    max_score: 20,
+  };
+  const groupGrade = grade({
+    id: "gg",
+    student_group_id: "grp",
+    is_group_grade: true,
+    scores: { c1: 16 },
+    value: 16,
+  });
+  const override = (studentId: string, over: Record<string, unknown>) => ({
+    grade_id: "gg",
+    student_id: studentId,
+    attendance: "present" as const,
+    individual_factor: 1,
+    justification: null,
+    ...over,
+  });
+  const members = {
+    ...base,
+    groups: [
+      {
+        id: "grp",
+        name: "G1",
+        members: [
+          student("s1", "Lea", "lea@x.fr"),
+          student("s2", "Noa", "noa@x.fr"),
+          student("s3", "Ali", null),
+        ],
+      },
+    ],
+  };
+
+  it("note de groupe : une fiche commune, plus une fiche par membre pondéré ou absent·e non prévenu·e", () => {
+    const sheets = buildResultSheets({
+      ...members,
+      criteria,
+      assessment: groupAssessment,
+      grades: [groupGrade],
+      memberOverrides: [
+        override("s2", { individual_factor: 0.8, justification: "A peu contribué à l'oral." }),
+        override("s3", { attendance: "absent_unexcused" }),
+      ],
+    });
+    expect(sheets).toHaveLength(3);
+    // Fiche commune : les membres sans ajustement, note du groupe intacte.
+    expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test"]);
+    expect(sheets[0].value).toBe(16);
+    expect(sheets[0].adjustment).toBeNull();
+    // Pondération : note du groupe × 80 %, avec sa justification.
+    expect(sheets[1].recipients.map((r) => r.name)).toEqual(["Noa Test"]);
+    expect(sheets[1].value).toBe(12.8);
+    expect(sheets[1].groupValue).toBe(16);
+    expect(sheets[1].adjustment).toEqual({
+      factor: 0.8,
+      justification: "A peu contribué à l'oral.",
+    });
+    // Absent·e non prévenu·e : 0, sans toucher à la note du groupe.
+    expect(sheets[2].recipients.map((r) => r.name)).toEqual(["Ali Test"]);
+    expect(sheets[2].value).toBe(0);
+    expect(sheets[2].attendance).toBe("absent_unexcused");
+    expect(sheets[2].adjustment).toBeNull();
+  });
+
+  it("note de groupe : pas de fiche pour un·e absent·e excusé·e (rattrapage à venir)", () => {
+    const sheets = buildResultSheets({
+      ...members,
+      criteria,
+      assessment: groupAssessment,
+      grades: [groupGrade],
+      memberOverrides: [override("s2", { attendance: "absent_excused" })],
+    });
+    expect(sheets.flatMap((s) => s.recipients.map((r) => r.name))).toEqual([
+      "Lea Test",
+      "Ali Test",
+    ]);
+  });
+
+  it("note de groupe : sans ajustement, une seule fiche pour tout le groupe", () => {
+    const sheets = buildResultSheets({
+      ...members,
+      criteria,
+      assessment: groupAssessment,
+      grades: [groupGrade],
+    });
+    expect(sheets).toHaveLength(1);
+    expect(sheets[0].recipients).toHaveLength(3);
+  });
+
+  it("note individuelle : absent·e non prévenu·e = fiche à 0 ; excusé·e = pas de fiche", () => {
+    const individual = { ...groupAssessment, is_group_grade: false };
+    const sheets = buildResultSheets({
+      ...members,
+      criteria,
+      assessment: individual,
+      grades: [
+        grade({ student_id: "s1", attendance: "absent_unexcused", value: 0, scores: {} }),
+        grade({ student_id: "s2", attendance: "absent_excused", value: null, scores: {} }),
+      ],
+    });
+    expect(sheets).toHaveLength(1);
+    expect(sheets[0].recipients[0].name).toBe("Lea Test");
+    expect(sheets[0].value).toBe(0);
+    expect(sheets[0].attendance).toBe("absent_unexcused");
+  });
+});

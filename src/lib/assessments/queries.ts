@@ -1,3 +1,4 @@
+import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
 import { createClient } from "@/lib/supabase/server";
 import {
   criteriaTotal,
@@ -257,6 +258,16 @@ export async function getAssessment(id: string): Promise<AssessmentDetail | null
   return { ...raw, groups, grading_grid, maxScore };
 }
 
+/** Ajustements individuels (absence, pondération) des notes de groupe données. */
+export async function listGroupGradeMembers(
+  gradeIds: string[],
+): Promise<Tables<"group_grade_member">[]> {
+  if (gradeIds.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.from("group_grade_member").select("*").in("grade_id", gradeIds);
+  return data ?? [];
+}
+
 export async function getGradesByAssessment(assessmentId: string): Promise<Tables<"grade">[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("grade").select("*").eq("assessment_id", assessmentId);
@@ -327,6 +338,19 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     gradesByAssessment.set(g.assessment_id, list);
   }
 
+  const groupGradeIds = (grades ?? []).filter((g) => g.student_group_id).map((g) => g.id);
+  const overrides = await listGroupGradeMembers(groupGradeIds);
+  const overrideOf = new Map(
+    overrides.map((o) => [
+      `${o.grade_id}:${o.student_id}`,
+      {
+        attendance: o.attendance,
+        factor: o.individual_factor,
+        justification: o.justification,
+      } satisfies MemberOverride,
+    ]),
+  );
+
   const perStudent = new Map<string, GradeInput[]>();
   for (const student of allStudents.values()) perStudent.set(student.id, []);
 
@@ -338,7 +362,9 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       if (row.value === null) continue;
       if (assessment.is_group_grade && row.student_group_id) {
         for (const s of studentsByGroup.get(row.student_group_id) ?? []) {
-          perStudent.get(s.id)?.push({ value: row.value, kind, max });
+          // Absent·e non prévenu·e : 0 ; excusé·e : hors moyenne ; pondération : note du groupe × facteur.
+          const value = groupMemberValue(row.value, max, overrideOf.get(`${row.id}:${s.id}`));
+          if (value !== null) perStudent.get(s.id)?.push({ value, kind, max });
         }
       } else if (row.student_id) {
         perStudent.get(row.student_id)?.push({ value: row.value, kind, max });

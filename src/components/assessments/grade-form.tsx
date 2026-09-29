@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ATTENDANCE_HINTS,
+  ATTENDANCE_LABELS,
+  ATTENDANCE_VALUES,
+  type Attendance,
+  type MemberOverride,
+} from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
 import type { CriterionWithLevels, GridWithCriteria } from "@/lib/assessments/queries";
@@ -36,6 +43,13 @@ export interface CopyControls {
   save: () => void;
 }
 
+interface MemberDraft {
+  attendance: Attendance;
+  /** Pourcentage saisi ; vide = 100 %. */
+  percent: string;
+  justification: string;
+}
+
 export function GradeForm({
   id,
   action,
@@ -48,6 +62,8 @@ export function GradeForm({
   subject = null,
   focusCriterionId = null,
   observations = [],
+  members,
+  memberOverrides,
   onStatus,
   register,
   onNavigate,
@@ -71,6 +87,9 @@ export function GradeForm({
   focusCriterionId?: string | null;
   /** Observations de cours (carnet) : consultation seulement. */
   observations?: ObservationLine[];
+  /** Membres du groupe (note de groupe) : absence et pondération individuelle par membre. */
+  members?: { id: string; name: string }[];
+  memberOverrides?: Record<string, MemberOverride>;
   onStatus?: (id: string, status: CopyStatus) => void;
   register?: (id: string, controls: CopyControls | null) => void;
   onNavigate?: (direction: -1 | 1) => void;
@@ -102,6 +121,25 @@ export function GradeForm({
   const [progress, setProgress] = useState(grade?.progress ?? "");
   const [feedback, setFeedback] = useState(grade?.feedback ?? "");
   const [announcement, setAnnouncement] = useState("");
+  // Présence (note individuelle) et ajustements par membre (note de groupe).
+  const isGroup = members !== undefined;
+  const [attendance, setAttendance] = useState<Attendance>(grade?.attendance ?? "present");
+  const [memberState, setMemberState] = useState<Record<string, MemberDraft>>(() =>
+    Object.fromEntries(
+      (members ?? []).map((m) => {
+        const o = memberOverrides?.[m.id];
+        return [
+          m.id,
+          {
+            attendance: o?.attendance ?? "present",
+            percent: o && o.factor !== 1 ? String(Math.round(o.factor * 100)) : "",
+            justification: o?.justification ?? "",
+          },
+        ];
+      }),
+    ),
+  );
+  const absent = !isGroup && attendance !== "present";
   const criteria = grid?.criteria ?? [];
 
   const numericScores = Object.fromEntries(
@@ -116,9 +154,11 @@ export function GradeForm({
     isBonus: c.is_bonus,
   }));
   const totals = computeTotals(scoringCriteria, numericScores, { autoValidatedIds, maxScore });
-  const corrected = grid
-    ? hasScoredInput(scoringCriteria, numericScores, autoValidatedIds)
-    : directValue.trim() !== "";
+  const corrected =
+    absent ||
+    (grid
+      ? hasScoredInput(scoringCriteria, numericScores, autoValidatedIds)
+      : directValue.trim() !== "");
   const scaled = totals.max !== totals.maxScore;
   const overflow = describeOverflow(totals);
   const groups = grid ? groupByAxis(grid.criteria, grid.axes) : [];
@@ -133,6 +173,8 @@ export function GradeForm({
     strengths,
     progress,
     feedback,
+    attendance,
+    memberState,
   ]);
   const [saved, setSaved] = useState(snapshot);
   const [submitted, setSubmitted] = useState(snapshot);
@@ -142,7 +184,7 @@ export function GradeForm({
     if (state.saved) setSaved(submitted);
   }
   const dirty = snapshot !== saved;
-  const ready = grid ? true : directValue.trim() !== "";
+  const ready = absent || grid ? true : directValue.trim() !== "";
 
   const dirtyRef = useRef(dirty);
   useEffect(() => {
@@ -344,6 +386,124 @@ export function GradeForm({
     </p>
   );
 
+  // Saisie des critères non affichés (vue par critère, ou copie absente) : conservée et renvoyée.
+  const hiddenCriteria = (exceptId: string | null) =>
+    criteria
+      .filter((c) => c.id !== exceptId)
+      .map((c) => (
+        <span key={c.id} hidden>
+          {inputs[c.id] !== undefined && inputs[c.id].trim() !== "" ? (
+            <input type="hidden" name={`score_${c.id}`} value={inputs[c.id]} />
+          ) : null}
+          <input type="hidden" name={`comment_${c.id}`} value={criterionComments[c.id] ?? ""} />
+        </span>
+      ));
+
+  const hiddenMembers = members ? (
+    <>
+      <input type="hidden" name="memberOverrides" value="1" />
+      {members.map((m) => {
+        const st = memberState[m.id];
+        return (
+          <span key={m.id} hidden>
+            <input type="hidden" name={`member_${m.id}_attendance`} value={st.attendance} />
+            {st.attendance === "present" ? (
+              <>
+                <input type="hidden" name={`member_${m.id}_factor`} value={st.percent} />
+                <input
+                  type="hidden"
+                  name={`member_${m.id}_justification`}
+                  value={st.justification}
+                />
+              </>
+            ) : null}
+          </span>
+        );
+      })}
+    </>
+  ) : null;
+
+  function membersFieldset(list: { id: string; name: string }[]) {
+    const update = (id: string, patch: Partial<MemberDraft>) =>
+      setMemberState((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+    return (
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold">Membres du groupe</legend>
+        <p className="text-muted-foreground text-xs">
+          Absence ou pondération individuelle (oral) : la note du groupe n’est jamais modifiée. Une
+          pondération différente de 100 % exige une justification, affichée dans le résultat.
+        </p>
+        <input type="hidden" name="memberOverrides" value="1" />
+        <ul className="space-y-3">
+          {list.map((m) => {
+            const st = memberState[m.id];
+            const percent = Number(st.percent.replace(",", "."));
+            const weighted = st.percent.trim() !== "" && percent !== 100;
+            return (
+              <li key={m.id} className="space-y-2 rounded-md border p-3">
+                <p className="text-sm font-medium">{m.name}</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <Label htmlFor={`${uid}-att_${m.id}`}>Présence de {m.name}</Label>
+                    <select
+                      id={`${uid}-att_${m.id}`}
+                      name={`member_${m.id}_attendance`}
+                      value={st.attendance}
+                      onChange={(e) => update(m.id, { attendance: e.target.value as Attendance })}
+                      className="border-input h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+                    >
+                      {ATTENDANCE_VALUES.map((value) => (
+                        <option key={value} value={value}>
+                          {ATTENDANCE_LABELS[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {st.attendance === "present" ? (
+                    <>
+                      <div className="space-y-1">
+                        <Label htmlFor={`${uid}-pct_${m.id}`}>Pondération de {m.name} (%)</Label>
+                        <Input
+                          id={`${uid}-pct_${m.id}`}
+                          name={`member_${m.id}_factor`}
+                          type="number"
+                          min={0}
+                          max={200}
+                          step={1}
+                          placeholder="100"
+                          value={st.percent}
+                          onChange={(e) => update(m.id, { percent: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`${uid}-why_${m.id}`}>
+                          Justification de la pondération de {m.name}
+                          {weighted ? " (obligatoire)" : ""}
+                        </Label>
+                        <Input
+                          id={`${uid}-why_${m.id}`}
+                          name={`member_${m.id}_justification`}
+                          value={st.justification}
+                          maxLength={1000}
+                          aria-required={weighted}
+                          onChange={(e) => update(m.id, { justification: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground text-xs sm:col-span-2">
+                      {ATTENDANCE_HINTS[st.attendance]}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </fieldset>
+    );
+  }
+
   const focused = grid && focusCriterionId ? criteria.find((c) => c.id === focusCriterionId) : null;
 
   return (
@@ -391,33 +551,61 @@ export function GradeForm({
         </details>
       ) : null}
 
+      {isGroup ? null : focused ? (
+        <input type="hidden" name="attendance" value={attendance} />
+      ) : (
+        <fieldset className="space-y-1">
+          <legend className="text-sm font-semibold">Présence</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {ATTENDANCE_VALUES.map((value) => (
+              <label key={value} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="attendance"
+                  value={value}
+                  checked={attendance === value}
+                  onChange={() => setAttendance(value)}
+                />
+                {ATTENDANCE_LABELS[value]}
+              </label>
+            ))}
+          </div>
+          {ATTENDANCE_HINTS[attendance] ? (
+            <p className="text-muted-foreground text-xs">{ATTENDANCE_HINTS[attendance]}</p>
+          ) : null}
+        </fieldset>
+      )}
+
       {focused ? (
         <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">{criterionField(focused)}</div>
-          {totalLine}
+          {absent ? (
+            <p className="text-sm">
+              {ATTENDANCE_LABELS[attendance]}. {ATTENDANCE_HINTS[attendance]}
+            </p>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">{criterionField(focused)}</div>
+              {totalLine}
+            </>
+          )}
           {/* Les autres critères et le bilan ne sont pas affichés dans cette vue, mais leur saisie
               est conservée et renvoyée : enregistrer ne perd rien. */}
-          {criteria
-            .filter((c) => c.id !== focused.id)
-            .map((c) => (
-              <span key={c.id} hidden>
-                {inputs[c.id] !== undefined && inputs[c.id].trim() !== "" ? (
-                  <input type="hidden" name={`score_${c.id}`} value={inputs[c.id]} />
-                ) : null}
-                <input
-                  type="hidden"
-                  name={`comment_${c.id}`}
-                  value={criterionComments[c.id] ?? ""}
-                />
-              </span>
-            ))}
+          {hiddenCriteria(absent ? null : focused.id)}
           <input type="hidden" name="strengths" value={strengths} />
           <input type="hidden" name="progress" value={progress} />
           <input type="hidden" name="feedback" value={feedback} />
+          {hiddenMembers}
         </div>
       ) : (
         <>
-          {grid ? (
+          {absent ? (
+            <>
+              <p className="bg-muted rounded-md p-2 text-sm">
+                {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette copie.
+              </p>
+              {hiddenCriteria(null)}
+            </>
+          ) : grid ? (
             <div className="space-y-4">
               {groups.map((group) =>
                 showAxes ? (
@@ -457,6 +645,8 @@ export function GradeForm({
               />
             </div>
           )}
+
+          {members ? membersFieldset(members) : null}
 
           <fieldset className="space-y-3">
             <legend className="text-sm font-semibold">Bilan</legend>

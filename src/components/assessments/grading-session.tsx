@@ -4,6 +4,7 @@ import { useCallback, useId, useRef, useState } from "react";
 
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { GradeForm, type CopyControls } from "@/components/assessments/grade-form";
+import type { MemberOverride } from "@/lib/assessments/attendance";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { GridWithCriteria } from "@/lib/assessments/queries";
@@ -25,6 +26,9 @@ export interface SessionItem {
   action: Action;
   grade?: Tables<"grade">;
   observations: ObservationLine[];
+  /** Note de groupe : membres et ajustements individuels enregistrés. */
+  members?: { id: string; name: string }[];
+  memberOverrides?: Record<string, MemberOverride>;
 }
 
 export interface SessionSection {
@@ -264,6 +268,8 @@ export function GradingSession({
               subject={subject}
               focusCriterionId={focused}
               observations={item.observations}
+              members={item.members}
+              memberOverrides={item.memberOverrides}
               onStatus={onStatus}
               register={register}
               onNavigate={(direction) => {

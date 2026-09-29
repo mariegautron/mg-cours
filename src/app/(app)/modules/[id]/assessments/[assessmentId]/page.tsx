@@ -10,7 +10,12 @@ import { Markdown } from "@/components/markdown";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assessments/queries";
+import {
+  getAssessment,
+  getGradesByAssessment,
+  listComments,
+  listGroupGradeMembers,
+} from "@/lib/assessments/queries";
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -40,6 +45,9 @@ export default async function AssessmentPage({
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
+  const overrideRows = await listGroupGradeMembers(
+    grades.filter((g) => g.student_group_id).map((g) => g.id),
+  );
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   const hasGrades = grades.some((g) => g.value !== null);
   const recipients = hasGrades
@@ -67,6 +75,24 @@ export default async function AssessmentPage({
             observations: observationsForCopy(
               group.members.map((m) => m.id),
               observations,
+            ),
+            members: group.members.map((m) => ({
+              id: m.id,
+              name: `${m.first_name} ${m.last_name}`,
+            })),
+            memberOverrides: Object.fromEntries(
+              overrideRows
+                .filter(
+                  (o) => o.grade_id === grades.find((g) => g.student_group_id === group.id)?.id,
+                )
+                .map((o) => [
+                  o.student_id,
+                  {
+                    attendance: o.attendance,
+                    factor: o.individual_factor,
+                    justification: o.justification,
+                  },
+                ]),
             ),
           })),
         },

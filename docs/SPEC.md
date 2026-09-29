@@ -418,6 +418,20 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Absences et pondération individuelle (US-87)** : chaque copie individuelle a un bloc « Présence » :
+  **présent·e**, **absent·e non prévenu·e** (note **0 automatique**, règle de l'école) ou **absent·e
+  excusé·e** (pas de note, **hors moyenne** tant qu'un rattrapage ne la remplace pas ; rattrapage :
+  US-96, lot C). Une copie absente n'affiche plus les critères (saisie conservée) et compte comme
+  traitée. **Note de groupe** : un bloc « Membres du groupe » liste chaque membre avec sa présence, une
+  **pondération en %** (multiplicateur de la note du groupe, plafonné au barème) et sa
+  **justification, obligatoire dès que la pondération diffère de 100 %** (message nommant l'étudiant·e) ;
+  la note du groupe n'est jamais modifiée. Ces ajustements sont dans `group_grade_member` (une ligne par
+  membre concerné). Effets : moyennes pondérées (absent·e non prévenu·e = 0 à ×1 pour une note de
+  groupe, excusé·e ignoré·e, pondéré·e = note du groupe × facteur) ; le compteur de notes reste « une
+  évaluation = une note » ; PDF de résultats : une fiche commune pour les membres sans ajustement, une
+  fiche par membre pondéré (« Pondération individuelle : 80 % de la note du groupe » + justification) ou
+  absent·e non prévenu·e (« la note est de 0 »), aucune fiche pour un·e excusé·e. Logique pure :
+  `src/lib/assessments/attendance.ts` ; e2e : `e2e/attendance.spec.ts`.
 - **Correction sans perte, en une page (US-86)** : la page de saisie est une session (`GradingSession`)
   qui regroupe toutes les copies. En tête (collant) : avancement **« 12/30 corrigées »** mis à jour à
   la frappe (une copie est corrigée dès qu'un critère est noté, ou si tous les critères sont validés

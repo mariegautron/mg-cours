@@ -563,6 +563,57 @@ export type Database = {
           },
         ]
       }
+      group_grade_member: {
+        Row: {
+          attendance: Database["public"]["Enums"]["attendance_status"]
+          created_at: string
+          grade_id: string
+          id: string
+          individual_factor: number
+          justification: string | null
+          owner_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          attendance?: Database["public"]["Enums"]["attendance_status"]
+          created_at?: string
+          grade_id: string
+          id?: string
+          individual_factor?: number
+          justification?: string | null
+          owner_id?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          attendance?: Database["public"]["Enums"]["attendance_status"]
+          created_at?: string
+          grade_id?: string
+          id?: string
+          individual_factor?: number
+          justification?: string | null
+          owner_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_grade_member_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grade"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_grade_member_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_member: {
         Row: {
           created_at: string

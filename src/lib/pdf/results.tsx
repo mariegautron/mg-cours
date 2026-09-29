@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f3f3f3",
   },
   criterion: { flex: 1, paddingRight: 8 },
+  notice: { marginBottom: 8, padding: 6, backgroundColor: "#f3f3f3" },
   ref: { color: "#555", fontSize: 9 },
   level: { color: "#333", fontSize: 10, marginTop: 2 },
   comment: { fontSize: 10, marginTop: 2, fontFamily: "Helvetica-Oblique" },
@@ -73,7 +74,22 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               </View>
             ) : null}
 
-            {s.criteria.map((c, j) => (
+            {s.attendance === "absent_unexcused" ? (
+              <Text style={styles.notice}>
+                Absence non prévenue : la note est de 0 (règle de l’école).
+              </Text>
+            ) : null}
+            {s.adjustment && s.groupValue !== null ? (
+              <View style={styles.notice}>
+                <Text>
+                  Pondération individuelle : {formatNumber(Math.round(s.adjustment.factor * 100))} %
+                  de la note du groupe ({formatNumber(s.groupValue)} / {s.maxScore}).
+                </Text>
+                <Text>Justification : {s.adjustment.justification}</Text>
+              </View>
+            ) : null}
+
+            {(s.attendance === "present" ? s.criteria : []).map((c, j) => (
               <View key={c.label + j}>
                 {hasAxes && (j === 0 || c.axis !== s.criteria[j - 1].axis) ? (
                   <View style={styles.axis}>

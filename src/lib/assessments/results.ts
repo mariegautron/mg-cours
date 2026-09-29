@@ -1,4 +1,5 @@
 import { gradingTargets } from "@/lib/assessments/targets";
+import { groupMemberValue, type Attendance } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import { findLevel } from "@/lib/assessments/levels";
 import {
@@ -50,6 +51,12 @@ export interface ResultSheet {
   axes: ResultAxisSubtotal[];
   /** Ex. « 20,33 → plafonné à 20 » si le bonus a fait dépasser le barème. */
   overflow: string | null;
+  /** Présence : « absent·e non prévenu·e » = note 0 (l'excusé·e n'a pas de fiche). */
+  attendance: Attendance;
+  /** Pondération individuelle dans une note de groupe (oral), avec sa justification. */
+  adjustment: { factor: number; justification: string } | null;
+  /** Note du groupe avant pondération, quand la note du membre en diffère. */
+  groupValue: number | null;
   /** Points forts. */
   strengths: string | null;
   /** Progrès. */
@@ -75,6 +82,11 @@ interface Input {
   /** Axes de la grille, dans l'ordre. */
   axes?: Pick<Tables<"grid_axis">, "id" | "label">[];
   grades: Tables<"grade">[];
+  /** Ajustements individuels des notes de groupe (absence, pondération justifiée). */
+  memberOverrides?: Pick<
+    Tables<"group_grade_member">,
+    "grade_id" | "student_id" | "attendance" | "individual_factor" | "justification"
+  >[];
   comments: Pick<Tables<"predefined_comment">, "id" | "text">[];
 }
 
@@ -140,6 +152,9 @@ export function buildResultSheets(input: Input): ResultSheet[] {
         label: axisId ? (axisLabel.get(axisId) ?? null) : null,
       })),
       overflow: consistent ? describeOverflow(totals) : null,
+      attendance: grade.attendance ?? "present",
+      adjustment: null,
+      groupValue: null,
       strengths: grade.strengths ?? null,
       progress: grade.progress ?? null,
       feedback: grade.feedback,
@@ -158,7 +173,40 @@ export function buildResultSheets(input: Input): ResultSheet[] {
   if (assessment.is_group_grade) {
     return targets.flatMap(({ group }) => {
       const grade = input.grades.find((g) => g.student_group_id === group.id && g.value !== null);
-      return grade ? [sheetFor(grade, group.members.map(recipient))] : [];
+      if (!grade) return [];
+      const overrides = new Map(
+        (input.memberOverrides ?? [])
+          .filter((o) => o.grade_id === grade.id)
+          .map((o) => [o.student_id, o]),
+      );
+      // Même fiche pour tous les membres, sauf ceux dont la note diffère : absence ou pondération.
+      const regular = group.members.filter((m) => !overrides.has(m.id));
+      const base = sheetFor(grade, regular.map(recipient));
+      const sheets = regular.length > 0 ? [base] : [];
+      for (const member of group.members) {
+        const o = overrides.get(member.id);
+        // Absent·e excusé·e : pas de note, donc pas de fiche (rattrapage à venir).
+        if (!o || o.attendance === "absent_excused") continue;
+        const value = groupMemberValue(grade.value, maxScore, {
+          attendance: o.attendance,
+          factor: o.individual_factor,
+          justification: o.justification,
+        });
+        sheets.push({
+          ...base,
+          recipients: [recipient(member)],
+          value,
+          valueOn20: value === null ? null : toTwenty(value, maxScore),
+          overflow: null,
+          attendance: o.attendance,
+          groupValue: grade.value,
+          adjustment:
+            o.attendance === "present" && o.individual_factor !== 1
+              ? { factor: o.individual_factor, justification: o.justification ?? "" }
+              : null,
+        });
+      }
+      return sheets;
     });
   }
 

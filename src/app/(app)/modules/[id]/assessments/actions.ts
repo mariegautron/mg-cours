@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
+import {
+  individualValueFor,
+  isAttendance,
+  readMemberOverrides,
+  type Attendance,
+} from "@/lib/assessments/attendance";
 import { readFeedback } from "@/lib/assessments/feedback";
 import { computeTotals, hasScoredInput, readScores } from "@/lib/assessments/scoring";
 
@@ -198,6 +204,10 @@ async function saveGrade(
   formData: FormData,
 ): Promise<GradeFormState> {
   const predefinedCommentIds = formData.getAll("predefinedCommentIds").map(String);
+  // Présence d'un·e étudiant·e (note individuelle) ; une note de groupe reste toujours « présent·e ».
+  const rawAttendance = formData.get("attendance");
+  const attendance: Attendance =
+    target.studentId && isAttendance(rawAttendance) ? rawAttendance : "present";
 
   const supabase = await createClient();
   const { data: assessment } = await supabase
@@ -235,6 +245,8 @@ async function saveGrade(
     value = hasScoredInput(criteria, scores, autoValidatedIds)
       ? computeTotals(criteria, scores, { autoValidatedIds, maxScore: assessment.max_score }).value
       : null;
+  } else if (attendance !== "present") {
+    value = null;
   } else {
     const raw = formData.get("value");
     const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;
@@ -245,6 +257,24 @@ async function saveGrade(
     }
     value = num;
   }
+  // Absent·e non prévenu·e : 0 automatique ; excusé·e : pas de note (hors moyenne).
+  if (target.studentId) value = individualValueFor(attendance, value);
+
+  // Note de groupe : ajustements individuels (absence, pondération justifiée) sans toucher à la note.
+  let memberOverrides: ReturnType<typeof readMemberOverrides> | null = null;
+  if (target.studentGroupId && formData.get("memberOverrides") === "1") {
+    const { data: rows } = await supabase
+      .from("group_member")
+      .select("student:student_id(id, first_name, last_name)")
+      .eq("student_group_id", target.studentGroupId);
+    const members = (rows ?? [])
+      .map((r) => r.student as { id: string; first_name: string; last_name: string } | null)
+      .filter((m) => m !== null)
+      .map((m) => ({ id: m.id, name: `${m.first_name} ${m.last_name}` }));
+    memberOverrides = readMemberOverrides(formData, members);
+    if ("error" in memberOverrides) return { error: memberOverrides.error };
+  }
+
   const match = target.studentId
     ? { assessment_id: assessmentId, student_id: target.studentId }
     : { assessment_id: assessmentId, student_group_id: target.studentGroupId };
@@ -257,6 +287,7 @@ async function saveGrade(
     student_group_id: target.studentGroupId,
     is_group_grade: target.studentId === null,
     value,
+    attendance,
     scores,
     feedback: text.feedback,
     strengths: text.strengths,
@@ -265,11 +296,31 @@ async function saveGrade(
     predefined_comment_ids: predefinedCommentIds,
   };
 
-  const { error } = existing
-    ? await supabase.from("grade").update(row).eq("id", existing.id)
-    : await supabase.from("grade").insert(row);
+  const saved = existing
+    ? await supabase.from("grade").update(row).eq("id", existing.id).select("id").single()
+    : await supabase.from("grade").insert(row).select("id").single();
+  if (saved.error || !saved.data) return { error: "Enregistrement impossible." };
 
-  if (error) return { error: "Enregistrement impossible." };
+  if (memberOverrides && "overrides" in memberOverrides) {
+    const gradeId = saved.data.id;
+    const { error: clearError } = await supabase
+      .from("group_grade_member")
+      .delete()
+      .eq("grade_id", gradeId);
+    if (clearError) return { error: "Enregistrement impossible." };
+    if (memberOverrides.overrides.size > 0) {
+      const { error: insertError } = await supabase.from("group_grade_member").insert(
+        [...memberOverrides.overrides].map(([studentId, o]) => ({
+          grade_id: gradeId,
+          student_id: studentId,
+          attendance: o.attendance,
+          individual_factor: o.factor,
+          justification: o.justification,
+        })),
+      );
+      if (insertError) return { error: "Enregistrement impossible." };
+    }
+  }
 
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}`);
