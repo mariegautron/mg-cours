@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
+import { FileDown, Pencil, Plus } from "lucide-react";
 
 import { DeleteGridButton } from "@/components/assessments/delete-buttons";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,14 @@ export default async function GridsPage() {
                     {criteriaTotal(g.criteria)} points
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="secondary" size="sm">
+                    <a href={`/api/grids/${g.id}/pdf`}>
+                      <FileDown aria-hidden />
+                      Grille pour les étudiant·es (PDF)
+                      <span className="sr-only"> — {g.name}</span>
+                    </a>
+                  </Button>
                   <Button asChild variant="secondary" size="sm">
                     <Link href={`/assessments/grids/${g.id}/edit`}>
                       <Pencil aria-hidden />

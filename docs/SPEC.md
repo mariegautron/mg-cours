@@ -562,6 +562,19 @@ attachment`, `Content-Type: application/octet-stream`, `X-Content-Type-Options: 
   ajoutés au déroulé projeté et à la vue présentatrice, après les ressources. Contenu étudiant·es
   seulement : ni notes, ni carnet, ni ressources « Enseignante uniquement », ni fichiers joints.
 
+## Grille remise aux étudiant·es (E15, US-91)
+
+- `/assessments/grids` : bouton **« Grille pour les étudiant·es (PDF) »** sur chaque grille
+  (`/api/grids/[id]/pdf`, téléchargement).
+- Fiche d'une évaluation : même bouton dans la section « Sujet », affiché dès que le sujet n'est plus
+  « À construire » et qu'une grille est choisie (`/api/modules/[id]/assessments/[assessmentId]/grid`, le
+  serveur refuse sinon). Le PDF reprend alors le titre, le module, la date, la durée et le barème de
+  l'évaluation.
+- Contenu du PDF : titre, description, axes avec sous-totaux, critères (description, référence,
+  paliers du plus haut au plus bas avec leur description), bonus (« jusqu'à +n », hors barème), barème
+  total. Jamais de note, de commentaire, de critère « validé d'office » ni de carnet (`buildGridHandout`,
+  `src/lib/assessments/grid-handout.ts`).
+
 ## Projet fil rouge (E15, US-88) — `/modules/[id]/project`
 
 - Accès depuis la section « Évaluations » de la fiche module et depuis `/modules/[id]/assessments`

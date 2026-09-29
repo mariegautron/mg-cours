@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, Pencil, Presentation } from "lucide-react";
+import { Download, FileDown, Pencil, Presentation } from "lucide-react";
 
 import { saveGroupGrade, saveStudentGrade } from "@/app/(app)/modules/[id]/assessments/actions";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
@@ -180,12 +180,22 @@ export default async function AssessmentPage({
             ) : null}
           </div>
           {canPresent(assessment.prep_status) ? (
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
-                <Presentation aria-hidden />
-                Présenter le sujet
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {assessment.grading_grid ? (
+                <Button asChild size="sm" variant="secondary">
+                  <a href={`/api/modules/${id}/assessments/${assessmentId}/grid`}>
+                    <FileDown aria-hidden />
+                    Grille pour les étudiant·es (PDF)
+                  </a>
+                </Button>
+              ) : null}
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                  <Presentation aria-hidden />
+                  Présenter le sujet
+                </Link>
+              </Button>
+            </div>
           ) : (
             <p className="text-muted-foreground text-sm">
               Le sujet se projette une fois « Prête » ou « Fournie ».
