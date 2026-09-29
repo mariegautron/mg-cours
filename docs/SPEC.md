@@ -134,6 +134,14 @@ chacune liées à une ou plusieurs ressources réutilisables.
 - Champs : nom, école (liste `school`), niveau, année, YCODE, heures (total + FFP/TD/TP),
   dates (début, **1re séance**, fin), référence bon de commande.
 - La date de 1re séance sert au calcul de l'échéance de la progression (J-15).
+- **Importer des séances d'un autre module (US-58)** : bouton « Depuis un autre module » de
+  l'onglet Séances → `/modules/[id]/import-courses` : choix du module source (actifs et archivés,
+  avec leur nombre de séances), séances à cocher (« Tout cocher »), aperçu en direct (« 3 séances
+  seront ajoutées à la suite des 4 existantes (séances 5 à 7) »). **Repris** : titre, modalité,
+  objectifs, notes (animation, évaluation, matériel) et liens vers les ressources (mêmes rôles).
+  **Non repris** : dates, horaires, statut de préparation (la copie repart « À préparer »),
+  clôture de séance, carnet et observations. Logique pure : `src/lib/modules/course-import.ts` ;
+  écriture : `src/app/(app)/modules/[id]/import-courses/actions.ts`.
 - **Ordre des séances (US-61)** : onglet Séances, boutons « Monter » / « Descendre » sur chaque
   séance (accessibles au clavier, désactivés en bout de liste, le focus suit la séance déplacée,
   annonce « … est maintenant la séance 2 sur 5 »). Les positions sont renumérotées de 1 à N sans

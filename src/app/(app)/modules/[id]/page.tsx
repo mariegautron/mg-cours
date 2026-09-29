@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   Archive,
   CalendarPlus,
+  CopyPlus,
   ChevronRight,
   Download,
   ExternalLink,
@@ -206,6 +207,12 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
               <Link href={`/modules/${mod.id}/schedule`}>
                 <CalendarPlus aria-hidden />
                 Depuis un planning
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/import-courses`}>
+                <CopyPlus aria-hidden />
+                Depuis un autre module
               </Link>
             </Button>
             <Button asChild size="sm">

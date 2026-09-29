@@ -3,6 +3,7 @@ import {
   type CourseExport,
   type ExportCourseRow,
 } from "@/lib/modules/course-export";
+import type { ImportableCourse } from "@/lib/modules/course-import";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
@@ -219,4 +220,58 @@ export async function getModuleExpectations(moduleId: string): Promise<ModuleExp
     .eq("module_id", moduleId)
     .order("position");
   return data ?? [];
+}
+
+export interface ImportSource {
+  id: string;
+  name: string;
+  year: number;
+  archived: boolean;
+  courseCount: number;
+}
+
+/** Modules (actifs et archivés) dont on peut reprendre des séances, sauf le module courant (US-58). */
+export async function listImportSources(excludeId: string): Promise<ImportSource[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module")
+    .select("id, name, year, archived_at, course(count)")
+    .neq("id", excludeId)
+    .order("year", { ascending: false })
+    .order("name");
+  return (
+    (data ?? []) as unknown as {
+      id: string;
+      name: string;
+      year: number;
+      archived_at: string | null;
+      course: { count: number }[];
+    }[]
+  )
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      year: m.year,
+      archived: m.archived_at !== null,
+      courseCount: m.course[0]?.count ?? 0,
+    }))
+    .filter((m) => m.courseCount > 0);
+}
+
+/** Séances d'un module avec les liens vers leurs ressources, dans l'ordre (US-58). */
+export async function getImportableCourses(moduleId: string): Promise<ImportableCourse[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course")
+    .select(
+      "id, title, type, position, learning_objectives, animation_notes, assessment_notes, material, course_resource(resource_id, role)",
+    )
+    .eq("module_id", moduleId)
+    .order("position")
+    .order("created_at");
+  return (
+    (data ?? []) as unknown as (Omit<ImportableCourse, "resourceLinks"> & {
+      course_resource: ImportableCourse["resourceLinks"];
+    })[]
+  ).map(({ course_resource, ...c }) => ({ ...c, resourceLinks: course_resource }));
 }
