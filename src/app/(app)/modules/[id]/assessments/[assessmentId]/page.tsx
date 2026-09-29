@@ -11,6 +11,7 @@ import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons"
 import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
+import { HyperplanningTable } from "@/components/assessments/hyperplanning-table";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
   listComments,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
+import { hyperplanningRows } from "@/lib/assessments/hyperplanning";
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
@@ -125,9 +127,11 @@ export default async function AssessmentPage({
   }
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   const hasGrades = grades.some((g) => g.value !== null);
-  const recipients = hasGrades
-    ? resultsRecipients((await loadResultSheets(id, assessmentId)) ?? [])
-    : { emails: 0, withoutEmail: [] };
+  const sheets =
+    hasGrades || grades.some((g) => g.attendance === "absent_excused")
+      ? ((await loadResultSheets(id, assessmentId)) ?? [])
+      : [];
+  const recipients = hasGrades ? resultsRecipients(sheets) : { emails: 0, withoutEmail: [] };
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
   const observations = toObservationLines(moduleObservations);
   const sections = buildSessionSections({
@@ -307,6 +311,14 @@ export default async function AssessmentPage({
       ) : null}
 
       {makeupPanel}
+
+      {sheets.length > 0 ? (
+        <HyperplanningTable
+          moduleId={id}
+          assessmentId={assessmentId}
+          rows={hyperplanningRows(sheets)}
+        />
+      ) : null}
 
       <ResultsActions
         moduleId={id}

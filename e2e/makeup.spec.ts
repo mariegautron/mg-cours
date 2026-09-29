@@ -28,6 +28,16 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
 
   // L'évaluation d'origine propose le rattrapage : seule Zoé (excusée) est concernée.
   await page.goto(setup.assessmentUrl);
+  // US-100 : tableau à recopier dans Hyperplanning (excusé·e sans note, non prévenu·e à 0).
+  const hp = page.getByRole("region", { name: "À saisir dans Hyperplanning" });
+  await expect(hp.getByRole("row").filter({ hasText: "Ana" })).toContainText("20,00");
+  await expect(hp.getByRole("row").filter({ hasText: "Zoé" })).toContainText("Absent·e excusé·e");
+  await expect(hp.getByRole("row").filter({ hasText: "Léo" })).toContainText("0,00");
+  const csv = await page.request.get(
+    new URL(page.url()).pathname.replace("/modules/", "/api/modules/") + "/hyperplanning",
+  );
+  expect(csv.status()).toBe(200);
+  expect(await csv.text()).toContain("Note /20");
   const panel = page.getByRole("region", { name: "Rattrapage" });
   await expect(panel.getByText(new RegExp(`Absent·es excusé·es \\(1\\) : ${zoe}`))).toBeVisible();
   expect((await axe(page)).violations).toEqual([]);
