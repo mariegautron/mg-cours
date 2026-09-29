@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 
 import {
   sendResultsEmail,
@@ -18,7 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { DownloadButton } from "@/components/download-button";
+import { PendingButton } from "@/components/ui/pending-button";
 import type { ResultsRecipients } from "@/lib/assessments/results";
 
 const dateTime = (iso: string) =>
@@ -55,23 +56,25 @@ export function ResultsActions({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <a href={`/api/modules/${moduleId}/assessments/${assessmentId}/results`}>
-            <Download aria-hidden />
-            Exporter les résultats (PDF)
-          </a>
-        </Button>
+        <DownloadButton
+          href={`/api/modules/${moduleId}/assessments/${assessmentId}/results`}
+          doneLabel="Résultats téléchargés."
+        >
+          Exporter les résultats (PDF)
+        </DownloadButton>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
+            <PendingButton
               type="button"
               size="sm"
               variant="secondary"
-              disabled={pending || recipients.emails === 0}
+              pending={pending}
+              pendingLabel="Envoi…"
+              disabled={recipients.emails === 0}
             >
               <Mail aria-hidden />
-              {pending ? "Envoi…" : "Envoyer par e-mail"}
-            </Button>
+              Envoyer par e-mail
+            </PendingButton>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

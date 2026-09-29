@@ -23,7 +23,7 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   await openTab(page, /Séances/);
-  await expect(page.getByRole("link", { name: "Un seul PDF" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Un seul PDF" })).toHaveCount(0);
 
   await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
@@ -34,12 +34,12 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
 
   const pdf = page.waitForEvent("download");
   await openTab(page, /Séances/);
-  await page.getByRole("link", { name: "Un seul PDF" }).click();
+  await page.getByRole("button", { name: "Un seul PDF" }).click();
   const pdfDownload = await pdf;
   expect(pdfDownload.suggestedFilename()).toMatch(/^cours-.*\.pdf$/);
 
   const zip = page.waitForEvent("download");
   await openTab(page, /Séances/);
-  await page.getByRole("link", { name: /Un PDF par séance/ }).click();
+  await page.getByRole("button", { name: /Un PDF par séance/ }).click();
   expect((await zip).suggestedFilename()).toMatch(/^cours-.*\.zip$/);
 });

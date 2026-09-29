@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { saveProject } from "@/app/(app)/modules/[id]/project/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,9 +89,9 @@ export function ProjectForm({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
         {project ? "Enregistrer le projet" : "Créer le projet"}
-      </Button>
+      </PendingButton>
     </form>
   );
 }

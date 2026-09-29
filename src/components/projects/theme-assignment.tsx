@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
 
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
@@ -108,10 +108,16 @@ export function ThemeAssignment({
         {hasDraw ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" variant="secondary" disabled={pending || themes.length === 0}>
+              <PendingButton
+                type="button"
+                variant="secondary"
+                pending={pending}
+                pendingLabel="Tirage…"
+                disabled={themes.length === 0}
+              >
                 <Dices aria-hidden />
                 Refaire le tirage
-              </Button>
+              </PendingButton>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -128,15 +134,17 @@ export function ThemeAssignment({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <Button
+          <PendingButton
             type="button"
             variant="secondary"
-            disabled={pending || themes.length === 0 || toDraw === 0}
+            pending={pending}
+            pendingLabel="Tirage…"
+            disabled={themes.length === 0 || toDraw === 0}
             onClick={draw}
           >
             <Dices aria-hidden />
             Tirer au sort les groupes restants ({toDraw})
-          </Button>
+          </PendingButton>
         )}
         {drawSeed ? (
           <p className="text-muted-foreground text-sm">Dernier tirage : graine {drawSeed}.</p>

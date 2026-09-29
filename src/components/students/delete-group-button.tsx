@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export function DeleteGroupButton({ moduleId, groupId }: { moduleId: string; groupId: string }) {
   const [pending, startTransition] = useTransition();
@@ -23,10 +23,15 @@ export function DeleteGroupButton({ moduleId, groupId }: { moduleId: string; gro
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="destructive" disabled={pending}>
+        <PendingButton
+          type="button"
+          variant="destructive"
+          pending={pending}
+          pendingLabel="Suppression…"
+        >
           <Trash2 aria-hidden />
           Supprimer le groupe
-        </Button>
+        </PendingButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

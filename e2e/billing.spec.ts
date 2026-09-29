@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
@@ -125,13 +126,15 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await expect(page.getByText("200,00 €").first()).toBeVisible();
 
   // Téléchargements : PDF Factur-X et XML.
-  const link = await page
-    .getByRole("link", { name: /Télécharger le PDF Factur-X/ })
-    .getAttribute("href");
-  const pdf = await page.request.get(link!);
-  expect(pdf.status()).toBe(200);
-  expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
-  const xml = await page.request.get(link!.replace("/pdf", "/xml"));
+  const pdfRequest = page.waitForRequest(/\/api\/invoices\/[^/]+\/pdf$/);
+  const pdfDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Télécharger le PDF Factur-X/ }).click();
+  const link = (await pdfRequest).url();
+  const download = await pdfDownload;
+  expect(download.suggestedFilename()).toMatch(/^facture-.*\.pdf$/);
+  expect((await readFile((await download.path())!)).subarray(0, 4).toString()).toBe("%PDF");
+  await expect(page.getByText(/Facture .* téléchargée\./)).toBeVisible();
+  const xml = await page.request.get(link.replace("/pdf", "/xml"));
   const xmlBody = await xml.text();
   expect(xmlBody).toContain("urn:cen.eu:en16931:2017");
   expect(xmlBody).toContain("PO-2026-12345");

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import type { GroupFormState } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -57,9 +58,9 @@ export function GroupForm({ action, moduleId }: { action: Action; moduleId: stri
         </p>
       ) : null}
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Créer le groupe"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Créer le groupe
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href={`/modules/${moduleId}`}>Annuler</Link>
         </Button>

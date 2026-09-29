@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { saveThemes } from "@/app/(app)/modules/[id]/project/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,9 +116,9 @@ export function ThemesEditor({
           <Plus aria-hidden />
           Ajouter un thème
         </Button>
-        <Button type="submit" disabled={pending}>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           Enregistrer les thèmes
-        </Button>
+        </PendingButton>
       </div>
     </form>
   );

@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { saveQuestion, type QuestionFormState } from "@/app/(app)/questions/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -338,9 +339,9 @@ export function QuestionForm({
         />
       </div>
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Enregistrement…" : "Enregistrer la question"}
-      </Button>
+      <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+        Enregistrer la question
+      </PendingButton>
     </form>
   );
 }

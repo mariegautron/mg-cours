@@ -42,7 +42,10 @@ export function NavigationStatusProvider({ children }: { children: ReactNode }) 
           visible ? "animate-nav-progress" : "hidden"
         }`}
       />
-      <div role="status" data-slot="navigation-status" className="sr-only">
+      {/* Zone d'annonce polie (équivalent de role="status") sans porter ce rôle : les pages ont leurs
+          propres zones `role="status"` (compteurs, enregistrements) et la coque n'en ajoute pas une
+          de plus qui les rendrait ambiguës. */}
+      <div aria-live="polite" aria-atomic="true" data-slot="navigation-status" className="sr-only">
         {visible ? "Chargement…" : ""}
       </div>
       {children}

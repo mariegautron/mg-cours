@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import type { CommentFormState } from "@/app/(app)/assessments/comments/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,9 +87,9 @@ export function CommentForm({
         </p>
       ) : null}
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href="/assessments/comments">Annuler</Link>
         </Button>

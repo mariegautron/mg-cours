@@ -5,7 +5,7 @@ import { Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
 
 import { archiveModule, unarchiveModule } from "@/app/(app)/modules/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export function ArchiveModuleButton({
   id,
@@ -38,10 +38,16 @@ export function ArchiveModuleButton({
   }
 
   const button = (
-    <Button type="button" variant="secondary" disabled={pending} onClick={toggle}>
+    <PendingButton
+      type="button"
+      variant="secondary"
+      pending={pending}
+      pendingLabel={archived ? "Restauration…" : "Archivage…"}
+      onClick={toggle}
+    >
       {archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
       {archived ? "Restaurer le module" : "Archiver le module"}
-    </Button>
+    </PendingButton>
   );
   if (compact) return button;
 

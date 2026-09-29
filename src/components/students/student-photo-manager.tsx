@@ -9,6 +9,7 @@ import {
 } from "@/app/(app)/students/photo-actions";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PHOTO_ACCEPT } from "@/lib/students/photo";
@@ -39,9 +40,9 @@ export function StudentPhotoManager({
             </Label>
             <Input id="photo-file" name="photo" type="file" accept={PHOTO_ACCEPT} required />
           </div>
-          <Button type="submit" variant="secondary" disabled={pending}>
-            {pending ? "Envoi…" : "Enregistrer la photo"}
-          </Button>
+          <PendingButton type="submit" variant="secondary" pending={pending} pendingLabel="Envoi…">
+            Enregistrer la photo
+          </PendingButton>
           {student.photo_path ? (
             <Button
               type="button"

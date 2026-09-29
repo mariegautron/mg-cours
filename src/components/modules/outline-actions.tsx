@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { CheckCheck, Download, FileText, Send } from "lucide-react";
+import { CheckCheck, FileText, Send } from "lucide-react";
 
 import {
   generateOutline,
@@ -9,7 +9,8 @@ import {
   markOutlineValidated,
   type OutlineActionState,
 } from "@/app/(app)/modules/[id]/outline/actions";
-import { Button } from "@/components/ui/button";
+import { DownloadButton } from "@/components/download-button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 const initial: OutlineActionState = {};
 
@@ -46,38 +47,54 @@ export function OutlineActions({
       <div className="flex flex-wrap gap-2">
         {!archived ? (
           <form action={genAction}>
-            <Button type="submit" size="sm" variant="secondary" disabled={genPending}>
+            <PendingButton
+              type="submit"
+              size="sm"
+              variant="secondary"
+              pending={genPending}
+              pendingLabel="Génération…"
+            >
               <FileText aria-hidden />
               {hasDepositedOutline
                 ? "Générer une progression depuis les séances"
                 : status
                   ? "Régénérer la progression"
                   : "Générer la progression"}
-            </Button>
+            </PendingButton>
           </form>
         ) : null}
         {status ? (
-          <Button asChild size="sm" variant="secondary">
-            <a href={`/api/modules/${moduleId}/outline`}>
-              <Download aria-hidden />
-              Télécharger le PDF
-            </a>
-          </Button>
+          <DownloadButton
+            href={`/api/modules/${moduleId}/outline`}
+            doneLabel="Progression téléchargée."
+          >
+            Télécharger le PDF
+          </DownloadButton>
         ) : null}
         {status === "draft" && !hasDepositedOutline && !archived ? (
           <form action={sentAction}>
-            <Button type="submit" size="sm" disabled={sentPending}>
+            <PendingButton
+              type="submit"
+              size="sm"
+              pending={sentPending}
+              pendingLabel="Enregistrement…"
+            >
               <Send aria-hidden />
               Marquer comme envoyée
-            </Button>
+            </PendingButton>
           </form>
         ) : null}
         {status === "sent" ? (
           <form action={valAction}>
-            <Button type="submit" size="sm" disabled={valPending}>
+            <PendingButton
+              type="submit"
+              size="sm"
+              pending={valPending}
+              pendingLabel="Enregistrement…"
+            >
               <CheckCheck aria-hidden />
               Marquer comme validée
-            </Button>
+            </PendingButton>
           </form>
         ) : null}
       </div>

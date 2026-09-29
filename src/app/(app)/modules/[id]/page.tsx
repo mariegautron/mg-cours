@@ -14,6 +14,7 @@ import {
   Presentation,
 } from "lucide-react";
 
+import { DownloadButton } from "@/components/download-button";
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
 import { ModuleDocuments } from "@/components/modules/module-documents";
@@ -289,18 +290,19 @@ export default async function ModulePage({
         {courses.length ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
-            <Button asChild size="sm" variant="secondary">
-              <a href={`/api/modules/${mod.id}/courses`}>
-                <Download aria-hidden />
-                Un seul PDF
-              </a>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <a href={`/api/modules/${mod.id}/courses?format=zip`}>
-                <Download aria-hidden />
-                Un PDF par séance (zip)
-              </a>
-            </Button>
+            <DownloadButton
+              href={`/api/modules/${mod.id}/courses`}
+              doneLabel="Cours téléchargés (un seul PDF)."
+            >
+              Un seul PDF
+            </DownloadButton>
+            <DownloadButton
+              href={`/api/modules/${mod.id}/courses?format=zip`}
+              kind="zip"
+              doneLabel="Cours téléchargés (un PDF par séance)."
+            >
+              Un PDF par séance (zip)
+            </DownloadButton>
           </div>
         ) : null}
       </section>

@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { createSkeleton } from "@/app/(app)/modules/[id]/project/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -174,9 +175,14 @@ export function SkeletonEditor({
           <Plus aria-hidden />
           Ajouter une évaluation
         </Button>
-        <Button type="submit" disabled={pending || rows.length === 0}>
+        <PendingButton
+          type="submit"
+          pending={pending}
+          pendingLabel="Création…"
+          disabled={rows.length === 0}
+        >
           Créer {rows.length} évaluation{rows.length > 1 ? "s" : ""}
-        </Button>
+        </PendingButton>
       </div>
     </form>
   );

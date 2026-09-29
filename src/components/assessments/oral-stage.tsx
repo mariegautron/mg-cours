@@ -9,6 +9,7 @@ import { OralTimer } from "@/components/assessments/oral-timer";
 import type { PlanSlot } from "@/components/assessments/oral-plan";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import type { GridWithCriteria } from "@/lib/assessments/queries";
 import { firstWaiting, nextWaiting } from "@/lib/assessments/oral";
 import type { Tables } from "@/types/db";
@@ -117,10 +118,15 @@ export function OralStage({
             <ChevronLeft aria-hidden />
             Groupe précédent
           </Button>
-          <Button type="button" disabled={pending} onClick={goNext}>
+          <PendingButton
+            type="button"
+            pending={pending}
+            pendingLabel={last ? "Fin de l’oral…" : "Passage au groupe suivant…"}
+            onClick={goNext}
+          >
             {last ? <Flag aria-hidden /> : <ChevronRight aria-hidden />}
             {last ? "Terminer l’oral" : "Groupe suivant"}
-          </Button>
+          </PendingButton>
         </div>
         <div role="status" aria-live="polite" className="text-sm">
           {message}

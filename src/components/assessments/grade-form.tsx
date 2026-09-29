@@ -5,6 +5,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -733,9 +734,9 @@ export function GradeForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer la note"}
-        </Button>
+        <PendingButton type="submit" size="sm" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer la note
+        </PendingButton>
         {onNavigate ? (
           <>
             <Button

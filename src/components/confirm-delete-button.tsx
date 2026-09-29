@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 /**
  * Bouton « Supprimer » avec confirmation. Le nom accessible inclut `itemName`
@@ -38,11 +38,12 @@ export function ConfirmDeleteButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
+        <PendingButton
           type="button"
           variant="ghost"
           size={iconOnly ? "icon" : "sm"}
-          disabled={pending}
+          pending={pending}
+          pendingLabel="Suppression…"
           aria-label={iconOnly ? `Supprimer ${itemName}` : undefined}
         >
           <Trash2 aria-hidden />
@@ -51,7 +52,7 @@ export function ConfirmDeleteButton({
               Supprimer<span className="sr-only"> {itemName}</span>
             </>
           )}
-        </Button>
+        </PendingButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

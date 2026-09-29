@@ -8,7 +8,7 @@ import {
   prepareMakeup,
   type MakeupState,
 } from "@/app/(app)/modules/[id]/assessments/makeup-action";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export interface MakeupPanelProps {
   moduleId: string;
@@ -57,14 +57,18 @@ export function MakeupPanel({ moduleId, assessmentId, excused, makeup }: MakeupP
       )}
       {!makeup || waiting > 0 ? (
         <form action={action}>
-          <Button type="submit" variant="secondary" size="sm" disabled={pending}>
+          <PendingButton
+            type="submit"
+            variant="secondary"
+            size="sm"
+            pending={pending}
+            pendingLabel="Préparation…"
+          >
             <RotateCcw aria-hidden />
-            {pending
-              ? "Préparation…"
-              : makeup
-                ? `Ajouter ${waiting} absent·e${waiting > 1 ? "s" : ""} excusé·e${waiting > 1 ? "s" : ""} au rattrapage`
-                : "Préparer le rattrapage"}
-          </Button>
+            {makeup
+              ? `Ajouter ${waiting} absent·e${waiting > 1 ? "s" : ""} excusé·e${waiting > 1 ? "s" : ""} au rattrapage`
+              : "Préparer le rattrapage"}
+          </PendingButton>
         </form>
       ) : null}
       {state.error ? (

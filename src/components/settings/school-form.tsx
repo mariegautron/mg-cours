@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -183,13 +184,9 @@ export function SchoolForm({
           </p>
         ) : null}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={pending}>
-            {pending
-              ? "Enregistrement…"
-              : school
-                ? "Enregistrer les modifications"
-                : "Créer l’école"}
-          </Button>
+          <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+            {school ? "Enregistrer les modifications" : "Créer l’école"}
+          </PendingButton>
           <Button type="button" variant="ghost" asChild>
             <Link href="/settings" onClick={leave}>
               Annuler

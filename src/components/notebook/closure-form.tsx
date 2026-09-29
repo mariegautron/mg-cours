@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { COMPLETION_OPTIONS, type CourseCompletion } from "@/lib/notebook/notebook";
@@ -66,9 +66,9 @@ export function ClosureForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer la clôture"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer la clôture
+        </PendingButton>
         <p role="status" className="text-sm">
           {state.message ?? ""}
         </p>

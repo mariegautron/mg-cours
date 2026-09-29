@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 function ConfirmDeleteButton({
   label,
@@ -34,10 +34,16 @@ function ConfirmDeleteButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="destructive" size={size} disabled={pending}>
+        <PendingButton
+          type="button"
+          variant="destructive"
+          size={size}
+          pending={pending}
+          pendingLabel="Suppression…"
+        >
           <Trash2 aria-hidden />
           {label}
-        </Button>
+        </PendingButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

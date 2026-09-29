@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { saveSubmission } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/submissions-action";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SubmissionRow } from "@/lib/projects/submission";
@@ -44,9 +44,15 @@ function Row({
             defaultValue={row.url ?? ""}
           />
         </div>
-        <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+        <PendingButton
+          type="submit"
+          size="sm"
+          variant="secondary"
+          pending={pending}
+          pendingLabel="Enregistrement…"
+        >
           Enregistrer<span className="sr-only"> le rendu de {row.groupName}</span>
-        </Button>
+        </PendingButton>
       </form>
       {row.url ? (
         <a

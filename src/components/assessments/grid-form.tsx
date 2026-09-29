@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -349,9 +350,9 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
         </p>
       ) : null}
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href="/assessments/grids">Annuler</Link>
         </Button>

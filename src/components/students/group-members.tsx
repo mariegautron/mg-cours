@@ -6,6 +6,7 @@ import { UserMinus, UserPlus } from "lucide-react";
 
 import { addMembers, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,11 @@ export function GroupMembers({
   candidates: Tables<"student">[];
 }) {
   const [pending, startTransition] = useTransition();
+  // Bouton en cours : lui seul affiche l'attente ; les autres sont désactivés le temps de l'envoi
+  // (un appui sur une autre personne ne doit pas être perdu en silence, il attend son tour).
+  const [busy, setBusy] = useState<string | null>(null);
+  const isBusy = (key: string) => pending && busy === key;
+  const isBlocked = (key: string) => pending && busy !== key;
   const memberIds = new Set(members.map((m) => m.id));
   const available = candidates.filter((c) => !memberIds.has(c.id));
   const id = useId();
@@ -46,6 +52,7 @@ export function GroupMembers({
     const ids = only ?? available.filter((c) => selected.has(c.id)).map((c) => c.id);
     setError("");
     setMessage("");
+    setBusy(only ? `add-${only[0]}` : "add-selection");
     startTransition(async () => {
       const result = await addMembers(moduleId, groupId, ids);
       if (result.error) {
@@ -75,16 +82,21 @@ export function GroupMembers({
                 <Link href={`/students/${m.id}`} className="underline underline-offset-2">
                   {m.first_name} {m.last_name}
                 </Link>
-                <Button
+                <PendingButton
                   type="button"
                   variant="ghost"
                   size="icon"
-                  disabled={pending}
+                  pending={isBusy(`remove-${m.id}`)}
+                  pendingLabel="Retrait…"
+                  disabled={isBlocked(`remove-${m.id}`)}
                   aria-label={`Retirer ${m.first_name} ${m.last_name} du groupe`}
-                  onClick={() => startTransition(() => void removeMember(moduleId, groupId, m.id))}
+                  onClick={() => {
+                    setBusy(`remove-${m.id}`);
+                    startTransition(() => void removeMember(moduleId, groupId, m.id));
+                  }}
                 >
                   <UserMinus aria-hidden />
-                </Button>
+                </PendingButton>
               </li>
             ))}
           </ul>
@@ -134,14 +146,16 @@ export function GroupMembers({
               >
                 Tout désélectionner
               </Button>
-              <Button
+              <PendingButton
                 type="button"
                 size="sm"
-                disabled={pending || selectedCount === 0}
+                pending={isBusy("add-selection")}
+                pendingLabel="Ajout…"
+                disabled={selectedCount === 0 || isBlocked("add-selection")}
                 onClick={() => addSelected()}
               >
                 Ajouter la sélection ({selectedCount})
-              </Button>
+              </PendingButton>
             </div>
             <p role="status" className="text-muted-foreground text-sm">
               {visible.length} étudiant·e{visible.length > 1 ? "s" : ""} affiché·e
@@ -167,16 +181,18 @@ export function GroupMembers({
                     <Label htmlFor={`${id}-s-${c.id}`} className="flex-1 font-normal">
                       {c.first_name} {c.last_name}
                     </Label>
-                    <Button
+                    <PendingButton
                       type="button"
                       variant="ghost"
                       size="icon"
-                      disabled={pending}
+                      pending={isBusy(`add-${c.id}`)}
+                      pendingLabel="Ajout…"
+                      disabled={isBlocked(`add-${c.id}`)}
                       aria-label={`Ajouter ${c.first_name} ${c.last_name} au groupe`}
                       onClick={() => addSelected([c.id])}
                     >
                       <UserPlus aria-hidden />
-                    </Button>
+                    </PendingButton>
                   </li>
                 ))}
               </ul>

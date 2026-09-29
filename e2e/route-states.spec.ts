@@ -34,7 +34,9 @@ test("la coque expose une seule zone de statut pour l’annonce « Chargement…
   await login(page);
   await page.goto("/dashboard");
   const status = page.locator("[data-slot=navigation-status]");
-  await expect(status).toHaveAttribute("role", "status");
+  await expect(status).toHaveAttribute("aria-live", "polite");
+  // Une seule zone d'annonce de navigation.
+  await expect(page.locator("[data-slot=navigation-status]")).toHaveCount(1);
   await expect(status).toHaveText("");
   await expect(page.locator("[data-slot=navigation-progress]")).toBeHidden();
 });

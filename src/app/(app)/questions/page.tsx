@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, FileUp, Plus } from "lucide-react";
+import { FileUp, Plus } from "lucide-react";
 
+import { DownloadButton } from "@/components/download-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,12 +64,13 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
             </Link>
           </Button>
           {shown.length > 0 ? (
-            <Button asChild size="sm" variant="secondary">
-              <a href={`/api/questions/export${exportQuery ? `?${exportQuery}` : ""}`}>
-                <Download aria-hidden />
-                Exporter (Moodle XML)
-              </a>
-            </Button>
+            <DownloadButton
+              href={`/api/questions/export${exportQuery ? `?${exportQuery}` : ""}`}
+              kind="xml"
+              doneLabel="Questions exportées."
+            >
+              Exporter (Moodle XML)
+            </DownloadButton>
           ) : null}
         </div>
       </div>

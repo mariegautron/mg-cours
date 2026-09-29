@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { importPhotosZip, type PhotoState } from "@/app/(app)/students/photo-actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -19,9 +19,9 @@ export function PhotosImportForm() {
           WebP, 2 Mo par photo. Une photo déjà enregistrée est remplacée.
         </p>
       </div>
-      <Button type="submit" disabled={pending}>
-        {pending ? "Import…" : "Importer les photos"}
-      </Button>
+      <PendingButton type="submit" pending={pending} pendingLabel="Import…">
+        Importer les photos
+      </PendingButton>
       {state.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}

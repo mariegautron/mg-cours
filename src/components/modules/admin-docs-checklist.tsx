@@ -30,8 +30,11 @@ export function AdminDocsChecklist({
               <Switch
                 id={id}
                 checked={checked}
-                disabled={pending}
+                aria-busy={pending || undefined}
                 onCheckedChange={(value) =>
+                  // Un second appui pendant l'enregistrement est ignoré (le focus reste sur le
+                  // réglage, contrairement à `disabled`).
+                  !pending &&
                   startTransition(async () => {
                     setState({});
                     const result = await setAdminDoc(moduleId, doc.key, value);
@@ -47,7 +50,7 @@ export function AdminDocsChecklist({
         })}
       </ul>
       <p role="status" className="text-muted-foreground min-h-5 text-sm">
-        {state.saved ? `Enregistré : ${state.label}.` : null}
+        {pending ? "Enregistrement…" : state.saved ? `Enregistré : ${state.label}.` : null}
       </p>
       {state.error ? (
         <p role="alert" className="text-destructive text-sm">

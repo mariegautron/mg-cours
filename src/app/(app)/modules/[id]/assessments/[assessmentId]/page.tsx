@@ -7,6 +7,7 @@ import {
   buildSessionSections,
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
+import { DownloadButton } from "@/components/download-button";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
@@ -248,12 +249,13 @@ export default async function AssessmentPage({
           {canPresent(assessment.prep_status) ? (
             <div className="flex flex-wrap gap-2">
               {assessment.grading_grid ? (
-                <Button asChild size="sm" variant="secondary">
-                  <a href={`/api/modules/${id}/assessments/${assessmentId}/grid`}>
-                    <FileDown aria-hidden />
-                    Grille pour les étudiant·es (PDF)
-                  </a>
-                </Button>
+                <DownloadButton
+                  href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
+                  icon={<FileDown aria-hidden />}
+                  doneLabel="Grille téléchargée."
+                >
+                  Grille pour les étudiant·es (PDF)
+                </DownloadButton>
               ) : null}
               <Button asChild size="sm" variant="secondary">
                 <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>

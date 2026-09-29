@@ -7,6 +7,7 @@ import type { ModuleFormState } from "@/app/(app)/modules/actions";
 import { ScheduleEditor } from "@/components/modules/schedule-editor";
 import type { ModuleDates } from "@/lib/modules/hyperplanning";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 /** Planning d'un module existant : mêmes saisies que le formulaire de création. */
 export function ScheduleForm({
@@ -32,9 +33,9 @@ export function ScheduleForm({
         </p>
       ) : null}
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Création…" : "Créer les séances"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Création…">
+          Créer les séances
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href={`/modules/${moduleId}#courses`}>Annuler</Link>
         </Button>

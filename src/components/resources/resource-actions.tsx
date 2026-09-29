@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
 
 import { archiveResource, deleteResource, unarchiveResource } from "@/app/(app)/resources/actions";
@@ -15,33 +15,44 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export function ResourceActions({ id, archived }: { id: string; archived: boolean }) {
   const [pending, startTransition] = useTransition();
+  // Action en cours : seul son bouton affiche l'attente, l'autre attend la fin.
+  const [current, setCurrent] = useState<"archive" | "delete" | null>(null);
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Button
+      <PendingButton
         type="button"
         variant="outline"
-        disabled={pending}
-        onClick={() =>
+        pending={pending && current === "archive"}
+        pendingLabel={archived ? "Désarchivage…" : "Archivage…"}
+        disabled={pending && current === "delete"}
+        onClick={() => {
+          setCurrent("archive");
           startTransition(() => {
             void (archived ? unarchiveResource(id) : archiveResource(id));
-          })
-        }
+          });
+        }}
       >
         {archived ? <ArchiveRestore aria-hidden /> : <Archive aria-hidden />}
         {archived ? "Désarchiver" : "Archiver"}
-      </Button>
+      </PendingButton>
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button type="button" variant="destructive" disabled={pending}>
+          <PendingButton
+            type="button"
+            variant="destructive"
+            pending={pending && current === "delete"}
+            pendingLabel="Suppression…"
+            disabled={pending && current === "archive"}
+          >
             <Trash2 aria-hidden />
             Supprimer
-          </Button>
+          </PendingButton>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -52,7 +63,12 @@ export function ResourceActions({ id, archived }: { id: string; archived: boolea
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => startTransition(() => void deleteResource(id))}>
+            <AlertDialogAction
+              onClick={() => {
+                setCurrent("delete");
+                startTransition(() => void deleteResource(id));
+              }}
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

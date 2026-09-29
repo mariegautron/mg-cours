@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 
 import { saveProfile, type SettingsFormState } from "@/app/(app)/settings/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -243,9 +243,14 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={pending || !dirty}>
-            {pending ? "Enregistrement…" : "Enregistrer les modifications"}
-          </Button>
+          <PendingButton
+            type="submit"
+            pending={pending}
+            pendingLabel="Enregistrement…"
+            disabled={!dirty}
+          >
+            Enregistrer les modifications
+          </PendingButton>
           <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
             {state.saved && !dirty ? (
               <span className="inline-flex items-center gap-1">

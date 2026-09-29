@@ -15,23 +15,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export function DeleteSchoolButton({ id, name }: { id: string; name: string }) {
   const [pending, startTransition] = useTransition();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
+        <PendingButton
           type="button"
           variant="ghost"
           size="sm"
-          disabled={pending}
+          pending={pending}
+          pendingLabel="Suppression…"
           aria-label={`Supprimer ${name}`}
         >
           <Trash2 aria-hidden />
           Supprimer
-        </Button>
+        </PendingButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

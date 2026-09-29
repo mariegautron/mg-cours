@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { login, type LoginState } from "@/app/login/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,9 +44,14 @@ export function LoginForm() {
               {state.error}
             </p>
           ) : null}
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? "Connexion…" : "Se connecter"}
-          </Button>
+          <PendingButton
+            type="submit"
+            className="w-full"
+            pending={pending}
+            pendingLabel="Connexion…"
+          >
+            Se connecter
+          </PendingButton>
         </form>
       </CardContent>
     </Card>

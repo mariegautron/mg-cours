@@ -7,7 +7,7 @@ import {
   markExternalInvoicePaid,
   type BillingActionState,
 } from "@/app/(app)/modules/[id]/billing/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 
 export function ExternalInvoicePaid({ moduleId, paid }: { moduleId: string; paid: boolean }) {
   const [pending, start] = useTransition();
@@ -24,14 +24,15 @@ export function ExternalInvoicePaid({ moduleId, paid }: { moduleId: string; paid
 
   return (
     <div className="space-y-2">
-      <Button
+      <PendingButton
         type="button"
         size="sm"
-        disabled={pending}
+        pending={pending}
+        pendingLabel="Enregistrement…"
         onClick={() => start(async () => setState(await markExternalInvoicePaid(moduleId)))}
       >
         Marquer le module comme payé
-      </Button>
+      </PendingButton>
       {state?.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}

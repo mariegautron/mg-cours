@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { ResourceFormState } from "@/app/(app)/resources/actions";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -310,9 +311,9 @@ export function ResourceForm({
       ) : null}
 
       <div className="bg-background/95 sticky bottom-0 -mx-1 flex gap-3 border-t px-1 py-3 backdrop-blur">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Enregistrement…" : "Enregistrer"}
-        </Button>
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href={resource ? `/resources/${resource.id}` : "/resources"}>Annuler</Link>
         </Button>

@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, useTransition, type RefObject } fro
 
 import { recordPhraseUse, savePhrase } from "@/app/(app)/assessments/comments/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -302,9 +303,15 @@ export function PhraseBank<T extends Phrase>({
             </p>
           ) : null}
           <div className="flex gap-2">
-            <Button type="button" size="sm" disabled={pending} onClick={submit}>
-              {pending ? "Enregistrement…" : "Enregistrer la phrase"}
-            </Button>
+            <PendingButton
+              type="button"
+              size="sm"
+              pending={pending}
+              pendingLabel="Enregistrement…"
+              onClick={submit}
+            >
+              Enregistrer la phrase
+            </PendingButton>
             <Button type="button" size="sm" variant="ghost" onClick={closeSave}>
               Annuler
             </Button>

@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -102,10 +103,15 @@ export function ModuleDangerZone({
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button type="button" variant="destructive" disabled={pending}>
+          <PendingButton
+            type="button"
+            variant="destructive"
+            pending={pending}
+            pendingLabel="Suppression…"
+          >
             <Trash2 aria-hidden />
             Supprimer le module
-          </Button>
+          </PendingButton>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

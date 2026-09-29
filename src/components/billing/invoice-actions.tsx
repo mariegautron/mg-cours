@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  BadgeEuro,
-  Download,
-  Ellipsis,
-  ExternalLink,
-  FileCheck2,
-  FileCode,
-  Mail,
-  Send,
-} from "lucide-react";
+import { BadgeEuro, Ellipsis, ExternalLink, FileCheck2, FileCode, Mail, Send } from "lucide-react";
 
 import {
   deleteInvoice,
@@ -20,6 +11,8 @@ import {
   sendInvoiceByEmail,
   type BillingActionState,
 } from "@/app/(app)/modules/[id]/billing/actions";
+import { DownloadButton } from "@/components/download-button";
+import { PreviewLink } from "@/components/preview-link";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import {
   AlertDialog,
@@ -33,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,14 +46,16 @@ export function GenerateInvoiceButton({
 
   return (
     <div className="space-y-2">
-      <Button
+      <PendingButton
         type="button"
-        disabled={disabled || pending}
+        pending={pending}
+        pendingLabel="Génération de la facture…"
+        disabled={disabled}
         onClick={() => start(async () => setState(await generateInvoice(moduleId)))}
       >
         <FileCheck2 aria-hidden />
-        {pending ? "Génération…" : "Générer la facture"}
-      </Button>
+        Générer la facture
+      </PendingButton>
       {state?.error ? (
         <div role="alert" className="text-destructive text-sm">
           <p>{state.error}</p>
@@ -96,26 +92,38 @@ export function InvoiceActions({
 }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<BillingActionState | null>(null);
-  const run = (fn: (id: string) => Promise<BillingActionState>) =>
+  // Action en cours : son bouton affiche l'attente, les autres attendent la fin (pas de doublon).
+  const [current, setCurrent] = useState<string | null>(null);
+  const run = (key: string, fn: (id: string) => Promise<BillingActionState>) => {
+    setCurrent(key);
     start(async () => setState(await fn(moduleId)));
+  };
+  const busy = (key: string) => pending && current === key;
+  const blocked = (key: string) => pending && current !== key;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <a href={`/api/invoices/${invoiceId}/pdf`}>
-            <Download aria-hidden />
-            Télécharger le PDF Factur-X
-          </a>
-        </Button>
+        <DownloadButton
+          href={`/api/invoices/${invoiceId}/pdf`}
+          doneLabel={`Facture ${number} téléchargée.`}
+        >
+          Télécharger le PDF Factur-X
+        </DownloadButton>
         {status === "ready" ? (
           <>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" size="sm" disabled={pending || !recipientEmail}>
+                <PendingButton
+                  type="button"
+                  size="sm"
+                  pending={busy("email")}
+                  pendingLabel="Envoi…"
+                  disabled={!recipientEmail || blocked("email")}
+                >
                   <Mail aria-hidden />
-                  {pending ? "Envoi…" : "Envoyer par e-mail à l’école"}
-                </Button>
+                  Envoyer par e-mail à l’école
+                </PendingButton>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -135,42 +143,49 @@ export function InvoiceActions({
                   <dd>facture-{number}.pdf (Factur-X)</dd>
                 </dl>
                 <p className="text-sm">
-                  <a
+                  <PreviewLink
                     href={`/api/invoices/${invoiceId}/pdf?inline=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 underline underline-offset-2"
                   >
                     <ExternalLink aria-hidden className="size-4" />
                     Aperçu du PDF
                     <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
-                  </a>
+                  </PreviewLink>
                 </p>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => run(sendInvoiceByEmail)}>
+                  <AlertDialogAction onClick={() => run("email", sendInvoiceByEmail)}>
                     Envoyer à {recipientEmail}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Button
+            <PendingButton
               type="button"
               size="sm"
               variant="secondary"
-              disabled={pending}
-              onClick={() => run(markInvoiceSent)}
+              pending={busy("sent")}
+              pendingLabel="Enregistrement…"
+              disabled={blocked("sent")}
+              onClick={() => run("sent", markInvoiceSent)}
             >
               <Send aria-hidden />
               Marquer comme envoyée
-            </Button>
+            </PendingButton>
           </>
         ) : null}
         {status === "sent" ? (
-          <Button type="button" size="sm" disabled={pending} onClick={() => run(markInvoicePaid)}>
+          <PendingButton
+            type="button"
+            size="sm"
+            pending={busy("paid")}
+            pendingLabel="Enregistrement…"
+            disabled={blocked("paid")}
+            onClick={() => run("paid", markInvoicePaid)}
+          >
             <BadgeEuro aria-hidden />
             Marquer comme payée
-          </Button>
+          </PendingButton>
         ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -193,7 +208,7 @@ export function InvoiceActions({
             itemName={`la facture ${number}`}
             title={`Supprimer la facture ${number} ?`}
             description="La facture n’a pas été envoyée : elle sera supprimée et son numéro pourra être réattribué. Vous pourrez la générer à nouveau."
-            onConfirm={() => run(deleteInvoice)}
+            onConfirm={() => run("delete", deleteInvoice)}
           />
         ) : null}
       </div>

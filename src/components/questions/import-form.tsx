@@ -3,7 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 
 import { importMoodleXml, type ImportState } from "@/app/(app)/questions/actions";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
 
 export function ImportForm() {
@@ -41,13 +41,24 @@ export function ImportForm() {
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => run("preview")} variant="secondary" disabled={pending}>
+        <PendingButton
+          type="button"
+          onClick={() => run("preview")}
+          variant="secondary"
+          pending={pending}
+          pendingLabel="Vérification…"
+        >
           Vérifier le fichier
-        </Button>
+        </PendingButton>
         {p && p.fresh > 0 && state.imported === undefined && checked === file ? (
-          <Button type="button" onClick={() => run("import")} disabled={pending}>
+          <PendingButton
+            type="button"
+            onClick={() => run("import")}
+            pending={pending}
+            pendingLabel="Import…"
+          >
             Importer {p.fresh} question{p.fresh > 1 ? "s" : ""}
-          </Button>
+          </PendingButton>
         ) : null}
       </div>
 

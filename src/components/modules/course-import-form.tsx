@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import type { ImportCoursesState } from "@/app/(app)/modules/[id]/import-courses/actions";
 import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -124,9 +125,14 @@ export function CourseImportForm({
         </p>
       ) : null}
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending || chosen.length === 0}>
-          {pending ? "Import…" : `Importer ${chosen.length} séance${chosen.length > 1 ? "s" : ""}`}
-        </Button>
+        <PendingButton
+          type="submit"
+          pending={pending}
+          pendingLabel="Import…"
+          disabled={chosen.length === 0}
+        >
+          {`Importer ${chosen.length} séance${chosen.length > 1 ? "s" : ""}`}
+        </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link href={`/modules/${moduleId}#courses`}>Annuler</Link>
         </Button>

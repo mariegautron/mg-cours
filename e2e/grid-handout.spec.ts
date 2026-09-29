@@ -1,14 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { extractText } from "unpdf";
 
 import { createAssessment, createSimpleGrid, loginLight } from "./grading-setup";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
-async function pdfText(response: import("@playwright/test").APIResponse) {
-  expect(response.status()).toBe(200);
-  expect(response.headers()["content-type"]).toBe("application/pdf");
-  const { text } = await extractText(new Uint8Array(await response.body()), { mergePages: true });
+// Le PDF est téléchargé par le bouton (fetch + fichier), pas par un simple lien.
+async function pdfText(download: import("@playwright/test").Download) {
+  const bytes = new Uint8Array(await readFile((await download.path())!));
+  expect(Buffer.from(bytes.subarray(0, 4)).toString()).toBe("%PDF");
+  const { text } = await extractText(bytes, { mergePages: true });
   return text;
 }
 
@@ -36,7 +38,7 @@ test("grille remise aux étudiant·es : PDF sans notes ni commentaires, depuis l
   // Depuis la page des grilles.
   await page.goto("/assessments/grids");
   const card = page.getByRole("listitem").filter({ hasText: gridName });
-  const link = card.getByRole("link", { name: /Grille pour les étudiant·es \(PDF\)/ });
+  const link = card.getByRole("button", { name: /Grille pour les étudiant·es \(PDF\)/ });
   await expect(link).toBeVisible();
   expect(
     (
@@ -45,7 +47,10 @@ test("grille remise aux étudiant·es : PDF sans notes ni commentaires, depuis l
         .analyze()
     ).violations,
   ).toEqual([]);
-  const gridText = await pdfText(await page.request.get((await link.getAttribute("href"))!));
+  const gridDownload = page.waitForEvent("download");
+  await link.click();
+  const gridText = await pdfText(await gridDownload);
+  await expect(card.getByText(/Grille « .* » téléchargée\./)).toBeVisible();
   expect(gridText).toContain("Structure");
   expect(gridText).toContain("Contenu");
   expect(gridText).toContain("Barème : 10 points");
@@ -54,7 +59,7 @@ test("grille remise aux étudiant·es : PDF sans notes ni commentaires, depuis l
 
   // Depuis l'évaluation : bloquée tant que le sujet est « à construire ».
   await page.goto(setup.assessmentUrl);
-  await expect(page.getByRole("link", { name: /Grille pour les étudiant·es/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Grille pour les étudiant·es/ })).toHaveCount(0);
   const gridUrl = `/api/modules/${setup.moduleUrl.split("/modules/")[1]}/assessments/${setup.assessmentUrl.split("/assessments/")[1]}/grid`;
   expect((await page.request.get(gridUrl)).status()).toBe(409);
 
@@ -63,9 +68,11 @@ test("grille remise aux étudiant·es : PDF sans notes ni commentaires, depuis l
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByRole("heading", { name: `Évaluation ${suffix}` }).waitFor();
 
-  const button = page.getByRole("link", { name: /Grille pour les étudiant·es/ });
+  const button = page.getByRole("button", { name: /Grille pour les étudiant·es/ });
   await expect(button).toBeVisible();
-  const text = await pdfText(await page.request.get((await button.getAttribute("href"))!));
+  const download = page.waitForEvent("download");
+  await button.click();
+  const text = await pdfText(await download);
   expect(text).toContain(`Évaluation ${suffix}`);
   expect(text).toContain("Structure");
   expect(text).not.toContain("Secret de correction");

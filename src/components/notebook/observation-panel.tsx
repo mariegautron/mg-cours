@@ -4,7 +4,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { StudentPhoto } from "@/components/students/student-photo";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +27,8 @@ export function ObservationPanel({ action, students }: { action: Action; student
   const [state, formAction, pending] = useActionState(action, {});
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  // Étiquette pressée : seule elle affiche l'attente, les autres attendent la fin de l'envoi.
+  const [pressedTag, setPressedTag] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<number | undefined>(undefined);
   const firstTagRef = useRef<HTMLButtonElement>(null);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -116,18 +118,21 @@ export function ObservationPanel({ action, students }: { action: Action; student
                       </legend>
                       <div className="flex flex-wrap gap-2">
                         {OBSERVATION_TAGS.map((t, i) => (
-                          <Button
+                          <PendingButton
                             key={t.value}
                             ref={i === 0 ? firstTagRef : undefined}
                             type="submit"
                             name="tag"
                             value={t.value}
                             variant="secondary"
-                            disabled={pending}
+                            pending={pending && pressedTag === t.value}
+                            pendingLabel="Enregistrement…"
+                            disabled={pending && pressedTag !== t.value}
+                            onClick={() => setPressedTag(t.value)}
                             className="min-h-11"
                           >
                             {t.label}
-                          </Button>
+                          </PendingButton>
                         ))}
                       </div>
                     </fieldset>

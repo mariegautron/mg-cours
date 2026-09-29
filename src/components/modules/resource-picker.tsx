@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { createResourceInline } from "@/app/(app)/resources/actions";
 import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
-import { Button } from "@/components/ui/button";
+import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -275,14 +275,16 @@ export function ResourcePicker({
               ))}
             </select>
           </div>
-          <Button
+          <PendingButton
             type="button"
             variant="secondary"
             onClick={create}
-            disabled={pending || !draftTitle.trim()}
+            pending={pending}
+            pendingLabel="Création…"
+            disabled={!draftTitle.trim()}
           >
             Créer et lier
-          </Button>
+          </PendingButton>
         </div>
         <p className="text-muted-foreground mt-2 text-sm">
           Créée « À construire » (jamais projetée) : complétez-la ensuite dans Ressources.
