@@ -27,6 +27,12 @@ export const commentSchema = z.object({
   text: z.string().trim().min(1, "Le texte est obligatoire.").max(1000),
   category: z.enum(COMMENT_CATEGORIES).default("advice"),
   tags: z.array(z.string().min(1)).max(20).default([]),
+  subject: z
+    .string()
+    .trim()
+    .max(100, "Matière trop longue (100 caractères max).")
+    .default("")
+    .transform((v) => v || null),
 });
 
 function parseTags(raw: string): string[] {
@@ -45,6 +51,7 @@ export function readCommentForm(formData: FormData) {
     text: formData.get("text") ?? "",
     category: formData.get("category") ?? "advice",
     tags: parseTags(String(formData.get("tags") ?? "")),
+    subject: formData.get("subject") ?? "",
   });
 }
 

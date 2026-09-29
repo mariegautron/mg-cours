@@ -349,6 +349,17 @@ privée », lien « Ouvrir la présentation » (nouvel onglet).
   critère repliable (« Voir le barème ») quand elle existe ; sans grille : note directe.
   Appréciation libre + commentaires prédéfinis. Enregistrement = upsert.
 
+- **Phrases réutilisables (US-84)** : sous l'appréciation, « Phrases réutilisables » liste les phrases
+  enregistrées (les plus utilisées d'abord ; à usage égal, celles de la matière du module, puis la plus
+  récente) avec un filtre par critère (Toutes / Générales / un critère). Un clic **insère** la phrase au
+  curseur (à la fin, sur une nouvelle ligne, si la zone n'a pas été utilisée) : le texte est **copié**,
+  donc modifier ou supprimer la phrase ne change jamais un commentaire déjà écrit. « Enregistrer la
+  sélection comme phrase » (ou tout le commentaire s'il n'y a pas de sélection) ouvre un court
+  formulaire : texte, critère, matière (nom du module proposé), type. Les usages sont comptés côté
+  serveur (`recordPhraseUse`). La bibliothèque `/assessments/comments` affiche critère, matière et
+  usage, et édite la matière. Les anciennes sélections par identifiant restent cochées (décochables)
+  sur les notes qui en ont. Logique pure : `src/lib/assessments/phrases.ts` ; e2e :
+  `e2e/phrases.spec.ts`.
 - **Noter par palier (US-83)** : un critère à paliers se note avec de vrais **boutons radio** (un par
   palier, « 6 pt — description », plus « Pas encore noté »), regroupés dans un `fieldset` dont la légende
   est le critère : flèches du clavier natives, points et total mis à jour à chaque choix. Le palier

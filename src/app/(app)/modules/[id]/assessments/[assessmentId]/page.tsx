@@ -14,6 +14,7 @@ import { getAssessment, getGradesByAssessment, listComments } from "@/lib/assess
 import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
+import { getModule } from "@/lib/modules/queries";
 
 export async function generateMetadata({
   params,
@@ -27,10 +28,11 @@ export default async function AssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
-  const [assessment, grades, comments] = await Promise.all([
+  const [assessment, grades, comments, mod] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
     listComments(),
+    getModule(id),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
@@ -103,6 +105,7 @@ export default async function AssessmentPage({
               grade={grades.find((g) => g.student_group_id === group.id)}
               comments={comments}
               autoValidatedIds={assessment.auto_validated_criterion_ids}
+              subject={mod?.name ?? null}
             />
           ))}
         </div>
@@ -130,6 +133,7 @@ export default async function AssessmentPage({
                     grade={grades.find((g) => g.student_id === m.id)}
                     comments={comments}
                     autoValidatedIds={assessment.auto_validated_criterion_ids}
+                    subject={mod?.name ?? null}
                   />
                 ))
               )}

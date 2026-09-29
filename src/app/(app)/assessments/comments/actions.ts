@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { phraseInputSchema, type PhraseInput } from "@/lib/assessments/phrases";
 import { readCommentForm } from "@/lib/assessments/schema";
 import { createClient } from "@/lib/supabase/server";
+import type { Tables } from "@/types/db";
 
 export interface CommentFormState {
   error?: string;
@@ -29,6 +31,7 @@ export async function createComment(
     text: parsed.data.text,
     category: parsed.data.category,
     tags: parsed.data.tags,
+    subject: parsed.data.subject,
   });
   if (error) return { error: "Enregistrement impossible." };
 
@@ -47,7 +50,12 @@ export async function updateComment(
   const supabase = await createClient();
   const { error } = await supabase
     .from("predefined_comment")
-    .update({ text: parsed.data.text, category: parsed.data.category, tags: parsed.data.tags })
+    .update({
+      text: parsed.data.text,
+      category: parsed.data.category,
+      tags: parsed.data.tags,
+      subject: parsed.data.subject,
+    })
     .eq("id", id);
   if (error) return { error: "Enregistrement impossible." };
 
@@ -61,4 +69,53 @@ export async function deleteComment(id: string) {
   await supabase.from("predefined_comment").delete().eq("id", id);
   revalidatePath("/assessments/comments");
   redirect("/assessments/comments");
+}
+
+export interface SavePhraseResult {
+  phrase?: Tables<"predefined_comment">;
+  error?: string;
+}
+
+/**
+ * « Enregistrer comme phrase » depuis un commentaire (US-84) : la phrase est rattachée à un critère
+ * (libellé recopié) et à une matière. Son texte sera COPIÉ à l'insertion, jamais lié.
+ */
+export async function savePhrase(input: PhraseInput): Promise<SavePhraseResult> {
+  const parsed = phraseInputSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Phrase invalide." };
+
+  const supabase = await createClient();
+  let criterionLabel: string | null = null;
+  if (parsed.data.criterionId) {
+    const { data: criterion } = await supabase
+      .from("grid_criterion")
+      .select("label")
+      .eq("id", parsed.data.criterionId)
+      .maybeSingle();
+    if (!criterion) return { error: "Critère introuvable." };
+    criterionLabel = criterion.label;
+  }
+
+  const { data, error } = await supabase
+    .from("predefined_comment")
+    .insert({
+      text: parsed.data.text,
+      category: parsed.data.category,
+      subject: parsed.data.subject,
+      grid_criterion_id: parsed.data.criterionId,
+      criterion_label: criterionLabel,
+    })
+    .select("*")
+    .single();
+  if (error || !data) return { error: "Enregistrement impossible." };
+
+  revalidatePath("/assessments/comments");
+  return { phrase: data };
+}
+
+/** Compte une insertion (tri « les plus utilisées en premier »). Sans effet si l'identifiant est invalide. */
+export async function recordPhraseUse(id: string): Promise<void> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const supabase = await createClient();
+  await supabase.rpc("bump_comment_use", { comment_id: id });
 }

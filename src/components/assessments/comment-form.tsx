@@ -39,6 +39,12 @@ export function CommentForm({
           </p>
         ) : null}
       </div>
+      {comment?.criterion_label ? (
+        <p className="text-muted-foreground text-sm">
+          Rattachée au critère « {comment.criterion_label} ». Modifier la phrase ne change pas les
+          commentaires où elle a déjà été insérée.
+        </p>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="category">Catégorie</Label>
@@ -56,6 +62,15 @@ export function CommentForm({
           </select>
         </div>
         <div className="space-y-2">
+          <Label htmlFor="subject">Matière</Label>
+          <Input
+            id="subject"
+            name="subject"
+            placeholder="Accessibilité"
+            defaultValue={comment?.subject ?? ""}
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="tags">Tags</Label>
           <Input
             id="tags"

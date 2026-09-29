@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 
+import { PhraseBank } from "@/components/assessments/phrase-bank";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +30,7 @@ export function GradeForm({
   grade,
   comments,
   autoValidatedIds = [],
+  subject = null,
 }: {
   action: Action;
   title: string;
@@ -39,11 +41,15 @@ export function GradeForm({
   comments: Tables<"predefined_comment">[];
   /** Critères validés d'office pour cette évaluation : palier le plus haut, sans saisie. */
   autoValidatedIds?: string[];
+  /** Matière courante (nom du module) : phrases de la même matière proposées en premier. */
+  subject?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
   const uid = useId();
-  const selectedComments = new Set(grade?.predefined_comment_ids ?? []);
+  // Anciennes sélections par identifiant : conservées (et décochables) tant que la note les porte.
+  const linked = new Set(grade?.predefined_comment_ids ?? []);
+  const legacyComments = comments.filter((c) => linked.has(c.id));
   // Saisies en cours (texte) : le total et les sous-totaux se recalculent à chaque frappe.
   const [inputs, setInputs] = useState<Record<string, string>>(() =>
     Object.fromEntries(
@@ -54,6 +60,7 @@ export function GradeForm({
     ),
   );
   const [feedback, setFeedback] = useState(grade?.feedback ?? "");
+  const feedbackRef = useRef<HTMLTextAreaElement>(null);
   const [announcement, setAnnouncement] = useState("");
   const criteria = grid?.criteria ?? [];
   const totals = computeTotals(
@@ -287,22 +294,35 @@ export function GradeForm({
           id={`${uid}-feedback`}
           name="feedback"
           rows={2}
+          ref={feedbackRef}
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
         />
       </div>
+      <PhraseBank
+        phrases={comments}
+        criteria={criteria.map((c) => ({ id: c.id, label: c.label }))}
+        subject={subject}
+        value={feedback}
+        onValueChange={setFeedback}
+        textareaRef={feedbackRef}
+      />
 
-      {comments.length > 0 ? (
+      {legacyComments.length > 0 ? (
         <fieldset className="space-y-1">
-          <legend className="text-sm font-medium">Commentaires prédéfinis</legend>
-          <ul className="max-h-32 space-y-1 overflow-y-auto">
-            {comments.map((c) => (
+          <legend className="text-sm font-medium">Commentaires prédéfinis (ancien mode)</legend>
+          <p className="text-muted-foreground text-xs">
+            Déjà liés à cette note ; décochez pour les retirer. Les nouvelles phrases s’insèrent
+            directement dans l’appréciation.
+          </p>
+          <ul className="space-y-1">
+            {legacyComments.map((c) => (
               <li key={c.id} className="flex items-start gap-2">
                 <Checkbox
                   id={`${uid}-comment_${c.id}`}
                   name="predefinedCommentIds"
                   value={c.id}
-                  defaultChecked={selectedComments.has(c.id)}
+                  defaultChecked
                   className="mt-0.5"
                 />
                 <Label htmlFor={`${uid}-comment_${c.id}`} className="font-normal">

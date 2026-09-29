@@ -896,31 +896,54 @@ export type Database = {
         Row: {
           category: Database["public"]["Enums"]["comment_category"]
           created_at: string
+          criterion_label: string | null
+          grid_criterion_id: string | null
           id: string
+          last_used_at: string | null
           owner_id: string
+          subject: string | null
           tags: string[]
           text: string
           updated_at: string
+          use_count: number
         }
         Insert: {
           category?: Database["public"]["Enums"]["comment_category"]
           created_at?: string
+          criterion_label?: string | null
+          grid_criterion_id?: string | null
           id?: string
+          last_used_at?: string | null
           owner_id?: string
+          subject?: string | null
           tags?: string[]
           text: string
           updated_at?: string
+          use_count?: number
         }
         Update: {
           category?: Database["public"]["Enums"]["comment_category"]
           created_at?: string
+          criterion_label?: string | null
+          grid_criterion_id?: string | null
           id?: string
+          last_used_at?: string | null
           owner_id?: string
+          subject?: string | null
           tags?: string[]
           text?: string
           updated_at?: string
+          use_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "predefined_comment_grid_criterion_id_fkey"
+            columns: ["grid_criterion_id"]
+            isOneToOne: false
+            referencedRelation: "grid_criterion"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resource: {
         Row: {
@@ -1256,6 +1279,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bump_comment_use: { Args: { comment_id: string }; Returns: undefined }
       mg_apply_conventions: {
         Args: { table_names: string[] }
         Returns: undefined

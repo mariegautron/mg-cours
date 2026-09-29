@@ -109,6 +109,13 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
                 <p className="text-sm">{c.text}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   <Badge variant="secondary">{CATEGORY_LABELS[c.category]}</Badge>
+                  {c.criterion_label ? (
+                    <Badge variant="outline">Critère : {c.criterion_label}</Badge>
+                  ) : null}
+                  {c.subject ? <Badge variant="outline">Matière : {c.subject}</Badge> : null}
+                  {c.use_count > 0 ? (
+                    <Badge variant="outline">Utilisée {c.use_count} fois</Badge>
+                  ) : null}
                   {c.tags.map((t) => (
                     <Badge key={t} variant="outline">
                       {t}
