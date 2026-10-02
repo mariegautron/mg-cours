@@ -11,3 +11,8 @@ export async function openTab(page: Page, name: string | RegExp) {
     await expect(tab).toHaveAttribute("aria-selected", "true", { timeout: 1_000 });
   }).toPass({ timeout: 15_000 });
 }
+
+/** Déplie « Autres options de facturation » (facture Factur-X complète) sur la page d'un module. */
+export async function openOtherBilling(page: Page) {
+  await page.getByText("Autres options de facturation").click();
+}

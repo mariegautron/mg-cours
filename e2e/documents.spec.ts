@@ -58,12 +58,24 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   // Facture émise hors application : dépôt sur la page Facturation, puis module payé.
   await page.goto(`${page.url().split("#")[0]}/billing`);
   await page.waitForLoadState("networkidle");
-  await page.getByLabel(/Déposer un fichier \(facture/).setInputFiles({
+  await page.getByLabel(/Déposer un fichier \(ma facture/).setInputFiles({
     name: "facture-26-03-6.pdf",
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
   });
   await expect(page.getByRole("link", { name: /Télécharger facture-26-03-6\.pdf/ })).toBeVisible();
-  await page.getByRole("button", { name: "Marquer le module comme payé" }).click();
-  await expect(page.getByText("Module marqué comme payé.")).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Pas de facture déposée" })).toHaveCount(
+    0,
+  );
+  // US-150 : deux cases, « Envoyée à l'école » puis « Payée ».
+  await page.getByRole("checkbox", { name: "Envoyée à l’école" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "En attente de paiement" }),
+  ).toBeVisible();
+  await page.getByRole("checkbox", { name: "Payée" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /^Payée$/ })).toBeVisible();
+  const axeBilling = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axeBilling.violations).toEqual([]);
 });

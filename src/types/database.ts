@@ -871,6 +871,44 @@ export type Database = {
           },
         ]
       }
+      invoice_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          owner_id: string
+          paid_on: string | null
+          sent_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          paid_on?: string | null
+          sent_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          paid_on?: string | null
+          sent_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_tracking_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module: {
         Row: {
           admin_docs: Json

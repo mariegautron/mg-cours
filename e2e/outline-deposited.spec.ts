@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openTab } from "./helpers";
+import { openOtherBilling, openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 // Pour un module déjà réalisé, la progression déposée en PDF fait foi : la génération depuis les
@@ -78,6 +78,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
 
   // US-70 : le dépôt vaut envoi, la condition de facturation est remplie.
   await page.goto(`${page.url().split("#")[0]}/billing`);
+  await openOtherBilling(page);
   await expect(
     page.getByRole("listitem").filter({ hasText: "Progression pédagogique envoyée : fait" }),
   ).toBeVisible();

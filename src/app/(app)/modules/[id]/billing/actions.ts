@@ -6,6 +6,12 @@ import { Resend } from "resend";
 import { serverEnv } from "@/lib/env";
 import { buildFacturX } from "@/lib/invoice/facturx";
 import { getInvoiceByModule, listInvoiceNumbers, loadInvoiceContext } from "@/lib/invoice/queries";
+import {
+  datesAfterToggle,
+  stateAfterToggle,
+  validDate,
+  type InvoiceBox,
+} from "@/lib/invoice/simple";
 import { advanceModule } from "@/lib/modules/advance";
 import { EMAIL_NOT_ENABLED, failure, NOT_FOUND } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
@@ -195,6 +201,61 @@ export async function deleteInvoice(moduleId: string): Promise<BillingActionStat
   const supabase = await createClient();
   const { error } = await supabase.from("invoice").delete().eq("id", invoice.id);
   if (error) return { error: failure("supprimer la facture") };
+  refresh(moduleId);
+  return { ok: true };
+}
+
+/**
+ * Facturation simple (US-150) : coche ou décoche « Envoyée » / « Payée ». L'état du module suit ;
+ * les dates (`invoice_tracking`) sont enregistrées au mieux : sans la table, seule la case compte.
+ */
+export async function setInvoiceStep(
+  moduleId: string,
+  box: InvoiceBox,
+  checked: boolean,
+  date: string | null,
+): Promise<BillingActionState> {
+  if (box !== "sent" && box !== "paid") return { error: "Case inconnue." };
+  const supabase = await createClient();
+  const { data: mod } = await supabase
+    .from("module")
+    .select("iceberg_state")
+    .eq("id", moduleId)
+    .maybeSingle();
+  if (!mod) return { error: NOT_FOUND.module };
+
+  const next = stateAfterToggle(mod.iceberg_state, box, checked);
+  if (next !== mod.iceberg_state) {
+    const { error } = await supabase
+      .from("module")
+      .update({ iceberg_state: next })
+      .eq("id", moduleId);
+    if (error) return { error: failure("enregistrer la facture") };
+  }
+
+  try {
+    const { data: row } = await supabase
+      .from("invoice_tracking")
+      .select("sent_on, paid_on")
+      .eq("module_id", moduleId)
+      .maybeSingle();
+    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
+    const dates = datesAfterToggle(
+      { sentOn: row?.sent_on ?? null, paidOn: row?.paid_on ?? null },
+      box,
+      checked,
+      validDate(date, today),
+    );
+    await supabase
+      .from("invoice_tracking")
+      .upsert(
+        { module_id: moduleId, sent_on: dates.sentOn, paid_on: dates.paidOn },
+        { onConflict: "module_id" },
+      );
+  } catch {
+    // Table des dates pas encore créée : la case est enregistrée, sans date.
+  }
+
   refresh(moduleId);
   return { ok: true };
 }

@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { openTab } from "./helpers";
+import { openOtherBilling, openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -54,6 +54,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
 
   // Facturation bloquée : rien n'est prêt.
   await page.goto(`${moduleUrl}/billing`);
+  await openOtherBilling(page);
   await expect(page.getByRole("heading", { name: /Facturation —/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Générer la facture" })).toBeDisabled();
   await expect(page.getByText(/Progression pédagogique envoyée/)).toBeVisible();
@@ -107,6 +108,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
 
   // Documents administratifs cochés directement sur la page Facturation (US-71).
   await page.goto(`${moduleUrl}/billing`);
+  await openOtherBilling(page);
   for (const label of [
     "Fiche de positionnement",
     "Supports déposés sur Moodle",
