@@ -21,7 +21,9 @@ import {
   listCoursesAfter,
   listCoursesBetween,
   listCoursesOn,
+  listResumeCandidates,
 } from "@/lib/dashboard/queries";
+import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
 import { formatSessionDay, nextSession, todaySessions } from "@/lib/dashboard/today";
 import { weekDays, weekRange } from "@/lib/dashboard/week";
@@ -79,14 +81,17 @@ function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
 export default async function DashboardPage() {
   const today = todayInParis();
   const week = weekRange(today);
-  const [modules, billing, profile, coursesToday, coursesAfter, coursesWeek] = await Promise.all([
-    listModules(),
-    listBillingOverview(),
-    getProfile(),
-    listCoursesOn(today),
-    listCoursesAfter(today),
-    listCoursesBetween(week.from, week.to),
-  ]);
+  const [modules, billing, profile, coursesToday, coursesAfter, coursesWeek, resumeCandidates] =
+    await Promise.all([
+      listModules(),
+      listBillingOverview(),
+      getProfile(),
+      listCoursesOn(today),
+      listCoursesAfter(today),
+      listCoursesBetween(week.from, week.to),
+      listResumeCandidates(),
+    ]);
+  const resume = pickResume(resumeCandidates);
   const sessions = todaySessions(coursesToday, today);
   // Sans cours aujourd'hui, la carte dit quand est la suite (jamais de silence : « ça a chargé ? »).
   const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
@@ -230,6 +235,30 @@ export default async function DashboardPage() {
           title={c.title}
         />
       ))}
+
+      {resume ? (
+        <section
+          aria-labelledby="resume"
+          className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-5"
+        >
+          <div>
+            <h2 id="resume" className="text-primary text-sm font-medium">
+              Reprendre là où tu t’étais arrêtée
+            </h2>
+            <p className="font-heading text-lg font-semibold">{resume.title}</p>
+            <p className="text-muted-foreground text-sm">
+              {RESUME_LABELS[resume.kind].prefix}
+              {resume.context ? ` · ${resume.context}` : ""} · modifié{" "}
+              {formatWhen(resume.updatedAt)}
+            </p>
+          </div>
+          <Button asChild>
+            <Link href={resume.href}>
+              Reprendre<span className="sr-only"> : {resume.title}</span>
+            </Link>
+          </Button>
+        </section>
+      ) : null}
 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>

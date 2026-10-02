@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listModuleGroups } from "@/lib/students/queries";
 
 import type { ReadinessInput } from "./readiness";
+import type { ResumeCandidate } from "./resume";
 import type { TodayCourse } from "./today";
 
 /** Séances datées du jour `date` (AAAA-MM-JJ), avec leur module. */
@@ -85,4 +86,49 @@ export async function getSessionPrep(moduleId: string, courseId: string): Promis
       students: { total: students.size, withPhoto },
     },
   };
+}
+
+/** Travaux en cours déjà horodatés : brouillons de ressources et séances pas encore prêtes. */
+export async function listResumeCandidates(): Promise<ResumeCandidate[]> {
+  const supabase = await createClient();
+  const [resources, courses] = await Promise.all([
+    supabase
+      .from("resource")
+      .select("id, title, updated_at")
+      .eq("status", "progress")
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("course")
+      .select("id, title, position, updated_at, module:module_id(id, name, archived_at)")
+      .neq("prep_status", "ready")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+  ]);
+  return [
+    ...(resources.data ?? []).map((r): ResumeCandidate => ({
+      kind: "resource_draft",
+      title: r.title,
+      href: `/resources/${r.id}/edit`,
+      updatedAt: r.updated_at,
+    })),
+    ...(
+      (courses.data ?? []) as unknown as {
+        id: string;
+        title: string;
+        position: number;
+        updated_at: string;
+        module: { id: string; name: string; archived_at: string | null } | null;
+      }[]
+    )
+      .filter((c) => c.module && !c.module.archived_at)
+      .map((c): ResumeCandidate => ({
+        kind: "session_prep",
+        title: `Séance ${c.position} — ${c.title}`,
+        context: c.module!.name,
+        href: `/modules/${c.module!.id}/courses/${c.id}/edit`,
+        updatedAt: c.updated_at,
+      })),
+  ];
 }
