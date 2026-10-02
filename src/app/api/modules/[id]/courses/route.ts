@@ -21,6 +21,7 @@ function slug(input: string): string {
 /**
  * `?format=pdf` (défaut) : un seul PDF avec toutes les séances.
  * `?format=zip` : un PDF par séance dans une archive.
+ * `?number=N` : le PDF de la seule séance N (écran de fin de séance).
  */
 export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/courses">) {
   const { id } = await ctx.params;
@@ -32,6 +33,19 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/cou
 
   const mod = { ...data.module, teacherName };
   const base = slug(mod.name);
+
+  const numberParam = new URL(req.url).searchParams.get("number");
+  if (numberParam !== null) {
+    const course = data.courses.find((c) => c.number === Number(numberParam));
+    if (!course) return new Response("Séance introuvable", { status: 404 });
+    const buffer = await renderToBuffer(CourseDocument({ mod, course }));
+    return new Response(new Uint8Array(buffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="cours-${base}-seance-${course.number}.pdf"`,
+      },
+    });
+  }
 
   if (format === "pdf") {
     const buffer = await renderToBuffer(ModuleCoursesDocument({ mod, courses: data.courses }));

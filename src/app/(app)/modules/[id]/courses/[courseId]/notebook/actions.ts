@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { observationAddedMessage } from "@/lib/notebook/live";
 import { readClosureForm, readObservationForm } from "@/lib/notebook/notebook";
@@ -118,7 +119,32 @@ export async function saveCourseClosure(
   if (!data) return { error: NOT_FOUND.course };
 
   refresh(moduleId, courseId);
-  return { message: "Clôture enregistrée.", savedAt: Date.now() };
+  // Écran de fin de séance (US-137) : récapitulatif, PDF du cours, consigne pour la prochaine fois.
+  redirect(`/modules/${moduleId}/courses/${courseId}/closed`);
+}
+
+/** Consigne pour la prochaine fois, éditée depuis l'écran de fin de séance (US-137). */
+export async function saveNextTime(
+  moduleId: string,
+  courseId: string,
+  _prev: NotebookState,
+  formData: FormData,
+): Promise<NotebookState> {
+  const value = String(formData.get("nextTime") ?? "").trim();
+  if (value.length > 4000) return { error: "4000 caractères maximum." };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("course")
+    .update({ next_time: value || null })
+    .eq("id", courseId)
+    .eq("module_id", moduleId)
+    .select("id")
+    .maybeSingle();
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  if (!data) return { error: NOT_FOUND.course };
+  refresh(moduleId, courseId);
+  revalidatePath(`/modules/${moduleId}/courses/${courseId}/closed`);
+  return { message: "Consigne enregistrée.", savedAt: Date.now() };
 }
 
 export interface SessionNoteState extends NotebookState {

@@ -48,7 +48,7 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
     .fill("Lire le Scrum Guide\nPréparer trois questions");
   await page.getByLabel("Retour d’expérience (privé)").fill("Trop dense, couper la partie 2");
   await page.getByRole("button", { name: "Enregistrer la clôture" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Clôture enregistrée." })).toBeVisible();
+  await page.waitForURL(/\/closed$/);
 
   // Vue privée de la séance suivante : points reportés et retour d'expérience.
   await page.goto(second!);

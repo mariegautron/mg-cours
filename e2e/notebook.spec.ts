@@ -105,7 +105,19 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await page.getByLabel("À faire pour la prochaine fois").fill("Lire le Scrum Guide");
   await page.getByLabel("Retour d’expérience (privé)").fill("Trop dense, couper la partie 2");
   await page.getByRole("button", { name: "Enregistrer la clôture" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Clôture enregistrée." })).toBeVisible();
+  // US-137 : l'enregistrement mène à l'écran de fin de séance.
+  await page.waitForURL(/\/courses\/[0-9a-f-]{36}\/closed$/);
+  await expect(page.getByRole("heading", { name: /^Séance 1 terminée/, level: 1 })).toBeVisible();
+  await expect(page.getByText("Faite en partie")).toBeVisible();
+  await expect(page.getByText(/Estimation en points/)).toBeVisible();
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: /Télécharger le cours rédigé/ }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^cours-.*-seance-1\.pdf$/);
+  await page.getByLabel("Consigne pour la prochaine fois").fill("Apporter le tableau de suivi");
+  await page.getByRole("button", { name: "Enregistrer la consigne" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Consigne enregistrée." })).toBeVisible();
   expect((await axe(page)).violations).toEqual([]);
 
   // Badge de statut sur la liste des séances.
