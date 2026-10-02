@@ -1,13 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookMarked, CalendarCheck, NotebookPen, Play, Receipt, TimerReset } from "lucide-react";
+import {
+  BookMarked,
+  CalendarCheck,
+  CalendarDays,
+  ListChecks,
+  NotebookPen,
+  Play,
+  Receipt,
+  TimerReset,
+} from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listCoursesAfter, listCoursesOn } from "@/lib/dashboard/queries";
-import { nextSession, noSessionSentence, todaySessions } from "@/lib/dashboard/today";
+import { listCoursesAfter, listCoursesBetween, listCoursesOn } from "@/lib/dashboard/queries";
+import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
+import { formatSessionDay, nextSession, todaySessions } from "@/lib/dashboard/today";
+import { weekDays, weekRange } from "@/lib/dashboard/week";
 import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
@@ -61,12 +72,14 @@ function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
 
 export default async function DashboardPage() {
   const today = todayInParis();
-  const [modules, billing, profile, coursesToday, coursesAfter] = await Promise.all([
+  const week = weekRange(today);
+  const [modules, billing, profile, coursesToday, coursesAfter, coursesWeek] = await Promise.all([
     listModules(),
     listBillingOverview(),
     getProfile(),
     listCoursesOn(today),
     listCoursesAfter(today),
+    listCoursesBetween(week.from, week.to),
   ]);
   const sessions = todaySessions(coursesToday, today);
   // Sans cours aujourd'hui, la carte dit quand est la suite (jamais de silence : « ça a chargé ? »).
@@ -78,6 +91,36 @@ export default async function DashboardPage() {
   const summary = outlineAlertSummary(alerts);
 
   const firstName = profile?.legal_name?.split(" ")[0];
+
+  const todos = pickTodos(
+    buildTodos({
+      today,
+      outlineAlerts: alerts,
+      upcomingCourses: [...coursesToday, ...coursesAfter]
+        .filter((c) => c.module && !c.module.archived_at)
+        .map((c) => ({
+          id: c.id,
+          title: c.title,
+          position: c.position,
+          session_date: c.session_date,
+          prep_status: c.prep_status ?? "draft",
+          module: { id: c.module!.id, name: c.module!.name },
+        })),
+      billing: billing.flatMap<TodoSources["billing"][number]>((b) =>
+        b.kind === "ready"
+          ? [{ module: b.module, kind: "ready" as const }]
+          : b.kind === "invoiced" && b.invoice.status === "ready"
+            ? [{ module: b.module, kind: "toSend" as const }]
+            : b.kind === "invoiced" && b.invoice.status === "sent"
+              ? [{ module: b.module, kind: "toCollect" as const }]
+              : [],
+      ),
+    }),
+  );
+  const { days, nextWeek } = weekDays(
+    today,
+    coursesWeek.filter((c) => c.module && !c.module.archived_at),
+  );
 
   return (
     <div className="space-y-8">
@@ -134,39 +177,143 @@ export default async function DashboardPage() {
               Aujourd’hui
             </h2>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p>{noSessionSentence(upcoming)}</p>
-            {upcoming ? (
-              <Button asChild variant="secondary">
-                <Link href={`/present/modules/${upcoming.module.id}/courses/${upcoming.id}`}>
-                  <Play aria-hidden />
-                  Faire cours<span className="sr-only"> : {upcoming.title}</span>
-                </Link>
-              </Button>
-            ) : null}
-          </div>
+          <p>Pas de cours aujourd’hui.</p>
+          {upcoming ? (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-primary text-sm font-medium">Prochain cours</p>
+                <p className="font-heading text-2xl font-semibold">
+                  Séance {upcoming.position} — {upcoming.title}
+                </p>
+                <p className="text-muted-foreground">
+                  {upcoming.module.name} · {formatSessionDay(upcoming.session_date!)}
+                  {formatTimeRange(upcoming.start_time, upcoming.end_time)
+                    ? ` · ${formatTimeRange(upcoming.start_time, upcoming.end_time)}`
+                    : ""}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <Link href={`/modules/${upcoming.module.id}/courses/${upcoming.id}/edit`}>
+                    Préparer<span className="sr-only"> : {upcoming.title}</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link href={`/modules/${upcoming.module.id}`}>Voir le module</Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">Aucune séance datée n’est à venir.</p>
+          )}
         </section>
       )}
 
-      <div className="bg-card halo relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-3xl border p-6 sm:p-8">
-        <div
-          aria-hidden
-          className="bg-violet/20 pointer-events-none absolute -top-16 -right-10 size-64 rounded-full blur-3xl"
-        />
-        <div className="relative max-w-xl space-y-2">
-          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            {firstName ? `Bonjour ${firstName} !` : "Bonjour !"}
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            {firstName ? `Bonjour ${firstName}` : "Bonjour"}
           </h1>
-          <p className="text-muted-foreground text-base">
-            {summary === "pressing"
-              ? "Une progression pédagogique demande ton attention avant l’échéance."
-              : summary === "upcoming"
-                ? "Une progression pédagogique est à préparer : échéance dans moins de 15 jours."
-                : "Tout est en ordre. Voici l’essentiel de ta rentrée."}
+          <p className="text-muted-foreground">
+            {formatSessionDay(today)} ·{" "}
+            {sessions.length
+              ? `${sessions.length} séance${sessions.length > 1 ? "s" : ""} aujourd’hui`
+              : "pas de cours aujourd’hui"}
           </p>
         </div>
-        <Mascot mood={alertMascotMood(summary)} className="relative size-28 sm:size-32" />
-      </div>
+        <Mascot mood={alertMascotMood(summary)} className="size-14" />
+      </header>
+
+      <section aria-labelledby="todo" className="bg-card space-y-3 rounded-2xl border p-5">
+        <div className="flex items-center gap-3">
+          <span className="bg-coral/15 text-coral flex size-9 items-center justify-center rounded-xl">
+            <ListChecks aria-hidden className="size-5" />
+          </span>
+          <div>
+            <h2 id="todo" className="text-base font-semibold">
+              À faire
+            </h2>
+            <p className="text-muted-foreground text-sm">Trois choses au plus, par urgence.</p>
+          </div>
+        </div>
+        {todos.length === 0 ? (
+          <EmptyState
+            compact
+            title="Rien d’urgent"
+            description="Tout est à jour. Profites-en pour préparer la suite."
+          />
+        ) : (
+          <ol className="divide-y">
+            {todos.map((t, i) => (
+              <li
+                key={t.key}
+                className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-hidden
+                    className="bg-primary/15 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                  >
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium">{t.title}</p>
+                    <p className="text-muted-foreground text-sm">{t.detail}</p>
+                  </div>
+                </div>
+                <Button asChild variant="secondary">
+                  <Link href={t.href}>
+                    Ouvrir<span className="sr-only"> : {t.title}</span>
+                  </Link>
+                </Button>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      <section aria-labelledby="week" className="bg-card space-y-3 rounded-2xl border p-5">
+        <div className="flex items-center gap-3">
+          <span className="bg-sky/15 text-sky flex size-9 items-center justify-center rounded-xl">
+            <CalendarDays aria-hidden className="size-5" />
+          </span>
+          <h2 id="week" className="text-base font-semibold">
+            {nextWeek ? "La semaine prochaine" : "Cette semaine"}
+          </h2>
+        </div>
+        <ol className="grid gap-2 sm:grid-cols-5">
+          {days.map((d) => (
+            <li
+              key={d.date}
+              aria-current={d.isToday ? "date" : undefined}
+              className={`rounded-xl border p-3 ${d.isToday ? "border-primary bg-primary/10" : ""}`}
+            >
+              <p className="text-sm font-semibold">
+                {d.label} {d.day}
+                {d.isToday ? <span className="text-primary"> · aujourd’hui</span> : null}
+              </p>
+              {d.courses.length ? (
+                <ul className="mt-1 space-y-1 text-sm">
+                  {d.courses.map((c) => (
+                    <li key={c.id}>
+                      <Link
+                        href={`/modules/${c.module!.id}/courses/${c.id}/edit`}
+                        className="focus-visible:ring-ring rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        Séance {c.position}
+                      </Link>
+                      <span className="text-muted-foreground"> · {c.module!.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground mt-1 text-sm">Pas de séance</p>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+
       <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Modules actifs"

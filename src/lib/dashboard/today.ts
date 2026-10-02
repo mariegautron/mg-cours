@@ -5,6 +5,7 @@ export interface TodayCourse {
   session_date: string | null;
   start_time: string | null;
   end_time: string | null;
+  prep_status?: string;
   module: { id: string; name: string; archived_at: string | null } | null;
 }
 
