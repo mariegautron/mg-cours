@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { formatBankDetails } from "@/lib/settings/bank";
+import { parseAppreciationMax, validateEmailTemplate } from "@/lib/settings/school-rules";
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure } from "@/lib/messages";
@@ -106,4 +107,56 @@ export async function deleteSchool(id: string) {
   await supabase.from("school").delete().eq("id", id);
   revalidatePath("/settings");
   redirect("/settings");
+}
+
+export interface SchoolRulesState {
+  error?: string;
+  fieldErrors?: { emailTemplate?: string; appreciationMax?: string };
+  message?: string;
+  savedAt?: number;
+}
+
+/** Règles d'une école (US-162) : absence excusée, modèle d'adresse, longueur d'appréciation. */
+export async function saveSchoolRules(
+  schoolId: string,
+  _prev: SchoolRulesState,
+  formData: FormData,
+): Promise<SchoolRulesState> {
+  const rule = String(formData.get("absenceRule") ?? "");
+  if (rule !== "keep_group_grade" && rule !== "makeup") {
+    return { error: "Choisis ce qui se passe pour une absence excusée." };
+  }
+  const template = String(formData.get("emailTemplate") ?? "").trim();
+  const templateCheck = validateEmailTemplate(template);
+  const max = parseAppreciationMax(String(formData.get("appreciationMax") ?? ""));
+  const fieldErrors: NonNullable<SchoolRulesState["fieldErrors"]> = {};
+  if (!templateCheck.ok) fieldErrors.emailTemplate = templateCheck.error;
+  if (!max.ok) fieldErrors.appreciationMax = max.error;
+  if (!templateCheck.ok || !max.ok) return { fieldErrors };
+
+  const supabase = await createClient();
+  const { data: school } = await supabase
+    .from("school")
+    .select("id")
+    .eq("id", schoolId)
+    .maybeSingle();
+  if (!school) return { error: "Cette école n’existe plus." };
+
+  const { error } = await supabase.from("school_setting").upsert(
+    {
+      school_id: schoolId,
+      absence_rule: rule,
+      email_template: template,
+      appreciation_max: max.value,
+    },
+    { onConflict: "school_id" },
+  );
+  if (error) {
+    return {
+      error:
+        "Les règles par école ne peuvent pas encore être enregistrées : la mise à jour de la base n’est pas faite.",
+    };
+  }
+  revalidatePath("/settings");
+  return { message: "Règles enregistrées.", savedAt: Date.now() };
 }

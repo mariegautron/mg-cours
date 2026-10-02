@@ -2,17 +2,24 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
+import { SchoolRulesForm } from "@/components/settings/school-rules-form";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { readSchoolRules } from "@/lib/settings/school-rules";
 import { DeleteSchoolButton } from "@/components/settings/delete-school-button";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { Button } from "@/components/ui/button";
 import { formatSiret } from "@/lib/settings/bank";
-import { getProfile, listAllSchools } from "@/lib/settings/queries";
+import { getProfile, listAllSchools, listSchoolRules } from "@/lib/settings/queries";
 
 export const metadata: Metadata = { title: "Réglages" };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
   const { saved } = await searchParams;
-  const [profile, schools] = await Promise.all([getProfile(), listAllSchools()]);
+  const [profile, schools, rules] = await Promise.all([
+    getProfile(),
+    listAllSchools(),
+    listSchoolRules(),
+  ]);
 
   return (
     <div className="max-w-5xl space-y-10">
@@ -22,6 +29,16 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           Tes informations administratives et les écoles avec lesquelles tu travailles.
         </p>
       </div>
+
+      <section aria-labelledby="appearance" className="space-y-2">
+        <h2 id="appearance" className="text-lg font-medium">
+          Apparence
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Sombre par défaut, clair si tu préfères : le bouton bascule d’un thème à l’autre.
+        </p>
+        <ThemeToggle size="touch" />
+      </section>
 
       <section aria-labelledby="profile">
         <div className="mb-6">
@@ -95,6 +112,35 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="school-rules" className="space-y-4">
+        <div>
+          <h2 id="school-rules" className="text-lg font-medium">
+            Règles par école
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Ce qui change d’une école à l’autre : absence excusée, adresses des étudiant·es,
+            longueur des appréciations.
+          </p>
+        </div>
+        {schools.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Ajoute d’abord une école pour régler ses règles.
+          </p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {schools.map((s) => (
+              <SchoolRulesForm
+                key={s.id}
+                schoolId={s.id}
+                schoolName={s.name}
+                rules={readSchoolRules(rules.bySchool.get(s.id) ?? null)}
+                available={rules.available}
+              />
+            ))}
+          </div>
         )}
       </section>
     </div>

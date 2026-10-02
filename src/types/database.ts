@@ -2053,6 +2053,47 @@ export type Database = {
         }
         Relationships: []
       }
+      school_setting: {
+        Row: {
+          absence_rule: string
+          appreciation_max: number
+          created_at: string
+          email_template: string
+          id: string
+          owner_id: string
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          absence_rule?: string
+          appreciation_max?: number
+          created_at?: string
+          email_template?: string
+          id?: string
+          owner_id?: string
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          absence_rule?: string
+          appreciation_max?: number
+          created_at?: string
+          email_template?: string
+          id?: string
+          owner_id?: string
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_setting_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: true
+            referencedRelation: "school"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student: {
         Row: {
           created_at: string
