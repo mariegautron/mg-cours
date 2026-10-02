@@ -60,12 +60,20 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
             Tous tes modules, toutes écoles et toutes années confondues.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/modules/new">
-            <Plus aria-hidden />
-            Nouveau module
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="secondary">
+            <Link href="/billing">Facturation</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/assessments">Évaluations</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/modules/new">
+              <Plus aria-hidden />
+              Nouveau module
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <nav aria-label="Filtrer les modules">

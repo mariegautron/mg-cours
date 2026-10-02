@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookMarked,
-  CircleHelp,
-  ClipboardCheck,
   GraduationCap,
-  LayoutDashboard,
   Library,
-  Receipt,
   Settings,
+  Sun,
 } from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
@@ -38,13 +35,10 @@ const CHIP = {
 } as const;
 
 const NAV = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, tone: "violet" },
+  { href: "/dashboard", label: "Aujourd’hui", icon: Sun, tone: "violet" },
   { href: "/modules", label: "Modules", icon: BookMarked, tone: "coral" },
-  { href: "/resources", label: "Ressources", icon: Library, tone: "mint" },
-  { href: "/questions", label: "Questions", icon: CircleHelp, tone: "sky" },
-  { href: "/students", label: "Étudiants", icon: GraduationCap, tone: "sky" },
-  { href: "/assessments", label: "Évaluations", icon: ClipboardCheck, tone: "sun" },
-  { href: "/billing", label: "Facturation", icon: Receipt, tone: "coral" },
+  { href: "/students", label: "Étudiant·es", icon: GraduationCap, tone: "sky" },
+  { href: "/resources", label: "Bibliothèque", icon: Library, tone: "mint" },
   { href: "/settings", label: "Réglages", icon: Settings, tone: "violet" },
 ] as const;
 
@@ -73,7 +67,7 @@ export function AppSidebar() {
                       size="lg"
                       className="data-[active=true]:halo gap-3 rounded-xl transition-colors"
                     >
-                      <Link href={item.href}>
+                      <Link href={item.href} aria-current={active ? "page" : undefined}>
                         <span
                           className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
                         >

@@ -130,12 +130,23 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
           <h1 className="text-2xl font-semibold">Ressources</h1>
           <p className="text-muted-foreground">Supports réutilisables dans plusieurs modules.</p>
         </div>
-        <Button asChild>
-          <Link href="/resources/new">
-            <Plus aria-hidden />
-            Nouvelle ressource
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="secondary">
+            <Link href="/questions">Questions</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/assessments/grids">Grilles</Link>
+          </Button>
+          <Button asChild variant="secondary">
+            <Link href="/assessments/comments">Phrases</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/resources/new">
+              <Plus aria-hidden />
+              Nouvelle ressource
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <form
