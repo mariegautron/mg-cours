@@ -49,9 +49,7 @@ import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { ficheNotice } from "@/lib/modules/fiche-import";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
 import { ModuleJourney } from "@/components/modules/module-journey";
-import { isOutlineSent } from "@/lib/ynov/iceberg";
-import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
-import { moduleSteps } from "@/lib/ynov/module-steps";
+import { buildJourney } from "@/lib/modules/journey";
 import { trameMessage, trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
 export async function generateMetadata({
@@ -122,36 +120,18 @@ export default async function ModulePage({
 
   // « Où j'en suis » : parcours du module, source unique du badge « Prochaine étape ».
   const coverage = await getModuleCoverage(id, expectations, retained);
-  const adminDocsDone = (mod.admin_docs as Record<string, boolean>) ?? {};
-  const journey = moduleSteps({
-    moduleId: mod.id,
-    archived: !!mod.archived_at,
-    hasFiche: documents.some((d) => d.kind === "school_expectations"),
-    expectationsCount: expectations.length,
+  const journey = buildJourney({
+    mod,
+    courses,
+    documents,
+    expectations,
     coverage,
-    courses: {
-      total: courses.length,
-      ready: readyCourses,
-      // Clôture du carnet : une séance clôturée « faite » ou « partielle » a bien eu lieu.
-      done: courses.filter((c) => c.completion === "done" || c.completion === "partial").length,
-    },
-    outlineGeneratedAt: outline?.generated_at ?? null,
-    outlineSent: isOutlineSent(mod.iceberg_state) || !!depositedOutline,
-    outlineDueDate: trame.dueDate ? trame.dueDate.toISOString() : null,
-    notes: {
-      entered: notes.enteredTotal,
-      required: notes.requirement.total,
-      satisfied: notes.satisfied,
-    },
-    plannedAssessments: assessments.filter((a) => !a.makeup_of_id && a.course_id).length,
-    adminDocs: {
-      done: REQUIRED_ADMIN_DOCS.filter((d) => adminDocsDone[d.key]).length,
-      total: REQUIRED_ADMIN_DOCS.length,
-    },
-    invoice: invoice?.status ?? null,
-    billingReady: invoiceCtx
-      ? invoiceBlockers(invoiceCtx).length + missingInvoiceData(invoiceCtx).length === 0
-      : false,
+    outline,
+    assessments,
+    notes,
+    trame,
+    invoice,
+    invoiceCtx,
   });
 
   // Onglet Progression
