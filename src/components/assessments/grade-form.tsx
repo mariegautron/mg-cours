@@ -18,6 +18,13 @@ import {
   type MemberOverride,
 } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
+import {
+  adoptComment,
+  parsePoints,
+  similarAtSameLevel,
+  similarLabel,
+  type OtherCopy,
+} from "@/lib/assessments/similar";
 import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
 import type { CriterionWithLevels, GridWithCriteria } from "@/lib/assessments/queries";
 import {
@@ -72,6 +79,7 @@ export function GradeForm({
   onNavigate,
   hasPrev = false,
   hasNext = false,
+  others = [],
 }: {
   /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
   id: string;
@@ -100,6 +108,8 @@ export function GradeForm({
   onNavigate?: (direction: -1 | 1) => void;
   hasPrev?: boolean;
   hasNext?: boolean;
+  /** Les autres copies de l'évaluation : « déjà noté chez les autres » (US-139). */
+  others?: OtherCopy[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
@@ -252,6 +262,12 @@ export function GradeForm({
     // qu'enregistrer la note ne les efface jamais.
     const orphan = numeric !== null && Number.isFinite(numeric) && !selected ? numeric : null;
     const base = levelCommentBase(c.label, selected);
+    const similar = similarAtSameLevel({
+      criterionId: c.id,
+      points: parsePoints(current),
+      others,
+      currentId: id,
+    });
     const name = `score_${c.id}`;
     const option = (
       value: string,
@@ -320,6 +336,45 @@ export function GradeForm({
           </Button>
         ) : null}
         {criterionComment(c)}
+        {similar.length > 0 ? (
+          <div className="space-y-1 rounded-md border border-dashed p-2 text-sm">
+            <p className="font-medium">Déjà noté chez les autres</p>
+            <ul className="space-y-1">
+              {similar.map((entry) => (
+                <li
+                  key={entry.copyId}
+                  className="flex flex-wrap items-center justify-between gap-2"
+                >
+                  <span className="text-muted-foreground">{similarLabel(entry)}</span>
+                  {entry.comment ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const next = adoptComment(criterionComments[c.id] ?? "", entry);
+                        if (!next.changed) {
+                          setAnnouncement(`Ce commentaire est déjà dans « ${c.label} ».`);
+                          return;
+                        }
+                        setCriterionComments((prev) => ({ ...prev, [c.id]: next.comment }));
+                        setAnnouncement(
+                          `Commentaire de ${entry.title} repris pour « ${c.label} ».`,
+                        );
+                      }}
+                    >
+                      Même palier et commentaire
+                      <span className="sr-only">
+                        {" "}
+                        de {entry.title} pour {c.label}
+                      </span>
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </fieldset>
     );
   }
@@ -518,6 +573,17 @@ export function GradeForm({
       action={formAction}
       noValidate
       onSubmit={() => setSubmitted(snapshot)}
+      onKeyDown={(e) => {
+        // Alt + ← / → : copie précédente / suivante, sans quitter le clavier.
+        if (!onNavigate || !e.altKey || e.ctrlKey || e.metaKey) return;
+        if (e.key === "ArrowLeft" && hasPrev) {
+          e.preventDefault();
+          onNavigate(-1);
+        } else if (e.key === "ArrowRight" && hasNext) {
+          e.preventDefault();
+          onNavigate(1);
+        }
+      }}
       aria-labelledby={`copy-${id}-title`}
       className="space-y-4 rounded-lg border p-4"
     >
@@ -754,6 +820,9 @@ export function GradeForm({
             >
               Copie suivante
             </Button>
+            <span className="text-muted-foreground text-xs">
+              Alt + ← / → : copie précédente / suivante
+            </span>
           </>
         ) : null}
       </div>

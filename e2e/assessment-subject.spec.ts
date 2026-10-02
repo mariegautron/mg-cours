@@ -54,7 +54,7 @@ test("sujet lié à la séance : préparation, fichier en téléchargement forc�
   const courseHref = `${moduleUrl.replace("/modules/", "/present/modules/")}/courses/`;
   await page.goto(`${moduleUrl}#courses`);
   const courseId = await page
-    .getByRole("link", { name: /^Faire cours/ })
+    .locator('a[href*="/courses/"]', { hasText: /^Faire cours/ })
     .first()
     .getAttribute("href")
     .then((h) => h?.split("/courses/")[1]?.split(/[/?#]/)[0]);

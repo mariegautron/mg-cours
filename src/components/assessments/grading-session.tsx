@@ -78,6 +78,13 @@ export function GradingSession({
   const [status, setStatus] = useState<Record<string, CopyStatus>>({});
   const controls = useRef(new Map<string, CopyControls>());
   const [view, setView] = useState<"copy" | "criterion">("copy");
+  // « Déjà noté chez les autres » (US-139) : ce qui est enregistré dans les autres copies.
+  const others = items.map((i) => ({
+    id: i.id,
+    title: i.title,
+    scores: i.grade?.scores,
+    comments: i.grade?.criterion_comments,
+  }));
   const criteria = grid?.criteria ?? [];
   const [criterionId, setCriterionId] = useState(criteria[0]?.id ?? "");
 
@@ -303,6 +310,7 @@ export function GradingSession({
                 members={item.members}
                 memberOverrides={item.memberOverrides}
                 theme={item.theme}
+                others={others}
                 onStatus={onStatus}
                 register={register}
                 onNavigate={(direction) => {

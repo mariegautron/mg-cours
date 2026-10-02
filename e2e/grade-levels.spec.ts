@@ -71,7 +71,7 @@ test("noter par palier : un choix attribue les points, propose la description, s
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText(`Yanis Palier${suffix}`)).toBeVisible();
+  await expect(page.getByText(`Yanis Palier${suffix}`).first()).toBeVisible();
 
   const structure = page.getByRole("group", { name: /^Structure/ });
   const bouton = page.getByRole("group", { name: /^Bouton/ });

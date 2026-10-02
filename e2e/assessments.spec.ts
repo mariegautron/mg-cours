@@ -62,7 +62,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   // Noter l'étudiant·e via la grille.
-  await expect(page.getByText(`Nora Benali${suffix}`)).toBeVisible();
+  await expect(page.getByText(`Nora Benali${suffix}`).first()).toBeVisible();
   await page.getByLabel("Présentation (/4)").fill("3");
   await page.getByLabel("Contenu (/6)").fill("5");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
