@@ -11,11 +11,17 @@ import {
   TimerReset,
 } from "lucide-react";
 
+import { TodayPrep } from "@/components/dashboard/today-prep";
 import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listCoursesAfter, listCoursesBetween, listCoursesOn } from "@/lib/dashboard/queries";
+import {
+  getSessionPrep,
+  listCoursesAfter,
+  listCoursesBetween,
+  listCoursesOn,
+} from "@/lib/dashboard/queries";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
 import { formatSessionDay, nextSession, todaySessions } from "@/lib/dashboard/today";
 import { weekDays, weekRange } from "@/lib/dashboard/week";
@@ -92,6 +98,8 @@ export default async function DashboardPage() {
 
   const firstName = profile?.legal_name?.split(" ")[0];
 
+  const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
+
   const todos = pickTodos(
     buildTodos({
       today,
@@ -135,7 +143,7 @@ export default async function DashboardPage() {
             </h2>
           </div>
           <ul className="divide-y">
-            {sessions.map((c) => (
+            {sessions.map((c, i) => (
               <li
                 key={c.id}
                 className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
@@ -148,6 +156,10 @@ export default async function DashboardPage() {
                     {c.module.name}
                   </p>
                   <p className="font-heading text-lg font-semibold">{c.title}</p>
+                  <p className="text-muted-foreground text-sm">
+                    Séance {preps[i].number} sur {preps[i].total}
+                    {preps[i].objective ? ` · Objectif : ${preps[i].objective}` : ""}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild>
@@ -208,6 +220,16 @@ export default async function DashboardPage() {
           )}
         </section>
       )}
+
+      {sessions.map((c, i) => (
+        <TodayPrep
+          key={c.id}
+          prep={preps[i]}
+          moduleId={c.module.id}
+          courseId={c.id}
+          title={c.title}
+        />
+      ))}
 
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>

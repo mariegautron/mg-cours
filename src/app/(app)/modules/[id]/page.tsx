@@ -306,7 +306,7 @@ export default async function ModulePage({
             compact
             title="Pas encore de groupes"
             description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes."
-            actions={[{ label: "Ajouter un groupe", href: `/modules/${mod.id}/groups/new` }]}
+            actions={[{ label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` }]}
           />
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
