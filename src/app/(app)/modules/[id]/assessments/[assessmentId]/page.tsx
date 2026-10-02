@@ -7,7 +7,9 @@ import {
   buildSessionSections,
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
+import { CorrectionOverview } from "@/components/assessments/correction-overview";
 import { DownloadButton } from "@/components/download-button";
+import { correctionOverview } from "@/lib/assessments/overview";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
@@ -163,6 +165,20 @@ export default async function AssessmentPage({
     observations,
     themes,
   });
+  const overview = correctionOverview(
+    sections.flatMap((section) =>
+      section.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        // Note individuelle : le groupe de la personne ; note de groupe : le thème du projet.
+        context: assessment.is_group_grade ? item.theme : section.title,
+        members: item.members?.map((m) => m.name),
+        grade: item.grade ?? null,
+      })),
+    ),
+    (assessment.grading_grid?.criteria ?? []).map((c) => c.id),
+    assessment.auto_validated_criterion_ids,
+  );
   const groupNames = assessment.groups.map((g) => g.name).join(", ");
   const subjectParts = subjectSections(assessment);
   const criteria = evaluatedCriteria(assessment.grading_grid?.criteria ?? []);
@@ -353,14 +369,21 @@ export default async function AssessmentPage({
       {targets.length === 0 ? (
         <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
       ) : (
-        <GradingSession
-          sections={sections}
-          grid={assessment.grading_grid}
-          maxScore={assessment.maxScore}
-          comments={comments}
-          autoValidatedIds={assessment.auto_validated_criterion_ids}
-          subject={mod?.name ?? null}
-        />
+        <>
+          <CorrectionOverview
+            overview={overview}
+            maxScore={assessment.maxScore}
+            noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
+          />
+          <GradingSession
+            sections={sections}
+            grid={assessment.grading_grid}
+            maxScore={assessment.maxScore}
+            comments={comments}
+            autoValidatedIds={assessment.auto_validated_criterion_ids}
+            subject={mod?.name ?? null}
+          />
+        </>
       )}
     </div>
   );
