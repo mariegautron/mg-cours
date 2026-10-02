@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { listResources } from "@/lib/resources/queries";
 import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresenterView } from "@/components/present/presenter-view";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
@@ -20,17 +21,18 @@ export default async function PresenterPage({
   params,
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
-  const [mod, courses, allResources, subjects] = await Promise.all([
+  const [mod, courses, allResources, subjects, libraryRows] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     getCourseResourcesFull(courseId),
     loadCourseSubjects(id, courseId),
+    listResources(),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
 
-  const { slides } = buildCourseDeck({
+  const { sections, slides } = buildCourseDeck({
     moduleName: mod.name,
     course,
     position,
@@ -53,6 +55,7 @@ export default async function PresenterPage({
       title: r.title,
       kindLabel: r.kind ? KIND_LABELS[r.kind] : null,
       toBuild: r.status !== "ready",
+      content: r.content,
     }));
 
   return (
@@ -65,6 +68,18 @@ export default async function PresenterPage({
       notes={notes}
       teacherResources={teacherResources}
       endTime={course.session_date === todayInParis() ? course.end_time : null}
+      sections={sections}
+      library={libraryRows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        kindLabel: r.kind ? KIND_LABELS[r.kind] : null,
+        audience: r.audience,
+        status: r.status,
+      }))}
+      moduleId={mod.id}
+      courseId={courseId}
+      sessionNotes={course.retro_note ?? ""}
+      projectionName={`mg-projection-${courseId}`}
     />
   );
 }

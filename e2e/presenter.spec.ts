@@ -90,6 +90,29 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await expect(page.getByText(/Diapositive 3 sur/)).toBeVisible();
   await expect(presenter.getByRole("heading", { name: /^Diapositive 3 sur/ })).toBeVisible();
 
+  // US-134 : « Pour moi » n'affiche qu'en privé, la classe garde sa diapositive.
+  await presenter.getByRole("button", { name: `Pour moi : ${lesson}` }).click();
+  await expect(presenter.getByText(/cette diapositive n’est pas projetée/)).toBeVisible();
+  await expect(page.getByText(/Diapositive 3 sur/)).toBeVisible();
+  await presenter.getByRole("button", { name: "Revenir à la diapositive projetée" }).click();
+
+  // Aller directement à : un numéro projette cette diapositive.
+  await presenter.getByLabel("Un titre ou un numéro de diapositive").fill("2");
+  await presenter.keyboard.press("Enter");
+  await expect(page.getByText(/Diapositive 2 sur/)).toBeVisible();
+
+  // Le corrigé se déplie dans la vue privée seulement.
+  await presenter.getByRole("button", { name: `Afficher le corrigé : ${answerKey}` }).click();
+  await expect(presenter.getByText("Réponse cachée.")).toBeVisible();
+  expect(await page.content()).not.toContain("Réponse cachée");
+
+  // Note de séance datée, enregistrée sans table dédiée.
+  await presenter.getByLabel("Ajouter une note").fill("Insister sur la valeur");
+  await presenter.getByRole("button", { name: "Enregistrer la note" }).click();
+  await expect(presenter.getByText("Note enregistrée.")).toBeVisible();
+  await expect(presenter.getByText(/\] Insister sur la valeur/)).toBeVisible();
+  expect(await page.content()).not.toContain("Insister sur la valeur");
+
   const axe = await new AxeBuilder({ page: presenter })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

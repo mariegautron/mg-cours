@@ -1,12 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, Presentation } from "lucide-react";
+
+import {
+  addSessionNote,
+  type SessionNoteState,
+} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import { Markdown } from "@/components/markdown";
 
 import type { PresentSlide } from "@/components/present/present-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  findJumps,
+  jumpEntries,
+  previewIndex,
+  searchLibrary,
+  sectionStarts,
+  type LibraryResource,
+} from "@/lib/present/presenter";
 import {
   clampIndex,
   clockInParis,
@@ -21,6 +44,8 @@ export interface TeacherResource {
   kindLabel: string | null;
   /** Ressource pas encore prête : jamais projetée. */
   toBuild: boolean;
+  /** Texte Markdown, dépliable dans la vue privée (jamais projeté). */
+  content: string | null;
 }
 
 function subscribeMinute(onChange: () => void) {
@@ -45,6 +70,12 @@ export function PresenterView({
   notes,
   teacherResources,
   endTime,
+  sections,
+  library,
+  moduleId,
+  courseId,
+  sessionNotes,
+  projectionName,
 }: {
   title: string;
   backHref: string;
@@ -55,10 +86,41 @@ export function PresenterView({
   teacherResources: TeacherResource[];
   /** Heure de fin (`HH:MM`) pour le temps restant, seulement le jour de la séance. */
   endTime: string | null;
+  /** Déroulé : titres des sections, dans l'ordre des diapositives. */
+  sections: string[];
+  /** Ressources de la bibliothèque, pour en projeter une à l'improviste. */
+  library: LibraryResource[];
+  moduleId: string;
+  courseId: string;
+  /** Notes de séance déjà enregistrées (une ligne datée par note). */
+  sessionNotes: string;
+  /** Nom de la fenêtre projetée, pour la retrouver. */
+  projectionName: string;
 }) {
   const total = slides.length;
   const [index, setIndex] = useState(0);
+  const [privateIndex, setPrivateIndex] = useState<number | null>(null);
+  const [jumpQuery, setJumpQuery] = useState("");
+  const [libraryQuery, setLibraryQuery] = useState("");
+  const [openAnswers, setOpenAnswers] = useState<Set<string>>(new Set());
+  const [projectedNote, setProjectedNote] = useState("");
   const [channel, setChannel] = useState<BroadcastChannel | null>(null);
+  const [noteState, noteAction, notePending] = useActionState<SessionNoteState, FormData>(
+    addSessionNote.bind(null, moduleId, courseId),
+    {},
+  );
+  const notes_ = noteState.notes ?? sessionNotes;
+  const starts = useMemo(
+    () =>
+      sectionStarts(
+        slides.map((s) => s.section),
+        sections.length,
+      ),
+    [slides, sections.length],
+  );
+  const entries = useMemo(() => jumpEntries(sections, starts, slides), [sections, starts, slides]);
+  const jumps = findJumps(jumpQuery, entries, total);
+  const found = searchLibrary(libraryQuery, library);
   const minutes = useSyncExternalStore(subscribeMinute, minuteSnapshot, serverSnapshot);
 
   useEffect(() => {
@@ -79,6 +141,7 @@ export function PresenterView({
     (next: number) => {
       const target = clampIndex(next, total);
       setIndex(target);
+      setPrivateIndex(null);
       channel?.postMessage({ type: "go", index: target });
     },
     [channel, total],
@@ -88,6 +151,14 @@ export function PresenterView({
     function onKey(e: KeyboardEvent) {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) {
+        return;
+      }
+      // Espace sur un bouton ou un lien l'active : il ne doit pas aussi changer de diapositive.
+      if (
+        e.key === " " &&
+        e.target instanceof HTMLElement &&
+        /^(BUTTON|A)$/.test(e.target.tagName)
+      ) {
         return;
       }
       const key = e.key.toLowerCase();
@@ -102,8 +173,21 @@ export function PresenterView({
     return () => window.removeEventListener("keydown", onKey);
   }, [go, index, total]);
 
-  const current = slides[index];
-  const next = slides[index + 1];
+  const shownIndex = previewIndex(index, privateIndex);
+  const isPrivate = privateIndex !== null && privateIndex !== index;
+  const current = slides[shownIndex];
+  const next = slides[shownIndex + 1];
+
+  const openProjection = (href: string) => {
+    window.open(href, projectionName);
+  };
+  const toggleAnswer = (id: string) =>
+    setOpenAnswers((prev) => {
+      const copy = new Set(prev);
+      if (copy.has(id)) copy.delete(id);
+      else copy.add(id);
+      return copy;
+    });
   const clock = minutes ? clockInParis() : "";
   const remaining = minutes ? remainingLabel(Number(minutes), endTime) : null;
 
@@ -117,7 +201,15 @@ export function PresenterView({
           Vue présentatrice · {title}
         </h1>
         <Button asChild variant="ghost" size="touch">
-          <a href={projectedHref} target="_blank" rel="noreferrer">
+          <a
+            href={projectedHref}
+            target={projectionName}
+            onClick={(e) => {
+              // Même fenêtre à chaque fois : on peut y projeter une ressource à l'improviste.
+              e.preventDefault();
+              openProjection(projectedHref);
+            }}
+          >
             <Presentation aria-hidden />
             Ouvrir la fenêtre projetée
             <span className="sr-only"> (nouvel onglet)</span>
@@ -135,9 +227,28 @@ export function PresenterView({
         <div className="space-y-4">
           <section aria-labelledby="pv-current" className="space-y-2">
             <h2 id="pv-current" className="text-sm font-medium">
-              Diapositive {total ? index + 1 : 0} sur {total}
+              Diapositive {total ? shownIndex + 1 : 0} sur {total}
               {current?.label ? ` : ${current.label}` : ""}
             </h2>
+            {isPrivate ? (
+              <p
+                role="status"
+                className="bg-muted flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-2 text-sm"
+              >
+                <span>
+                  <strong>Pour toi seule</strong> : cette diapositive n’est pas projetée (la classe
+                  voit la diapositive {index + 1}).
+                </span>
+                <Button
+                  type="button"
+                  size="touch"
+                  variant="secondary"
+                  onClick={() => setPrivateIndex(null)}
+                >
+                  Revenir à la diapositive projetée
+                </Button>
+              </p>
+            ) : null}
             <div className="max-h-[55vh] overflow-auto rounded-lg border p-4">
               <div style={{ zoom: 0.5 }}>{current?.node}</div>
             </div>
@@ -168,6 +279,99 @@ export function PresenterView({
             </p>
           </div>
 
+          <section aria-labelledby="pv-jump" className="space-y-2 rounded-lg border p-4">
+            <h2 id="pv-jump" className="font-medium">
+              Aller directement à
+            </h2>
+            <div className="space-y-1">
+              <Label htmlFor="pv-jump-input">Un titre ou un numéro de diapositive</Label>
+              <Input
+                id="pv-jump-input"
+                type="search"
+                autoComplete="off"
+                value={jumpQuery}
+                onChange={(e) => setJumpQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && jumps[0]) {
+                    e.preventDefault();
+                    go(jumps[0].index);
+                    setJumpQuery("");
+                  }
+                }}
+                placeholder="Objectifs, 7…"
+              />
+            </div>
+            <div aria-live="polite" className="text-sm">
+              {jumpQuery.trim() && jumps.length === 0 ? (
+                <p className="text-muted-foreground">Rien ne porte ce titre dans le déroulé.</p>
+              ) : null}
+              {jumps.length ? (
+                <ul className="flex flex-wrap gap-2">
+                  {jumps.map((j) => (
+                    <li key={`${j.kind}-${j.index}`}>
+                      <Button
+                        type="button"
+                        size="touch"
+                        variant="outline"
+                        onClick={() => {
+                          go(j.index);
+                          setJumpQuery("");
+                        }}
+                      >
+                        {j.label}
+                        <span className="text-muted-foreground font-normal">
+                          · diapo {j.index + 1}
+                        </span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </section>
+
+          <section aria-labelledby="pv-flow" className="space-y-2 rounded-lg border p-4">
+            <h2 id="pv-flow" className="font-medium">
+              Déroulé de la séance
+            </h2>
+            <ol className="divide-y">
+              {sections.map((title, i) =>
+                starts[i] < 0 ? null : (
+                  <li
+                    key={i}
+                    aria-current={slides[index]?.section === i ? "step" : undefined}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2"
+                  >
+                    <span className="min-w-0 flex-1 font-medium">
+                      {title}
+                      {slides[index]?.section === i ? (
+                        <Badge variant="secondary" className="ml-2">
+                          Projeté
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="flex gap-2">
+                      <Button type="button" size="touch" onClick={() => go(starts[i])}>
+                        Projeter<span className="sr-only"> : {title}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        size="touch"
+                        variant="secondary"
+                        onClick={() => setPrivateIndex(starts[i])}
+                      >
+                        Pour moi<span className="sr-only"> : {title}</span>
+                      </Button>
+                    </span>
+                  </li>
+                ),
+              )}
+            </ol>
+            <p className="text-muted-foreground text-xs">
+              « Projeter » change l’écran de la classe. « Pour moi » ne change que cette vue.
+            </p>
+          </section>
+
           <section aria-labelledby="pv-next" className="space-y-2">
             <h2 id="pv-next" className="text-sm font-medium">
               {next ? `Ensuite${next.label ? ` : ${next.label}` : ""}` : "Dernière diapositive"}
@@ -183,7 +387,7 @@ export function PresenterView({
         <aside className="space-y-4">
           <section aria-labelledby="pv-notes" className="space-y-2 rounded-lg border p-4">
             <h2 id="pv-notes" className="font-medium">
-              Notes de séance
+              Préparation de la séance
             </h2>
             {notes.length ? (
               <dl className="space-y-3 text-sm">
@@ -199,28 +403,101 @@ export function PresenterView({
             )}
           </section>
 
+          <section aria-labelledby="pv-mynotes" className="space-y-2 rounded-lg border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="pv-mynotes" className="font-medium">
+                Mes notes de séance
+              </h2>
+              <Badge variant="outline">Pour moi</Badge>
+            </div>
+            {notes_.trim() ? (
+              <ul className="space-y-1 text-sm">
+                {notes_
+                  .split("\n")
+                  .filter(Boolean)
+                  .map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-sm">Aucune note pour l’instant.</p>
+            )}
+            <form action={noteAction} className="space-y-2" key={noteState.savedAt ?? "new"}>
+              <div className="space-y-1">
+                <Label htmlFor="pv-note">Ajouter une note</Label>
+                <Input
+                  id="pv-note"
+                  name="note"
+                  autoComplete="off"
+                  placeholder="Ex. : revoir l’estimation avec le groupe 3"
+                />
+              </div>
+              <Button type="submit" size="touch" variant="secondary" disabled={notePending}>
+                {notePending ? "Enregistrement…" : "Enregistrer la note"}
+              </Button>
+              <p role="status" className="text-sm">
+                {noteState.error ? (
+                  <span className="text-destructive">{noteState.error}</span>
+                ) : (
+                  noteState.message
+                )}
+              </p>
+            </form>
+            <p className="text-muted-foreground text-xs">
+              Les notes sont datées, retrouvées dans la clôture de la séance et jamais projetées.
+            </p>
+          </section>
+
           <section aria-labelledby="pv-teacher" className="space-y-2 rounded-lg border p-4">
             <h2 id="pv-teacher" className="font-medium">
               Enseignante uniquement
             </h2>
             {teacherResources.length ? (
               <ul className="space-y-2 text-sm">
-                {teacherResources.map((r) => (
-                  <li key={r.id} className="flex flex-wrap items-center gap-2">
-                    <a
-                      href={`/resources/${r.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-medium underline underline-offset-2"
-                    >
-                      {r.title}
-                      <ExternalLink aria-hidden className="size-3.5" />
-                      <span className="sr-only"> (nouvel onglet)</span>
-                    </a>
-                    {r.kindLabel ? <Badge variant="secondary">{r.kindLabel}</Badge> : null}
-                    {r.toBuild ? <Badge variant="outline">À construire</Badge> : null}
-                  </li>
-                ))}
+                {teacherResources.map((r) => {
+                  const open = openAnswers.has(r.id);
+                  return (
+                    <li key={r.id} className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <a
+                          href={`/resources/${r.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 font-medium underline underline-offset-2"
+                        >
+                          {r.title}
+                          <ExternalLink aria-hidden className="size-3.5" />
+                          <span className="sr-only"> (nouvel onglet)</span>
+                        </a>
+                        {r.kindLabel ? <Badge variant="secondary">{r.kindLabel}</Badge> : null}
+                        {r.toBuild ? <Badge variant="outline">À construire</Badge> : null}
+                        <Badge variant="outline">Jamais projeté</Badge>
+                      </div>
+                      <Button
+                        type="button"
+                        size="touch"
+                        variant="secondary"
+                        aria-expanded={open}
+                        aria-controls={`pv-answer-${r.id}`}
+                        onClick={() => toggleAnswer(r.id)}
+                      >
+                        {open ? "Masquer le corrigé" : "Afficher le corrigé"}
+                        <span className="sr-only"> : {r.title}</span>
+                      </Button>
+                      {open ? (
+                        <div id={`pv-answer-${r.id}`} className="bg-muted/50 rounded-lg border p-3">
+                          {r.content?.trim() ? (
+                            <Markdown source={r.content} headingLevel={3} />
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Cette ressource n’a pas de texte : ouvre-la dans un nouvel onglet.
+                            </p>
+                          )}
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="text-muted-foreground text-sm">
@@ -229,6 +506,74 @@ export function PresenterView({
             )}
             <p className="text-muted-foreground text-xs">
               Ces ressources ne sont jamais projetées.
+            </p>
+          </section>
+
+          <section aria-labelledby="pv-lib" className="space-y-2 rounded-lg border p-4">
+            <h2 id="pv-lib" className="font-medium">
+              Une question sur autre chose ?
+            </h2>
+            <div className="space-y-1">
+              <Label htmlFor="pv-lib-input">Chercher une ressource</Label>
+              <Input
+                id="pv-lib-input"
+                type="search"
+                autoComplete="off"
+                value={libraryQuery}
+                onChange={(e) => setLibraryQuery(e.target.value)}
+                placeholder="Estimation…"
+              />
+            </div>
+            <div aria-live="polite" className="text-sm">
+              {libraryQuery.trim().length >= 2 && found.length === 0 ? (
+                <p className="text-muted-foreground">Aucune ressource ne porte ce titre.</p>
+              ) : null}
+              {projectedNote ? <p>{projectedNote}</p> : null}
+            </div>
+            {found.length ? (
+              <ul className="divide-y text-sm">
+                {found.map((r) => (
+                  <li key={r.id} className="space-y-1 py-2">
+                    <p className="font-medium">
+                      {r.title}
+                      {r.kindLabel ? (
+                        <Badge variant="secondary" className="ml-2">
+                          {r.kindLabel}
+                        </Badge>
+                      ) : null}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button asChild size="touch" variant="secondary">
+                        <a href={`/resources/${r.id}`} target="_blank" rel="noreferrer">
+                          Pour moi<span className="sr-only"> : {r.title} (nouvel onglet)</span>
+                        </a>
+                      </Button>
+                      {r.projectable ? (
+                        <Button
+                          type="button"
+                          size="touch"
+                          onClick={() => {
+                            openProjection(`/present/resources/${r.id}`);
+                            setProjectedNote(
+                              `« ${r.title} » est projetée. Pour revenir au déroulé, ouvre la fenêtre projetée.`,
+                            );
+                          }}
+                        >
+                          Projeter<span className="sr-only"> : {r.title}</span>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          Pas projetable : réservée à toi ou pas prête.
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="text-muted-foreground text-xs">
+              « Pour moi » l’ouvre chez toi. « Projeter » remplace l’écran de la classe jusqu’à ce
+              que tu rouvres le déroulé.
             </p>
           </section>
         </aside>

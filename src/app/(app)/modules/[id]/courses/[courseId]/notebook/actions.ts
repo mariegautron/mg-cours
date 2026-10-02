@@ -7,6 +7,7 @@ import {
   readClosureForm,
   readObservationForm,
 } from "@/lib/notebook/notebook";
+import { appendDatedNote } from "@/lib/present/presenter";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
 
@@ -121,4 +122,47 @@ export async function saveCourseClosure(
 
   refresh(moduleId, courseId);
   return { message: "Clôture enregistrée.", savedAt: Date.now() };
+}
+
+export interface SessionNoteState extends NotebookState {
+  /** Notes de séance après enregistrement (texte complet, une ligne datée par note). */
+  notes?: string;
+}
+
+/**
+ * Note de séance datée, écrite depuis la vue présentatrice (US-134). Pas de table dédiée : la note
+ * s'ajoute, avec sa date, au retour d'expérience privé de la séance (`course.retro_note`), qu'on
+ * retrouve dans la clôture du carnet. Jamais projetée.
+ */
+export async function addSessionNote(
+  moduleId: string,
+  courseId: string,
+  _prev: SessionNoteState,
+  formData: FormData,
+): Promise<SessionNoteState> {
+  const note = String(formData.get("note") ?? "");
+  if (!note.trim()) return { error: "Écris une note avant de l’enregistrer." };
+
+  const supabase = await createClient();
+  const { data: course } = await supabase
+    .from("course")
+    .select("retro_note")
+    .eq("id", courseId)
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!course) return { error: NOT_FOUND.course };
+
+  const next = appendDatedNote(course.retro_note, note);
+  if (!next)
+    return { error: "Cette note ferait dépasser les 4000 caractères des notes de la séance." };
+
+  const { error } = await supabase
+    .from("course")
+    .update({ retro_note: next })
+    .eq("id", courseId)
+    .eq("module_id", moduleId);
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+
+  refresh(moduleId, courseId);
+  return { message: "Note enregistrée.", notes: next, savedAt: Date.now() };
 }
