@@ -4,7 +4,7 @@ import { Markdown } from "@/components/markdown";
 import type { PresentSlide } from "@/components/present/present-shell";
 import type { SubjectSection } from "@/lib/assessments/subject";
 import { parseMarkdown } from "@/lib/pdf/markdown";
-import { slideTitle, splitSlides } from "@/lib/present/slides";
+import { buildSlides, slideTitle } from "@/lib/present/slides";
 import {
   isImageMime,
   parseResourceFiles,
@@ -68,17 +68,29 @@ export function markdownSlides(
   source: string,
   resolveSrc?: (src: string) => string,
 ): PresentSlide[] {
-  return splitSlides(parseMarkdown(source)).map((blocks) => ({
+  return buildSlides(parseMarkdown(source)).map(({ blocks, reminder, part }) => ({
     section,
-    label: slideTitle(blocks),
+    label: slideTitle(blocks) ?? (reminder ? `${reminder} (suite)` : null),
     node: (
-      <Markdown
-        source=""
-        blocks={blocks}
-        headingLevel={2}
-        size="present"
-        resolveImageSrc={resolveSrc}
-      />
+      <div className="space-y-4">
+        {reminder || (part && part.index > 1) ? (
+          <p className="text-muted-foreground text-2xl">
+            {reminder}
+            {part && part.index > 1 ? (
+              <span>
+                {reminder ? " · " : ""}suite {part.index}/{part.total}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+        <Markdown
+          source=""
+          blocks={blocks}
+          headingLevel={2}
+          size="present"
+          resolveImageSrc={resolveSrc}
+        />
+      </div>
     ),
   }));
 }
