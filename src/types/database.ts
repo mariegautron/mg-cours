@@ -1172,6 +1172,41 @@ export type Database = {
           },
         ]
       }
+      module_retrospective: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          note: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          note?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          note?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_retrospective_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oral_slot: {
         Row: {
           assessment_id: string

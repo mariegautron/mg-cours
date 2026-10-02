@@ -33,7 +33,7 @@ export function ArchiveModuleButton({
       } else {
         await archiveModule(id);
         toast.success(name ? `Module « ${name} » archivé` : "Module archivé", {
-          description: "Il n’apparaît plus que dans l’onglet « Archivés » de la liste des modules.",
+          description: "Il n’apparaît plus que dans l’onglet « Rangés » de la liste des modules.",
           action: { label: "Annuler", onClick: () => void unarchiveModule(id) },
         });
       }
@@ -59,7 +59,7 @@ export function ArchiveModuleButton({
       {button}
       <p className="text-muted-foreground text-sm">
         Un module archivé (année passée) disparaît du tableau de bord, de la facturation et des
-        modules actifs ; il reste consultable dans l’onglet « Archivés ».
+        modules actifs ; il reste consultable dans l’onglet « Rangés ».
       </p>
     </div>
   );

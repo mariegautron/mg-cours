@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Archive, Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { FinishModuleButton } from "@/components/modules/finish-module-button";
+import { retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { type ModuleFilter, parseModuleFilter, splitModules } from "@/lib/modules/archive-filter";
@@ -37,11 +39,15 @@ const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 export default async function ModulesPage({ searchParams }: PageProps<"/modules">) {
   const filter = parseModuleFilter(await searchParams);
-  const { active, archived } = splitModules(await listModules({ includeArchived: true }));
+  const [all, askNote] = await Promise.all([
+    listModules({ includeArchived: true }),
+    retrospectiveAvailable(),
+  ]);
+  const { active, archived } = splitModules(all);
 
   const tabs: { value: ModuleFilter; label: string }[] = [
-    { value: "active", label: `Actifs (${active.length})` },
-    { value: "archived", label: `Archivés (${archived.length})` },
+    { value: "active", label: `En cours (${active.length})` },
+    { value: "archived", label: `Rangés (${archived.length})` },
     { value: "all", label: `Tous (${active.length + archived.length})` },
   ];
 
@@ -93,7 +99,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
 
       {filter === "active" ? (
         active.length > 0 ? (
-          <ModuleGrid modules={active} />
+          <ModuleGrid modules={active} askNote={askNote} />
         ) : archived.length > 0 ? (
           <EmptyState
             title="Aucun module actif"
@@ -130,15 +136,15 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           {active.length > 0 ? (
             <section aria-labelledby="modules-actifs" className="space-y-3">
               <h2 id="modules-actifs" className="text-lg font-semibold">
-                Actifs
+                En cours
               </h2>
-              <ModuleGrid modules={active} headingLevel={3} />
+              <ModuleGrid modules={active} headingLevel={3} askNote={askNote} />
             </section>
           ) : null}
           {archived.length > 0 ? (
             <section aria-labelledby="modules-archives" className="space-y-3">
               <h2 id="modules-archives" className="text-lg font-semibold">
-                Archivés
+                Rangés
               </h2>
               <ModuleGrid modules={archived} headingLevel={3} />
             </section>
@@ -152,15 +158,17 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
 function ModuleGrid({
   modules,
   headingLevel = 2,
+  askNote = false,
 }: {
   modules: ModuleWithSchool[];
   headingLevel?: 2 | 3;
+  askNote?: boolean;
 }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {modules.map((m) => (
         <li key={m.id}>
-          <ModuleCard module={m} headingLevel={headingLevel} />
+          <ModuleCard module={m} headingLevel={headingLevel} askNote={askNote} />
         </li>
       ))}
     </ul>
@@ -170,9 +178,11 @@ function ModuleGrid({
 function ModuleCard({
   module: m,
   headingLevel,
+  askNote,
 }: {
   module: ModuleWithSchool;
   headingLevel: 2 | 3;
+  askNote: boolean;
 }) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const meta = (
@@ -202,16 +212,24 @@ function ModuleCard({
   const notes = requiredNotes(m.total_hours);
   const badge = TRAME_BADGE[trameStatus(m.first_session_date, m.iceberg_state).level];
   return (
-    <Link href={`/modules/${m.id}`} className={cardClass}>
-      <Heading className="font-medium">{m.name}</Heading>
-      {meta}
-      <div className="mt-3 flex flex-wrap gap-1">
-        <Badge variant="secondary">{m.total_hours} h</Badge>
-        <Badge variant="outline">
-          {notes.total} note{notes.total > 1 ? "s" : ""} min.
-        </Badge>
-        <Badge variant={badge.variant}>{badge.label}</Badge>
+    <div className="flex h-full flex-col rounded-lg border">
+      <Link
+        href={`/modules/${m.id}`}
+        className="hover:bg-accent focus-visible:ring-ring block flex-1 rounded-t-lg p-4 focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <Heading className="font-medium">{m.name}</Heading>
+        {meta}
+        <div className="mt-3 flex flex-wrap gap-1">
+          <Badge variant="secondary">{m.total_hours} h</Badge>
+          <Badge variant="outline">
+            {notes.total} note{notes.total > 1 ? "s" : ""} min.
+          </Badge>
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+        </div>
+      </Link>
+      <div className="flex justify-end border-t px-2 py-1">
+        <FinishModuleButton id={m.id} name={m.name} askNote={askNote} />
       </div>
-    </Link>
+    </div>
   );
 }

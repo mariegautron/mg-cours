@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
+import {
+  canUndoArchive,
+  cleanRetrospective,
+  RESTORED_ARCHIVED_AT,
+} from "@/lib/modules/archive-undo";
 import { readModuleDates } from "@/lib/modules/hyperplanning";
 import { planAssessmentCopy } from "@/lib/modules/duplicate-evaluations";
 import { parseResourceFiles } from "@/lib/resources/files";
@@ -221,6 +226,73 @@ export async function archiveModule(id: string) {
 export async function unarchiveModule(id: string) {
   "use server";
   await setModuleArchived(id, false);
+}
+
+export interface FinishModuleResult {
+  ok?: boolean;
+  error?: string;
+  /** Horodatage du rangement : jeton à renvoyer pour « Annuler ». */
+  archivedAt?: string;
+}
+
+/**
+ * Termine et range un module depuis la liste (US-160). Le mot « Ce que je retiens » est gardé au
+ * mieux : sans la table `module_retrospective`, le module est rangé quand même.
+ */
+export async function finishModule(id: string, note: string | null): Promise<FinishModuleResult> {
+  const cleaned = cleanRetrospective(note);
+  if ("error" in cleaned) return { error: cleaned.error };
+
+  const supabase = await createClient();
+  const archivedAt = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("module")
+    .update({ archived_at: archivedAt })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { error: failure("ranger le module") };
+  if (!data) return { error: NOT_FOUND.module };
+
+  if (cleaned.note) {
+    try {
+      await supabase
+        .from("module_retrospective")
+        .upsert({ module_id: id, note: cleaned.note }, { onConflict: "module_id" });
+    } catch {
+      // Table pas encore créée : le module est rangé, sans le mot.
+    }
+  }
+  revalidatePath("/modules");
+  revalidatePath(`/modules/${id}`);
+  revalidatePath("/billing");
+  revalidatePath("/dashboard");
+  return { ok: true, archivedAt };
+}
+
+/** « Annuler » après le rangement : seulement dans le délai et pour ce rangement-là. */
+export async function undoFinishModule(
+  id: string,
+  archivedAt: string,
+): Promise<FinishModuleResult> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("module").select("archived_at").eq("id", id).maybeSingle();
+  if (!data) return { error: NOT_FOUND.module };
+  if (!canUndoArchive(data.archived_at, archivedAt, Date.now())) {
+    return {
+      error: "Le délai pour annuler est passé : tu peux restaurer le module depuis « Rangés ».",
+    };
+  }
+  const { error } = await supabase
+    .from("module")
+    .update({ archived_at: RESTORED_ARCHIVED_AT })
+    .eq("id", id);
+  if (error) return { error: failure("annuler le rangement") };
+  revalidatePath("/modules");
+  revalidatePath(`/modules/${id}`);
+  revalidatePath("/billing");
+  revalidatePath("/dashboard");
+  return { ok: true };
 }
 
 export interface AdminDocState {
