@@ -38,6 +38,15 @@ const PRIVATE =
  */
 const NEXT_TIME_ALLOWED = "src/lib/present/reprise.ts";
 
+/**
+ * US-134 : la vue présentatrice (seconde fenêtre, jamais projetée) affiche les notes de séance de
+ * Marie, stockées dans `retro_note`. Son seul point de lecture est cette page ; la fenêtre
+ * projetée, elle, ne doit jamais y toucher (voir le test dédié plus bas).
+ */
+const PRIVATE_VIEW_PAGE =
+  "src/app/(present)/present/modules/[id]/courses/[courseId]/presenter/page.tsx";
+const PROJECTED_PAGE = "src/app/(present)/present/modules/[id]/courses/[courseId]/page.tsx";
+
 function files(path: string): string[] {
   const abs = join(ROOT, path);
   if (statSync(abs).isFile()) return [path];
@@ -50,8 +59,18 @@ describe("carnet de séance : données privées", () => {
       (f) => /\.(ts|tsx)$/.test(f) && !f.endsWith(".test.ts"),
     );
     expect(sources.length).toBeGreaterThan(10);
-    const leaks = sources.filter((f) => PRIVATE.test(readFileSync(join(ROOT, f), "utf8")));
+    const leaks = sources
+      .filter((f) => f !== PRIVATE_VIEW_PAGE)
+      .filter((f) => PRIVATE.test(readFileSync(join(ROOT, f), "utf8")));
     expect(leaks).toEqual([]);
+  });
+
+  it("la vue présentatrice ne lit que retro_note ; la page projetée ne lit rien du carnet", () => {
+    const privateView = readFileSync(join(ROOT, PRIVATE_VIEW_PAGE), "utf8");
+    const others =
+      /student_observation|observation_tag|experience_note|not_covered|\bcompletion\b|next_time|lib\/notebook|components\/notebook/;
+    expect(others.test(privateView)).toBe(false);
+    expect(PRIVATE.test(readFileSync(join(ROOT, PROJECTED_PAGE), "utf8"))).toBe(false);
   });
 
   it("next_time n'est lu que par la diapositive de reprise (US-68)", () => {
