@@ -2,6 +2,8 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
+import Link from "next/link";
+
 import { ActionError } from "@/components/action-error";
 import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
@@ -17,6 +19,7 @@ import {
   type Attendance,
   type MemberOverride,
 } from "@/lib/assessments/attendance";
+import { excusedGroupHint, groupMemberValue } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
   adoptComment,
@@ -61,8 +64,6 @@ export interface CopyControls {
 
 interface MemberDraft {
   attendance: Attendance;
-  /** Pourcentage saisi ; vide = 100 %. */
-  percent: string;
   justification: string;
 }
 
@@ -87,6 +88,7 @@ export function GradeForm({
   hasPrev = false,
   hasNext = false,
   others = [],
+  absenceRule = "keep_group_grade",
 }: {
   /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
   id: string;
@@ -117,6 +119,8 @@ export function GradeForm({
   hasNext?: boolean;
   /** Les autres copies de l'évaluation : « déjà noté chez les autres » (US-139). */
   others?: OtherCopy[];
+  /** Règle de l'école pour une absence excusée sur une note de groupe (US-162). */
+  absenceRule?: "keep_group_grade" | "makeup";
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
@@ -158,7 +162,6 @@ export function GradeForm({
           m.id,
           {
             attendance: o?.attendance ?? "present",
-            percent: o && o.factor !== 1 ? String(Math.round(o.factor * 100)) : "",
             justification: o?.justification ?? "",
           },
         ];
@@ -735,7 +738,6 @@ export function GradeForm({
             <input type="hidden" name={`member_${m.id}_attendance`} value={st.attendance} />
             {st.attendance === "present" ? (
               <>
-                <input type="hidden" name={`member_${m.id}_factor`} value={st.percent} />
                 <input
                   type="hidden"
                   name={`member_${m.id}_justification`}
@@ -754,73 +756,77 @@ export function GradeForm({
       setMemberState((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
     return (
       <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold">Membres du groupe</legend>
+        <legend className="text-sm font-semibold">Membres du groupe : qui a fait quoi ?</legend>
         <p className="text-muted-foreground text-xs">
-          Absence ou pondération individuelle (oral) : la note du groupe n’est jamais modifiée. Une
-          pondération différente de 100 % exige une justification, affichée dans le résultat.
+          Absent·e non prévenu·e : la note est 0. Absent·e excusé·e :{" "}
+          {excusedGroupHint(absenceRule).toLowerCase()} Les points ne sont jamais retirés à une
+          personne : un mot pour elle, facultatif, ne change pas la note.{" "}
+          <Link href="/settings#school-rules" className="underline underline-offset-2">
+            Changer la règle de l’école
+          </Link>
         </p>
         <input type="hidden" name="memberOverrides" value="1" />
         <ul className="space-y-3">
           {list.map((m) => {
             const st = memberState[m.id];
-            const percent = Number(st.percent.replace(",", "."));
-            const weighted = st.percent.trim() !== "" && percent !== 100;
+            const finalValue = groupMemberValue(
+              totals.value,
+              maxScore,
+              { attendance: st.attendance },
+              absenceRule,
+            );
             return (
               <li key={m.id} className="space-y-2 rounded-md border p-3">
-                <p className="text-sm font-medium">{m.name}</p>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="space-y-1">
-                    <Label htmlFor={`${uid}-att_${m.id}`}>Présence de {m.name}</Label>
-                    <select
-                      id={`${uid}-att_${m.id}`}
-                      name={`member_${m.id}_attendance`}
-                      value={st.attendance}
-                      onChange={(e) => update(m.id, { attendance: e.target.value as Attendance })}
-                      className="border-input h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{m.name}</p>
+                  <p className="text-sm" aria-live="polite">
+                    <strong>{finalValue === null ? "—" : formatNumber(finalValue)}</strong>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      {st.attendance === "absent_unexcused"
+                        ? "· non prévenu·e : 0"
+                        : st.attendance === "absent_excused"
+                          ? finalValue === null
+                            ? "· pas de note, rattrapage"
+                            : "· note de groupe gardée"
+                          : "· = note de groupe"}
+                    </span>
+                  </p>
+                </div>
+                <div
+                  role="radiogroup"
+                  aria-label={`Présence de ${m.name}`}
+                  className="flex flex-wrap gap-2"
+                >
+                  {ATTENDANCE_VALUES.map((value) => (
+                    <label
+                      key={value}
+                      className="has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:focus-visible]:ring-ring hover:bg-muted flex min-h-11 cursor-pointer items-center rounded-md border px-3 text-sm font-medium has-[:focus-visible]:ring-2"
                     >
-                      {ATTENDANCE_VALUES.map((value) => (
-                        <option key={value} value={value}>
-                          {ATTENDANCE_LABELS[value]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {st.attendance === "present" ? (
-                    <>
-                      <div className="space-y-1">
-                        <Label htmlFor={`${uid}-pct_${m.id}`}>Pondération de {m.name} (%)</Label>
-                        <Input
-                          id={`${uid}-pct_${m.id}`}
-                          name={`member_${m.id}_factor`}
-                          type="number"
-                          min={0}
-                          max={200}
-                          step={1}
-                          placeholder="100"
-                          value={st.percent}
-                          onChange={(e) => update(m.id, { percent: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor={`${uid}-why_${m.id}`}>
-                          Justification de la pondération de {m.name}
-                          {weighted ? " (obligatoire)" : ""}
-                        </Label>
-                        <Input
-                          id={`${uid}-why_${m.id}`}
-                          name={`member_${m.id}_justification`}
-                          value={st.justification}
-                          maxLength={1000}
-                          aria-required={weighted}
-                          onChange={(e) => update(m.id, { justification: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground text-xs sm:col-span-2">
-                      {ATTENDANCE_HINTS[st.attendance]}
-                    </p>
-                  )}
+                      <input
+                        type="radio"
+                        name={`member_${m.id}_attendance`}
+                        value={value}
+                        checked={st.attendance === value}
+                        onChange={() => update(m.id, { attendance: value })}
+                        className="sr-only"
+                      />
+                      {ATTENDANCE_LABELS[value]}
+                    </label>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${uid}-why_${m.id}`}>
+                    Un mot pour {m.name} (facultatif, elle ou il le lira ; la note ne change pas)
+                  </Label>
+                  <Input
+                    id={`${uid}-why_${m.id}`}
+                    name={`member_${m.id}_justification`}
+                    value={st.justification}
+                    maxLength={1000}
+                    autoComplete="off"
+                    onChange={(e) => update(m.id, { justification: e.target.value })}
+                  />
                 </div>
               </li>
             );

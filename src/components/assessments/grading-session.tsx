@@ -57,6 +57,7 @@ export function GradingSession({
   subject,
   activeId,
   onActivate,
+  absenceRule,
 }: {
   sections: SessionSection[];
   grid: GridWithCriteria | null;
@@ -71,6 +72,8 @@ export function GradingSession({
   activeId?: string;
   /** Appelé quand la navigation (liste des copies, précédente / suivante) choisit une autre copie. */
   onActivate?: (id: string) => void;
+  /** Règle de l'école pour une absence excusée sur une note de groupe. */
+  absenceRule?: "keep_group_grade" | "makeup";
 }) {
   const uid = useId();
   const items = sections.flatMap((s) => s.items);
@@ -311,6 +314,7 @@ export function GradingSession({
                 memberOverrides={item.memberOverrides}
                 theme={item.theme}
                 others={others}
+                absenceRule={absenceRule}
                 onStatus={onStatus}
                 register={register}
                 onNavigate={(direction) => {

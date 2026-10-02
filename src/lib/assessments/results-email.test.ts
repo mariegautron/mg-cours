@@ -31,8 +31,7 @@ const sheet = (over: Partial<ResultSheet> = {}): ResultSheet => ({
   axes: [],
   overflow: null,
   attendance: "present",
-  adjustment: null,
-  groupValue: null,
+  personalNote: null,
   strengths: "Code propre",
   progress: "Tu as progressé sur les labels.",
   feedback: null,
@@ -72,17 +71,24 @@ describe("resultsEmailText", () => {
     expect(text).not.toContain("Détail par critère");
   });
 
-  it("pondération individuelle : justification incluse", () => {
+  it("un mot pour la personne, sans changement de note", () => {
     const text = resultsEmailText(
-      sheet({
-        isGroupGrade: true,
-        value: 12.8,
-        groupValue: 16,
-        adjustment: { factor: 0.8, justification: "A peu contribué à l'oral." },
-      }),
+      sheet({ isGroupGrade: true, value: 16, personalNote: "Très investi sur les tests." }),
     );
-    expect(text).toContain("80 % de la note du groupe (16 / 20)");
-    expect(text).toContain("A peu contribué à l'oral.");
+    expect(text).toContain("Un mot pour toi : Très investi sur les tests.");
+    expect(text).not.toContain("Pondération");
+  });
+
+  it("absence excusée : garde la note du groupe, ou rattrapage selon la règle de l'école", () => {
+    const keeps = resultsEmailText(
+      sheet({ isGroupGrade: true, attendance: "absent_excused", value: 16 }),
+    );
+    expect(keeps).toContain("tu gardes la note du groupe");
+    expect(keeps).toContain("Note : 16 / 20");
+    const makeup = resultsEmailText(
+      sheet({ isGroupGrade: true, attendance: "absent_excused", value: null }),
+    );
+    expect(makeup).toContain("Ta note sera celle du rattrapage");
   });
 
   it("le sujet de l'e-mail tutoie aussi", () => {

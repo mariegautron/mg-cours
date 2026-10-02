@@ -50,7 +50,7 @@ test("note individuelle : non prévenu·e = 0, excusé·e = hors moyenne", async
   await expect(averageOf(page, leo)).toHaveText("—");
 });
 
-test("note de groupe : absence et pondération justifiée par membre, sans toucher à la note du groupe", async ({
+test("note de groupe : présence par membre et mot personnel, jamais de retrait de points", async ({
   page,
 }) => {
   test.setTimeout(150_000);
@@ -67,42 +67,47 @@ test("note de groupe : absence et pondération justifiée par membre, sans touch
 
   await form.getByLabel("Structure (/4)").fill("3");
 
-  // Pondération sans justification : refusée, avec un message qui nomme l'étudiant·e.
-  await form.getByLabel(`Pondération de ${ana} (%)`).fill("80");
-  await form.getByRole("button", { name: "Enregistrer la note" }).click();
-  await expect(
-    form
-      .getByRole("alert")
-      .filter({ hasText: `Justification obligatoire pour la pondération de ${ana}.` }),
-  ).toBeVisible();
-  await expect(
-    form.getByLabel(`Justification de la pondération de ${ana} (obligatoire)`),
-  ).toBeVisible();
-
+  // Plus de pondération : on ne retire jamais de points. Un mot pour Ana, facultatif, sans effet.
+  await expect(form.getByLabel(`Pondération de ${ana} (%)`)).toHaveCount(0);
+  await form.getByLabel(new RegExp(`^Un mot pour ${ana}`)).fill("Très investie sur les tests.");
   await form
-    .getByLabel(`Justification de la pondération de ${ana}`)
-    .fill("A peu contribué à l’oral.");
-  await form.getByLabel(`Présence de ${zoe}`).selectOption({ label: "Absent·e non prévenu·e" });
-  await expect(form.getByLabel(`Pondération de ${zoe} (%)`)).toHaveCount(0);
+    .getByRole("radiogroup", { name: `Présence de ${zoe}` })
+    .getByText("Absent·e non prévenu·e")
+    .click();
+  await form
+    .getByRole("radiogroup", { name: `Présence de ${leo}` })
+    .getByText("Absent·e excusé·e")
+    .click();
+
+  // La note finale de chaque membre est écrite à côté de son nom (règle par défaut de l'école).
+  await expect(form.getByText("non prévenu·e : 0")).toBeVisible();
+  await expect(form.getByText("note de groupe gardée")).toBeVisible();
+  await expect(form.getByText("= note de groupe")).toBeVisible();
 
   expect((await axe(page)).violations).toEqual([]);
   await form.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(form.getByText("Note enregistrée.")).toBeVisible();
+  // L'enregistrement automatique et le clic peuvent se chevaucher : on attend la fin des envois.
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByText("Tout est enregistré")).toBeVisible();
 
-  // Rechargement : ajustements restitués, note du groupe intacte (15/20 = 3/4).
+  // Rechargement : situations restituées, note du groupe intacte (15/20 = 3/4).
   await page.reload();
   const reloaded = page.getByRole("form", { name: /Note du groupe/ });
-  await expect(reloaded.getByLabel(`Pondération de ${ana} (%)`)).toHaveValue("80");
-  await expect(reloaded.getByLabel(`Justification de la pondération de ${ana}`)).toHaveValue(
-    "A peu contribué à l’oral.",
+  await expect(reloaded.getByLabel(new RegExp(`^Un mot pour ${ana}`))).toHaveValue(
+    "Très investie sur les tests.",
   );
-  await expect(reloaded.getByLabel(`Présence de ${zoe}`)).toHaveValue("absent_unexcused");
+  await expect(
+    reloaded
+      .getByRole("radiogroup", { name: `Présence de ${zoe}` })
+      .getByLabel("Absent·e non prévenu·e"),
+  ).toBeChecked();
   await expect(reloaded.getByText("Note actuelle : 3 / 4 (15/20)")).toBeVisible();
 
-  // Moyennes : Léo 15 (note du groupe), Ana 12 (80 %), Zoé 0 (absente non prévenue).
+  // Moyennes : Ana 15 et Léo 15 (excusé : garde la note du groupe), Zoé 0 (non prévenue).
   await page.goto(`${setup.moduleUrl}/assessments`);
   await expect(averageOf(page, leo)).toHaveText("15.00");
-  await expect(averageOf(page, ana)).toHaveText("12.00");
+  await expect(averageOf(page, ana)).toHaveText("15.00");
   await expect(averageOf(page, zoe)).toHaveText("0.00");
 
   // Le PDF de résultats se génère (fiches distinctes pour les membres ajustés).

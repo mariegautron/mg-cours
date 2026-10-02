@@ -35,6 +35,7 @@ export function OralStage({
   comments,
   autoValidatedIds,
   subject,
+  absenceRule,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -45,6 +46,7 @@ export function OralStage({
   comments: Tables<"predefined_comment">[];
   autoValidatedIds: string[];
   subject: string | null;
+  absenceRule?: "keep_group_grade" | "makeup";
 }) {
   const [activeGroupId, setActiveGroupId] = useState(
     () => (firstWaiting(slots) ?? slots[slots.length - 1])?.groupId ?? "",
@@ -146,6 +148,7 @@ export function OralStage({
           comments={comments}
           autoValidatedIds={autoValidatedIds}
           subject={subject}
+          absenceRule={absenceRule}
           activeId={active.groupId}
           onActivate={(groupId) => {
             setMessage("");

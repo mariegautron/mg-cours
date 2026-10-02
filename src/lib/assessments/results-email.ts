@@ -20,20 +20,16 @@ export function resultsEmailText(sheet: ResultSheet, firstName?: string): string
   const lines: string[] = [`Bonjour${firstName ? ` ${firstName}` : ""},`, ""];
   lines.push(`Voici ton résultat pour « ${sheet.title} » (${sheet.moduleName}).`, "");
 
-  if (sheet.attendance === "absent_excused") {
+  if (sheet.attendance === "absent_excused" && sheet.value === null) {
     lines.push(
       "Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera celle du rattrapage.",
     );
   } else {
     if (sheet.attendance === "absent_unexcused")
       lines.push("Absence non prévenue : la note est de 0 (règle de l’école).", "");
-    if (sheet.adjustment && sheet.groupValue !== null) {
-      lines.push(
-        `Pondération individuelle : ${formatNumber(Math.round(sheet.adjustment.factor * 100))} % de la note du groupe (${formatNumber(sheet.groupValue)} / ${formatNumber(sheet.maxScore)}).`,
-        `Justification : ${sheet.adjustment.justification}`,
-        "",
-      );
-    }
+    if (sheet.attendance === "absent_excused")
+      lines.push("Ton absence est excusée : tu gardes la note du groupe (règle de l’école).", "");
+    if (sheet.personalNote) lines.push(`Un mot pour toi : ${sheet.personalNote}`, "");
     lines.push(
       `Note : ${sheet.value === null ? "—" : formatNumber(sheet.value)} / ${formatNumber(sheet.maxScore)}${
         sheet.maxScore !== 20 && sheet.valueOn20 !== null

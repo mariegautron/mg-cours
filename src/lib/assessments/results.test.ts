@@ -407,38 +407,35 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     ],
   };
 
-  it("note de groupe : une fiche commune, plus une fiche par membre pondéré ou absent·e non prévenu·e", () => {
+  it("note de groupe : une fiche commune, plus une fiche par membre avec un mot ou absent·e", () => {
     const sheets = buildResultSheets({
       ...members,
       criteria,
       assessment: groupAssessment,
       grades: [groupGrade],
       memberOverrides: [
-        override("s2", { individual_factor: 0.8, justification: "A peu contribué à l'oral." }),
+        // Une ancienne pondération stockée est ignorée : jamais de retrait de points.
+        override("s2", { individual_factor: 0.8, justification: "Très investi sur les tests." }),
         override("s3", { attendance: "absent_unexcused" }),
       ],
     });
     expect(sheets).toHaveLength(3);
-    // Fiche commune : les membres sans ajustement, note du groupe intacte.
+    // Fiche commune : les membres sans particularité, note du groupe intacte.
     expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test"]);
     expect(sheets[0].value).toBe(16);
-    expect(sheets[0].adjustment).toBeNull();
-    // Pondération : note du groupe × 80 %, avec sa justification.
+    expect(sheets[0].personalNote).toBeNull();
+    // Un mot pour la personne : la note ne change pas.
     expect(sheets[1].recipients.map((r) => r.name)).toEqual(["Noa Test"]);
-    expect(sheets[1].value).toBe(12.8);
-    expect(sheets[1].groupValue).toBe(16);
-    expect(sheets[1].adjustment).toEqual({
-      factor: 0.8,
-      justification: "A peu contribué à l'oral.",
-    });
+    expect(sheets[1].value).toBe(16);
+    expect(sheets[1].personalNote).toBe("Très investi sur les tests.");
     // Absent·e non prévenu·e : 0, sans toucher à la note du groupe.
     expect(sheets[2].recipients.map((r) => r.name)).toEqual(["Ali Test"]);
     expect(sheets[2].value).toBe(0);
     expect(sheets[2].attendance).toBe("absent_unexcused");
-    expect(sheets[2].adjustment).toBeNull();
+    expect(sheets[2].personalNote).toBeNull();
   });
 
-  it("note de groupe : un·e absent·e excusé·e a une fiche sans note, avec la mention de l'absence", () => {
+  it("note de groupe, absent·e excusé·e : garde la note du groupe par défaut (règle de l'école)", () => {
     const sheets = buildResultSheets({
       ...members,
       criteria,
@@ -453,9 +450,24 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
     ]);
     const excused = sheets[1];
     expect(excused.attendance).toBe("absent_excused");
+    expect(excused.value).toBe(16);
+    expect(excused.valueOn20).toBe(16);
+    expect(sheets[0].value).toBe(16);
+  });
+
+  it("note de groupe, absent·e excusé·e : fiche sans note si l'école demande un rattrapage", () => {
+    const sheets = buildResultSheets({
+      ...members,
+      criteria,
+      assessment: groupAssessment,
+      grades: [groupGrade],
+      memberOverrides: [override("s2", { attendance: "absent_excused" })],
+      absenceRule: "makeup",
+    });
+    const excused = sheets[1];
+    expect(excused.attendance).toBe("absent_excused");
     expect(excused.value).toBeNull();
     expect(excused.valueOn20).toBeNull();
-    // La note du groupe n'est jamais modifiée pour les autres membres.
     expect(sheets[0].value).toBe(16);
   });
 

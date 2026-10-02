@@ -17,12 +17,16 @@ export function isAttendance(value: unknown): value is Attendance {
   return typeof value === "string" && (ATTENDANCE_VALUES as readonly string[]).includes(value);
 }
 
-/** Ajustement individuel d'un·e membre dans une note de groupe (absence ou pondération). */
+/**
+ * Situation d'un·e membre dans une note de groupe : présence, et un mot facultatif pour la personne
+ * (`justification`, lu par elle, sans effet sur la note). `factor` n'est plus qu'une trace des
+ * anciennes pondérations : il est ignoré, on ne retire jamais de points à une personne.
+ */
 export interface MemberOverride {
   attendance: Attendance;
-  /** Multiplicateur de la note du groupe (1 = inchangée, 0,8 = 80 %). */
+  /** Hérité : toujours 1 à l'écriture, ignoré à la lecture. */
   factor: number;
-  /** Obligatoire dès que `factor` diffère de 1 ; affichée dans le rendu. */
+  /** « Un mot pour la personne » : facultatif, affiché dans son résultat, sans effet sur la note. */
   justification: string | null;
 }
 
@@ -34,11 +38,14 @@ export const DEFAULT_OVERRIDE: MemberOverride = {
 
 /** `true` si rien n'est à retenir : aucune ligne à enregistrer pour ce membre. */
 export function isDefaultOverride(o: MemberOverride): boolean {
-  return o.attendance === "present" && o.factor === 1 && !o.justification;
+  return o.attendance === "present" && !o.justification;
 }
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+/** Ce que devient une absence excusée sur une note de groupe, d'après la règle de l'école. */
+export function excusedGroupHint(rule: "keep_group_grade" | "makeup"): string {
+  return rule === "keep_group_grade"
+    ? "Garde la note du groupe (règle de l’école)."
+    : "Pas de note, non comptée dans la moyenne ; rattrapage individuel à prévoir (règle de l’école).";
 }
 
 /**
@@ -52,27 +59,29 @@ export function individualValueFor(attendance: Attendance, value: number | null)
 }
 
 /**
- * Note d'un·e membre pour une note de groupe : absent·e non prévenu·e = 0 (sans toucher à la note du
- * groupe), absent·e excusé·e = aucune note, sinon la note du groupe × pondération, plafonnée au barème.
+ * Note finale d'un·e membre pour une note de groupe (US-142) :
+ * - absent·e non prévenu·e : 0, quoi que dise l'école ;
+ * - absent·e excusé·e : selon la règle de l'école, il ou elle garde la note du groupe
+ *   (`keep_group_grade`, par défaut) ou n'a pas de note, en attente d'un rattrapage (`makeup`) ;
+ * - présent·e : la note du groupe.
+ * Jamais de retrait de points. Le résultat est plafonné au barème.
  */
 export function groupMemberValue(
   groupValue: number | null,
   maxScore: number,
-  override?: MemberOverride | null,
+  override?: Pick<MemberOverride, "attendance"> | null,
+  rule: "keep_group_grade" | "makeup" = "keep_group_grade",
 ): number | null {
   if (override?.attendance === "absent_unexcused") return 0;
-  if (override?.attendance === "absent_excused") return null;
+  if (override?.attendance === "absent_excused" && rule === "makeup") return null;
   if (groupValue === null) return null;
-  if (!override || override.factor === 1) return groupValue;
-  return Math.min(round2(groupValue * override.factor), maxScore);
+  return Math.min(groupValue, maxScore);
 }
 
-const MAX_PERCENT = 200;
-
 /**
- * Lit les ajustements individuels d'une note de groupe : `member_<id>_attendance`, `member_<id>_factor`
- * (en pourcentage) et `member_<id>_justification`. Une pondération différente de 100 % exige une
- * justification. Seuls les membres du groupe (`members`) sont lus ; les membres sans ajustement sont omis.
+ * Lit la situation de chaque membre d'une note de groupe : `member_<id>_attendance` et
+ * `member_<id>_justification` (le mot pour la personne, facultatif). Seuls les membres du groupe
+ * (`members`) sont lus ; les membres sans particularité sont omis. Aucune pondération n'est lue.
  */
 export function readMemberOverrides(
   formData: FormData,
@@ -86,23 +95,7 @@ export function readMemberOverrides(
       String(formData.get(`member_${member.id}_justification`) ?? "")
         .trim()
         .slice(0, 1000) || null;
-
-    let factor = 1;
-    const rawFactor = String(formData.get(`member_${member.id}_factor`) ?? "").trim();
-    if (attendance === "present" && rawFactor !== "") {
-      const percent = Number(rawFactor.replace(",", "."));
-      if (!Number.isFinite(percent) || percent < 0 || percent > MAX_PERCENT) {
-        return {
-          error: `Pondération de ${member.name} : saisis un pourcentage entre 0 et ${MAX_PERCENT}.`,
-        };
-      }
-      factor = round2(percent / 100);
-    }
-    if (factor !== 1 && !justification) {
-      return { error: `Justification obligatoire pour la pondération de ${member.name}.` };
-    }
-
-    const override: MemberOverride = { attendance, factor, justification };
+    const override: MemberOverride = { attendance, factor: 1, justification };
     if (!isDefaultOverride(override)) overrides.set(member.id, override);
   }
   return { overrides };

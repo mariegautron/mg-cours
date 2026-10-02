@@ -7,6 +7,7 @@ import {
 import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
 import { getModule } from "@/lib/modules/queries";
 import { themeTitleByGroup } from "@/lib/projects/queries";
+import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 
 /** Fiches de résultats d'une évaluation (vide si introuvable ou aucune note saisie). */
 export async function loadResultSheets(
@@ -25,7 +26,10 @@ export async function loadResultSheets(
   const memberOverrides = await listGroupGradeMembers(
     grades.filter((g) => g.student_group_id).map((g) => g.id),
   );
-  const themesByGroup = await themeTitleByGroup(assessment.project_id);
+  const [themesByGroup, absenceRule] = await Promise.all([
+    themeTitleByGroup(assessment.project_id),
+    getAbsenceRuleForModule(moduleId),
+  ]);
   return buildResultSheets({
     moduleName: mod.name,
     assessment,
@@ -34,6 +38,7 @@ export async function loadResultSheets(
     axes: assessment.grading_grid?.axes ?? [],
     grades,
     memberOverrides,
+    absenceRule,
     comments,
     themesByGroup,
   });

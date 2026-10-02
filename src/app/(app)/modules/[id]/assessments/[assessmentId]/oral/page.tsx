@@ -1,3 +1,4 @@
+import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -138,6 +139,7 @@ export default async function OralPage({
           comments={comments}
           autoValidatedIds={assessment.auto_validated_criterion_ids}
           subject={mod.name}
+          absenceRule={await getAbsenceRuleForModule(id)}
         />
       ) : (
         <p className="text-muted-foreground">

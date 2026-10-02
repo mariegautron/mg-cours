@@ -1,6 +1,7 @@
 import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
+import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
 import {
   criteriaTotal,
@@ -344,6 +345,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
   }
 
   if (assessments.length === 0 || allStudents.size === 0) return [];
+  const absenceRule = await getAbsenceRuleForModule(moduleId);
 
   const { data: grades } = await supabase
     .from("grade")
@@ -384,8 +386,14 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       if (row.value === null) continue;
       if (assessment.is_group_grade && row.student_group_id) {
         for (const s of studentsByGroup.get(row.student_group_id) ?? []) {
-          // Absent·e non prévenu·e : 0 ; excusé·e : hors moyenne ; pondération : note du groupe × facteur.
-          const value = groupMemberValue(row.value, max, overrideOf.get(`${row.id}:${s.id}`));
+          // Absent·e non prévenu·e : 0 ; excusé·e : selon la règle de l'école (garde la note du groupe
+          // ou hors moyenne en attendant le rattrapage) ; jamais de retrait de points.
+          const value = groupMemberValue(
+            row.value,
+            max,
+            overrideOf.get(`${row.id}:${s.id}`),
+            absenceRule,
+          );
           if (value !== null) perStudent.get(s.id)?.push({ value, kind, max });
         }
       } else if (row.student_id) {

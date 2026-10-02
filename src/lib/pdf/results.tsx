@@ -76,10 +76,15 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               </View>
             ) : null}
 
-            {s.attendance === "absent_excused" ? (
+            {s.attendance === "absent_excused" && s.value === null ? (
               <Text style={styles.notice}>
                 Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera
                 celle du rattrapage.
+              </Text>
+            ) : null}
+            {s.attendance === "absent_excused" && s.value !== null ? (
+              <Text style={styles.notice}>
+                Ton absence est excusée : tu gardes la note du groupe (règle de l’école).
               </Text>
             ) : null}
             {s.attendance === "absent_unexcused" ? (
@@ -87,13 +92,9 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                 Absence non prévenue : la note est de 0 (règle de l’école).
               </Text>
             ) : null}
-            {s.adjustment && s.groupValue !== null ? (
+            {s.personalNote ? (
               <View style={styles.notice}>
-                <Text>
-                  Pondération individuelle : {formatNumber(Math.round(s.adjustment.factor * 100))} %
-                  de la note du groupe ({formatNumber(s.groupValue)} / {s.maxScore}).
-                </Text>
-                <Text>Justification : {s.adjustment.justification}</Text>
+                <Text>Un mot pour toi : {s.personalNote}</Text>
               </View>
             ) : null}
 

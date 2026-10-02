@@ -1,6 +1,7 @@
 import { axisCommentKey } from "./compact";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { groupMemberValue, type Attendance } from "@/lib/assessments/attendance";
+import type { AbsenceRule } from "@/lib/settings/school-rules";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import { findLevel, sortLevels } from "@/lib/assessments/levels";
 import {
@@ -64,9 +65,9 @@ export interface ResultSheet {
    */
   attendance: Attendance;
   /** Pondération individuelle dans une note de groupe (oral), avec sa justification. */
-  adjustment: { factor: number; justification: string } | null;
+  /** Un mot de Marie pour cette personne (facultatif, sans effet sur la note). */
+  personalNote: string | null;
   /** Note du groupe avant pondération, quand la note du membre en diffère. */
-  groupValue: number | null;
   /** Points forts. */
   strengths: string | null;
   /** Progrès. */
@@ -93,6 +94,8 @@ interface Input {
   axes?: Pick<Tables<"grid_axis">, "id" | "label">[];
   grades: Tables<"grade">[];
   /** Ajustements individuels des notes de groupe (absence, pondération justifiée). */
+  /** Règle de l'école pour une absence excusée (défaut : garde la note du groupe). */
+  absenceRule?: AbsenceRule;
   memberOverrides?: Pick<
     Tables<"group_grade_member">,
     "grade_id" | "student_id" | "attendance" | "individual_factor" | "justification"
@@ -176,8 +179,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       })),
       overflow: consistent ? describeOverflow(totals) : null,
       attendance: grade.attendance ?? "present",
-      adjustment: null,
-      groupValue: null,
+      personalNote: null,
       strengths: grade.strengths ?? null,
       progress: grade.progress ?? null,
       feedback: grade.feedback,
@@ -203,44 +205,25 @@ export function buildResultSheets(input: Input): ResultSheet[] {
           .filter((o) => o.grade_id === grade.id)
           .map((o) => [o.student_id, o]),
       );
-      // Même fiche pour tous les membres, sauf ceux dont la note diffère : absence ou pondération.
+      // Même fiche pour tous les membres, sauf ceux dont la situation diffère : absence, ou un mot
+      // personnel de Marie (sans effet sur la note : jamais de retrait de points).
+      const rule = input.absenceRule ?? "keep_group_grade";
       const regular = group.members.filter((m) => !overrides.has(m.id));
       const base = sheetFor(grade, regular.map(recipient), group.id);
       const sheets = regular.length > 0 ? [base] : [];
       for (const member of group.members) {
         const o = overrides.get(member.id);
         if (!o) continue;
-        // Absent·e excusé·e : fiche sans note, avec la mention de l'absence (rattrapage à venir).
-        if (o.attendance === "absent_excused") {
-          sheets.push({
-            ...base,
-            recipients: [recipient(member)],
-            value: null,
-            valueOn20: null,
-            overflow: null,
-            attendance: "absent_excused",
-            groupValue: null,
-            adjustment: null,
-          });
-          continue;
-        }
-        const value = groupMemberValue(grade.value, maxScore, {
-          attendance: o.attendance,
-          factor: o.individual_factor,
-          justification: o.justification,
-        });
+        const value = groupMemberValue(grade.value, maxScore, o, rule);
         sheets.push({
           ...base,
           recipients: [recipient(member)],
           value,
           valueOn20: value === null ? null : toTwenty(value, maxScore),
-          overflow: null,
+          // Le dépassement n'est affiché que pour la note du groupe telle quelle.
+          overflow: o.attendance === "present" ? base.overflow : null,
           attendance: o.attendance,
-          groupValue: grade.value,
-          adjustment:
-            o.attendance === "present" && o.individual_factor !== 1
-              ? { factor: o.individual_factor, justification: o.justification ?? "" }
-              : null,
+          personalNote: o.justification?.trim() || null,
         });
       }
       return sheets;
