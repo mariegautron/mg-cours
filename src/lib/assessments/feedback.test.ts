@@ -28,6 +28,19 @@ describe("readFeedback", () => {
     });
   });
 
+  it("lit le commentaire d'un axe de la grille (sous « axis:<axe> »), jamais d'un axe inconnu", () => {
+    const fields = readFeedback(
+      form({
+        "comment_axis:ax1": " Backlog clair. ",
+        "comment_axis:intrus": "x",
+        comment_c1: "ok",
+      }),
+      ["c1"],
+      ["ax1"],
+    );
+    expect(fields.criterionComments).toEqual({ c1: "ok", "axis:ax1": "Backlog clair." });
+  });
+
   it("ignore les critères qui ne sont pas dans la grille et vide les champs absents", () => {
     const fields = readFeedback(form({ comment_intrus: "x" }), ["c1"]);
     expect(fields).toEqual({

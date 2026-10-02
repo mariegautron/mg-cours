@@ -301,6 +301,7 @@ async function saveGrade(
   const text = readFeedback(
     formData,
     criteria.map((c) => c.id),
+    [...new Set(criteria.flatMap((c) => (c.axisId ? [c.axisId] : [])))],
   );
 
   let value: number | null;

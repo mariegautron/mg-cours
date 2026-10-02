@@ -17,13 +17,22 @@ function clean(raw: FormDataEntryValue | null): string | null {
 
 /**
  * Lit le commentaire structuré d'un formulaire de note : `comment_<critère>` (seuls les critères de la
- * grille sont retenus), `strengths`, `progress` et `feedback` (commentaire libre).
+ * grille sont retenus), `comment_axis:<axe>` (axes de la grille), `strengths`, `progress` et `feedback` (commentaire libre).
  */
-export function readFeedback(formData: FormData, criterionIds: readonly string[]): FeedbackFields {
+export function readFeedback(
+  formData: FormData,
+  criterionIds: readonly string[],
+  axisIds: readonly string[] = [],
+): FeedbackFields {
   const criterionComments: Record<string, string> = {};
   for (const id of criterionIds) {
     const text = clean(formData.get(`comment_${id}`));
     if (text) criterionComments[id] = text;
+  }
+  // Commentaire d'axe (vue compacte, US-140) : rangé sous `axis:<axe>` dans les mêmes commentaires.
+  for (const id of axisIds) {
+    const text = clean(formData.get(`comment_axis:${id}`));
+    if (text) criterionComments[`axis:${id}`] = text;
   }
   return {
     criterionComments,

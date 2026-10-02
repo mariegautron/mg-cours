@@ -105,6 +105,12 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                     <Text>{axisSubtotal(s, c.axis)}</Text>
                   </View>
                 ) : null}
+                {hasAxes && (j === 0 || c.axis !== s.criteria[j - 1].axis)
+                  ? (() => {
+                      const axisNote = s.axes.find((x) => x.label === c.axis)?.comment;
+                      return axisNote ? <Text style={styles.comment}>{axisNote}</Text> : null;
+                    })()
+                  : null}
                 <View style={styles.row} wrap={false}>
                   <View style={styles.criterion}>
                     <Text>{c.label}</Text>

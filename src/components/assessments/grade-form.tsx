@@ -25,7 +25,14 @@ import {
   similarLabel,
   type OtherCopy,
 } from "@/lib/assessments/similar";
-import { appendComment, findLevel, levelCommentBase } from "@/lib/assessments/levels";
+import {
+  axisComment,
+  axisCommentKey,
+  criteriaToFillWithMiddle,
+  levelForDigit,
+  moveCriterion,
+} from "@/lib/assessments/compact";
+import { appendComment, findLevel, levelCommentBase, sortLevels } from "@/lib/assessments/levels";
 import type { CriterionWithLevels, GridWithCriteria } from "@/lib/assessments/queries";
 import {
   computeTotals,
@@ -136,6 +143,10 @@ export function GradeForm({
   const [progress, setProgress] = useState(grade?.progress ?? "");
   const [feedback, setFeedback] = useState(grade?.feedback ?? "");
   const [announcement, setAnnouncement] = useState("");
+  // Vue compacte (US-140) : tous les critères en une page, paliers en pastilles.
+  const [compact, setCompact] = useState(false);
+  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
+  const compactRef = useRef<HTMLUListElement>(null);
   // Présence (note individuelle) et ajustements par membre (note de groupe).
   const isGroup = members !== undefined;
   const [attendance, setAttendance] = useState<Attendance>(grade?.attendance ?? "present");
@@ -435,8 +446,263 @@ export function GradeForm({
     );
   }
 
+  function setLevel(c: CriterionWithLevels, points: number) {
+    setInputs((prev) => ({ ...prev, [c.id]: String(points) }));
+    setAnnouncement(`${c.label} : ${formatNumber(points)} point${points > 1 ? "s" : ""}.`);
+  }
+
+  function fillMiddle() {
+    const todo = criteriaToFillWithMiddle(criteria, inputs, autoValidatedIds);
+    if (todo.length === 0) {
+      setAnnouncement("Rien à remplir : tous les critères à paliers ont déjà une note.");
+      return;
+    }
+    setInputs((prev) => ({
+      ...prev,
+      ...Object.fromEntries(todo.map((t) => [t.id, String(t.points)])),
+    }));
+    setAnnouncement(`${todo.length} critère${todo.length > 1 ? "s" : ""} mis au palier moyen.`);
+  }
+
+  function toggleComment(id: string) {
+    setOpenComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  /** Clavier de la vue compacte : ↑ ↓ changent de critère, un chiffre choisit le palier, C ouvre le commentaire. */
+  function onCompactKeyDown(e: React.KeyboardEvent<HTMLUListElement>) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const target = e.target as HTMLElement;
+    if (
+      target instanceof HTMLTextAreaElement ||
+      (target instanceof HTMLInputElement && target.type !== "radio")
+    ) {
+      return;
+    }
+    const rows = Array.from(
+      compactRef.current?.querySelectorAll<HTMLElement>("[data-crit-row]") ?? [],
+    );
+    const index = rows.findIndex((r) => r.contains(target));
+    if (index === -1) return;
+    const next = moveCriterion(index, e.key, rows.length);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (next !== null) {
+        const row = rows[next];
+        row
+          .querySelector<HTMLElement>(
+            "input[type=radio]:checked, input[type=radio], input[type=number]",
+          )
+          ?.focus();
+      }
+      return;
+    }
+    const criterion = criteria.find((c) => c.id === rows[index].dataset.critRow);
+    if (!criterion) return;
+    if (e.key.toLowerCase() === "c") {
+      e.preventDefault();
+      setOpenComments((prev) => new Set(prev).add(criterion.id));
+      setTimeout(() => document.getElementById(`${uid}-cm-${criterion.id}`)?.focus(), 0);
+      return;
+    }
+    const level = levelForDigit(criterion.levels, e.key);
+    if (level && !(!criterion.is_bonus && autoValidatedIds.includes(criterion.id))) {
+      e.preventDefault();
+      setLevel(criterion, level.points);
+    }
+  }
+
+  function compactRow(c: CriterionWithLevels) {
+    const validated = !c.is_bonus && autoValidatedIds.includes(c.id);
+    const current = inputs[c.id] ?? "";
+    const numeric = current.trim() === "" ? null : Number(current.replace(",", "."));
+    const selected = findLevel(c.levels, numeric);
+    const orphan =
+      numeric !== null && Number.isFinite(numeric) && !selected && c.levels.length > 0
+        ? numeric
+        : null;
+    const comment = criterionComments[c.id] ?? "";
+    const commentOpen = openComments.has(c.id) || comment.trim() !== "";
+    const labelId = `${uid}-ct-${c.id}`;
+    const pill =
+      "has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:focus-visible]:ring-ring hover:bg-muted flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border px-3 text-sm font-medium has-[:focus-visible]:ring-2";
+    return (
+      <li key={c.id} data-crit-row={c.id} className="space-y-2 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span id={labelId} className="font-medium">
+            {c.label}{" "}
+            <span className="text-muted-foreground text-sm font-normal">
+              {c.is_bonus
+                ? `(bonus, jusqu’à +${c.weight})`
+                : `(${c.weight} point${c.weight > 1 ? "s" : ""})`}
+            </span>
+          </span>
+          {validated ? (
+            <span className="text-sm">
+              Validé d’office : {formatNumber(c.weight)} / {formatNumber(c.weight)}
+            </span>
+          ) : c.levels.length > 0 ? (
+            <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
+              {sortLevels(c.levels).map((l) => (
+                <label key={l.id} className={pill}>
+                  <input
+                    type="radio"
+                    name={`score_${c.id}`}
+                    value={String(l.points)}
+                    checked={selected?.id === l.id}
+                    onChange={() => setLevel(c, l.points)}
+                    className="sr-only"
+                  />
+                  {formatNumber(l.points)}
+                  <span className="sr-only"> point{l.points > 1 ? "s" : ""}</span>
+                </label>
+              ))}
+              {orphan !== null ? (
+                <label className={pill}>
+                  <input
+                    type="radio"
+                    name={`score_${c.id}`}
+                    value={String(orphan)}
+                    checked
+                    readOnly
+                    className="sr-only"
+                  />
+                  {formatNumber(orphan)}
+                  <span className="sr-only">
+                    {" "}
+                    point{orphan > 1 ? "s" : ""} (hors des paliers actuels)
+                  </span>
+                </label>
+              ) : null}
+              <label className={pill}>
+                <input
+                  type="radio"
+                  name={`score_${c.id}`}
+                  value=""
+                  checked={current.trim() === ""}
+                  onChange={() => setInputs((prev) => ({ ...prev, [c.id]: "" }))}
+                  className="sr-only"
+                />
+                —<span className="sr-only"> pas encore noté</span>
+              </label>
+            </div>
+          ) : (
+            <Input
+              name={`score_${c.id}`}
+              type="number"
+              step="0.5"
+              min={0}
+              max={c.weight}
+              value={current}
+              aria-labelledby={labelId}
+              onChange={(e) => setInputs((prev) => ({ ...prev, [c.id]: e.target.value }))}
+              className="w-24"
+            />
+          )}
+        </div>
+        {commentOpen ? (
+          <Input
+            id={`${uid}-cm-${c.id}`}
+            name={`comment_${c.id}`}
+            aria-label={`Commentaire — ${c.label}`}
+            value={comment}
+            maxLength={4000}
+            autoComplete="off"
+            onChange={(e) => setCriterionComments((prev) => ({ ...prev, [c.id]: e.target.value }))}
+          />
+        ) : (
+          <>
+            <input type="hidden" name={`comment_${c.id}`} value={comment} />
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              aria-expanded={false}
+              onClick={() => toggleComment(c.id)}
+            >
+              + commentaire<span className="sr-only"> pour {c.label}</span>
+            </Button>
+          </>
+        )}
+      </li>
+    );
+  }
+
+  function compactView() {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="button" size="sm" variant="secondary" onClick={fillMiddle}>
+            Mettre les critères non notés au palier moyen
+          </Button>
+          <p className="text-muted-foreground text-xs">
+            Au clavier : ↑ ↓ changent de critère, un chiffre choisit le palier (ses points), C ouvre
+            le commentaire, Alt + ← / → change de copie.
+          </p>
+        </div>
+        <ul ref={compactRef} onKeyDown={onCompactKeyDown} className="divide-y">
+          {groups.flatMap((group) => {
+            const axisId = group.axis?.id ?? null;
+            const head = showAxes ? (
+              <li key={`head-${axisId ?? "none"}`} className="pt-3 pb-1">
+                <p className="text-sm font-semibold">
+                  {group.axis?.label ?? "Autres critères"}
+                  <span className="text-muted-foreground font-normal">
+                    {" "}
+                    — sous-total : {subtotal(axisId)}
+                  </span>
+                </p>
+              </li>
+            ) : null;
+            const foot =
+              showAxes && axisId ? (
+                <li key={`axis-${axisId}`} className="space-y-1 py-3">
+                  <Label htmlFor={`${uid}-axis-${axisId}`}>
+                    Un mot pour tout l’axe « {group.axis?.label} »
+                  </Label>
+                  <Input
+                    id={`${uid}-axis-${axisId}`}
+                    name={`comment_${axisCommentKey(axisId)}`}
+                    value={axisComment(criterionComments, axisId)}
+                    maxLength={4000}
+                    autoComplete="off"
+                    onChange={(e) =>
+                      setCriterionComments((prev) => ({
+                        ...prev,
+                        [axisCommentKey(axisId)]: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Le commentaire par axe suffit souvent : celui par critère reste facultatif.
+                  </p>
+                </li>
+              ) : null;
+            return [head, ...group.criteria.map(compactRow), foot].filter(Boolean);
+          })}
+        </ul>
+      </div>
+    );
+  }
+
+  // Commentaires d'axe conservés et renvoyés quand la vue compacte n'est pas affichée.
+  const hiddenAxisComments = grid
+    ? grid.axes.map((a) => (
+        <input
+          key={a.id}
+          type="hidden"
+          name={`comment_${axisCommentKey(a.id)}`}
+          value={axisComment(criterionComments, a.id)}
+        />
+      ))
+    : null;
+
   const totalLine = (
-    <p className="text-muted-foreground text-sm">
+    <p className="text-muted-foreground text-sm" aria-live={compact ? "polite" : undefined}>
       Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
       {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}
       {scaled || totals.capped
@@ -663,6 +929,7 @@ export function GradeForm({
           {/* Les autres critères et le bilan ne sont pas affichés dans cette vue, mais leur saisie
               est conservée et renvoyée : enregistrer ne perd rien. */}
           {hiddenCriteria(absent ? null : focused.id)}
+          {hiddenAxisComments}
           <input type="hidden" name="strengths" value={strengths} />
           <input type="hidden" name="progress" value={progress} />
           <input type="hidden" name="feedback" value={feedback} />
@@ -676,10 +943,36 @@ export function GradeForm({
                 {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette copie.
               </p>
               {hiddenCriteria(null)}
+              {hiddenAxisComments}
             </>
           ) : grid ? (
             <div className="space-y-4">
-              {groups.map((group) =>
+              <div
+                role="group"
+                aria-label="Affichage des critères"
+                className="flex flex-wrap gap-2"
+              >
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={compact ? "outline" : "default"}
+                  aria-pressed={!compact}
+                  onClick={() => setCompact(false)}
+                >
+                  Détaillé
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={compact ? "default" : "outline"}
+                  aria-pressed={compact}
+                  onClick={() => setCompact(true)}
+                >
+                  Tous les critères d’un coup
+                </Button>
+              </div>
+              {compact ? compactView() : hiddenAxisComments}
+              {(compact ? [] : groups).map((group) =>
                 showAxes ? (
                   <fieldset key={group.axis?.id ?? "none"} className="space-y-3">
                     <legend className="text-sm font-semibold">

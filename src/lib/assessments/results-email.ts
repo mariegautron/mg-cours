@@ -50,6 +50,15 @@ export function resultsEmailText(sheet: ResultSheet, firstName?: string): string
         if (c.level?.description) lines.push(`  Palier obtenu : ${c.level.description}`);
         if (c.comment) lines.push(`  ${c.comment}`);
       }
+      for (const axis of sheet.axes) {
+        if (axis.comment?.trim()) {
+          lines.push(
+            "",
+            `Commentaire sur l’axe « ${axis.label ?? "Autres critères"} » :`,
+            axis.comment.trim(),
+          );
+        }
+      }
     }
   }
 

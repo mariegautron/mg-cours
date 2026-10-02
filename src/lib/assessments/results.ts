@@ -1,3 +1,4 @@
+import { axisCommentKey } from "./compact";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { groupMemberValue, type Attendance } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
@@ -32,6 +33,8 @@ export interface ResultCriterionLine {
 
 export interface ResultAxisSubtotal extends Omit<AxisSubtotal, "axisId"> {
   label: string | null;
+  /** Commentaire de l'axe (vue compacte), s'il y en a un. */
+  comment: string | null;
 }
 
 export interface ResultSheet {
@@ -169,6 +172,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       axes: totals.axes.map(({ axisId, ...a }) => ({
         ...a,
         label: axisId ? (axisLabel.get(axisId) ?? null) : null,
+        comment: axisId ? (criterionComments[axisCommentKey(axisId)] ?? null) : null,
       })),
       overflow: consistent ? describeOverflow(totals) : null,
       attendance: grade.attendance ?? "present",

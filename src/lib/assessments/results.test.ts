@@ -238,10 +238,32 @@ describe("buildResultSheets — axes, bonus, validé d'office", () => {
     ]);
     expect(sheet.criteria[2].isBonus).toBe(true);
     expect(sheet.axes).toEqual([
-      { label: "Structure", points: 10, max: 10, bonusPoints: 0, bonusMax: 0 },
-      { label: "Formulaires", points: 8, max: 10, bonusPoints: 0, bonusMax: 0.5 },
+      { label: "Structure", points: 10, max: 10, bonusPoints: 0, bonusMax: 0, comment: null },
+      { label: "Formulaires", points: 8, max: 10, bonusPoints: 0, bonusMax: 0.5, comment: null },
     ]);
     expect(sheet.overflow).toBeNull();
+  });
+
+  it("reprend le commentaire de l'axe (clé « axis:<axe> ») dans les sous-totaux (US-140)", () => {
+    const sheet = buildResultSheets({
+      ...base,
+      criteria,
+      axes,
+      assessment,
+      grades: [
+        grade({
+          student_id: "s1",
+          scores: { c2: 8 },
+          value: 18,
+          criterion_comments: { "axis:ax2": "Formulaires solides.", c2: "Labels ok." },
+        }),
+      ],
+    })[0];
+    expect(sheet.axes.map((a) => [a.label, a.comment])).toEqual([
+      ["Structure", null],
+      ["Formulaires", "Formulaires solides."],
+    ]);
+    expect(sheet.criteria.find((c) => c.label === "Labels")?.comment).toBe("Labels ok.");
   });
 
   it("affiche le dépassement quand le bonus fait dépasser 20, la note restant plafonnée", () => {
