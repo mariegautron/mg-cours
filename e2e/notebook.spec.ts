@@ -72,10 +72,31 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await page.getByLabel("Note (facultatif)").fill("Très bonne question sur le backlog");
   expect((await axe(page)).violations).toEqual([]);
   await page.getByRole("button", { name: "Question pertinente" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Observation enregistrée" })).toHaveText(
-    `Observation enregistrée : ${student} — Question pertinente.`,
+  await expect(page.getByRole("status").filter({ hasText: "Observation ajoutée" })).toHaveText(
+    `Observation ajoutée pour ${student} — Question pertinente.`,
   );
   await expect(page.getByText("Notées pendant cette séance (1)")).toBeVisible();
+
+  // US-135 : au clavier. Début du nom, Entrée ouvre, 2 choisit l'étiquette (hors du champ), Entrée
+  // enregistre, et le focus revient à la liste.
+  const filter = page.getByLabel("Filtrer par nom");
+  await filter.fill("zoe");
+  await filter.press("Enter");
+  const note = page.getByLabel("Note (facultatif)");
+  await expect(note).toBeFocused();
+  await note.fill("Revoir l’estimation");
+  await note.press("Alt+2");
+  await note.press("Enter");
+  await expect(page.getByRole("status").filter({ hasText: "Observation ajoutée" })).toHaveText(
+    `Observation ajoutée pour ${student} — Participation.`,
+  );
+  await expect(
+    page.getByRole("button", { name: `${student} : ajouter une observation` }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: `${student} : ajouter une observation` }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByLabel("Note (facultatif)")).toHaveCount(0);
+  await expect(page.getByText("Notées pendant cette séance (2)")).toBeVisible();
   await expect(page.getByText("Très bonne question sur le backlog")).toBeVisible();
 
   // Clôture.
@@ -115,7 +136,7 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await expect(page.getByRole("heading", { name: student, level: 1 })).toBeVisible();
   const journal = page.getByRole("region", { name: "Journal d’observations" });
   await expect(
-    journal.getByText(`Module Carnet ${suffix} · Séance carnet ${suffix}`),
+    journal.getByText(`Module Carnet ${suffix} · Séance carnet ${suffix}`).first(),
   ).toBeVisible();
   await expect(journal.getByText("Question pertinente")).toBeVisible();
   await expect(journal.getByText("Très bonne question sur le backlog")).toBeVisible();

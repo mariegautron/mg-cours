@@ -2,11 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
-  OBSERVATION_TAG_LABELS,
-  readClosureForm,
-  readObservationForm,
-} from "@/lib/notebook/notebook";
+import { observationAddedMessage } from "@/lib/notebook/live";
+import { readClosureForm, readObservationForm } from "@/lib/notebook/notebook";
 import { appendDatedNote } from "@/lib/present/presenter";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
@@ -75,7 +72,7 @@ export async function addObservation(
   refresh(moduleId, courseId);
   revalidatePath(`/students/${studentId}`);
   return {
-    message: `Observation enregistrée : ${student.first_name} ${student.last_name} — ${OBSERVATION_TAG_LABELS[tag]}.`,
+    message: observationAddedMessage(`${student.first_name} ${student.last_name}`, tag),
     savedAt: Date.now(),
   };
 }

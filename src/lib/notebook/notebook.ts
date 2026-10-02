@@ -53,7 +53,8 @@ export const observationSchema = z.object({
 export function readObservationForm(formData: FormData) {
   return observationSchema.safeParse({
     studentId: formData.get("studentId") ?? "",
-    tag: formData.get("tag") ?? "",
+    // `tagDefault` : étiquette choisie au clavier, utilisée quand aucun bouton d'étiquette n'a envoyé le formulaire.
+    tag: formData.get("tag") || formData.get("tagDefault") || "",
     note: formData.get("note") ?? "",
   });
 }
