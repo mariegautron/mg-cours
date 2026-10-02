@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Button } from "@/components/ui/button";
 import { listBillingOverview } from "@/lib/invoice/queries";
 
 export const metadata: Metadata = { title: "Facturation" };
@@ -34,17 +27,11 @@ export default async function BillingPage() {
       </div>
 
       {rows.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucun module</EmptyTitle>
-            <EmptyDescription>Crée un module pour préparer sa facturation.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/modules/new">Nouveau module</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Rien à facturer"
+          description="Un module apparaît ici dès qu’il existe. Crée-en un pour préparer sa facturation."
+          actions={[{ label: "Créer un module", href: "/modules/new" }]}
+        />
       ) : (
         <ul className="space-y-2">
           {rows.map((r) => (

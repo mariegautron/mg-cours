@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Pencil, Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { DeleteCommentButton } from "@/components/assessments/delete-buttons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { commentTags, listComments } from "@/lib/assessments/queries";
@@ -90,17 +84,11 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
       </form>
 
       {comments.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucun commentaire</EmptyTitle>
-            <EmptyDescription>Crée-en pour gagner du temps lors des corrections.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/assessments/comments/new">Nouveau commentaire</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Aucun commentaire"
+          description="Crée-en pour gagner du temps lors des corrections."
+          actions={[{ label: "Nouveau commentaire", href: "/assessments/comments/new" }]}
+        />
       ) : (
         <ul className="space-y-2">
           {comments.map((c) => (

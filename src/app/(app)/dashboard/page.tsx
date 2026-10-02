@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookMarked, CalendarCheck, NotebookPen, Play, Receipt, TimerReset } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -184,7 +185,11 @@ export default async function DashboardPage() {
           icon={<TimerReset aria-hidden className="size-5" />}
         >
           {alerts.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune échéance dans les 15 jours.</p>
+            <EmptyState
+              compact
+              title="Rien d’urgent"
+              description="Aucune progression à envoyer dans les 15 prochains jours."
+            />
           ) : (
             <ul className="space-y-2 text-sm">
               {alerts.slice(0, 5).map((a) => (

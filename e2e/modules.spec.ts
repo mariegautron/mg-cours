@@ -80,5 +80,5 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
     .click();
   await page.getByRole("menuitem", { name: /^Supprimer/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
-  await expect(page.getByText("Aucune séance pour l’instant")).toBeVisible();
+  await expect(page.getByText("Aucune séance", { exact: true })).toBeVisible();
 });

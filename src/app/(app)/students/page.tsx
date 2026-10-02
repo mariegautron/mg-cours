@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Camera, Plus, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
@@ -127,19 +121,14 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
       </form>
 
       {students.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucun·e étudiant·e</EmptyTitle>
-            <EmptyDescription>
-              Ajoute-les un·e par un·e ou importe une liste CSV/XLSX.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/students/new">Nouvel·le étudiant·e</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Personne pour l’instant"
+          description="Importe la liste de la promotion, puis le trombinoscope pour avoir les photos. Tu peux aussi ajouter une personne à la main."
+          actions={[
+            { label: "Importer une liste", href: "/students/import" },
+            { label: "Importer le trombinoscope", href: "/students/photos" },
+          ]}
+        />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {students.map((s) => (

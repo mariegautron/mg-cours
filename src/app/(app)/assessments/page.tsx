@@ -2,15 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, MessageSquareText } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { listAllAssessments } from "@/lib/assessments/queries";
 
 export const metadata: Metadata = { title: "Évaluations" };
@@ -42,19 +36,11 @@ export default async function AssessmentsPage() {
       </div>
 
       {assessments.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucune évaluation</EmptyTitle>
-            <EmptyDescription>
-              Crée-en une depuis la page d’un module (onglet Évaluations).
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/modules">Voir les modules</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Aucune évaluation"
+          description="Crée-en une depuis la page d’un module (onglet Évaluations)."
+          actions={[{ label: "Voir les modules", href: "/modules" }]}
+        />
       ) : (
         <ul className="space-y-2">
           {assessments.map((a) => (

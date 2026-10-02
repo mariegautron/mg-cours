@@ -2,18 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { createDraftResource } from "@/app/(app)/resources/actions";
 import { AddToModule } from "@/components/resources/add-to-module";
@@ -274,19 +268,11 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
       </p>
 
       {resources.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucune ressource</EmptyTitle>
-            <EmptyDescription>
-              Aucune ressource ne correspond à ces filtres, ou aucune n’a encore été créée.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/resources/new">Nouvelle ressource</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Aucune ressource"
+          description="Rien ne correspond à ces filtres, ou ta bibliothèque est encore vide. Crée une ressource ou importe un export Notion, Word ou Markdown."
+          actions={[{ label: "Créer une ressource", href: "/resources/new" }]}
+        />
       ) : groups ? (
         <div className="space-y-8">
           {groups.map((g, i) => (

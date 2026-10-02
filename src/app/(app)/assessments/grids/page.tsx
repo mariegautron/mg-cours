@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileDown, Pencil, Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { DownloadButton } from "@/components/download-button";
 import { DeleteGridButton } from "@/components/assessments/delete-buttons";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { listGrids } from "@/lib/assessments/queries";
 import { groupByAxis } from "@/lib/assessments/scoring";
 import { criteriaTotal } from "@/lib/ynov/notation";
@@ -37,17 +31,11 @@ export default async function GridsPage() {
       </div>
 
       {grids.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucune grille</EmptyTitle>
-            <EmptyDescription>Crée une grille pour l’appliquer à tes évaluations.</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/assessments/grids/new">Nouvelle grille</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Aucune grille"
+          description="Crée une grille pour l’appliquer à tes évaluations."
+          actions={[{ label: "Nouvelle grille", href: "/assessments/grids/new" }]}
+        />
       ) : (
         <ul className="space-y-3">
           {grids.map((g) => (

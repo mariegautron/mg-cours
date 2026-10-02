@@ -2,16 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileUp, Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { DownloadButton } from "@/components/download-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { filterQuestions, readQuestionFilters } from "@/lib/questions/filter";
@@ -136,19 +130,14 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
       </p>
 
       {all.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Crée ta première question</EmptyTitle>
-            <EmptyDescription>
-              Écris-la ici, ou importe une banque exportée de Moodle au format XML.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/questions/new">Nouvelle question</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <EmptyState
+          title="Pas encore de question"
+          description="Écris la première ici, ou importe une banque exportée de Moodle au format XML."
+          actions={[
+            { label: "Écrire une question", href: "/questions/new" },
+            { label: "Importer une banque", href: "/questions/import" },
+          ]}
+        />
       ) : shown.length === 0 ? (
         <p className="text-muted-foreground">Aucune question ne correspond à ces filtres.</p>
       ) : (

@@ -3,15 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import {
   listModuleAssessments,
   moduleNoteProgress,
@@ -78,17 +72,14 @@ export default async function ModuleAssessmentsPage({
           Évaluations ({assessments.length})
         </h2>
         {assessments.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>Aucune évaluation</EmptyTitle>
-              <EmptyDescription>Crée la première pour ce module.</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link href={`/modules/${id}/assessments/new`}>Nouvelle évaluation</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
+          <EmptyState
+            title="Pas encore d’évaluation"
+            description="Commence par le projet fil rouge : il organise les jalons. Tu peux aussi créer directement une évaluation."
+            actions={[
+              { label: "Créer le projet", href: `/modules/${id}/project` },
+              { label: "Nouvelle évaluation", href: `/modules/${id}/assessments/new` },
+            ]}
+          />
         ) : (
           <ul className="space-y-2">
             {assessments.map((a) => (

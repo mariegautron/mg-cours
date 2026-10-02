@@ -2,15 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Archive, Plus } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { type ModuleFilter, parseModuleFilter, splitModules } from "@/lib/modules/archive-filter";
 import { listModules, type ModuleWithSchool } from "@/lib/modules/queries";
 import { cn } from "@/lib/utils";
@@ -101,56 +95,36 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         active.length > 0 ? (
           <ModuleGrid modules={active} />
         ) : archived.length > 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>Aucun module actif</EmptyTitle>
-              <EmptyDescription>
-                {plural(archived.length, "module archivé")}. Crée un module pour la nouvelle année
-                ou retrouve tes modules passés.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent className="flex-row flex-wrap justify-center">
-              <Button asChild>
-                <Link href="/modules/new">Nouveau module</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={FILTER_HREF.archived}>Voir les archivés</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
+          <EmptyState
+            title="Aucun module actif"
+            description={`${plural(archived.length, "module archivé")}. Crée un module pour la nouvelle année ou retrouve tes modules passés.`}
+            actions={[
+              { label: "Nouveau module", href: "/modules/new" },
+              { label: "Voir les archivés", href: FILTER_HREF.archived },
+            ]}
+          />
         ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>Aucun module</EmptyTitle>
-              <EmptyDescription>Crée ton premier module pour commencer.</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link href="/modules/new">Nouveau module</Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
+          <EmptyState
+            title="Aucun module"
+            description="Un module regroupe les séances, les évaluations et la facture d’un cours. Crée le premier pour préparer ta rentrée."
+            actions={[{ label: "Créer un module", href: "/modules/new" }]}
+          />
         )
       ) : filter === "archived" ? (
         archived.length > 0 ? (
           <ModuleGrid modules={archived} />
         ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>Aucun module archivé</EmptyTitle>
-              <EmptyDescription>
-                Archive un module depuis sa fiche une fois l’année terminée.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            title="Aucun module archivé"
+            description="Archive un module depuis sa fiche une fois l’année terminée."
+          />
         )
       ) : active.length + archived.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>Aucun module</EmptyTitle>
-            <EmptyDescription>Crée ton premier module pour commencer.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          title="Aucun module"
+          description="Un module regroupe les séances, les évaluations et la facture d’un cours. Crée le premier pour préparer ta rentrée."
+          actions={[{ label: "Créer un module", href: "/modules/new" }]}
+        />
       ) : (
         <div className="space-y-8">
           {active.length > 0 ? (

@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
@@ -10,7 +11,6 @@ import {
   NotebookPen,
   Pencil,
   Play,
-  Plus,
   Trash2,
 } from "lucide-react";
 
@@ -109,18 +109,15 @@ export function CourseList({
 
   if (courses.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-6 text-center">
-        <p className="font-medium">Aucune séance pour l’instant</p>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Planifie la première séance : elle alimente la progression pédagogique et les PDF Moodle.
-        </p>
-        <Button asChild size="sm" className="mt-3">
-          <Link href={`/modules/${moduleId}/courses/new`}>
-            <Plus aria-hidden />
-            Planifier la première séance
-          </Link>
-        </Button>
-      </div>
+      <EmptyState
+        compact
+        title="Aucune séance"
+        description="Ajoute les dates du planning pour préparer chaque séance : elles alimentent la progression pédagogique et les PDF Moodle."
+        actions={[
+          { label: "Planifier la première séance", href: `/modules/${moduleId}/courses/new` },
+          { label: "Importer le planning", href: `/modules/${moduleId}/schedule` },
+        ]}
+      />
     );
   }
 

@@ -14,6 +14,7 @@ import {
   Presentation,
 } from "lucide-react";
 
+import { EmptyState } from "@/components/empty-state";
 import { DownloadButton } from "@/components/download-button";
 import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { CourseList } from "@/components/modules/course-list";
@@ -301,10 +302,12 @@ export default async function ModulePage({
           </Button>
         </div>
         {groups.length === 0 ? (
-          <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-            Aucun groupe pour l’instant. Crée un groupe (TP, TD, projet) pour y rattacher les
-            étudiant·es et saisir les notes.
-          </p>
+          <EmptyState
+            compact
+            title="Pas encore de groupes"
+            description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes."
+            actions={[{ label: "Ajouter un groupe", href: `/modules/${mod.id}/groups/new` }]}
+          />
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {groups.map((g) => (
