@@ -31,12 +31,15 @@ export function ModuleSubnav({
   return (
     <div className="mb-6 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Fil d’Ariane du module" className="text-muted-foreground text-sm">
+        <nav
+          aria-label="Fil d’Ariane du module"
+          className="text-muted-foreground min-w-0 text-sm break-words"
+        >
           <ol className="flex flex-wrap items-center gap-1">
             <li>
               <Link
                 href={archived ? "/modules?filter=archived" : "/modules"}
-                className="hover:text-foreground underline-offset-2 hover:underline"
+                className="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
               >
                 {archived ? "Modules archivés" : "Modules"}
               </Link>
@@ -47,7 +50,7 @@ export function ModuleSubnav({
             <li>
               <Link
                 href={`/modules/${moduleId}`}
-                className="hover:text-foreground underline-offset-2 hover:underline"
+                className="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
               >
                 {moduleName}
               </Link>
@@ -78,7 +81,7 @@ export function ModuleSubnav({
               <Link
                 href={item.href}
                 aria-current={item.key === active ? "page" : undefined}
-                className="text-muted-foreground hover:text-foreground aria-[current=page]:border-primary aria-[current=page]:text-foreground focus-visible:ring-ring -mb-px inline-flex min-h-11 items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none aria-[current=page]:font-semibold"
+                className="text-muted-foreground hover:text-foreground aria-[current=page]:border-primary aria-[current=page]:text-foreground focus-visible:ring-ring -mb-px inline-flex min-h-11 items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset aria-[current=page]:font-semibold"
               >
                 {item.label}
               </Link>

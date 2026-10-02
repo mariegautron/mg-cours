@@ -52,7 +52,7 @@ export function ModuleTabs({
     <Tabs value={tab} onValueChange={select} className="space-y-4">
       <TabsList
         aria-label="Sections du module"
-        className="bg-background sticky top-0 z-10 -mx-2 rounded-b-lg border-b px-2 py-2 shadow-sm"
+        className="bg-background sticky top-0 z-10 -mx-2 max-w-[calc(100%+1rem)] justify-start overflow-x-auto rounded-b-lg border-b px-2 py-2 shadow-sm"
       >
         {(Object.keys(labels) as ModuleTab[]).map((value) => (
           <TabsTrigger key={value} value={value} className="text-sm">

@@ -52,31 +52,33 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      size="lg"
-                      className="data-[active=true]:halo gap-3 rounded-xl transition-colors"
-                    >
-                      <Link href={item.href} aria-current={active ? "page" : undefined}>
-                        <span
-                          className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
-                        >
-                          <item.icon aria-hidden className="size-4" />
-                        </span>
-                        <span className="font-medium">{item.label}</span>
-                        <LinkPending />
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <nav aria-label="Menu principal">
+              <SidebarMenu>
+                {NAV.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        size="lg"
+                        className="data-[active=true]:halo gap-3 rounded-xl transition-colors"
+                      >
+                        <Link href={item.href} aria-current={active ? "page" : undefined}>
+                          <span
+                            className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
+                          >
+                            <item.icon aria-hidden className="size-4" />
+                          </span>
+                          <span className="font-medium">{item.label}</span>
+                          <LinkPending />
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </nav>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
