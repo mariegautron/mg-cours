@@ -15,8 +15,11 @@ type Action = (state: NotebookState, formData: FormData) => Promise<NotebookStat
 export function ClosureForm({
   action,
   course,
+  suggestedNotCovered = "",
 }: {
   action: Action;
+  /** Proposition tirée du journal de projection, utilisée si rien n'a encore été noté (US-136). */
+  suggestedNotCovered?: string;
   course: {
     completion: CourseCompletion | null;
     not_covered: string | null;
@@ -48,7 +51,17 @@ export function ClosureForm({
 
       <div className="space-y-1">
         <Label htmlFor="notCovered">Points non traités, à reporter</Label>
-        <Textarea id="notCovered" name="notCovered" defaultValue={course.not_covered ?? ""} />
+        <Textarea
+          id="notCovered"
+          name="notCovered"
+          defaultValue={course.not_covered || suggestedNotCovered}
+          aria-describedby={suggestedNotCovered ? "notCovered-hint" : undefined}
+        />
+        {suggestedNotCovered && !course.not_covered ? (
+          <p id="notCovered-hint" className="text-muted-foreground text-xs">
+            Proposé d’après ce qui n’a pas été projeté : modifie ou efface ce qui ne colle pas.
+          </p>
+        ) : null}
       </div>
       <div className="space-y-1">
         <Label htmlFor="nextTime">À faire pour la prochaine fois</Label>

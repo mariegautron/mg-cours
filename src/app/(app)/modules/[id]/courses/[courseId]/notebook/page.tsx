@@ -13,9 +13,17 @@ import { ClosureForm } from "@/components/notebook/closure-form";
 import { ObservationPanel } from "@/components/notebook/observation-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { loadCourseSubjects } from "@/lib/assessments/present-data";
+import { ProjectionStatus } from "@/components/notebook/projection-status";
+import { todayInParis } from "@/lib/modules/next-session";
+import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { notebookStudents, OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { endedEarly, projectionRecap } from "@/lib/notebook/projection";
+import { listProjectionEvents } from "@/lib/notebook/projection-queries";
 import { listCourseObservations } from "@/lib/notebook/queries";
+import { plannedSections } from "@/lib/present/plan";
+import { minutesInParis } from "@/lib/present/sync";
+import { studentFacing } from "@/lib/resources/kind";
 import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Carnet de séance" };
@@ -35,12 +43,17 @@ export default async function CourseNotebookPage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/notebook">) {
   const { id, courseId } = await params;
-  const [mod, courses, groups, observations] = await Promise.all([
-    getModule(id),
-    getModuleCourses(id),
-    listModuleGroups(id),
-    listCourseObservations(courseId),
-  ]);
+  const [mod, courses, groups, observations, courseResources, subjects, events] = await Promise.all(
+    [
+      getModule(id),
+      getModuleCourses(id),
+      listModuleGroups(id),
+      listCourseObservations(courseId),
+      getCourseResourcesFull(courseId),
+      loadCourseSubjects(id, courseId),
+      listProjectionEvents(courseId),
+    ],
+  );
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
@@ -52,6 +65,14 @@ export default async function CourseNotebookPage({
         { label: "Retour d’expérience de la séance précédente", text: previous.retro_note },
       ].filter((n) => n.text?.trim())
     : [];
+  // US-136 : ce qui était prévu au déroulé comparé à ce qui a été projeté.
+  const recap = projectionRecap({
+    planned: plannedSections(studentFacing(courseResources), subjects),
+    events,
+    nextSessionResourceIds: (courses[position + 1]?.resources ?? []).map((r) => r.id),
+    endedEarly:
+      course.session_date === todayInParis() && endedEarly(minutesInParis(), course.end_time),
+  });
   const students = notebookStudents(groups).map(({ id, first_name, last_name, photo_path }) => ({
     id,
     first_name,
@@ -157,8 +178,10 @@ export default async function CourseNotebookPage({
         <h2 id="closure" className="text-lg font-medium">
           Clôture de la séance
         </h2>
+        <ProjectionStatus recap={recap} />
         <ClosureForm
           action={saveCourseClosure.bind(null, id, courseId)}
+          suggestedNotCovered={recap.status === "late" ? recap.suggestedCarryOver : ""}
           course={{
             completion: course.completion,
             not_covered: course.not_covered,

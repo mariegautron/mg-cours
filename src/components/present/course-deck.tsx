@@ -7,6 +7,7 @@ import {
   type SubjectDeckInput,
 } from "@/components/present/deck";
 import type { PresentSlide } from "@/components/present/present-shell";
+import { CLOSING_KEY, OPENING_KEY, resourceKey, subjectKey } from "@/lib/present/plan";
 import type { Tables } from "@/types/db";
 
 /**
@@ -33,8 +34,10 @@ export function buildCourseDeck({
   resumeLines?: string[];
   /** Sujets des évaluations rattachées à la séance (déjà réduits au contenu étudiant·es, US-90). */
   subjects?: SubjectDeckInput[];
-}): { sections: string[]; slides: PresentSlide[] } {
+}): { sections: string[]; sectionKeys: string[]; slides: PresentSlide[] } {
   const sections = ["Ouverture"];
+  // Clé stable de chaque section (même ordre que `sections`) : journal de projection, clôture.
+  const sectionKeys = [OPENING_KEY];
   const slides: PresentSlide[] = [
     coverSlide(0, {
       eyebrow: `${moduleName} · Séance ${position + 1}`,
@@ -60,15 +63,18 @@ export function buildCourseDeck({
 
   for (const resource of resources) {
     sections.push(resource.title);
+    sectionKeys.push(resourceKey(resource.id));
     slides.push(...resourceSlides(sections.length - 1, resource));
   }
 
   for (const subject of subjects) {
     sections.push(`Sujet — ${subject.title}`);
+    sectionKeys.push(subjectKey(subject.title));
     slides.push(...subjectSlides(sections.length - 1, subject));
   }
 
   sections.push("Clôture");
+  sectionKeys.push(CLOSING_KEY);
   slides.push(
     coverSlide(sections.length - 1, {
       eyebrow: "Merci !",
@@ -77,5 +83,5 @@ export function buildCourseDeck({
     }),
   );
 
-  return { sections, slides };
+  return { sections, sectionKeys, slides };
 }

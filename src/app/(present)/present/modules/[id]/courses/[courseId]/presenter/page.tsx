@@ -32,7 +32,7 @@ export default async function PresenterPage({
   if (!mod || position === -1) notFound();
   const course = courses[position];
 
-  const { sections, slides } = buildCourseDeck({
+  const { sections, sectionKeys, slides } = buildCourseDeck({
     moduleName: mod.name,
     course,
     position,
@@ -69,6 +69,7 @@ export default async function PresenterPage({
       teacherResources={teacherResources}
       endTime={course.session_date === todayInParis() ? course.end_time : null}
       sections={sections}
+      sectionKeys={sectionKeys}
       library={libraryRows.map((r) => ({
         id: r.id,
         title: r.title,

@@ -1444,6 +1444,57 @@ export type Database = {
           },
         ]
       }
+      projection_event: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          kind: string
+          owner_id: string
+          projected_at: string
+          resource_id: string | null
+          section_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          owner_id?: string
+          projected_at?: string
+          resource_id?: string | null
+          section_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          projected_at?: string
+          resource_id?: string | null
+          section_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projection_event_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projection_event_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       question: {
         Row: {
           archived_at: string | null

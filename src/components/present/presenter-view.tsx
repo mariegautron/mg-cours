@@ -6,11 +6,13 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, Presentation } from "lucide-react";
 
+import { recordProjection } from "@/app/(present)/present/modules/[id]/courses/[courseId]/presenter/actions";
 import {
   addSessionNote,
   type SessionNoteState,
@@ -71,6 +73,7 @@ export function PresenterView({
   teacherResources,
   endTime,
   sections,
+  sectionKeys,
   library,
   moduleId,
   courseId,
@@ -88,6 +91,8 @@ export function PresenterView({
   endTime: string | null;
   /** Déroulé : titres des sections, dans l'ordre des diapositives. */
   sections: string[];
+  /** Clé stable de chaque section (même ordre), pour le journal de projection. */
+  sectionKeys: string[];
   /** Ressources de la bibliothèque, pour en projeter une à l'improviste. */
   library: LibraryResource[];
   moduleId: string;
@@ -146,6 +151,19 @@ export function PresenterView({
     },
     [channel, total],
   );
+
+  // Journal de projection (US-136) : chaque changement de section à l'écran de la classe est
+  // enregistré, sans jamais bloquer ni retarder la projection (erreurs ignorées).
+  const lastRecorded = useRef<string | null>(null);
+  useEffect(() => {
+    const section = slides[index]?.section;
+    const key = section === undefined ? null : (sectionKeys[section] ?? null);
+    if (!key || key === lastRecorded.current) return;
+    lastRecorded.current = key;
+    void recordProjection({ courseId, sectionKey: key, resourceId: null, kind: "projected" }).catch(
+      () => {},
+    );
+  }, [index, slides, sectionKeys, courseId]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -358,7 +376,15 @@ export function PresenterView({
                         type="button"
                         size="touch"
                         variant="secondary"
-                        onClick={() => setPrivateIndex(starts[i])}
+                        onClick={() => {
+                          setPrivateIndex(starts[i]);
+                          void recordProjection({
+                            courseId,
+                            sectionKey: sectionKeys[i] ?? null,
+                            resourceId: null,
+                            kind: "private",
+                          }).catch(() => {});
+                        }}
                       >
                         Pour moi<span className="sr-only"> : {title}</span>
                       </Button>
@@ -554,6 +580,12 @@ export function PresenterView({
                           size="touch"
                           onClick={() => {
                             openProjection(`/present/resources/${r.id}`);
+                            void recordProjection({
+                              courseId,
+                              sectionKey: null,
+                              resourceId: r.id,
+                              kind: "projected",
+                            }).catch(() => {});
                             setProjectedNote(
                               `« ${r.title} » est projetée. Pour revenir au déroulé, ouvre la fenêtre projetée.`,
                             );

@@ -7,7 +7,13 @@ import { saveNextTime } from "@/app/(app)/modules/[id]/courses/[courseId]/notebo
 import { DownloadButton } from "@/components/download-button";
 import { NextTimeForm } from "@/components/notebook/next-time-form";
 import { Button } from "@/components/ui/button";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { loadCourseSubjects } from "@/lib/assessments/present-data";
+import { ProjectionStatus } from "@/components/notebook/projection-status";
+import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { projectionRecap } from "@/lib/notebook/projection";
+import { listProjectionEvents } from "@/lib/notebook/projection-queries";
+import { plannedSections } from "@/lib/present/plan";
+import { studentFacing } from "@/lib/resources/kind";
 import { listCourseObservations } from "@/lib/notebook/queries";
 import { closureRecap, type RecapState } from "@/lib/notebook/recap";
 
@@ -28,16 +34,24 @@ export default async function ClosedCoursePage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/closed">) {
   const { id, courseId } = await params;
-  const [mod, courses, observations] = await Promise.all([
+  const [mod, courses, observations, courseResources, subjects, events] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     listCourseObservations(courseId),
+    getCourseResourcesFull(courseId),
+    loadCourseSubjects(id, courseId),
+    listProjectionEvents(courseId),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
   const next = courses[position + 1] ?? null;
 
+  const projection = projectionRecap({
+    planned: plannedSections(studentFacing(courseResources), subjects),
+    events,
+    nextSessionResourceIds: (courses[position + 1]?.resources ?? []).map((r) => r.id),
+  });
   const recap = closureRecap({
     completion: course.completion,
     notCovered: course.not_covered,
@@ -92,6 +106,7 @@ export default async function ClosedCoursePage({
             );
           })}
         </ul>
+        {projection.status !== "none" ? <ProjectionStatus recap={projection} /> : null}
         <Button asChild variant="secondary" size="touch">
           <Link href={`/modules/${id}/courses/${courseId}/notebook#closure`}>
             Modifier la clôture

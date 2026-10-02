@@ -113,6 +113,19 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await expect(presenter.getByText(/\] Insister sur la valeur/)).toBeVisible();
   expect(await page.content()).not.toContain("Insister sur la valeur");
 
+  // US-136 : la projection est retenue et relue à la clôture (statut en mots, ressource projetée).
+  const notebookUrl = href!.replace("/present", "") + "/notebook";
+  await expect(async () => {
+    await presenter.goto(notebookUrl);
+    await expect(presenter.getByText(/Relevé de la projection/)).toBeVisible({ timeout: 2000 });
+    await expect(presenter.getByText(`Projeté à`, { exact: false }).first()).toBeVisible({
+      timeout: 2000,
+    });
+  }).toPass({ timeout: 20_000 });
+  await expect(presenter.getByText(lesson).first()).toBeVisible();
+  await presenter.goto(`${href}/presenter`);
+  await presenter.waitForLoadState("networkidle");
+
   const axe = await new AxeBuilder({ page: presenter })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
