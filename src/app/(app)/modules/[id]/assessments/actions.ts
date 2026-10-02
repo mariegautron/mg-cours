@@ -14,7 +14,7 @@ import {
   readMemberOverrides,
   type Attendance,
 } from "@/lib/assessments/attendance";
-import { readFeedback } from "@/lib/assessments/feedback";
+import { parseCriterionComments, readFeedback } from "@/lib/assessments/feedback";
 import { computeTotals, hasScoredInput, readScores } from "@/lib/assessments/scoring";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
@@ -395,6 +395,64 @@ async function saveGrade(
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}`);
   return { saved: true };
+}
+
+/**
+ * Une cellule de la comparaison d'un critère (US-141) : change les points et le commentaire d'UN
+ * critère d'une copie. Tout le reste de la copie est conservé : on rejoue l'enregistrement normal
+ * (`saveGrade`) avec le contenu actuel de la copie, pour que la note soit recalculée comme partout.
+ */
+export async function saveCriterionCell(
+  moduleId: string,
+  assessmentId: string,
+  copy: { kind: "group" | "student"; id: string },
+  criterionId: string,
+  points: number | null,
+  comment: string,
+): Promise<GradeFormState> {
+  if (points !== null && (!Number.isFinite(points) || points < 0)) {
+    return { error: "Les points doivent être un nombre positif." };
+  }
+  const supabase = await createClient();
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("grading_grid:grading_grid_id(grid_criterion(id, axis_id))")
+    .eq("id", assessmentId)
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!assessment) return { error: NOT_FOUND.assessment };
+  const grid = assessment.grading_grid as {
+    grid_criterion: { id: string; axis_id: string | null }[];
+  } | null;
+  const criteria = grid?.grid_criterion ?? [];
+  if (!criteria.some((c) => c.id === criterionId)) return { error: "Ce critère n’existe plus." };
+
+  const target =
+    copy.kind === "group"
+      ? { studentId: null, studentGroupId: copy.id }
+      : { studentId: copy.id, studentGroupId: null };
+  const match =
+    copy.kind === "group"
+      ? { assessment_id: assessmentId, student_group_id: copy.id }
+      : { assessment_id: assessmentId, student_id: copy.id };
+  const { data: current } = await supabase.from("grade").select("*").match(match).maybeSingle();
+
+  const scores = (current?.scores ?? {}) as Record<string, number>;
+  const comments = parseCriterionComments(current?.criterion_comments);
+  const form = new FormData();
+  for (const c of criteria) {
+    const value = c.id === criterionId ? points : (scores[c.id] ?? null);
+    if (value !== null && value !== undefined) form.set(`score_${c.id}`, String(value));
+    const text = c.id === criterionId ? comment : (comments[c.id] ?? "");
+    form.set(`comment_${c.id}`, text);
+    if (c.axis_id) form.set(`comment_axis:${c.axis_id}`, comments[`axis:${c.axis_id}`] ?? "");
+  }
+  form.set("strengths", current?.strengths ?? "");
+  form.set("progress", current?.progress ?? "");
+  form.set("feedback", current?.feedback ?? "");
+  form.set("attendance", current?.attendance ?? "present");
+  for (const id of current?.predefined_comment_ids ?? []) form.append("predefinedCommentIds", id);
+  return saveGrade(moduleId, assessmentId, target, form);
 }
 
 export async function saveGroupGrade(

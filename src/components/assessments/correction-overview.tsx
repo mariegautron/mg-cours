@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Check, CircleDashed, PencilLine } from "lucide-react";
 
@@ -36,11 +37,14 @@ export function CorrectionOverview({
   overview,
   maxScore,
   noun,
+  compareHref,
 }: {
   overview: Overview;
   maxScore: number;
   /** « groupe » ou « étudiant·e », pour les libellés. */
   noun: string;
+  /** Comparer un critère entre les copies (US-141) ; absent sans grille. */
+  compareHref?: string | null;
 }) {
   const [filter, setFilter] = useState<OverviewFilter>("all");
   const rows = filterRows(overview.rows, filter);
@@ -81,6 +85,18 @@ export function CorrectionOverview({
         <p className="text-muted-foreground text-sm">
           Prochaine copie : <strong className="text-foreground">{next.title}</strong>
           {next.state === "in_progress" ? ` · ${progressNote(next)}` : ""}
+        </p>
+      ) : null}
+
+      {compareHref ? (
+        <p className="text-sm">
+          <Link
+            href={compareHref}
+            className="focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
+          >
+            Comparer un critère entre les {noun === "groupe" ? "groupes" : "étudiant·es"}
+          </Link>{" "}
+          <span className="text-muted-foreground">pour harmoniser notes et commentaires.</span>
         </p>
       ) : null}
 

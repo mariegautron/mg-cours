@@ -375,6 +375,11 @@ export default async function AssessmentPage({
             overview={overview}
             maxScore={assessment.maxScore}
             noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
+            compareHref={
+              (assessment.grading_grid?.criteria.length ?? 0) > 0
+                ? `/modules/${id}/assessments/${assessmentId}/compare`
+                : null
+            }
           />
           <GradingSession
             sections={sections}
