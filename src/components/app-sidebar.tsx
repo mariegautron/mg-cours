@@ -2,16 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BookMarked,
-  GraduationCap,
-  Library,
-  Settings,
-  Sun,
-} from "lucide-react";
+import { BookMarked, GraduationCap, Library, Settings, Sun } from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
 import { LinkPending } from "@/components/navigation-status";
+import { GlobalSearch } from "@/components/search/global-search";
 import {
   Sidebar,
   SidebarContent,
@@ -47,11 +42,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-3 pt-4 pb-2">
+      <SidebarHeader className="gap-3 px-3 pt-4 pb-2">
         <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg px-1 py-1">
           <LogoMark />
           <span className="font-heading text-xl font-bold tracking-tight">MG COURS</span>
         </Link>
+        <GlobalSearch />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
