@@ -12,6 +12,13 @@ import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { createDraftResource } from "@/app/(app)/resources/actions";
 import { AddToModule } from "@/components/resources/add-to-module";
 import { listActiveModules } from "@/lib/modules/queries";
+import {
+  familyCounts,
+  FAMILIES,
+  FAMILY_LABELS,
+  FAMILY_LINKS,
+  inFamily,
+} from "@/lib/resources/family";
 import { readResourceFilters, type ResourceGrouping } from "@/lib/resources/filters";
 import {
   AUDIENCE_LABELS,
@@ -27,7 +34,7 @@ import {
 import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/resources/queries";
 
-export const metadata: Metadata = { title: "Ressources" };
+export const metadata: Metadata = { title: "Bibliothèque" };
 
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
@@ -103,13 +110,26 @@ function CardGrid({
 }
 
 export default async function ResourcesPage({ searchParams }: PageProps<"/resources">) {
-  const { filters, group } = readResourceFilters(await searchParams);
+  const sp = await searchParams;
+  const { filters, group } = readResourceFilters(sp);
 
-  const [resources, facets, modules] = await Promise.all([
+  const [listed, facets, modules] = await Promise.all([
     listResources(filters),
     resourceFacets(),
     listActiveModules(),
   ]);
+  const counts = familyCounts(listed);
+  const resources = inFamily(listed, filters.family);
+  // Les onglets gardent les autres filtres de l'URL.
+  const familyHref = (family?: string) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) {
+      if (k !== "family" && typeof v === "string" && v) params.set(k, v);
+    }
+    if (family) params.set("family", family);
+    const qs = params.toString();
+    return qs ? `/resources?${qs}` : "/resources";
+  };
   const groups: ResourceGroup<ResourceWithUsage>[] | null =
     group === "kind"
       ? groupByKind(resources)
@@ -121,7 +141,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Ressources</h1>
+          <h1 className="text-2xl font-semibold">Bibliothèque</h1>
           <p className="text-muted-foreground">Supports réutilisables dans plusieurs modules.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -143,11 +163,46 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         </div>
       </div>
 
+      <nav aria-label="Familles de la bibliothèque">
+        <ul className="flex flex-wrap gap-2">
+          {[undefined, ...FAMILIES].map((f) => {
+            const active = filters.family === f;
+            return (
+              <li key={f ?? "all"}>
+                <Link
+                  href={familyHref(f)}
+                  aria-current={active ? "page" : undefined}
+                  className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${active ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                >
+                  {f ? FAMILY_LABELS[f] : "Toutes"}
+                  {f ? <span className="text-xs opacity-80">({counts[f]})</span> : null}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {filters.family && FAMILY_LINKS[filters.family].length ? (
+          <p className="text-muted-foreground mt-2 text-sm">
+            Rattaché à cette famille :{" "}
+            {FAMILY_LINKS[filters.family].map((l, i) => (
+              <span key={l.href}>
+                {i > 0 ? ", " : ""}
+                <Link href={l.href} className="underline underline-offset-2">
+                  {l.label}
+                </Link>
+              </span>
+            ))}
+            .
+          </p>
+        ) : null}
+      </nav>
+
       <form
         className="flex flex-wrap items-end gap-3"
         role="search"
         aria-label="Filtrer les ressources"
       >
+        {filters.family ? <input type="hidden" name="family" value={filters.family} /> : null}
         <div className="space-y-1">
           <Label htmlFor="q">Recherche</Label>
           <Input id="q" name="q" defaultValue={filters.q} placeholder="Titre, tag, contenu…" />

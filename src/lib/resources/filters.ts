@@ -1,3 +1,4 @@
+import { isResourceFamily, type ResourceFamily } from "./family";
 import {
   isResourceAudience,
   isResourceKind,
@@ -20,6 +21,8 @@ export interface ResourceListFilters {
   /** Prête ou « À construire ». */
   status?: ResourceStatus;
   archived?: boolean;
+  /** Famille de la bibliothèque (US-151) ; appliquée après la requête. */
+  family?: ResourceFamily;
 }
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -44,6 +47,7 @@ export function readResourceFilters(sp: SearchParams): {
       audience: isResourceAudience(audience) ? audience : undefined,
       status: isResourceStatus(status) ? status : undefined,
       archived: sp.archived === "1",
+      family: isResourceFamily(str(sp.family)) ? (str(sp.family) as ResourceFamily) : undefined,
     },
     group: group === "category" || group === "none" ? group : "kind",
   };

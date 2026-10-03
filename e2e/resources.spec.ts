@@ -16,7 +16,7 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
   await login(page);
 
   await page.goto("/resources");
-  await expect(page.getByRole("heading", { name: "Ressources", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bibliothèque", level: 1 })).toBeVisible();
 
   await page.getByRole("link", { name: "Nouvelle ressource" }).first().click();
   const title = `Scrum – bases ${Date.now()}`;
