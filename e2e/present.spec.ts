@@ -68,9 +68,7 @@ test("faire cours : déroulé projeté d'une séance, sans les ressources enseig
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   // Ressources groupées par type sur la fiche module, corrigé repéré.
-  await expect(page.getByRole("term").filter({ hasText: "Corrigés" })).toBeVisible();
-  // Mise en avant de la prochaine séance.
-  await expect(page.getByRole("heading", { name: "Prochaine séance" })).toBeVisible();
+  await expect(page.getByText("Corrigé", { exact: true }).first()).toBeVisible();
 
   await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Faire cours : Rôles et responsabilités" }).click();

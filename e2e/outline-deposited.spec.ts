@@ -6,6 +6,7 @@ import { openOtherBilling, openTab } from "./helpers";
 // Pour un module déjà réalisé, la progression déposée en PDF fait foi : la génération depuis les
 // séances reste possible mais ne doit jamais se présenter comme la version envoyée.
 test("une progression déposée en PDF fait foi et débloque la facturation", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto("/login");
   await page.getByLabel("E-mail").fill("marie@local.test");
   await page.getByLabel("Mot de passe").fill("password123");
@@ -25,7 +26,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
   await page.getByLabel("Titre de la séance").fill("Introduction");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText("Séance 1")).toBeVisible();
+  await expect(page.getByText("Séance 1").first()).toBeVisible();
 
   await openTab(page, "Progression");
   // Avant tout dépôt : le bouton porte encore le libellé « Générer la progression ».

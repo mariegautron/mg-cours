@@ -21,9 +21,9 @@ export async function openTab(page: Page, name: string | RegExp) {
     // Un enregistrement qui redirige vers la page visée peut être en cours : on le laisse finir
     // (aller ailleurs tout de suite interromprait l'action).
     await page
-      .waitForURL((url) => url.pathname === target, { timeout: 3_000 })
+      .waitForURL((url) => url.pathname.startsWith(target), { timeout: 3_000 })
       .catch(() => undefined);
-    if (new URL(page.url()).pathname !== target) await page.goto(target);
+    if (!new URL(page.url()).pathname.startsWith(target)) await page.goto(target);
     return;
   }
   const tab = page.getByRole("tab", { name });

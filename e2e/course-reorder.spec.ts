@@ -26,67 +26,59 @@ test("US-61 : monter / descendre une séance au clavier depuis le menu « ⋯ »
     await expect(page.getByLabel("Position")).toHaveCount(0);
     await page.getByLabel("Titre de la séance").fill(title);
     await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/courses$/);
+    await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   }
 
   await openTab(page, /Séances/);
-  const titles = page.getByRole("list").filter({ hasText: "Séance 1" }).getByRole("heading", {
-    level: 3,
-  });
-  await expect(titles).toHaveText(["Alpha", "Bravo", "Charlie"]);
-  // Les actions secondaires vivent dans un menu « ⋯ » par séance (une seule action primaire visible).
-  const actions = (title: string) =>
-    page.getByRole("button", { name: new RegExp(`^Actions de la séance \\d : ${title}`) });
-  await actions("Alpha").click();
-  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toHaveAttribute(
-    "aria-disabled",
-    "true",
-  );
-  await page.keyboard.press("Escape");
-  await actions("Charlie").click();
-  await expect(page.getByRole("menuitem", { name: /^Descendre/ })).toHaveAttribute(
-    "aria-disabled",
-    "true",
-  );
-  await page.keyboard.press("Escape");
+  // La liste étroite montre toutes les séances ; la séance ouverte porte monter / descendre.
+  const list = page.getByRole("complementary", { name: /Les 3 séances/ });
+  const titles = list.getByRole("listitem");
+  await expect(titles).toHaveCount(3);
+  await expect(titles.nth(0)).toContainText("Alpha");
+  await expect(titles.nth(1)).toContainText("Bravo");
+  await expect(titles.nth(2)).toContainText("Charlie");
 
-  // Au clavier : Charlie monte deux fois, le focus revient sur le menu de la séance.
-  await actions("Charlie").focus();
+  // Alpha ne peut pas monter, Charlie ne peut pas descendre.
+  await list.getByRole("link", { name: /Alpha/ }).click();
+  await expect(page.getByRole("button", { name: "Monter la séance 1" })).toBeDisabled();
+  await list.getByRole("link", { name: /Charlie/ }).click();
+  await expect(page.getByRole("button", { name: "Descendre la séance 3" })).toBeDisabled();
+
+  // Au clavier : Charlie monte deux fois.
+  await page.getByRole("button", { name: "Monter la séance 3" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toBeVisible();
-  await page.getByRole("menuitem", { name: /^Monter/ }).focus();
-  await page.keyboard.press("Enter");
-  await expect(titles).toHaveText(["Alpha", "Charlie", "Bravo"]);
+  await expect(titles.nth(1)).toContainText("Charlie");
   await expect(page.getByRole("status").filter({ hasText: "séance 2 sur 3" })).toHaveCount(1);
-  await expect(actions("Charlie")).toBeFocused();
+  await page.getByRole("button", { name: "Monter la séance 2" }).focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("menuitem", { name: /^Monter/ })).toBeVisible();
-  await page.getByRole("menuitem", { name: /^Monter/ }).focus();
-  await page.keyboard.press("Enter");
-  await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
-  await expect(actions("Charlie")).toBeFocused();
+  await expect(titles.nth(0)).toContainText("Charlie");
+  await expect(titles.nth(1)).toContainText("Alpha");
+  await expect(titles.nth(2)).toContainText("Bravo");
 
-  // Supprimer demande confirmation en nommant la séance ; « Annuler » ne supprime rien.
-  await actions("Bravo").click();
-  await page.getByRole("menuitem", { name: /^Supprimer/ }).click();
-  await expect(
-    page.getByRole("alertdialog", { name: "Supprimer la séance « Bravo » ?" }),
-  ).toBeVisible();
+  // Supprimer demande confirmation ; « Annuler » ne supprime rien.
+  await list.getByRole("link", { name: /Bravo/ }).click();
+  await expect(page.getByRole("heading", { name: "Bravo", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: /^Supprimer/ }).click();
+  await expect(page.getByRole("alertdialog", { name: "Supprimer la séance 3 ?" })).toBeVisible();
   await page.getByRole("button", { name: "Annuler" }).click();
-  await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
+  await expect(titles).toHaveCount(3);
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
 
-  // L'ordre persiste et modifier une séance ne le change pas.
+  // L'ordre persiste et le titre se change dans la séance ouverte (enregistrement automatique).
   await page.goto(`${moduleUrl}/courses`);
-  await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
-  await actions("Alpha").click();
-  await page.getByRole("menuitem", { name: /^Modifier/ }).click();
-  await page.getByLabel("Titre de la séance").fill("Alpha 2");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/courses$/);
-  await expect(titles).toHaveText(["Charlie", "Alpha 2", "Bravo"]);
+  await page.waitForURL(/\/courses\/[0-9a-f-]{36}$/);
+  await list.getByRole("link", { name: /Alpha/ }).click();
+  // Avant l'hydratation, une saisie est perdue : on recommence jusqu'à l'annonce d'enregistrement.
+  await expect(async () => {
+    await page.getByLabel("Titre de la séance").fill("Alpha 2");
+    await expect(page.getByText(/^Enregistré à \d\d:\d\d$/)).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
+  await page.reload();
+  await expect(titles.nth(0)).toContainText("Charlie");
+  await expect(titles.nth(1)).toContainText("Alpha 2");
+  await expect(titles.nth(2)).toContainText("Bravo");
 });

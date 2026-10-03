@@ -30,7 +30,7 @@ test("exporte les cours d’un module en un PDF et en zip", async ({ page }) => 
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel(resourceTitle).check();
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText("Séance 1")).toBeVisible();
+  await expect(page.getByText("Séance 1").first()).toBeVisible();
 
   const pdf = page.waitForEvent("download");
   await openTab(page, /Séances/);

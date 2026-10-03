@@ -36,7 +36,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Titre de la séance").fill("Séance de cadrage");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
 
   // Trois attendus (texte collé, une ligne = un attendu).
   await page.goto(`${moduleUrl}/expectations`);

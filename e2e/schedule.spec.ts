@@ -51,10 +51,9 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await expect(page.getByText("À préparer").first()).toBeVisible();
 
   // US-60 : 3 créneaux de 2 h sur 6 h annoncées → cohérent ; une séance raccourcie → avertissement.
-  await expect(page.getByText(/6 h planifiées \/ 6 h/)).toBeVisible();
+  await expect(page.getByText(/6 h sur 6 h/)).toBeVisible();
   await expect(page.getByText("À vérifier")).toHaveCount(0);
-  await page.getByRole("button", { name: /^Actions de la séance 1 : Séance 1/ }).click();
-  await page.getByRole("menuitem", { name: /^Modifier/ }).click();
+  await page.getByRole("link", { name: /^Modifier la séance 1/ }).click();
   await expect(page.getByLabel("Début")).toHaveValue("10:00");
   await page.getByLabel("Fin").fill("09:00");
   await page.getByRole("button", { name: "Enregistrer" }).click();
@@ -62,7 +61,7 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await page.getByLabel("Fin").fill("11:00");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await openTab(page, /Séances/);
-  await expect(page.getByText(/5 h planifiées \/ 6 h/)).toBeVisible();
+  await expect(page.getByText(/5 h sur 6 h/)).toBeVisible();
   await expect(page.getByText(/Il manque 1 h par rapport aux 6 h du module/)).toBeVisible();
 
   // Module existant : la numérotation continue.
@@ -73,7 +72,7 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await page.getByLabel("Fin du créneau 1").fill("12:00");
   await expect(page.getByText(/Séance 4/)).toBeVisible();
   await page.getByRole("button", { name: "Créer les séances" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   await openTab(page, /Séances/);
   await expect(page.getByText("Séance 4").first()).toBeVisible();
 });

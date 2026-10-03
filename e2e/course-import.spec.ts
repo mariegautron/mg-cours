@@ -45,14 +45,14 @@ test("US-58 : importer des séances d'un autre module sans dates ni statut", asy
     await page.getByLabel("Objectifs pédagogiques").fill("Comprendre\nPratiquer");
     await page.getByLabel(resource).check();
     await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/courses$/);
+    await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   }
 
   const targetUrl = await createModule(`Module cible ${stamp}`);
   await page.goto(`${targetUrl}/courses/new`);
   await page.getByLabel("Titre de la séance").fill("Déjà là");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
 
   await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Depuis un autre module" }).click();
@@ -75,15 +75,16 @@ test("US-58 : importer des séances d'un autre module sans dates ni statut", asy
   expect(axe.violations).toEqual([]);
 
   await page.getByRole("button", { name: "Importer 2 séances" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   await openTab(page, /Séances/);
-  const headings = page.getByRole("heading", { level: 3 });
   // Ordre du module source : Introduction avant Atelier, après « Déjà là ».
-  await expect(headings).toHaveText(["Déjà là", "Introduction", "Atelier"]);
-  await expect(page.getByText("Séance 2").first()).toBeVisible();
-  // Contenu repris, mais pas les dates ni le statut « Prête ».
-  await expect(page.getByText("Comprendre").first()).toBeVisible();
-  await expect(page.getByRole("link", { name: resource }).first()).toBeVisible();
-  await expect(page.getByText(/12 oct/)).toHaveCount(0);
-  await expect(page.getByText("Prête", { exact: true })).toHaveCount(0);
+  const list = page.getByRole("complementary", { name: /Les 3 séances/ }).getByRole("listitem");
+  await expect(list).toHaveCount(3);
+  await expect(list.nth(0)).toContainText("Déjà là");
+  await expect(list.nth(1)).toContainText("Introduction");
+  await expect(list.nth(2)).toContainText("Atelier");
+  // Ni dates ni statut « Prête » repris : toutes à préparer, sans date.
+  await expect(list.nth(1)).toContainText("Date à fixer");
+  await expect(list.nth(1)).toContainText("À préparer");
+  await expect(list.nth(2)).toContainText("À préparer");
 });

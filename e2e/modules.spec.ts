@@ -45,8 +45,8 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.getByLabel("Préparation", { exact: true }).selectOption("ready");
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
-  await expect(page.getByText("Séance 1")).toBeVisible();
-  await expect(page.getByText("1/1 prête")).toBeVisible();
+  await expect(page.getByText("Séance 1").first()).toBeVisible();
+  await expect(page.getByText(/1 sur 1 prêtes/)).toBeVisible();
   await expect(page.getByRole("link", { name: resourceTitle })).toBeVisible();
 
   // Document administratif.
@@ -69,16 +69,13 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
 
   // Navigation : fil d'Ariane + onglets (l'onglet choisi apparaît dans l'ancre).
   await openTab(page, /Séances/);
-  await expect(page).toHaveURL(/\/courses$/);
+  await expect(page).toHaveURL(/\/courses(\/[0-9a-f-]{36})?$/);
   await expect(
     page.getByRole("navigation", { name: "Fil d’Ariane" }).getByRole("link", { name: "Modules" }),
   ).toHaveAttribute("href", "/modules");
 
   // Suppression d'une séance : confirmation obligatoire.
-  await page
-    .getByRole("button", { name: /^Actions de la séance 1 : Introduction à l’Agilité/ })
-    .click();
-  await page.getByRole("menuitem", { name: /^Supprimer/ }).click();
+  await page.getByRole("button", { name: /^Supprimer/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
   await expect(page.getByText("Aucune séance", { exact: true })).toBeVisible();
 });

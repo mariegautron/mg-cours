@@ -75,7 +75,7 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
   await page.goto(`${moduleUrl}/courses/new`);
   await page.getByLabel("Titre de la séance").fill("Séance unique");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   const env = localEnv();
   const res = await fetch(
     `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/course?module_id=eq.${moduleId}`,

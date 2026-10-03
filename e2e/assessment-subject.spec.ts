@@ -25,7 +25,7 @@ test("sujet lié à la séance : préparation, fichier en téléchargement forc�
   await page.goto(`${moduleUrl}/courses/new`);
   await page.getByLabel("Titre de la séance").fill("Évaluation et restitution");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/courses$/);
+  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
 
   const groupName = `Groupe Sujet ${suffix}`;
   await page.goto(`${moduleUrl}/groups/new`);

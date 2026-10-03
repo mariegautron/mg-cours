@@ -72,8 +72,8 @@ export async function createCourse(
 
   await syncResources(supabase, data.id, parsed.data.resourceIds);
 
-  revalidatePath(`/modules/${moduleId}`);
-  redirect(`/modules/${moduleId}/courses`);
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  redirect(`/modules/${moduleId}/courses/${data.id}`);
 }
 
 export async function updateCourse(
@@ -108,8 +108,8 @@ export async function updateCourse(
 
   await syncResources(supabase, courseId, parsed.data.resourceIds);
 
-  revalidatePath(`/modules/${moduleId}`);
-  redirect(`/modules/${moduleId}/courses`);
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  redirect(`/modules/${moduleId}/courses/${courseId}`);
 }
 
 export async function deleteCourse(moduleId: string, courseId: string) {

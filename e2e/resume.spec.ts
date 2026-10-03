@@ -30,11 +30,15 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
     await page.waitForLoadState("networkidle");
     await page.getByLabel("Titre de la séance").fill(`${title} ${stamp}`);
     await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/\/courses$/);
+    await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   }
   await openTab(page, /Séances/);
   const notebookHref = (title: string) =>
-    page.getByRole("link", { name: `Carnet de séance : ${title} ${stamp}` }).getAttribute("href");
+    page
+      .getByRole("complementary", { name: /Les 2 séances/ })
+      .getByRole("link", { name: new RegExp(`${title} ${stamp}`) })
+      .getAttribute("href")
+      .then((h) => `${h}/notebook`);
   const first = await notebookHref("Première");
   const second = await notebookHref("Seconde");
 

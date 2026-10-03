@@ -32,7 +32,7 @@ test("génère la progression pédagogique PDF, la télécharge et la marque env
   await page.getByLabel("Titre de la séance").fill("Introduction à l’Agilité");
   await page.getByLabel("Objectifs pédagogiques").fill("Valeurs et principes\nRôles Scrum");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText("Séance 1")).toBeVisible();
+  await expect(page.getByText("Séance 1").first()).toBeVisible();
 
   // Pas de PDF avant génération.
   const before = await page.request.get(`/api/modules/${moduleId}/outline`);
