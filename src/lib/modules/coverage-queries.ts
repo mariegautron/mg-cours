@@ -25,7 +25,7 @@ export async function getModuleCoverage(
     expectations.map((e) =>
       coverageState({
         courseIds: coursesByExpectation.get(e.id) ?? [],
-        retainedMatches: matchResources(e.label, candidates)
+        retainedMatches: matchResources(e.label, candidates, candidates.length)
           .filter((m) => retainedIds.has(m.resource.id))
           .map((m) => ({ status: m.resource.status })),
       }),

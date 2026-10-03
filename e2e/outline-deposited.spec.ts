@@ -45,21 +45,19 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
 
   await openTab(page, "Progression");
   const trameSection = page.getByRole("region", {
-    name: "Progression pédagogique",
+    name: "Le document",
     exact: true,
   });
-  await expect(trameSection.getByText(/Progression envoyée \(PDF déposé le/)).toBeVisible();
-  await expect(trameSection.getByRole("link", { name: "Télécharger" })).toBeVisible();
+  await expect(trameSection.getByText(/PDF déposé le/)).toBeVisible();
+  await expect(trameSection.getByRole("link", { name: /Télécharger le PDF déposé/ })).toBeVisible();
   await expect(trameSection.locator('a[href*="?inline=1"]')).toBeVisible();
   // Le bouton de génération se reformule, et n'écrase pas le badge « envoyée ».
   await expect(
     trameSection.getByRole("button", { name: "Générer une progression depuis les séances" }),
   ).toBeVisible();
-  await expect(
-    trameSection.getByText("La progression déposée reste la version envoyée à l’école."),
-  ).toBeVisible();
+  await expect(trameSection.getByText(/c’est la version envoyée à l’école/)).toBeVisible();
   // Pas de bouton « Marquer comme envoyée » : la progression déposée est déjà la version envoyée.
-  await expect(trameSection.getByRole("button", { name: "Marquer comme envoyée" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /J’ai envoyé la progression/ })).toHaveCount(0);
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -73,7 +71,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
     .click();
   await expect(trameSection.getByText(/Progression générée depuis les séances le/)).toBeVisible();
   await expect(trameSection.getByText(/\(brouillon, non envoyée\)/)).toBeVisible();
-  await expect(trameSection.getByText(/Progression envoyée \(PDF déposé le/)).toBeVisible();
+  await expect(trameSection.getByText(/PDF déposé le/)).toBeVisible();
 
   // Le document déposé est toujours présent dans la carte Documents.
   await openTab(page, "Administratif");

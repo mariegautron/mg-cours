@@ -51,13 +51,15 @@ test("génère la progression pédagogique PDF, la télécharge et la marque env
   expect(body.subarray(0, 4).toString()).toBe("%PDF");
 
   // Geste qui ne se défait pas : un dialogue court demande confirmation (« Pas encore » l'annule).
-  await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
+  await page.getByRole("button", { name: /J’ai envoyé la progression à l’école/ }).click();
   await expect(
     page.getByRole("alertdialog", { name: "Tu as bien envoyé la progression à l’école ?" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Pas encore" }).click();
-  await expect(page.getByRole("button", { name: "Marquer comme envoyée" })).toBeVisible();
-  await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
+  await expect(
+    page.getByRole("button", { name: /J’ai envoyé la progression à l’école/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /J’ai envoyé la progression à l’école/ }).click();
   await page.getByRole("button", { name: "Oui, je l’ai envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();
   // Jalon célébré, sobrement.
