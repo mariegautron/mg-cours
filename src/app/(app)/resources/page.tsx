@@ -184,6 +184,23 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         ) : null}
       </nav>
 
+      <p className="text-muted-foreground flex flex-wrap items-center gap-x-4 text-sm">
+        Aussi dans la bibliothèque :
+        {[
+          { label: "Questions", href: "/questions" },
+          { label: "Grilles", href: "/assessments/grids" },
+          { label: "Phrases", href: "/assessments/comments" },
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </p>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="bg-card rounded-xl border px-4 py-2">
           <span className="text-muted-foreground text-sm">

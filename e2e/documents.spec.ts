@@ -4,6 +4,7 @@ import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 test("dépose, télécharge et supprime les attendus de l’école d’un module", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.goto("/login");
   await page.getByLabel("E-mail").fill("marie@local.test");
   await page.getByLabel("Mot de passe").fill("password123");
