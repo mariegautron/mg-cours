@@ -47,6 +47,11 @@ export function JourneyHero({
             prominent
           />
         ) : null}
+        {hero.offerFinish ? (
+          <Link href={`/modules/${moduleId}/finish`} className={SECONDARY}>
+            Ce qu’il reste avant de terminer
+          </Link>
+        ) : null}
         {hero.secondary ? (
           <Link href={hero.secondary.href} className={SECONDARY}>
             {hero.secondary.label}
