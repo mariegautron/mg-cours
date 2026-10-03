@@ -15,6 +15,11 @@ import { Button } from "@/components/ui/button";
 import { parseResourceFiles, resolveImageSrc } from "@/lib/resources/files";
 import { AUDIENCE_LABELS } from "@/lib/resources/kind";
 import { getResource, getResourceModules } from "@/lib/resources/queries";
+import { setResourceQuestions } from "@/app/(app)/questions/link-actions";
+import { LinkPicker } from "@/components/questions/link-picker";
+import { listQuestionLinks } from "@/lib/questions/link-queries";
+import { linkedQuestionsTitle } from "@/lib/questions/links";
+import { listQuestions } from "@/lib/questions/queries";
 
 export async function generateMetadata({
   params,
@@ -26,15 +31,19 @@ export async function generateMetadata({
 
 export default async function ResourcePage({ params }: PageProps<"/resources/[id]">) {
   const { id } = await params;
-  const [resource, modules, activeModules] = await Promise.all([
+  const [resource, modules, activeModules, links, bank] = await Promise.all([
     getResource(id),
     getResourceModules(id),
     listActiveModules(),
+    listQuestionLinks(),
+    listQuestions(),
   ]);
   if (!resource) notFound();
   const files = parseResourceFiles(resource.files);
   const outline = resource.content ? markdownOutline(resource.content, "c") : [];
   const teacherOnly = resource.audience === "teacher";
+  const linkedIds = links.pairs.filter((p) => p.resourceId === id).map((p) => p.questionId);
+  const linkedQuestions = bank.filter((q) => linkedIds.includes(q.id));
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -128,6 +137,54 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
               </Link>
             </p>
           )}
+
+          <section aria-labelledby="linked-questions" className="space-y-3 border-t pt-6">
+            <h2 id="linked-questions" className="text-lg font-medium">
+              {linkedQuestionsTitle(linkedQuestions.length)}
+            </h2>
+            {!links.available ? (
+              <p className="text-muted-foreground text-sm">
+                Les questions liées seront disponibles après la mise à jour de la base de données.
+              </p>
+            ) : (
+              <>
+                {linkedQuestions.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    Aucune question de la banque n’est liée à cette ressource.
+                  </p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {linkedQuestions.map((q) => (
+                      <li key={q.id}>
+                        <Link href={`/questions/${q.id}`} className="underline underline-offset-2">
+                          {q.name}
+                        </Link>
+                        <span className="text-muted-foreground"> — {q.statement.slice(0, 90)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {bank.length ? (
+                  <details className="rounded-md border p-3">
+                    <summary className="cursor-pointer text-sm font-medium">
+                      Lier des questions
+                    </summary>
+                    <div className="mt-3">
+                      <LinkPicker
+                        action={setResourceQuestions.bind(null, id)}
+                        items={bank
+                          .filter((q) => !q.archived_at)
+                          .map((q) => ({ id: q.id, label: q.name, hint: q.category || undefined }))}
+                        selected={linkedIds}
+                        legend="Questions de la banque"
+                        filterLabel="Chercher une question"
+                      />
+                    </div>
+                  </details>
+                ) : null}
+              </>
+            )}
+          </section>
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start" aria-label="Informations">

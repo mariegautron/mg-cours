@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { filterQuestions, readQuestionFilters } from "@/lib/questions/filter";
+import { questionOrigins } from "@/lib/questions/link-queries";
+import { originLabel } from "@/lib/questions/links";
 import { listQuestions } from "@/lib/questions/queries";
 import { QUESTION_TYPES, QUESTION_TYPE_LABELS } from "@/lib/questions/types";
 
@@ -18,7 +20,7 @@ const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 tex
 
 export default async function QuestionsPage({ searchParams }: PageProps<"/questions">) {
   const filters = readQuestionFilters(await searchParams);
-  const all = await listQuestions();
+  const [all, origins] = await Promise.all([listQuestions(), questionOrigins()]);
   const shown = filterQuestions(all, filters);
   const active = all.filter((q) => !q.archived_at);
   const categories = [...new Set(active.map((q) => q.category))].sort((a, b) =>
@@ -163,6 +165,11 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
                   {q.category || "Sans catégorie"}
                   {q.tags.length ? ` · ${q.tags.join(", ")}` : ""}
                 </p>
+                {origins.get(q.id)?.length ? (
+                  <p className="text-muted-foreground text-xs">
+                    {originLabel((origins.get(q.id) ?? []).map((r) => r.title))}
+                  </p>
+                ) : null}
               </Link>
             </li>
           ))}

@@ -9,6 +9,10 @@ import { QuestionView } from "@/components/questions/question-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getQuestion } from "@/lib/questions/queries";
+import { setQuestionResources } from "@/app/(app)/questions/link-actions";
+import { LinkPicker } from "@/components/questions/link-picker";
+import { listQuestionLinks } from "@/lib/questions/link-queries";
+import { listResources } from "@/lib/resources/queries";
 import { QUESTION_TYPE_LABELS, type QuestionType } from "@/lib/questions/types";
 
 export async function generateMetadata({
@@ -21,8 +25,14 @@ export async function generateMetadata({
 export default async function QuestionPage({ params, searchParams }: PageProps<"/questions/[id]">) {
   const { id } = await params;
   const { error } = await searchParams;
-  const q = await getQuestion(id);
+  const [q, links, resources] = await Promise.all([
+    getQuestion(id),
+    listQuestionLinks(),
+    listResources(),
+  ]);
   if (!q) notFound();
+  const linkedIds = links.pairs.filter((p) => p.questionId === id).map((p) => p.resourceId);
+  const linkedResources = resources.filter((r) => linkedIds.includes(r.id));
   const type = q.type as QuestionType;
   const points = Number(q.default_points);
 
@@ -89,6 +99,53 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
           points={points}
           choices={q.choices.map((c) => ({ id: c.id, text: c.text }))}
         />
+      </section>
+
+      <section aria-labelledby="origin" className="space-y-3">
+        <h2 id="origin" className="text-lg font-medium">
+          Ressource d’origine
+        </h2>
+        {!links.available ? (
+          <p className="text-muted-foreground text-sm">
+            La liaison sera disponible après la mise à jour de la base de données.
+          </p>
+        ) : (
+          <>
+            {linkedResources.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Cette question n’est liée à aucune ressource.
+              </p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {linkedResources.map((r) => (
+                  <li key={r.id}>
+                    <Link href={`/resources/${r.id}`} className="underline underline-offset-2">
+                      {r.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <details className="rounded-md border p-3">
+              <summary className="cursor-pointer text-sm font-medium">
+                Lier à des ressources
+              </summary>
+              <div className="mt-3">
+                <LinkPicker
+                  action={setQuestionResources.bind(null, id)}
+                  items={resources.map((r) => ({
+                    id: r.id,
+                    label: r.title,
+                    hint: r.category ?? undefined,
+                  }))}
+                  selected={linkedIds}
+                  legend="Ressources"
+                  filterLabel="Chercher une ressource à lier"
+                />
+              </div>
+            </details>
+          </>
+        )}
       </section>
 
       <section aria-labelledby="answer" className="space-y-3">
