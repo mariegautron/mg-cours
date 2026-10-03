@@ -717,3 +717,12 @@ manual` pour le projet fil rouge M2 (liens de rendu).
   l'intervenante » (`origin = 'custom'`) rattachés à leur journée (simulation, décision PO).
 - **Édition archivée** : PDF `~/Téléchargements/B2 Accessibilité et qualité web.pdf` (fiche
   2024, Bachelor 2 Initial, 16 h) à déposer comme fiche du module archivé à la reprise.
+
+#### Fiches école et attendus (03/10) — écrits sur le cloud
+
+`complements-5` (GP : 10 attendus `origin = 'school'` + présentation aux étudiant·es),
+`complements-6` (B2 : 6 attendus + présentation ; module conservé à 20 h contre 16 h dans
+la fiche) et `complements-7` (M2 : 18 attendus `origin = 'custom'` rattachés à leur journée,
+18 `course_expectation`) appliqués sans erreur. Restent : description étudiante du B2
+(texte complet à fournir), barème Opquast (à structurer côté application), YCODE du M2,
+horaires du B2, 12 appréciations > 250 car., photos, sauvegarde `.mbz` du M2, édition archivée.
