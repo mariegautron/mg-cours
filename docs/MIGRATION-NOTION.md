@@ -742,3 +742,16 @@ Source : export DocuSign (`EnvelopeList_10_03_2026…csv`, 4 enveloppes) et 3 PD
   14/04/2025, **600 € HT (50 €/h)**. À la reprise : taux horaire 50 €/h, 12 h facturées
   (la fiche école annonce 16 h, dont 4 h de projet autonome).
 - GP et B2 2025-26 : aucune convention fournie à ce jour.
+- **GP et B2 2025-26** : une seule convention de prestation de services pour les deux modules
+  (`~/Téléchargements/convention_prestation.pdf`, signée le 07/11/2025) : 13 interventions,
+  48 h, du 05/11/2025 au 05/02/2026, **2 680 € HT = 28 h × 60 € (GP, 1 680 €) + 20 h × 50 €
+  (B2, 1 000 €)** : confirme heures et taux des deux modules. Planning source :
+  `~/Téléchargements/Services par [intervenant].pdf` (export Hyperplanning du 30/10/2025).
+  - GP : 8 séances, mêmes dates et horaires que Notion (13h–16h ou 8h–12h) : conforme.
+  - B2 : séances de 4 h **à 13h00** (13:00–17:00) : 08/01, 15/01, 22/01, 23/01, 05/02/2026
+    (INFO B2 : 08/01, 15/01, 23/01, 05/02 = 16 h, soit la durée de la fiche école ; CYBSEC
+    B2 : 22/01 = 4 h ; total facturé 20 h). **Écart** : la séance 2 est au 12/01 dans
+    l'application (Notion) et au 15/01 dans Hyperplanning. À confirmer par la PO avant
+    d'écrire les horaires du B2.
+  - Public Hyperplanning du GP : « DEVFLSTK MAST1 » (niveau importé : Mastère 1 DEVWEB,
+    DEVLMIOT, DATA).
