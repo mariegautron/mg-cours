@@ -39,7 +39,7 @@ export default async function AttemptPage({
   const answers = (attempt.answers ?? {}) as Record<string, unknown>;
   const manual = (attempt.manual_scores ?? {}) as Record<string, unknown>;
   const grade = gradeAttempt(drawn, answers, manual);
-  const back = `/modules/${id}/assessments/${assessmentId}/quiz`;
+  const back = `/modules/${id}/assessments/${assessmentId}/quiz/links`;
 
   return (
     <div className="max-w-3xl space-y-6">

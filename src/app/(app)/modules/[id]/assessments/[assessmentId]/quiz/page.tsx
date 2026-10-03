@@ -9,21 +9,12 @@ import {
   publishQuiz,
   unpublishQuiz,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
-import { AttemptActions } from "@/components/quiz/attempt-actions";
-import { PrepareLinks } from "@/components/quiz/links-panel";
+import { Pill } from "@/components/dashboard/pill";
 import { QuizConfigForm } from "@/components/quiz/quiz-config-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAssessment } from "@/lib/assessments/queries";
-import { gradingTargets } from "@/lib/assessments/targets";
-import {
-  getQuizByAssessment,
-  getQuizPool,
-  listAttempts,
-  loadBank,
-  passingStudents,
-} from "@/lib/quiz/queries";
-import { attemptScoreLabel, attemptStatusLabel } from "@/lib/quiz/status";
+import { getQuizByAssessment, getQuizPool, listAttempts, loadBank } from "@/lib/quiz/queries";
+import { quizTotalPoints } from "@/lib/quiz/draw";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -118,87 +109,85 @@ export default async function QuizPage({
     hasMakeupQuiz: (family ?? []).some((a) => a.makeup_of_id === origin && a.quiz),
   });
 
-  const { eligible: students, absent } = await passingStudents(
-    assessmentId,
-    gradingTargets(false, assessment.groups).flatMap((t) => t.students),
-  );
   const pool = await getQuizPool(quiz.id);
-  const withAttempt = new Set(attempts.map((a) => a.studentId));
-  const missing = students.filter((s) => !withAttempt.has(s.id)).length;
   const submitted = attempts.filter((a) => a.status === "submitted").length;
   const toReview = attempts.filter((a) => a.status === "submitted" && !a.reviewComplete).length;
-  const closed = quiz.status === "closed";
   const categories = [...new Set(bank.map((q) => q.category).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "fr"),
   );
 
+  const total = quizTotalPoints(quiz.rules);
+  const perStudent = quiz.rules.reduce((n, r) => n + r.count, 0);
+  const card = "bg-card rounded-xl border p-5";
+
   return (
-    <div className="max-w-4xl space-y-8">
-      {heading}
-      {errorBox}
-      <div className="flex flex-wrap items-center gap-3">
-        <Badge variant={quiz.status === "published" ? "secondary" : "outline"}>
-          {STATUS_LABEL[quiz.status]}
-        </Badge>
-        {assessment.makeup_of_id ? <Badge variant="outline">Rattrapage</Badge> : null}
-        {quiz.status === "draft" ? (
-          <form action={publishQuiz.bind(null, id, assessmentId)}>
-            <Button type="submit" size="sm">
-              Publier le QCM
-            </Button>
-          </form>
-        ) : null}
-        {quiz.status === "published" ? (
-          <>
-            <form action={unpublishQuiz.bind(null, id, assessmentId)}>
-              <Button type="submit" size="sm" variant="secondary">
-                Repasser en brouillon
-              </Button>
-            </form>
-            <form action={closeQuiz.bind(null, id, assessmentId)}>
-              <Button type="submit" size="sm" variant="secondary">
-                Clôturer le QCM
-              </Button>
-            </form>
-          </>
-        ) : null}
-      </div>
-      <p className="text-muted-foreground text-sm">
-        {submitted}/{attempts.length} copie{attempts.length > 1 ? "s" : ""} rendue
-        {submitted > 1 ? "s" : ""}
-        {toReview ? ` · ${toReview} à relire` : ""}.
-      </p>
-      {hiddenReason ? (
-        <p role="status" className="rounded-md border p-3 text-sm">
-          <strong>Corrigé caché pour les étudiant·es.</strong> {hiddenReason}
-        </p>
-      ) : (
-        <p role="status" className="rounded-md border p-3 text-sm">
-          Le QCM est clôturé pour tout le monde : les corrigés sont visibles (selon l’option
-          choisie).
-        </p>
-      )}
-
-      {pool ? (
-        <p role="status" className="rounded-md border p-3 text-sm">
-          Ce QCM pioche dans {pool.size} question{pool.size > 1 ? "s" : ""} choisie
-          {pool.size > 1 ? "s" : ""}.{" "}
-          {quiz.status === "draft" && attempts.length === 0 ? (
-            <Link href={`${back}/generate`} className="underline underline-offset-2">
-              Changer les questions
+    <div className="flex max-w-6xl flex-col gap-5 lg:flex-row lg:items-start">
+      <section aria-labelledby="qp" className={`${card} min-w-0 flex-[3_1_0] space-y-4`}>
+        <div className="space-y-1">
+          <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
+            <Link href={back} className="underline-offset-2 hover:underline">
+              {assessment.title}
             </Link>
-          ) : null}
-        </p>
-      ) : quiz.status === "draft" && attempts.length === 0 ? (
-        <p className="text-sm">
-          <Link href={`${back}/generate`} className="underline underline-offset-2">
-            Générer le QCM depuis les questions de tes ressources
-          </Link>
-        </p>
-      ) : null}
+          </nav>
+          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
+          <h1 id="qp" className="font-heading text-3xl font-bold tracking-tight">
+            QCM{quiz ? ` — ${quiz.title}` : ""}
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Évaluation individuelle sous forme de QCM, tirage différent pour chaque personne.
+          </p>
+        </div>
+        {errorBox}
+        <div className="flex flex-wrap items-center gap-2">
+          <Pill
+            tone={quiz.status === "published" ? "ok" : quiz.status === "closed" ? "plain" : "warn"}
+          >
+            {STATUS_LABEL[quiz.status]}
+          </Pill>
+          {assessment.makeup_of_id ? <Pill>Rattrapage</Pill> : null}
+        </div>
+        <dl className="divide-y text-sm">
+          <div className="flex justify-between gap-3 py-2">
+            <dt>Questions tirées par personne</dt>
+            <dd className="font-semibold">
+              {perStudent}
+              {pool ? ` sur ${pool.size}` : bank.length ? ` (banque : ${bank.length})` : ""}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3 py-2">
+            <dt>Durée</dt>
+            <dd className="font-semibold">
+              {quiz.duration_minutes ? `${quiz.duration_minutes} minutes` : "Pas de limite"}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3 py-2">
+            <dt>Tirage</dt>
+            <dd>
+              Individuel
+              {quiz.shuffle_questions || quiz.shuffle_choices
+                ? " : questions et réponses mélangées"
+                : ""}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3 py-2">
+            <dt>Note</dt>
+            <dd>Sur {total} points</dd>
+          </div>
+        </dl>
 
-      <section aria-labelledby="config" className="space-y-3">
-        <h2 id="config" className="text-lg font-medium">
+        {pool ? (
+          <p role="status" className="rounded-md border p-3 text-sm">
+            Ce QCM pioche dans {pool.size} question{pool.size > 1 ? "s" : ""} choisie
+            {pool.size > 1 ? "s" : ""}.{" "}
+            {quiz.status === "draft" && attempts.length === 0 ? (
+              <Link href={`${back}/generate`} className="underline underline-offset-2">
+                Changer les questions
+              </Link>
+            ) : null}
+          </p>
+        ) : null}
+
+        <h2 id="config" className="font-heading pt-1 text-lg font-bold">
           Configuration
         </h2>
         <QuizConfigForm
@@ -208,102 +197,74 @@ export default async function QuizPage({
           bank={bank.map((q) => ({ id: q.id, category: q.category, type: q.type, tags: q.tags }))}
           categories={categories}
         />
-      </section>
-
-      <section aria-labelledby="links" className="space-y-3">
-        <h2 id="links" className="text-lg font-medium">
-          Liens personnels
-        </h2>
-        {students.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {assessment.makeup_of_id
-              ? "Personne n’est inscrit·e à ce rattrapage."
-              : "Aucun·e étudiant·e dans les groupes de cette évaluation."}
+        {hiddenReason ? (
+          <p role="status" className="text-muted-foreground text-sm">
+            <strong className="text-foreground">Corrigé caché pour les étudiant·es.</strong>{" "}
+            {hiddenReason}
           </p>
         ) : (
-          <PrepareLinks moduleId={id} assessmentId={assessmentId} missing={missing} />
+          <p role="status" className="text-muted-foreground text-sm">
+            Le QCM est clôturé pour tout le monde : les corrigés sont visibles (selon l’option
+            choisie).
+          </p>
         )}
-        {students.length > 0 ? (
-          <p className="text-sm">
-            <Link href={`${back}/qr`} className="underline underline-offset-2">
-              Projeter un QR code de classe
-            </Link>{" "}
-            : chaque étudiant·e choisit son nom et passe le QCM, sans lien personnel.
-          </p>
-        ) : null}
-        {absent > 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {absent} absent·e{absent > 1 ? "s" : ""} déclaré·e{absent > 1 ? "s" : ""} sur
-            l’évaluation : pas de lien (une absence excusée se rattrape avec un rattrapage).
-          </p>
-        ) : null}
       </section>
 
-      {attempts.length > 0 ? (
-        <section aria-labelledby="follow" className="space-y-3">
-          <h2 id="follow" className="text-lg font-medium">
-            Suivi
+      <div className="min-w-0 flex-[2_1_0] space-y-4 lg:max-w-md">
+        <section
+          aria-labelledby="pr"
+          className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
+        >
+          <h2 id="pr" className="font-heading text-xl font-bold">
+            Prêt ?
           </h2>
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full text-sm">
-              <caption className="sr-only">Suivi des copies</caption>
-              <thead>
-                <tr className="text-left">
-                  <th scope="col" className="p-2">
-                    Étudiant·e
-                  </th>
-                  <th scope="col" className="p-2">
-                    État
-                  </th>
-                  <th scope="col" className="p-2">
-                    Note
-                  </th>
-                  <th scope="col" className="p-2">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {attempts.map((a) => (
-                  <tr key={a.id} className="border-t align-top">
-                    <th scope="row" className="p-2 text-left font-medium">
-                      {a.name}
-                      {a.timeMultiplier > 1 ? (
-                        <span className="text-muted-foreground block text-xs font-normal">
-                          tiers-temps ×{String(a.timeMultiplier).replace(".", ",")}
-                        </span>
-                      ) : null}
-                      {a.reusedCount > 0 ? (
-                        <span className="text-muted-foreground block text-xs font-normal">
-                          {a.reusedCount} sur {a.questionCount} déjà vue
-                          {a.reusedCount > 1 ? "s" : ""}
-                        </span>
-                      ) : null}
-                    </th>
-                    <td className="p-2">
-                      {attemptStatusLabel(a)}
-                      {a.hasLateAnswers ? (
-                        <span className="text-destructive block text-xs">
-                          Modifications après l’heure limite
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="p-2">{attemptScoreLabel(a)}</td>
-                    <td className="p-2">
-                      <AttemptActions
-                        moduleId={id}
-                        assessmentId={assessmentId}
-                        attempt={a}
-                        quizClosed={closed}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <p className="text-muted-foreground text-sm">
+            Chaque étudiant·e a un lien personnel. Personne ne voit les réponses avant d’avoir
+            envoyé les siennes.
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {submitted}/{attempts.length} copie{attempts.length > 1 ? "s" : ""} rendue
+            {submitted > 1 ? "s" : ""}
+            {toReview ? ` · ${toReview} à relire` : ""}.
+          </p>
+          <div className="flex flex-col gap-2">
+            {quiz.status === "draft" ? (
+              <form action={publishQuiz.bind(null, id, assessmentId)}>
+                <Button type="submit" size="touch" variant="secondary" className="w-full">
+                  Publier le QCM
+                </Button>
+              </form>
+            ) : null}
+            {quiz.status === "published" ? (
+              <>
+                <form action={unpublishQuiz.bind(null, id, assessmentId)}>
+                  <Button type="submit" size="touch" variant="secondary" className="w-full">
+                    Repasser en brouillon
+                  </Button>
+                </form>
+                <form action={closeQuiz.bind(null, id, assessmentId)}>
+                  <Button type="submit" size="touch" variant="secondary" className="w-full">
+                    Clôturer le QCM
+                  </Button>
+                </form>
+              </>
+            ) : null}
+            <Button asChild size="touch">
+              <Link href={`${back}/quiz/links`}>Préparer les liens personnels</Link>
+            </Button>
           </div>
         </section>
-      ) : null}
+        {quiz.status === "draft" && attempts.length === 0 ? (
+          <Button asChild variant="ghost" size="touch">
+            <Link href={`${back}/generate`}>Générer depuis les questions des ressources</Link>
+          </Button>
+        ) : null}
+        <div>
+          <Button asChild variant="ghost" size="touch">
+            <Link href="/questions">← Banque de questions</Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

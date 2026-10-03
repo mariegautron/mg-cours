@@ -55,8 +55,15 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   });
   const [ana, zoe, leo] = setup.studentNames;
   await createAndPublishQuiz(page, setup.assessmentUrl, suffix);
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/qcm-preparer.png", fullPage: true });
+  }
   const links = await prepareLinks(page);
   expect(Object.keys(links)).toHaveLength(3);
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/qcm-liens.png", fullPage: true });
+  }
   expect(page.getByText("Ce lien est personnel : ne le partage pas.").first()).toBeVisible();
 
   // CSV : fonctionne seul (aucune adresse e-mail, aucun envoi).
@@ -151,7 +158,7 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   }
 
   // ── Marie : copie à relire, note partielle, puis relecture ──
-  await page.goto(`${setup.assessmentUrl}/quiz`);
+  await page.goto(`${setup.assessmentUrl}/quiz/links`);
   const row = page.getByRole("row").filter({ hasText: ana });
   await expect(row).toContainText("Rendue : à relire");
   await expect(row).toContainText("2 / 5 (partiel)");
@@ -161,7 +168,7 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
     "—",
   );
 
-  await page.goto(`${setup.assessmentUrl}/quiz`);
+  await page.goto(`${setup.assessmentUrl}/quiz/links`);
   await page.getByRole("link", { name: `Relire la copie de ${ana}` }).click();
   await expect(page).toHaveTitle(/.+/);
   await expect.poll(async () => (await axe(page)).violations.length, { timeout: 20_000 }).toBe(0);
@@ -201,6 +208,11 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   await page.getByRole("button", { name: "Clôturer le QCM" }).click();
   await expect(page.getByText("Clôturé", { exact: true })).toBeVisible();
   await expect(page.getByText("Le QCM est clôturé pour tout le monde")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.goto(`${setup.assessmentUrl}/quiz/results`);
+    await page.waitForLoadState("networkidle");
+    await page.screenshot({ path: "docs/captures/qcm-resultats.png", fullPage: true });
+  }
   const a2 = await studentPage(browser);
   await a2.page.goto(links[ana]);
   await expect(a2.page.getByText("Ta note : 3,5 / 5")).toBeVisible();

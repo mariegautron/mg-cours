@@ -32,6 +32,8 @@ const path = (moduleId: string, assessmentId: string) =>
 
 function refresh(moduleId: string, assessmentId: string) {
   revalidatePath(path(moduleId, assessmentId));
+  revalidatePath(`${path(moduleId, assessmentId)}/links`);
+  revalidatePath(`${path(moduleId, assessmentId)}/results`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}/assessments`);
 }
@@ -200,6 +202,17 @@ export async function unpublishQuiz(moduleId: string, assessmentId: string): Pro
  * puis tout est corrigé. Le corrigé devient visible quand tout le monde a clôturé (rattrapages compris).
  */
 export async function closeQuiz(moduleId: string, assessmentId: string): Promise<void> {
+  await doCloseQuiz(moduleId, assessmentId);
+  redirect(path(moduleId, assessmentId));
+}
+
+/** Depuis « Donner accès au QCM » : clôture puis résultats. */
+export async function closeQuizToResults(moduleId: string, assessmentId: string): Promise<void> {
+  await doCloseQuiz(moduleId, assessmentId);
+  redirect(`${path(moduleId, assessmentId)}/results`);
+}
+
+async function doCloseQuiz(moduleId: string, assessmentId: string): Promise<void> {
   const quiz = await getQuizByAssessment(assessmentId);
   if (!quiz) redirect(path(moduleId, assessmentId));
   const supabase = await createClient();
@@ -216,7 +229,6 @@ export async function closeQuiz(moduleId: string, assessmentId: string): Promise
   for (const a of attempts ?? []) await regradeAttempt(supabase, a.id);
   await supabase.from("quiz").update({ status: "closed" }).eq("id", quiz.id);
   refresh(moduleId, assessmentId);
-  redirect(path(moduleId, assessmentId));
 }
 
 // ── Liens personnels ────────────────────────────────────────────────────────
@@ -503,11 +515,9 @@ async function withAttempt(
   const supabase = await createClient();
   const error = await run(supabase);
   refresh(moduleId, assessmentId);
-  redirect(
-    error
-      ? `${path(moduleId, assessmentId)}?error=${encodeURIComponent(error)}`
-      : path(moduleId, assessmentId),
-  );
+  // Les gestes sur une copie se font depuis « Donner accès au QCM ».
+  const links = `${path(moduleId, assessmentId)}/links`;
+  redirect(error ? `${links}?error=${encodeURIComponent(error)}` : links);
 }
 
 export async function revokeLink(moduleId: string, assessmentId: string, attemptId: string) {

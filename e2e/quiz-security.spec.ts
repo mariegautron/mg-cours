@@ -320,6 +320,7 @@ test("passation : fenêtre, retard, débit, révocation, corrigé jamais avant l
   await page.getByRole("button", { name: "Publier le QCM" }).click();
   const makeupLinks = await prepareLinks(page);
   expect(Object.keys(makeupLinks)).toEqual([zoe]);
+  await page.goto(page.url().replace(/\/quiz.*$/, "/quiz"));
   await page.getByRole("button", { name: "Clôturer le QCM" }).click();
   await expect(page.getByText("Clôturé", { exact: true })).toBeVisible();
   await expect(page.getByText("Le QCM est clôturé pour tout le monde")).toBeVisible();

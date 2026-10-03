@@ -66,6 +66,11 @@ export async function createAndPublishQuiz(page: Page, assessmentUrl: string, su
 
 /** Prépare les liens et renvoie « chemin du lien » par nom d'étudiant·e (le lien n'apparaît qu'une fois). */
 export async function prepareLinks(page: Page): Promise<Record<string, string>> {
+  // Les liens se préparent sur « Donner accès au QCM ».
+  if (!page.url().includes("/quiz/links")) {
+    await page.goto(page.url().replace(/\/quiz.*$/, "/quiz/links"));
+    await page.waitForLoadState("networkidle");
+  }
   await page.getByRole("button", { name: "Préparer les tirages et les liens" }).click();
   const table = page.getByRole("table", { name: "Liens personnels générés" });
   await expect(table).toBeVisible();
