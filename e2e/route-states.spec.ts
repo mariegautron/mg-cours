@@ -17,9 +17,9 @@ test("un module inexistant affiche « page introuvable » avec une issue, sans �
   await login(page);
   await page.goto("/modules/00000000-0000-0000-0000-000000000000");
   await expect(
-    page.getByRole("heading", { name: "Cette page n’existe pas (ou plus)", level: 1 }),
+    page.getByRole("heading", { name: "Cette page n’existe pas", level: 1 }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Retour au tableau de bord" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Aller à Aujourd’hui" })).toBeVisible();
   // La coque reste là : on n'est pas éjectée de l'application.
   await expect(page.getByRole("link", { name: "Modules" }).first()).toBeVisible();
 

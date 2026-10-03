@@ -75,8 +75,8 @@ export default async function BillingPage() {
       {rows.length === 0 ? (
         <EmptyState
           title="Rien à facturer"
-          description="Un module apparaît ici dès qu’il existe. Crée-en un pour préparer sa facturation."
-          actions={[{ label: "Créer un module", href: "/modules/new" }]}
+          description="Un module apparaît ici dès qu’il est terminé."
+          actions={[{ label: "Voir mes modules", href: "/modules" }]}
         />
       ) : (
         <>

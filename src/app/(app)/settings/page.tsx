@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
 import { SchoolRulesForm } from "@/components/settings/school-rules-form";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AccountSection } from "@/components/settings/account-section";
+import { AppearanceForm } from "@/components/settings/appearance-form";
+import { readTextSize, TEXT_SIZE_COOKIE } from "@/lib/settings/text-size";
 import { readSchoolRules } from "@/lib/settings/school-rules";
 import { DeleteSchoolButton } from "@/components/settings/delete-school-button";
 import { ProfileForm } from "@/components/settings/profile-form";
@@ -21,12 +24,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
     listSchoolRules(),
   ]);
 
+  const textSize = readTextSize((await cookies()).get(TEXT_SIZE_COOKIE)?.value);
+
   return (
     <div className="max-w-5xl space-y-10">
       <div>
         <h1 className="text-2xl font-semibold">Réglages</h1>
         <p className="text-muted-foreground">
-          Tes informations administratives et les écoles avec lesquelles tu travailles.
+          Ce que tu règles une fois. Chaque changement s’enregistre et te le dit.
         </p>
       </div>
 
@@ -35,9 +40,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           Apparence
         </h2>
         <p className="text-muted-foreground text-sm">
-          Sombre par défaut, clair si tu préfères : le bouton bascule d’un thème à l’autre.
+          Choisis l’affichage qui te repose les yeux. Chaque choix s’applique tout de suite.
         </p>
-        <ThemeToggle size="touch" />
+        <AppearanceForm textSize={textSize} />
       </section>
 
       <section aria-labelledby="profile">
@@ -142,6 +147,29 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             ))}
           </div>
         )}
+      </section>
+
+      <section aria-labelledby="my-data" className="space-y-2">
+        <h2 id="my-data" className="text-lg font-medium">
+          Mes données
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Tout ce que l’appli garde pour toi : notes, ressources, modules, évaluations, factures (un
+          fichier).
+        </p>
+        <Button asChild variant="outline" size="touch">
+          <a href="/api/export" download>
+            Exporter mes données
+          </a>
+        </Button>
+      </section>
+
+      <section aria-labelledby="account" className="space-y-2">
+        <h2 id="account" className="text-lg font-medium">
+          Compte
+        </h2>
+        <p className="text-muted-foreground text-sm">Connexion et sécurité.</p>
+        <AccountSection />
       </section>
     </div>
   );

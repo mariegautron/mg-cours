@@ -112,7 +112,7 @@ export function CourseList({
       <EmptyState
         compact
         title="Aucune séance"
-        description="Ajoute les dates du planning pour préparer chaque séance : elles alimentent la progression pédagogique et les PDF Moodle."
+        description="Ajoute les dates du planning pour préparer chaque séance."
         actions={[
           { label: "Planifier la première séance", href: `/modules/${moduleId}/courses/new` },
           { label: "Importer le planning", href: `/modules/${moduleId}/schedule` },

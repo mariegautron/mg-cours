@@ -8,6 +8,7 @@ import { parseAppreciationMax, validateEmailTemplate } from "@/lib/settings/scho
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure } from "@/lib/messages";
+import { readTextSize, TEXT_SIZE_COOKIE } from "@/lib/settings/text-size";
 
 export interface SettingsFormState {
   error?: string;
@@ -159,4 +160,39 @@ export async function saveSchoolRules(
   }
   revalidatePath("/settings");
   return { message: "Règles enregistrées.", savedAt: Date.now() };
+}
+
+export interface AccountState {
+  error?: string;
+  saved?: boolean;
+}
+
+/** Taille du texte : un cookie, lu par le layout racine (pas de flash au chargement). */
+export async function saveTextSize(size: string): Promise<void> {
+  const { cookies } = await import("next/headers");
+  (await cookies()).set(TEXT_SIZE_COOKIE, readTextSize(size), {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+}
+
+export async function changePassword(
+  _prev: AccountState,
+  formData: FormData,
+): Promise<AccountState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < 8) return { error: "Le mot de passe doit faire au moins 8 caractères." };
+  if (password !== confirm) return { error: "Les deux mots de passe ne sont pas identiques." };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: failure("changer ton mot de passe", { kept: false }) };
+  return { saved: true };
+}
+
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
 }

@@ -6,6 +6,7 @@ import { ModuleNavProvider } from "@/components/modules/module-nav-context";
 import { RailSync } from "@/components/rail-sync";
 import { GlobalSearch } from "@/components/search/global-search";
 import { NavigationStatusProvider } from "@/components/navigation-status";
+import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -41,6 +42,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               <GlobalSearch variant="icon" hotkey className="md:hidden" />
               <ThemeToggle />
             </header>
+            <OfflineBanner />
             <div
               id="contenu"
               tabIndex={-1}

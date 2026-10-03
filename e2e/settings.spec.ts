@@ -62,3 +62,44 @@ test("enregistre le profil et ajoute une école", async ({ page }) => {
     .analyze();
   expect(axe.violations).toEqual([]);
 });
+
+test("apparence, taille du texte, export et compte", async ({ page }) => {
+  await login(page);
+  await page.goto("/settings");
+  const theme = page.getByRole("radiogroup", { name: "Thème" });
+  await theme.getByText("Clair", { exact: true }).click();
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expect(theme.getByRole("radio", { name: "Clair" })).toBeChecked();
+  await theme.getByText("Sombre", { exact: true }).click();
+  await expect(page.locator("html")).toHaveClass(/dark/);
+
+  const size = page.getByRole("radiogroup", { name: "Taille du texte" });
+  await size.getByText("Plus grand", { exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-text-size", "large");
+  await expect(page.getByRole("status").filter({ hasText: "Taille du texte" })).toBeVisible();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-text-size", "large");
+  await page.getByRole("radiogroup", { name: "Taille du texte" }).getByText("Texte normal").click();
+  await expect(page.locator("html")).toHaveAttribute("data-text-size", "normal");
+
+  const res = await page.request.get("/api/export");
+  expect(res.status()).toBe(200);
+  expect(Object.keys(await res.json())).toContain("teacher_profile");
+
+  await page.getByLabel("Nouveau mot de passe").fill("court");
+  await page.getByLabel("Confirmer le mot de passe").fill("court");
+  await page.getByRole("button", { name: "Changer le mot de passe" }).click();
+  await expect(page.getByText(/au moins 8 caractères/)).toBeVisible();
+
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1100 });
+    await page.screenshot({ path: "docs/captures/reglages.png", fullPage: true });
+  }
+  const axe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  await page.getByRole("button", { name: "Se déconnecter" }).click();
+  await page.waitForURL("**/login");
+});

@@ -361,9 +361,19 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
 
       {resources.length === 0 ? (
         <EmptyState
-          title="Aucune ressource"
-          description="Rien ne correspond à ces filtres, ou ta bibliothèque est encore vide. Crée une ressource ou importe un export Notion, Word ou Markdown."
-          actions={[{ label: "Créer une ressource", href: "/resources/new" }]}
+          title={
+            Object.keys(sp).length ? "Aucune ressource ne correspond" : "Ta bibliothèque est vide"
+          }
+          description={
+            Object.keys(sp).length
+              ? "Enlève un filtre pour en voir plus."
+              : "Crée une ressource ou importe un export Notion, Word ou Markdown."
+          }
+          actions={
+            Object.keys(sp).length
+              ? [{ label: "Effacer les filtres", href: "/resources" }]
+              : [{ label: "Créer une ressource", href: "/resources/new" }]
+          }
         />
       ) : groups ? (
         <div className="space-y-6">

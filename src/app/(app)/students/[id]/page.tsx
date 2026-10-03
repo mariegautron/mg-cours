@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -193,7 +194,11 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
             <Pill tone="warn">Pour toi seule</Pill>
           </div>
           {observations.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune observation.</p>
+            <EmptyState
+              compact
+              title="Rien noté sur cette personne"
+              description="Tu pourras ajouter une observation pendant le cours, en un appui."
+            />
           ) : (
             <ol className="divide-y text-sm">
               {observations.map((o) => (

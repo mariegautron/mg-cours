@@ -175,7 +175,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
       {all.length === 0 ? (
         <EmptyState
           title="Aucun module"
-          description="Un module regroupe les séances, les évaluations et la facture d’un cours. Crée le premier pour préparer ta rentrée."
+          description="Un module regroupe les séances, les évaluations et la facture d’un cours."
           actions={[{ label: "Créer un module", href: "/modules/new" }]}
         />
       ) : shown.length === 0 ? (

@@ -8,13 +8,12 @@ export function RouteNotFound() {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-12 text-center">
       <Mascot mood="thinking" className="size-24" />
-      <h1 className="text-2xl font-semibold">Cette page n’existe pas (ou plus)</h1>
+      <h1 className="text-2xl font-semibold">Cette page n’existe pas</h1>
       <p className="text-muted-foreground">
-        Le lien est peut-être ancien, ou l’élément a été supprimé. Rien n’est perdu : tu peux
-        repartir du tableau de bord.
+        Le lien est peut-être ancien. Reviens à ton tableau de bord.
       </p>
       <Button asChild>
-        <Link href="/dashboard">Retour au tableau de bord</Link>
+        <Link href="/dashboard">Aller à Aujourd’hui</Link>
       </Button>
     </div>
   );

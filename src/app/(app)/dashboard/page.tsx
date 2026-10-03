@@ -156,7 +156,7 @@ export default async function DashboardPage() {
         <EmptyState
           compact
           title="Rien d’urgent"
-          description="Tout est à jour. Profites-en pour préparer la suite."
+          description="Tout est à jour. Profite-en pour préparer le prochain module."
         />
       ) : (
         <ol>

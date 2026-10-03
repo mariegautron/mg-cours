@@ -27,9 +27,9 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
       <h1 className="font-heading text-2xl font-bold">Séances</h1>
       <EmptyState
         title="Aucune séance"
-        description="Ajoute les dates du planning pour préparer chaque séance : elles alimentent la progression pédagogique et les PDF Moodle."
+        description="Ajoute les dates du planning pour préparer chaque séance."
         actions={[
-          { label: "Ajouter une séance", href: `/modules/${id}/courses/new` },
+          { label: "Ajouter les séances", href: `/modules/${id}/courses/new` },
           { label: "Importer le planning", href: `/modules/${id}/schedule` },
         ]}
       />
