@@ -4,7 +4,6 @@ import { FileUp, Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { DownloadButton } from "@/components/download-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,100 +35,130 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
     }).filter(([, v]) => v),
   ).toString();
 
+  const countOf = (c: string) => active.filter((q) => q.category === c).length;
+  const chipHref = (category: string) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries({
+      q: filters.q,
+      type: filters.type,
+      tag: filters.tag,
+      archived: filters.archived ? "1" : "",
+      category,
+    })) {
+      if (v) params.set(k, v);
+    }
+    const qs = params.toString();
+    return qs ? `/questions?${qs}` : "/questions";
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Banque de questions</h1>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Banque de questions</h1>
           <p className="text-muted-foreground">
-            {active.length} question{active.length > 1 ? "s" : ""} pour tes QCM, à toi et non liées
-            à un module.
+            {active.length} question{active.length > 1 ? "s" : ""}, à toi et non liées à un module.
+            Chaque QCM en tire un nombre au hasard pour chaque étudiant·e, dans un ordre différent.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm">
-            <Link href="/questions/new">
-              <Plus aria-hidden />
-              Nouvelle question
-            </Link>
-          </Button>
-          <Button asChild size="sm" variant="secondary">
-            <Link href="/questions/import">
-              <FileUp aria-hidden />
-              Importer (Moodle XML)
-            </Link>
-          </Button>
-          {shown.length > 0 ? (
-            <DownloadButton
-              href={`/api/questions/export${exportQuery ? `?${exportQuery}` : ""}`}
-              kind="xml"
-              doneLabel="Questions exportées."
-            >
-              Exporter (Moodle XML)
-            </DownloadButton>
-          ) : null}
-        </div>
-      </div>
-
-      <form
-        role="search"
-        aria-label="Filtrer les questions"
-        className="flex flex-wrap items-end gap-3"
-      >
-        <div className="space-y-1">
-          <Label htmlFor="q">Recherche</Label>
-          <Input id="q" name="q" type="search" defaultValue={filters.q} className="w-56" />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="category">Catégorie</Label>
-          <select
-            id="category"
-            name="category"
-            defaultValue={filters.category}
-            className={SELECT_CLASS}
-          >
-            <option value="">Toutes</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c || "Sans catégorie"}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="type">Type</Label>
-          <select id="type" name="type" defaultValue={filters.type} className={SELECT_CLASS}>
-            <option value="">Tous</option>
-            {QUESTION_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {QUESTION_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="tag">Tag</Label>
-          <select id="tag" name="tag" defaultValue={filters.tag} className={SELECT_CLASS}>
-            <option value="">Tous</option>
-            {tags.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <label className="flex items-center gap-2 pb-2 text-sm">
-          <input type="checkbox" name="archived" value="1" defaultChecked={filters.archived} />
-          Archivées
-        </label>
-        <Button type="submit" variant="secondary">
-          Filtrer
+        <Button asChild size="touch">
+          <Link href="/questions/new">
+            <Plus aria-hidden />
+            Ajouter une question
+          </Link>
         </Button>
-      </form>
+      </div>
+      <Link
+        href="/resources?family=quizzes"
+        className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+      >
+        ← Bibliothèque, famille QCM
+      </Link>
 
-      <p role="status" className="text-muted-foreground text-sm">
-        {shown.length} question{shown.length > 1 ? "s" : ""} affichée{shown.length > 1 ? "s" : ""}.
-      </p>
+      <nav aria-label="Thèmes" className="flex flex-wrap gap-2">
+        {[
+          { label: `Tous les thèmes · ${active.length}`, value: "" },
+          ...categories.map((c) => ({
+            label: `${c || "Sans catégorie"} · ${countOf(c)}`,
+            value: c,
+          })),
+        ].map((c) => {
+          const current = filters.category === c.value;
+          return (
+            <Link
+              key={c.value || "all"}
+              href={chipHref(c.value)}
+              aria-current={current ? "true" : undefined}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${current ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
+            >
+              {c.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <form role="search" aria-label="Filtrer les questions" className="space-y-2">
+        <input type="hidden" name="category" value={filters.category} />
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-56 flex-1 space-y-1">
+            <Label htmlFor="q">Recherche</Label>
+            <Input id="q" name="q" type="search" defaultValue={filters.q} />
+          </div>
+          <Button type="submit" variant="secondary" size="touch">
+            Filtrer
+          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="ghost" size="touch">
+              <Link href="/questions/import">
+                <FileUp aria-hidden />
+                Importer (Moodle XML)
+              </Link>
+            </Button>
+            {shown.length > 0 ? (
+              <DownloadButton
+                href={`/api/questions/export${exportQuery ? `?${exportQuery}` : ""}`}
+                kind="xml"
+                doneLabel="Questions exportées."
+              >
+                Exporter (Moodle XML)
+              </DownloadButton>
+            ) : null}
+          </div>
+        </div>
+        <details>
+          <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+            Plus de filtres
+          </summary>
+          <div className="flex flex-wrap items-end gap-3 pt-2">
+            <div className="space-y-1">
+              <Label htmlFor="type">Type</Label>
+              <select id="type" name="type" defaultValue={filters.type} className={SELECT_CLASS}>
+                <option value="">Tous</option>
+                {QUESTION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {QUESTION_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="tag">Tag</Label>
+              <select id="tag" name="tag" defaultValue={filters.tag} className={SELECT_CLASS}>
+                <option value="">Tous</option>
+                {tags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 pb-2 text-sm">
+              <input type="checkbox" name="archived" value="1" defaultChecked={filters.archived} />
+              Archivées
+            </label>
+          </div>
+        </details>
+      </form>
 
       {all.length === 0 ? (
         <EmptyState
@@ -143,37 +172,45 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
       ) : shown.length === 0 ? (
         <p className="text-muted-foreground">Aucune question ne correspond à ces filtres.</p>
       ) : (
-        <ul className="space-y-2">
-          {shown.map((q) => (
-            <li key={q.id}>
-              <Link
-                href={`/questions/${q.id}`}
-                className="hover:bg-accent focus-visible:ring-ring block rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium">{q.name}</p>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="secondary">{QUESTION_TYPE_LABELS[q.type]}</Badge>
-                    <Badge variant="outline">
-                      {Number(q.default_points)} pt{Number(q.default_points) > 1 ? "s" : ""}
-                    </Badge>
-                    {q.archived_at ? <Badge variant="outline">Archivée</Badge> : null}
-                  </div>
-                </div>
-                <p className="text-muted-foreground line-clamp-2 text-sm">{q.statement}</p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {q.category || "Sans catégorie"}
-                  {q.tags.length ? ` · ${q.tags.join(", ")}` : ""}
-                </p>
-                {origins.get(q.id)?.length ? (
-                  <p className="text-muted-foreground text-xs">
-                    {originLabel((origins.get(q.id) ?? []).map((r) => r.title))}
-                  </p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <section aria-label="Questions" className="bg-card rounded-xl border p-5">
+          <ul className="divide-y">
+            {shown.map((q) => (
+              <li key={q.id} className="flex flex-wrap items-center gap-3 py-3">
+                <Link
+                  href={`/questions/${q.id}`}
+                  className="focus-visible:ring-ring min-w-0 flex-1 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <strong className="block">{q.name}</strong>
+                  <span className="text-muted-foreground line-clamp-2 block text-sm">
+                    {q.statement}
+                  </span>
+                  <span className="text-muted-foreground block text-sm">
+                    {q.category || "Sans catégorie"} · {QUESTION_TYPE_LABELS[q.type]} ·{" "}
+                    {Number(q.default_points)} pt{Number(q.default_points) > 1 ? "s" : ""}
+                    {q.tags.length ? ` · ${q.tags.join(", ")}` : ""}
+                    {q.archived_at ? " · archivée" : ""}
+                    {origins.get(q.id)?.length
+                      ? ` · ${originLabel((origins.get(q.id) ?? []).map((r) => r.title))}`
+                      : ""}
+                  </span>
+                </Link>
+                <Button asChild variant="ghost" size="touch">
+                  <Link href={`/questions/${q.id}/edit`}>Modifier</Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p role="status" className="text-muted-foreground text-sm">
+              {shown.length} question{shown.length > 1 ? "s" : ""} affichée
+              {shown.length > 1 ? "s" : ""}
+              {shown.length < active.length ? ` sur ${active.length}` : ""}.
+            </p>
+            <Button asChild variant="ghost" size="touch">
+              <Link href="/resources?family=quizzes">Préparer un QCM avec cette banque</Link>
+            </Button>
+          </div>
+        </section>
       )}
     </div>
   );

@@ -111,6 +111,10 @@ test("banque de questions : créer, importer, chercher, aperçu, dupliquer, arch
     `/questions?category=${encodeURIComponent(`Import${suffix}`)}&type=single_choice`,
   );
   await expect(page.getByRole("status")).toContainText("1 question affichée");
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/qcm-banque.png" });
+  }
   expect((await axe(page)).violations).toEqual([]);
 
   // Duplication puis archivage.
