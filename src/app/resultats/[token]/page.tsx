@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Pill } from "@/components/dashboard/pill";
 import { callResult } from "@/lib/result-links/public";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -24,138 +25,158 @@ function Message({ title, children }: { title: string; children?: React.ReactNod
 function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
   const me = sheet.recipients[0];
   const absentExcusedNoNote = sheet.attendance === "absent_excused" && sheet.value === null;
+  const notice = "bg-card rounded-xl border p-4 text-sm";
+  const feedback = [
+    ["Ce qui est réussi", sheet.strengths],
+    ["Pour progresser", sheet.progress],
+    ["Commentaire", sheet.feedback],
+  ].filter(([, text]) => text?.trim());
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+      <section
+        aria-labelledby="res"
+        className="bg-card min-w-0 flex-[3_1_0] space-y-3 rounded-2xl border p-6"
+      >
         <p className="text-muted-foreground text-sm">
-          {[sheet.moduleName, sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null]
+          {[
+            sheet.title,
+            sheet.theme ? `thème ${sheet.theme}` : null,
+            sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null,
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>
-        <h1 className="text-2xl font-semibold">{sheet.title}</h1>
-        <p>
+        <h1 id="res" className="font-heading text-3xl font-bold tracking-tight">
           {sheet.isGroupGrade ? "Note de groupe pour " : "Résultat de "}
-          <strong>{me.name}</strong>
-        </p>
-        {sheet.theme ? (
-          <p className="text-muted-foreground text-sm">Thème du projet : {sheet.theme}</p>
+          {me.name}
+        </h1>
+
+        {sheet.attendance === "absent_unexcused" ? (
+          <p className={notice}>Absence non prévenue : la note est de 0 (règle de l’école).</p>
         ) : null}
-      </header>
-
-      {absentExcusedNoNote ? (
-        <p className="rounded-lg border p-4">
-          Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera celle du
-          rattrapage.
-        </p>
-      ) : (
-        <section aria-labelledby="note" className="rounded-lg border p-4">
-          <h2 id="note" className="text-muted-foreground text-sm font-medium">
-            Ta note
-          </h2>
-          <p className="text-4xl font-semibold">
-            {sheet.value === null ? "—" : fmt(sheet.value)}{" "}
-            <span className="text-muted-foreground text-xl font-normal">
-              / {fmt(sheet.maxScore)}
-            </span>
+        {sheet.attendance === "absent_excused" && sheet.value !== null ? (
+          <p className={notice}>
+            Votre absence est excusée : vous gardez la note du groupe (règle de l’école).
           </p>
-          {sheet.maxScore !== 20 && sheet.valueOn20 !== null ? (
-            <p className="text-muted-foreground text-sm">Soit {fmt(sheet.valueOn20)} / 20.</p>
-          ) : null}
-          {sheet.overflow ? <p className="text-sm">Total avec bonus : {sheet.overflow}</p> : null}
-        </section>
-      )}
+        ) : null}
+        {absentExcusedNoNote ? (
+          <p className={notice}>
+            Votre absence est excusée : vous n’avez pas de note pour cette évaluation. Votre note
+            sera celle du rattrapage.
+          </p>
+        ) : null}
+        {sheet.personalNote ? (
+          <div className={notice}>
+            <h2 className="font-medium">Un mot pour vous</h2>
+            <p className="whitespace-pre-wrap">{sheet.personalNote}</p>
+          </div>
+        ) : null}
 
-      {sheet.attendance === "absent_unexcused" ? (
-        <p className="rounded-lg border p-4">
-          Absence non prévenue : la note est de 0 (règle de l’école).
-        </p>
-      ) : null}
-      {sheet.attendance === "absent_excused" && sheet.value !== null ? (
-        <p className="rounded-lg border p-4">
-          Ton absence est excusée : tu gardes la note du groupe (règle de l’école).
-        </p>
-      ) : null}
-      {sheet.personalNote ? (
-        <section aria-labelledby="mot" className="rounded-lg border p-4">
-          <h2 id="mot" className="font-medium">
-            Un mot pour toi
-          </h2>
-          <p className="whitespace-pre-wrap">{sheet.personalNote}</p>
-        </section>
-      ) : null}
-
-      {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
-        <section aria-labelledby="detail" className="space-y-3">
-          <h2 id="detail" className="text-lg font-medium">
-            Détail par critère
-          </h2>
-          {sheet.axes.some((a) => a.comment) ? (
-            <ul className="space-y-2">
-              {sheet.axes
-                .filter((a) => a.comment)
-                .map((a) => (
-                  <li key={a.label ?? "autres"} className="rounded-md border p-3 text-sm">
-                    <strong>{a.label ?? "Autres critères"}</strong> : {a.comment}
-                  </li>
-                ))}
-            </ul>
-          ) : null}
-          <ul className="divide-y rounded-lg border">
-            {sheet.criteria.map((c, i) => (
-              <li key={c.label + i} className="space-y-1 p-3">
-                <p className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium">
-                    {c.axis ? `${c.axis} · ` : ""}
-                    {c.label}
-                  </span>
-                  <span>
-                    {c.points === null ? "Pas noté" : `${fmt(c.points)} / ${fmt(c.max)}`}
-                    {c.isBonus ? " (bonus)" : ""}
-                  </span>
-                </p>
-                {c.level?.description ? (
-                  <p className="text-muted-foreground text-sm">
-                    Palier obtenu : {c.level.description}
+        {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
+          <div aria-labelledby="detail" role="group">
+            <h2 id="detail" className="sr-only">
+              Détail par critère
+            </h2>
+            {sheet.axes.some((a) => a.comment) ? (
+              <ul className="mb-2 space-y-2">
+                {sheet.axes
+                  .filter((a) => a.comment)
+                  .map((a) => (
+                    <li key={a.label ?? "autres"} className="text-sm">
+                      <strong>{a.label ?? "Autres critères"}</strong> : {a.comment}
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
+            <ul className="divide-y border-y">
+              {sheet.criteria.map((c, i) => (
+                <li key={c.label + i} className="space-y-1 py-3">
+                  <p className="flex flex-wrap items-center justify-between gap-2">
+                    <strong>
+                      {c.axis ? `${c.axis} · ` : ""}
+                      {c.label}
+                    </strong>
+                    <Pill tone={c.points === null ? "warn" : "ok"}>
+                      {c.points === null ? "Pas noté" : `${fmt(c.points)} / ${fmt(c.max)}`}
+                      {c.isBonus ? " (bonus)" : ""}
+                    </Pill>
                   </p>
-                ) : null}
-                {c.comment ? <p className="text-sm whitespace-pre-wrap">{c.comment}</p> : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+                  {c.level?.description ? (
+                    <p className="text-muted-foreground text-sm">
+                      Palier obtenu : {c.level.description}
+                    </p>
+                  ) : null}
+                  {c.comment ? (
+                    <p className="text-muted-foreground text-sm whitespace-pre-wrap">{c.comment}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-      {[
-        ["Tes points forts", sheet.strengths],
-        ["Tes progrès", sheet.progress],
-        ["Commentaire", sheet.feedback],
-      ].map(([heading, text]) =>
-        text?.trim() ? (
-          <section key={heading} className="space-y-1">
-            <h2 className="font-medium">{heading}</h2>
-            <p className="whitespace-pre-wrap">{text}</p>
+        {feedback.length > 0 ? (
+          <div className="space-y-2 pt-1">
+            {feedback.map(([heading, text]) => (
+              <div key={heading}>
+                <h2 className="font-semibold">{heading}</h2>
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">{text}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {sheet.comments.length > 0 ? (
+          <div>
+            <h2 className="font-semibold">Commentaires</h2>
+            <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
+              {sheet.comments.map((c, i) => (
+                <li key={i}>{c}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
+
+      <div className="min-w-0 flex-[2_1_0] space-y-4">
+        {absentExcusedNoNote ? null : (
+          <section
+            aria-labelledby="note"
+            className="bg-primary/10 border-primary/50 rounded-2xl border p-6"
+          >
+            <h2 id="note" className="font-heading mb-1 font-bold">
+              Votre note
+            </h2>
+            <p className="font-heading text-5xl font-bold">
+              {sheet.value === null ? "—" : fmt(sheet.value)}{" "}
+              <span className="text-muted-foreground text-xl font-normal">
+                / {fmt(sheet.maxScore)}
+              </span>
+            </p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              {sheet.isGroupGrade ? "Note de groupe. " : ""}
+              {sheet.maxScore !== 20 && sheet.valueOn20 !== null
+                ? `Soit ${fmt(sheet.valueOn20)} / 20. `
+                : ""}
+              {sheet.overflow ? `Total avec bonus : ${sheet.overflow}.` : ""}
+            </p>
           </section>
-        ) : null,
-      )}
-      {sheet.comments.length > 0 ? (
-        <section className="space-y-1">
-          <h2 className="font-medium">Commentaires</h2>
-          <ul className="list-disc space-y-1 pl-5">
-            {sheet.comments.map((c, i) => (
-              <li key={i}>{c}</li>
-            ))}
-          </ul>
+        )}
+        <section aria-labelledby="dl" className="bg-card space-y-2 rounded-2xl border p-5">
+          <h2 id="dl" className="font-heading font-bold">
+            Garder une trace
+          </h2>
+          <a
+            href={`/resultats/${token}/pdf`}
+            className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-md px-4 font-medium focus-visible:ring-2 focus-visible:outline-none"
+          >
+            Télécharger mon PDF
+          </a>
+          <p className="text-muted-foreground text-sm">
+            Ce lien est personnel : vous ne voyez que votre résultat. Une question sur votre note ?
+            Voyez-la avec votre intervenante au prochain cours.
+          </p>
         </section>
-      ) : null}
-
-      <p>
-        <a
-          href={`/resultats/${token}/pdf`}
-          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-md px-4 font-medium focus-visible:ring-2 focus-visible:outline-none"
-        >
-          Télécharger mon PDF
-        </a>
-      </p>
+      </div>
     </div>
   );
 }
@@ -166,7 +187,16 @@ export default async function PublicResultPage({ params }: PageProps<"/resultats
   const result = await callResult(token);
 
   return (
-    <main id="main" className="mx-auto w-full max-w-3xl flex-1 space-y-6 p-4 sm:p-6">
+    <main id="main" className="mx-auto w-full max-w-5xl flex-1 space-y-5 p-4 sm:p-6">
+      {result.status === "ok" ? (
+        <p className="text-muted-foreground text-sm">
+          <strong className="text-foreground font-heading text-base">Espace étudiant·e</strong>
+          {" › "}
+          {result.sheet.moduleName}
+          {" › "}
+          Mon résultat
+        </p>
+      ) : null}
       {result.status === "ok" ? (
         <Result sheet={result.sheet} token={token} />
       ) : result.status === "throttled" ? (

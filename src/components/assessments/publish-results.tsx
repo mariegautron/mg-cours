@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
+import { Pill } from "@/components/dashboard/pill";
 import { allLinksText, viewStatus, type ViewInfo } from "@/lib/result-links/sheet";
 
 export interface PublishStudent {
@@ -31,6 +32,8 @@ export interface PublishStudent {
   name: string;
   /** Lien actif (date de publication et consultation), `null` si pas publié. */
   link: (ViewInfo & { published_at: string }) | null;
+  /** Note publiée (sur le barème de l'évaluation), `null` sans note. */
+  value?: number | null;
 }
 
 /**
@@ -82,6 +85,7 @@ export function PublishResults({
 
   const lines = students.flatMap((s) => (urls[s.id] ? [{ name: s.name, url: urls[s.id] }] : []));
   const published = students.filter((s) => s.link).length;
+  const viewed = students.filter((s) => s.link?.first_viewed_at).length;
 
   if (!available) {
     return (
@@ -107,7 +111,8 @@ export function PublishResults({
           <p className="text-muted-foreground text-sm">
             Chaque étudiant·e reçoit un lien personnel et ne voit que son propre résultat.{" "}
             {published} lien{published > 1 ? "s" : ""} publié{published > 1 ? "s" : ""} sur{" "}
-            {students.length}.
+            {students.length}
+            {published > 0 ? ` · ${viewed} personne${viewed > 1 ? "s" : ""} l’ont consulté` : ""}.
           </p>
         </div>
         <AlertDialog>
@@ -168,12 +173,36 @@ export function PublishResults({
       <ul className="divide-y text-sm">
         {students.map((s) => (
           <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-            <div>
-              <p className="font-medium">{s.name}</p>
-              <p className="text-muted-foreground">
-                {s.link ? `Publié · ${viewStatus(s.link)}` : "Pas publié"}
-              </p>
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span
+                aria-hidden
+                className="bg-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+              >
+                {s.name
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((w) => w.charAt(0).toUpperCase())
+                  .join("")}
+              </span>
+              <div className="min-w-0">
+                <p className="font-medium">{s.name}</p>
+                <p className="text-muted-foreground">
+                  {s.link ? `Publié · ${viewStatus(s.link)}` : "Pas publié"}
+                </p>
+              </div>
             </div>
+            <strong className="w-12 text-right tabular-nums">
+              {s.value === null || s.value === undefined
+                ? "—"
+                : s.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
+            </strong>
+            {s.link ? (
+              <Pill tone={s.link.first_viewed_at ? "ok" : "warn"}>
+                {s.link.first_viewed_at ? "Consulté" : "Pas encore consulté"}
+              </Pill>
+            ) : (
+              <Pill>Pas publié</Pill>
+            )}
             <div className="flex flex-wrap gap-2">
               {urls[s.id] ? (
                 <Button

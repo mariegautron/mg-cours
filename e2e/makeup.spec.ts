@@ -82,6 +82,9 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(page.getByRole("heading", { name: /^Rattrapages —/, level: 1 })).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: zoe })).toContainText("Note remplacée");
   await expect(page.getByText("0 à rattraper, 1 note remplacée.")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/rattrapages.png", fullPage: true });
+  }
   expect((await axe(page)).violations).toEqual([]);
 
   // Une seule évaluation « notée » côté YNOV : 1 note individuelle, pas 2.

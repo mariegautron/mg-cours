@@ -160,6 +160,9 @@ export default async function ResultsPage({
                   id: studentId,
                   name,
                   link: resultLinks.byStudent.get(studentId) ?? null,
+                  value:
+                    sheets.find((sheet) => sheet.recipients.some((r) => r.id === studentId))
+                      ?.value ?? null,
                 }))}
               />
             ) : null}

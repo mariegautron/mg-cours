@@ -65,8 +65,9 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
   const pub = await anon.newPage();
   await pub.goto(links[ana]);
   await expect(
-    pub.getByRole("heading", { name: new RegExp(`Évaluation ${suffix}`), level: 1 }),
+    pub.getByRole("heading", { name: /^(Résultat de|Note de groupe pour)/, level: 1 }),
   ).toBeVisible({ timeout: 20_000 });
+  await expect(pub.getByText(`Évaluation ${suffix}`).first()).toBeVisible();
   await expect(pub.getByText(ana)).toBeVisible();
   await expect(pub.getByText("3 / 4").first()).toBeVisible();
   await expect(pub.getByText(`Mot pour ${ana.split(" ")[0]}`)).toBeVisible();
@@ -76,6 +77,10 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
   expect(html).not.toContain(`Mot pour ${zoe.split(" ")[0]}`);
   await expect(pub.getByRole("navigation")).toHaveCount(0);
   expect(await pub.locator('meta[name="robots"]').getAttribute("content")).toContain("noindex");
+  if (process.env.CAPTURE) {
+    await pub.setViewportSize({ width: 1280, height: 860 });
+    await pub.screenshot({ path: "docs/captures/resultat-etudiant.png", fullPage: true });
+  }
   const axe = await new AxeBuilder({ page: pub })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
@@ -101,6 +106,9 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
       .filter({ hasText: /Publié|Pas publié/ });
   await expect(row(ana)).toContainText(/Consulté le/);
   await expect(row(zoe)).toContainText("Pas encore consulté");
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/suivi-resultats.png", fullPage: true });
+  }
 
   // Révocation : le lien n'affiche plus rien.
   await row(ana)
