@@ -677,7 +677,6 @@ Refonte des écrans : conventions de stockage et nouvelles tables (migrations ju
   ouvertes portent le même nom (`OUV_TRI02_TriangleOr_SansSpoiler`), à renommer.
 - **Doublon « Livrable »** retiré de `course.assessment_notes` (8 séances GP).
 - **Évaluations** (10) : `exam_kind` (oral / qcm / in_class / files) ; `submission_mode =
-  manual` pour le projet fil rouge M2 (liens de rendu).
+manual` pour le projet fil rouge M2 (liens de rendu).
 - Restent : horaires B2, 12 appréciations > 250 car., fiches YNOV (Rapprochement), photos,
   page Archives « [Ynov] Accessibilité & Qualité Web » (proposition : 11 phrases, grille /80).
-
