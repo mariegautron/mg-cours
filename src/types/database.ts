@@ -1134,6 +1134,7 @@ export type Database = {
           label: string
           modality: string | null
           module_id: string
+          origin: string
           owner_id: string
           position: number
           updated_at: string
@@ -1146,6 +1147,7 @@ export type Database = {
           label: string
           modality?: string | null
           module_id: string
+          origin?: string
           owner_id?: string
           position?: number
           updated_at?: string
@@ -1158,6 +1160,7 @@ export type Database = {
           label?: string
           modality?: string | null
           module_id?: string
+          origin?: string
           owner_id?: string
           position?: number
           updated_at?: string

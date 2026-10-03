@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { extractText } from "unpdf";
 import { z } from "zod";
 
+import { cleanCustomLabel, nextExpectationPosition } from "@/lib/modules/custom-expectations";
 import { draftsFromText, unitsToSkeleton, type ExpectationDraft } from "@/lib/modules/expectations";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
@@ -110,7 +111,14 @@ export async function saveExpectations(
     .from("module_expectation")
     .select("id")
     .eq("module_id", moduleId);
-  const existingIds = new Set((existing ?? []).map((e) => e.id));
+  // Les attendus ajoutés à la main (US-125) ne dépendent pas de la fiche : ni retirés ni réécrits ici.
+  const { data: customRows, error: customError } = await supabase
+    .from("module_expectation")
+    .select("id")
+    .eq("module_id", moduleId)
+    .eq("origin", "custom");
+  const customIds = new Set(customError ? [] : (customRows ?? []).map((e) => e.id));
+  const existingIds = new Set((existing ?? []).map((e) => e.id).filter((id) => !customIds.has(id)));
   const keptIds = new Set(rows.flatMap((r) => (r.id && existingIds.has(r.id) ? [r.id] : [])));
 
   const removed = [...existingIds].filter((id) => !keptIds.has(id));
@@ -179,4 +187,91 @@ export async function proposeSkeleton(moduleId: string): Promise<void> {
 
   revalidatePath(`/modules/${moduleId}`);
   redirect(`/modules/${moduleId}#courses`);
+}
+
+export interface CustomExpectationState {
+  error?: string;
+  saved?: boolean;
+}
+
+const UNAVAILABLE =
+  "L’ajout d’attendus sera disponible après la mise à jour de la base de données.";
+
+async function originAvailable(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { error } = await supabase.from("module_expectation").select("origin").limit(1);
+  return !error;
+}
+
+/** Ajoute un attendu propre au module (« ajouté par l'intervenante »). */
+export async function addCustomExpectation(
+  moduleId: string,
+  _prev: CustomExpectationState,
+  formData: FormData,
+): Promise<CustomExpectationState> {
+  const cleaned = cleanCustomLabel(String(formData.get("label") ?? ""));
+  if (!cleaned.ok) return { error: cleaned.error };
+  const supabase = await createClient();
+  if (!(await originAvailable(supabase))) return { error: UNAVAILABLE };
+  const { data: mod } = await supabase.from("module").select("id").eq("id", moduleId).maybeSingle();
+  if (!mod) return { error: NOT_FOUND.module };
+  const { data: positions } = await supabase
+    .from("module_expectation")
+    .select("position")
+    .eq("module_id", moduleId);
+  const { error } = await supabase.from("module_expectation").insert({
+    module_id: moduleId,
+    kind: "objective",
+    label: cleaned.label,
+    origin: "custom",
+    position: nextExpectationPosition((positions ?? []).map((p) => p.position)),
+  });
+  if (error) return { error: failure("ajouter l’attendu", { kept: true }) };
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
+  revalidatePath(`/modules/${moduleId}/matching`);
+  return { saved: true };
+}
+
+/** Modifie le libellé d'un attendu ajouté à la main (jamais ceux de la fiche). */
+export async function updateCustomExpectation(
+  moduleId: string,
+  expectationId: string,
+  _prev: CustomExpectationState,
+  formData: FormData,
+): Promise<CustomExpectationState> {
+  const cleaned = cleanCustomLabel(String(formData.get("label") ?? ""));
+  if (!cleaned.ok) return { error: cleaned.error };
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("module_expectation")
+    .update({ label: cleaned.label })
+    .eq("id", expectationId)
+    .eq("module_id", moduleId)
+    .eq("origin", "custom")
+    .select("id");
+  if (error) return { error: failure("modifier l’attendu", { kept: true }) };
+  if (!data?.length) return { error: "Cet attendu n’existe plus." };
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
+  revalidatePath(`/modules/${moduleId}/matching`);
+  return { saved: true };
+}
+
+/** Supprime un attendu ajouté à la main (ses liens avec les séances partent avec lui). */
+export async function deleteCustomExpectation(
+  moduleId: string,
+  expectationId: string,
+): Promise<CustomExpectationState> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("module_expectation")
+    .delete()
+    .eq("id", expectationId)
+    .eq("module_id", moduleId)
+    .eq("origin", "custom");
+  if (error) return { error: failure("supprimer l’attendu") };
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
+  revalidatePath(`/modules/${moduleId}/matching`);
+  return { saved: true };
 }

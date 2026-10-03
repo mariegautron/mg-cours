@@ -3,8 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { proposeSkeleton } from "@/app/(app)/modules/[id]/expectations/actions";
+import { CustomExpectations } from "@/components/modules/custom-expectations";
 import { ExpectationsEditor } from "@/components/modules/expectations-editor";
 import { Button } from "@/components/ui/button";
+import { splitExpectations } from "@/lib/modules/custom-expectations";
+import { createClient } from "@/lib/supabase/server";
 import {
   getModule,
   getModuleCourses,
@@ -28,6 +31,12 @@ export default async function ExpectationsPage({
   ]);
   if (!mod) notFound();
 
+  const { school, custom } = splitExpectations(expectations);
+  const supabase = await createClient();
+  const { error: originError } = await supabase
+    .from("module_expectation")
+    .select("origin")
+    .limit(1);
   const doc = documents.find((d) => d.kind === "school_expectations") ?? null;
   const hasUnits = expectations.some((e) => e.kind === "unit");
 
@@ -64,13 +73,19 @@ export default async function ExpectationsPage({
               }
             : null
         }
-        initial={expectations.map((e) => ({
+        initial={school.map((e) => ({
           id: e.id,
           kind: e.kind,
           label: e.label,
           hours: e.hours,
           modality: (e.modality as "FFP" | "TDP" | null) ?? null,
         }))}
+      />
+
+      <CustomExpectations
+        moduleId={mod.id}
+        available={!originError}
+        items={custom.map((e) => ({ id: e.id, label: e.label }))}
       />
 
       {hasUnits ? (

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { CUSTOM_ORIGIN_LABEL, isCustomExpectation } from "@/lib/modules/custom-expectations";
 import {
   coverageState,
   formatCoverage,
@@ -131,6 +132,9 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
                       <Badge variant="secondary">
                         {e.kind === "objective" ? "Objectif" : "Unité"}
                       </Badge>
+                      {isCustomExpectation(e) ? (
+                        <Badge variant="outline">{CUSTOM_ORIGIN_LABEL}</Badge>
+                      ) : null}
                       <Badge variant={state === "covered" ? "secondary" : "outline"}>
                         {STATE_LABELS[state]}
                       </Badge>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { originSummary } from "@/lib/modules/custom-expectations";
 import { othersLabel } from "@/lib/ynov/trame";
 import type { ModuleExpectation } from "@/lib/modules/queries";
 
@@ -44,6 +45,9 @@ export function ExpectationsSummary({
           <p className="text-muted-foreground">
             {objectives.length} objectif{objectives.length > 1 ? "s" : ""} pédagogique
             {objectives.length > 1 ? "s" : ""} · {units.length} unité{units.length > 1 ? "s" : ""}
+            {expectations.some((e) => (e as { origin?: string }).origin === "custom")
+              ? ` · ${originSummary(expectations as { origin?: string }[])}`
+              : ""}
           </p>
           <ul className="list-disc space-y-0.5 pl-5">
             {objectives.slice(0, 3).map((o) => (
