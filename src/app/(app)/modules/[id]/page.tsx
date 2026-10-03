@@ -50,6 +50,10 @@ import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { ficheNotice } from "@/lib/modules/fiche-import";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
 import { ModuleJourney } from "@/components/modules/module-journey";
+import { FinishModuleButton } from "@/components/modules/finish-module-button";
+import { ModuleCompletion } from "@/components/modules/module-completion";
+import { completionLines, moduleStage } from "@/lib/modules/completion";
+import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 import { buildJourney } from "@/lib/modules/journey";
 import { trameMessage, trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
 
@@ -134,6 +138,26 @@ export default async function ModulePage({
     invoice,
     invoiceCtx,
   });
+
+  // États de fin (US-131) : « tout est prêt » et « terminé ».
+  const stage = moduleStage(journey, !!mod.archived_at);
+  const completion =
+    stage === "in_progress"
+      ? null
+      : {
+          lines: completionLines({
+            courses: {
+              total: courses.length,
+              done: courses.filter((c) => c.completion === "done" || c.completion === "partial")
+                .length,
+            },
+            notes: { entered: notes.enteredTotal, required: notes.requirement.total },
+            invoice: invoice?.status ?? null,
+            totalHours: mod.total_hours,
+          }),
+          note: stage === "finished" ? await getRetrospectiveNote(id) : null,
+          askNote: stage === "all_ready" ? await retrospectiveAvailable() : false,
+        };
 
   // Onglet Progression
   const progressionTab = (
@@ -554,6 +578,14 @@ export default async function ModulePage({
           <Badge variant={journey.current ? "outline" : "secondary"}>{journey.badge}</Badge>
         ) : null}
       </div>
+
+      {completion && stage !== "in_progress" ? (
+        <ModuleCompletion stage={stage} lines={completion.lines} note={completion.note}>
+          {stage === "all_ready" ? (
+            <FinishModuleButton id={mod.id} name={mod.name} askNote={completion.askNote} />
+          ) : null}
+        </ModuleCompletion>
+      ) : null}
 
       <ModuleJourney journey={journey} />
 

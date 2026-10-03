@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { openTab } from "./helpers";
 
@@ -24,6 +25,12 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
   await openTab(page, /Administratif/);
   await page.getByRole("button", { name: "Archiver le module" }).click();
   await expect(page.getByRole("button", { name: "Restaurer le module" })).toBeVisible();
+  // US-131 : état « Module terminé » de la page.
+  await expect(page.getByRole("heading", { name: "Module terminé", level: 2 })).toBeVisible();
+  const done = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(done.violations).toEqual([]);
 
   await page.goto("/modules");
   await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
