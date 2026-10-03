@@ -9,6 +9,7 @@ import {
   COPY_STATE_LABELS,
   filterRows,
   progressNote,
+  submissionLabel,
   type CopyState,
   type Overview,
   type OverviewFilter,
@@ -25,6 +26,7 @@ const FILTER_LABELS: Record<OverviewFilter, string> = {
   all: "Tous",
   todo: "À corriger",
   done: "Corrigés",
+  missing: "Non rendus",
 };
 
 const AVATAR_TONES = ["bg-mint", "bg-sun", "bg-sky", "bg-coral", "bg-primary"];
@@ -70,7 +72,12 @@ export function CorrectionOverview({
     all: overview.total,
     todo: overview.todo + overview.inProgress,
     done: overview.done,
+    missing: overview.rows.filter((r) => r.received === false).length,
   };
+  const tracked = overview.rows.some((r) => r.received !== undefined);
+  const filters = (Object.keys(FILTER_LABELS) as OverviewFilter[]).filter(
+    (f) => f !== "missing" || tracked,
+  );
   const { next, total } = overview;
   const plural = noun === "groupe" ? "groupes" : "étudiant·es";
   const withContext = overview.rows.some((r) => r.context);
@@ -90,7 +97,7 @@ export function CorrectionOverview({
                 : ""}
             </p>
             <div role="group" aria-label="Filtrer les copies" className="flex flex-wrap gap-2">
-              {(Object.keys(FILTER_LABELS) as OverviewFilter[]).map((f) => (
+              {filters.map((f) => (
                 <Button
                   key={f}
                   type="button"
@@ -139,6 +146,11 @@ export function CorrectionOverview({
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Personnes
                     </th>
+                    {tracked ? (
+                      <th scope="col" className="py-2 pr-3 font-medium">
+                        Rendu
+                      </th>
+                    ) : null}
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Statut
                     </th>
@@ -187,6 +199,14 @@ export function CorrectionOverview({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
+                      {tracked ? (
+                        <td className="py-1 pr-3">
+                          {(() => {
+                            const sub = submissionLabel(r);
+                            return sub ? <Pill tone={sub.tone}>{sub.label}</Pill> : "—";
+                          })()}
+                        </td>
+                      ) : null}
                       <td className="py-1 pr-3">
                         <Pill tone={TONE[r.state]}>
                           {COPY_STATE_LABELS[r.state]}
@@ -240,6 +260,30 @@ export function CorrectionOverview({
               </h3>
             )}
           </section>
+
+          {tracked && counts.missing > 0 ? (
+            <section aria-labelledby="ab" className="bg-card rounded-xl border p-5">
+              <h3 id="ab" className="mb-2 text-lg font-semibold">
+                Non rendus
+              </h3>
+              <ul className="text-muted-foreground space-y-1 text-sm">
+                {overview.rows
+                  .filter((r) => r.received === false)
+                  .map((r) => (
+                    <li key={r.id}>
+                      <strong className="text-foreground">{r.title}</strong> :{" "}
+                      {submissionLabel(r)
+                        ?.label.replace("Non rendu, ", "")
+                        .replace("Non rendu", "rien reçu")}
+                    </li>
+                  ))}
+              </ul>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Excusé·e : un rattrapage est possible. Non prévenu·e : la note est 0. Un rendu reçu
+                autrement ? Ouvre la personne et ajoute ses fichiers ou un lien.
+              </p>
+            </section>
+          ) : null}
 
           {compareHref ? (
             <section aria-labelledby="crit" className="bg-card rounded-xl border p-5">

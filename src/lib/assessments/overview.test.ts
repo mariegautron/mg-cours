@@ -4,6 +4,7 @@ import {
   copyState,
   correctionOverview,
   filterRows,
+  submissionLabel,
   progressNote,
   scoredCount,
   type OverviewItem,
@@ -101,5 +102,26 @@ describe("filterRows", () => {
     expect(filterRows(o.rows, "all")).toHaveLength(3);
     expect(filterRows(o.rows, "todo").map((r) => r.id)).toEqual(["b", "c"]);
     expect(filterRows(o.rows, "done").map((r) => r.id)).toEqual(["a"]);
+  });
+});
+
+describe("rendus (évaluation individuelle)", () => {
+  const rows = correctionOverview([
+    { id: "a", title: "Ana", received: true },
+    { id: "b", title: "Ben", received: false, attendance: "absent_excused" },
+    { id: "c", title: "Cléo", received: false, attendance: "absent_unexcused" },
+    { id: "d", title: "Dan", received: false },
+  ]).rows;
+  it("filtre les non rendus", () => {
+    expect(filterRows(rows, "missing").map((r) => r.id)).toEqual(["b", "c", "d"]);
+  });
+  it("dit le rendu en mots, avec l'absence", () => {
+    expect(rows.map((r) => submissionLabel(r)?.label)).toEqual([
+      "Rendu reçu",
+      "Non rendu, excusé·e",
+      "Non rendu, non prévenu·e",
+      "Non rendu",
+    ]);
+    expect(submissionLabel({ received: undefined, attendance: null })).toBeNull();
   });
 });

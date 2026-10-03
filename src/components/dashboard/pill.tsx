@@ -6,6 +6,7 @@ const TONES = {
   warn: "border-sun/45 bg-sun/12 text-sun",
   key: "border-primary/55 bg-primary/10 text-primary",
   wip: "border-sky/45 bg-sky/12 text-sky",
+  lock: "border-coral/45 bg-coral/12 text-coral",
 } as const;
 
 /** Pastille de la maquette : texte toujours écrit en mots, la couleur n'est qu'un renfort. */

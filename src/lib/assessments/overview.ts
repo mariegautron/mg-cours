@@ -26,6 +26,10 @@ export interface OverviewItem {
   context?: string | null;
   members?: string[];
   grade?: OverviewGrade | null;
+  /** Rendu déposé (au moins un fichier ou lien) ; `undefined` si les rendus ne sont pas suivis. */
+  received?: boolean;
+  /** Présence enregistrée sur la copie (absence excusée / non prévenue). */
+  attendance?: string | null;
 }
 
 export interface OverviewRow extends OverviewItem {
@@ -122,12 +126,13 @@ export function correctionOverview(
   };
 }
 
-export type OverviewFilter = "all" | "todo" | "done";
+export type OverviewFilter = "all" | "todo" | "done" | "missing";
 
 /** Filtre de la liste : « À corriger » regroupe à corriger et en cours. */
 export function filterRows(rows: readonly OverviewRow[], filter: OverviewFilter): OverviewRow[] {
   if (filter === "all") return [...rows];
   if (filter === "done") return rows.filter((r) => r.state === "done");
+  if (filter === "missing") return rows.filter((r) => r.received === false);
   return rows.filter((r) => r.state !== "done");
 }
 
@@ -135,4 +140,17 @@ export function filterRows(rows: readonly OverviewRow[], filter: OverviewFilter)
 export function progressNote(row: Pick<OverviewRow, "scored" | "total">): string {
   if (row.scored === null || row.total === null) return "";
   return `${row.scored} critère${row.scored > 1 ? "s" : ""} sur ${row.total} noté${row.scored > 1 ? "s" : ""}.`;
+}
+
+/** « Non rendu, excusé·e » / « Non rendu, non prévenu·e » / « Non rendu » / « Rendu reçu » ; `null` si non suivi. */
+export function submissionLabel(
+  row: Pick<OverviewRow, "received" | "attendance">,
+): { label: string; tone: "ok" | "warn" | "lock" } | null {
+  if (row.received === undefined) return null;
+  if (row.received) return { label: "Rendu reçu", tone: "ok" };
+  if (row.attendance === "absent_excused") return { label: "Non rendu, excusé·e", tone: "warn" };
+  if (row.attendance === "absent_unexcused") {
+    return { label: "Non rendu, non prévenu·e", tone: "lock" };
+  }
+  return { label: "Non rendu", tone: "warn" };
 }

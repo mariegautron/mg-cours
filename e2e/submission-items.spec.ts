@@ -57,6 +57,17 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
   await expect(copyLink).toHaveAttribute("rel", /noopener/);
   await expect(copy.getByRole("link", { name: /Ouvrir rendu-ana\.pdf/ })).toBeVisible();
 
+  // IndVue : le rendu apparaît dans la vue d'ensemble (« Rendu reçu »), filtre « Non rendus ».
+  await page.goto(setup.assessmentUrl);
+  await page.waitForLoadState("networkidle");
+  const overview = page.getByRole("region", { name: "Où j’en suis" });
+  await expect(overview.getByText("Rendu reçu")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await overview.screenshot({ path: "docs/captures/evaluation-individuelle-vue.png" });
+  }
+  await overview.getByRole("button", { name: /Non rendus · 0/ }).click();
+  await expect(overview.getByText("Aucune copie dans cette liste.")).toBeVisible();
+
   // Suppression confirmée (page de l'évaluation).
   await page.goto(setup.assessmentUrl);
   await card.getByRole("button", { name: /Supprimer Dépôt Git/ }).click();

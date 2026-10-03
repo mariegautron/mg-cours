@@ -161,6 +161,12 @@ export default async function AssessmentPage({
         context: assessment.is_group_grade ? item.theme : section.title,
         members: item.members?.map((m) => m.name),
         grade: item.grade ?? null,
+        // Rendus suivis seulement pour une évaluation individuelle dont les rendus sont lisibles.
+        received:
+          !assessment.is_group_grade && submissionData.available
+            ? (item.submissions?.length ?? 0) > 0
+            : undefined,
+        attendance: item.grade?.attendance ?? null,
       })),
     ),
     (assessment.grading_grid?.criteria ?? []).map((c) => c.id),
@@ -610,6 +616,25 @@ export default async function AssessmentPage({
         <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
       ) : (
         <>
+          {!assessment.is_group_grade ? (
+            <section
+              aria-labelledby="dday"
+              className="bg-primary/10 border-primary/40 space-y-2 rounded-xl border p-5"
+            >
+              <h2 id="dday" className="text-lg font-semibold">
+                Le jour J
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Après l’épreuve, tu corriges copie par copie. Les absences se règlent à part :
+                excusé·e, un rattrapage est possible ; non prévenu·e, la note est 0.
+              </p>
+              <Button asChild size="touch">
+                <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
+                  Corriger les rendus
+                </Link>
+              </Button>
+            </section>
+          ) : null}
           <CorrectionOverview
             overview={overview}
             maxScore={assessment.maxScore}
