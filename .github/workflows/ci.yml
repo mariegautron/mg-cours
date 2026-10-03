@@ -50,6 +50,13 @@ jobs:
       - name: Supabase local
         run: pnpm exec supabase start # applique migrations + seed
 
+      - name: Clé service_role locale (stack de démo, jamais un secret)
+        run: |
+          pnpm exec supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          key="$(grep '^SERVICE_ROLE_KEY=' "$RUNNER_TEMP/supabase.env" | cut -d= -f2- | tr -d '"')"
+          echo "::add-mask::$key"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$key" >> "$GITHUB_ENV"
+
       - name: E2E + accessibilité (axe)
         run: pnpm test:e2e
         env:
