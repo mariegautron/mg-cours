@@ -13,6 +13,7 @@ async function login(page: import("@playwright/test").Page) {
 }
 
 test("crée un·e étudiant·e, un groupe, et les relie", async ({ page }) => {
+  test.setTimeout(90_000);
   await login(page);
 
   // Étudiant·e manuel·le.

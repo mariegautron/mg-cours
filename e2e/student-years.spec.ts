@@ -43,7 +43,7 @@ test("US-80b : promotion par année scolaire, import d'une année pour un·e ét
   const promotions = page.getByRole("region", { name: "Promotions" });
   await expect(promotions.getByText(older)).toBeVisible();
   await expect(promotions.getByText(recent)).toBeVisible();
-  await expect(page.getByText(`${recent} · 2025-26`).first()).toBeVisible();
+  await expect(page.getByText(`${recent} · promotion 2025-26`).first()).toBeVisible();
   const studentUrl = page.url();
 
   // Import 2026-27 : la promotion s'ajoute à l'étudiant·e déjà en base, une nouvelle personne est créée.
@@ -69,7 +69,7 @@ test("US-80b : promotion par année scolaire, import d'une année pour un·e ét
   await page.goto(studentUrl);
   const all = page.getByRole("region", { name: "Promotions" });
   for (const promo of [older, recent, imported]) await expect(all.getByText(promo)).toBeVisible();
-  await expect(page.getByText(`${imported} · 2026-27`).first()).toBeVisible();
+  await expect(page.getByText(`${imported} · promotion 2026-27`).first()).toBeVisible();
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

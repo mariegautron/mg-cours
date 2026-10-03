@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
+import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { observationSummaries, type ObservationSummary } from "@/lib/notebook/queries";
 import { readView } from "@/lib/students/indicators";
 import { loadStudentIndicators } from "@/lib/students/indicators-queries";
 import { plural } from "@/lib/plural";
@@ -40,48 +42,51 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
   const year = Number.isInteger(yearParam) ? yearParam : undefined;
 
   const view = readView(sp.view);
-  const [students, scholarGroups, modules, years, indicators] = await Promise.all([
+  const [students, scholarGroups, modules, years, indicators, notes] = await Promise.all([
     listStudents({ q, scholarGroup, moduleId, year }),
     listScholarGroups(year),
     listModules(),
     listStudentYears(),
     loadStudentIndicators().catch(() => new Map()),
+    observationSummaries().catch(() => new Map<string, ObservationSummary>()),
   ]);
   const viewHref = (v: string) => {
     const params = new URLSearchParams();
     for (const [k, val] of Object.entries(sp))
       if (k !== "view" && typeof val === "string" && val) params.set(k, val);
-    if (v !== "tiles") params.set("view", v);
+    if (v !== "list") params.set("view", v);
     const qs = params.toString();
     return qs ? `/students?${qs}` : "/students";
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Étudiant·es</h1>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Étudiant·es</h1>
           <p className="text-muted-foreground">
-            {plural(students.length, "étudiant·e", "étudiant·es")}.
+            {plural(students.length, "personne", "personnes")}
+            {scholarGroup ? ` dans ${scholarGroup}` : ""}. Un clic ouvre la fiche : notes,
+            observations, groupes.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="secondary">
+          <Button asChild variant="ghost" size="touch">
             <Link href="/students/photos">
               <Camera aria-hidden />
-              Importer les photos
+              Importer le trombinoscope
             </Link>
           </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="ghost" size="touch">
             <Link href="/students/import">
               <Upload aria-hidden />
-              Importer
+              Importer une liste
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild size="touch">
             <Link href="/students/new">
               <Plus aria-hidden />
-              Nouvel·le étudiant·e
+              Ajouter
             </Link>
           </Button>
         </div>
@@ -140,7 +145,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             ))}
           </select>
         </div>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" size="touch">
           Filtrer
         </Button>
       </form>
@@ -148,8 +153,8 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
       <nav aria-label="Affichage de la liste" className="flex gap-2">
         {(
           [
-            ["tiles", "Tuiles"],
             ["list", "Liste"],
+            ["tiles", "Trombinoscope"],
           ] as const
         ).map(([v, label]) => (
           <Link
@@ -173,26 +178,40 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
           ]}
         />
       ) : view === "list" ? (
-        <ul className="divide-y rounded-lg border">
-          {students.map((s) => {
-            const promo = promotionToShow(s.years, year);
-            return (
-              <li key={s.id}>
-                <Link
-                  href={`/students/${s.id}`}
-                  className="hover:bg-accent focus-visible:ring-ring flex min-h-14 flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 focus-visible:ring-2 focus-visible:outline-none"
-                >
-                  <StudentPhoto student={s} size="sm" />
-                  <span className="min-w-40 flex-1 font-medium">
-                    {s.last_name} {s.first_name}
-                  </span>
-                  <span className="text-muted-foreground text-sm">{promo?.group ?? ""}</span>
-                  <IndicatorBadges items={indicators.get(s.id) ?? []} />
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <section aria-label="Liste des étudiant·es" className="bg-card rounded-xl border p-2">
+          <ul className="divide-y">
+            {students.map((s) => {
+              const promo = promotionToShow(s.years, year);
+              const note = notes.get(s.id);
+              return (
+                <li key={s.id}>
+                  <Link
+                    href={`/students/${s.id}`}
+                    className="hover:bg-accent focus-visible:ring-ring flex min-h-14 flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <StudentPhoto student={s} size="sm" />
+                    <h2 className="min-w-40 flex-1 text-base font-semibold">
+                      {s.first_name} {s.last_name}
+                    </h2>
+                    <span className="text-muted-foreground text-sm">{promo?.group ?? ""}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {note ? `${note.count} note${note.count > 1 ? "s" : ""}` : "aucune note"}
+                    </span>
+                    {note ? (
+                      <span className="text-muted-foreground text-sm">
+                        Dernière note : {OBSERVATION_TAG_LABELS[note.lastTag].toLowerCase()}
+                      </span>
+                    ) : null}
+                    <IndicatorBadges items={indicators.get(s.id) ?? []} />
+                    <span aria-hidden className="text-muted-foreground">
+                      ›
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {students.map((s) => (

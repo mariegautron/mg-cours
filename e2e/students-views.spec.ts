@@ -30,6 +30,10 @@ test("étudiant·es : tuiles et liste, fiche avec notes, présences, appréciati
   ]) {
     await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
   }
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/etudiant-fiche.png", fullPage: true });
+  }
   const fiche = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
@@ -37,9 +41,13 @@ test("étudiant·es : tuiles et liste, fiche avec notes, présences, appréciati
 
   await page.goto("/students");
   const views = page.getByRole("navigation", { name: "Affichage de la liste" });
-  await expect(views.getByRole("link", { name: "Tuiles" })).toHaveAttribute("aria-current", "page");
-  await views.getByRole("link", { name: "Liste" }).click();
-  await page.waitForURL("**/students?view=list");
+  await expect(views.getByRole("link", { name: "Liste" })).toHaveAttribute("aria-current", "page");
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/etudiants-liste.png" });
+  }
+  await views.getByRole("link", { name: "Trombinoscope" }).click();
+  await page.waitForURL("**/students?view=tiles");
   await expect(page.getByRole("link", { name: new RegExp(`Vue${suffix}`) })).toBeVisible();
   const list = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

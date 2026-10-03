@@ -58,9 +58,9 @@ describe("pendingByStudent", () => {
 });
 
 describe("readView", () => {
-  it("tuiles par défaut", () => {
-    expect(readView("list")).toBe("list");
-    expect(readView("x")).toBe("tiles");
-    expect(readView(undefined)).toBe("tiles");
+  it("liste par défaut, trombinoscope sur demande", () => {
+    expect(readView("tiles")).toBe("tiles");
+    expect(readView("x")).toBe("list");
+    expect(readView(undefined)).toBe("list");
   });
 });

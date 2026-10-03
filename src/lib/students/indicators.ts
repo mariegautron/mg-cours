@@ -92,5 +92,5 @@ export function pendingByStudent(
 export type StudentView = "tiles" | "list";
 
 export function readView(value: unknown): StudentView {
-  return value === "list" ? "list" : "tiles";
+  return value === "tiles" ? "tiles" : "list";
 }

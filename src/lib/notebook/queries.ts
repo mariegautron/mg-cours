@@ -64,3 +64,25 @@ export async function listModuleObservations(moduleId: string): Promise<ModuleOb
     .order("created_at", { ascending: false });
   return (data ?? []) as unknown as ModuleObservation[];
 }
+
+export interface ObservationSummary {
+  count: number;
+  /** Étiquette de la dernière observation. */
+  lastTag: ObservationTag;
+}
+
+/** Nombre d'observations et dernière étiquette de chaque étudiant·e (liste des étudiant·es). */
+export async function observationSummaries(): Promise<Map<string, ObservationSummary>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("student_observation")
+    .select("student_id, tag, created_at")
+    .order("created_at", { ascending: false });
+  const out = new Map<string, ObservationSummary>();
+  for (const row of data ?? []) {
+    const known = out.get(row.student_id);
+    if (known) known.count += 1;
+    else out.set(row.student_id, { count: 1, lastTag: row.tag });
+  }
+  return out;
+}
