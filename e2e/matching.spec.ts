@@ -58,7 +58,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
     "3 sans ressource",
   );
 
-  // Proposition par mots-clés, avec le type ; « Retenir » couvre l'attendu.
+  // Proposition par mots-clés, avec le type ; « Associer à cet attendu » couvre l'attendu.
   const first = page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) });
   await expect(first.getByRole("link", { name: title })).toBeVisible();
   await expect(
@@ -67,8 +67,8 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await expect(
     first.getByRole("listitem").filter({ hasText: title }).getByText("Pas encore utilisée"),
   ).toBeVisible();
-  await first.getByRole("button", { name: `Retenir ${title}` }).click();
-  await expect(first.getByText("Retenue", { exact: true })).toBeVisible();
+  await first.getByRole("button", { name: `Associer ${title} à cet attendu` }).click();
+  await expect(first.getByText("Associée", { exact: true })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "1 couvert" })).toBeVisible();
 
   // « À construire » crée une ressource à construire, retenue et rapprochée de l'attendu.
@@ -88,9 +88,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await expect(
     page.getByRole("status").filter({ hasText: "2 couverts, 1 à construire" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /Maîtriser la fiscalité.*À construire/ }),
-  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Maîtriser la fiscalité.*À voir/ })).toBeVisible();
 
   // Filtre « Sans ressource » : plus aucun attendu dans ce cas ; « À construire » en garde un.
   await page.getByRole("link", { name: /^À construire · 1/ }).click();
@@ -101,4 +99,27 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
+
+  // « Ce n'est pas la bonne » : la ressource n'est plus proposée pour cet attendu, même après rechargement.
+  await page.getByRole("link", { name: /^Tous · 3/ }).click();
+  await page.getByRole("link", { name: /Réaliser un audit/ }).click();
+  await page.waitForLoadState("networkidle");
+  const audit = page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) });
+  await audit.getByRole("button", { name: `Retirer ${title}` }).click();
+  await expect(
+    audit.getByRole("button", { name: `Associer ${title} à cet attendu` }),
+  ).toBeVisible();
+  await audit.getByText("Aperçu sans quitter l’écran").first().click();
+  await audit.getByRole("button", { name: `Ce n’est pas la bonne : ${title}` }).click();
+  await expect(audit.getByRole("link", { name: title })).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) }).getByRole("link", {
+      name: title,
+    }),
+  ).toHaveCount(0);
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/rapprochement-v2.png", fullPage: true });
+  }
 });

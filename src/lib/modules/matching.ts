@@ -63,9 +63,9 @@ export type MatchField = "tag" | "title" | "description" | "content";
 export type MatchLevel = "strong" | "medium" | "weak";
 
 export const MATCH_LEVEL_LABELS: Record<MatchLevel, string> = {
-  strong: "Correspondance forte",
-  medium: "Correspondance moyenne",
-  weak: "Correspondance faible",
+  strong: "Convient bien",
+  medium: "Convient en partie",
+  weak: "À vérifier",
 };
 
 const FIELD_LABELS: Record<MatchField, string> = {

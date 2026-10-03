@@ -4,7 +4,11 @@ import { useActionState, useDeferredValue, useEffect, useMemo, useRef, useState 
 import Link from "next/link";
 
 import { ActionError } from "@/components/action-error";
-import type { ResourceFormState } from "@/app/(app)/resources/actions";
+import {
+  getResourceSeed,
+  listSeedChoices,
+  type ResourceFormState,
+} from "@/app/(app)/resources/actions";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -62,6 +66,9 @@ export function ResourceForm({
   const [audience, setAudience] = useState<ResourceAudience>(resource?.audience ?? "students");
   const [audienceTouched, setAudienceTouched] = useState(!!resource);
   const [content, setContent] = useState(resource?.content ?? "");
+  const [kindValue, setKindValue] = useState<string>(resource?.kind ?? "");
+  const [seeds, setSeeds] = useState<{ id: string; title: string }[] | null>(null);
+  const [importNote, setImportNote] = useState("");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [dirty, setDirty] = useState(false);
   useUnsavedChangesGuard(dirty && !pending);
@@ -188,6 +195,48 @@ export function ResourceForm({
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <section className="min-w-0 flex-[3_1_0] space-y-3">
+          <div
+            role="radiogroup"
+            aria-label="C’est un…"
+            className="flex flex-wrap items-center gap-2"
+          >
+            <span className="text-muted-foreground text-sm">C’est un</span>
+            {(
+              [
+                ["course", "Cours"],
+                ["workshop", "Atelier"],
+                ["project", "Évaluation"],
+                ["question_bank", "QCM"],
+              ] as const
+            ).map(([value, label]) => (
+              <label
+                key={value}
+                className={cn(
+                  "has-[:focus-visible]:ring-ring flex min-h-11 cursor-pointer items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold has-[:focus-visible]:ring-2",
+                  kindValue === value
+                    ? "bg-primary text-primary-foreground border-transparent"
+                    : "bg-muted/40",
+                )}
+              >
+                <input
+                  type="radio"
+                  name="kind-chip"
+                  value={value}
+                  checked={kindValue === value}
+                  onChange={() => {
+                    setKindValue(value);
+                    onKindChange(value);
+                    setDirty(true);
+                  }}
+                  className="sr-only"
+                />
+                {label}
+              </label>
+            ))}
+            <span className="text-muted-foreground text-xs">
+              Plus de choix (corrigé, modèle, notes…) dans « Classement ».
+            </span>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="title">Titre</Label>
             <Input
@@ -364,6 +413,82 @@ export function ResourceForm({
               )}
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="focus-within:ring-ring bg-secondary text-secondary-foreground inline-flex min-h-11 cursor-pointer items-center rounded-xl px-4 text-sm font-semibold focus-within:ring-2">
+              Importer un fichier
+              <input
+                type="file"
+                accept=".md,.markdown,.txt,text/markdown,text/plain"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const text = await file.text();
+                  const cleaned = cleanPaste(text);
+                  setContent(cleaned);
+                  const heading = /^#\s+(.+)$/m.exec(cleaned)?.[1];
+                  const input = document.getElementById("title") as HTMLInputElement | null;
+                  if (input && !input.value.trim()) {
+                    const name = heading ?? file.name.replace(/\.[^.]+$/, "");
+                    input.value = name;
+                    setTitle(name);
+                  }
+                  setDirty(true);
+                  setImportNote(`« ${file.name} » importé : relis le texte avant d’enregistrer.`);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {seeds === null ? (
+              <Button
+                type="button"
+                size="touch"
+                variant="ghost"
+                onClick={async () => setSeeds(await listSeedChoices())}
+              >
+                Partir d’une ressource existante
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="seed" className="sr-only">
+                  Ressource à copier
+                </Label>
+                <select
+                  id="seed"
+                  className={SELECT_CLASS}
+                  defaultValue=""
+                  onChange={async (e) => {
+                    const seed = e.target.value ? await getResourceSeed(e.target.value) : null;
+                    if (!seed) return;
+                    setContent(seed.content);
+                    setKindValue(seed.kind ?? "");
+                    const set = (id: string, value: string) => {
+                      const el = document.getElementById(id) as
+                        HTMLInputElement | HTMLTextAreaElement | null;
+                      if (el) el.value = value;
+                    };
+                    set("title", `${seed.title} (copie)`);
+                    setTitle(`${seed.title} (copie)`);
+                    set("category", seed.category ?? "");
+                    set("description", seed.description ?? "");
+                    set("tags", seed.tags.join(", "));
+                    setDirty(true);
+                    setImportNote(`Copié depuis « ${seed.title} » : adapte puis enregistre.`);
+                  }}
+                >
+                  <option value="">Choisir une ressource à copier…</option>
+                  {seeds.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <span role="status" aria-live="polite" className="text-muted-foreground text-sm">
+              {importNote}
+            </span>
+          </div>
         </section>
 
         <aside
@@ -381,8 +506,11 @@ export function ResourceForm({
                   id="kind"
                   name="kind"
                   required
-                  defaultValue={resource?.kind ?? ""}
-                  onChange={(e) => onKindChange(e.target.value)}
+                  value={kindValue}
+                  onChange={(e) => {
+                    setKindValue(e.target.value);
+                    onKindChange(e.target.value);
+                  }}
                   aria-invalid={fe.kind ? true : undefined}
                   aria-describedby={fe.kind ? "kind-error" : undefined}
                   className={SELECT_CLASS}

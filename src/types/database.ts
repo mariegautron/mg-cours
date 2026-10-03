@@ -34,6 +34,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      expectation_dismissal: {
+        Row: {
+          created_at: string
+          expectation_id: string
+          id: string
+          module_id: string
+          owner_id: string
+          resource_id: string
+        }
+        Insert: {
+          created_at?: string
+          expectation_id: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          resource_id: string
+        }
+        Update: {
+          created_at?: string
+          expectation_id?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expectation_dismissal_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expectation_dismissal_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resource"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appreciation: {
         Row: {
           created_at: string

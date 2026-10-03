@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   buildForExpectation,
+  dismissMatch,
   retainForModule,
   setExpectationCourses,
   unretainForModule,
@@ -35,6 +36,7 @@ import {
   type MatchingFilter,
 } from "@/lib/modules/matching-view";
 import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
+import { createClient } from "@/lib/supabase/server";
 import { getExpectationCourses, listCandidateResources } from "@/lib/modules/matching-queries";
 import {
   getModule,
@@ -48,9 +50,9 @@ export const metadata: Metadata = { title: "Rapprochement" };
 const PREVIEW_LENGTH = 1500;
 
 const STATE_LABELS: Record<CoverageState, string> = {
-  covered: "Couvert",
-  to_build: "À construire",
-  uncovered: "Sans ressource",
+  covered: "Fait",
+  to_build: "À voir",
+  uncovered: "Rien",
 };
 
 const STATE_TONES = { covered: "ok", to_build: "warn", uncovered: "plain" } as const;
@@ -79,6 +81,21 @@ export default async function MatchingPage({
       getExpectationCourses(id),
     ]);
   if (!mod) notFound();
+  // Ressources écartées par « Ce n'est pas la bonne » (table facultative : sans elle, rien n'est écarté).
+  const dismissed = new Map<string, Set<string>>();
+  {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("expectation_dismissal")
+      .select("expectation_id, resource_id")
+      .eq("module_id", id);
+    for (const d of data ?? []) {
+      dismissed.set(
+        d.expectation_id,
+        (dismissed.get(d.expectation_id) ?? new Set()).add(d.resource_id),
+      );
+    }
+  }
 
   const retainedIds = new Set(retained.map((r) => r.id));
   const rows = expectations.map((e) => {
@@ -92,7 +109,10 @@ export default async function MatchingPage({
         .filter((m) => retainedIds.has(m.resource.id))
         .map((m) => ({ status: m.resource.status })),
     });
-    const matches = all.filter((m, i) => i < 5 || retainedIds.has(m.resource.id));
+    const away = dismissed.get(e.id);
+    const matches = all
+      .filter((m) => !away?.has(m.resource.id) || retainedIds.has(m.resource.id))
+      .filter((m, i) => i < 5 || retainedIds.has(m.resource.id));
     return { e, matches, courseIds, state };
   });
   const summary = summarizeCoverage(rows.map((r) => r.state));
@@ -272,9 +292,10 @@ export default async function MatchingPage({
                                 <StatusBadge status={resource.status} />
                               </div>
                               <p>
-                                <Pill tone={LEVEL_TONES[level]}>
-                                  {MATCH_LEVEL_LABELS[level]} · {percent} %
-                                </Pill>
+                                <Pill tone={LEVEL_TONES[level]}>{MATCH_LEVEL_LABELS[level]}</Pill>
+                                <span className="text-muted-foreground ml-2 text-xs">
+                                  correspondance {percent} %
+                                </span>
                               </p>
                               <p className="text-muted-foreground text-sm">
                                 {reason}{" "}
@@ -292,7 +313,7 @@ export default async function MatchingPage({
                             </div>
                             {isRetained ? (
                               <div className="flex flex-wrap items-center gap-2">
-                                <Pill tone="ok">Retenue</Pill>
+                                <Pill tone="ok">Associée</Pill>
                                 <form action={unretainForModule.bind(null, mod.id, resource.id)}>
                                   <Button
                                     type="submit"
@@ -308,16 +329,17 @@ export default async function MatchingPage({
                                 <Button
                                   type="submit"
                                   variant="secondary"
-                                  aria-label={`Retenir ${resource.title}`}
+                                  aria-label={`Associer ${resource.title} à cet attendu`}
                                 >
-                                  Retenir
+                                  Associer à cet attendu
                                 </Button>
                               </form>
                             )}
                           </div>
                           <details className="text-sm">
                             <summary className="min-h-8 cursor-pointer underline underline-offset-2">
-                              Aperçu<span className="sr-only"> de {resource.title}</span>
+                              Aperçu sans quitter l’écran
+                              <span className="sr-only"> : {resource.title}</span>
                             </summary>
                             <div className="bg-background mt-2 max-h-64 overflow-auto rounded-md border p-3 whitespace-pre-wrap">
                               {resource.description ? (
@@ -337,6 +359,20 @@ export default async function MatchingPage({
                               Ouvrir en entier
                               <span className="sr-only"> : {resource.title}</span>
                             </Link>
+                            {isRetained ? null : (
+                              <form
+                                action={dismissMatch.bind(null, mod.id, open.e.id, resource.id)}
+                                className="mt-1"
+                              >
+                                <Button
+                                  type="submit"
+                                  variant="ghost"
+                                  aria-label={`Ce n’est pas la bonne : ${resource.title}`}
+                                >
+                                  Ce n’est pas la bonne
+                                </Button>
+                              </form>
+                            )}
                           </details>
                         </li>
                       );

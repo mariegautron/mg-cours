@@ -146,3 +146,41 @@ test("US-57 : note une ressource à construire, la filtre et l'enregistre depuis
   await page.goto(`/resources?status=ready&q=${encodeURIComponent(title)}`);
   await expect(page.getByRole("link", { name: new RegExp(title) })).toHaveCount(0);
 });
+
+test("créer une ressource : « C'est un… », import d'un fichier Markdown, partir d'une ressource existante", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await login(page);
+  const stamp = Date.now();
+
+  await page.goto("/resources/new");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("radio", { name: "Atelier" }).check({ force: true });
+  await expect(page.getByLabel("Type")).toHaveValue("workshop");
+
+  // Importer un fichier : le texte arrive dans le contenu, le titre vient du premier titre.
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "cours.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(`# Atelier importé ${stamp}\n\nUn premier point.\n`),
+  });
+  await expect(page.getByLabel("Titre", { exact: true })).toHaveValue(`Atelier importé ${stamp}`);
+  await expect(page.getByLabel(/Contenu/)).toHaveValue(/Un premier point\./);
+  await expect(page.getByText(/importé : relis le texte/)).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(
+    page.getByRole("heading", { name: `Atelier importé ${stamp}`, level: 1 }),
+  ).toBeVisible();
+
+  // Partir d'une ressource existante : copie du titre, du type et du contenu.
+  await page.goto("/resources/new");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Partir d’une ressource existante" }).click();
+  await page.getByLabel("Ressource à copier").selectOption({ label: `Atelier importé ${stamp}` });
+  await expect(page.getByLabel("Titre", { exact: true })).toHaveValue(
+    `Atelier importé ${stamp} (copie)`,
+  );
+  await expect(page.getByLabel("Type")).toHaveValue("workshop");
+  await expect(page.getByLabel(/Contenu/)).toHaveValue(/Un premier point\./);
+});

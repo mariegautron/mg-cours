@@ -100,3 +100,27 @@ export async function setExpectationCourses(
   }
   refresh(moduleId);
 }
+
+export interface DismissState {
+  error?: string;
+}
+
+/**
+ * « Ce n'est pas la bonne » : écarte la ressource de cet attendu (elle n'est plus proposée). Table
+ * additive : sans la migration, on le dit au lieu d'échouer.
+ */
+export async function dismissMatch(
+  moduleId: string,
+  expectationId: string,
+  resourceId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("expectation_dismissal")
+    .upsert(
+      { module_id: moduleId, expectation_id: expectationId, resource_id: resourceId },
+      { onConflict: "module_id,expectation_id,resource_id" },
+    );
+  if (error) return;
+  refresh(moduleId);
+}

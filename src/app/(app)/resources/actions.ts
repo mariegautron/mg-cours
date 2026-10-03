@@ -276,3 +276,45 @@ export async function listModuleChoices(): Promise<{ id: string; name: string; y
   const modules = await listActiveModules();
   return modules.map((m) => ({ id: m.id, name: m.name, year: m.year }));
 }
+
+/** « Partir d'une ressource existante » : ce qu'on recopie (jamais ses fichiers ni son historique). */
+export interface ResourceSeed {
+  title: string;
+  kind: string | null;
+  category: string | null;
+  audience: string;
+  description: string | null;
+  tags: string[];
+  content: string;
+}
+
+export async function getResourceSeed(id: string): Promise<ResourceSeed | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resource")
+    .select("title, kind, category, audience, description, tags, content")
+    .eq("id", id)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    title: data.title,
+    kind: data.kind,
+    category: data.category,
+    audience: data.audience,
+    description: data.description,
+    tags: data.tags ?? [],
+    content: data.content ?? "",
+  };
+}
+
+/** Ressources proposées pour « Partir d'une ressource existante » (les plus récentes). */
+export async function listSeedChoices(): Promise<{ id: string; title: string }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resource")
+    .select("id, title")
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(100);
+  return data ?? [];
+}
