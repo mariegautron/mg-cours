@@ -287,7 +287,9 @@ async function m2Submissions({ imp, page }: CourseContext) {
     const groupId = await imp.findRef("notion", g.id, "student_group");
     if (!groupId) continue;
     for (const [key, name] of KINDS) {
-      const url = (g.properties[key] ?? "").trim();
+      const raw = (g.properties[key] ?? "").trim();
+      // Lien écrit sans protocole (« exemple.atlassian.net/… ») : https:// ajouté.
+      const url = /^[\w-]+(\.[\w-]+)+\//.test(raw) ? `https://${raw}` : raw;
       if (!/^https?:\/\//.test(url)) continue;
       await imp.ensure(
         "submission_item",
