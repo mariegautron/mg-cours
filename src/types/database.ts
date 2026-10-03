@@ -417,6 +417,44 @@ export type Database = {
           },
         ]
       }
+      course_plan: {
+        Row: {
+          course_id: string
+          created_at: string
+          deliverable: string
+          id: string
+          owner_id: string
+          resource_order: string[]
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          deliverable?: string
+          id?: string
+          owner_id?: string
+          resource_order?: string[]
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          deliverable?: string
+          id?: string
+          owner_id?: string
+          resource_order?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_plan_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_resource: {
         Row: {
           course_id: string

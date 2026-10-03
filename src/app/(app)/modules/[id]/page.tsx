@@ -239,6 +239,11 @@ export default async function ModulePage({
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
+            {courses.length ? (
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/modules/${mod.id}/build`}>Construire les séances</Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/schedule`}>
                 <CalendarPlus aria-hidden />

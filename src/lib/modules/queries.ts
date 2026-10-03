@@ -6,6 +6,8 @@ import {
   type ExportCourseRow,
 } from "@/lib/modules/course-export";
 import type { ImportableCourse } from "@/lib/modules/course-import";
+import { getCourseResourceOrder } from "@/lib/modules/course-plan-queries";
+import { orderResources } from "@/lib/modules/session-builder";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
@@ -184,10 +186,14 @@ export async function getCourseResourcesFull(courseId: string): Promise<Tables<"
     .select("role, resource:resource_id(*)")
     .eq("course_id", courseId);
 
-  return ((data ?? []) as unknown as { role: string; resource: Tables<"resource"> | null }[])
+  const ordered = (
+    (data ?? []) as unknown as { role: string; resource: Tables<"resource"> | null }[]
+  )
     .sort((a, b) => (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1))
     .map((cr) => cr.resource)
     .filter((r) => r !== null);
+  // Ordre choisi dans « Construire les séances » (US-124), sinon principale d'abord.
+  return orderResources(ordered, await getCourseResourceOrder(courseId));
 }
 
 /** Ressources distinctes d'un module, dans l'ordre des séances (même avertissement). */
