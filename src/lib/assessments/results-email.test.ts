@@ -40,17 +40,18 @@ const sheet = (over: Partial<ResultSheet> = {}): ResultSheet => ({
 });
 
 describe("resultsEmailText", () => {
-  it("tutoie, donne la note, le palier, le commentaire du critère, les points forts et les progrès", () => {
+  it("vouvoie, donne la note, le palier, le commentaire du critère, les points forts et les progrès", () => {
     const text = resultsEmailText(sheet(), "Lea");
     expect(text).toContain("Bonjour Lea,");
-    expect(text).toContain("Voici ton résultat pour « Évaluation individuelle »");
+    expect(text).toContain("Voici votre résultat pour « Évaluation individuelle »");
     expect(text).toContain("Note : 14 / 20");
     expect(text).toContain("- Structure : 4 / 6");
     expect(text).toContain("Palier obtenu : Structure globalement correcte.");
     expect(text).toContain("Le header manque.");
-    expect(text).toContain("Tes points forts :\nCode propre");
-    expect(text).toContain("Tes progrès :\nTu as progressé sur les labels.");
-    expect(text).not.toMatch(/\bvous\b|\bvotre\b|\bvos\b/i);
+    expect(text).toContain("Vos points forts :\nCode propre");
+    expect(text).toContain("Vos progrès :\nTu as progressé sur les labels.");
+    expect(text).toMatch(/\bvotre\b/);
+    expect(text).not.toMatch(/\bton\b|\bta\b|\btes\b/i);
   });
 
   it("absence excusée : mention claire, pas de note ni de détail", () => {
@@ -58,8 +59,8 @@ describe("resultsEmailText", () => {
       sheet({ attendance: "absent_excused", value: null, valueOn20: null }),
       "Lea",
     );
-    expect(text).toContain("Ton absence est excusée");
-    expect(text).toContain("Ta note sera celle du rattrapage");
+    expect(text).toContain("Votre absence est excusée");
+    expect(text).toContain("Votre note sera celle du rattrapage");
     expect(text).not.toContain("Note :");
     expect(text).not.toContain("Détail par critère");
   });
@@ -75,7 +76,7 @@ describe("resultsEmailText", () => {
     const text = resultsEmailText(
       sheet({ isGroupGrade: true, value: 16, personalNote: "Très investi sur les tests." }),
     );
-    expect(text).toContain("Un mot pour toi : Très investi sur les tests.");
+    expect(text).toContain("Un mot pour vous : Très investi sur les tests.");
     expect(text).not.toContain("Pondération");
   });
 
@@ -83,16 +84,16 @@ describe("resultsEmailText", () => {
     const keeps = resultsEmailText(
       sheet({ isGroupGrade: true, attendance: "absent_excused", value: 16 }),
     );
-    expect(keeps).toContain("tu gardes la note du groupe");
+    expect(keeps).toContain("vous gardez la note du groupe");
     expect(keeps).toContain("Note : 16 / 20");
     const makeup = resultsEmailText(
       sheet({ isGroupGrade: true, attendance: "absent_excused", value: null }),
     );
-    expect(makeup).toContain("Ta note sera celle du rattrapage");
+    expect(makeup).toContain("Votre note sera celle du rattrapage");
   });
 
-  it("le sujet de l'e-mail tutoie aussi", () => {
-    expect(resultsEmailSubject({ title: "Oral" })).toBe("Tes résultats — Oral");
+  it("le sujet de l'e-mail vouvoie aussi", () => {
+    expect(resultsEmailSubject({ title: "Oral" })).toBe("Vos résultats — Oral");
   });
 
   it("jamais de nom d'un·e autre étudiant·e dans le message", () => {

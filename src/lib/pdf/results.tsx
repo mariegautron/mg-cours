@@ -78,13 +78,13 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
 
             {s.attendance === "absent_excused" && s.value === null ? (
               <Text style={styles.notice}>
-                Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera
-                celle du rattrapage.
+                Votre absence est excusée : vous n’avez pas de note pour cette évaluation. Votre
+                note sera celle du rattrapage.
               </Text>
             ) : null}
             {s.attendance === "absent_excused" && s.value !== null ? (
               <Text style={styles.notice}>
-                Ton absence est excusée : tu gardes la note du groupe (règle de l’école).
+                Votre absence est excusée : vous gardez la note du groupe (règle de l’école).
               </Text>
             ) : null}
             {s.attendance === "absent_unexcused" ? (
@@ -94,7 +94,7 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
             ) : null}
             {s.personalNote ? (
               <View style={styles.notice}>
-                <Text>Un mot pour toi : {s.personalNote}</Text>
+                <Text>Un mot pour vous : {s.personalNote}</Text>
               </View>
             ) : null}
 
@@ -148,13 +148,13 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
 
             {s.strengths ? (
               <View>
-                <Text style={styles.h}>Tes points forts</Text>
+                <Text style={styles.h}>Vos points forts</Text>
                 <Text>{s.strengths}</Text>
               </View>
             ) : null}
             {s.progress ? (
               <View>
-                <Text style={styles.h}>Tes progrès</Text>
+                <Text style={styles.h}>Vos progrès</Text>
                 <Text>{s.progress}</Text>
               </View>
             ) : null}

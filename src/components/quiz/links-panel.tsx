@@ -136,17 +136,30 @@ export function PrepareLinks({
             ? `${missing} étudiant·e${missing > 1 ? "s" : ""} sans lien : chacun·e reçoit son propre tirage, figé.`
             : "Tout le monde a déjà un lien."}
         </p>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="send" /> Envoyer aussi le lien par e-mail (à celles et ceux
-          qui ont une adresse)
-        </label>
         <p className="text-muted-foreground text-xs">
           {PERSONAL_LINK_WARNING} Chaque étudiant·e reçoit uniquement le sien.
         </p>
-        <Button type="submit" size="sm" disabled={pending || missing === 0}>
-          <Link2 aria-hidden />
-          {pending ? "Préparation…" : "Préparer les tirages et les liens"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" size="touch" disabled={pending || missing === 0}>
+            <Link2 aria-hidden />
+            {pending ? "Préparation…" : "Préparer les tirages et les liens"}
+          </Button>
+          <Button
+            type="submit"
+            name="send"
+            value="on"
+            size="touch"
+            variant="secondary"
+            disabled={pending || missing === 0}
+          >
+            <Mail aria-hidden />
+            Envoyer aux {missing} personne{missing > 1 ? "s" : ""} par e-mail
+          </Button>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          L’e-mail part à celles et ceux qui ont une adresse ; les autres gardent leur lien dans le
+          CSV.
+        </p>
       </form>
       <LinksResult state={state} />
     </div>

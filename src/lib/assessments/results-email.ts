@@ -7,7 +7,7 @@ import type { ResultSheet } from "@/lib/assessments/results";
  * ni carnet, ni observations, ni autres étudiant·es.
  */
 export function resultsEmailSubject(sheet: Pick<ResultSheet, "title">): string {
-  return `Tes résultats — ${sheet.title}`;
+  return `Vos résultats — ${sheet.title}`;
 }
 
 function pointsLine(c: ResultSheet["criteria"][number]): string {
@@ -18,18 +18,21 @@ function pointsLine(c: ResultSheet["criteria"][number]): string {
 
 export function resultsEmailText(sheet: ResultSheet, firstName?: string): string {
   const lines: string[] = [`Bonjour${firstName ? ` ${firstName}` : ""},`, ""];
-  lines.push(`Voici ton résultat pour « ${sheet.title} » (${sheet.moduleName}).`, "");
+  lines.push(`Voici votre résultat pour « ${sheet.title} » (${sheet.moduleName}).`, "");
 
   if (sheet.attendance === "absent_excused" && sheet.value === null) {
     lines.push(
-      "Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera celle du rattrapage.",
+      "Votre absence est excusée : vous n’avez pas de note pour cette évaluation. Votre note sera celle du rattrapage.",
     );
   } else {
     if (sheet.attendance === "absent_unexcused")
       lines.push("Absence non prévenue : la note est de 0 (règle de l’école).", "");
     if (sheet.attendance === "absent_excused")
-      lines.push("Ton absence est excusée : tu gardes la note du groupe (règle de l’école).", "");
-    if (sheet.personalNote) lines.push(`Un mot pour toi : ${sheet.personalNote}`, "");
+      lines.push(
+        "Votre absence est excusée : vous gardez la note du groupe (règle de l’école).",
+        "",
+      );
+    if (sheet.personalNote) lines.push(`Un mot pour vous : ${sheet.personalNote}`, "");
     lines.push(
       `Note : ${sheet.value === null ? "—" : formatNumber(sheet.value)} / ${formatNumber(sheet.maxScore)}${
         sheet.maxScore !== 20 && sheet.valueOn20 !== null
@@ -59,8 +62,8 @@ export function resultsEmailText(sheet: ResultSheet, firstName?: string): string
   }
 
   for (const [heading, text] of [
-    ["Tes points forts", sheet.strengths],
-    ["Tes progrès", sheet.progress],
+    ["Vos points forts", sheet.strengths],
+    ["Vos progrès", sheet.progress],
     ["Commentaire", sheet.feedback],
   ] as const) {
     if (text?.trim()) lines.push("", `${heading} :`, text.trim());
