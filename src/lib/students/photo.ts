@@ -1,3 +1,5 @@
+import { normalize } from "@/lib/search/search";
+
 /**
  * US-66 : trombinoscope. Règles pures : formats et taille, reconnaissance de l'image par ses
  * premiers octets (jamais par l'extension), rapprochement des fichiers d'un zip avec les numéros
@@ -73,6 +75,11 @@ export function isIgnoredZipEntry(path: string): boolean {
   return base.startsWith(".") || base === "Thumbs.db";
 }
 
+/** Nom de fichier ou de personne ramené à des mots sans accents ni casse (« DUPONT_Camille »). */
+function nameKey(text: string): string {
+  return normalize(text.replace(/[_.-]+/g, " "));
+}
+
 export interface ZipMatch<F> {
   matched: { studentId: string; name: string; file: F }[];
   /** Fichiers dont le nom ne correspond à aucun numéro étudiant. */
@@ -87,7 +94,12 @@ export interface ZipMatch<F> {
  */
 export function matchPhotosToStudents<F>(
   files: { name: string; file: F }[],
-  students: { id: string; student_number: string | null }[],
+  students: {
+    id: string;
+    student_number: string | null;
+    first_name?: string;
+    last_name?: string;
+  }[],
 ): ZipMatch<F> {
   const byNumber = new Map<string, string[]>();
   for (const s of students) {
@@ -95,12 +107,24 @@ export function matchPhotosToStudents<F>(
     if (n) byNumber.set(n, [...(byNumber.get(n) ?? []), s.id]);
   }
 
+  const byName = new Map<string, string[]>();
+  for (const s of students) {
+    if (!s.first_name || !s.last_name) continue;
+    for (const key of new Set([
+      nameKey(`${s.first_name} ${s.last_name}`),
+      nameKey(`${s.last_name} ${s.first_name}`),
+    ])) {
+      byName.set(key, [...(byName.get(key) ?? []), s.id]);
+    }
+  }
+
   const chosen = new Map<string, { studentId: string; name: string; file: F }>();
   const unmatched: string[] = [];
   const ambiguous: string[] = [];
   for (const f of [...files].sort((a, b) => a.name.localeCompare(b.name))) {
     const number = studentNumberFromFilename(f.name);
-    const ids = byNumber.get(number);
+    // Sans numéro reconnu : le nom du fichier peut être « NOM Prénom » ou « Prénom Nom ».
+    const ids = byNumber.get(number) ?? byName.get(nameKey(number));
     if (!number || !ids) unmatched.push(f.name);
     else if (ids.length > 1) ambiguous.push(f.name);
     else chosen.set(ids[0], { studentId: ids[0], name: f.name, file: f.file });

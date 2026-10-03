@@ -93,3 +93,31 @@ describe("describePhotoImport / initials", () => {
     expect(initials("élodie", "martin")).toBe("ÉM");
   });
 });
+
+describe("matchPhotosToStudents : par le nom du fichier", () => {
+  const students = [
+    { id: "1", student_number: "A1", first_name: "Camille", last_name: "Dupont" },
+    { id: "2", student_number: null, first_name: "Inès", last_name: "Petit" },
+    { id: "3", student_number: null, first_name: "Inès", last_name: "Petit" },
+  ];
+  it("« NOM Prénom » ou « Prénom Nom », sans accents ni casse", () => {
+    const match = matchPhotosToStudents(
+      [
+        { name: "DUPONT Camille.jpg", file: 1 },
+        { name: "camille_dupont.png", file: 2 },
+      ],
+      students,
+    );
+    expect(match.matched.map((m) => m.studentId)).toEqual(["1"]);
+    expect(match.unmatched).toEqual([]);
+  });
+  it("deux fiches de même nom : ambigu, jamais affecté", () => {
+    const match = matchPhotosToStudents([{ name: "PETIT Ines.jpg", file: 1 }], students);
+    expect(match.ambiguous).toEqual(["PETIT Ines.jpg"]);
+    expect(match.matched).toEqual([]);
+  });
+  it("le numéro étudiant garde la priorité", () => {
+    const match = matchPhotosToStudents([{ name: "a1.jpg", file: 1 }], students);
+    expect(match.matched[0].studentId).toBe("1");
+  });
+});

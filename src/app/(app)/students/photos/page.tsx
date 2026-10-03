@@ -12,10 +12,10 @@ export default function ImportPhotosPage() {
         <Link href="/students" className="text-sm underline underline-offset-2">
           ← Étudiants
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Importer les photos (trombinoscope)</h1>
+        <h1 className="mt-2 text-3xl font-semibold">Importer le trombinoscope</h1>
         <p className="text-muted-foreground">
-          Les photos sont privées : visibles uniquement par toi, jamais dans les exports, e-mails ou
-          présentations.
+          Dépose le fichier de photos : je relie chaque photo à une fiche, tu vérifies, puis
+          j’enregistre.
         </p>
       </div>
       <PhotosImportForm />

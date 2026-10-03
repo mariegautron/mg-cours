@@ -79,7 +79,18 @@ test("US-66 : photo par étudiant·e, import zip par numéro, suppression, jamai
     mimeType: "application/zip",
     buffer: zip,
   });
-  await page.getByRole("button", { name: "Importer les photos" }).click();
+  // Aperçu avant enregistrement : une fiche reconnue, un fichier sans fiche ; rien n'est écrit.
+  await expect(page.getByText("Fiche reconnue")).toBeVisible();
+  await expect(page.getByText("Sans fiche", { exact: true })).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/import-trombinoscope.png" });
+  }
+  const previewAxe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(previewAxe.violations).toEqual([]);
+  await page.getByRole("button", { name: "Enregistrer 1 photo" }).click();
   await expect(page.getByRole("status")).toContainText(
     "1 photo ajoutée ; 1 fichier sans numéro étudiant correspondant.",
   );

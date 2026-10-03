@@ -22,9 +22,18 @@ import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
+export interface PhotoReportRow {
+  name: string;
+  status: "matched" | "unmatched" | "ambiguous" | "rejected";
+  /** Fiche reconnue, pour « matched ». */
+  student?: string;
+}
+
 export interface PhotoState {
   error?: string;
   message?: string;
+  /** Aperçu avant enregistrement : rien n'est écrit tant que l'import n'est pas confirmé. */
+  report?: PhotoReportRow[];
 }
 
 /** Enregistre une photo (stockage + colonne) et supprime l'ancienne. */
@@ -141,16 +150,38 @@ export async function importPhotosZip(_prev: PhotoState, formData: FormData): Pr
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { error: SESSION_EXPIRED };
-  const { data: students } = await supabase.from("student").select("id, student_number");
+  const { data: students } = await supabase
+    .from("student")
+    .select("id, student_number, first_name, last_name");
 
   const valid: { name: string; file: { bytes: Uint8Array; mime: PhotoMime } }[] = [];
+  const refused: string[] = [];
   for (const [name, bytes] of Object.entries(entries)) {
     const check = checkPhoto(bytes);
     if (check.ok) valid.push({ name, file: { bytes, mime: check.mime } });
-    else rejected++;
+    else {
+      rejected++;
+      refused.push(name);
+    }
   }
 
   const match = matchPhotosToStudents(valid, students ?? []);
+  if (formData.get("intent") === "preview") {
+    const nameOf = new Map(
+      (students ?? []).map((s) => [s.id, `${s.last_name.toUpperCase()} ${s.first_name}`]),
+    );
+    const report: PhotoReportRow[] = [
+      ...match.matched.map((m) => ({
+        name: m.name,
+        status: "matched" as const,
+        student: nameOf.get(m.studentId),
+      })),
+      ...match.ambiguous.map((name) => ({ name, status: "ambiguous" as const })),
+      ...match.unmatched.map((name) => ({ name, status: "unmatched" as const })),
+      ...refused.map((name) => ({ name, status: "rejected" as const })),
+    ];
+    return { report };
+  }
   let added = 0;
   for (const m of match.matched) {
     if (await storePhoto(supabase, auth.user.id, m.studentId, m.file.bytes, m.file.mime)) added++;
