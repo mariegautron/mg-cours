@@ -19,7 +19,10 @@ export async function listCandidateResources(): Promise<CandidateResource[]> {
     supabase
       .from("resource")
       .select("id, title, description, tags, content, kind, status")
-      .is("archived_at", null),
+      .is("archived_at", null)
+      // Les plus récentes d'abord : si la liste dépasse la limite de lignes de l'API, ce sont les
+      // ressources les plus anciennes qui sont laissées de côté, jamais celle qu'on vient de créer.
+      .order("created_at", { ascending: false }),
     supabase
       .from("course_resource")
       .select("resource_id, course:course_id(module:module_id(name))"),

@@ -124,7 +124,7 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   // Badge de statut sur la liste des séances.
   await page.goto(moduleUrl);
   await openTab(page, /Séances/);
-  await expect(page.getByText("Partiellement faite", { exact: true })).toBeVisible();
+  await expect(page.getByText("Partiellement faite", { exact: true }).first()).toBeVisible();
 
   // Rien du carnet dans la présentation.
   await page.goto(moduleUrl);

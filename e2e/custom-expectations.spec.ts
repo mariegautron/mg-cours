@@ -32,6 +32,7 @@ test("attendu ajouté à la main : rapprochement, modification, suppression, axe
   expect(axe.violations).toEqual([]);
 
   await page.goto(`${moduleUrl}/matching`);
+  await page.getByRole("link", { name: /Savoir animer un atelier zorglub/ }).click();
   const region = page.getByRole("region", { name: /Savoir animer un atelier zorglub/ });
   await expect(region.getByText("Ajouté par l’intervenante")).toBeVisible();
 

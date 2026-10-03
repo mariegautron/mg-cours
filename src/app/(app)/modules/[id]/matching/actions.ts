@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { retainResource } from "@/app/(app)/modules/[id]/retained/actions";
+import { retainResource, unretainResource } from "@/app/(app)/modules/[id]/retained/actions";
 import { createClient } from "@/lib/supabase/server";
 
 const refresh = (moduleId: string) => {
@@ -16,11 +16,21 @@ export async function retainForModule(moduleId: string, resourceId: string): Pro
   refresh(moduleId);
 }
 
+/** « Retirer » : la ressource n'est plus retenue pour ce module. */
+export async function unretainForModule(moduleId: string, resourceId: string): Promise<void> {
+  await unretainResource(moduleId, resourceId);
+  refresh(moduleId);
+}
+
 /**
- * « À construire » : crée une ressource « à construire » d'après l'attendu (titre = attendu,
- * note d'intention) et la retient pour le module (US-57 + US-55).
+ * « Créer et retenir » : crée une ressource « à construire » d'après l'attendu (titre proposé = attendu,
+ * modifiable, note d'intention) et la retient pour le module (US-57 + US-55).
  */
-export async function buildForExpectation(moduleId: string, expectationId: string): Promise<void> {
+export async function buildForExpectation(
+  moduleId: string,
+  expectationId: string,
+  formData?: FormData,
+): Promise<void> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return;
@@ -32,8 +42,9 @@ export async function buildForExpectation(moduleId: string, expectationId: strin
     .maybeSingle();
   if (!expectation || expectation.module_id !== moduleId) return;
 
-  const title =
-    expectation.label.length > 200 ? `${expectation.label.slice(0, 199)}…` : expectation.label;
+  const typed = String(formData?.get("title") ?? "").trim();
+  const wanted = typed || expectation.label;
+  const title = wanted.length > 200 ? `${wanted.slice(0, 199)}…` : wanted;
   const { data: resource } = await supabase
     .from("resource")
     .insert({

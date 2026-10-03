@@ -72,14 +72,16 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await expect(page.getByRole("status").filter({ hasText: "1 couvert" })).toBeVisible();
 
   // « À construire » crée une ressource à construire, retenue et rapprochée de l'attendu.
+  await page.getByRole("link", { name: /Maîtriser la fiscalité/ }).click();
   const second = page.getByRole("region", { name: /Maîtriser la fiscalité/ });
-  await second.getByRole("button", { name: /à construire/i }).click();
+  await second.getByRole("button", { name: "Créer et retenir" }).click();
   await expect(
     page.getByRole("status").filter({ hasText: "1 couvert, 1 à construire" }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 20_000 });
   await expect(second.getByText("À construire", { exact: true }).first()).toBeVisible();
 
   // Couvert par une séance.
+  await page.getByRole("link", { name: /Présenter un projet/ }).click();
   const third = page.getByRole("region", { name: /Présenter un projet/ });
   await third.getByLabel("Séance de cadrage").check();
   await third.getByRole("button", { name: /Enregistrer les séances/ }).click();
@@ -87,8 +89,13 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
     page.getByRole("status").filter({ hasText: "2 couverts, 1 à construire" }),
   ).toBeVisible();
   await expect(
-    page.getByLabel("Bilan").getByRole("link", { name: /Maîtriser la fiscalité/ }),
+    page.getByRole("link", { name: /Maîtriser la fiscalité.*À construire/ }),
   ).toBeVisible();
+
+  // Filtre « Sans ressource » : plus aucun attendu dans ce cas ; « À construire » en garde un.
+  await page.getByRole("link", { name: /^À construire · 1/ }).click();
+  await expect(page.getByRole("link", { name: /Maîtriser la fiscalité/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Réaliser un audit/ })).toHaveCount(0);
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

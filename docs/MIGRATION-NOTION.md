@@ -664,4 +664,3 @@ Refonte des écrans : conventions de stockage et nouvelles tables (migrations ju
 - **Non importé** : 12 appréciations > 250 car. (5 GP, 7 M2 : à raccourcir, limite
   Hyperplanning), dates de factures, bilans de module, attendus de l'école, banques QCM
   (à faire, catégorie « À classer »).
-
