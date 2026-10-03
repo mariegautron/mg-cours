@@ -178,7 +178,7 @@ test("passation : fenêtre, retard, débit, révocation, corrigé jamais avant l
   await nextCopy(page);
   await nextCopy(page);
   await form(zoe).getByRole("radio", { name: "Absent·e excusé·e" }).check();
-  await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
+  await expect(form(zoe).getByText(/Enregistré à/)).toBeVisible({ timeout: 10_000 });
 
   await createAndPublishQuiz(page, setup.assessmentUrl, suffix);
   const links = await prepareLinks(page);

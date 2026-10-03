@@ -38,7 +38,7 @@ test("US-62 : lier des ressources à une séance avec recherche, filtres et cré
   await page.getByRole("button", { name: /Ajouter au module/ }).click();
   await page
     .getByLabel("Ajouter au module…")
-    .selectOption({ label: `Module picker ${stamp} (2026)` });
+    .selectOption({ label: `Module picker ${stamp} (2026-2027)` });
   await page.getByRole("button", { name: "Ajouter" }).click();
   await expect(page.getByText(/Ressource retenue pour/)).toBeVisible();
 

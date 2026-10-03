@@ -39,14 +39,14 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
   expect(done.violations).toEqual([]);
 
   await page.goto("/modules?filter=to_prepare");
-  await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name })).toHaveCount(0);
 
   await page.goto("/modules?filter=archived");
   await expect(page.getByRole("link", { name: /^Rangés · \d+$/ })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name })).toBeVisible();
 
   await page.goto("/billing");
   await expect(page.getByText(name)).toHaveCount(0);
@@ -94,20 +94,18 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
   expect(res.ok).toBe(true);
 
   await page.goto("/modules");
-  const row = page
-    .getByRole("listitem")
-    .filter({ has: page.getByRole("heading", { name, level: 2 }) });
+  const row = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name }) });
   await expect(row.getByText("Cours faits")).toBeVisible();
   await row.getByRole("button", { name: `Terminer : ${name}` }).click();
   const dialog = page.getByRole("alertdialog", { name: "Terminer le module" });
   await expect(dialog.getByText(`Terminer « ${name} » ?`)).toBeVisible();
   await dialog.getByRole("button", { name: "Terminer", exact: true }).click();
   await expect(page.getByText(`« ${name} » est terminé.`)).toBeVisible();
-  await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name })).toHaveCount(0);
 
   // Annuler pendant les 10 secondes : le module revient dans « En cours ».
   await page.getByRole("button", { name: "Annuler" }).click();
-  await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name })).toBeVisible();
 
   // Terminer pour de bon : « Terminés », puis Ranger → « Rangés ».
   await row.getByRole("button", { name: `Terminer : ${name}` }).click();
@@ -117,9 +115,7 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
     .click();
   await expect(page.getByText(`« ${name} » est terminé.`)).toBeVisible();
   await page.goto("/modules?filter=finished");
-  const finished = page
-    .getByRole("listitem")
-    .filter({ has: page.getByRole("heading", { name, level: 2 }) });
+  const finished = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name }) });
   await expect(finished.getByText("Terminé", { exact: true })).toBeVisible();
   await finished.getByRole("button", { name: `Ranger : ${name}` }).click();
   await expect(page.getByText(`« ${name} » est rangé.`)).toBeVisible();
