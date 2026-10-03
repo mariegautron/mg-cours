@@ -144,6 +144,27 @@ export function ResourceForm({
     }
   }
 
+  function insertSnippet(snippet: string) {
+    const el = contentRef.current;
+    setTab("write");
+    const start = el?.selectionStart ?? content.length;
+    const end = el?.selectionEnd ?? content.length;
+    const next = insertAtSelection(content, start, end, snippet);
+    setContent(next.text);
+    setDirty(true);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(next.cursor, next.cursor);
+    });
+  }
+
+  const formRef = useRef<HTMLFormElement>(null);
+  function markReady() {
+    const select = formRef.current?.elements.namedItem("status");
+    if (select instanceof HTMLSelectElement) select.value = "ready";
+    formRef.current?.requestSubmit();
+  }
+
   function onKindChange(kind: string) {
     // Un corrigé, une banque de questions ou des notes sont réservés à l'enseignante par défaut.
     if (!audienceTouched) {
@@ -153,6 +174,7 @@ export function ResourceForm({
 
   return (
     <form
+      ref={formRef}
       onSubmit={(e) => {
         try {
           localStorage.removeItem(draftKey);
@@ -162,345 +184,413 @@ export function ResourceForm({
         keepFormValues(formAction)(e);
       }}
       onChange={() => setDirty(true)}
-      className="max-w-6xl space-y-6"
+      className="max-w-7xl space-y-5"
     >
-      <div className="space-y-2">
-        <Label htmlFor="title">Titre</Label>
-        <Input
-          id="title"
-          name="title"
-          required
-          defaultValue={resource?.title ?? ""}
-          onChange={(e) => setTitle(e.target.value)}
-          aria-invalid={fe.title ? true : undefined}
-          aria-describedby={fe.title ? "title-error" : undefined}
-        />
-        <FieldError id="title" errors={fe.title} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="kind">
-            Type <span aria-hidden>*</span>
-          </Label>
-          <select
-            id="kind"
-            name="kind"
-            required
-            defaultValue={resource?.kind ?? ""}
-            onChange={(e) => onKindChange(e.target.value)}
-            aria-invalid={fe.kind ? true : undefined}
-            aria-describedby={fe.kind ? "kind-error" : undefined}
-            className={SELECT_CLASS}
-          >
-            <option value="" disabled>
-              Choisir un type…
-            </option>
-            {RESOURCE_KINDS.map((kind) => (
-              <option key={kind} value={kind}>
-                {KIND_LABELS[kind]}
-              </option>
-            ))}
-          </select>
-          <FieldError id="kind" errors={fe.kind} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="category">Matière</Label>
-          <Input
-            id="category"
-            name="category"
-            list="subject-suggestions"
-            autoComplete="off"
-            placeholder="Ex. Gestion de projet"
-            aria-describedby="category-hint"
-            defaultValue={resource?.category ?? ""}
-          />
-          <datalist id="subject-suggestions">
-            {subjects.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-          <p id="category-hint" className="text-muted-foreground text-sm">
-            Choisis une matière proposée ou saisis-en une nouvelle.
-          </p>
-        </div>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Visibilité</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {(["students", "teacher"] as const).map((value) => (
-            <label
-              key={value}
-              className={cn(
-                "flex cursor-pointer gap-3 rounded-lg border p-3 text-sm",
-                "has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-2",
-                audience === value && "border-primary bg-primary/5",
-              )}
-            >
-              <input
-                type="radio"
-                name="audience"
-                value={value}
-                checked={audience === value}
-                onChange={() => {
-                  setAudience(value);
-                  setAudienceTouched(true);
-                }}
-                aria-describedby={`audience-${value}-hint`}
-                className="accent-primary mt-0.5"
-              />
-              <span>
-                <span className="font-medium">{AUDIENCE_LABELS[value]}</span>
-                <span id={`audience-${value}-hint`} className="text-muted-foreground block">
-                  {AUDIENCE_HINTS[value]}
-                </span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          rows={2}
-          defaultValue={resource?.description ?? ""}
-        />
-        <FieldError id="description" errors={fe.description} />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="url">Lien</Label>
-          <Input
-            id="url"
-            name="url"
-            type="url"
-            placeholder="https://…"
-            defaultValue={resource?.url ?? ""}
-            aria-invalid={fe.url ? true : undefined}
-            aria-describedby={fe.url ? "url-error" : undefined}
-          />
-          <FieldError id="url" errors={fe.url} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="status">Statut</Label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={resource?.status ?? "ready"}
-            className={SELECT_CLASS}
-          >
-            {RESOURCE_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {STATUS_LABELS[status]}
-              </option>
-            ))}
-          </select>
-          <p className="text-muted-foreground text-sm">
-            Les ressources « À construire » ne sont jamais projetées.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="intentNote">Note d’intention</Label>
-          <Input
-            id="intentNote"
-            name="intentNote"
-            placeholder="Ex. À adapter pour le niveau L3"
-            defaultValue={resource?.intent_note ?? ""}
-          />
-          <p className="text-muted-foreground text-sm">
-            Note interne pour expliquer ce qu’il reste à faire.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="tags">Tags</Label>
-          <Input
-            id="tags"
-            name="tags"
-            placeholder="RGAA, RACI, SantaConnect"
-            aria-describedby="tags-hint"
-            defaultValue={(resource?.tags ?? []).join(", ")}
-          />
-          <p id="tags-hint" className="text-muted-foreground text-sm">
-            Notions ou projet, séparés par des virgules.
-          </p>
-        </div>
-      </div>
-
-      {restorable ? (
-        <div
-          role="status"
-          className="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
-        >
-          <span>Un brouillon plus récent existe sur cet appareil.</span>
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setContent(restorable.content);
-              setTitle(restorable.title);
-              const input = document.getElementById("title") as HTMLInputElement | null;
-              if (input && restorable.title) input.value = restorable.title;
-              setDirty(true);
-              setRestorable(null);
-            }}
-          >
-            Reprendre le brouillon
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              try {
-                localStorage.removeItem(draftKey);
-              } catch {
-                /* sans effet */
-              }
-              setRestorable(null);
-            }}
-          >
-            Ignorer
-          </Button>
-        </div>
-      ) : null}
-
-      <div className="lg:grid lg:grid-cols-2 lg:gap-6">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <Label htmlFor="content">Contenu (Markdown)</Label>
-            <div
-              role="tablist"
-              aria-label="Écrire ou prévisualiser"
-              className="bg-muted flex rounded-md p-0.5"
-            >
-              {(
-                [
-                  ["write", "Écrire"],
-                  ["preview", "Aperçu"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="tab"
-                  id={`tab-${value}`}
-                  aria-selected={tab === value}
-                  aria-controls={`panel-${value}`}
-                  onClick={() => setTab(value)}
-                  className={cn(
-                    "focus-visible:ring-ring rounded px-3 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none",
-                    tab === value ? "bg-background font-medium shadow-sm" : "text-muted-foreground",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div
-            id="panel-write"
-            role="tabpanel"
-            aria-labelledby="tab-write"
-            hidden={tab !== "write"}
-          >
-            <Textarea
-              id="content"
-              name="content"
-              ref={contentRef}
-              onPaste={onPasteContent}
-              rows={18}
-              className="font-mono text-sm"
-              aria-describedby="content-hint"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+        <section className="min-w-0 flex-[3_1_0] space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="title">Titre</Label>
+            <Input
+              id="title"
+              className="h-12 text-xl font-semibold"
+              name="title"
+              required
+              defaultValue={resource?.title ?? ""}
+              onChange={(e) => setTitle(e.target.value)}
+              aria-invalid={fe.title ? true : undefined}
+              aria-describedby={fe.title ? "title-error" : undefined}
             />
-            <p id="content-hint" className="text-muted-foreground mt-2 text-sm">
-              Titres <code>##</code> ou séparateur <code>---</code> = nouvelle diapositive en mode
-              présentation. Image déposée sur la ressource :{" "}
-              <code>![description](fichier.png)</code>. Tu peux coller depuis Notion ou Word : le
-              texte est nettoyé.
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <Button type="button" size="sm" variant="secondary" onClick={cleanAll}>
-                Nettoyer le texte
+            <FieldError id="title" errors={fe.title} />
+          </div>
+
+          <div
+            role="toolbar"
+            aria-label="Mise en forme"
+            className="flex flex-wrap items-center gap-2"
+          >
+            {(
+              [
+                ["Titre", "\n## Titre\n"],
+                ["Liste", "\n- Point\n- Point\n"],
+                ["Code", "\n```\ncode\n```\n"],
+                ["Image", "\n![description](fichier.png)\n"],
+                ["Tableau", "\n| A | B |\n| --- | --- |\n| 1 | 2 |\n"],
+              ] as const
+            ).map(([label, snippet]) => (
+              <Button
+                key={label}
+                type="button"
+                size="touch"
+                variant="secondary"
+                onClick={() => insertSnippet(snippet)}
+              >
+                {label}
+                <span className="sr-only"> : insérer dans le contenu</span>
               </Button>
-              <p role="status" aria-live="polite" className="text-muted-foreground text-sm">
-                {pasteNote}
+            ))}
+            <span className="text-muted-foreground text-sm">
+              ou écris en Markdown, c’est pareil
+            </span>
+          </div>
+          {restorable ? (
+            <div
+              role="status"
+              className="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
+            >
+              <span>Un brouillon plus récent existe sur cet appareil.</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setContent(restorable.content);
+                  setTitle(restorable.title);
+                  const input = document.getElementById("title") as HTMLInputElement | null;
+                  if (input && restorable.title) input.value = restorable.title;
+                  setDirty(true);
+                  setRestorable(null);
+                }}
+              >
+                Reprendre le brouillon
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(draftKey);
+                  } catch {
+                    /* sans effet */
+                  }
+                  setRestorable(null);
+                }}
+              >
+                Ignorer
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <Label htmlFor="content">Contenu (Markdown)</Label>
+              <div
+                role="tablist"
+                aria-label="Écrire ou prévisualiser"
+                className="bg-muted flex rounded-md p-0.5"
+              >
+                {(
+                  [
+                    ["write", "Écrire"],
+                    ["preview", "Aperçu"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    id={`tab-${value}`}
+                    aria-selected={tab === value}
+                    aria-controls={`panel-${value}`}
+                    onClick={() => setTab(value)}
+                    className={cn(
+                      "focus-visible:ring-ring rounded px-3 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none",
+                      tab === value
+                        ? "bg-background font-medium shadow-sm"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div
+              id="panel-write"
+              role="tabpanel"
+              aria-labelledby="tab-write"
+              hidden={tab !== "write"}
+            >
+              <Textarea
+                id="content"
+                name="content"
+                ref={contentRef}
+                onPaste={onPasteContent}
+                rows={18}
+                className="min-h-72 font-mono text-sm"
+                aria-describedby="content-hint"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
+              <p id="content-hint" className="text-muted-foreground mt-2 text-sm">
+                Titres <code>##</code> ou séparateur <code>---</code> = nouvelle diapositive en mode
+                présentation. Image déposée sur la ressource :{" "}
+                <code>![description](fichier.png)</code>. Tu peux coller depuis Notion ou Word : le
+                texte est nettoyé.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <Button type="button" size="sm" variant="secondary" onClick={cleanAll}>
+                  Nettoyer le texte
+                </Button>
+                <p role="status" aria-live="polite" className="text-muted-foreground text-sm">
+                  {pasteNote}
+                </p>
+              </div>
+              <p
+                role="status"
+                aria-live="polite"
+                className="text-muted-foreground mt-1 min-h-5 text-sm"
+              >
+                {draftNote}
               </p>
             </div>
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-muted-foreground mt-1 min-h-5 text-sm"
+            <div
+              id="panel-preview"
+              role="tabpanel"
+              aria-labelledby="tab-preview"
+              tabIndex={0}
+              hidden={tab !== "preview"}
+              className="bg-card min-h-40 rounded-md border p-4"
             >
-              {draftNote}
-            </p>
+              {tab !== "preview" ? null : content.trim() ? (
+                <Markdown
+                  source={content}
+                  resolveImageSrc={
+                    resource ? (src) => resolveImageSrc(resource.id, src) : undefined
+                  }
+                />
+              ) : (
+                <p className="text-muted-foreground text-sm">Rien à afficher pour l’instant.</p>
+              )}
+            </div>
           </div>
-          <div
-            id="panel-preview"
-            role="tabpanel"
-            aria-labelledby="tab-preview"
-            tabIndex={0}
-            hidden={tab !== "preview"}
-            className="bg-card min-h-40 rounded-md border p-4"
-          >
-            {tab !== "preview" ? null : content.trim() ? (
-              <Markdown
-                source={content}
-                resolveImageSrc={resource ? (src) => resolveImageSrc(resource.id, src) : undefined}
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">Rien à afficher pour l’instant.</p>
-            )}
-          </div>
-        </div>
+        </section>
 
-        <aside aria-labelledby="slides-title" className="mt-6 space-y-2 lg:mt-0">
-          <h2 id="slides-title" className="text-sm font-medium">
-            Diapositives ({slides.length})
-          </h2>
-          {slides.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Les diapositives apparaissent ici dès que tu écris.
-            </p>
-          ) : (
-            <ol className="max-h-[32rem] space-y-2 overflow-auto">
-              {slides.map((sl) => (
-                <li key={sl.number} className="bg-card rounded-md border p-3 text-sm">
-                  <p className="font-medium">
-                    <span className="text-muted-foreground">{sl.number}.</span>{" "}
-                    {sl.title ?? "Sans titre"}
-                  </p>
-                  {sl.summary ? <p className="text-muted-foreground mt-1">{sl.summary}</p> : null}
-                  {sl.extras.length ? (
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {sl.extras
-                        .map((x) => ({ image: "Image", table: "Tableau", code: "Code" })[x])
-                        .join(" · ")}
+        <aside
+          aria-label="Classement et aperçu"
+          className="min-w-0 flex-[2_1_0] space-y-3 lg:max-w-md"
+        >
+          <section className="bg-card space-y-4 rounded-xl border p-4">
+            <h2 className="font-heading text-lg font-bold">Classement</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="kind">
+                  Type <span aria-hidden>*</span>
+                </Label>
+                <select
+                  id="kind"
+                  name="kind"
+                  required
+                  defaultValue={resource?.kind ?? ""}
+                  onChange={(e) => onKindChange(e.target.value)}
+                  aria-invalid={fe.kind ? true : undefined}
+                  aria-describedby={fe.kind ? "kind-error" : undefined}
+                  className={SELECT_CLASS}
+                >
+                  <option value="" disabled>
+                    Choisir un type…
+                  </option>
+                  {RESOURCE_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {KIND_LABELS[kind]}
+                    </option>
+                  ))}
+                </select>
+                <FieldError id="kind" errors={fe.kind} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Matière</Label>
+                <Input
+                  id="category"
+                  name="category"
+                  list="subject-suggestions"
+                  autoComplete="off"
+                  placeholder="Ex. Gestion de projet"
+                  aria-describedby="category-hint"
+                  defaultValue={resource?.category ?? ""}
+                />
+                <datalist id="subject-suggestions">
+                  {subjects.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+                <p id="category-hint" className="text-muted-foreground text-sm">
+                  Choisis une matière proposée ou saisis-en une nouvelle.
+                </p>
+              </div>
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Visibilité</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(["students", "teacher"] as const).map((value) => (
+                  <label
+                    key={value}
+                    className={cn(
+                      "flex cursor-pointer gap-3 rounded-lg border p-3 text-sm",
+                      "has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-2",
+                      audience === value && "border-primary bg-primary/5",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="audience"
+                      value={value}
+                      checked={audience === value}
+                      onChange={() => {
+                        setAudience(value);
+                        setAudienceTouched(true);
+                      }}
+                      aria-describedby={`audience-${value}-hint`}
+                      className="accent-primary mt-0.5"
+                    />
+                    <span>
+                      <span className="font-medium">{AUDIENCE_LABELS[value]}</span>
+                      <span id={`audience-${value}-hint`} className="text-muted-foreground block">
+                        {AUDIENCE_HINTS[value]}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                rows={2}
+                defaultValue={resource?.description ?? ""}
+              />
+              <FieldError id="description" errors={fe.description} />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="url">Lien</Label>
+                <Input
+                  id="url"
+                  name="url"
+                  type="url"
+                  placeholder="https://…"
+                  defaultValue={resource?.url ?? ""}
+                  aria-invalid={fe.url ? true : undefined}
+                  aria-describedby={fe.url ? "url-error" : undefined}
+                />
+                <FieldError id="url" errors={fe.url} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Statut</Label>
+                <select
+                  id="status"
+                  name="status"
+                  defaultValue={resource?.status ?? "ready"}
+                  className={SELECT_CLASS}
+                >
+                  {RESOURCE_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-muted-foreground text-sm">
+                  Les ressources « À construire » ne sont jamais projetées.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="intentNote">Note d’intention</Label>
+                <Input
+                  id="intentNote"
+                  name="intentNote"
+                  placeholder="Ex. À adapter pour le niveau L3"
+                  defaultValue={resource?.intent_note ?? ""}
+                />
+                <p className="text-muted-foreground text-sm">
+                  Note interne pour expliquer ce qu’il reste à faire.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
+                  name="tags"
+                  placeholder="RGAA, RACI, SantaConnect"
+                  aria-describedby="tags-hint"
+                  defaultValue={(resource?.tags ?? []).join(", ")}
+                />
+                <p id="tags-hint" className="text-muted-foreground text-sm">
+                  Notions ou projet, séparés par des virgules.
+                </p>
+              </div>
+            </div>
+          </section>
+          <aside aria-labelledby="slides-title" className="bg-card space-y-2 rounded-xl border p-4">
+            <h2 id="slides-title" className="font-heading text-lg font-bold">
+              Diapositives ({slides.length})
+            </h2>
+            {slides.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Les diapositives apparaissent ici dès que tu écris.
+              </p>
+            ) : (
+              <ol className="max-h-[32rem] space-y-2 overflow-auto">
+                {slides.map((sl) => (
+                  <li key={sl.number} className="bg-card rounded-md border p-3 text-sm">
+                    <p className="font-medium">
+                      <span className="text-muted-foreground">{sl.number}.</span>{" "}
+                      {sl.title ?? "Sans titre"}
                     </p>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          )}
+                    {sl.summary ? <p className="text-muted-foreground mt-1">{sl.summary}</p> : null}
+                    {sl.extras.length ? (
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {sl.extras
+                          .map((x) => ({ image: "Image", table: "Tableau", code: "Code" })[x])
+                          .join(" · ")}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </aside>
+
+          {resource ? (
+            <section className="bg-card space-y-2 rounded-xl border p-4 text-sm">
+              <h2 className="font-heading text-lg font-bold">Questions et corrigé</h2>
+              <p className="text-muted-foreground">
+                Les questions liées et le corrigé se gèrent depuis la fiche de la ressource.
+              </p>
+              <Button asChild variant="ghost" size="touch">
+                <Link href={`/resources/${resource.id}`}>Ouvrir la fiche</Link>
+              </Button>
+            </section>
+          ) : null}
         </aside>
       </div>
 
       {state.error ? <ActionError error={state.error} /> : null}
 
-      <div className="bg-background/95 sticky bottom-0 -mx-1 flex gap-3 border-t px-1 py-3 backdrop-blur">
-        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
-          Enregistrer
-        </PendingButton>
+      <div className="bg-background/95 sticky bottom-0 -mx-1 flex flex-wrap items-center justify-between gap-3 border-t px-1 py-3 backdrop-blur">
         <Button type="button" variant="ghost" asChild>
-          <Link href={resource ? `/resources/${resource.id}` : "/resources"}>Annuler</Link>
+          <Link href={resource ? `/resources/${resource.id}` : "/resources"}>← Retour</Link>
         </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-muted-foreground text-sm">
+            Pas fini ? Elle reste « À construire ».
+          </span>
+          <PendingButton
+            type="submit"
+            variant="secondary"
+            pending={pending}
+            pendingLabel="Enregistrement…"
+          >
+            Enregistrer
+          </PendingButton>
+          <Button type="button" onClick={markReady} disabled={pending}>
+            Marquer comme prête
+          </Button>
+        </div>
       </div>
     </form>
   );

@@ -21,7 +21,11 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
 
   await page.getByRole("link", { name: "Créer", exact: true }).first().click();
   const title = `Scrum – bases ${Date.now()}`;
-  await page.getByLabel("Titre").fill(title);
+  await page.getByLabel("Titre", { exact: true }).fill(title);
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/ressource-creer.png" });
+  }
   await page.getByLabel("Type").selectOption("course");
   await page.getByLabel("Description").fill("Cérémonies et rôles Scrum.");
   await page.getByLabel("Tags").fill("agile, scrum");

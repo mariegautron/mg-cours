@@ -29,7 +29,7 @@ test("affiche un tableau Markdown, défilable au clavier, sans violation d'acces
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
 
-  const region = page.getByRole("region", { name: "Tableau" });
+  const region = page.getByRole("region", { name: "Tableau", exact: true });
   await expect(region.getByRole("table")).toBeVisible();
   await expect(region.getByRole("columnheader", { name: "Points" })).toBeVisible();
   await expect(region.getByRole("cell", { name: "4" })).toBeVisible();
