@@ -755,3 +755,12 @@ Source : export DocuSign (`EnvelopeList_10_03_2026…csv`, 4 enveloppes) et 3 PD
     d'écrire les horaires du B2.
   - Public Hyperplanning du GP : « DEVFLSTK MAST1 » (niveau importé : Mastère 1 DEVWEB,
     DEVLMIOT, DATA).
+
+#### Planning réel du B2 (décision PO, 03/10)
+
+L'export Hyperplanning du 30/10/2025 était un planning **prévisionnel** qui a changé. **Planning
+réel du B2 : 08/01, 12/01, 22/01, 23/01, 05/02/2026** (l'application est juste : séance 2 le
+12/01, pas le 15/01). Ne rien corriger dans l'application. Les horaires « 13h00 » de l'export
+ne sont donc pas non plus des horaires réels : **horaires du B2 toujours à fournir** par la PO.
+Les attendus du B2 sont rattachés aux séances d'après leurs objectifs, jamais d'après les
+dates Hyperplanning. Le GP, lui, correspond exactement à l'export.
