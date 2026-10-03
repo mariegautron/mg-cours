@@ -619,6 +619,11 @@ export default async function AssessmentPage({
             overview={overview}
             maxScore={assessment.maxScore}
             noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
+            phrasesHref={
+              (assessment.grading_grid?.criteria.length ?? 0) > 0
+                ? `/modules/${id}/assessments/${assessmentId}/phrases`
+                : null
+            }
             compareHref={
               (assessment.grading_grid?.criteria.length ?? 0) > 0
                 ? `/modules/${id}/assessments/${assessmentId}/compare`

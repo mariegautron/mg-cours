@@ -95,8 +95,37 @@ test("comparer un critère : modification en place, écart signalé, tri, access
 
   // Rechargement : tout est resté, et la vue d'ensemble compte les deux copies corrigées.
   await page.reload();
+  await page.waitForLoadState("networkidle");
   await expect(level(names[1], "6 points")).toBeChecked();
   await expect(comment(names[0])).toHaveValue("Choix non justifiés.");
   await page.getByRole("link", { name: "← Vue d’ensemble" }).click();
   await expect(page.getByText(/^2 corrigés sur 2/)).toBeVisible();
+
+  // Phrases de correction rangées par critère (BibPhrases).
+  await page.getByRole("link", { name: "Phrases de correction" }).click();
+  await expect(
+    page.getByRole("heading", { name: /^Phrases de correction/, level: 1 }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Ajouter une phrase à ce critère/ })
+    .first()
+    .click();
+  await page.getByLabel("Nouvelle phrase : Priorisation").fill(`Justifier chaque choix ${suffix}`);
+  await page.getByRole("button", { name: "Ajouter", exact: true }).click();
+  await expect(
+    page.locator("strong", { hasText: `Justifier chaque choix ${suffix}` }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator("li", { hasText: `Justifier chaque choix ${suffix}` })
+      .getByText("Utilisée 0 fois"),
+  ).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/phrases-correction.png", fullPage: true });
+  }
+  const phrasesAxe = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(phrasesAxe.violations).toEqual([]);
 });

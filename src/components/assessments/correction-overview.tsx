@@ -50,6 +50,7 @@ export function CorrectionOverview({
   maxScore,
   noun,
   compareHref,
+  phrasesHref,
 }: {
   overview: Overview;
   maxScore: number;
@@ -57,6 +58,8 @@ export function CorrectionOverview({
   noun: string;
   /** Comparer un critère entre les copies (US-141) ; absent sans grille. */
   compareHref?: string | null;
+  /** Phrases de correction rangées par critère ; absent sans grille. */
+  phrasesHref?: string | null;
 }) {
   const [filter, setFilter] = useState<OverviewFilter>("all");
   const rows = filterRows(overview.rows, filter);
@@ -252,6 +255,11 @@ export function CorrectionOverview({
                   </span>
                 </Link>
               </Button>
+              {phrasesHref ? (
+                <Button asChild variant="ghost" size="touch" className="mt-2 w-full">
+                  <Link href={phrasesHref}>Phrases de correction</Link>
+                </Button>
+              ) : null}
             </section>
           ) : null}
 
