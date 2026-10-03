@@ -7,17 +7,35 @@ Aucun autre service obligatoire ; **Resend** (e-mails) est optionnel.
 
 ## Variables d'environnement (Vercel → Settings → Environment Variables, _Production_)
 
-| Variable                        | Rôle                                                       | Obligatoire                      |
-| ------------------------------- | ---------------------------------------------------------- | -------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | URL du projet (`https://<ref>.supabase.co`)                | oui                              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé **publishable** Supabase                               | oui                              |
-| `SUPABASE_SERVICE_ROLE_KEY`     | clé **secret** (serveur uniquement, marquer « Sensitive ») | prévue, pas utilisée aujourd'hui |
-| `NEXT_PUBLIC_APP_URL`           | URL publique (`https://mg-cours.vercel.app`)               | oui                              |
-| `RESEND_API_KEY`                | envoi des résultats et factures par e-mail                 | non (fonction désactivée sinon)  |
-| `RESEND_FROM`                   | expéditeur vérifié dans Resend                             | avec `RESEND_API_KEY`            |
+| Variable                        | Rôle                                                       | Obligatoire                     |
+| ------------------------------- | ---------------------------------------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | URL du projet (`https://<ref>.supabase.co`)                | oui                             |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé **publishable** Supabase                               | oui                             |
+| `SUPABASE_SERVICE_ROLE_KEY`     | clé **secret** (serveur uniquement, marquer « Sensitive ») | **oui** (pages publiques, QCM)  |
+| `NEXT_PUBLIC_APP_URL`           | URL publique (`https://mg-cours.vercel.app`)               | oui                             |
+| `RESEND_API_KEY`                | envoi des résultats et factures par e-mail                 | non (fonction désactivée sinon) |
+| `RESEND_FROM`                   | expéditeur vérifié dans Resend                             | avec `RESEND_API_KEY`           |
+
+`SUPABASE_SERVICE_ROLE_KEY` est **requise** : elle sert aux pages publiques sans connexion (résultats
+étudiant·es `/resultats/…`, QCM `/q/…`, frise `/module/…`), à la correction des QCM côté serveur et au sel
+des jetons. Sans elle, ces pages échouent. `NEXT_PUBLIC_APP_URL` fabrique les liens et QR codes partagés :
+elle doit être l'URL publique exacte (sans `/` final), sinon les liens envoyés aux étudiant·es sont faux.
+Resend est facultatif : sans `RESEND_API_KEY` + `RESEND_FROM`, les envois par e-mail sont désactivés et
+l'appli le dit (les liens restent copiables).
 
 Les variables `NEXT_PUBLIC_*` sont figées **au build** : après modification → **redéployer**.
 Ne jamais nommer un fichier d'identifiants `.env.production.local` (voir ADR-009).
+
+## Fichiers (Storage) et migrations
+
+Quatre buckets privés sont créés par les migrations : `module-documents`, `resource-files`,
+`student-photos`, `assessment-files`. Si une migration manque, la fonction concernée affiche
+« disponible après la mise à jour » au lieu de planter.
+
+Migrations récentes à appliquer dans l'ordre (SQL Editor ou `supabase db push`), toutes additives :
+`20261101…` et `20261102000000_assessment_individual` (déjà appliquées),
+`20261103000000_expectation_dismissal` (« Ce n'est pas la bonne » du rapprochement),
+`20261104000000_training_agreement_document` (convention de formation).
 
 ## Mise en place de Supabase Cloud (une fois)
 
