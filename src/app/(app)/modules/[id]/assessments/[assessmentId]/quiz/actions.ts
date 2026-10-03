@@ -164,7 +164,7 @@ export async function publishQuiz(moduleId: string, assessmentId: string): Promi
       shuffleChoices: quiz.shuffle_choices,
       rules: quiz.rules,
     }),
-    ...shortages(await loadBank(), quiz.rules),
+    ...shortages(await loadBank(quiz.id), quiz.rules),
   ];
   if (problems.length)
     redirect(
@@ -269,11 +269,12 @@ export async function prepareLinks(
   formData: FormData,
 ): Promise<LinksState> {
   const send = formData.get("send") === "on";
-  const [quiz, assessment, bank] = await Promise.all([
+  const [quiz, assessment] = await Promise.all([
     getQuizByAssessment(assessmentId),
     getAssessment(assessmentId),
-    loadBank(),
   ]);
+  // Réserve du QCM (US-157) : le tirage ne pioche que dans ses questions.
+  const bank = await loadBank(quiz?.id);
   if (!quiz || !assessment || assessment.module_id !== moduleId)
     return { errors: ["Ce QCM n’existe plus."] };
   if (quiz.rules.length === 0) return { errors: ["Ajoute d’abord au moins une règle de tirage."] };
@@ -540,7 +541,8 @@ export async function setTimeMultiplier(
 /** Refait le tirage d'une copie pas encore commencée. */
 export async function redrawAttempt(moduleId: string, assessmentId: string, attemptId: string) {
   await withAttempt(moduleId, assessmentId, async (supabase) => {
-    const [quiz, bank] = await Promise.all([getQuizByAssessment(assessmentId), loadBank()]);
+    const quiz = await getQuizByAssessment(assessmentId);
+    const bank = await loadBank(quiz?.id);
     const { data: attempt } = await supabase
       .from("quiz_attempt")
       .select("status")

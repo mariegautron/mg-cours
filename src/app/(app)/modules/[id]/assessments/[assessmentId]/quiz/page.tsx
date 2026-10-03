@@ -16,7 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getAssessment } from "@/lib/assessments/queries";
 import { gradingTargets } from "@/lib/assessments/targets";
-import { getQuizByAssessment, listAttempts, loadBank, passingStudents } from "@/lib/quiz/queries";
+import {
+  getQuizByAssessment,
+  getQuizPool,
+  listAttempts,
+  loadBank,
+  passingStudents,
+} from "@/lib/quiz/queries";
 import { attemptScoreLabel, attemptStatusLabel } from "@/lib/quiz/status";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
@@ -71,6 +77,13 @@ export default async function QuizPage({
             <form action={createQuiz.bind(null, id, assessmentId)}>
               <Button type="submit">Créer le QCM</Button>
             </form>
+            <p className="text-sm">
+              Ou{" "}
+              <Link href={`${back}/generate`} className="underline underline-offset-2">
+                générer un QCM depuis les questions de tes ressources
+              </Link>
+              .
+            </p>
           </section>
         )}
       </div>
@@ -109,6 +122,7 @@ export default async function QuizPage({
     assessmentId,
     gradingTargets(false, assessment.groups).flatMap((t) => t.students),
   );
+  const pool = await getQuizPool(quiz.id);
   const withAttempt = new Set(attempts.map((a) => a.studentId));
   const missing = students.filter((s) => !withAttempt.has(s.id)).length;
   const submitted = attempts.filter((a) => a.status === "submitted").length;
@@ -164,6 +178,24 @@ export default async function QuizPage({
           choisie).
         </p>
       )}
+
+      {pool ? (
+        <p role="status" className="rounded-md border p-3 text-sm">
+          Ce QCM pioche dans {pool.size} question{pool.size > 1 ? "s" : ""} choisie
+          {pool.size > 1 ? "s" : ""}.{" "}
+          {quiz.status === "draft" && attempts.length === 0 ? (
+            <Link href={`${back}/generate`} className="underline underline-offset-2">
+              Changer les questions
+            </Link>
+          ) : null}
+        </p>
+      ) : quiz.status === "draft" && attempts.length === 0 ? (
+        <p className="text-sm">
+          <Link href={`${back}/generate`} className="underline underline-offset-2">
+            Générer le QCM depuis les questions de tes ressources
+          </Link>
+        </p>
+      ) : null}
 
       <section aria-labelledby="config" className="space-y-3">
         <h2 id="config" className="text-lg font-medium">

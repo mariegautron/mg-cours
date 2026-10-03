@@ -33,10 +33,26 @@ export async function getQuizByAssessment(assessmentId: string): Promise<QuizWit
   };
 }
 
-/** Banque active, dans la forme attendue par le tirage. */
-export async function loadBank(): Promise<BankQuestion[]> {
+/** Réserve de questions d'un QCM (US-157) ; table absente ou réserve vide → `null` (toute la banque). */
+export async function getQuizPool(quizId: string): Promise<Set<string> | null> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("quiz_pool")
+      .select("question_id")
+      .eq("quiz_id", quizId);
+    if (error || !data || data.length === 0) return null;
+    return new Set(data.map((r) => r.question_id));
+  } catch {
+    return null;
+  }
+}
+
+/** Banque active, dans la forme attendue par le tirage ; limitée à la réserve du QCM s'il en a une. */
+export async function loadBank(quizId?: string): Promise<BankQuestion[]> {
+  const pool = quizId ? await getQuizPool(quizId) : null;
   return (await listQuestions())
-    .filter((q) => !q.archived_at)
+    .filter((q) => !q.archived_at && (!pool || pool.has(q.id)))
     .map((q) => ({
       id: q.id,
       category: q.category,
