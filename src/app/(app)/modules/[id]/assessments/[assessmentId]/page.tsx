@@ -18,6 +18,9 @@ import { Markdown } from "@/components/markdown";
 import { HyperplanningTable } from "@/components/assessments/hyperplanning-table";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { PublishResults } from "@/components/assessments/publish-results";
+import { SubmissionItems } from "@/components/assessments/submission-items";
+import { groupByOwner } from "@/lib/projects/submission-items";
+import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { listResultLinks } from "@/lib/result-links/queries";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +133,7 @@ export default async function AssessmentPage({
   );
   const hasGrades = grades.some((g) => g.value !== null);
   // Les six lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
-  const [overrideRows, themes, submissionRows, makeup, loadedSheets, resultLinks] =
+  const [overrideRows, themes, submissionRows, makeup, loadedSheets, resultLinks, submissionData] =
     await Promise.all([
       listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
       themeTitleByGroup(assessment.project_id),
@@ -144,6 +147,7 @@ export default async function AssessmentPage({
         ? loadResultSheets(id, assessmentId)
         : null,
       listResultLinks(assessmentId),
+      listSubmissionItems(assessmentId),
     ]);
   let makeupPanel: React.ReactNode = null;
   const makeupOf = makeup.original;
@@ -350,6 +354,38 @@ export default async function AssessmentPage({
             Rendus — {submissionSummary(submissionRows)}
           </h2>
           <Submissions moduleId={id} assessmentId={assessmentId} rows={submissionRows} />
+        </section>
+      ) : null}
+
+      {submissionData.available && targets.length > 0 ? (
+        <section aria-labelledby="rendus" className="space-y-3">
+          <h2 id="rendus" className="text-lg font-medium">
+            Rendus déposés
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Plusieurs fichiers ou liens par {assessment.is_group_grade ? "groupe" : "étudiant·e"},
+            ajoutés par toi. Ils s’ouvrent aussi depuis la copie à corriger.
+          </p>
+          <SubmissionItems
+            moduleId={id}
+            assessmentId={assessmentId}
+            rows={(() => {
+              const byOwner = groupByOwner(submissionData.items);
+              return assessment.is_group_grade
+                ? targets.map(({ group }) => ({
+                    owner: { kind: "group" as const, id: group.id },
+                    name: group.name,
+                    items: byOwner.get(group.id) ?? [],
+                  }))
+                : targets.flatMap(({ students }) =>
+                    students.map((s) => ({
+                      owner: { kind: "student" as const, id: s.id },
+                      name: `${s.first_name} ${s.last_name}`,
+                      items: byOwner.get(s.id) ?? [],
+                    })),
+                  );
+            })()}
+          />
         </section>
       ) : null}
 

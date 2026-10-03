@@ -2378,6 +2378,82 @@ export type Database = {
           },
         ]
       }
+      submission_item: {
+        Row: {
+          added_by: string
+          assessment_id: string
+          created_at: string
+          file_name: string | null
+          group_id: string | null
+          id: string
+          kind: string
+          label: string
+          mime: string | null
+          owner_id: string
+          size_bytes: number | null
+          storage_path: string | null
+          student_id: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          added_by?: string
+          assessment_id: string
+          created_at?: string
+          file_name?: string | null
+          group_id?: string | null
+          id?: string
+          kind: string
+          label?: string
+          mime?: string | null
+          owner_id?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          student_id?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          added_by?: string
+          assessment_id?: string
+          created_at?: string
+          file_name?: string | null
+          group_id?: string | null
+          id?: string
+          kind?: string
+          label?: string
+          mime?: string | null
+          owner_id?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          student_id?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_item_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_item_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "student_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_item_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teacher_profile: {
         Row: {
           activity_number: string | null
