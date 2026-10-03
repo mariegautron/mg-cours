@@ -193,4 +193,8 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   // Vue d'ensemble.
   await page.goto("/billing");
   await expect(page.getByText(new RegExp(`Module Facture ${suffix}`)).first()).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/facturation.png" });
+  }
 });

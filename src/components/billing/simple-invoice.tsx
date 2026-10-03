@@ -5,6 +5,9 @@ import { CircleCheck, CircleDashed, Hourglass, Upload } from "lucide-react";
 
 import { ActionError } from "@/components/action-error";
 import { setInvoiceStep, type BillingActionState } from "@/app/(app)/modules/[id]/billing/actions";
+import Link from "next/link";
+
+import { Pill } from "@/components/dashboard/pill";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,6 +38,9 @@ export function SimpleInvoice({
   datesAvailable,
   today,
   summary,
+  title,
+  subtitle,
+  href,
   children,
 }: {
   moduleId: string;
@@ -47,6 +53,10 @@ export function SimpleInvoice({
   today: string;
   /** Résumé d'une ligne (montant, école…), s'il y en a un. */
   summary?: string | null;
+  /** Vue « tous les modules » : le bloc porte le nom du module (lien vers sa facturation). */
+  title?: string;
+  subtitle?: string;
+  href?: string;
   children: ReactNode;
 }) {
   const [pending, start] = useTransition();
@@ -58,21 +68,37 @@ export function SimpleInvoice({
     start(async () => setState(await setInvoiceStep(moduleId, box, checked, dates[box])));
 
   return (
-    <section aria-labelledby="simple-invoice" className="space-y-4 rounded-lg border p-4">
+    <section
+      aria-labelledby={`simple-invoice-${moduleId}`}
+      className="bg-card space-y-4 rounded-xl border p-5"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="simple-invoice" className="text-lg font-medium">
-          Ma facture
-        </h2>
-        <p className="flex items-center gap-2 text-sm font-medium" role="status">
-          <Icon aria-hidden className="size-4" />
-          {SIMPLE_STATUS_LABELS[status]}
+        <div>
+          <h2 id={`simple-invoice-${moduleId}`} className="text-lg font-semibold">
+            {title && href ? (
+              <Link href={href} className="underline-offset-2 hover:underline">
+                {title}
+              </Link>
+            ) : (
+              (title ?? "Ma facture")
+            )}
+          </h2>
+          {subtitle ? <p className="text-muted-foreground text-sm">{subtitle}</p> : null}
+        </div>
+        <p role="status">
+          <Pill tone={status === "paid" ? "ok" : status === "to_deposit" ? "warn" : "wip"}>
+            <Icon aria-hidden className="size-3.5" />
+            {status === "to_deposit" ? "Pas de facture déposée" : SIMPLE_STATUS_LABELS[status]}
+          </Pill>
         </p>
       </div>
-      <p className="text-muted-foreground text-sm">
-        Tu fais ta facture toi-même. Ici, tu la déposes et tu suis où elle en est. Chaque case
-        s’enregistre toute seule.
-        {summary ? ` ${summary}` : ""}
-      </p>
+      {title ? null : (
+        <p className="text-muted-foreground text-sm">
+          Tu fais ta facture toi-même. Ici, tu la déposes et tu suis où elle en est. Chaque case
+          s’enregistre toute seule.
+          {summary ? ` ${summary}` : ""}
+        </p>
+      )}
 
       {children}
 
@@ -101,11 +127,14 @@ export function SimpleInvoice({
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <Label htmlFor={`invoice-${box}-date`} className="text-muted-foreground text-sm">
+                  <Label
+                    htmlFor={`invoice-${moduleId}-${box}-date`}
+                    className="text-muted-foreground text-sm"
+                  >
                     Date
                   </Label>
                   <Input
-                    id={`invoice-${box}-date`}
+                    id={`invoice-${moduleId}-${box}-date`}
                     type="date"
                     value={dates[box]}
                     onChange={(e) => setDates((d) => ({ ...d, [box]: e.target.value }))}

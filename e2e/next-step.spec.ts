@@ -33,6 +33,7 @@ test("US-72 : « Prochaine étape » sur le module et raisons du blocage sur la 
   await expect(journey.getByText("Fait", { exact: true })).toHaveCount(0);
 
   await page.goto("/billing");
+  await page.waitForLoadState("networkidle");
   const item = page.getByRole("listitem").filter({ hasText: name });
   await expect(
     item.getByText("Prochaine étape : envoyer la progression pédagogique"),
