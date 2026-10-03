@@ -132,7 +132,8 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   const present = await page
     .getByRole("link", { name: `Faire cours : Séance carnet ${suffix}` })
     .getAttribute("href");
-  const html = await (await page.request.get(present!)).text();
+  const projectedUrl = present!.replace("/modules/", "/present/modules/").replace(/\/start$/, "");
+  const html = await (await page.request.get(projectedUrl)).text();
   for (const secret of [
     "Très bonne question",
     "Estimation en points",

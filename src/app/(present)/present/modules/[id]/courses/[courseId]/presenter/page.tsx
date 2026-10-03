@@ -7,6 +7,7 @@ import { PresenterView } from "@/components/present/presenter-view";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { todayInParis } from "@/lib/modules/next-session";
+import { parseHidden, resourceKey } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
@@ -19,8 +20,10 @@ export const metadata: Metadata = { title: "Vue présentatrice" };
  */
 export default async function PresenterPage({
   params,
+  searchParams,
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
+  const hidden = parseHidden((await searchParams).hide);
   const [mod, courses, allResources, subjects, libraryRows] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -40,6 +43,7 @@ export default async function PresenterPage({
     resources: studentFacing(allResources),
     resumeLines: previousNextTime(courses, position),
     subjects,
+    hidden,
   });
 
   const notes = [
@@ -48,8 +52,9 @@ export default async function PresenterPage({
     { label: "Matériel nécessaire", text: course.material },
   ].flatMap((n) => (n.text?.trim() ? [{ label: n.label, text: n.text.trim() }] : []));
 
+  // Les ressources gardées « pour moi » (Avant de commencer) restent consultables ici, jamais projetées.
   const teacherResources = allResources
-    .filter((r) => r.audience === "teacher")
+    .filter((r) => r.audience === "teacher" || hidden.has(resourceKey(r.id)))
     .map((r) => ({
       id: r.id,
       title: r.title,

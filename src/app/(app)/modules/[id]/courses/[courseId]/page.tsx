@@ -135,7 +135,7 @@ export default async function CoursePage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/present/modules/${id}/courses/${courseId}`} className={BTN}>
+          <Link href={`/modules/${id}/courses/${courseId}/start`} className={BTN}>
             <Play aria-hidden className="mr-2 size-4" />
             Faire cours<span className="sr-only"> : {course.title}</span>
           </Link>

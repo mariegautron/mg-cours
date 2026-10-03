@@ -21,7 +21,7 @@ import { notebookStudents, OBSERVATION_TAG_LABELS } from "@/lib/notebook/noteboo
 import { endedEarly, projectionRecap } from "@/lib/notebook/projection";
 import { listProjectionEvents } from "@/lib/notebook/projection-queries";
 import { listCourseObservations } from "@/lib/notebook/queries";
-import { plannedSections } from "@/lib/present/plan";
+import { keptForMeKeys, plannedSections } from "@/lib/present/plan";
 import { minutesInParis } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -67,7 +67,7 @@ export default async function CourseNotebookPage({
     : [];
   // US-136 : ce qui était prévu au déroulé comparé à ce qui a été projeté.
   const recap = projectionRecap({
-    planned: plannedSections(studentFacing(courseResources), subjects),
+    planned: plannedSections(studentFacing(courseResources), subjects, keptForMeKeys(events)),
     events,
     nextSessionResourceIds: (courses[position + 1]?.resources ?? []).map((r) => r.id),
     endedEarly:

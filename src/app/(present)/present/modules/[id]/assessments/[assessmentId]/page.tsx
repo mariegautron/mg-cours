@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PresentShell } from "@/components/present/present-shell";
-import { subjectSlides } from "@/components/present/deck";
+import { cadreSlides, gridSlidesOf, subjectSlides } from "@/components/present/deck";
 import { Button } from "@/components/ui/button";
 import { loadSubjectDeck } from "@/lib/assessments/present-data";
 import { getAssessment } from "@/lib/assessments/queries";
@@ -44,13 +44,22 @@ export default async function PresentAssessmentPage({
     );
   }
 
+  // Intercalaire, cadre (quand, avec qui, rendu, notation), sujet, puis la grille critère par critère.
+  const base = subjectSlides(0, subject);
+  const slides = [
+    ...base.slice(0, 1),
+    ...cadreSlides(0, subject),
+    ...base.slice(1),
+    ...gridSlidesOf(0, subject),
+  ];
+
   return (
     <PresentShell
       title={`${mod.name} — Sujet : ${assessment.title}`}
       backHref={backHref}
       backLabel="l’évaluation"
       sections={["Sujet"]}
-      slides={subjectSlides(0, subject)}
+      slides={slides}
     />
   );
 }

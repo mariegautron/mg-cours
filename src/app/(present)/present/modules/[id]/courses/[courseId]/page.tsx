@@ -5,6 +5,7 @@ import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresentShell } from "@/components/present/present-shell";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { parseHidden } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
@@ -21,8 +22,10 @@ export async function generateMetadata({
 /** Déroulé projeté d'une séance : titre → objectifs → ressources étudiant·es → suite. */
 export default async function PresentCoursePage({
   params,
+  searchParams,
 }: PageProps<"/present/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
+  const hidden = parseHidden((await searchParams).hide);
   const [mod, courses, allResources, subjects] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -43,6 +46,7 @@ export default async function PresentCoursePage({
     resources,
     resumeLines: previousNextTime(courses, position),
     subjects,
+    hidden,
   });
 
   return (

@@ -322,7 +322,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex w-full flex-col gap-2.5 sm:w-72">
             <Link
-              href={`/present/modules/${hero.module.id}/courses/${hero.id}`}
+              href={`/modules/${hero.module.id}/courses/${hero.id}/start`}
               className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
             >
               <Play aria-hidden className="size-4" />

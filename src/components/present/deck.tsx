@@ -238,7 +238,6 @@ export function subjectSlides(section: number, subject: SubjectDeckInput): Prese
       subtitle: subject.durationMinutes ? `Durée : ${subject.durationMinutes} min` : null,
     }),
   ];
-  if (subject.cadre) slides.push(cadreSlide(section, subject.cadre));
   for (const part of subject.sections) {
     slides.push(...markdownSlides(section, `## ${part.heading}\n\n${part.text}`));
     if (part.key === "evaluated" && subject.criteria.length) {
@@ -250,8 +249,17 @@ export function subjectSlides(section: number, subject: SubjectDeckInput): Prese
       ...criteriaSlide(section, subject.criteria),
     });
   }
-  if (subject.grid) slides.push(...gridSlides(section, subject.grid));
   return slides;
+}
+
+/** Le cadre de l'évaluation, projeté à part du sujet (sa propre section du déroulé). */
+export function cadreSlides(section: number, subject: SubjectDeckInput): PresentSlide[] {
+  return subject.cadre ? [cadreSlide(section, subject.cadre)] : [];
+}
+
+/** La grille de correction projetée, un critère par diapositive (sa propre section). */
+export function gridSlidesOf(section: number, subject: SubjectDeckInput): PresentSlide[] {
+  return subject.grid ? gridSlides(section, subject.grid) : [];
 }
 
 /** Le cadre de l'évaluation : grands blocs quand / avec qui / rendu / notation, contraste fort. */

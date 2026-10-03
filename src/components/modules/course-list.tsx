@@ -161,7 +161,7 @@ export function CourseList({
                   size="sm"
                   variant={c.id === highlightedId ? "default" : "secondary"}
                 >
-                  <Link href={`/present/modules/${moduleId}/courses/${c.id}`}>
+                  <Link href={`/modules/${moduleId}/courses/${c.id}/start`}>
                     <Play aria-hidden />
                     Faire cours<span className="sr-only"> : {c.title}</span>
                   </Link>

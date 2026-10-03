@@ -74,7 +74,32 @@ test("faire cours : déroulé projeté d'une séance, sans les ressources enseig
 
   await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Faire cours : Rôles et responsabilités" }).click();
-  await expect(page.getByRole("heading", { name: "Rôles et responsabilités" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Avant de commencer", level: 1 })).toBeVisible();
+  expect(await axe(page), "avant de commencer").toEqual([]);
+  // « Pour moi » : l'élément ne part plus à l'écran de la classe (l'adresse porte le choix).
+  const roles = page.getByRole("group", { name: lesson, exact: true });
+  await roles.getByRole("button", { name: "Pour moi" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /élément/ })).toBeVisible();
+  const hiddenHref = await page
+    .getByRole("link", { name: /Ouvrir la fenêtre projetée/ })
+    .getAttribute("href");
+  expect(hiddenHref).toContain("hide=");
+  await page.goto(hiddenHref!);
+  await expect(page.getByText("Construire une matrice RACI")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Les quatre rôles" })).toHaveCount(0);
+  await page.goBack();
+  await page
+    .getByRole("group", { name: lesson, exact: true })
+    .getByRole("button", { name: "Projeter" })
+    .click();
+  const projected = await page
+    .getByRole("link", { name: /Ouvrir la fenêtre projetée/ })
+    .getAttribute("href");
+  expect(projected).not.toContain("hide=");
+  await page.goto(projected!);
+  await expect(
+    page.getByRole("heading", { name: "Rôles et responsabilités", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Construire une matrice RACI")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Les quatre rôles" })).toBeVisible();
   // Garde-fou : le corrigé n'est jamais projeté.

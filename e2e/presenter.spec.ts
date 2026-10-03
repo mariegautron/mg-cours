@@ -55,9 +55,10 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
   await openTab(page, /Séances/);
-  const href = await page
+  const startHref = await page
     .getByRole("link", { name: /^Faire cours : Séance présentée/ })
     .getAttribute("href");
+  const href = startHref!.replace("/modules/", "/present/modules/").replace(/\/start$/, "");
 
   // Fenêtre projetée.
   await page.goto(href!);

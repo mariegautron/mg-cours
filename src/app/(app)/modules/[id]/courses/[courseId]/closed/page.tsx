@@ -12,7 +12,7 @@ import { ProjectionStatus } from "@/components/notebook/projection-status";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { projectionRecap } from "@/lib/notebook/projection";
 import { listProjectionEvents } from "@/lib/notebook/projection-queries";
-import { plannedSections } from "@/lib/present/plan";
+import { keptForMeKeys, plannedSections } from "@/lib/present/plan";
 import { studentFacing } from "@/lib/resources/kind";
 import { listCourseObservations } from "@/lib/notebook/queries";
 import { closureRecap, type RecapState } from "@/lib/notebook/recap";
@@ -48,7 +48,7 @@ export default async function ClosedCoursePage({
   const next = courses[position + 1] ?? null;
 
   const projection = projectionRecap({
-    planned: plannedSections(studentFacing(courseResources), subjects),
+    planned: plannedSections(studentFacing(courseResources), subjects, keptForMeKeys(events)),
     events,
     nextSessionResourceIds: (courses[position + 1]?.resources ?? []).map((r) => r.id),
   });

@@ -80,7 +80,7 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   const start = page.getByRole("link", { name: /^Commencer le cours/ }).first();
   await expect(start).toHaveAttribute(
     "href",
-    new RegExp(`^/present/modules/[0-9a-f-]{36}/courses/[0-9a-f-]{36}$`),
+    new RegExp(`^/modules/[0-9a-f-]{36}/courses/[0-9a-f-]{36}/start$`),
   );
   // Les trois cartes de la maquette.
   for (const name of [
@@ -97,7 +97,8 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   expect(axe.violations).toEqual([]);
 
   await start.click();
-  await page.waitForURL(/\/present\/modules\/.+\/courses\//);
+  await page.waitForURL(/\/modules\/.+\/courses\/.+\/start/);
+  await expect(page.getByRole("heading", { name: "Avant de commencer", level: 1 })).toBeVisible();
 });
 
 test("l'accueil dit toujours où on en est : séance du jour ou prochain cours", async ({ page }) => {
