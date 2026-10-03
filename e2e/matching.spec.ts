@@ -11,6 +11,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
   // Mot-clé unique : pas de collision avec les ressources déjà en base.
   const word = `zorglub${stamp}`;

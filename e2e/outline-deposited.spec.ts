@@ -12,6 +12,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.getByLabel("Nom du module").fill(`Module Progression Déposée ${Date.now()}`);

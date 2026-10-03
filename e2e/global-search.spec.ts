@@ -10,6 +10,7 @@ test("Ctrl K ouvre la recherche, Échap la ferme et rend le focus, 0 violation a
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const trigger = page.getByRole("button", { name: /Rechercher/ });
   await trigger.focus();

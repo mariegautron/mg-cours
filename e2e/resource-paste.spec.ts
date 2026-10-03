@@ -14,6 +14,7 @@ test("collage nettoyé, aperçu des diapos, brouillon local annoncé puis repris
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/resources/new");
   await page.getByLabel("Titre", { exact: true }).fill("Collage Word");

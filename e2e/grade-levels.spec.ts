@@ -1,3 +1,4 @@
+import { setCriterionComment, showCriterion } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -8,6 +9,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("noter par palier : un choix attribue les points, propose la description, se pilote au clavier", async ({
@@ -73,28 +75,39 @@ test("noter par palier : un choix attribue les points, propose la description, s
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByText(`Yanis Palier${suffix}`).first()).toBeVisible();
 
-  const structure = page.getByRole("group", { name: /^Structure/ });
-  const bouton = page.getByRole("group", { name: /^Bouton/ });
+  const total = page.getByRole("region", { name: "Total en direct" }).first();
+  const structure = () => page.getByRole("group", { name: "Palier atteint pour Structure" });
+  const bouton = () => page.getByRole("group", { name: "Palier atteint pour Bouton" });
 
   // Un choix attribue les points et met le total à jour en direct.
-  await structure.getByRole("radio", { name: /4 pt — Structure approximative/ }).check();
-  await expect(page.getByText("Total : 4 / 8")).toBeVisible();
-  await bouton.getByRole("radio", { name: "2 pt" }).check();
-  await expect(page.getByText("Total : 6 / 8")).toBeVisible();
+  await structure()
+    .getByRole("radio", { name: /4 pts? Structure approximative/ })
+    .check({ force: true });
+  await expect(total).toContainText("4 / 8");
+  await showCriterion(page, "Bouton");
+  await bouton()
+    .getByRole("radio", { name: /^2 pts?/ })
+    .check({ force: true });
+  await expect(total).toContainText("6 / 8");
 
   // La description du palier choisi est proposée comme base du commentaire du critère, sans écraser.
-  await page.getByLabel("Commentaire — Structure", { exact: true }).fill("Bon début.");
-  await structure.getByRole("button", { name: /Insérer dans le commentaire/ }).click();
+  await showCriterion(page, "Structure");
+  await setCriterionComment(page, "Structure", "Bon début.");
+  await page.getByRole("button", { name: /Insérer dans le commentaire/ }).click();
   await expect(page.getByLabel("Commentaire — Structure", { exact: true })).toHaveValue(
     "Bon début.\nStructure — Structure approximative",
   );
-  await expect(bouton.getByRole("button", { name: /Insérer/ })).toHaveCount(0);
+  await showCriterion(page, "Bouton");
+  await expect(page.getByRole("button", { name: /Insérer/ })).toHaveCount(0);
 
-  // Clavier : flèche bas sur le groupe passe au palier suivant (2 pt).
-  await structure.getByRole("radio", { name: /4 pt/ }).focus();
+  // Clavier : flèche bas sur le groupe passe au palier suivant.
+  await showCriterion(page, "Structure");
+  await structure()
+    .getByRole("radio", { name: /4 pts?/ })
+    .focus();
   await page.keyboard.press("ArrowDown");
-  await expect(structure.getByRole("radio", { name: "2 pt" })).toBeChecked();
-  await expect(page.getByText("Total : 4 / 8")).toBeVisible();
+  await expect(structure().getByRole("radio", { name: /^2 pts?/ })).toBeChecked();
+  await expect(total).toContainText("4 / 8");
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -107,10 +120,7 @@ test("noter par palier : un choix attribue les points, propose la description, s
 
   // Rechargement : les paliers choisis sont restitués.
   await page.reload();
-  await expect(
-    page.getByRole("group", { name: /^Structure/ }).getByRole("radio", { name: "2 pt" }),
-  ).toBeChecked();
-  await expect(
-    page.getByRole("group", { name: /^Bouton/ }).getByRole("radio", { name: "2 pt" }),
-  ).toBeChecked();
+  await expect(structure().getByRole("radio", { name: /^2 pts?/ })).toBeChecked();
+  await showCriterion(page, "Bouton");
+  await expect(bouton().getByRole("radio", { name: /^2 pts?/ })).toBeChecked();
 });

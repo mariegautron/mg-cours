@@ -11,6 +11,7 @@ test("US-72 : « Prochaine étape » sur le module et raisons du blocage sur la 
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const name = `Étape ${Date.now()}`;
   await page.goto("/modules/new");

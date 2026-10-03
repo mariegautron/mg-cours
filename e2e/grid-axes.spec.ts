@@ -1,3 +1,4 @@
+import { setScore, showCriterion } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -8,6 +9,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("axes, référence, bonus et critère validé d'office : total ramené sur 20 puis plafonné", async ({
@@ -96,19 +98,20 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   // Saisie : Header et footer validé d'office (8/8), sous-totaux et total en direct.
   await expect(page.getByText(`Ines Axes${suffix}`).first()).toBeVisible();
   await expect(page.getByText("Validé d’office : 8 / 8")).toBeVisible();
-  await expect(page.getByLabel("Header et footer", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel(/^Header et footer \(\//)).toHaveCount(0);
   await expect(page.getByText("Référence : RGAA 1.3.1")).toBeVisible();
 
-  await page.getByLabel("Onglets (/12)").fill("6");
-  await expect(page.getByText("sous-total : 8 / 8")).toBeVisible();
-  await expect(page.getByText("sous-total : 6 / 12 + 0 de bonus")).toBeVisible();
-  await expect(page.getByText("Total : 14 / 20")).toBeVisible();
+  const total = page.getByRole("region", { name: "Total en direct" });
+  await setScore(page, "Onglets", "6");
+  await expect(total).toContainText("8 / 8");
+  await expect(total).toContainText("6 / 12 + 0 de bonus");
+  await expect(total).toContainText("14 / 20");
 
-  await page.getByLabel("Onglets (/12)").fill("12");
-  await page.getByLabel(/^Lighthouse supérieur à 90/).fill("0.5");
-  await expect(
-    page.getByText("Total : 20 / 20 + 0,5 de bonus → 20 / 20 (20,5 → plafonné à 20)"),
-  ).toBeVisible();
+  await setScore(page, "Onglets", "12");
+  await showCriterion(page, "Lighthouse supérieur à 90");
+  await page.getByRole("spinbutton", { name: /^Lighthouse supérieur à 90/ }).fill("0.5");
+  await expect(total).toContainText("20 / 20");
+  await expect(total).toContainText("plafonné à 20");
 
   const gradeAxe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

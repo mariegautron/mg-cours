@@ -11,6 +11,7 @@ test("US-56 : la recherche porte sur le contenu et les tags, sans accent ni cass
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
 
   const title = `Support sobriété ${stamp}`;

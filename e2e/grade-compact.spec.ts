@@ -1,3 +1,4 @@
+import { setCriterionComment } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -13,6 +14,7 @@ test("vue compacte : paliers en pastilles, clavier, commentaire d'axe, palier mo
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const suffix = Date.now();
   const gridName = `Grille Compacte ${suffix}`;
 
@@ -74,7 +76,7 @@ test("vue compacte : paliers en pastilles, clavier, commentaire d'axe, palier mo
   const group = (name: string) => form.getByRole("radiogroup", { name });
   // Pastille : un clic choisit le palier ; le total suit.
   await group("Stories (3 points)").getByRole("radio", { name: "2 points" }).check({ force: true });
-  await expect(form.getByText(/Total : 2 \/ 9/)).toBeVisible();
+  await expect(form.getByRole("region", { name: "Total en direct" })).toContainText("2 / 9");
 
   // Clavier : ↓ passe au critère suivant, un chiffre choisit le palier de ces points.
   await group("Stories (3 points)").getByRole("radio", { name: "2 points" }).focus();
@@ -84,7 +86,7 @@ test("vue compacte : paliers en pastilles, clavier, commentaire d'axe, palier mo
   await expect(
     group("Priorisation (3 points)").getByRole("radio", { name: "3 points" }),
   ).toBeChecked();
-  await expect(form.getByText(/Total : 5 \/ 9/)).toBeVisible();
+  await expect(form.getByRole("region", { name: "Total en direct" })).toContainText("5 / 9");
 
   // Palier moyen pour ce qui n'est pas noté : « Cohérence » passe à 2 points, rien d'autre ne bouge.
   await form.getByRole("button", { name: /palier moyen/ }).click();
@@ -92,11 +94,11 @@ test("vue compacte : paliers en pastilles, clavier, commentaire d'axe, palier mo
     group("Cohérence (3 points)").getByRole("radio", { name: "2 points" }),
   ).toBeChecked();
   await expect(group("Stories (3 points)").getByRole("radio", { name: "2 points" })).toBeChecked();
-  await expect(form.getByText(/Total : 7 \/ 9/)).toBeVisible();
+  await expect(form.getByRole("region", { name: "Total en direct" })).toContainText("7 / 9");
 
   // Commentaire d'un critère (« + commentaire ») et d'un axe.
   await form.getByRole("button", { name: /\+ commentaire pour Stories/ }).click();
-  await form.getByLabel("Commentaire — Stories", { exact: true }).fill("Valeur claire.");
+  await setCriterionComment(form, "Stories", "Valeur claire.");
   await form.getByLabel(/Un mot pour tout l’axe « Backlog »/).fill("Backlog clair.");
 
   const axe = await new AxeBuilder({ page })

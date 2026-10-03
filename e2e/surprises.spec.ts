@@ -10,6 +10,7 @@ test("imprévu du client : ajout, rappel du jour, copie, envoyé", async ({ page
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const suffix = Date.now();
   const today = new Date().toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });

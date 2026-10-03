@@ -1,3 +1,4 @@
+import { nextCopy, setScore } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -21,9 +22,11 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   const [ana, zoe, leo] = setup.studentNames;
   const form = (name: string) => page.getByRole("form", { name });
 
-  await form(ana).getByLabel("Structure (/4)").fill("4");
-  await form(zoe).getByRole("radio", { name: "Absent·e excusé·e" }).check();
+  await setScore(form(ana), "Structure", "4");
+  await nextCopy(page);
   await form(leo).getByRole("radio", { name: "Absent·e non prévenu·e" }).check();
+  await nextCopy(page);
+  await form(zoe).getByRole("radio", { name: "Absent·e excusé·e" }).check();
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
 
   // L'évaluation d'origine propose le rattrapage : seule Zoé (excusée) est concernée.
@@ -57,7 +60,7 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(form(zoe)).toBeVisible();
   await expect(form(ana)).toHaveCount(0);
   await expect(form(leo)).toHaveCount(0);
-  await form(zoe).getByLabel("Structure (/4)").fill("3");
+  await setScore(form(zoe), "Structure", "3");
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
 
   // Le rattrapage ne compte pas comme une note de plus ; sa note remplace l'absence excusée.

@@ -12,6 +12,7 @@ test("comparer un critère : modification en place, écart signalé, tri, access
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const suffix = Date.now();
   const gridName = `Grille Comparer ${suffix}`;
 

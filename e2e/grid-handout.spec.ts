@@ -1,3 +1,4 @@
+import { setScore, setCriterionComment } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -28,9 +29,9 @@ test("grille remise aux étudiant·es : PDF sans notes ni commentaires, depuis l
   const setup = await createAssessment(page, gridName, suffix);
 
   // Une note avec des commentaires : rien de tout cela ne doit sortir dans la grille remise.
-  await page.getByLabel("Structure (/4)").fill("3");
-  await page.getByLabel("Contenu (/6)").fill("5");
-  await page.getByLabel("Commentaire — Structure", { exact: true }).fill("Secret de correction");
+  await setScore(page, "Structure", "3");
+  await setScore(page, "Contenu", "5");
+  await setCriterionComment(page, "Structure", "Secret de correction");
   await page.getByLabel("Commentaire libre", { exact: true }).fill("Appréciation privée");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(page.getByText("Note enregistrée.")).toBeVisible();

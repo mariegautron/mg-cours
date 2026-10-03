@@ -24,6 +24,7 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
 

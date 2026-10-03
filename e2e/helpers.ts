@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /** Zones d'un module, devenues des pages (plus d'onglets sur la fiche) : nom d'onglet → chemin. */
 const MODULE_ZONES: [RegExp, string][] = [
@@ -52,4 +52,46 @@ export async function openModuleFromList(page: Page, name: string | RegExp) {
     }
   }
   throw new Error(`Module introuvable dans la liste : ${String(name)}`);
+}
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Affiche un critère dans « Un critère à la fois » (clic sur son onglet) ; sans effet s'il n'y a pas d'onglets. */
+export async function showCriterion(scope: Page | Locator, label: string) {
+  const tab = scope
+    .getByRole("group", { name: "Critères", exact: true })
+    .getByRole("button", { name: new RegExp(`^(Bonus · )?${esc(label)}`) });
+  if ((await tab.count()) > 0) await tab.first().click();
+}
+
+/** Saisit les points d'un critère numérique (champ « Libellé (/N) »). */
+export async function setScore(scope: Page | Locator, label: string, value: string) {
+  await showCriterion(scope, label);
+  await scope
+    .getByLabel(new RegExp(`^${esc(label)} \\(/`))
+    .first()
+    .fill(value);
+}
+
+/** Saisit le commentaire d'un critère (champ « Commentaire — Libellé »). */
+export async function setCriterionComment(scope: Page | Locator, label: string, text: string) {
+  await showCriterion(scope, label);
+  await scope.getByLabel(`Commentaire — ${label}`, { exact: true }).fill(text);
+}
+
+/** Passe à la copie suivante (une seule copie est affichée à la fois). */
+export async function nextCopy(page: Page) {
+  await page
+    .getByRole("button", { name: /^(?!Critère).* →$/ })
+    .first()
+    .click();
+}
+
+/** Revient à la première copie (après un rechargement, par exemple). */
+export async function firstCopy(page: Page) {
+  for (let i = 0; i < 20; i++) {
+    const prev = page.getByRole("button", { name: /^← (?!Critère)/ });
+    if ((await prev.count()) === 0) return;
+    await prev.first().click();
+  }
 }

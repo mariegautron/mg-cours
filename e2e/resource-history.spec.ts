@@ -8,6 +8,7 @@ test("conserve l’historique d’une ressource et restaure une ancienne version
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/resources/new");
   const title = `Historique ${Date.now()}`;

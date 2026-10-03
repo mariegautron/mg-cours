@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openTab } from "./helpers";
+import { nextCopy, openTab, setScore } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -9,6 +9,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("grille, groupe, évaluation notée et compteur de notes", async ({ page }) => {
@@ -63,8 +64,8 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
 
   // Noter l'étudiant·e via la grille.
   await expect(page.getByText(`Nora Benali${suffix}`).first()).toBeVisible();
-  await page.getByLabel("Présentation (/4)").fill("3");
-  await page.getByLabel("Contenu (/6)").fill("5");
+  await setScore(page, "Présentation", "3");
+  await setScore(page, "Contenu", "5");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(page.getByText("Note enregistrée.")).toBeVisible();
   await expect(page.getByText("Note actuelle : 8 / 10 (16/20)")).toBeVisible();
@@ -130,6 +131,7 @@ test("une évaluation sur plusieurs groupes compte pour une seule note", async (
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   for (const [i, name] of groupNames.entries()) {
+    if (i > 0) await nextCopy(page);
     const form = page.getByRole("form", { name: `Note du groupe « ${name} »` });
     await form.getByLabel("Note (/20)", { exact: true }).fill(String(12 + i));
     await form.getByRole("button", { name: "Enregistrer la note" }).click();

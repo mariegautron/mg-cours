@@ -9,6 +9,7 @@ test("tirage en trois étapes, groupes créés, axe 0 violation", async ({ page 
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const suffix = Date.now();
   for (const first of ["Ana", "Bob", "Cléo"]) {

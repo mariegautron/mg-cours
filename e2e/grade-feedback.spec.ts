@@ -1,3 +1,4 @@
+import { setCriterionComment, setScore, showCriterion } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -18,12 +19,10 @@ for (const groupGrade of [false, true]) {
     ]);
     const setup = await createAssessment(page, gridName, suffix, { groupGrade });
 
-    await page.getByLabel("Structure (/4)").fill("3");
-    await page.getByLabel("Contenu (/6)").fill("5");
-    await page
-      .getByLabel("Commentaire — Structure", { exact: true })
-      .fill("Le header est bien posé.");
-    await page.getByLabel("Commentaire — Contenu", { exact: true }).fill("Manque un exemple.");
+    await setScore(page, "Structure", "3");
+    await setScore(page, "Contenu", "5");
+    await setCriterionComment(page, "Structure", "Le header est bien posé.");
+    await setCriterionComment(page, "Contenu", "Manque un exemple.");
     await page.getByLabel("Points forts", { exact: true }).fill("Code propre et lisible.");
     await page.getByLabel("Progrès", { exact: true }).fill("Tester davantage.");
     await page.getByLabel("Commentaire libre", { exact: true }).fill("Continuez ainsi.");
@@ -38,9 +37,11 @@ for (const groupGrade of [false, true]) {
 
     // Rechargement : chaque zone est restituée.
     await page.goto(setup.assessmentUrl);
+    await showCriterion(page, "Structure");
     await expect(page.getByLabel("Commentaire — Structure", { exact: true })).toHaveValue(
       "Le header est bien posé.",
     );
+    await showCriterion(page, "Contenu");
     await expect(page.getByLabel("Commentaire — Contenu", { exact: true })).toHaveValue(
       "Manque un exemple.",
     );

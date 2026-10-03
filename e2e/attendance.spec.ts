@@ -1,3 +1,4 @@
+import { nextCopy, setScore } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -23,13 +24,15 @@ test("note individuelle : non prévenu·e = 0, excusé·e = hors moyenne", async
   const [ana, zoe, leo] = setup.studentNames;
   const form = (name: string) => page.getByRole("form", { name });
 
-  await form(ana).getByLabel("Structure (/4)").fill("4");
+  await setScore(form(ana), "Structure", "4");
+  await nextCopy(page);
+  await form(leo).getByRole("radio", { name: "Absent·e excusé·e" }).check();
+  await expect(form(leo).getByText(/non comptée dans la moyenne/)).toBeVisible();
+  await nextCopy(page);
   await form(zoe).getByRole("radio", { name: "Absent·e non prévenu·e" }).check();
   await expect(form(zoe).getByText("Note 0 automatique (règle de l’école).")).toBeVisible();
   // Les critères disparaissent pour une copie absente ; la copie compte comme traitée.
   await expect(form(zoe).getByLabel("Structure (/4)")).toHaveCount(0);
-  await form(leo).getByRole("radio", { name: "Absent·e excusé·e" }).check();
-  await expect(form(leo).getByText(/non comptée dans la moyenne/)).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: /corrigées?$/ })).toHaveText(
     "3/3 corrigées",
   );
@@ -40,8 +43,10 @@ test("note individuelle : non prévenu·e = 0, excusé·e = hors moyenne", async
 
   // Rechargement : les statuts sont restitués.
   await page.reload();
-  await expect(form(zoe).getByRole("radio", { name: "Absent·e non prévenu·e" })).toBeChecked();
+  await nextCopy(page);
   await expect(form(leo).getByRole("radio", { name: "Absent·e excusé·e" })).toBeChecked();
+  await nextCopy(page);
+  await expect(form(zoe).getByRole("radio", { name: "Absent·e non prévenu·e" })).toBeChecked();
 
   // Moyennes : 20 (présent·e), 0 (non prévenu·e), aucune (excusé·e).
   await page.goto(`${setup.moduleUrl}/assessments`);
@@ -65,7 +70,7 @@ test("note de groupe : présence par membre et mot personnel, jamais de retrait 
   const [ana, zoe, leo] = setup.studentNames;
   const form = page.getByRole("form", { name: /Note du groupe/ });
 
-  await form.getByLabel("Structure (/4)").fill("3");
+  await setScore(form, "Structure", "3");
 
   // Plus de pondération : on ne retire jamais de points. Un mot pour Ana, facultatif, sans effet.
   await expect(form.getByLabel(`Pondération de ${ana} (%)`)).toHaveCount(0);

@@ -9,6 +9,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("crée un module, ajoute une séance liée à une ressource, coche un document", async ({

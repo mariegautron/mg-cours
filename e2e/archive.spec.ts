@@ -13,6 +13,7 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   const name = `Module archivable ${Date.now()}`;
@@ -60,6 +61,7 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   const name = `Module à terminer ${Date.now()}`;

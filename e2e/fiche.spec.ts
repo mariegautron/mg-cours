@@ -20,6 +20,7 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");
@@ -69,6 +70,7 @@ test("E18 : la fiche importée à la création est conservée, avec ses attendus
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");
@@ -134,6 +136,7 @@ test("signale un PDF sans texte exploitable", async ({ page }) => {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");

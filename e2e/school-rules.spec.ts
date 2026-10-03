@@ -9,6 +9,7 @@ test("règles par école : enregistrement, validation du modèle d'adresse, axe"
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const name = `École règles ${Date.now()}`;
   await page.goto("/settings/schools/new");

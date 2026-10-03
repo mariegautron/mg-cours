@@ -90,6 +90,9 @@ export function GradeForm({
   onNavigate,
   hasPrev = false,
   hasNext = false,
+  prevLabel = null,
+  nextLabel = null,
+  overviewHref = null,
   others = [],
   submissions,
   absenceRule = "keep_group_grade",
@@ -121,6 +124,11 @@ export function GradeForm({
   onNavigate?: (direction: -1 | 1) => void;
   hasPrev?: boolean;
   hasNext?: boolean;
+  /** Titres des copies voisines (« ← Groupe 1 », « Groupe 3 → »). */
+  prevLabel?: string | null;
+  nextLabel?: string | null;
+  /** Lien « Vue d'ensemble » (liste des copies de l'évaluation). */
+  overviewHref?: string | null;
   /** Les autres copies de l'évaluation : « déjà noté chez les autres » (US-139). */
   others?: OtherCopy[];
   /** Rendu de la personne ou du groupe (US-146) ; `undefined` : pas de suivi des rendus. */
@@ -155,6 +163,9 @@ export function GradeForm({
   const [announcement, setAnnouncement] = useState("");
   // Vue compacte (US-140) : tous les critères en une page, paliers en pastilles.
   const [compact, setCompact] = useState(false);
+  // « Un critère à la fois » (maquette CorrCopie) : critère affiché et heure du dernier enregistrement.
+  const [stepId, setStepId] = useState("");
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const compactRef = useRef<HTMLUListElement>(null);
   // Présence (note individuelle) et ajustements par membre (note de groupe).
@@ -216,7 +227,10 @@ export function GradeForm({
   const [lastState, setLastState] = useState(state);
   if (state !== lastState) {
     setLastState(state);
-    if (state.saved) setSaved(submitted);
+    if (state.saved) {
+      setSaved(submitted);
+      setSavedAt(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
+    }
   }
   const dirty = snapshot !== saved;
   const ready = absent || grid ? true : directValue.trim() !== "";
@@ -859,6 +873,412 @@ export function GradeForm({
   }
 
   const focused = grid && focusCriterionId ? criteria.find((c) => c.id === focusCriterionId) : null;
+  const ordered = groups.flatMap((g) => g.criteria);
+  const stepIndex = Math.max(
+    0,
+    ordered.findIndex((c) => c.id === stepId),
+  );
+  const step = ordered[stepIndex] ?? null;
+
+  function pointsPill(c: CriterionWithLevels) {
+    const v = inputs[c.id];
+    if (!c.is_bonus && autoValidatedIds.includes(c.id))
+      return { label: formatNumber(c.weight), tone: "ok" };
+    if (v === undefined || v.trim() === "") return { label: "à noter", tone: "warn" };
+    return { label: formatNumber(Number(v.replace(",", "."))), tone: "wip" };
+  }
+
+  /** Autres copies notées au même palier pour ce critère (reprise du commentaire en un clic). */
+  function similarBlock(c: CriterionWithLevels) {
+    const similar = similarAtSameLevel({
+      criterionId: c.id,
+      points: parsePoints(inputs[c.id] ?? ""),
+      others,
+      currentId: id,
+    });
+    if (similar.length === 0) return null;
+    return (
+      <div className="space-y-2 rounded-2xl border border-dashed p-3 text-sm">
+        <p className="font-semibold">Déjà noté chez les autres</p>
+        <ul className="space-y-1.5">
+          {similar.map((entry) => (
+            <li key={entry.copyId} className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-muted-foreground">{similarLabel(entry)}</span>
+              {entry.comment ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const next = adoptComment(criterionComments[c.id] ?? "", entry);
+                    if (!next.changed) {
+                      setAnnouncement(`Ce commentaire est déjà dans « ${c.label} ».`);
+                      return;
+                    }
+                    setCriterionComments((prev) => ({ ...prev, [c.id]: next.comment }));
+                    setAnnouncement(`Commentaire de ${entry.title} repris pour « ${c.label} ».`);
+                  }}
+                >
+                  Même palier et commentaire
+                  <span className="sr-only">
+                    {" "}
+                    de {entry.title} pour {c.label}
+                  </span>
+                </Button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  /** Critère affiché en grand : paliers en cartes, commentaire, phrases, déjà noté chez les autres. */
+  function stepCard(c: CriterionWithLevels, index: number) {
+    const validated = !c.is_bonus && autoValidatedIds.includes(c.id);
+    const current = inputs[c.id] ?? "";
+    const numeric = current.trim() === "" ? null : Number(current.replace(",", "."));
+    const selected = findLevel(c.levels, numeric);
+    const orphan = numeric !== null && Number.isFinite(numeric) && !selected ? numeric : null;
+    const base = levelCommentBase(c.label, selected);
+    const name = `score_${c.id}`;
+    const card =
+      "has-[:focus-visible]:ring-ring flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-2xl border-[1.5px] p-3.5 has-[:focus-visible]:ring-2";
+    return (
+      <section
+        aria-labelledby={`${uid}-step-title`}
+        className="bg-card space-y-4 rounded-3xl border p-5 shadow-sm"
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id={`${uid}-step-title`} className="font-heading text-xl font-bold">
+            {c.label}
+          </h2>
+          <span className="text-muted-foreground text-sm">
+            {c.is_bonus
+              ? `bonus, jusqu’à +${c.weight}`
+              : `${c.weight} point${c.weight > 1 ? "s" : ""}`}{" "}
+            · critère {index + 1} sur {ordered.length}
+          </span>
+        </div>
+        {c.reference ? (
+          <p className="text-muted-foreground text-xs">Référence : {c.reference}</p>
+        ) : null}
+
+        {validated ? (
+          <p className="text-sm">
+            Validé d’office : {formatNumber(c.weight)} / {formatNumber(c.weight)}
+          </p>
+        ) : c.levels.length > 0 ? (
+          <fieldset>
+            <legend className="sr-only">Palier atteint pour {c.label}</legend>
+            <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+              {sortLevels(c.levels).map((l) => {
+                const on = selected?.id === l.id;
+                return (
+                  <label
+                    key={l.id}
+                    className={`${card} ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
+                  >
+                    <input
+                      type="radio"
+                      name={name}
+                      value={String(l.points)}
+                      checked={on}
+                      onChange={() => setLevel(c, l.points)}
+                      className="sr-only"
+                    />
+                    <span className="font-heading text-2xl font-bold">
+                      {formatNumber(l.points)}{" "}
+                      <span className="text-muted-foreground text-sm font-normal">
+                        pt{l.points > 1 ? "s" : ""}
+                      </span>
+                    </span>
+                    <span className="text-sm">{l.description}</span>
+                    {on ? (
+                      <span className="bg-primary/20 text-primary mt-auto w-fit rounded-full px-2.5 py-0.5 text-xs font-bold">
+                        ✓ Choisi
+                      </span>
+                    ) : null}
+                  </label>
+                );
+              })}
+              {orphan !== null ? (
+                <label className={`${card} border-primary bg-primary/10`}>
+                  <input
+                    type="radio"
+                    name={name}
+                    value={String(orphan)}
+                    checked
+                    readOnly
+                    className="sr-only"
+                  />
+                  <span className="font-heading text-2xl font-bold">{formatNumber(orphan)} pt</span>
+                  <span className="text-sm">Saisie précédente, hors des paliers actuels</span>
+                </label>
+              ) : null}
+              <label
+                className={`${card} ${current.trim() === "" ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
+              >
+                <input
+                  type="radio"
+                  name={name}
+                  value=""
+                  checked={current.trim() === ""}
+                  onChange={() => setInputs((prev) => ({ ...prev, [c.id]: "" }))}
+                  className="sr-only"
+                />
+                <span className="text-sm font-semibold">Pas encore noté</span>
+              </label>
+            </div>
+            {base ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => insertBase(c, base)}
+              >
+                Insérer dans le commentaire
+                <span className="sr-only"> la description du palier choisi pour {c.label}</span>
+              </Button>
+            ) : null}
+          </fieldset>
+        ) : (
+          <div className="space-y-1">
+            <Label htmlFor={`${uid}-score_${c.id}`}>Points (de 0 à {c.weight})</Label>
+            <Input
+              id={`${uid}-score_${c.id}`}
+              name={name}
+              type="number"
+              step="0.5"
+              min={0}
+              max={c.weight}
+              value={current}
+              aria-label={`${c.label} (/${c.weight})`}
+              onChange={(e) => setInputs((prev) => ({ ...prev, [c.id]: e.target.value }))}
+              className="w-28"
+            />
+          </div>
+        )}
+
+        {splitDescription(c.description).text ? (
+          <details>
+            <summary className="text-muted-foreground cursor-pointer text-xs">
+              Voir le barème
+            </summary>
+            <p className="text-muted-foreground mt-1 text-xs whitespace-pre-wrap">
+              {splitDescription(c.description).text}
+            </p>
+          </details>
+        ) : null}
+        {expectationsBlock(c)}
+        {criterionComment(c)}
+        {similarBlock(c)}
+
+        <div className="flex flex-wrap justify-between gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={index === 0}
+            onClick={() => setStepId(ordered[index - 1].id)}
+          >
+            ← Critère précédent
+          </Button>
+          <Button
+            type="button"
+            disabled={index === ordered.length - 1}
+            onClick={() => setStepId(ordered[index + 1].id)}
+          >
+            Critère suivant →
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  const attendanceFieldset = isGroup ? null : (
+    <fieldset className="bg-card space-y-1.5 rounded-3xl border p-4 shadow-sm">
+      <legend className="font-heading px-1 text-base font-bold">Présence</legend>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {ATTENDANCE_VALUES.map((value) => (
+          <label key={value} className="flex min-h-9 items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="attendance"
+              value={value}
+              checked={attendance === value}
+              onChange={() => setAttendance(value)}
+            />
+            {ATTENDANCE_LABELS[value]}
+          </label>
+        ))}
+      </div>
+      {ATTENDANCE_HINTS[attendance] ? (
+        <p className="text-muted-foreground text-xs">{ATTENDANCE_HINTS[attendance]}</p>
+      ) : null}
+    </fieldset>
+  );
+
+  const totalCard = (
+    <section aria-labelledby={`${uid}-total`} className="bg-card rounded-3xl border p-4 shadow-sm">
+      <h2 id={`${uid}-total`} className="font-heading mb-1 text-base font-bold">
+        Total en direct
+      </h2>
+      <p className="font-heading text-4xl font-bold" aria-live="polite">
+        {formatNumber(totals.value)}{" "}
+        <span className="text-muted-foreground text-lg font-normal">
+          / {formatNumber(totals.maxScore)}
+        </span>
+      </p>
+      <p className="text-muted-foreground text-[0.8rem]">
+        {showAxes
+          ? groups
+              .map((g) => `${g.axis?.label ?? "Autres"} ${subtotal(g.axis?.id ?? null)}`)
+              .join(" · ")
+          : `${formatNumber(totals.base)} / ${formatNumber(totals.max)}${totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}`}
+        {overflow ? ` · ${overflow}` : ""}
+        {totals.capped ? ` · plafonné à ${formatNumber(totals.maxScore)}` : ""}
+      </p>
+    </section>
+  );
+
+  const submissionsCard =
+    submissions !== undefined ? (
+      <section
+        aria-label={`Rendu de ${title}`}
+        className="bg-card space-y-2 rounded-3xl border p-4 text-sm shadow-sm"
+      >
+        <h2 className="font-heading text-base font-bold">Rendu</h2>
+        <p>{submissionSummary(submissions.length)}</p>
+        {submissions.length > 0 ? (
+          <ul className="space-y-1.5">
+            {submissions.map((l) => (
+              <li key={l.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {l.title}
+                  <span className="text-muted-foreground"> · {l.detail}</span>
+                </span>
+                <Button asChild size="touch" variant="secondary">
+                  <a
+                    href={l.href}
+                    {...(l.kind === "link"
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : { download: true })}
+                  >
+                    Ouvrir
+                    <span className="sr-only">
+                      {" "}
+                      {l.title} de {title}
+                    </span>
+                  </a>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+    ) : null;
+
+  const observationsCard =
+    observations.length > 0 ? (
+      <section aria-labelledby={`${uid}-obs`} className="bg-card rounded-3xl border p-4 shadow-sm">
+        <div className="mb-1 flex items-center gap-2">
+          <h2 id={`${uid}-obs`} className="font-heading text-base font-bold">
+            Ton carnet
+          </h2>
+          <span className="border-sun/45 bg-sun/12 text-sun rounded-full border px-2.5 text-xs font-bold">
+            Pour toi seule
+          </span>
+        </div>
+        <details>
+          <summary className="cursor-pointer text-sm font-medium">
+            Observations de cours ({observations.length})
+          </summary>
+          <ul className="mt-2 space-y-1 text-sm">
+            {observations.map((o) => (
+              <li key={o.id}>
+                <span className="text-muted-foreground">
+                  {new Date(o.createdAt).toLocaleDateString("fr-FR")}
+                  {observations.some((x) => x.studentId !== o.studentId)
+                    ? ` · ${o.studentName}`
+                    : ""}
+                  {" · "}
+                  {o.tag}
+                </span>
+                {o.note ? ` — ${o.note}` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      </section>
+    ) : null;
+
+  const bilanCard = (
+    <section
+      aria-labelledby={`${uid}-bilan`}
+      className="bg-card space-y-3 rounded-3xl border p-4 shadow-sm"
+    >
+      <h2 id={`${uid}-bilan`} className="font-heading text-base font-bold">
+        Bilan
+      </h2>
+      <CommentField
+        name="strengths"
+        label="Points forts"
+        value={strengths}
+        onChange={setStrengths}
+        phrases={comments}
+        criteria={phraseCriteria}
+        subject={subject}
+        categories={["positive"]}
+      />
+      <CommentField
+        name="progress"
+        label="Progrès"
+        value={progress}
+        onChange={setProgress}
+        phrases={comments}
+        criteria={phraseCriteria}
+        subject={subject}
+        categories={["advice", "negative"]}
+      />
+      <CommentField
+        name="feedback"
+        label="Commentaire libre"
+        value={feedback}
+        onChange={setFeedback}
+        phrases={comments}
+        criteria={phraseCriteria}
+        subject={subject}
+      />
+    </section>
+  );
+
+  // Cases d'attendus des critères non affichés : conservées et renvoyées.
+  const hiddenChecks = (exceptId: string | null) =>
+    criteria
+      .filter((c) => c.id !== exceptId && criterionComments[checksKey(c.id)])
+      .map((c) => (
+        <input
+          key={c.id}
+          type="hidden"
+          name={`checks_${c.id}`}
+          value={criterionComments[checksKey(c.id)] ?? ""}
+        />
+      ));
+
+  const statusPill = (
+    <span role="status" className="text-sm">
+      {dirty ? (
+        <span className="border-sun/45 bg-sun/12 text-sun rounded-full border px-3 py-1 text-xs font-bold">
+          Modifications non enregistrées
+        </span>
+      ) : savedAt ? (
+        <span className="border-mint/45 bg-mint/12 text-mint rounded-full border px-3 py-1 text-xs font-bold">
+          Enregistré à {savedAt}
+        </span>
+      ) : null}
+    </span>
+  );
 
   return (
     <form
@@ -879,103 +1299,57 @@ export function GradeForm({
         }
       }}
       aria-labelledby={`copy-${id}-title`}
-      className="space-y-4 rounded-lg border p-4"
+      className="space-y-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 id={`copy-${id}-title`} tabIndex={-1} className="font-medium">
-          {title}
-        </h3>
-        {grade?.value !== undefined && grade?.value !== null ? (
-          <span className="text-muted-foreground text-sm">
-            Note actuelle : {grade.value} / {maxScore}
-            {maxScore !== DEFAULT_MAX_SCORE ? ` (${toTwenty(grade.value, maxScore)}/20)` : ""}
-          </span>
-        ) : null}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-primary mb-1 text-[0.75rem] font-bold tracking-widest uppercase">
+            Évaluations
+          </p>
+          <h3
+            id={`copy-${id}-title`}
+            tabIndex={-1}
+            className="font-heading text-2xl font-bold outline-none"
+          >
+            {title}
+          </h3>
+          {grade?.value !== undefined && grade?.value !== null ? (
+            <p className="text-muted-foreground text-sm">
+              Note actuelle : {grade.value} / {maxScore}
+              {maxScore !== DEFAULT_MAX_SCORE ? ` (${toTwenty(grade.value, maxScore)}/20)` : ""}
+            </p>
+          ) : null}
+          {theme ? <p className="text-sm">Thème : {theme}</p> : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {onNavigate ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasPrev}
+                onClick={() => onNavigate(-1)}
+              >
+                {prevLabel ? `← ${prevLabel}` : "Copie précédente"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasNext}
+                onClick={() => onNavigate(1)}
+              >
+                {nextLabel ? `${nextLabel} →` : "Copie suivante"}
+              </Button>
+            </>
+          ) : null}
+          {overviewHref ? (
+            <Button asChild variant="outline">
+              <a href={overviewHref}>Vue d’ensemble</a>
+            </Button>
+          ) : null}
+          {statusPill}
+        </div>
       </div>
-      {theme ? <p className="text-sm">Thème : {theme}</p> : null}
-
-      {submissions !== undefined ? (
-        <section
-          aria-label={`Rendu de ${title}`}
-          className="space-y-2 rounded-md border p-3 text-sm"
-        >
-          <p className="font-medium">Rendu : {submissionSummary(submissions.length)}</p>
-          {submissions.length > 0 ? (
-            <ul className="space-y-1">
-              {submissions.map((l) => (
-                <li key={l.id} className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    {l.title}
-                    <span className="text-muted-foreground"> · {l.detail}</span>
-                  </span>
-                  <Button asChild size="touch" variant="secondary">
-                    <a
-                      href={l.href}
-                      {...(l.kind === "link"
-                        ? { target: "_blank", rel: "noopener noreferrer" }
-                        : { download: true })}
-                    >
-                      Ouvrir
-                      <span className="sr-only">
-                        {" "}
-                        {l.title} de {title}
-                      </span>
-                    </a>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
-
-      {observations.length > 0 ? (
-        <details className="rounded-md border p-2">
-          <summary className="cursor-pointer text-sm font-medium">
-            Observations de cours ({observations.length})
-          </summary>
-          <ul className="mt-2 space-y-1 text-sm">
-            {observations.map((o) => (
-              <li key={o.id}>
-                <span className="text-muted-foreground">
-                  {new Date(o.createdAt).toLocaleDateString("fr-FR")}
-                  {observations.some((x) => x.studentId !== o.studentId)
-                    ? ` · ${o.studentName}`
-                    : ""}
-                  {" · "}
-                  {o.tag}
-                </span>
-                {o.note ? ` — ${o.note}` : ""}
-              </li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
-
-      {isGroup ? null : focused ? (
-        <input type="hidden" name="attendance" value={attendance} />
-      ) : (
-        <fieldset className="space-y-1">
-          <legend className="text-sm font-semibold">Présence</legend>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {ATTENDANCE_VALUES.map((value) => (
-              <label key={value} className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="attendance"
-                  value={value}
-                  checked={attendance === value}
-                  onChange={() => setAttendance(value)}
-                />
-                {ATTENDANCE_LABELS[value]}
-              </label>
-            ))}
-          </div>
-          {ATTENDANCE_HINTS[attendance] ? (
-            <p className="text-muted-foreground text-xs">{ATTENDANCE_HINTS[attendance]}</p>
-          ) : null}
-        </fieldset>
-      )}
 
       {focused ? (
         <div className="space-y-4">
@@ -989,9 +1363,9 @@ export function GradeForm({
               {totalLine}
             </>
           )}
-          {/* Les autres critères et le bilan ne sont pas affichés dans cette vue, mais leur saisie
-              est conservée et renvoyée : enregistrer ne perd rien. */}
+          {isGroup ? null : <input type="hidden" name="attendance" value={attendance} />}
           {hiddenCriteria(absent ? null : focused.id)}
+          {hiddenChecks(absent ? null : focused.id)}
           {hiddenAxisComments}
           <input type="hidden" name="strengths" value={strengths} />
           <input type="hidden" name="progress" value={progress} />
@@ -999,116 +1373,111 @@ export function GradeForm({
           {hiddenMembers}
         </div>
       ) : (
-        <>
-          {absent ? (
-            <>
-              <p className="bg-muted rounded-md p-2 text-sm">
-                {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette copie.
-              </p>
-              {hiddenCriteria(null)}
-              {hiddenAxisComments}
-            </>
-          ) : grid ? (
-            <div className="space-y-4">
-              <div
-                role="group"
-                aria-label="Affichage des critères"
-                className="flex flex-wrap gap-2"
-              >
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={compact ? "outline" : "default"}
-                  aria-pressed={!compact}
-                  onClick={() => setCompact(false)}
+        <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap">
+          <div className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
+            {absent ? (
+              <>
+                <p className="bg-muted rounded-2xl p-3 text-sm">
+                  {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette copie.
+                </p>
+                {hiddenCriteria(null)}
+                {hiddenChecks(null)}
+                {hiddenAxisComments}
+              </>
+            ) : grid ? (
+              <>
+                <div
+                  className="flex flex-wrap items-center gap-2"
+                  role="group"
+                  aria-label="Affichage des critères"
                 >
-                  Détaillé
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={compact ? "default" : "outline"}
-                  aria-pressed={compact}
-                  onClick={() => setCompact(true)}
-                >
-                  Tous les critères d’un coup
-                </Button>
-              </div>
-              {compact ? compactView() : hiddenAxisComments}
-              {(compact ? [] : groups).map((group) =>
-                showAxes ? (
-                  <fieldset key={group.axis?.id ?? "none"} className="space-y-3">
-                    <legend className="text-sm font-semibold">
-                      {group.axis?.label ?? "Autres critères"}
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        — sous-total : {subtotal(group.axis?.id ?? null)}
-                      </span>
-                    </legend>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {group.criteria.map(criterionField)}
+                  <Button
+                    type="button"
+                    variant={compact ? "outline" : "default"}
+                    aria-pressed={!compact}
+                    onClick={() => setCompact(false)}
+                  >
+                    Un critère à la fois
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={compact ? "default" : "outline"}
+                    aria-pressed={compact}
+                    onClick={() => setCompact(true)}
+                  >
+                    Tous les critères d’un coup
+                  </Button>
+                </div>
+                {compact ? (
+                  <section className="bg-card rounded-3xl border p-4 shadow-sm">
+                    {compactView()}
+                  </section>
+                ) : step ? (
+                  <>
+                    <div role="group" aria-label="Critères" className="flex flex-wrap gap-2">
+                      {ordered.map((c) => {
+                        const pill = pointsPill(c);
+                        const on = c.id === step.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            aria-current={on ? "step" : undefined}
+                            onClick={() => setStepId(c.id)}
+                            className={`focus-visible:ring-ring flex min-h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
+                          >
+                            {c.is_bonus ? "Bonus · " : ""}
+                            {c.label}
+                            <span
+                              className={`rounded-full border px-2 text-xs font-bold ${pill.tone === "ok" ? "border-mint/45 text-mint" : pill.tone === "wip" ? "border-sky/45 text-sky" : "border-sun/45 text-sun"}`}
+                            >
+                              {pill.label}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </fieldset>
-                ) : (
-                  <div key="all" className="grid gap-3 sm:grid-cols-2">
-                    {group.criteria.map(criterionField)}
-                  </div>
-                ),
-              )}
-              {totalLine}
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
-              <Input
-                id={`${uid}-value`}
-                name="value"
-                type="number"
-                step="0.5"
-                min={0}
-                max={maxScore}
-                value={directValue}
-                onChange={(e) => setDirectValue(e.target.value)}
-                required
-              />
-            </div>
-          )}
+                    {stepCard(step, stepIndex)}
+                    {hiddenCriteria(step.id)}
+                    {hiddenChecks(step.id)}
+                    {hiddenAxisComments}
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <div className="bg-card space-y-1 rounded-3xl border p-5 shadow-sm">
+                <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
+                <Input
+                  id={`${uid}-value`}
+                  name="value"
+                  type="number"
+                  step="0.5"
+                  min={0}
+                  max={maxScore}
+                  value={directValue}
+                  onChange={(e) => setDirectValue(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+            {members ? (
+              <div className="bg-card rounded-3xl border p-4 shadow-sm">
+                {membersFieldset(members)}
+              </div>
+            ) : null}
+          </div>
 
-          {members ? membersFieldset(members) : null}
-
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-semibold">Bilan</legend>
-            <CommentField
-              name="strengths"
-              label="Points forts"
-              value={strengths}
-              onChange={setStrengths}
-              phrases={comments}
-              criteria={phraseCriteria}
-              subject={subject}
-              categories={["positive"]}
-            />
-            <CommentField
-              name="progress"
-              label="Progrès"
-              value={progress}
-              onChange={setProgress}
-              phrases={comments}
-              criteria={phraseCriteria}
-              subject={subject}
-              categories={["advice", "negative"]}
-            />
-            <CommentField
-              name="feedback"
-              label="Commentaire libre"
-              value={feedback}
-              onChange={setFeedback}
-              phrases={comments}
-              criteria={phraseCriteria}
-              subject={subject}
-            />
-          </fieldset>
-        </>
+          <aside
+            className="w-full min-w-0 space-y-3 lg:sticky lg:top-2 lg:w-80 lg:flex-none"
+            aria-label="Contexte de la copie"
+          >
+            {totalCard}
+            {attendanceFieldset}
+            {submissionsCard}
+            {bilanCard}
+            {observationsCard}
+          </aside>
+        </div>
       )}
 
       {legacyComments.length > 0 ? (
@@ -1142,45 +1511,29 @@ export function GradeForm({
       </p>
 
       {state.error ? <ActionError error={state.error} /> : null}
-      {dirty ? (
-        <p role="status" className="text-sm text-amber-700 dark:text-amber-400">
-          Modifications non enregistrées
-        </p>
-      ) : state.saved ? (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
-          Note enregistrée. {title} est à jour.
-        </p>
-      ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <PendingButton type="submit" size="sm" pending={pending} pendingLabel="Enregistrement…">
-          Enregistrer la note
-        </PendingButton>
-        {onNavigate ? (
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!hasPrev}
-              onClick={() => onNavigate(-1)}
-            >
-              Copie précédente
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!hasNext}
-              onClick={() => onNavigate(1)}
-            >
-              Copie suivante
-            </Button>
-            <span className="text-muted-foreground text-xs">
+      <div className="bg-background/95 sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 border-t py-2.5 backdrop-blur">
+        <p className="text-sm" aria-live="polite">
+          <strong className="font-heading text-lg">
+            {formatNumber(totals.value)} / {formatNumber(totals.maxScore)}
+          </strong>
+          <span className="text-muted-foreground"> · total en direct</span>
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {state.saved && !dirty ? (
+            <span className="sr-only" role="status">
+              Note enregistrée. {title} est à jour.
+            </span>
+          ) : null}
+          <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+            Enregistrer la note
+          </PendingButton>
+          {onNavigate ? (
+            <span className="text-muted-foreground hidden text-xs sm:inline">
               Alt + ← / → : copie précédente / suivante
             </span>
-          </>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </form>
   );

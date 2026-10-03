@@ -10,6 +10,7 @@ test("US-55 : retenir une ressource pour un module, la retrouver en tête de sé
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
 
   await page.goto("/modules/new");

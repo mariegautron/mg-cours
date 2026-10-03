@@ -1,3 +1,4 @@
+import { setCriterionComment } from "./helpers";
 import { expect, test } from "@playwright/test";
 
 // US-139 : « Déjà noté chez les autres » : le même palier ailleurs dans la classe, et son commentaire
@@ -9,6 +10,7 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const suffix = Date.now();
   const gridName = `Grille Similaire ${suffix}`;
 
@@ -61,14 +63,18 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
   const zoe = page.getByRole("form", { name: `Élève ${names[1]}` });
 
   // Ana : palier 4 + commentaire, enregistrés.
-  await ana.getByRole("radio", { name: "4 pt" }).check();
-  await ana.getByLabel("Commentaire — Priorisation", { exact: true }).fill("Choix non justifiés.");
+  await ana.getByRole("radio", { name: /^4 pts?/ }).check({ force: true });
+  await setCriterionComment(ana, "Priorisation", "Choix non justifiés.");
   await ana.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(ana.getByText("Note enregistrée.")).toBeVisible();
 
+  // Une copie à la fois : on passe à Zoé avec « Élève … → ».
+  await ana.getByRole("button", { name: new RegExp(`Élève ${names[1]} →`) }).click();
+  await expect(zoe).toBeVisible();
+
   // Zoé : tant qu'aucun palier n'est choisi, rien n'est proposé ; au même palier, la suggestion apparaît.
   await expect(zoe.getByText("Déjà noté chez les autres")).toHaveCount(0);
-  await zoe.getByRole("radio", { name: "4 pt" }).check();
+  await zoe.getByRole("radio", { name: /^4 pts?/ }).check({ force: true });
   await expect(zoe.getByText("Déjà noté chez les autres")).toBeVisible();
   await expect(zoe.getByText(/Choix non justifiés\./).first()).toBeVisible();
   await zoe.getByRole("button", { name: /Même palier et commentaire/ }).click();
@@ -76,11 +82,15 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
     "Choix non justifiés.",
   );
   // Un autre palier : plus de suggestion.
-  await zoe.getByRole("radio", { name: "6 pt" }).check();
+  await zoe
+    .locator("label")
+    .filter({ hasText: /^6\s*pts/ })
+    .click();
+  await expect(zoe.getByRole("radio", { name: /^6 pts?/ })).toBeChecked();
   await expect(zoe.getByText("Déjà noté chez les autres")).toHaveCount(0);
 
-  // Clavier : Alt + flèche droite passe à la copie suivante (focus sur son titre).
-  await ana.getByLabel("Commentaire — Priorisation", { exact: true }).focus();
-  await page.keyboard.press("Alt+ArrowRight");
-  await expect(page.locator('h3[tabindex="-1"]', { hasText: `Élève ${names[1]}` })).toBeFocused();
+  // Clavier : Alt + flèche gauche revient à la copie précédente (focus sur son titre).
+  await zoe.getByLabel("Commentaire — Priorisation", { exact: true }).focus();
+  await page.keyboard.press("Alt+ArrowLeft");
+  await expect(page.locator('h3[tabindex="-1"]', { hasText: `Élève ${names[0]}` })).toBeFocused();
 });

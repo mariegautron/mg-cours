@@ -8,6 +8,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("coque : lien d’évitement, repères uniques, axe et pas de défilement horizontal à 320 px", async ({

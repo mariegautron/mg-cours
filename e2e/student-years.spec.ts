@@ -11,6 +11,7 @@ test("US-80b : promotion par année scolaire, import d'une année pour un·e ét
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
   const email = `promo.${stamp}@ynov.com`;
   const older = `B3 Dev ${stamp}`;

@@ -20,6 +20,7 @@ test("propose la présentation aux étudiant·es depuis la fiche, et confirme av
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");

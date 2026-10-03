@@ -8,6 +8,7 @@ export async function loginLight(page: Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 /** Crée une grille à critères numériques simples (`[libellé, points]`). */

@@ -1,3 +1,4 @@
+import { nextCopy, setScore } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -23,8 +24,9 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
     [ana, "3"],
     [zoe, "2"],
   ] as const) {
+    if (name === zoe) await nextCopy(page);
     const form = page.getByRole("form", { name });
-    await form.getByLabel("Structure (/4)").fill(points);
+    await setScore(form, "Structure", points);
     await form
       .getByLabel("Commentaire — Structure", { exact: true })
       .fill(`Mot pour ${name.split(" ")[0]}`);

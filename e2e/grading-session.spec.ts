@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 import { createAssessment, createSimpleGrid, loginLight } from "./grading-setup";
-import { openTab } from "./helpers";
+import { openTab, setScore, showCriterion } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 test("correction sans perte : avancement, enregistrement automatique, garde, vue par critère", async ({
@@ -32,7 +32,7 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await expect(page.getByText("Tout est enregistré")).toBeVisible();
 
   // Noter un critère : l'avancement suit la frappe, la copie est « à enregistrer » et protégée.
-  await anaForm.getByLabel("Structure (/4)").fill("3");
+  await setScore(anaForm, "Structure", "3");
   await expect(progress).toHaveText("1/2 corrigée");
   await expect(anaForm.getByText("Modifications non enregistrées")).toBeVisible();
   expect(await beforeUnloadPrevented()).toBe(true);
@@ -53,6 +53,7 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   ).toBeVisible();
 
   // Un simple commentaire ne fait pas une copie corrigée (pas de faux 0) ; « Enregistrer tout ».
+  await anaForm.getByRole("button", { name: new RegExp(`${zoe} →`) }).click();
   await zoeForm
     .getByLabel("Commentaire libre", { exact: true })
     .fill("Absent·e à l'oral, à revoir.");
@@ -67,15 +68,15 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await page.getByRole("button", { name: "Un critère pour toute la classe" }).click();
   await page.getByLabel("Critère affiché").selectOption({ label: "Contenu" });
   await expect(anaForm.getByLabel("Structure (/4)")).toHaveCount(0);
-  await anaForm.getByLabel("Contenu (/6)").fill("5");
-  await zoeForm.getByLabel("Contenu (/6)").fill("2");
+  await setScore(anaForm, "Contenu", "5");
+  await setScore(zoeForm, "Contenu", "2");
   await expect(progress).toHaveText("2/2 corrigées");
   await expect(anaForm.getByText("Total : 8 / 10")).toBeVisible();
 
   // Navigation clavier d'une copie à l'autre.
-  await anaForm.getByRole("button", { name: "Copie suivante" }).click();
+  await anaForm.getByRole("button", { name: new RegExp(`${zoe} →`) }).click();
   await expect(page.locator('h3[tabindex="-1"]', { hasText: zoe })).toBeFocused();
-  await zoeForm.getByRole("button", { name: "Copie précédente" }).click();
+  await zoeForm.getByRole("button", { name: new RegExp(`← ${ana}`) }).click();
   await expect(page.locator('h3[tabindex="-1"]', { hasText: ana })).toBeFocused();
 
   const axe = await new AxeBuilder({ page })
@@ -88,7 +89,9 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await expect(anaForm.getByLabel("Structure (/4)")).toHaveValue("3");
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
   await page.reload();
+  await showCriterion(page.getByRole("form", { name: ana }), "Contenu");
   await expect(page.getByRole("form", { name: ana }).getByLabel("Contenu (/6)")).toHaveValue("5");
+  await anaForm.getByRole("button", { name: new RegExp(`${zoe} →`) }).click();
   await expect(
     page.getByRole("form", { name: zoe }).getByLabel("Commentaire libre", { exact: true }),
   ).toHaveValue("Absent·e à l'oral, à revoir.");

@@ -22,6 +22,7 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   const moduleName = `Attendus ${Date.now()}`;

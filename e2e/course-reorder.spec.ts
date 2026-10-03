@@ -12,6 +12,7 @@ test("US-61 : monter / descendre une séance au clavier depuis le menu « ⋯ »
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/modules/new");
   await page.getByLabel("Nom du module").fill(`Ordre ${Date.now()}`);

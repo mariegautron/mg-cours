@@ -11,6 +11,7 @@ test("familles de la bibliothèque : onglets, filtre par famille, liens rattach�
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/resources");
   const tabs = page.getByRole("navigation", { name: "Familles de la bibliothèque" });

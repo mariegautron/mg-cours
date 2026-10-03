@@ -11,6 +11,7 @@ test("partir d'un projet existant : brief et évaluations repris, contexte clien
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   const suffix = Date.now();
   async function newModule(name: string) {

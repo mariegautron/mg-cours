@@ -84,6 +84,9 @@ export function GradingSession({
   const [status, setStatus] = useState<Record<string, CopyStatus>>({});
   const controls = useRef(new Map<string, CopyControls>());
   const [view, setView] = useState<"copy" | "criterion">("copy");
+  // Une copie à la fois (maquette CorrCopie) : les autres restent montées (saisie, enregistrement
+  // automatique et garde anti-perte continuent), seulement masquées.
+  const [current, setCurrent] = useState(items[0]?.id ?? "");
   // « Déjà noté chez les autres » (US-139) : ce qui est enregistré dans les autres copies.
   const others = items.map((i) => ({
     id: i.id,
@@ -134,13 +137,10 @@ export function GradingSession({
       heading?.scrollIntoView({ block: "start" });
       heading?.focus();
     };
-    if (onActivate) {
-      onActivate(id);
-      // La copie choisie n'est visible qu'après le rendu suivant.
-      setTimeout(focus, 0);
-    } else {
-      focus();
-    }
+    if (onActivate) onActivate(id);
+    else setCurrent(id);
+    // La copie choisie n'est visible qu'après le rendu suivant.
+    setTimeout(focus, 0);
   }
 
   function moveCriterion(direction: -1 | 1) {
@@ -154,6 +154,9 @@ export function GradingSession({
 
   const canFocusCriterion = criteria.length > 0 && activeId === undefined;
   const focused = view === "criterion" && canFocusCriterion ? criterionId : null;
+  // Copie affichée : celle de l'oral, sinon la copie courante ; toutes en vue « un critère pour toute la classe ».
+  const shownId = activeId ?? (focused ? null : current);
+  const titleOf = (id: string | null) => items.find((i) => i.id === id)?.title ?? null;
 
   return (
     <div className="space-y-6">
@@ -300,7 +303,7 @@ export function GradingSession({
             <p className="text-muted-foreground">{section.empty}</p>
           ) : null}
           {section.items.map((item) => (
-            <div key={item.id} hidden={activeId !== undefined && item.id !== activeId}>
+            <div key={item.id} hidden={shownId !== null && item.id !== shownId}>
               <GradeForm
                 id={item.id}
                 action={item.action}
@@ -325,6 +328,9 @@ export function GradingSession({
                   const next = neighborId(ids, item.id, direction);
                   if (next) focusCopy(next);
                 }}
+                prevLabel={titleOf(neighborId(ids, item.id, -1))}
+                nextLabel={titleOf(neighborId(ids, item.id, 1))}
+                overviewHref={activeId === undefined ? "#overview" : null}
                 hasPrev={neighborId(ids, item.id, -1) !== null}
                 hasNext={neighborId(ids, item.id, 1) !== null}
               />

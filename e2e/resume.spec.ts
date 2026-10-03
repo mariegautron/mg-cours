@@ -14,6 +14,7 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
 
   await page.goto("/modules/new");

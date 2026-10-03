@@ -9,6 +9,7 @@ test("le lien « Aller au contenu » est le premier arrêt clavier et déplace l
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.keyboard.press("Tab");
   const skip = page.getByRole("link", { name: "Aller au contenu" });

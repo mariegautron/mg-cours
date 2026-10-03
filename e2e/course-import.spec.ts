@@ -10,6 +10,7 @@ test("US-58 : importer des séances d'un autre module sans dates ni statut", asy
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
 
   const createModule = async (name: string) => {

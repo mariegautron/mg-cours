@@ -10,6 +10,7 @@ test("US-62 : lier des ressources à une séance avec recherche, filtres et cré
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
   const stamp = Date.now();
 
   const create = async (title: string, kind: string) => {

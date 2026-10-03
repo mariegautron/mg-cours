@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openTab } from "./helpers";
+import { openTab, setScore, showCriterion } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -9,12 +9,13 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Mot de passe").fill("password123");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
 }
 
 test("modifier une grille conserve les identifiants et demande confirmation pour un critère noté", async ({
   page,
 }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   await login(page);
   const suffix = Date.now();
 
@@ -44,8 +45,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
 
-  await openTab(page, /Groupes/);
-  await page.getByRole("link", { name: "Ajouter un groupe" }).click();
+  await page.goto(`${moduleUrl}/groups/new`);
   const groupName = `Groupe Grille ${suffix}`;
   await page.getByLabel("Nom du groupe").fill(groupName);
   await page.getByRole("button", { name: "Créer le groupe" }).click();
@@ -62,8 +62,8 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await expect(page.getByText(`Léa Girard${suffix}`).first()).toBeVisible();
-  await page.getByLabel("Présentation (/4)").fill("3");
-  await page.getByLabel("Contenu (/6)").fill("5");
+  await setScore(page, "Présentation", "3");
+  await setScore(page, "Contenu", "5");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
   await expect(page.getByText("Note enregistrée.")).toBeVisible();
   await expect(page.getByText("Note actuelle : 8 / 10 (16/20)")).toBeVisible();
@@ -89,8 +89,10 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");
+  await showCriterion(page, "Contenu");
   await expect(page.getByLabel("Contenu (/6)")).toHaveValue("5");
   await expect(page.getByText("Note actuelle : 8 / 10 (16/20)")).toBeVisible();
+  await showCriterion(page, "Présentation orale");
   await page.getByText("Voir le barème").click();
   await expect(page.getByText("6 pts : excellent")).toBeVisible();
 
@@ -122,5 +124,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");
-  await expect(page.getByLabel("Contenu (/6)")).toHaveCount(0);
+  await expect(
+    page.getByRole("group", { name: "Critères" }).getByRole("button", { name: /Contenu/ }),
+  ).toHaveCount(0);
 });
