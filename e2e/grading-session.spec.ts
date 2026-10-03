@@ -47,6 +47,9 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   // US-138 : vue d'ensemble, avancement global et « Continuer » vers la prochaine copie.
   const overview = page.getByRole("region", { name: "Où j’en suis" });
   await expect(overview.getByText(/^1 corrigé sur 2/)).toBeVisible();
+  if (process.env.CAPTURE) {
+    await overview.screenshot({ path: "docs/captures/correction-vue.png" });
+  }
   await expect(overview.getByRole("row", { name: new RegExp(`${ana}.*Corrigé`) })).toBeVisible();
   await expect(
     overview.getByRole("link", { name: new RegExp(`Continuer la correction : ${zoe}`) }),
