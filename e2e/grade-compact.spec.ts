@@ -1,4 +1,4 @@
-import { setCriterionComment } from "./helpers";
+import { setCriterionComment, openCorrection } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -68,6 +68,7 @@ test("vue compacte : paliers en pastilles, clavier, commentaire d'axe, palier mo
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
 
   const form = page.getByRole("form", { name: `Élève ${student}` });
   await expect(form).toBeVisible();

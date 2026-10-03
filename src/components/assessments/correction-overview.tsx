@@ -51,6 +51,7 @@ export function CorrectionOverview({
   noun,
   compareHref,
   phrasesHref,
+  correctHref,
 }: {
   overview: Overview;
   maxScore: number;
@@ -60,6 +61,8 @@ export function CorrectionOverview({
   compareHref?: string | null;
   /** Phrases de correction rangées par critère ; absent sans grille. */
   phrasesHref?: string | null;
+  /** Page de correction plein écran ; `?copy=` ouvre une copie. */
+  correctHref: string;
 }) {
   const [filter, setFilter] = useState<OverviewFilter>("all");
   const rows = filterRows(overview.rows, filter);
@@ -153,7 +156,7 @@ export function CorrectionOverview({
                     >
                       <th scope="row" className="py-1 pr-3 text-left font-medium">
                         <a
-                          href={`#copy-${r.id}-title`}
+                          href={`${correctHref}?copy=${r.id}`}
                           className="focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
                         >
                           {r.title}
@@ -225,10 +228,10 @@ export function CorrectionOverview({
                     : `Elle n’est pas encore commencée.`}
                 </p>
                 <Button asChild size="touch" className="w-full">
-                  <a href={`#copy-${next.id}-title`}>
+                  <Link href={`${correctHref}?copy=${next.id}`}>
                     {next.state === "in_progress" ? "Reprendre" : "Continuer"}
                     <span className="sr-only"> la correction : {next.title}</span>
-                  </a>
+                  </Link>
                 </Button>
               </>
             ) : (

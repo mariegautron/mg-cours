@@ -59,7 +59,9 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(page.getByText("À construire")).toBeVisible();
   expect((await axe(page)).violations).toEqual([]);
 
-  // Seule Zoé peut être notée dans le rattrapage.
+  // Seule Zoé peut être notée dans le rattrapage (page de correction).
+  await page.goto(`${page.url()}/correct`);
+  await page.waitForLoadState("networkidle");
   await expect(form(zoe)).toBeVisible();
   await expect(form(ana)).toHaveCount(0);
   await expect(form(leo)).toHaveCount(0);

@@ -12,6 +12,7 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
   await createSimpleGrid(page, gridName, [["Structure", 4]]);
   const setup = await createAssessment(page, gridName, suffix, { firstNames: ["Ana"] });
   const [ana] = setup.studentNames;
+  await page.goto(setup.assessmentUrl);
   await expect(page.getByRole("heading", { name: "Rendus déposés" })).toBeVisible({
     timeout: 20_000,
   });
@@ -48,7 +49,7 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
   expect(axe.violations).toEqual([]);
 
   // US-146 : la bande « Rendu » de la copie montre les éléments, avec « Ouvrir ».
-  await page.reload();
+  await page.goto(setup.correctUrl);
   const copy = page.getByRole("form", { name: ana });
   await expect(copy.getByText("2 éléments")).toBeVisible({ timeout: 20_000 });
   const copyLink = copy.getByRole("link", { name: /Ouvrir Dépôt Git/ });
@@ -56,7 +57,8 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
   await expect(copyLink).toHaveAttribute("rel", /noopener/);
   await expect(copy.getByRole("link", { name: /Ouvrir rendu-ana\.pdf/ })).toBeVisible();
 
-  // Suppression confirmée.
+  // Suppression confirmée (page de l'évaluation).
+  await page.goto(setup.assessmentUrl);
   await card.getByRole("button", { name: /Supprimer Dépôt Git/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();
   await expect(card.getByText("1 élément")).toBeVisible();

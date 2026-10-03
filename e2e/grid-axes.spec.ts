@@ -1,4 +1,4 @@
-import { setScore, showCriterion } from "./helpers";
+import { setScore, showCriterion, openCorrection } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -94,6 +94,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   await page.getByRole("checkbox", { name: "Header et footer" }).check();
   await expect(page.getByRole("checkbox", { name: "Lighthouse supérieur à 90" })).toHaveCount(0);
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
 
   // Saisie : Header et footer validé d'office (8/8), sous-totaux et total en direct.
   await expect(page.getByText(`Ines Axes${suffix}`).first()).toBeVisible();
@@ -123,7 +124,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   await expect(page.getByText("Note actuelle : 20 / 20")).toBeVisible();
 
   // Rendu : le PDF de résultats se génère (le contenu détaillé est couvert par les tests unitaires).
-  const assessmentPath = new URL(page.url()).pathname;
+  const assessmentPath = new URL(page.url()).pathname.replace(/\/correct$/, "");
   const res = await page.request.get(
     `${assessmentPath.replace("/modules/", "/api/modules/")}/results`,
   );

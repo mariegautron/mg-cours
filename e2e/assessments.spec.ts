@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { nextCopy, openTab, setScore } from "./helpers";
+import { nextCopy, openTab, setScore, openCorrection } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -13,6 +13,7 @@ async function login(page: import("@playwright/test").Page) {
 }
 
 test("grille, groupe, évaluation notée et compteur de notes", async ({ page }) => {
+  test.setTimeout(90_000);
   await login(page);
   const suffix = Date.now();
 
@@ -61,6 +62,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
 
   // Noter l'étudiant·e via la grille.
   await expect(page.getByText(`Nora Benali${suffix}`).first()).toBeVisible();
@@ -71,12 +73,12 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await expect(page.getByText("Note actuelle : 8 / 10 (16/20)")).toBeVisible();
 
   // Export PDF des résultats + envoi e-mail (non configuré en local).
-  const pdfUrl = `${moduleUrl.replace("/modules/", "/api/modules/")}/assessments/${page.url().split("/").pop()}/results`;
+  const pdfUrl = `${moduleUrl.replace("/modules/", "/api/modules/")}/assessments/${page.url().split("/").slice(-2)[0]}/results`;
   const pdf = await page.request.get(pdfUrl);
   expect(pdf.status()).toBe(200);
   expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
   // US-76 : confirmation avec le nombre de destinataires avant l'envoi (écran dédié aux résultats).
-  await page.goto(`${page.url()}/results`);
+  await page.goto(`${page.url().replace(/\/correct.*$/, "")}/results`);
   await page.getByRole("button", { name: "Envoyer par e-mail" }).click();
   const dialog = page.getByRole("alertdialog", { name: "Envoyer les résultats par e-mail ?" });
   await expect(dialog.getByText(/1 destinataire\./)).toBeVisible();
@@ -103,6 +105,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
 });
 
 test("une évaluation sur plusieurs groupes compte pour une seule note", async ({ page }) => {
+  test.setTimeout(90_000);
   await login(page);
   const suffix = Date.now();
 
@@ -130,6 +133,7 @@ test("une évaluation sur plusieurs groupes compte pour une seule note", async (
   for (const name of groupNames) await page.getByRole("checkbox", { name }).check();
   await page.getByLabel(/Note de groupe/).check();
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
 
   for (const [i, name] of groupNames.entries()) {
     if (i > 0) await nextCopy(page);

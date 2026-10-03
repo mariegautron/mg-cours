@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { openOtherBilling, openTab } from "./helpers";
+import { openOtherBilling, openTab, openCorrection } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -94,6 +94,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
     await page.getByRole("checkbox", { name: `Groupe F ${suffix}` }).check();
     if (isGroup) await page.getByLabel(/Note de groupe/).check();
     await page.getByRole("button", { name: "Enregistrer" }).click();
+    await openCorrection(page);
     await page.getByLabel("Note (/20)", { exact: true }).fill(value);
     await page.getByRole("button", { name: "Enregistrer la note" }).click();
     await expect(page.getByText("Note enregistrée.")).toBeVisible();

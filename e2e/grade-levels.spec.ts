@@ -1,4 +1,4 @@
-import { setCriterionComment, showCriterion } from "./helpers";
+import { setCriterionComment, showCriterion, openCorrection } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -73,6 +73,7 @@ test("noter par palier : un choix attribue les points, propose la description, s
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
   await expect(page.getByText(`Yanis Palier${suffix}`).first()).toBeVisible();
 
   const total = page.getByRole("region", { name: "Total en direct" }).first();

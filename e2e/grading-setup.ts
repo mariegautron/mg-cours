@@ -31,11 +31,13 @@ export interface AssessmentSetup {
   studentName: string;
   studentNames: string[];
   assessmentUrl: string;
+  /** Page de correction plein écran de l'évaluation. */
+  correctUrl: string;
 }
 
 /**
  * Crée un·e étudiant·e, un module neuf (21 h), un groupe et une évaluation sur `gridName`, puis ouvre la
- * page de saisie. `options.groupGrade` : note de groupe au lieu d'une note individuelle.
+ * page de correction. `options.groupGrade` : note de groupe au lieu d'une note individuelle.
  */
 export async function createAssessment(
   page: Page,
@@ -84,5 +86,17 @@ export async function createAssessment(
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.getByRole("heading", { name: `Évaluation ${suffix}` }).waitFor();
 
-  return { moduleName, moduleUrl, studentName, studentNames, assessmentUrl: page.url() };
+  // La correction a sa propre page : on y arrive directement, et `assessmentUrl` y mène.
+  const overviewUrl = page.url();
+  await page.goto(`${overviewUrl}/correct`);
+  await page.getByRole("heading", { name: /^Corriger/, level: 1 }).waitFor();
+  await page.waitForLoadState("networkidle");
+  return {
+    moduleName,
+    moduleUrl,
+    studentName,
+    studentNames,
+    assessmentUrl: overviewUrl,
+    correctUrl: `${overviewUrl}/correct`,
+  };
 }

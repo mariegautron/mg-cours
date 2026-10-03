@@ -1,4 +1,4 @@
-import { setCriterionComment } from "./helpers";
+import { setCriterionComment, openCorrection } from "./helpers";
 import { expect, test } from "@playwright/test";
 
 // US-139 : « Déjà noté chez les autres » : le même palier ailleurs dans la classe, et son commentaire
@@ -57,6 +57,7 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
   await expect(page.getByText(`Élève ${names[0]}`).first()).toBeVisible();
 
   const ana = page.getByRole("form", { name: `Élève ${names[0]}` });

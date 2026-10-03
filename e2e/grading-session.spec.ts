@@ -45,6 +45,12 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await expect(progress).toHaveText("1/2 corrigée");
 
   // US-138 : vue d'ensemble, avancement global et « Continuer » vers la prochaine copie.
+  const correctUrl = page.url();
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/correction-copie.png", fullPage: true });
+  }
+  await page.goto(correctUrl.replace(/\/correct.*$/, ""));
+  await page.waitForLoadState("networkidle");
   const overview = page.getByRole("region", { name: "Où j’en suis" });
   await expect(overview.getByText(/^1 corrigé sur 2/)).toBeVisible();
   if (process.env.CAPTURE) {
@@ -54,6 +60,13 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await expect(
     overview.getByRole("link", { name: new RegExp(`Continuer la correction : ${zoe}`) }),
   ).toBeVisible();
+  // « Continuer » ouvre la page de correction sur cette copie.
+  await overview
+    .getByRole("link", { name: new RegExp(`Continuer la correction : ${zoe}`) })
+    .click();
+  await expect(page).toHaveURL(/\/correct\?copy=/);
+  await expect(page.getByRole("form", { name: zoe })).toBeVisible();
+  await page.goto(correctUrl);
 
   // Un simple commentaire ne fait pas une copie corrigée (pas de faux 0) ; « Enregistrer tout ».
   await anaForm.getByRole("button", { name: new RegExp(`${zoe} →`) }).click();
@@ -126,7 +139,7 @@ test("les observations de cours du carnet restent consultables pendant la correc
   await page.getByRole("button", { name: "Question pertinente" }).click();
   await expect(page.getByText("Notées pendant cette séance (1)")).toBeVisible();
 
-  await page.goto(setup.assessmentUrl);
+  await page.goto(setup.correctUrl);
   const form = page.getByRole("form", { name: setup.studentName });
   await form.getByText("Observations de cours (1)").click();
   await expect(form.getByText("Très bonne question sur le backlog")).toBeVisible();

@@ -61,6 +61,8 @@ export function GradingSession({
   activeId,
   onActivate,
   absenceRule,
+  initialId,
+  overviewHref = "#overview",
 }: {
   sections: SessionSection[];
   grid: GridWithCriteria | null;
@@ -77,6 +79,10 @@ export function GradingSession({
   onActivate?: (id: string) => void;
   /** Règle de l'école pour une absence excusée sur une note de groupe. */
   absenceRule?: "keep_group_grade" | "makeup";
+  /** Copie ouverte au départ (page de correction plein écran). */
+  initialId?: string;
+  /** Lien « Vue d'ensemble » de la copie. */
+  overviewHref?: string;
 }) {
   const uid = useId();
   const items = sections.flatMap((s) => s.items);
@@ -86,7 +92,9 @@ export function GradingSession({
   const [view, setView] = useState<"copy" | "criterion">("copy");
   // Une copie à la fois (maquette CorrCopie) : les autres restent montées (saisie, enregistrement
   // automatique et garde anti-perte continuent), seulement masquées.
-  const [current, setCurrent] = useState(items[0]?.id ?? "");
+  const [current, setCurrent] = useState(
+    items.some((i) => i.id === initialId) ? (initialId as string) : (items[0]?.id ?? ""),
+  );
   // « Déjà noté chez les autres » (US-139) : ce qui est enregistré dans les autres copies.
   const others = items.map((i) => ({
     id: i.id,
@@ -162,7 +170,7 @@ export function GradingSession({
     <div className="space-y-6">
       <section
         aria-labelledby={`${uid}-progress`}
-        className="bg-background sticky top-0 z-10 space-y-3 rounded-lg border p-3"
+        className="bg-card space-y-3 rounded-xl border p-4"
       >
         <h2 id={`${uid}-progress`} className="sr-only">
           Avancement de la correction
@@ -330,7 +338,7 @@ export function GradingSession({
                 }}
                 prevLabel={titleOf(neighborId(ids, item.id, -1))}
                 nextLabel={titleOf(neighborId(ids, item.id, 1))}
-                overviewHref={activeId === undefined ? "#overview" : null}
+                overviewHref={activeId === undefined ? overviewHref : null}
                 hasPrev={neighborId(ids, item.id, -1) !== null}
                 hasNext={neighborId(ids, item.id, 1) !== null}
               />

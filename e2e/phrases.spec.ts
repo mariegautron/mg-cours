@@ -88,7 +88,7 @@ test("phrases réutilisables : enregistrer une sélection, insérer en un clic, 
   await expect(item).toBeVisible();
   await expect(item).toContainText("Critère : Structure");
 
-  await page.goto(setup.assessmentUrl);
+  await page.goto(setup.correctUrl);
   const reloaded = await bankOf();
   await expect(comment).toHaveValue(written);
   // L'usage a été compté côté serveur (au moins une des deux insertions).

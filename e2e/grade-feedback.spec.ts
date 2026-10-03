@@ -36,7 +36,7 @@ for (const groupGrade of [false, true]) {
     await expect(page.getByText("Note enregistrée.")).toBeVisible();
 
     // Rechargement : chaque zone est restituée.
-    await page.goto(setup.assessmentUrl);
+    await page.goto(setup.correctUrl);
     await showCriterion(page, "Structure");
     await expect(page.getByLabel("Commentaire — Structure", { exact: true })).toHaveValue(
       "Le header est bien posé.",
@@ -54,7 +54,7 @@ for (const groupGrade of [false, true]) {
     );
 
     // Le PDF de résultats se génère pour cette note (une fiche pour tout le groupe, ou pour l'étudiant·e).
-    const path = new URL(page.url()).pathname.replace("/modules/", "/api/modules/");
+    const path = new URL(setup.assessmentUrl).pathname.replace("/modules/", "/api/modules/");
     const res = await page.request.get(`${path}/results`);
     expect(res.status()).toBe(200);
     expect(res.headers()["content-type"]).toContain("pdf");

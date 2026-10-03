@@ -1,4 +1,3 @@
-import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,7 +12,6 @@ import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { Submissions } from "@/components/assessments/submissions";
-import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { SubmissionItems } from "@/components/assessments/submission-items";
@@ -24,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import {
   getAssessment,
   getGradesByAssessment,
-  listComments,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
 import { frameStatus } from "@/lib/assessments/module-overview";
@@ -36,7 +33,7 @@ import { isOralAssessment } from "@/lib/assessments/oral";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
 import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
 import { createClient } from "@/lib/supabase/server";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
@@ -106,11 +103,9 @@ export default async function AssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
-  const [assessment, grades, comments, mod, moduleObservations, courses] = await Promise.all([
+  const [assessment, grades, moduleObservations, courses] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
-    listComments(),
-    getModule(id),
     listModuleObservations(id),
     getModuleCourses(id),
   ]);
@@ -619,6 +614,7 @@ export default async function AssessmentPage({
             overview={overview}
             maxScore={assessment.maxScore}
             noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
+            correctHref={`/modules/${id}/assessments/${assessmentId}/correct`}
             phrasesHref={
               (assessment.grading_grid?.criteria.length ?? 0) > 0
                 ? `/modules/${id}/assessments/${assessmentId}/phrases`
@@ -629,15 +625,6 @@ export default async function AssessmentPage({
                 ? `/modules/${id}/assessments/${assessmentId}/compare`
                 : null
             }
-          />
-          <GradingSession
-            sections={sections}
-            grid={assessment.grading_grid}
-            maxScore={assessment.maxScore}
-            comments={comments}
-            autoValidatedIds={assessment.auto_validated_criterion_ids}
-            subject={mod?.name ?? null}
-            absenceRule={await getAbsenceRuleForModule(id)}
           />
         </>
       )}

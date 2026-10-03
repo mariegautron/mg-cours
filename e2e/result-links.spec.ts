@@ -36,7 +36,12 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
   await page.waitForLoadState("networkidle");
   await page.reload();
 
-  await page.goto(`${page.url().split("?")[0]}/results`);
+  await page.goto(
+    `${page
+      .url()
+      .split("?")[0]
+      .replace(/\/correct$/, "")}/results`,
+  );
   if (process.env.CAPTURE) {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.screenshot({ path: "docs/captures/envoyer-resultats.png", fullPage: true });

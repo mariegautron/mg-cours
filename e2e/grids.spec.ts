@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openTab, setScore, showCriterion } from "./helpers";
+import { openTab, setScore, showCriterion, openCorrection } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -60,6 +60,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.getByRole("checkbox", { name: groupName }).check();
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
+  await openCorrection(page);
 
   await expect(page.getByText(`Léa Girard${suffix}`).first()).toBeVisible();
   await setScore(page, "Présentation", "3");
@@ -88,6 +89,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
+  await openCorrection(page);
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");
   await showCriterion(page, "Contenu");
   await expect(page.getByLabel("Contenu (/6)")).toHaveValue("5");
@@ -123,6 +125,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Voir les évaluations" }).click();
   await page.getByRole("link", { name: `Oral ${suffix}` }).click();
+  await openCorrection(page);
   await expect(page.getByLabel("Présentation orale (/4)")).toHaveValue("3");
   await expect(
     page.getByRole("group", { name: "Critères" }).getByRole("button", { name: /Contenu/ }),

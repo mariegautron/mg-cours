@@ -95,3 +95,11 @@ export async function firstCopy(page: Page) {
     await prev.first().click();
   }
 }
+
+/** Après la création d'une évaluation : ouvre sa page de correction plein écran. */
+export async function openCorrection(page: Page) {
+  await page.waitForURL(/\/assessments\/[0-9a-f-]{36}$/);
+  await page.goto(`${page.url()}/correct`);
+  await page.getByRole("heading", { name: /^Corriger/, level: 1 }).waitFor();
+  await page.waitForLoadState("networkidle");
+}

@@ -17,7 +17,13 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Fenêtre haute : la barre d'actions collée en bas des formulaires de correction ne masque pas les champs.
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 1000 } },
+    },
+  ],
   webServer: {
     command: `pnpm build && pnpm start --port ${PORT}`,
     url: baseURL,

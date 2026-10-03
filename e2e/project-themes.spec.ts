@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { openCorrection } from "./helpers";
 import { loginLight } from "./grading-setup";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
@@ -78,6 +79,7 @@ test("thèmes du projet : volontaire, tirage, nouveau tirage confirmé, thème e
   await page.getByRole("button", { name: "Créer 3 évaluations" }).click();
   await expect(page.getByText("3 évaluations créées.")).toBeVisible();
   await page.getByRole("link", { name: /Oral de fin de projet/ }).click();
+  await openCorrection(page);
   await expect(
     page
       .getByRole("form", { name: `Note du groupe « ${groupNames[0]} »` })
