@@ -188,7 +188,7 @@ export function GradingSession({
 
         {canFocusCriterion ? (
           <div className="flex flex-wrap items-end gap-3">
-            <div role="group" aria-label="Mode de correction" className="flex gap-2">
+            <div role="group" aria-label="Mode de correction" className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"

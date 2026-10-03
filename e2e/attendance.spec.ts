@@ -43,6 +43,7 @@ test("note individuelle : non prévenu·e = 0, excusé·e = hors moyenne", async
 
   // Rechargement : les statuts sont restitués.
   await page.reload();
+  await page.waitForLoadState("networkidle");
   await nextCopy(page);
   await expect(form(leo).getByRole("radio", { name: "Absent·e excusé·e" })).toBeChecked();
   await nextCopy(page);
@@ -98,6 +99,7 @@ test("note de groupe : présence par membre et mot personnel, jamais de retrait 
 
   // Rechargement : situations restituées, note du groupe intacte (15/20 = 3/4).
   await page.reload();
+  await page.waitForLoadState("networkidle");
   const reloaded = page.getByRole("form", { name: /Note du groupe/ });
   await expect(reloaded.getByLabel(new RegExp(`^Un mot pour ${ana}`))).toHaveValue(
     "Très investie sur les tests.",

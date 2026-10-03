@@ -118,7 +118,7 @@ export function CorrectionOverview({
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">Aucune copie dans cette liste.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             <caption className="sr-only">Copies de l’évaluation et état de leur correction</caption>
             <thead>
