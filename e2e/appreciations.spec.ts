@@ -40,17 +40,23 @@ test("appréciations : saisie, limite, enregistrement, relecture, axe", async ({
   await expect(page.getByText("Membres (1)")).toBeVisible();
 
   await page.goto(`${moduleUrl}/appreciations`);
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByText("À écrire", { exact: true })).toBeVisible({ timeout: 20_000 });
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/appreciations.png" });
+  }
+  await page.getByRole("link", { name: `Écrire l’appréciation de Élève ${student}` }).click();
   const field = page.getByLabel(`Appréciation de Élève ${student}`);
   await expect(field).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText("À écrire", { exact: true })).toBeVisible();
+  await page.waitForLoadState("networkidle");
 
   // Trop long : refusé avec le nombre de caractères en trop, rien n'est enregistré.
   await field.fill("x".repeat(260));
   await expect(page.getByText(/10 caractères en trop/).first()).toBeVisible();
-  await expect(page.getByRole("listitem").getByRole("alert")).toContainText(
-    "10 caractères en trop",
-    { timeout: 8000 },
-  );
+  await expect(page.getByRole("alert").filter({ hasText: "10 caractères en trop" })).toBeVisible({
+    timeout: 8000,
+  });
 
   await field.fill("Travail sérieux et régulier.");
   await expect(
@@ -58,11 +64,14 @@ test("appréciations : saisie, limite, enregistrement, relecture, axe", async ({
   ).toBeVisible({ timeout: 8000 });
   await expect(page.getByText("Écrite", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: /Copier l’appréciation de/ }).click();
-  await expect(page.getByText(/Appréciation de .* copié\./)).toBeVisible();
+  await page.getByRole("button", { name: /Copier pour Hyperplanning/ }).click();
+  await expect(page.getByText(/Appréciation de .* copiée\./)).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     `${student.toUpperCase()} Élève : Travail sérieux et régulier.`,
   );
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/appreciation-fiche.png" });
+  }
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -74,4 +83,10 @@ test("appréciations : saisie, limite, enregistrement, relecture, axe", async ({
     "Travail sérieux et régulier.",
     { timeout: 20_000 },
   );
+
+  // Retour à la liste : aperçu du texte, statut, export.
+  await page.getByRole("link", { name: "← Toutes les appréciations" }).click();
+  await expect(page.getByText("Travail sérieux et régulier.")).toBeVisible();
+  await page.getByRole("button", { name: "Tout copier" }).click();
+  await expect(page.getByText("Tout copié.")).toBeVisible();
 });
