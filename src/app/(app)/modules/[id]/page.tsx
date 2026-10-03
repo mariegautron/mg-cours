@@ -309,6 +309,9 @@ export default async function ModulePage({
               <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
             </Button>
             <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/groups/new`}>
                 <Plus aria-hidden />
                 Ajouter un groupe
