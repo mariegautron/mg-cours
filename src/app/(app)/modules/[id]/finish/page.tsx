@@ -7,8 +7,9 @@ import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { isPaid, isSent } from "@/lib/invoice/simple";
 import { loadInvoiceContext } from "@/lib/invoice/queries";
+import { agreementDeposited } from "@/lib/modules/documents";
 import { finishChecklist } from "@/lib/modules/finish";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 
 export const metadata: Metadata = { title: "Terminer le module" };
@@ -16,12 +17,13 @@ export const metadata: Metadata = { title: "Terminer le module" };
 /** Terminer le module (maquette « ModFin ») : ce qu'il reste, ce que je retiens, ranger. Rien n'est bloquant. */
 export default async function FinishModulePage({ params }: PageProps<"/modules/[id]/finish">) {
   const { id } = await params;
-  const [mod, courses, ctx, askNote, note] = await Promise.all([
+  const [mod, courses, ctx, askNote, note, documents] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     loadInvoiceContext(id),
     retrospectiveAvailable(),
     getRetrospectiveNote(id),
+    getModuleDocuments(id),
   ]);
   if (!mod || !ctx) notFound();
 
@@ -31,6 +33,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     adminDocs: ctx.module.admin_docs,
     invoiceSent: isSent(mod.iceberg_state),
     invoicePaid: isPaid(mod.iceberg_state),
+    agreementDeposited: agreementDeposited(documents),
   });
   const card = "bg-card rounded-xl border p-5";
 

@@ -8,10 +8,12 @@ export interface FinishInput {
   adminDocs: Record<string, boolean>;
   invoiceSent: boolean;
   invoicePaid: boolean;
+  /** Au moins une convention de formation déposée (facultatif : absent = non déposée). */
+  agreementDeposited?: boolean;
 }
 
 export interface FinishItem {
-  key: "sessions" | "notes" | "invoice" | "documents";
+  key: "sessions" | "notes" | "invoice" | "documents" | "agreement";
   label: string;
   detail: string;
   done: boolean;
@@ -52,6 +54,14 @@ export function finishChecklist(i: FinishInput): FinishItem[] {
       label: "Documents à jour sur Moodle",
       detail: "Supports, sujets, grilles",
       done: supports,
+    },
+    {
+      key: "agreement",
+      label: "Convention déposée",
+      detail: i.agreementDeposited
+        ? "Convention de formation déposée"
+        : "À déposer dans l’onglet Documents (ne bloque pas la facture)",
+      done: !!i.agreementDeposited,
     },
   ];
 }

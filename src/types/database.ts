@@ -1140,11 +1140,13 @@ export type Database = {
           created_at: string
           id: string
           kind: Database["public"]["Enums"]["module_document_kind"]
+          label: string | null
           mime: string
           module_id: string
           name: string
           owner_id: string
           path: string
+          signed_on: string | null
           size_bytes: number
           updated_at: string
         }
@@ -1152,11 +1154,13 @@ export type Database = {
           created_at?: string
           id?: string
           kind: Database["public"]["Enums"]["module_document_kind"]
+          label?: string | null
           mime: string
           module_id: string
           name: string
           owner_id?: string
           path: string
+          signed_on?: string | null
           size_bytes: number
           updated_at?: string
         }
@@ -1164,11 +1168,13 @@ export type Database = {
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["module_document_kind"]
+          label?: string | null
           mime?: string
           module_id?: string
           name?: string
           owner_id?: string
           path?: string
+          signed_on?: string | null
           size_bytes?: number
           updated_at?: string
         }
@@ -2945,6 +2951,7 @@ export type Database = {
         | "outline_sent"
         | "slides"
         | "external_invoice"
+        | "training_agreement"
       observation_tag:
         | "relevant_question"
         | "participation"
@@ -3142,6 +3149,7 @@ export const Constants = {
         "outline_sent",
         "slides",
         "external_invoice",
+        "training_agreement",
       ],
       observation_tag: [
         "relevant_question",

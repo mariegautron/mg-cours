@@ -8,6 +8,7 @@ const base = {
   adminDocs: { notes_hyperplanning: true, supports_moodle: true, sujets_grilles_moodle: true },
   invoiceSent: true,
   invoicePaid: true,
+  agreementDeposited: true,
 };
 
 describe("finishChecklist", () => {
@@ -26,5 +27,12 @@ describe("finishChecklist", () => {
     expect(by.notes.done).toBe(false);
     expect(by.invoice.detail).toBe("Case « payée » à cocher");
     expect(by.documents.done).toBe(false);
+  });
+  it("la convention manquante se voit, sans bloquer", () => {
+    const items = finishChecklist({ ...base, agreementDeposited: false });
+    expect(items.find((i) => i.key === "agreement")).toMatchObject({
+      label: "Convention déposée",
+      done: false,
+    });
   });
 });

@@ -12,8 +12,11 @@ import {
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { FileCard } from "@/components/files/file-card";
 import { FileDropZone } from "@/components/files/file-drop-zone";
+import { AgreementExtras } from "@/components/modules/agreement-extras";
 import { Button } from "@/components/ui/button";
-import type { DocumentKind } from "@/lib/modules/documents";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { agreementTitle, sortAgreements, type DocumentKind } from "@/lib/modules/documents";
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/db";
@@ -29,16 +32,21 @@ export function DocumentSlot({
   title,
   hint,
   documents,
+  agreement = false,
 }: {
   moduleId: string;
   kind: DocumentKind;
   title: string;
   hint: string;
   documents: Tables<"module_document">[];
+  /** Convention : plusieurs fichiers, libellé libre, date de signature, rattachement à d'autres modules. */
+  agreement?: boolean;
 }) {
   const router = useRouter();
   const [uploading, setUploading] = useState<string | null>(null);
   const [state, setState] = useState<{ error?: string; saved?: boolean }>({});
+  const [label, setLabel] = useState("");
+  const [signedOn, setSignedOn] = useState("");
 
   async function upload(file: File, input: HTMLInputElement) {
     input.value = "";
@@ -67,15 +75,22 @@ export function DocumentSlot({
       return setState({ error: failure("déposer le fichier") });
     }
 
-    const result = await registerModuleDocument(moduleId, kind, {
-      path,
-      name: file.name,
-      size: file.size,
-      mime,
-    });
+    const result = await registerModuleDocument(
+      moduleId,
+      kind,
+      {
+        path,
+        name: file.name,
+        size: file.size,
+        mime,
+      },
+      { label, signedOn },
+    );
     setUploading(null);
     if (result.error) return setState({ error: result.error });
     setState({ saved: true });
+    setLabel("");
+    setSignedOn("");
     router.refresh();
   }
 
@@ -98,7 +113,7 @@ export function DocumentSlot({
           {documents.map((d) => (
             <FileCard
               key={d.id}
-              name={d.name}
+              name={agreement ? agreementTitle(d) : d.name}
               mime={d.mime}
               size={d.size_bytes}
               date={d.created_at}
@@ -129,9 +144,36 @@ export function DocumentSlot({
                 description="Le fichier sera définitivement effacé."
                 onConfirm={() => deleteModuleDocument(moduleId, d.id)}
               />
+              {agreement ? <AgreementExtras moduleId={moduleId} doc={d} /> : null}
             </FileCard>
           ))}
         </ul>
+      ) : null}
+
+      {agreement ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="agreement-new-label">Libellé du prochain fichier (facultatif)</Label>
+            <Input
+              id="agreement-new-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              maxLength={120}
+              placeholder="Convention, Avenant 1, Convention de prestation…"
+              className="w-72 max-w-full"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="agreement-new-date">Date de signature (facultative)</Label>
+            <Input
+              id="agreement-new-date"
+              type="date"
+              value={signedOn}
+              onChange={(e) => setSignedOn(e.target.value)}
+              className="w-44"
+            />
+          </div>
+        </div>
       ) : null}
 
       <FileDropZone
@@ -177,6 +219,14 @@ export function ModuleDocuments({
         title="Progression pédagogique envoyée"
         hint="Module déjà réalisé : la progression envoyée à l’école. La déposer ici la compte comme envoyée pour la facturation."
         documents={documents.filter((d) => d.kind === "outline_sent")}
+      />
+      <DocumentSlot
+        moduleId={moduleId}
+        kind="training_agreement"
+        agreement
+        title="Convention de formation"
+        hint="Convention, avenants, convention de prestation : plusieurs fichiers possibles, avec un libellé et la date de signature. Attendue, mais ne bloque jamais la facture."
+        documents={sortAgreements(documents.filter((d) => d.kind === "training_agreement"))}
       />
       <DocumentSlot
         moduleId={moduleId}
