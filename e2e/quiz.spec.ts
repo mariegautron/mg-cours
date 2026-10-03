@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 
 import { localEnv } from "./env";
 import { createAssessment, createSimpleGrid, loginLight } from "./grading-setup";
@@ -91,7 +91,7 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   });
   await a.page.goto(links[ana]);
   await expect(a.page.getByRole("heading", { name: `Évaluation ${suffix}` })).toBeVisible();
-  await expect(a.page.getByText("Ce lien est personnel : ne le partage pas.")).toBeVisible();
+  await expect(a.page.getByText("Ce lien est personnel : ne le partagez pas.")).toBeVisible();
   expect((await axe(a.page)).violations).toEqual([]);
   await a.page.getByRole("button", { name: "Commencer" }).click();
   await expect(a.page.getByRole("group", { name: /Question 1 sur 4/ })).toBeVisible();
@@ -111,45 +111,61 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   ])
     expect(html, `« ${forbidden} » ne doit pas être dans la page`).not.toContain(forbidden);
 
-  // Questions à choix unique (l'ordre est mélangé : la réponse libre peut venir n'importe où).
-  const singles = a.page
-    .getByRole("group", { name: /Question \d sur 4/ })
-    .filter({ has: a.page.getByRole("radio") });
+  // Une question à la fois (l'ordre est mélangé : la réponse libre peut venir n'importe où).
   const statements = async (p: Page) =>
     (await p.getByText(/^Énoncé \d+ du lot/).allTextContents()).sort().join("|");
   const anaSet = await statements(a.page);
-
-  // Navigation au clavier dans un groupe de boutons radio.
-  const radios = singles.first().getByRole("radio");
-  await radios.first().focus();
-  await a.page.keyboard.press("ArrowDown");
-  await expect(radios.nth(1)).toBeChecked();
-
-  // Réponses : 2 bonnes sur 3 (2 pts auto), une réponse libre à relire.
-  const count = await singles.count();
-  expect(count).toBe(3);
-  for (let i = 0; i < 3; i++) {
-    await singles
-      .nth(i)
-      .getByRole("radio", { name: i < 2 ? /^Bonne / : /^Mauvaise / })
-      .check();
+  const eachQuestion = async (p: Page, fn: (group: Locator, i: number) => Promise<void>) => {
+    for (let i = 0; i < 4; i++) {
+      const group = p.getByRole("group", { name: new RegExp(`Question ${i + 1} sur 4`) });
+      await expect(group).toBeVisible();
+      await fn(group, i);
+      if (i < 3) await p.getByRole("button", { name: "Suivante →" }).click();
+    }
+  };
+  if (process.env.CAPTURE) {
+    await a.page.setViewportSize({ width: 1280, height: 800 });
+    await a.page.screenshot({ path: "docs/captures/qcm-etudiant.png" });
   }
-  await a.page.getByRole("textbox", { name: "Ta réponse" }).fill("Ma réponse libre");
-  await expect(a.page.getByText(/Tes réponses sont enregistrées \(à/)).toBeVisible({
+
+  // Réponses : 2 bonnes sur 3 (2 pts auto), une réponse libre à relire ; clavier dans un groupe radio.
+  let single = 0;
+  await eachQuestion(a.page, async (group) => {
+    const radios = group.getByRole("radio");
+    if (await radios.count()) {
+      if (single === 0) {
+        await radios.first().focus();
+        await a.page.keyboard.press("ArrowDown");
+        await expect(radios.nth(1)).toBeChecked();
+      }
+      await group.getByRole("radio", { name: single < 2 ? /^Bonne / : /^Mauvaise / }).check();
+      single++;
+    } else {
+      await group.getByRole("textbox", { name: "Votre réponse" }).fill("Ma réponse libre");
+    }
+  });
+  expect(single).toBe(3);
+  await expect(a.page.getByText(/Vos réponses sont enregistrées \(à/)).toBeVisible({
     timeout: 15_000,
   });
 
   // Reprise : rechargement, les réponses sont là.
   await a.page.reload();
-  await expect(a.page.getByRole("textbox", { name: "Ta réponse" })).toHaveValue("Ma réponse libre");
-  await expect(singles.first().getByRole("radio", { name: /^Bonne / })).toBeChecked();
+  await eachQuestion(a.page, async (group) => {
+    const text = group.getByRole("textbox");
+    if (await text.count()) await expect(text).toHaveValue("Ma réponse libre");
+    else await expect(group.getByRole("radio", { checked: true })).toHaveCount(1);
+  });
 
   // Rendre la copie : confirmation avec focus géré.
   await a.page.getByRole("button", { name: "Rendre ma copie" }).click();
-  await expect(a.page.getByRole("heading", { name: "Rendre ta copie ?" })).toBeFocused();
+  await expect(a.page.getByRole("heading", { name: "Rendre votre copie ?" })).toBeFocused();
   await a.page.getByRole("button", { name: "Oui, rendre ma copie" }).click();
-  await expect(a.page.getByText(/Ta copie est rendue/)).toBeVisible();
-  await expect(a.page.getByText("Ta copie est en cours de correction")).toBeVisible();
+  await expect(a.page.getByText(/Votre copie est rendue/)).toBeVisible();
+  if (process.env.CAPTURE) {
+    await a.page.screenshot({ path: "docs/captures/qcm-fin.png" });
+  }
+  await expect(a.page.getByText("Votre copie est en cours de correction")).toBeVisible();
   expect((await axe(a.page)).violations).toEqual([]);
   // Les bonnes réponses ne sont jamais passées par le navigateur avant le corrigé.
   for (const b of bodies) {
@@ -215,7 +231,7 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   }
   const a2 = await studentPage(browser);
   await a2.page.goto(links[ana]);
-  await expect(a2.page.getByText("Ta note : 3,5 / 5")).toBeVisible();
+  await expect(a2.page.getByText("Votre note : 3,5 / 5")).toBeVisible();
   await expect(a2.page.getByRole("heading", { name: "Corrigé" })).toBeVisible();
   await expect(a2.page.getByText(/Bonne réponse/).first()).toBeVisible();
   expect((await axe(a2.page)).violations).toEqual([]);

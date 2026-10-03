@@ -40,28 +40,28 @@ export default async function QuizPage({ params }: PageProps<"/q/[token]">) {
           case "invalid":
             return (
               <Message title="Ce lien ne fonctionne pas">
-                Vérifie que tu as copié le lien en entier. S’il ne marche toujours pas, demande-en
-                un nouveau à ton enseignante : l’ancien a peut-être été remplacé.
+                Vérifiez que vous avez copié le lien en entier. S’il ne marche toujours pas,
+                demandez-en un nouveau à votre enseignante : l’ancien a peut-être été remplacé.
               </Message>
             );
           case "throttled":
             return (
               <Message title="Trop d’essais">
-                Trop de liens invalides ont été essayés depuis ta connexion. Réessaie dans quelques
-                minutes.
+                Trop de liens invalides ont été essayés depuis votre connexion. Réessayez dans
+                quelques minutes.
               </Message>
             );
           case "rate_limited":
             return (
               <Message title="Un instant">
-                Cette page a été rechargée trop souvent. Attends une minute puis recharge : ta copie
-                est conservée.
+                Cette page a été rechargée trop souvent. Attendez une minute puis rechargez : votre
+                copie est conservée.
               </Message>
             );
           case "unavailable":
             return (
               <Message title="Le service ne répond pas">
-                Réessaie dans un instant. Si tu avais commencé, tes réponses enregistrées ne sont
+                Réessayez dans un instant. Si vous aviez commencé, vos réponses enregistrées ne sont
                 pas perdues.
               </Message>
             );

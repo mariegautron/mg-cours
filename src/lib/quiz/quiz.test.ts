@@ -423,7 +423,7 @@ describe("liens personnels", () => {
     expect(csv).toContain(`"'=cmd";"Ana ""A""";"";"https://x.fr/q/T"`);
   });
 
-  it("l'e-mail tutoie et rappelle que le lien est personnel", () => {
+  it("l'e-mail vouvoie et rappelle que le lien est personnel", () => {
     const text = inviteText({
       firstName: "Ana",
       quizTitle: "QCM 1",
@@ -432,8 +432,9 @@ describe("liens personnels", () => {
       closesAt: null,
       durationMinutes: 30,
     });
-    expect(text).toContain("Ce lien est personnel : ne le partage pas.");
+    expect(text).toContain("Ce lien est personnel : ne le partagez pas.");
     expect(text).toContain("Durée : 30 minutes");
-    expect(text).not.toMatch(/\bvous\b|\bvotre\b/i);
+    expect(text).toMatch(/\bvotre\b/i);
+    expect(text).not.toMatch(/\bton\b|\btes\b|\bpartage pas\b/i);
   });
 });

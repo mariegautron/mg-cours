@@ -57,7 +57,7 @@ export function QuestionView({
       {type === "open" ? (
         <div className="space-y-1">
           <label htmlFor={`${idPrefix}-answer`} className="text-sm font-medium">
-            Ta réponse
+            Votre réponse
           </label>
           <textarea
             id={`${idPrefix}-answer`}
@@ -76,7 +76,7 @@ export function QuestionView({
       ) : type === "numerical" ? (
         <div className="space-y-1">
           <label htmlFor={`${idPrefix}-answer`} className="text-sm font-medium">
-            Ta réponse (un nombre)
+            Votre réponse (un nombre)
           </label>
           <input
             id={`${idPrefix}-answer`}

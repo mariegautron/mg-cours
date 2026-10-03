@@ -20,14 +20,14 @@ export function ClassNamePicker({
   if (names.length === 0) {
     return (
       <p role="status" className="rounded-md border p-4 text-sm">
-        Tous les noms sont pris. Si le tien manque, préviens ton enseignante.
+        Tous les noms sont pris. Si le vôtre manque, prévenez votre enseignante.
       </p>
     );
   }
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <Label htmlFor="name-filter">Chercher mon nom</Label>
+        <Label htmlFor="name-filter">Chercher votre nom</Label>
         <Input
           id="name-filter"
           value={query}
@@ -45,8 +45,18 @@ export function ClassNamePicker({
               <input type="hidden" name="attemptId" value={n.id} />
               <button
                 type="submit"
-                className="hover:bg-accent focus-visible:ring-ring min-h-12 w-full rounded-lg border px-4 text-left text-base font-medium focus-visible:ring-2 focus-visible:outline-none"
+                className="hover:bg-accent focus-visible:ring-ring flex min-h-14 w-full items-center gap-3 rounded-xl border px-4 text-left text-base font-semibold focus-visible:ring-2 focus-visible:outline-none"
               >
+                <span
+                  aria-hidden
+                  className="bg-primary/20 text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                >
+                  {n.name
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((w) => w.charAt(0).toUpperCase())
+                    .join("")}
+                </span>
                 {n.name}
               </button>
             </form>

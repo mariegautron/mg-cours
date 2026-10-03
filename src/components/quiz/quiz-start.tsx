@@ -40,10 +40,10 @@ export function QuizStart({
       const result = await startQuiz(token);
       if (result.status === "in_progress" || result.status === "submitted") router.refresh();
       else if (result.status === "unavailable")
-        setError("Le service ne répond pas. Réessaie dans un instant.");
+        setError("Le service ne répond pas. Réessayez dans un instant.");
       else
         setError(
-          "Ce QCM n’est pas ouvert en ce moment : il est peut-être fermé ou pas encore ouvert. Recharge la page.",
+          "Ce QCM n’est pas ouvert en ce moment : il est peut-être fermé ou pas encore ouvert. Rechargez la page.",
         );
     });
 
@@ -58,12 +58,12 @@ export function QuizStart({
         </li>
         <li>
           {durationMinutes
-            ? `Tu as ${durationMinutes} minutes une fois commencé : le décompte démarre quand tu cliques sur « Commencer ».`
+            ? `Vous avez ${durationMinutes} minutes une fois commencé : le décompte démarre quand vous cliquez sur « Commencer ».`
             : "Pas de limite de temps."}
         </li>
         {closesAt ? <li>À rendre avant le {dateTime(closesAt)}.</li> : null}
-        <li>Tes réponses sont enregistrées au fur et à mesure.</li>
-        <li>Ce lien est personnel : ne le partage pas.</li>
+        <li>Vos réponses sont enregistrées au fur et à mesure.</li>
+        <li>Ce lien est personnel : ne le partagez pas.</li>
       </ul>
       <Button type="button" onClick={start} disabled={pending}>
         {pending ? "Ouverture…" : "Commencer"}

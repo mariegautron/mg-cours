@@ -39,7 +39,7 @@ const fmt = (iso: string) =>
   });
 
 export function inviteSubject(quizTitle: string): string {
-  return `Ton lien pour le QCM « ${quizTitle} »`;
+  return `Votre lien pour le QCM « ${quizTitle} »`;
 }
 
 export function inviteText(c: InviteContext): string {
@@ -51,12 +51,12 @@ export function inviteText(c: InviteContext): string {
   return [
     `Bonjour ${c.firstName},`,
     "",
-    `Voici ton lien personnel pour passer le QCM « ${c.quizTitle} » :`,
+    `Voici votre lien personnel pour passer le QCM « ${c.quizTitle} » :`,
     c.url,
     "",
-    PERSONAL_LINK_WARNING,
+    "Ce lien est personnel : ne le partagez pas.",
     ...(when.length ? ["", ...when] : []),
-    "Tes réponses sont enregistrées au fur et à mesure ; pense à cliquer sur « Rendre ma copie » à la fin.",
+    "Vos réponses sont enregistrées au fur et à mesure ; pensez à cliquer sur « Rendre ma copie » à la fin.",
     "",
     "À bientôt.",
   ].join("\n");

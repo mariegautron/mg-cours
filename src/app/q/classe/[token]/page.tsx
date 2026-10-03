@@ -38,10 +38,13 @@ export default async function ClassPage({ params, searchParams }: PageProps<"/q/
             return (
               <>
                 <header className="space-y-1">
-                  <h1 className="text-2xl font-semibold">{res.title}</h1>
+                  <p className="text-muted-foreground text-sm font-semibold">QCM · {res.title}</p>
+                  <h1 className="font-heading text-3xl font-bold tracking-tight">
+                    Qui êtes-vous ?
+                  </h1>
                   <p className="text-muted-foreground">
-                    Choisis ton nom pour passer le QCM. Chaque nom ne peut être pris qu’une fois :
-                    ne choisis pas celui de quelqu’un d’autre.
+                    Choisissez votre nom. Un nom ne peut être pris qu’une fois : ne choisissez pas
+                    celui de quelqu’un d’autre.
                   </p>
                 </header>
                 {problemText ? (
@@ -67,15 +70,15 @@ export default async function ClassPage({ params, searchParams }: PageProps<"/q/
           case "window_closed":
             return <Message title={res.title}>Le QCM est fermé.</Message>;
           case "throttled":
-            return <Message title="Trop d’essais">Réessaie dans quelques minutes.</Message>;
+            return <Message title="Trop d’essais">Réessayez dans quelques minutes.</Message>;
           case "unavailable":
             return (
-              <Message title="Page momentanément indisponible">Réessaie dans un instant.</Message>
+              <Message title="Page momentanément indisponible">Réessayez dans un instant.</Message>
             );
           default:
             return (
               <Message title="Ce lien ne fonctionne pas">
-                Demande le QR code à ton enseignante : l’ancien a peut-être été remplacé.
+                Demandez le QR code à votre enseignante : l’ancien a peut-être été remplacé.
               </Message>
             );
         }

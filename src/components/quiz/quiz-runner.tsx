@@ -8,6 +8,7 @@ import { saveQuiz, submitQuiz } from "@/app/q/[token]/actions";
 import { Markdown } from "@/components/markdown";
 import { QuestionView } from "@/components/questions/question-view";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { QuestionType } from "@/lib/questions/types";
 import { announcementAt, formatRemaining } from "@/lib/quiz/timer";
 import type { StoredAnswer } from "@/lib/quiz/types";
@@ -44,6 +45,7 @@ export function QuizRunner({
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [index, setIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -124,11 +126,11 @@ export function QuizRunner({
         return;
       }
       setSubmitError(
-        "Ta copie n’a pas pu être rendue pour l’instant. Tes réponses sont enregistrées : réessaie dans un instant.",
+        "Votre copie n’a pas pu être rendue pour l’instant. Vos réponses sont enregistrées : réessayez dans un instant.",
       );
     } catch {
       setSubmitError(
-        "Ta copie n’a pas pu être rendue pour l’instant (connexion ?). Tes réponses sont enregistrées : réessaie dans un instant.",
+        "Votre copie n’a pas pu être rendue pour l’instant (connexion ?). Vos réponses sont enregistrées : réessayez dans un instant.",
       );
     } finally {
       setSubmitting(false);
@@ -163,34 +165,64 @@ export function QuizRunner({
     saveState === "saving"
       ? "Enregistrement…"
       : saveState === "error"
-        ? "Pas de connexion : ta copie reste ouverte ici, nouvel essai automatique."
+        ? "Pas de connexion : votre copie reste ouverte ici, nouvel essai automatique."
         : saveState === "dirty"
           ? "Modifications en attente d’enregistrement…"
           : savedAt
-            ? `Tes réponses sont enregistrées (à ${savedAt}).`
-            : "Tes réponses sont enregistrées au fur et à mesure.";
+            ? `Vos réponses sont enregistrées (à ${savedAt}).`
+            : "Vos réponses sont enregistrées au fur et à mesure.";
+
+  const total = questions.length;
+  const current = Math.min(index, total - 1);
+  const answered = (position: number) => {
+    const a = answers[String(position)];
+    if (!a) return false;
+    if ("choices" in a) return a.choices.length > 0;
+    if ("text" in a) return a.text.trim() !== "";
+    return a.number.trim() !== "";
+  };
 
   return (
-    <div className="space-y-6">
-      <header className="bg-background sticky top-0 z-10 space-y-1 border-b py-3">
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <p
-            role="status"
-            aria-live="polite"
-            className={saveState === "error" ? "text-destructive" : "text-muted-foreground"}
-          >
-            {saveText}
-          </p>
+    <div className="space-y-5">
+      <header className="bg-background sticky top-0 z-10 space-y-2 border-b py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="font-heading text-xl font-bold">QCM · {title}</h1>
           {remaining !== null ? (
-            <p role="timer" className="font-medium">
+            <p
+              role="timer"
+              className="border-sky/45 bg-sky/12 text-sky rounded-full border px-3 py-1 text-sm font-bold"
+            >
               Temps restant : {formatRemaining(remaining)}
             </p>
           ) : null}
         </div>
+        <p
+          role="status"
+          aria-live="polite"
+          className={cn(
+            "text-sm",
+            saveState === "error" ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {saveText}
+        </p>
       </header>
       <p aria-live="polite" role="status" className="sr-only">
         {announcement}
+      </p>
+
+      <div
+        role="img"
+        aria-label={`Question ${current + 1} sur ${total}`}
+        className="bg-muted h-2 overflow-hidden rounded-full"
+      >
+        <span
+          className="bg-primary block h-full"
+          style={{ width: `${((current + 1) / total) * 100}%` }}
+        />
+      </div>
+      <p className="text-muted-foreground text-sm" aria-hidden>
+        Question {current + 1} sur {total}
       </p>
 
       {instructions.trim() ? (
@@ -209,19 +241,44 @@ export function QuizRunner({
         }}
         className="space-y-4"
       >
-        {questions.map((q) => (
-          <QuestionView
-            key={q.position}
-            idPrefix={`q${q.position}`}
-            label={`Question ${q.position} sur ${questions.length}`}
-            type={q.type}
-            statement={q.statement}
-            points={q.points}
-            choices={q.choices.map((c) => ({ id: String(c.id), text: c.text }))}
-            answer={answers[String(q.position)] ?? null}
-            onAnswer={(a) => onAnswer(q.position, a)}
-          />
+        {questions.map((q, i) => (
+          <div key={q.position} hidden={i !== current}>
+            <QuestionView
+              idPrefix={`q${q.position}`}
+              label={`Question ${q.position} sur ${total}`}
+              type={q.type}
+              statement={q.statement}
+              points={q.points}
+              choices={q.choices.map((c) => ({ id: String(c.id), text: c.text }))}
+              answer={answers[String(q.position)] ?? null}
+              onAnswer={(a) => onAnswer(q.position, a)}
+            />
+          </div>
         ))}
+
+        <nav aria-label="Questions" className="flex flex-wrap gap-1.5">
+          {questions.map((q, i) => (
+            <button
+              key={q.position}
+              type="button"
+              aria-current={i === current ? "step" : undefined}
+              onClick={() => setIndex(i)}
+              className={cn(
+                "focus-visible:ring-ring min-h-11 min-w-11 rounded-lg border text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none",
+                i === current
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : answered(q.position)
+                    ? "bg-mint/15 border-mint/40"
+                    : "bg-muted/40",
+              )}
+            >
+              {q.position}
+              <span className="sr-only">
+                {answered(q.position) ? " : répondue" : " : pas encore répondue"}
+              </span>
+            </button>
+          ))}
+        </nav>
 
         {confirming ? (
           <div
@@ -229,10 +286,18 @@ export function QuizRunner({
             aria-labelledby="confirm-title"
             className="space-y-3 rounded-lg border p-4"
           >
-            <h2 id="confirm-title" ref={confirmRef} tabIndex={-1} className="font-medium">
-              Rendre ta copie ?
+            <h2
+              id="confirm-title"
+              ref={(el) => {
+                confirmRef.current = el;
+                el?.focus();
+              }}
+              tabIndex={-1}
+              className="font-medium"
+            >
+              Rendre votre copie ?
             </h2>
-            <p className="text-sm">Une fois rendue, tu ne pourras plus la modifier.</p>
+            <p className="text-sm">Une fois rendue, vous ne pourrez plus la modifier.</p>
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={submit} disabled={submitting}>
                 {submitting ? "Envoi…" : "Oui, rendre ma copie"}
@@ -248,8 +313,39 @@ export function QuizRunner({
             </div>
           </div>
         ) : (
-          <Button type="submit">Rendre ma copie</Button>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+            <Button
+              type="button"
+              variant="secondary"
+              size="touch-lg"
+              disabled={current === 0}
+              onClick={() => setIndex(current - 1)}
+            >
+              ← Précédente
+            </Button>
+            {current < total - 1 ? (
+              <Button
+                key="next"
+                type="button"
+                size="touch-lg"
+                onClick={() => setIndex(current + 1)}
+              >
+                Suivante →
+              </Button>
+            ) : (
+              <Button key="submit" type="submit" size="touch-lg">
+                Rendre ma copie
+              </Button>
+            )}
+          </div>
         )}
+        {current < total - 1 && !confirming ? (
+          <p>
+            <Button type="submit" variant="ghost" size="touch">
+              Rendre ma copie
+            </Button>
+          </p>
+        ) : null}
         {submitError ? <ActionError error={submitError} /> : null}
       </form>
     </div>

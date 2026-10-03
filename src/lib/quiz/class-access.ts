@@ -42,10 +42,10 @@ export function readClaimStatus(raw: unknown): ClaimStatus {
 
 export const CLAIM_MESSAGES: Record<Exclude<ClaimStatus, "ok">, string> = {
   taken:
-    "Ce nom vient d’être pris. Si c’est bien le tien, préviens ton enseignante : elle peut le libérer.",
+    "Ce nom vient d’être pris. Si c’est bien le vôtre, prévenez votre enseignante : elle peut le libérer.",
   window_closed: "Le QCM n’est pas ouvert en ce moment.",
-  invalid: "Ce lien ne fonctionne plus. Demande le nouveau QR code à ton enseignante.",
-  unavailable: "Un souci est survenu. Réessaie dans un instant.",
+  invalid: "Ce lien ne fonctionne plus. Demandez le nouveau QR code à votre enseignante.",
+  unavailable: "Un souci est survenu. Réessayez dans un instant.",
 };
 
 /** Une attribution peut être libérée tant que la copie n'est pas commencée. */

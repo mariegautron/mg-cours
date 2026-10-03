@@ -41,6 +41,10 @@ test("QR de classe : choix du nom, nom pris disparu, libération, accès fermé 
   // Étudiant·e 1 : voit les deux noms, choisit le sien.
   const s1 = await studentPage(browser);
   await s1.page.goto(classPath);
+  if (process.env.CAPTURE) {
+    await s1.page.setViewportSize({ width: 1280, height: 800 });
+    await s1.page.screenshot({ path: "docs/captures/qcm-choisir.png" });
+  }
   await expect(s1.page.getByRole("button", { name: ana })).toBeVisible();
   await expect(s1.page.getByRole("button", { name: zoe })).toBeVisible();
   const axe = await new AxeBuilder({ page: s1.page })

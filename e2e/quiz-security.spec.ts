@@ -307,7 +307,7 @@ test("passation : fenêtre, retard, débit, révocation, corrigé jamais avant l
   await a.page.goto(links[ana]);
   await expect(
     a.page.getByText(
-      /Ta copie est en cours de correction|seront visibles ici quand le QCM sera clôturé/,
+      /Votre copie est en cours de correction|seront visibles ici quand le QCM sera clôturé/,
     ),
   ).toBeVisible();
   await a.context.close();
@@ -342,7 +342,7 @@ test("passation : fenêtre, retard, débit, révocation, corrigé jamais avant l
   expect(throttled).toBe(true);
   await p.goto(links[ana]);
   await expect(p.getByRole("heading", { name: "Trop d’essais" })).toHaveCount(0);
-  await expect(p.getByText(/Ta copie est rendue/)).toBeVisible();
+  await expect(p.getByText(/Votre copie est rendue/)).toBeVisible();
   // Un jeton mal formé (chemin quelconque) ne provoque aucune erreur serveur.
   const weird = await p.request.get("/q/%27%3B%20drop%20table--");
   expect(weird.status()).toBe(200);
