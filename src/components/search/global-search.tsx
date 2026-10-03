@@ -26,7 +26,17 @@ const DEBOUNCE_MS = 200;
  * dialogue (focus piégé, Échap ferme, focus rendu au déclencheur) avec motif « combobox » :
  * flèches haut/bas, Entrée, résultats annoncés poliment. Aucune animation.
  */
-export function GlobalSearch() {
+export function GlobalSearch({
+  variant = "field",
+  hotkey = false,
+  className,
+}: {
+  /** « field » : champ « Rechercher… » ; « icon » : bouton rond (rail, en-tête). */
+  variant?: "field" | "icon";
+  /** Une seule instance écoute Ctrl K / ⌘K (celle de l'en-tête, toujours montée). */
+  hotkey?: boolean;
+  className?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -43,15 +53,21 @@ export function GlobalSearch() {
   const searchable = normalize(trimmed).length >= MIN_QUERY_LENGTH;
 
   useEffect(() => {
+    if (!hotkey) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        // Ouvre par le déclencheur VISIBLE (menu, rail ou en-tête) : le focus lui revient à la fermeture.
+        const visible = Array.from(
+          document.querySelectorAll<HTMLElement>("[data-search-trigger]"),
+        ).find((el) => el.offsetParent !== null);
+        if (visible) visible.click();
+        else setOpen((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [hotkey]);
 
   useEffect(() => {
     if (!searchable) return;
@@ -123,17 +139,29 @@ export function GlobalSearch() {
   return (
     <Dialog.Root open={open} onOpenChange={reset}>
       <Dialog.Trigger asChild>
-        <button
-          type="button"
-          className="border-input bg-background text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 text-sm focus-visible:ring-2 focus-visible:outline-none"
-        >
-          <Search aria-hidden className="size-4 shrink-0" />
-          <span className="flex-1 text-left">Rechercher…</span>
-          <kbd className="text-xs" aria-hidden>
-            Ctrl K
-          </kbd>
-          <span className="sr-only">(raccourci : Ctrl K ou ⌘ K)</span>
-        </button>
+        {variant === "icon" ? (
+          <button
+            type="button"
+            data-search-trigger
+            aria-label="Rechercher (raccourci : Ctrl K ou ⌘ K)"
+            className={`border-input bg-background text-muted-foreground hover:text-foreground focus-visible:ring-ring flex size-11 items-center justify-center rounded-lg border focus-visible:ring-2 focus-visible:outline-none ${className ?? ""}`}
+          >
+            <Search aria-hidden className="size-5" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-search-trigger
+            className={`border-input bg-background text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 text-sm focus-visible:ring-2 focus-visible:outline-none ${className ?? ""}`}
+          >
+            <Search aria-hidden className="size-4 shrink-0" />
+            <span className="flex-1 text-left">Rechercher…</span>
+            <kbd className="text-xs" aria-hidden>
+              Ctrl K
+            </kbd>
+            <span className="sr-only">(raccourci : Ctrl K ou ⌘ K)</span>
+          </button>
+        )}
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />

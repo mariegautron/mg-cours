@@ -7,6 +7,7 @@ import { BookMarked, GraduationCap, Library, Settings, Sun } from "lucide-react"
 import { LogoMark, Mascot } from "@/components/mascot";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
+import { MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
 import {
   Sidebar,
   SidebarContent,
@@ -29,32 +30,40 @@ const CHIP = {
   sun: "bg-sun/15 text-sun",
 } as const;
 
-const NAV = [
-  { href: "/dashboard", label: "Aujourd’hui", icon: Sun, tone: "violet" },
-  { href: "/modules", label: "Modules", icon: BookMarked, tone: "coral" },
-  { href: "/students", label: "Étudiant·es", icon: GraduationCap, tone: "sky" },
-  { href: "/resources", label: "Bibliothèque", icon: Library, tone: "mint" },
-  { href: "/settings", label: "Réglages", icon: Settings, tone: "violet" },
-] as const;
+const LOOK: Record<MenuKey, { icon: typeof Sun; tone: keyof typeof CHIP }> = {
+  dashboard: { icon: Sun, tone: "violet" },
+  modules: { icon: BookMarked, tone: "coral" },
+  students: { icon: GraduationCap, tone: "sky" },
+  library: { icon: Library, tone: "mint" },
+  settings: { icon: Settings, tone: "violet" },
+};
+
+export const NAV_ICONS = LOOK;
 
 export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="gap-3 px-3 pt-4 pb-2">
         <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg px-1 py-1">
           <LogoMark />
-          <span className="font-heading text-xl font-bold tracking-tight">MG COURS</span>
+          <span className="font-heading text-xl font-bold tracking-tight group-data-[collapsible=icon]:sr-only">
+            MG COURS
+          </span>
         </Link>
-        <GlobalSearch />
+        <GlobalSearch className="group-data-[collapsible=icon]:hidden" />
+        <div className="hidden justify-center group-data-[collapsible=icon]:flex">
+          <GlobalSearch variant="icon" />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <nav aria-label="Menu principal">
               <SidebarMenu>
-                {NAV.map((item) => {
+                {MENU_ENTRIES.map((entry) => {
+                  const item = { ...entry, ...LOOK[entry.key] };
                   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -62,15 +71,21 @@ export function AppSidebar() {
                         asChild
                         isActive={active}
                         size="lg"
-                        className="data-[active=true]:halo gap-3 rounded-xl transition-colors"
+                        className="data-[active=true]:halo gap-3 rounded-xl transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center"
                       >
-                        <Link href={item.href} aria-current={active ? "page" : undefined}>
+                        <Link
+                          href={item.href}
+                          aria-label={item.label}
+                          aria-current={active ? "page" : undefined}
+                        >
                           <span
                             className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
                           >
                             <item.icon aria-hidden className="size-4" />
                           </span>
-                          <span className="font-medium">{item.label}</span>
+                          <span className="font-medium group-data-[collapsible=icon]:sr-only">
+                            {item.label}
+                          </span>
                           <LinkPending />
                         </Link>
                       </SidebarMenuButton>
@@ -83,7 +98,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="items-center pb-4">
-        <Mascot mood="happy" className="size-16" />
+        <Mascot mood="happy" className="size-16 group-data-[collapsible=icon]:hidden" />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
