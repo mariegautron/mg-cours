@@ -69,7 +69,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
 
   // Navigation : fil d'Ariane + onglets (l'onglet choisi apparaît dans l'ancre).
   await openTab(page, /Séances/);
-  await expect(page).toHaveURL(/#courses$/);
+  await expect(page).toHaveURL(/\/courses$/);
   await expect(
     page.getByRole("navigation", { name: "Fil d’Ariane" }).getByRole("link", { name: "Modules" }),
   ).toHaveAttribute("href", "/modules");

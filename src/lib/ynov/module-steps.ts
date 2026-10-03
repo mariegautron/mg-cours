@@ -162,7 +162,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
           : "aucune séance",
       action:
         courses.total > 0
-          ? { label: "Préparer mes séances", href: `${base}#courses` }
+          ? { label: "Préparer mes séances", href: `${base}/courses` }
           : { label: "Créer les séances", href: `${base}/schedule` },
       badge: courses.total > 0 ? "préparer les séances" : "créer les séances",
     },
@@ -181,7 +181,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       summary: ctx.outlineGeneratedAt
         ? `générée le ${dateFr(ctx.outlineGeneratedAt)}`
         : "pas encore générée",
-      action: { label: "Générer la progression", href: `${base}#trame` },
+      action: { label: "Générer la progression", href: `${base}/outline` },
       badge: "générer la progression pédagogique",
     },
     {
@@ -196,7 +196,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       action:
         !ctx.outlineSent && !ctx.outlineDueDate
           ? { label: "Renseigner la date de la 1re séance", href: `${base}/edit` }
-          : { label: "Envoyer la progression", href: `${base}#trame` },
+          : { label: "Envoyer la progression", href: `${base}/outline` },
       badge: "envoyer la progression pédagogique",
     },
     {
@@ -220,7 +220,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       title: "Documents administratifs",
       state: inProgress(adminDone, adminDocs.done > 0),
       summary: `${adminDocs.done}/${adminDocs.total}`,
-      action: { label: "Cocher les documents", href: `${base}#admin-docs` },
+      action: { label: "Cocher les documents", href: `${base}/documents` },
       badge: "cocher les documents administratifs",
     },
     {

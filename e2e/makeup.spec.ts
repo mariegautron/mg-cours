@@ -77,7 +77,7 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   expect((await axe(page)).violations).toEqual([]);
 
   // Une seule évaluation « notée » côté YNOV : 1 note individuelle, pas 2.
-  await page.goto(`${setup.moduleUrl}#assessments`);
+  await page.goto(`${setup.moduleUrl}/groups`);
   await expect(page.getByText(/2 évaluations \(1 avec des notes saisies\) · 1\//)).toBeVisible();
 
   // Retour sur l'originale : le rattrapage est lié, plus rien à ajouter.

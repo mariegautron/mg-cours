@@ -74,8 +74,8 @@ test("US-62 : lier des ressources à une séance avec recherche, filtres et cré
   expect(axe.violations).toEqual([]);
 
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/#courses$/);
-  await expect(page.getByRole("tab", { name: /Séances/ })).toHaveAttribute("aria-selected", "true");
+  await page.waitForURL(/\/courses$/);
+  await expect(page).toHaveURL(/\/courses$/);
   for (const title of [cours, atelier, inline]) {
     await expect(page.getByText(title).first()).toBeVisible();
   }

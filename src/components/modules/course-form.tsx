@@ -193,7 +193,7 @@ export function CourseForm({
         </PendingButton>
         <Button type="button" variant="ghost" asChild>
           <Link
-            href={`/modules/${moduleId}#courses`}
+            href={`/modules/${moduleId}/courses`}
             onClick={(e) => {
               if (dirty && !window.confirm("Abandonner les modifications non enregistrées ?")) {
                 e.preventDefault();

@@ -186,7 +186,7 @@ export async function proposeSkeleton(moduleId: string): Promise<void> {
   if (error) return;
 
   revalidatePath(`/modules/${moduleId}`);
-  redirect(`/modules/${moduleId}#courses`);
+  redirect(`/modules/${moduleId}/courses`);
 }
 
 export interface CustomExpectationState {

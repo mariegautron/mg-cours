@@ -35,7 +35,7 @@ export function ScheduleForm({
           Créer les séances
         </PendingButton>
         <Button type="button" variant="ghost" asChild>
-          <Link href={`/modules/${moduleId}#courses`}>Annuler</Link>
+          <Link href={`/modules/${moduleId}/courses`}>Annuler</Link>
         </Button>
       </div>
     </form>

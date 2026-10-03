@@ -21,11 +21,10 @@ test("US-72 : « Prochaine étape » sur le module et raisons du blocage sur la 
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
   // E18 : le badge de l'en-tête reprend l'étape courante du parcours « Où j'en suis ».
-  await expect(
-    page.getByText("Prochaine étape : lire les attendus de la fiche", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText("Prochaine étape · 1 sur 10")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Lire les attendus de la fiche →" })).toBeVisible();
   const journey = page.getByRole("region", { name: "Où j’en suis" });
-  await expect(journey.getByRole("link", { name: "Lire les attendus de la fiche" })).toBeVisible();
+  await expect(journey.getByRole("link", { name: /Fiche de l’école et attendus/ })).toBeVisible();
   await expect(journey.getByRole("listitem")).toHaveCount(10);
   await expect(journey.locator("[aria-current=step]")).toContainText(
     "Fiche de l’école et attendus",

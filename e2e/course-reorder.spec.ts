@@ -26,7 +26,7 @@ test("US-61 : monter / descendre une séance au clavier depuis le menu « ⋯ »
     await expect(page.getByLabel("Position")).toHaveCount(0);
     await page.getByLabel("Titre de la séance").fill(title);
     await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/#courses$/);
+    await page.waitForURL(/\/courses$/);
   }
 
   await openTab(page, /Séances/);
@@ -81,12 +81,12 @@ test("US-61 : monter / descendre une séance au clavier depuis le menu « ⋯ »
   expect(axe.violations).toEqual([]);
 
   // L'ordre persiste et modifier une séance ne le change pas.
-  await page.goto(`${moduleUrl}#courses`);
+  await page.goto(`${moduleUrl}/courses`);
   await expect(titles).toHaveText(["Charlie", "Alpha", "Bravo"]);
   await actions("Alpha").click();
   await page.getByRole("menuitem", { name: /^Modifier/ }).click();
   await page.getByLabel("Titre de la séance").fill("Alpha 2");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/#courses$/);
+  await page.waitForURL(/\/courses$/);
   await expect(titles).toHaveText(["Charlie", "Alpha 2", "Bravo"]);
 });

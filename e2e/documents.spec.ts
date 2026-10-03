@@ -56,7 +56,7 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await expect(page.getByText("attendus-ecole.pdf")).toHaveCount(0);
 
   // Facture émise hors application : dépôt sur la page Facturation, puis module payé.
-  await page.goto(`${page.url().split("#")[0]}/billing`);
+  await page.goto(`${page.url().match(/^.*\/modules\/[0-9a-f-]{36}/)![0]}/billing`);
   await page.waitForLoadState("networkidle");
   await page.getByLabel(/Déposer un fichier \(ma facture/).setInputFiles({
     name: "facture-26-03-6.pdf",

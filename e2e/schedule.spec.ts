@@ -73,7 +73,7 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await page.getByLabel("Fin du créneau 1").fill("12:00");
   await expect(page.getByText(/Séance 4/)).toBeVisible();
   await page.getByRole("button", { name: "Créer les séances" }).click();
-  await page.waitForURL(/#courses$/);
+  await page.waitForURL(/\/courses$/);
   await openTab(page, /Séances/);
   await expect(page.getByText("Séance 4").first()).toBeVisible();
 });

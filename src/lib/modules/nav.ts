@@ -14,17 +14,18 @@ export interface ModuleNavItem {
 export function moduleNavItems(moduleId: string): ModuleNavItem[] {
   const base = `/modules/${moduleId}`;
   return [
-    { key: "journey", label: "Où j’en suis", href: `${base}#progression` },
-    { key: "sessions", label: "Séances", href: `${base}#courses` },
+    { key: "journey", label: "Où j’en suis", href: base },
+    { key: "sessions", label: "Séances", href: `${base}/courses` },
     { key: "assessments", label: "Évaluations", href: `${base}/assessments` },
-    { key: "students", label: "Étudiant·es", href: `${base}#groups-evaluations` },
-    { key: "documents", label: "Documents", href: `${base}#admin-docs` },
+    { key: "students", label: "Étudiant·es", href: `${base}/groups` },
+    { key: "documents", label: "Documents", href: `${base}/documents` },
     { key: "invoice", label: "Facture", href: `${base}/billing` },
   ];
 }
 
 // Premier segment sous /modules/{id}/ → entrée du menu et libellé du fil d'Ariane.
 const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
+  documents: { key: "documents", label: "Documents" },
   expectations: { key: "journey", label: "Attendus de l’école" },
   matching: { key: "journey", label: "Rapprochement des ressources" },
   outline: { key: "journey", label: "Progression" },
@@ -43,6 +44,9 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
 };
 
 function section(pathname: string, moduleId: string) {
+  // La fiche du module est l'écran « Où j'en suis ».
+  if (pathname === `/modules/${moduleId}`)
+    return { key: "journey" as const, label: "Où j’en suis" };
   const prefix = `/modules/${moduleId}/`;
   if (!pathname.startsWith(prefix)) return null;
   return SECTION[pathname.slice(prefix.length).split("/")[0]] ?? null;

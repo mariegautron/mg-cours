@@ -25,7 +25,7 @@ test("imprévu du client : ajout, rappel du jour, copie, envoyé", async ({ page
   await page.getByLabel("Titre de la séance").fill(`Séance du jour ${suffix}`);
   await page.getByLabel("Date").first().fill(today);
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/modules\/[0-9a-f-]{36}(#.*)?$/);
+  await page.waitForURL(/\/courses$/);
 
   await page.goto(`${moduleUrl}/project`);
   await page.getByLabel("Titre du projet").fill("Projet imprévus");

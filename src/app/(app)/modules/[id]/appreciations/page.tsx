@@ -52,7 +52,7 @@ export default async function AppreciationsPage({
         <EmptyState
           title="Personne dans ce module"
           description="Ajoute des étudiant·es aux groupes du module pour écrire leurs appréciations."
-          actions={[{ label: "Voir les groupes", href: `/modules/${id}#groups-evaluations` }]}
+          actions={[{ label: "Voir les groupes", href: `/modules/${id}/groups` }]}
         />
       ) : (
         <AppreciationList

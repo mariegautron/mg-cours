@@ -114,10 +114,7 @@ export function GroupWizard({ moduleId, students, takenNames, pastGroups, hasThe
           {result.created} groupe{result.created > 1 ? "s" : ""} créé{result.created > 1 ? "s" : ""}
         </h2>
         {result.themesMessage ? <p role="status">{result.themesMessage}</p> : null}
-        <Link
-          className="underline underline-offset-2"
-          href={`/modules/${moduleId}#groups-evaluations`}
-        >
+        <Link className="underline underline-offset-2" href={`/modules/${moduleId}/groups`}>
           Voir les groupes du module
         </Link>
       </section>

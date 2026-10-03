@@ -132,7 +132,7 @@ export function CourseImportForm({
           {`Importer ${chosen.length} séance${chosen.length > 1 ? "s" : ""}`}
         </PendingButton>
         <Button type="button" variant="ghost" asChild>
-          <Link href={`/modules/${moduleId}#courses`}>Annuler</Link>
+          <Link href={`/modules/${moduleId}/courses`}>Annuler</Link>
         </Button>
       </div>
     </form>

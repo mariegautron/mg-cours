@@ -128,7 +128,7 @@ test("sur un module existant : liste au choix si le nom ne correspond pas, écar
 
   await page.getByRole("button", { name: "Utiliser ces séances et ces dates" }).click();
   await page.getByRole("button", { name: "Créer les séances" }).click();
-  await page.waitForURL(/\/modules\/[0-9a-f-]{36}#courses/);
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}\/courses/);
 
   await page.goto(`/modules/${id}/edit`);
   await expect(page.getByLabel("Date de la 1re séance")).toHaveValue("2026-10-12");

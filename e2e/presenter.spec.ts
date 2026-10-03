@@ -52,7 +52,7 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await page.getByLabel(lesson).check();
   await page.getByLabel(answerKey).check();
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/#courses$/);
+  await page.waitForURL(/\/courses$/);
   await openTab(page, /Séances/);
   const href = await page
     .getByRole("link", { name: /^Faire cours : Séance présentée/ })

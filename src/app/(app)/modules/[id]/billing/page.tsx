@@ -55,7 +55,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
     {
       ok: !blockers.includes(OUTLINE_NOT_SENT),
       label: "Progression pédagogique envoyée",
-      action: { href: `/modules/${id}#progression`, label: "Marquer comme envoyée" },
+      action: { href: `/modules/${id}/outline`, label: "Marquer comme envoyée" },
     },
     {
       ok: ctx.notes.satisfied,

@@ -34,7 +34,7 @@ test("US-55 : retenir une ressource pour un module, la retrouver en tête de sé
   await expect(page.getByText(`Ressource retenue pour « ${moduleName} ».`)).toBeVisible();
 
   // Sur le module : section « Ressources retenues ».
-  await page.goto(`${moduleUrl}#courses`);
+  await page.goto(`${moduleUrl}/courses`);
   const section = page.getByRole("region", { name: /Ressources retenues \(1\)/ });
   await expect(section.getByRole("link", { name: title })).toBeVisible();
 
@@ -49,7 +49,7 @@ test("US-55 : retenir une ressource pour un module, la retrouver en tête de sé
   expect(axe.violations).toEqual([]);
 
   // Retirer.
-  await page.goto(`${moduleUrl}#courses`);
+  await page.goto(`${moduleUrl}/courses`);
   await page.getByRole("button", { name: `Ne plus retenir ${title}` }).click();
   await expect(page.getByRole("region", { name: /Ressources retenues \(0\)/ })).toBeVisible();
 });

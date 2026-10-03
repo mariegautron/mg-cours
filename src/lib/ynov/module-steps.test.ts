@@ -181,7 +181,7 @@ describe("moduleSteps — progression générée puis envoyée", () => {
     const send = keyed(ctx, "send");
     expect(send.state).toBe("todo");
     expect(send.summary).toBe("à envoyer avant le 27/09/2026");
-    expect(send.action).toEqual({ label: "Envoyer la progression", href: "/modules/m1#trame" });
+    expect(send.action).toEqual({ label: "Envoyer la progression", href: "/modules/m1/outline" });
     expect(moduleSteps(ctx).current?.key).toBe("send");
   });
   it("envoyée : on passe à faire cours", () => {

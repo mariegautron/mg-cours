@@ -177,7 +177,7 @@ export async function addScheduleToModule(
   revalidatePath("/modules");
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath("/dashboard");
-  redirect(`/modules/${moduleId}#courses`);
+  redirect(`/modules/${moduleId}/courses`);
 }
 
 export async function updateModule(

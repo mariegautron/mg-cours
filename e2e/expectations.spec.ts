@@ -91,7 +91,7 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
   // Squelette : une séance vide par unité.
   await page.goto(`${moduleUrl}/expectations`);
   await page.getByRole("button", { name: /Proposer un squelette de séances/ }).click();
-  await page.waitForURL(/#courses$/);
+  await page.waitForURL(/\/courses$/);
   await openTab(page, /Séances/);
   await expect(page.getByText("Cadrage du besoin").first()).toBeVisible();
   await expect(page.getByText("Etude de faisabilite").first()).toBeVisible();

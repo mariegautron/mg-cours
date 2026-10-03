@@ -25,7 +25,7 @@ test("sujet lié à la séance : préparation, fichier en téléchargement forc�
   await page.goto(`${moduleUrl}/courses/new`);
   await page.getByLabel("Titre de la séance").fill("Évaluation et restitution");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/#courses$/);
+  await page.waitForURL(/\/courses$/);
 
   const groupName = `Groupe Sujet ${suffix}`;
   await page.goto(`${moduleUrl}/groups/new`);
@@ -52,7 +52,7 @@ test("sujet lié à la séance : préparation, fichier en téléchargement forc�
   await expect(page.getByText("Séance 1 — Évaluation et restitution")).toBeVisible();
   await expect(page.getByRole("link", { name: /Présenter le sujet/ })).toHaveCount(0);
   const courseHref = `${moduleUrl.replace("/modules/", "/present/modules/")}/courses/`;
-  await page.goto(`${moduleUrl}#courses`);
+  await page.goto(`${moduleUrl}/courses`);
   const courseId = await page
     .locator('a[href*="/courses/"]', { hasText: /^Faire cours/ })
     .first()

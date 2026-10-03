@@ -38,7 +38,8 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
     mimeType: "application/pdf",
     buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
   });
-  await expect(page.getByText("trame-envoyee.pdf").first()).toBeVisible();
+  // Le dépôt est fini quand le lien de téléchargement apparaît (changer de page avant l'interrompt).
+  await expect(page.getByRole("link", { name: /Télécharger trame-envoyee\.pdf/ })).toBeVisible();
 
   await openTab(page, "Progression");
   const trameSection = page.getByRole("region", {
@@ -77,7 +78,7 @@ test("une progression déposée en PDF fait foi et débloque la facturation", as
   await expect(page.getByText("trame-envoyee.pdf").first()).toBeVisible();
 
   // US-70 : le dépôt vaut envoi, la condition de facturation est remplie.
-  await page.goto(`${page.url().split("#")[0]}/billing`);
+  await page.goto(`${page.url().match(/^.*\/modules\/[0-9a-f-]{36}/)![0]}/billing`);
   await openOtherBilling(page);
   await expect(
     page.getByRole("listitem").filter({ hasText: "Progression pédagogique envoyée : fait" }),

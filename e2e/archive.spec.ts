@@ -26,8 +26,11 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
   await openTab(page, /Administratif/);
   await page.getByRole("button", { name: "Archiver le module" }).click();
   await expect(page.getByRole("button", { name: "Restaurer le module" })).toBeVisible();
-  // US-131 : état « Module terminé » de la page.
-  await expect(page.getByRole("heading", { name: "Module terminé", level: 2 })).toBeVisible();
+  // Fiche du module : carte « Ce module est terminé ».
+  await page.goto(page.url().replace(/\/documents$/, ""));
+  await expect(
+    page.getByRole("heading", { name: "Ce module est terminé", level: 2 }),
+  ).toBeVisible();
   const done = await new AxeBuilder({ page })
     .exclude("[data-sonner-toaster]")
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -72,7 +75,7 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
   await page.goto(`${moduleUrl}/courses/new`);
   await page.getByLabel("Titre de la séance").fill("Séance unique");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/modules\/[0-9a-f-]{36}(#.*)?$/);
+  await page.waitForURL(/\/courses$/);
   const env = localEnv();
   const res = await fetch(
     `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/course?module_id=eq.${moduleId}`,

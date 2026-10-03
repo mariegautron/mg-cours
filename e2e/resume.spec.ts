@@ -30,7 +30,7 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
     await page.waitForLoadState("networkidle");
     await page.getByLabel("Titre de la séance").fill(`${title} ${stamp}`);
     await page.getByRole("button", { name: "Enregistrer" }).click();
-    await page.waitForURL(/#courses$/);
+    await page.waitForURL(/\/courses$/);
   }
   await openTab(page, /Séances/);
   const notebookHref = (title: string) =>
@@ -86,5 +86,5 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
   await expect(
     page.getByRole("heading", { name: "Retour d’expérience de cette année" }),
   ).toBeVisible();
-  await expect(page.getByText("Trop dense, couper la partie 2")).toBeVisible();
+  await expect(page.getByText("Trop dense, couper la partie 2").first()).toBeVisible();
 });

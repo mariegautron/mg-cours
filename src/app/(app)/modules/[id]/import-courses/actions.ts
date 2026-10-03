@@ -72,5 +72,5 @@ export async function importCourses(
 
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath("/dashboard");
-  redirect(`/modules/${moduleId}#courses`);
+  redirect(`/modules/${moduleId}/courses`);
 }

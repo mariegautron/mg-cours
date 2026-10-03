@@ -61,7 +61,7 @@ export default async function PresenterPage({
   return (
     <PresenterView
       title={`${mod.name} — Séance ${position + 1} : ${course.title}`}
-      backHref={`/modules/${mod.id}#courses`}
+      backHref={`/modules/${mod.id}/courses`}
       slides={slides}
       syncChannel={syncChannelName(courseId)}
       projectedHref={`/present/modules/${mod.id}/courses/${courseId}`}

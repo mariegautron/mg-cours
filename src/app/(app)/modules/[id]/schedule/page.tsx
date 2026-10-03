@@ -16,7 +16,7 @@ export default async function ModuleSchedulePage({ params }: PageProps<"/modules
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link href={`/modules/${mod.id}#courses`} className="text-sm underline underline-offset-2">
+        <Link href={`/modules/${mod.id}/courses`} className="text-sm underline underline-offset-2">
           ← {mod.name}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">Ajouter des séances depuis un planning</h1>

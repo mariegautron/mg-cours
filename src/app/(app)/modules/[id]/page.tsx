@@ -1,41 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Archive,
-  CalendarPlus,
-  CopyPlus,
-  ChevronRight,
-  Download,
-  ExternalLink,
-  Pencil,
-  Play,
-  Plus,
-  Presentation,
-} from "lucide-react";
+import { Pencil, Presentation } from "lucide-react";
 
-import { EmptyState } from "@/components/empty-state";
-import { DownloadButton } from "@/components/download-button";
-import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
-import { CourseList } from "@/components/modules/course-list";
-import { ModuleDocuments } from "@/components/modules/module-documents";
+import { Pill } from "@/components/dashboard/pill";
 import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
-import { ModuleDangerZone } from "@/components/modules/module-danger-zone";
-import { OutlineActions } from "@/components/modules/outline-actions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ExpectationsSummary } from "@/components/modules/expectations-summary";
-import { RetainedResources } from "@/components/modules/retained-resources";
-import { ModuleTabs } from "@/components/modules/module-tabs";
-import { defaultModuleTab } from "@/lib/modules/tabs";
-import { TabsContent } from "@/components/ui/tabs";
-import {
-  checkPlannedHours,
-  formatDuration,
-  totalPlannedHours,
-} from "@/lib/modules/course-duration";
-import { experienceNotes } from "@/lib/modules/duplicate-evaluations";
-import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
+import { FinishModuleButton } from "@/components/modules/finish-module-button";
+import { JourneyHero } from "@/components/modules/journey-hero";
+import { JourneySteps } from "@/components/modules/journey-steps";
+import { loadModuleMean } from "@/lib/dashboard/overview-queries";
+import { daysBetween } from "@/lib/dashboard/todo";
+import { formatSessionDay } from "@/lib/dashboard/today";
+import { meanLabel } from "@/lib/dashboard/overview";
+import { formatTimeRange } from "@/lib/modules/course-duration";
+import { getModuleCoverage } from "@/lib/modules/coverage-queries";
+import { ficheNotice } from "@/lib/modules/fiche-import";
+import { buildHero } from "@/lib/modules/hero";
+import { buildJourney } from "@/lib/modules/journey";
+import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import {
   getModule,
   getModuleCourses,
@@ -43,19 +25,13 @@ import {
   getModuleExpectations,
   getRetainedResources,
 } from "@/lib/modules/queries";
-import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
+import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
+import { schoolYearOf } from "@/lib/modules/list-state";
+import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
+import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getOutline } from "@/lib/outline/queries";
 import { listModuleGroups } from "@/lib/students/queries";
-import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
-import { ficheNotice } from "@/lib/modules/fiche-import";
-import { getModuleCoverage } from "@/lib/modules/coverage-queries";
-import { ModuleJourney } from "@/components/modules/module-journey";
-import { FinishModuleButton } from "@/components/modules/finish-module-button";
-import { ModuleCompletion } from "@/components/modules/module-completion";
-import { completionLines, moduleStage } from "@/lib/modules/completion";
-import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
-import { buildJourney } from "@/lib/modules/journey";
-import { trameMessage, trameStatus, type TrameAlertLevel } from "@/lib/ynov/trame";
+import { trameStatus } from "@/lib/ynov/trame";
 
 export async function generateMetadata({
   params,
@@ -67,15 +43,48 @@ export async function generateMetadata({
   return { title: mod?.name ?? "Module" };
 }
 
-const TRAME_VARIANT: Record<TrameAlertLevel, "default" | "destructive" | "outline" | "secondary"> =
-  {
-    sent: "secondary",
-    overdue: "destructive",
-    urgent: "destructive",
-    warning: "outline",
-    ok: "outline",
-    unknown: "outline",
-  };
+const BTN =
+  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+
+const INVOICE_LABEL = {
+  draft: "En préparation",
+  ready: "Prête",
+  sent: "Envoyée",
+  paid: "Payée",
+} as const;
+
+function Card({
+  id,
+  title,
+  children,
+  aside,
+}: {
+  id: string;
+  title: string;
+  children: React.ReactNode;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <section aria-labelledby={id} className="bg-card rounded-3xl border p-5 shadow-sm">
+      <div className="mb-3 flex items-center gap-2.5">
+        <h2 id={id} className="font-heading text-lg font-bold">
+          {title}
+        </h2>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-card rounded-2xl border p-3.5">
+      <span className="text-muted-foreground block text-[0.8rem]">{label}</span>
+      <b className="font-heading text-2xl">{value}</b>
+    </div>
+  );
+}
 
 export default async function ModulePage({
   params,
@@ -111,19 +120,9 @@ export default async function ModulePage({
   ]);
   if (!mod) notFound();
 
+  const today = todayInParis();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
-  const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
-  const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
-  const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
-  const toBuild = new Set(
-    courses.flatMap((c) => c.resources.filter((r) => r.status === "progress").map((r) => r.id)),
-  ).size;
-  const plannedHours = totalPlannedHours(courses);
-  const hoursCheck = checkPlannedHours(plannedHours, mod.total_hours);
-  const upcoming = mod.archived_at ? null : highlightedSession(courses, todayInParis());
-
-  // « Où j'en suis » : parcours du module, source unique du badge « Prochaine étape ».
   const coverage = await getModuleCoverage(id, expectations, retained);
   const journey = buildJourney({
     mod,
@@ -139,390 +138,71 @@ export default async function ModulePage({
     invoiceCtx,
   });
 
-  // États de fin (US-131) : « tout est prêt » et « terminé ».
-  const stage = moduleStage(journey, !!(mod.archived_at || mod.finished_at));
-  const completion =
-    stage === "in_progress"
-      ? null
-      : {
-          lines: completionLines({
-            courses: {
-              total: courses.length,
-              done: courses.filter((c) => c.completion === "done" || c.completion === "partial")
-                .length,
-            },
-            notes: { entered: notes.enteredTotal, required: notes.requirement.total },
-            invoice: invoice?.status ?? null,
-            totalHours: mod.total_hours,
-          }),
-          note: stage === "finished" ? await getRetrospectiveNote(id) : null,
-          askNote: stage === "all_ready" ? await retrospectiveAvailable() : false,
-        };
-
-  // Onglet Progression
-  const progressionTab = (
-    <TabsContent value="progression" className="space-y-6">
-      <ExpectationsSummary moduleId={mod.id} expectations={expectations} />
-      <section aria-labelledby="trame">
-        <h2 id="trame" className="mb-1 scroll-mt-16 text-lg font-medium">
-          Progression pédagogique
-        </h2>
-        {depositedOutline ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">
-              Progression envoyée (PDF déposé le{" "}
-              {new Date(depositedOutline.created_at).toLocaleDateString("fr-FR")})
-            </Badge>
-            <Button asChild size="sm" variant="secondary">
-              <a href={`/api/modules/${mod.id}/documents/${depositedOutline.id}`}>
-                <Download aria-hidden />
-                Télécharger
-              </a>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <a
-                href={`/api/modules/${mod.id}/documents/${depositedOutline.id}?inline=1`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink aria-hidden />
-                Voir
-                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
-              </a>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={TRAME_VARIANT[trame.level]}>
-              {trameMessage(trame.level, trame.daysUntilDue)}
-            </Badge>
-            {trame.dueDate ? (
-              <span className="text-muted-foreground text-sm">
-                Échéance : {trame.dueDate.toLocaleDateString("fr-FR")}
-              </span>
-            ) : null}
-          </div>
-        )}
-        {outline && depositedOutline ? (
-          <p className="text-muted-foreground mt-2 text-sm">
-            Progression générée depuis les séances le{" "}
-            {new Date(outline.generated_at).toLocaleDateString("fr-FR")} (brouillon, non envoyée).
-          </p>
-        ) : outline ? (
-          <p className="text-muted-foreground mt-2 text-sm">
-            Générée le {new Date(outline.generated_at).toLocaleDateString("fr-FR")}
-            {outline.sent_at
-              ? ` · envoyée le ${new Date(outline.sent_at).toLocaleDateString("fr-FR")}`
-              : ""}
-            {outline.validated_at
-              ? ` · validée le ${new Date(outline.validated_at).toLocaleDateString("fr-FR")}`
-              : ""}
-            .
-          </p>
-        ) : null}
-        <div className="mt-3">
-          <OutlineActions
-            moduleId={mod.id}
-            status={outline?.status ?? null}
-            hasDepositedOutline={!!depositedOutline}
-            archived={!!mod.archived_at}
-          />
-        </div>
-      </section>
-    </TabsContent>
-  );
-
-  // Onglet Séances
-  const coursesTab = (
-    <TabsContent value="courses" className="space-y-6">
-      <RetainedResources moduleId={mod.id} resources={retained} />
-      <section aria-labelledby="courses">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 id="courses" className="scroll-mt-16 text-lg font-medium">
-              Séances ({courses.length})
-            </h2>
-            {courses.length ? (
-              <p className="text-muted-foreground text-sm">
-                {readyCourses}/{courses.length} prête{readyCourses > 1 ? "s" : ""}
-                {plannedHours > 0
-                  ? ` · ${formatDuration(plannedHours)} planifiées / ${mod.total_hours} h`
-                  : ""}
-              </p>
-            ) : null}
-            {plannedHours > 0 && !hoursCheck.consistent ? (
-              <p role="status" className="text-destructive text-sm">
-                <span className="font-medium">À vérifier :</span> {hoursCheck.message}
-              </p>
-            ) : null}
-            {toBuild > 0 ? (
-              <p className="text-sm">
-                {toBuild} ressource{toBuild > 1 ? "s" : ""} à construire dans ce module (jamais
-                projetée{toBuild > 1 ? "s" : ""}).
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {courses.length ? (
-              <Button asChild size="sm" variant="secondary">
-                <Link href={`/modules/${mod.id}/build`}>Construire les séances</Link>
-              </Button>
-            ) : null}
-            {courses.length ? (
-              <Button asChild size="sm" variant="secondary">
-                <Link href={`/modules/${mod.id}/frise`}>Frise du module</Link>
-              </Button>
-            ) : null}
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/schedule`}>
-                <CalendarPlus aria-hidden />
-                Depuis un planning
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/import-courses`}>
-                <CopyPlus aria-hidden />
-                Depuis un autre module
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href={`/modules/${mod.id}/courses/new`}>
-                <Plus aria-hidden />
-                Ajouter une séance
-              </Link>
-            </Button>
-          </div>
-        </div>
-        <CourseList
-          moduleId={mod.id}
-          courses={courses}
-          highlightedId={upcoming?.course.id ?? null}
-        />
-        {courses.length ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
-            <DownloadButton
-              href={`/api/modules/${mod.id}/courses`}
-              doneLabel="Cours téléchargés (un seul PDF)."
-            >
-              Un seul PDF
-            </DownloadButton>
-            <DownloadButton
-              href={`/api/modules/${mod.id}/courses?format=zip`}
-              kind="zip"
-              doneLabel="Cours téléchargés (un PDF par séance)."
-            >
-              Un PDF par séance (zip)
-            </DownloadButton>
-          </div>
-        ) : null}
-      </section>
-    </TabsContent>
-  );
-
-  // Onglet Groupes et évaluations
-  const groupsEvaluationsTab = (
-    <TabsContent value="groups-evaluations" className="space-y-4">
-      <section aria-labelledby="groups">
-        <div className="flex items-center justify-between">
-          <h2 id="groups" className="scroll-mt-16 text-lg font-medium">
-            Groupes ({groups.length})
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/groups/new`}>
-                <Plus aria-hidden />
-                Ajouter un groupe
-              </Link>
-            </Button>
-          </div>
-        </div>
-        {groups.length === 0 ? (
-          <EmptyState
-            compact
-            title="Pas encore de groupes"
-            description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes."
-            actions={[{ label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` }]}
-          />
-        ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {groups.map((g) => (
-              <li key={g.id}>
-                <Link
-                  href={`/modules/${mod.id}/groups/${g.id}`}
-                  className="hover:bg-accent focus-visible:ring-ring block rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
-                >
-                  <p className="font-medium">{g.name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {g.members.length} étudiant·e{g.members.length > 1 ? "s" : ""}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section aria-labelledby="assessments" className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 id="assessments" className="scroll-mt-16 text-lg font-medium">
-              Évaluations
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              {assessments.length} évaluation{assessments.length > 1 ? "s" : ""}
-              {assessments.length ? ` (${gradedAssessments} avec des notes saisies)` : ""} ·{" "}
-              {notes.enteredTotal}/{notes.requirement.total} note
-              {notes.requirement.total > 1 ? "s" : ""} requise
-              {notes.requirement.total > 1 ? "s" : ""} obtenue
-              {notes.enteredTotal > 1 ? "s" : ""}.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/project`}>Projet fil rouge</Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-    </TabsContent>
-  );
-
-  // Onglet Administratif (Documents + Facturation + Actions)
-  const adminTab = (
-    <TabsContent value="admin" className="space-y-4">
-      <section aria-labelledby="documents">
-        <h2 id="documents" className="mb-3 scroll-mt-16 text-lg font-medium">
-          Documents{documents.length ? ` (${documents.length})` : ""}
-        </h2>
-        {mod.slides_url ? (
-          <p className="mb-3">
-            <Button asChild size="sm" variant="secondary">
-              <a href={mod.slides_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink aria-hidden />
-                Ouvrir les slides (Figma)
-                <span className="sr-only"> — s’ouvre dans un nouvel onglet</span>
-              </a>
-            </Button>
-          </p>
-        ) : null}
-        <ModuleDocuments moduleId={mod.id} documents={documents} />
-      </section>
-
-      <section aria-labelledby="billing" className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 id="billing" className="scroll-mt-16 text-lg font-medium">
-              Facturation
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Conditions YNOV, mentions obligatoires et facture Factur-X.
-            </p>
-          </div>
-          <Button asChild size="sm" variant="secondary">
-            <Link href={`/modules/${mod.id}/billing`}>Voir la facturation</Link>
-          </Button>
-        </div>
-      </section>
-
-      <section aria-labelledby="admin-docs" className="space-y-4">
-        <h2 id="admin-docs" className="mb-3 scroll-mt-16 text-lg font-medium">
-          Documents administratifs
-        </h2>
-        <AdminDocsChecklist
-          moduleId={mod.id}
-          adminDocs={(mod.admin_docs as Record<string, boolean>) ?? {}}
-        />
-      </section>
-
-      <section aria-labelledby="danger" className="space-y-4">
-        <h2 id="danger" className="mb-3 scroll-mt-16 text-lg font-medium">
-          Actions
-        </h2>
-        <div className="space-y-6">
-          {mod.archived_at ? null : (
-            <ArchiveModuleButton id={mod.id} archived={false} name={mod.name} />
-          )}
-          <ModuleDangerZone
-            id={mod.id}
-            year={mod.year}
-            assessmentExperience={experienceNotes(assessments)}
-            experience={courses.flatMap((c, i) =>
-              c.retro_note?.trim()
-                ? [{ number: i + 1, title: c.title, text: c.retro_note.trim() }]
-                : [],
-            )}
-          />
-        </div>
-      </section>
-    </TabsContent>
-  );
+  const closed = !!(mod.archived_at || mod.finished_at);
+  const doneCourses = courses.filter(
+    (c) => c.completion === "done" || c.completion === "partial",
+  ).length;
+  const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
+  const firstDated = courses.find((c) => c.session_date) ?? courses[0] ?? null;
+  const hero = buildHero({
+    moduleId: mod.id,
+    journey,
+    firstSessionDate: firstDated?.session_date ?? mod.first_session_date,
+    firstCourse: courses[0] ? { id: courses[0].id, position: 1 } : null,
+    courses: { total: courses.length, done: doneCourses },
+    closed,
+  });
+  const askNote = hero?.offerFinish ? await retrospectiveAvailable() : false;
+  const finishedView = hero?.kind === "finished";
+  const upcoming = closed ? null : highlightedSession(courses, today);
+  const planned = assessments.filter((a) => !a.makeup_of_id && a.course_id);
+  const gridsReady = planned.filter((a) => a.grading_grid_id).length;
+  const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
+  const [mean, retro] = finishedView
+    ? await Promise.all([loadModuleMean(id), getRetrospectiveNote(id)])
+    : [[], null];
+  const dueIn = trame.dueDate ? daysBetween(today, trame.dueDate.toISOString().slice(0, 10)) : null;
+  const meta = [
+    mod.school?.name ?? "École non renseignée",
+    mod.level,
+    mod.ycode ? `YCODE ${mod.ycode}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="max-w-3xl space-y-8">
-      <div className="space-y-2">
-        <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
-          <ol className="flex flex-wrap items-center gap-1">
-            <li>
-              <Link
-                href={mod.archived_at ? "/modules?filter=archived" : "/modules"}
-                className="hover:text-foreground underline-offset-2 hover:underline"
-              >
-                {mod.archived_at ? "Modules archivés" : "Modules"}
-              </Link>
-            </li>
-            <li aria-hidden>
-              <ChevronRight className="size-3.5" />
-            </li>
-            <li>
-              <span aria-current="page" className="text-foreground">
-                {mod.name}
-              </span>
-            </li>
-          </ol>
-        </nav>
-
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold">{mod.name}</h1>
-            <p className="text-muted-foreground">
-              {mod.school?.name ?? "École non renseignée"} · {mod.level ?? "—"} · {mod.year}
-              {mod.ycode ? ` · YCODE ${mod.ycode}` : ""}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline">
-              <Link href={`/present/modules/${mod.id}`}>
-                <Presentation aria-hidden />
-                Présenter le module
-              </Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href={`/modules/${mod.id}/edit`}>
-                <Pencil aria-hidden />
-                Modifier
-              </Link>
-            </Button>
-          </div>
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-primary mb-1.5 text-[0.75rem] font-bold tracking-widest uppercase">
+            Module · {schoolYearOf(mod.year)}
+          </p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">{mod.name}</h1>
+          <p className="text-muted-foreground mt-1.5">{meta}</p>
         </div>
-      </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Pill>{mod.total_hours} h</Pill>
+          <Pill tone={notes.satisfied ? "ok" : "plain"}>
+            {notes.enteredTotal} / {notes.requirement.total} notes
+          </Pill>
+          <Link href={`/present/modules/${mod.id}`} className={BTN}>
+            <Presentation aria-hidden className="mr-2 size-4" />
+            Présenter le module
+          </Link>
+          <Link href={`/modules/${mod.id}/edit`} className={BTN}>
+            <Pencil aria-hidden className="mr-2 size-4" />
+            Modifier
+          </Link>
+        </div>
+      </header>
 
       {ficheMessage ? (
         <p
           role="status"
           className={
             ficheMessage.tone === "ok"
-              ? "rounded-lg border p-3 text-sm"
-              : "border-destructive/50 rounded-lg border p-3 text-sm"
+              ? "rounded-2xl border p-3 text-sm"
+              : "border-destructive/50 rounded-2xl border p-3 text-sm"
           }
         >
           {ficheMessage.text}{" "}
@@ -534,94 +214,142 @@ export default async function ModulePage({
         </p>
       ) : null}
 
-      {upcoming ? (
-        <section
-          aria-labelledby="upcoming"
-          className="halo bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
-        >
-          <div>
-            <h2 id="upcoming" className="text-primary text-sm font-medium">
-              {upcoming.isToday ? "Séance du jour" : "Prochaine séance"}
-            </h2>
-            <p className="font-heading text-lg font-semibold">
-              Séance {upcoming.number} — {upcoming.course.title}
-            </p>
-            {!upcoming.isToday && upcoming.course.session_date ? (
-              <p className="text-muted-foreground text-sm">
-                {new Date(`${upcoming.course.session_date}T00:00:00`).toLocaleDateString("fr-FR", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-              </p>
-            ) : null}
-          </div>
-          <Button asChild size="lg">
-            <Link href={`/present/modules/${mod.id}/courses/${upcoming.course.id}`}>
-              <Play aria-hidden />
-              Faire cours
-            </Link>
-          </Button>
-        </section>
-      ) : null}
-
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary">{mod.total_hours} h</Badge>
-        <Badge variant={notes.satisfied ? "secondary" : "outline"}>
-          {notes.enteredTotal}/{notes.requirement.total} note
-          {notes.requirement.total > 1 ? "s" : ""} ({notes.requirement.group} groupe
-          {notes.requirement.group > 1 ? "s" : ""} + {notes.requirement.individual} individuelle
-          {notes.requirement.individual > 1 ? "s" : ""})
-          {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
-        </Badge>
-        {journey.badge ? (
-          <Badge
-            variant={journey.current ? "outline" : "secondary"}
-            className="h-auto max-w-full py-0.5 text-left whitespace-normal"
-          >
-            {journey.badge}
-          </Badge>
-        ) : null}
-      </div>
-
-      {completion && stage !== "in_progress" ? (
-        <ModuleCompletion stage={stage} lines={completion.lines} note={completion.note}>
-          {stage === "all_ready" ? (
-            <FinishModuleButton id={mod.id} name={mod.name} askNote={completion.askNote} />
-          ) : null}
-        </ModuleCompletion>
-      ) : null}
-
-      <ModuleJourney journey={journey} />
-
       {mod.archived_at ? (
-        <div className="bg-muted flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed p-4">
-          <p className="flex items-start gap-2 text-sm">
-            <Archive aria-hidden className="mt-0.5 size-4 shrink-0" />
-            <span>
-              <strong>Module archivé</strong> le{" "}
-              {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il n’apparaît plus dans le
-              tableau de bord ni dans la facturation.
-            </span>
-          </p>
+        <p className="bg-muted rounded-2xl border border-dashed p-3 text-sm">
+          <strong>Module rangé</strong> le {new Date(mod.archived_at).toLocaleDateString("fr-FR")} :
+          il n’apparaît plus dans le tableau de bord ni dans la facturation. Tu peux le restaurer
+          depuis la liste des modules.{" "}
           <ArchiveModuleButton id={mod.id} archived compact name={mod.name} />
-        </div>
+        </p>
       ) : null}
 
-      <ModuleTabs
-        defaultTab={defaultModuleTab(trame.level)}
-        labels={{
-          progression: "Progression",
-          courses: `Séances (${courses.length})`,
-          "groups-evaluations": `Groupes (${groups.length}) et évaluations`,
-          admin: "Administratif",
-        }}
-      >
-        {progressionTab}
-        {coursesTab}
-        {groupsEvaluationsTab}
-        {adminTab}
-      </ModuleTabs>
+      <div className="flex flex-wrap items-start gap-6 lg:flex-nowrap">
+        <div className="min-w-0 flex-1 basis-full space-y-4 lg:basis-0">
+          {hero ? (
+            <JourneyHero hero={hero} moduleId={mod.id} moduleName={mod.name} askNote={askNote} />
+          ) : null}
+          <JourneySteps journey={journey} />
+        </div>
+
+        <div className="w-full min-w-0 space-y-4 lg:w-96 lg:flex-none">
+          {finishedView ? (
+            <>
+              <Card id="bilan" title="Le bilan">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Stat label="Moyenne de la classe" value={meanLabel(mean) ?? "—"} />
+                  <Stat label="Étudiant·es" value={String(members.size)} />
+                  <Stat label="Heures faites" value={`${mod.total_hours} h`} />
+                  <Stat label="Facture" value={invoice ? INVOICE_LABEL[invoice.status] : "—"} />
+                </div>
+              </Card>
+              <Card id="retour" title="Ton retour" aside={<Pill tone="warn">Privé</Pill>}>
+                {retro ? (
+                  <p className="text-sm whitespace-pre-wrap">{retro}</p>
+                ) : (
+                  <p className="text-muted-foreground mb-3 text-sm">
+                    Ce que tu retiens de ce module, à écrire avant de le terminer.
+                  </p>
+                )}
+                {hero?.offerFinish ? (
+                  <FinishModuleButton
+                    id={mod.id}
+                    name={mod.name}
+                    askNote={askNote}
+                    label="Écrire mon retour"
+                  />
+                ) : null}
+              </Card>
+              <Card id="consultable" title="Ce qui reste consultable">
+                <p className="text-muted-foreground text-sm">
+                  Notes, résultats publiés, observations, facture, fil rouge.
+                </p>
+              </Card>
+            </>
+          ) : (
+            <>
+              <Card id="avenir" title="À venir">
+                {upcoming ? (
+                  <>
+                    <p>
+                      <strong>{formatSessionDay(upcoming.course.session_date!)}</strong>
+                      {formatTimeRange(upcoming.course.start_time, upcoming.course.end_time)
+                        ? `, ${formatTimeRange(upcoming.course.start_time, upcoming.course.end_time)}`
+                        : ""}
+                    </p>
+                    <p className="text-muted-foreground mb-3">
+                      Séance {upcoming.number} sur {courses.length}
+                      {upcoming.isToday
+                        ? " · aujourd’hui"
+                        : ` · dans ${daysBetween(today, upcoming.course.session_date!)} jours`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground mb-3">Aucune séance datée à venir.</p>
+                )}
+                {trame.dueDate ? (
+                  <>
+                    <p>
+                      <strong>Échéance de la progression</strong>
+                    </p>
+                    <p className="text-muted-foreground">
+                      {trame.dueDate.toLocaleDateString("fr-FR")}
+                      {trame.level === "sent" || dueIn === null
+                        ? ""
+                        : dueIn < 0
+                          ? ` · dépassée de ${-dueIn} jour${-dueIn > 1 ? "s" : ""}`
+                          : ` · dans ${dueIn} jour${dueIn > 1 ? "s" : ""}`}
+                    </p>
+                  </>
+                ) : null}
+              </Card>
+              <Card id="chiffres" title="Le module en chiffres">
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-2">
+                  <dt className="text-muted-foreground">Séances prêtes</dt>
+                  <dd>
+                    <strong>
+                      {readyCourses} / {courses.length}
+                    </strong>
+                  </dd>
+                  <dt className="text-muted-foreground">Attendus couverts</dt>
+                  <dd>
+                    <strong>
+                      {coverage.covered} / {coverage.total}
+                    </strong>
+                  </dd>
+                  <dt className="text-muted-foreground">Ressources retenues</dt>
+                  <dd>
+                    <strong>{retained.length}</strong>
+                  </dd>
+                  <dt className="text-muted-foreground">Évaluations prévues</dt>
+                  <dd>
+                    <strong>
+                      {planned.length} / {notes.requirement.total}
+                    </strong>
+                  </dd>
+                  <dt className="text-muted-foreground">Grilles prêtes</dt>
+                  <dd>
+                    <strong>
+                      {gridsReady} / {planned.length}
+                    </strong>
+                  </dd>
+                  <dt className="text-muted-foreground">Groupes</dt>
+                  <dd>
+                    <strong>{groups.length}</strong>
+                  </dd>
+                </dl>
+              </Card>
+              <Card id="evals" title="Les évaluations">
+                <p className="text-muted-foreground mb-3 text-sm">
+                  Vois quand chaque évaluation croise tes séances.
+                </p>
+                <Link href={`/modules/${mod.id}/assessments`} className={BTN}>
+                  Ouvrir les évaluations
+                </Link>
+              </Card>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

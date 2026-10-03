@@ -53,7 +53,7 @@ test("US-77 : import vers les groupes d'un module et ajout de membres en masse",
   ).toBeVisible();
 
   // Le groupe TP1 contient ses deux membres ; la « Classe » les trois.
-  await page.goto(`${moduleUrl}#groups-evaluations`);
+  await page.goto(`${moduleUrl}/groups`);
   await page.getByRole("link", { name: /^TP1/ }).click();
   await expect(page.getByRole("heading", { name: "Membres (2)" })).toBeVisible();
 

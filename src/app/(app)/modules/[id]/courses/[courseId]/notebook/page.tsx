@@ -84,7 +84,7 @@ export default async function CourseNotebookPage({
     <div className="max-w-2xl space-y-8">
       <div className="space-y-2">
         <p className="text-muted-foreground text-sm">
-          <Link href={`/modules/${id}#courses`} className="underline underline-offset-2">
+          <Link href={`/modules/${id}/courses`} className="underline underline-offset-2">
             {mod.name}
           </Link>{" "}
           · Séance {position + 1}
