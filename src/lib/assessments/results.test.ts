@@ -66,7 +66,7 @@ describe("buildResultSheets", () => {
     });
     expect(sheets).toHaveLength(1);
     expect(sheets[0].recipients).toEqual([
-      { name: "Lea Test", firstName: "Lea", email: "lea@x.fr" },
+      { id: "s1", name: "Lea Test", firstName: "Lea", email: "lea@x.fr" },
     ]);
     expect(sheets[0].maxScore).toBe(10);
     expect(sheets[0].valueOn20).toBe(16);
