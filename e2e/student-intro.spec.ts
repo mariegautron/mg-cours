@@ -82,7 +82,7 @@ test("propose la présentation aux étudiant·es depuis la fiche, et confirme av
 
   // Le brouillon s'enregistre avec le module, uniquement quand Marie valide le formulaire.
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
-  await page.goto(`${page.url()}/edit`);
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}(\?.*)?$/);
+  await page.goto(`${page.url().split("?")[0]}/edit`);
   await expect(page.getByLabel("Présentation aux étudiant·es")).toHaveValue(/## Bienvenue !/);
 });

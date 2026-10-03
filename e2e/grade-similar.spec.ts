@@ -82,5 +82,5 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
   // Clavier : Alt + flèche droite passe à la copie suivante (focus sur son titre).
   await ana.getByLabel("Commentaire — Priorisation", { exact: true }).focus();
   await page.keyboard.press("Alt+ArrowRight");
-  await expect(page.getByRole("heading", { name: `Élève ${names[1]}`, level: 3 })).toBeFocused();
+  await expect(page.locator('h3[tabindex="-1"]', { hasText: `Élève ${names[1]}` })).toBeFocused();
 });

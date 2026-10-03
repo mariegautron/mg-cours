@@ -24,7 +24,7 @@ test("conserve l’historique d’une ressource et restaure une ancienne version
   await page.getByRole("link", { name: "Modifier" }).click();
   await page.getByLabel("Contenu (Markdown)").fill("Version deux");
   await page.getByRole("button", { name: "Enregistrer" }).click();
-  await expect(page.getByText("Version deux")).toBeVisible();
+  await expect(page.getByText("Version deux").first()).toBeVisible();
 
   await page.getByRole("link", { name: "Historique" }).click();
   await page.getByText("Voir le contenu").click();
@@ -42,5 +42,5 @@ test("conserve l’historique d’une ressource et restaure une ancienne version
   // L'état « Version deux » a été sauvegardé avant la restauration.
   await page.getByRole("link", { name: "Historique" }).click();
   await page.getByText("Voir le contenu").first().click();
-  await expect(page.getByText("Version deux")).toBeVisible();
+  await expect(page.getByText("Version deux").first()).toBeVisible();
 });

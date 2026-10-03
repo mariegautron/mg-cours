@@ -575,7 +575,12 @@ export default async function ModulePage({
           {!notes.requirement.exact ? " — hors palier, à confirmer" : ""}
         </Badge>
         {journey.badge ? (
-          <Badge variant={journey.current ? "outline" : "secondary"}>{journey.badge}</Badge>
+          <Badge
+            variant={journey.current ? "outline" : "secondary"}
+            className="h-auto max-w-full py-0.5 text-left whitespace-normal"
+          >
+            {journey.badge}
+          </Badge>
         ) : null}
       </div>
 

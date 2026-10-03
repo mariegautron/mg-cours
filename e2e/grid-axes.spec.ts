@@ -94,7 +94,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   // Saisie : Header et footer validé d'office (8/8), sous-totaux et total en direct.
-  await expect(page.getByText(`Ines Axes${suffix}`)).toBeVisible();
+  await expect(page.getByText(`Ines Axes${suffix}`).first()).toBeVisible();
   await expect(page.getByText("Validé d’office : 8 / 8")).toBeVisible();
   await expect(page.getByLabel("Header et footer", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Référence : RGAA 1.3.1")).toBeVisible();

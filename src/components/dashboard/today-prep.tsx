@@ -27,7 +27,7 @@ export function TodayPrep({
     <div className="grid gap-4 lg:grid-cols-2">
       <section aria-labelledby={`${id}-ready`} className="bg-card rounded-2xl border p-5">
         <h3 id={`${id}-ready`} className="font-heading text-lg font-semibold">
-          Prêt pour aujourd’hui ?
+          Prêt pour aujourd’hui ?<span className="sr-only"> — {title}</span>
         </h3>
         <p className="text-muted-foreground mb-2 text-sm" role="status">
           {readiness.allReady
@@ -70,7 +70,7 @@ export function TodayPrep({
 
       <section aria-labelledby={`${id}-students`} className="bg-card rounded-2xl border p-5">
         <h3 id={`${id}-students`} className="font-heading text-lg font-semibold">
-          Tes étudiant·es
+          Tes étudiant·es<span className="sr-only"> — {title}</span>
         </h3>
         <p className="mt-1">
           <strong>

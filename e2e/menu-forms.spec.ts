@@ -27,8 +27,12 @@ test("tablette : rail d’icônes, libellés accessibles, cibles de 44 px, reche
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
-  const rail = await page.locator("[data-slot=sidebar-container]").boundingBox();
-  expect(rail?.width ?? 999).toBeLessThanOrEqual(80);
+  // Le menu se replie en rail après le montage (transition) : on attend sa largeur finale.
+  await expect
+    .poll(
+      async () => (await page.locator("[data-slot=sidebar-container]").boundingBox())?.width ?? 999,
+    )
+    .toBeLessThanOrEqual(80);
   await expect(page.getByRole("button", { name: /Rechercher/ })).toHaveCount(1);
   await page.keyboard.press("Control+k");
   await expect(page.getByRole("dialog")).toBeVisible();

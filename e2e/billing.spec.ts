@@ -36,7 +36,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.getByLabel("E-mail de facturation").fill("fournisseurs@example.fr");
   await page.getByLabel("Adresse", { exact: true }).fill("Nantes");
   await page.getByRole("button", { name: "Créer l’école" }).click();
-  await expect(page.getByText(schoolName, { exact: true })).toBeVisible();
+  await expect(page.getByText(schoolName, { exact: true }).first()).toBeVisible();
 
   // Module de 4 h (→ 2 notes : 1 de groupe + 1 individuelle) avec toutes les mentions.
   await page.goto("/modules/new");
@@ -188,5 +188,5 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
 
   // Vue d'ensemble.
   await page.goto("/billing");
-  await expect(page.getByText(new RegExp(`Module Facture ${suffix}`))).toBeVisible();
+  await expect(page.getByText(new RegExp(`Module Facture ${suffix}`)).first()).toBeVisible();
 });

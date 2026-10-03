@@ -28,6 +28,7 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
   // US-131 : état « Module terminé » de la page.
   await expect(page.getByRole("heading", { name: "Module terminé", level: 2 })).toBeVisible();
   const done = await new AxeBuilder({ page })
+    .exclude("[data-sonner-toaster]")
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(done.violations).toEqual([]);

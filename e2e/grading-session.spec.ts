@@ -74,9 +74,9 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
 
   // Navigation clavier d'une copie à l'autre.
   await anaForm.getByRole("button", { name: "Copie suivante" }).click();
-  await expect(page.getByRole("heading", { name: zoe })).toBeFocused();
+  await expect(page.locator('h3[tabindex="-1"]', { hasText: zoe })).toBeFocused();
   await zoeForm.getByRole("button", { name: "Copie précédente" }).click();
-  await expect(page.getByRole("heading", { name: ana })).toBeFocused();
+  await expect(page.locator('h3[tabindex="-1"]', { hasText: ana })).toBeFocused();
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
