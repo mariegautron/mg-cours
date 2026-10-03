@@ -34,7 +34,7 @@ test("US-74 : « À faire » liste au plus trois choses, jamais « Tout est en o
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
   await page.goto("/dashboard");
-  const todo = page.getByRole("region", { name: "À faire" });
+  const todo = page.locator("section[aria-labelledby='todo']");
   await expect(todo).toBeVisible();
   // Trois choses au plus ; le tri et les niveaux d'urgence sont couverts par Vitest.
   expect(await todo.getByRole("listitem").count()).toBeLessThanOrEqual(3);

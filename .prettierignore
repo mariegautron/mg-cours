@@ -1,4 +1,7 @@
 .next
+**/.next
+.claude
+.vercel
 node_modules
 pnpm-lock.yaml
 src/types/database.ts
