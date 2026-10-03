@@ -40,7 +40,7 @@ export interface ResultAxisSubtotal extends Omit<AxisSubtotal, "axisId"> {
 
 export interface ResultSheet {
   /** Destinataires (1 pour une note individuelle, tous les membres pour une note de groupe). */
-  recipients: { name: string; firstName?: string; email: string | null }[];
+  recipients: { id?: string; name: string; firstName?: string; email: string | null }[];
   title: string;
   isGroupGrade: boolean;
   /** Sujet complet (Markdown). */
@@ -190,6 +190,7 @@ export function buildResultSheets(input: Input): ResultSheet[] {
   };
 
   const recipient = (m: Tables<"student">) => ({
+    id: m.id,
     name: `${m.first_name} ${m.last_name}`,
     firstName: m.first_name,
     email: m.email,

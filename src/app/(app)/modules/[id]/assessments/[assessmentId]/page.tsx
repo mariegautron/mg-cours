@@ -17,6 +17,8 @@ import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
 import { HyperplanningTable } from "@/components/assessments/hyperplanning-table";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
+import { PublishResults } from "@/components/assessments/publish-results";
+import { listResultLinks } from "@/lib/result-links/queries";
 import { ResultsActions } from "@/components/assessments/results-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,19 +130,21 @@ export default async function AssessmentPage({
   );
   const hasGrades = grades.some((g) => g.value !== null);
   // Les six lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
-  const [overrideRows, themes, submissionRows, makeup, loadedSheets] = await Promise.all([
-    listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
-    themeTitleByGroup(assessment.project_id),
-    // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
-    assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
-    // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
-    // un rattrapage, rappel de l'originale.
-    loadMakeupInfo(assessment, assessmentId),
-    // Fiches de résultats : notes saisies ou absences excusées (elles sont mentionnées).
-    hasGrades || grades.some((g) => g.attendance === "absent_excused")
-      ? loadResultSheets(id, assessmentId)
-      : null,
-  ]);
+  const [overrideRows, themes, submissionRows, makeup, loadedSheets, resultLinks] =
+    await Promise.all([
+      listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
+      themeTitleByGroup(assessment.project_id),
+      // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
+      assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
+      // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
+      // un rattrapage, rappel de l'originale.
+      loadMakeupInfo(assessment, assessmentId),
+      // Fiches de résultats : notes saisies ou absences excusées (elles sont mentionnées).
+      hasGrades || grades.some((g) => g.attendance === "absent_excused")
+        ? loadResultSheets(id, assessmentId)
+        : null,
+      listResultLinks(assessmentId),
+    ]);
   let makeupPanel: React.ReactNode = null;
   const makeupOf = makeup.original;
   if (makeup.panel) {
@@ -356,6 +360,26 @@ export default async function AssessmentPage({
           moduleId={id}
           assessmentId={assessmentId}
           rows={hyperplanningRows(sheets)}
+        />
+      ) : null}
+
+      {hasGrades ? (
+        <PublishResults
+          moduleId={id}
+          assessmentId={assessmentId}
+          available={resultLinks.available}
+          students={Array.from(
+            new Map(
+              sheets
+                .flatMap((sheet) => sheet.recipients)
+                .filter((r) => r.id)
+                .map((r) => [r.id as string, r.name]),
+            ),
+          ).map(([studentId, name]) => ({
+            id: studentId,
+            name,
+            link: resultLinks.byStudent.get(studentId) ?? null,
+          }))}
         />
       ) : null}
 

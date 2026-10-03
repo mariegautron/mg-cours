@@ -20,7 +20,7 @@ export async function clientIp(): Promise<string> {
  * Compte un essai avec un jeton invalide. Renvoie `true` si l'IP a dépassé la limite. Ne s'applique
  * QU'AUX jetons invalides : un jeton valide n'est jamais compté ni bloqué.
  */
-async function recordFailure(ip: string): Promise<boolean> {
+export async function recordFailure(ip: string): Promise<boolean> {
   try {
     const salt = serverEnv().SUPABASE_SERVICE_ROLE_KEY ?? "mg-cours";
     const { data } = await createAdminClient().rpc("mg_quiz_ip_failure", {

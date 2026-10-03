@@ -2062,6 +2062,66 @@ export type Database = {
           },
         ]
       }
+      result_link: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          first_viewed_at: string | null
+          id: string
+          owner_id: string
+          payload: Json
+          published_at: string
+          revoked_at: string | null
+          student_id: string
+          token_hash: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          owner_id?: string
+          payload: Json
+          published_at?: string
+          revoked_at?: string | null
+          student_id: string
+          token_hash: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          owner_id?: string
+          payload?: Json
+          published_at?: string
+          revoked_at?: string | null
+          student_id?: string
+          token_hash?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "result_link_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_link_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school: {
         Row: {
           address: string | null
@@ -2397,6 +2457,10 @@ export type Database = {
         Returns: Json
       }
       mg_quiz_view: { Args: { p_attempt_id: string }; Returns: Json }
+      mg_result_view: {
+        Args: { p_count?: boolean; p_token_hash: string }
+        Returns: Json
+      }
     }
     Enums: {
       assessment_prep_status: "to_build" | "ready" | "provided"
