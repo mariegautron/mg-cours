@@ -26,8 +26,9 @@ test("tirage en trois étapes, groupes créés, axe 0 violation", async ({ page 
   await page.getByLabel("Nom du module").fill(`Assistant ${suffix}`);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: /Continuer/ }).click();
   await page.getByLabel("Date de la 1re séance").fill("2026-10-12");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const id = page.url().split("/").pop()!;
 

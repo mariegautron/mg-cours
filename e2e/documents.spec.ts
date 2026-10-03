@@ -15,6 +15,7 @@ test("dépose, télécharge et supprime les attendus de l’école d’un module
   await page.getByLabel("Nom du module").fill(`Module Documents ${Date.now()}`);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByText("Autres informations (facultatif)").click();
   await page.getByLabel("Lien des slides (Figma)").fill("https://www.figma.com/deck/abc123");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);

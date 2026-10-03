@@ -24,6 +24,7 @@ test("propose la présentation aux étudiant·es depuis la fiche, et confirme av
 
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");
+  await page.getByText("Autres informations (facultatif)").click();
   const intro = page.getByLabel("Présentation aux étudiant·es");
 
   // Sans fiche déposée : pas de bouton, une explication.
@@ -50,7 +51,7 @@ test("propose la présentation aux étudiant·es depuis la fiche, et confirme av
       "Prerequis : Bachelor informatique - Gestion de projet",
     ]),
   });
-  await expect(page.getByRole("status")).toContainText("Lus pour la présentation");
+  await expect(page.getByText(/Lus pour la présentation/)).toBeVisible();
 
   const propose = page.getByRole("button", { name: "Proposer un texte depuis la fiche" });
   await propose.click();

@@ -22,8 +22,9 @@ test("génère la progression pédagogique PDF, la télécharge et la marque env
   await page.getByLabel("Nom du module").fill(`Module Progression ${suffix}`);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: /Continuer/ }).click();
   await page.getByLabel("Date de la 1re séance").fill("2026-12-01");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
   const moduleId = moduleUrl.split("/").pop()!;

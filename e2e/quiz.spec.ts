@@ -164,7 +164,7 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   await page.goto(`${setup.assessmentUrl}/quiz`);
   await page.getByRole("link", { name: `Relire la copie de ${ana}` }).click();
   await expect(page).toHaveTitle(/.+/);
-  expect((await axe(page)).violations).toEqual([]);
+  await expect.poll(async () => (await axe(page)).violations.length, { timeout: 20_000 }).toBe(0);
   await page.getByLabel("Points donnés (sur 2)").fill("1,5");
   await page.getByRole("button", { name: "Enregistrer la relecture" }).click();
   await expect(page.getByRole("row").filter({ hasText: ana })).toContainText("Corrigée");

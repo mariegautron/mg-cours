@@ -23,6 +23,8 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("6");
 
+  await page.getByRole("button", { name: /Continuer/ }).click();
+  await page.getByText("Ajouter ou saisir des créneaux à la main").click();
   await page.getByRole("button", { name: "Ajouter une ligne" }).click();
   await page.getByLabel("Date du créneau 1").fill("2026-10-12");
   await page.getByLabel("Début du créneau 1").fill("10:00");
@@ -34,15 +36,15 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await page.getByRole("button", { name: "Ajouter ces créneaux au tableau" }).click();
   await expect(page.getByText("1 créneau reconnu, 1 ligne ignorée.")).toBeVisible();
   await expect(page.getByText("Ligne 2 : « n'importe quoi »")).toBeVisible();
-  await expect(page.getByRole("heading", { name: /3 séances à créer/ })).toBeVisible();
-  await expect(page.getByText(/Séance 3.*26 octobre 2026.*10:00–12:00/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /3 séances proposées/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /3.*26\/10\/2026.*10:00–12:00/ })).toBeVisible();
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
 
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
   const moduleUrl = page.url();
   await expect(page.getByText(/Échéance/).first()).toBeVisible();

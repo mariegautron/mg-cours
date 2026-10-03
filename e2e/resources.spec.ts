@@ -110,6 +110,7 @@ test("US-57 : note une ressource à construire, la filtre et l'enregistre depuis
   await expect(page.locator("#draft-note")).toHaveCount(1);
   await page.locator("#draft-note").fill("Un TP sur les tests d’accessibilité.");
   await page.getByRole("button", { name: "Noter à construire" }).click();
+  await page.waitForLoadState("networkidle");
 
   await page.goto(`/resources?status=progress&q=${encodeURIComponent(title)}`);
   const card = page.getByRole("link", { name: new RegExp(title) });

@@ -50,7 +50,7 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
   // US-146 : la bande « Rendu » de la copie montre les éléments, avec « Ouvrir ».
   await page.reload();
   const copy = page.getByRole("form", { name: ana });
-  await expect(copy.getByText("Rendu : 2 éléments")).toBeVisible({ timeout: 20_000 });
+  await expect(copy.getByText("2 éléments")).toBeVisible({ timeout: 20_000 });
   const copyLink = copy.getByRole("link", { name: /Ouvrir Dépôt Git/ });
   await expect(copyLink).toHaveAttribute("target", "_blank");
   await expect(copyLink).toHaveAttribute("rel", /noopener/);

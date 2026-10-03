@@ -42,7 +42,7 @@ test("préremplit le formulaire module depuis une fiche pédagogique PDF", async
     ]),
   });
 
-  await expect(page.getByRole("status")).toContainText("Préremplis");
+  await expect(page.getByText("Lue", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Nom du module")).toHaveValue("Architecture Web");
   await expect(page.getByLabel("YCODE")).toHaveValue(ycode);
   await expect(page.getByLabel("Année")).toHaveValue("2026");
@@ -96,7 +96,7 @@ test("E18 : la fiche importée à la création est conservée, avec ses attendus
       "2 TDP 4h Etude de faisabilite",
     ]),
   });
-  await expect(page.getByRole("status")).toContainText("La fiche sera conservée");
+  await expect(page.getByText("Fiche conservée dans le module")).toBeVisible();
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}\?fiche=read$/);
   await expect(page.getByRole("status").filter({ hasText: "attendus sont lus" })).toBeVisible();
@@ -145,5 +145,5 @@ test("signale un PDF sans texte exploitable", async ({ page }) => {
     mimeType: "application/pdf",
     buffer: await fichePdf(["Bonjour, un texte sans aucun rapport avec un module."]),
   });
-  await expect(page.locator("p[role=alert]")).toContainText("Rien d’exploitable");
+  await expect(page.getByRole("alert").filter({ hasText: "Rien d’exploitable" })).toBeVisible();
 });

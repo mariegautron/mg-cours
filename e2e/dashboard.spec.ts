@@ -29,12 +29,13 @@ test("US-74 : « À faire » liste au plus trois choses, jamais « Tout est en o
   await page.getByLabel("Nom du module").fill(name);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: /Continuer/ }).click();
   await page.getByLabel("Date de la 1re séance").fill(isoIn(25));
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
   await page.goto("/dashboard");
-  const todo = page.locator("section[aria-labelledby='todo']");
+  const todo = page.locator("section[aria-labelledby='todo']").first();
   await expect(todo).toBeVisible();
   // Trois choses au plus ; le tri et les niveaux d'urgence sont couverts par Vitest.
   expect(await todo.getByRole("listitem").count()).toBeLessThanOrEqual(3);

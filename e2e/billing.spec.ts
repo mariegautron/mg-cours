@@ -46,10 +46,12 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("YCODE").fill(`A2627_${String(suffix).slice(-4)}`);
   await page.getByLabel("Nombre d’heures total").fill("4");
+  await page.getByText("Autres informations (facultatif)").click();
   await page.getByLabel("Tarif horaire HT (€)").fill("50");
-  await page.getByLabel("Date de la 1re séance").fill("2026-12-01");
   await page.getByLabel("Référence bon de commande").fill("PO-2026-12345");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /Continuer/ }).click();
+  await page.getByLabel("Date de la 1re séance").fill("2026-12-01");
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const moduleUrl = page.url();
 

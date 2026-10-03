@@ -4,6 +4,7 @@ import { expect, test, type Browser } from "@playwright/test";
 
 import { localEnv } from "./env";
 import { createAssessment, createSimpleGrid, loginLight } from "./grading-setup";
+import { nextCopy } from "./helpers";
 import { createAndPublishQuiz, importBank, prepareLinks } from "./quiz-setup";
 
 // Tests d'abus de la passation anonyme (docs/SECURITY-QCM.md). Nécessitent Supabase local et
@@ -174,6 +175,8 @@ test("passation : fenêtre, retard, débit, révocation, corrigé jamais avant l
   const form = (name: string) => page.getByRole("form", { name });
 
   // Zoé est absente excusée sur l'évaluation d'origine (rattrapage à prévoir).
+  await nextCopy(page);
+  await nextCopy(page);
   await form(zoe).getByRole("radio", { name: "Absent·e excusé·e" }).check();
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { CopyPlus, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export function ScheduleEditor({
   totalHours,
   existingCount = 0,
   existing,
+  onRows,
 }: {
   /** Heures du module, pour comparer au total planifié. */
   totalHours?: number;
@@ -50,6 +51,11 @@ export function ScheduleEditor({
   existingCount?: number;
   /** Module existant : nom (pour trouver la matière du PDF) et dates enregistrées (pour l'écart). */
   existing?: { name: string; dates: ModuleDates };
+  /**
+   * Mode « à la main » (création de module) : l'éditeur ne montre que le tableau et le collage,
+   * sans import ni aperçu, et remonte ses lignes valides ; le parent les envoie avec le formulaire.
+   */
+  onRows?: (rows: ScheduleRow[]) => void;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -72,6 +78,9 @@ export function ScheduleEditor({
         })),
     [rows],
   );
+  useEffect(() => {
+    onRows?.(valid);
+  }, [valid, onRows]);
   const plan = useMemo(() => planSessions(valid, existingCount), [valid, existingCount]);
   const withoutDate = rows.length - valid.length;
 
@@ -179,25 +188,29 @@ export function ScheduleEditor({
 
   return (
     <div ref={root} className="space-y-4">
-      <input type="hidden" name="scheduleJson" value={JSON.stringify(valid)} />
-      {importDates ? (
-        <input type="hidden" name="datesJson" value={JSON.stringify(importDates)} />
-      ) : null}
+      {onRows ? null : (
+        <>
+          <input type="hidden" name="scheduleJson" value={JSON.stringify(valid)} />
+          {importDates ? (
+            <input type="hidden" name="datesJson" value={JSON.stringify(importDates)} />
+          ) : null}
 
-      <HyperplanningImport
-        getModuleName={() => existing?.name ?? formField("name")?.value ?? ""}
-        current={existing?.dates}
-        existingCount={existingCount}
-        onConfirm={applyImport}
-      />
-      <div aria-live="polite" className="text-sm">
-        {importNotice}
-      </div>
+          <HyperplanningImport
+            getModuleName={() => existing?.name ?? formField("name")?.value ?? ""}
+            current={existing?.dates}
+            existingCount={existingCount}
+            onConfirm={applyImport}
+          />
+          <div aria-live="polite" className="text-sm">
+            {importNotice}
+          </div>
+        </>
+      )}
 
-      <fieldset className="space-y-3">
+      <fieldset className="min-w-0 space-y-3">
         <legend className="text-sm font-medium">Créneaux</legend>
         {rows.length ? (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">Créneaux du planning</caption>
               <thead>
@@ -318,53 +331,55 @@ export function ScheduleEditor({
         ) : null}
       </div>
 
-      <section aria-labelledby={`${id}-preview`} className="space-y-2 rounded-lg border p-3">
-        <h3 id={`${id}-preview`} className="text-sm font-medium">
-          Aperçu : {plan.sessions.length} séance{plan.sessions.length > 1 ? "s" : ""} à créer
-        </h3>
-        <div aria-live="polite" className="space-y-2 text-sm">
-          {plan.sessions.length ? (
-            <>
-              <ol className="space-y-1">
-                {plan.sessions.map((s) => (
-                  <li key={s.number}>
-                    <strong>{s.title}</strong> · {formatDay(s.date)}
-                    {s.startTime ? ` · ${s.startTime}${s.endTime ? `–${s.endTime}` : ""}` : ""}
-                    {s.hours ? ` (${formatDuration(s.hours)})` : ""} · À préparer
-                  </li>
-                ))}
-              </ol>
-              <p className="text-muted-foreground">
-                1re séance : {formatDay(plan.firstSessionDate!)} — elle sert de référence pour
-                l’échéance de la progression (J-15).
-                {plan.totalHours > 0 ? ` ${formatDuration(plan.totalHours)} planifiées` : ""}
-                {totalHours && plan.totalHours > 0 ? ` sur ${totalHours} h prévues.` : ""}
-              </p>
-              {totalHours && plan.totalHours > 0 && Math.abs(hoursGap) > 0.5 ? (
-                <p className="text-destructive">
-                  {hoursGap < 0
-                    ? `Il manque ${formatDuration(-hoursGap)} par rapport aux ${totalHours} h du module.`
-                    : `${formatDuration(hoursGap)} de plus que les ${totalHours} h du module.`}
+      {onRows ? null : (
+        <section aria-labelledby={`${id}-preview`} className="space-y-2 rounded-lg border p-3">
+          <h3 id={`${id}-preview`} className="text-sm font-medium">
+            Aperçu : {plan.sessions.length} séance{plan.sessions.length > 1 ? "s" : ""} à créer
+          </h3>
+          <div aria-live="polite" className="space-y-2 text-sm">
+            {plan.sessions.length ? (
+              <>
+                <ol className="space-y-1">
+                  {plan.sessions.map((s) => (
+                    <li key={s.number}>
+                      <strong>{s.title}</strong> · {formatDay(s.date)}
+                      {s.startTime ? ` · ${s.startTime}${s.endTime ? `–${s.endTime}` : ""}` : ""}
+                      {s.hours ? ` (${formatDuration(s.hours)})` : ""} · À préparer
+                    </li>
+                  ))}
+                </ol>
+                <p className="text-muted-foreground">
+                  1re séance : {formatDay(plan.firstSessionDate!)} — elle sert de référence pour
+                  l’échéance de la progression (J-15).
+                  {plan.totalHours > 0 ? ` ${formatDuration(plan.totalHours)} planifiées` : ""}
+                  {totalHours && plan.totalHours > 0 ? ` sur ${totalHours} h prévues.` : ""}
                 </p>
-              ) : null}
-            </>
-          ) : (
-            <p className="text-muted-foreground">Aucune séance : le planning reste facultatif.</p>
-          )}
-          {withoutDate > 0 ? (
-            <p className="text-destructive">
-              {withoutDate > 1
-                ? `${withoutDate} lignes sans date valide ne seront pas créées.`
-                : "1 ligne sans date valide ne sera pas créée."}
-            </p>
-          ) : null}
-          {plan.issues.map((issue) => (
-            <p key={issue} className="text-destructive">
-              {issue}
-            </p>
-          ))}
-        </div>
-      </section>
+                {totalHours && plan.totalHours > 0 && Math.abs(hoursGap) > 0.5 ? (
+                  <p className="text-destructive">
+                    {hoursGap < 0
+                      ? `Il manque ${formatDuration(-hoursGap)} par rapport aux ${totalHours} h du module.`
+                      : `${formatDuration(hoursGap)} de plus que les ${totalHours} h du module.`}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-muted-foreground">Aucune séance : le planning reste facultatif.</p>
+            )}
+            {withoutDate > 0 ? (
+              <p className="text-destructive">
+                {withoutDate > 1
+                  ? `${withoutDate} lignes sans date valide ne seront pas créées.`
+                  : "1 ligne sans date valide ne sera pas créée."}
+              </p>
+            ) : null}
+            {plan.issues.map((issue) => (
+              <p key={issue} className="text-destructive">
+                {issue}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

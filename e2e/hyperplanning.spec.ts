@@ -65,29 +65,32 @@ test("crée un module depuis l'export Hyperplanning : aperçu, confirmation, 6 s
   await expect(
     page.getByRole("heading", { name: /Matière trouvée : Methodologies Agile/ }),
   ).toBeVisible();
+  await expect(page.getByLabel("Nombre d’heures total")).toHaveValue("21");
+
+  // Étape 2 : séances déduites, dates et échéance ; rien n'est créé avant l'accord.
+  await page.getByRole("button", { name: /Continuer/ }).click();
   const preview = page.getByRole("table", { name: /6 séances/ });
   await expect(preview).toBeVisible();
   await expect(preview.getByRole("row")).toHaveCount(7);
-  await expect(
-    page.getByText("début 12/10/2026 · 1re séance 12/10/2026 · fin 03/11/2026"),
-  ).toBeVisible();
-
-  // Rien n'est écrit avant la confirmation : le formulaire est encore vide côté dates.
-  await expect(page.getByLabel("Date de la 1re séance")).toHaveValue("");
+  await expect(page.getByText("Total : 21 h sur 21 h du module")).toBeVisible();
+  await expect(page.getByText("Le compte est bon")).toBeVisible();
+  await expect(page.getByLabel("Date de la 1re séance")).toHaveValue("2026-10-12");
+  await expect(page.getByLabel("Début", { exact: true })).toHaveValue("2026-10-12");
+  await expect(page.getByLabel("Fin", { exact: true })).toHaveValue("2026-11-03");
+  await expect(page.getByRole("heading", { name: "Échéance de la progression" })).toBeVisible();
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
 
-  await page.getByRole("button", { name: "Utiliser ces séances et ces dates" }).click();
-  await expect(page.getByLabel("Date de la 1re séance")).toHaveValue("2026-10-12");
-  await expect(page.getByLabel("Date de début")).toHaveValue("2026-10-12");
-  await expect(page.getByLabel("Date de fin")).toHaveValue("2026-11-03");
-  await expect(page.getByLabel("Nombre d’heures total")).toHaveValue("21");
-  await expect(page.getByRole("heading", { name: /Aperçu : 6 séances à créer/ })).toBeVisible();
+  // Sans fusion : un créneau = une séance (8 créneaux).
+  await page.getByLabel("Fusionner les créneaux qui se suivent").click();
+  await expect(page.getByRole("table", { name: /8 séances/ })).toBeVisible();
+  await page.getByLabel("Fusionner les créneaux qui se suivent").click();
+  await expect(page.getByRole("table", { name: /6 séances/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: "Créer le module et ses 6 séances" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const url = page.url();
   await openTab(page, /Séances/);
@@ -107,8 +110,9 @@ test("sur un module existant : liste au choix si le nom ne correspond pas, écar
   await page.goto("/modules/new");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Nom du module").fill("Module sans rapport");
+  await page.getByRole("button", { name: /Continuer/ }).click();
   await page.getByLabel("Date de la 1re séance").fill("2026-10-05");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: /^Créer le module/ }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
   const id = page.url().split("/").pop();
 
@@ -150,5 +154,5 @@ test("signale un PDF sans créneau Hyperplanning", async ({ page }) => {
     mimeType: "application/pdf",
     buffer: Buffer.from(await doc.save()),
   });
-  await expect(page.locator("p[role=alert]")).toContainText("Aucun créneau reconnu");
+  await expect(page.getByRole("alert").filter({ hasText: "Aucun créneau reconnu" })).toBeVisible();
 });

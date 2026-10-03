@@ -55,6 +55,7 @@ test("faire cours : déroulé projeté d'une séance, sans les ressources enseig
   await page.getByLabel("Nom du module").fill(moduleName);
   await page.getByLabel("Année").fill("2026");
   await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByText("Autres informations (facultatif)").click();
   await page.getByLabel("Présentation aux étudiant·es").fill("## Bienvenue\n\nOn va piloter.");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
