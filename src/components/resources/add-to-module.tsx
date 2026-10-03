@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 
 import { ActionError } from "@/components/action-error";
+import { listModuleChoices } from "@/app/(app)/resources/actions";
 import type { RetainState } from "@/app/(app)/modules/[id]/retained/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
@@ -10,16 +11,15 @@ import { Label } from "@/components/ui/label";
 /** « Ajouter au module… » : retient la ressource pour le module choisi (US-55). */
 export function AddToModule({
   resourceId,
-  modules,
   action,
 }: {
   resourceId: string;
-  modules: { id: string; name: string; year: number }[];
   action: (state: RetainState, formData: FormData) => Promise<RetainState>;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
-  const [open, setOpen] = useState(false);
-  if (modules.length === 0) return null;
+  const [modules, setModules] = useState<{ id: string; name: string; year: number }[] | null>(null);
+  const [loading, startLoading] = useTransition();
+  const open = modules !== null;
   const selectId = `add-to-module-${resourceId}`;
   // Les choix de modules ne sont rendus qu'à l'ouverture : une longue liste de ressources reste légère.
   if (!open) {
@@ -27,13 +27,17 @@ export function AddToModule({
       <button
         type="button"
         aria-expanded={false}
-        onClick={() => setOpen(true)}
+        disabled={loading}
+        onClick={() => startLoading(async () => setModules(await listModuleChoices()))}
         className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
       >
         Ajouter au module…
         <span className="sr-only"> : choisir un module pour cette ressource</span>
       </button>
     );
+  }
+  if (modules.length === 0) {
+    return <p className="text-muted-foreground text-sm">Aucun module en cours où l’ajouter.</p>;
   }
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2">

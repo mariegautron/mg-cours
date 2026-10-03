@@ -11,6 +11,7 @@ import {
 } from "@/lib/resources/files";
 import { isResourceKind, TEACHER_KINDS, type ResourceKind } from "@/lib/resources/kind";
 import { readResourceForm } from "@/lib/resources/schema";
+import { listActiveModules } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
@@ -268,4 +269,10 @@ export async function restoreResourceVersion(resourceId: string, versionId: stri
   revalidatePath("/resources");
   revalidatePath(`/resources/${resourceId}`);
   redirect(`/resources/${resourceId}`);
+}
+
+/** Modules proposés par « Ajouter au module… » : lus à l'ouverture, pas recopiés dans chaque ligne de la liste. */
+export async function listModuleChoices(): Promise<{ id: string; name: string; year: number }[]> {
+  const modules = await listActiveModules();
+  return modules.map((m) => ({ id: m.id, name: m.name, year: m.year }));
 }

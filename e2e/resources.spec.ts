@@ -29,6 +29,10 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
   await expect(page.getByText("Pas encore utilisée dans un module.")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/ressource-fiche.png" });
+  }
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -37,6 +41,13 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
 
   await page.goto("/resources");
   await expect(page.getByRole("link", { name: title })).toBeVisible();
+  // Pagination : un compteur « N sur M » et « Afficher plus », rien n'est masqué.
+  const more = page.getByRole("link", { name: "Afficher plus" });
+  if (await more.count()) {
+    await expect(page.getByText(/^\d+ sur \d+$/)).toBeVisible();
+    await more.click();
+    await expect(page).toHaveURL(/page=2/);
+  }
 });
 
 test("classe une ressource (type, matière, visibilité), filtre et regroupe la liste", async ({
@@ -86,6 +97,7 @@ test("classe une ressource (type, matière, visibilité), filtre et regroupe la 
   await expect(page.getByRole("status")).toHaveText("1 ressource");
 
   // Regroupement par type.
+  await page.waitForLoadState("networkidle");
   await page.getByText("Plus de filtres").click();
   await page.getByLabel("Regrouper").selectOption("kind");
   await page.getByRole("button", { name: "Filtrer" }).click();

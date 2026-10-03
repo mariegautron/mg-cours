@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { createDraftResource } from "@/app/(app)/resources/actions";
 import { AddToModule } from "@/components/resources/add-to-module";
-import { listActiveModules } from "@/lib/modules/queries";
 import {
   familyCounts,
   FAMILIES,
@@ -34,8 +33,8 @@ import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/res
 
 export const metadata: Metadata = { title: "Bibliothèque" };
 
-/** Lignes affichées : les plus récemment modifiées ; une recherche ou un filtre précise le reste. */
-const ROW_LIMIT = 60;
+/** Taille d'une page : « Afficher plus » en ajoute autant, rien n'est jamais masqué. */
+const PAGE_SIZE = 50;
 
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
@@ -45,13 +44,7 @@ const GROUPINGS: Record<ResourceGrouping, string> = {
   category: "Par matière",
 };
 
-function ResourceRow({
-  r,
-  modules,
-}: {
-  r: ResourceWithUsage;
-  modules: { id: string; name: string; year: number }[];
-}) {
+function ResourceRow({ r }: { r: ResourceWithUsage }) {
   return (
     <li className="flex flex-wrap items-center gap-3 py-3">
       <Link
@@ -88,11 +81,7 @@ function ResourceRow({
           {r.status === "ready" ? "Prête" : STATUS_LABELS[r.status]}
         </Pill>
       </span>
-      <AddToModule
-        resourceId={r.id}
-        modules={modules}
-        action={addResourceToModule.bind(null, r.id)}
-      />
+      <AddToModule resourceId={r.id} action={addResourceToModule.bind(null, r.id)} />
     </li>
   );
 }
@@ -101,11 +90,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
   const sp = await searchParams;
   const { filters, group } = readResourceFilters(sp);
 
-  const [listed, facets, modules] = await Promise.all([
-    listResources(filters),
-    resourceFacets(),
-    listActiveModules(),
-  ]);
+  const [listed, facets] = await Promise.all([listResources(filters), resourceFacets()]);
   const counts = familyCounts(listed);
   const resources = inFamily(listed, filters.family);
   // Les onglets gardent les autres filtres de l'URL.
@@ -118,10 +103,19 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     const qs = params.toString();
     return qs ? `/resources?${qs}` : "/resources";
   };
-  const shown = resources.slice(0, ROW_LIMIT);
+  const pageCount = Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1);
+  const shown = resources.slice(0, pageCount * PAGE_SIZE);
   const groups: ResourceGroup<ResourceWithUsage>[] | null =
     group === "kind" ? groupByKind(shown) : group === "category" ? groupByCategory(shown) : null;
 
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) {
+      if (k !== "page" && typeof v === "string" && v) params.set(k, v);
+    }
+    params.set("page", String(page));
+    return `/resources?${params.toString()}`;
+  };
   const ready = resources.filter((r) => r.status === "ready").length;
   const toBuild = resources.length - ready;
   const statusHref = (status?: string) => {
@@ -370,7 +364,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
               </h2>
               <ul className="divide-y">
                 {g.items.map((r) => (
-                  <ResourceRow key={r.id} r={r} modules={modules} />
+                  <ResourceRow key={r.id} r={r} />
                 ))}
               </ul>
             </section>
@@ -380,16 +374,24 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         <section aria-label="Liste" className="bg-card rounded-xl border p-5">
           <ul className="divide-y">
             {shown.map((r) => (
-              <ResourceRow key={r.id} r={r} modules={modules} />
+              <ResourceRow key={r.id} r={r} />
             ))}
           </ul>
         </section>
       )}
-      {resources.length > ROW_LIMIT ? (
-        <p className="text-muted-foreground text-sm">
-          Les {ROW_LIMIT} plus récentes sur {resources.length} : cherche ou filtre pour retrouver
-          les autres.
-        </p>
+      {resources.length > PAGE_SIZE ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-muted-foreground text-sm" role="status">
+            {shown.length} sur {resources.length}
+          </p>
+          {shown.length < resources.length ? (
+            <Button asChild variant="secondary" size="touch">
+              <Link href={pageHref(pageCount + 1)} scroll={false}>
+                Afficher plus
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
