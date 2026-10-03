@@ -74,6 +74,11 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
               <Link href={`/modules/${mod.id}/project/reuse`}>Partir d’un projet existant</Link>
             </Button>
           ) : null}
+          {project ? (
+            <Button asChild variant="outline">
+              <Link href={`/modules/${mod.id}/frise`}>Voir ce que voient les étudiant·es</Link>
+            </Button>
+          ) : null}
           <Button asChild variant="ghost">
             <Link href={`/modules/${mod.id}/assessments`}>← Les évaluations</Link>
           </Button>

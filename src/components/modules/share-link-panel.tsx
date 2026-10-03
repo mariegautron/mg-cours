@@ -39,13 +39,14 @@ export function ShareLinkPanel({
   }
 
   return (
-    <section aria-labelledby="share" className="space-y-3 rounded-lg border p-4">
-      <h2 id="share" className="text-lg font-medium">
-        Partager la frise
+    <section aria-labelledby="share" className="bg-card space-y-3 rounded-3xl border p-5 shadow-sm">
+      <h2 id="share" className="font-heading text-xl font-bold">
+        Le lien pour les étudiant·es
       </h2>
       <p className="text-muted-foreground text-sm">
-        Un lien en lecture seule pour les étudiant·es : les séances, les dates et les notes à venir.
-        Rien d’autre : ni noms, ni notes obtenues, ni ressources.
+        Un lien en lecture seule, à donner une fois : les séances, les dates, les rendus attendus et
+        les notes à venir. Rien d’autre : ni noms, ni notes obtenues, ni ressources, ni consignes
+        privées.
       </p>
       {!available ? (
         <p className="text-sm">

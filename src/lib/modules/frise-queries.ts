@@ -16,7 +16,9 @@ export async function loadFrise(moduleId: string): Promise<Frise | null> {
       .order("created_at"),
     supabase
       .from("assessment")
-      .select("id, title, course_id, is_group_grade, makeup_of_id")
+      .select(
+        "id, title, course_id, is_group_grade, makeup_of_id, project_role, project_id, deliverable_md, prep_status",
+      )
       .eq("module_id", moduleId),
   ]);
   if (!mod) return null;
