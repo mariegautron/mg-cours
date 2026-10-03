@@ -31,6 +31,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   schedule: { key: "sessions", label: "Planning" },
   "import-courses": { key: "sessions", label: "Import des séances" },
   courses: { key: "sessions", label: "Séances" },
+  frise: { key: "journey", label: "Frise du module" },
   build: { key: "sessions", label: "Construire les séances" },
   assessments: { key: "assessments", label: "Évaluations" },
   project: { key: "assessments", label: "Projet fil rouge" },

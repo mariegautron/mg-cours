@@ -6,7 +6,8 @@ import { clientEnv, isSupabaseConfigured } from "@/lib/env";
 
 // `/q` : passation d'un QCM par lien personnel (étudiant·es sans compte). Rien d'autre n'est public.
 // `/resultats` : résultats d'une personne par lien personnel (US-147), lus par le haché du jeton.
-const PUBLIC_PATHS = ["/login", "/auth", "/q", "/resultats"];
+// `/module` : frise du module par lien partageable (US-130), lue par le haché du jeton.
+const PUBLIC_PATHS = ["/login", "/auth", "/q", "/resultats", "/module"];
 
 /**
  * Refreshes the Supabase session on every request and guards the app.
@@ -18,7 +19,8 @@ export async function proxy(request: NextRequest) {
   // Passation d'un QCM : aucune session, aucun appel d'authentification (l'accès se fait par le jeton).
   if (
     request.nextUrl.pathname.startsWith("/q/") ||
-    request.nextUrl.pathname.startsWith("/resultats/")
+    request.nextUrl.pathname.startsWith("/resultats/") ||
+    request.nextUrl.pathname.startsWith("/module/")
   ) {
     return response;
   }

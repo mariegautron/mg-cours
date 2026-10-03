@@ -244,6 +244,11 @@ export default async function ModulePage({
                 <Link href={`/modules/${mod.id}/build`}>Construire les séances</Link>
               </Button>
             ) : null}
+            {courses.length ? (
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/modules/${mod.id}/frise`}>Frise du module</Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/schedule`}>
                 <CalendarPlus aria-hidden />

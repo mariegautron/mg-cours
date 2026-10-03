@@ -1290,6 +1290,56 @@ export type Database = {
           },
         ]
       }
+      module_share_link: {
+        Row: {
+          created_at: string
+          first_viewed_at: string | null
+          id: string
+          module_id: string
+          owner_id: string
+          payload: Json
+          published_at: string
+          revoked_at: string | null
+          token_hash: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          module_id: string
+          owner_id?: string
+          payload: Json
+          published_at?: string
+          revoked_at?: string | null
+          token_hash: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          module_id?: string
+          owner_id?: string
+          payload?: Json
+          published_at?: string
+          revoked_at?: string | null
+          token_hash?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_share_link_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oral_slot: {
         Row: {
           assessment_id: string
@@ -2549,6 +2599,10 @@ export type Database = {
       mg_apply_conventions: {
         Args: { table_names: string[] }
         Returns: undefined
+      }
+      mg_module_view: {
+        Args: { p_count?: boolean; p_token_hash: string }
+        Returns: Json
       }
       mg_quiz_clean_answers: {
         Args: { p_answers: Json; p_count: number }
