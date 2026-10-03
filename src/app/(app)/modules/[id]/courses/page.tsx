@@ -29,7 +29,7 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
         title="Aucune séance"
         description="Ajoute les dates du planning pour préparer chaque séance."
         actions={[
-          { label: "Ajouter les séances", href: `/modules/${id}/courses/new` },
+          { label: "Ajouter une séance", href: `/modules/${id}/courses/new` },
           { label: "Importer le planning", href: `/modules/${id}/schedule` },
         ]}
       />

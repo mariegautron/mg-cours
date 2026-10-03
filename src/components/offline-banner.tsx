@@ -1,24 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-
-function subscribe(cb: () => void) {
-  window.addEventListener("online", cb);
-  window.addEventListener("offline", cb);
-  return () => {
-    window.removeEventListener("online", cb);
-    window.removeEventListener("offline", cb);
-  };
-}
+import { useOnline } from "@/lib/use-online";
 
 /** Bandeau « hors connexion » : dit ce qui se passe et ce qui reste possible. Invisible en ligne. */
 export function OfflineBanner() {
-  const online = useSyncExternalStore(
-    subscribe,
-    () => navigator.onLine,
-    () => true,
-  );
-  if (online) return null;
+  if (useOnline()) return null;
   return (
     <div
       role="status"

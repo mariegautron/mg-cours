@@ -490,11 +490,20 @@ export default async function DashboardPage() {
               </div>
             </section>
           ) : (
-            <section aria-labelledby="next" className="bg-card rounded-3xl border p-6 shadow-sm">
-              <h2 id="next" className="font-heading text-xl font-bold">
-                Pas de cours aujourd’hui
-              </h2>
-              <p className="text-muted-foreground mt-1">Aucune séance datée n’est à venir.</p>
+            <section aria-label="Prochaine séance" className="bg-card rounded-3xl border shadow-sm">
+              {modules.length === 0 ? (
+                <EmptyState
+                  title="Pas encore de module"
+                  description="Bienvenue. Rien à faire pour l’instant : crée ton premier module à partir de la fiche de l’école."
+                  actions={[{ label: "Créer un module", href: "/modules/new" }]}
+                />
+              ) : (
+                <EmptyState
+                  title="Pas de cours cette semaine"
+                  description="Profite-en pour préparer le prochain module."
+                  actions={[{ label: "Voir mes modules", href: "/modules" }]}
+                />
+              )}
             </section>
           )}
           {todoCard}

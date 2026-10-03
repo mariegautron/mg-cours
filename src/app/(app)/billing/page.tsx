@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -98,7 +99,7 @@ export default async function BillingPage() {
                   moduleId={r.module.id}
                   title={r.module.name}
                   href={`/modules/${r.module.id}/billing`}
-                  subtitle={`${r.module.school?.name ?? "École non renseignée"} · ${r.module.year} · ${r.module.total_hours} h`}
+                  subtitle={`${r.module.school?.name ?? "École non renseignée"} · ${schoolYearOf(r.module.year)} · ${r.module.total_hours} h`}
                   status={status}
                   sent={isSent(r.module.iceberg_state)}
                   paid={isPaid(r.module.iceberg_state)}
@@ -140,7 +141,12 @@ export default async function BillingPage() {
                       href={`/modules/${r.module.id}/billing`}
                       className="hover:bg-accent flex flex-wrap items-center justify-between gap-2 p-3"
                     >
-                      <span>{r.module.name}</span>
+                      <span>
+                        {r.module.name}{" "}
+                        <span className="text-muted-foreground text-sm">
+                          · {schoolYearOf(r.module.year)}
+                        </span>
+                      </span>
                       <Pill tone={statusOf(r) === "paid" ? "ok" : "wip"}>
                         {SIMPLE_STATUS_LABELS[statusOf(r)]}
                       </Pill>

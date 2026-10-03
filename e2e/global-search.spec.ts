@@ -21,7 +21,7 @@ test("Ctrl K ouvre la recherche, Échap la ferme et rend le focus, 0 violation a
   await expect(input).toBeFocused();
 
   await input.fill("zzzzqx");
-  await expect(dialog.getByText(/Aucun résultat pour « zzzzqx »/)).toBeVisible();
+  await expect(dialog.getByText(/Rien pour « zzzzqx »/)).toBeVisible();
   const empty = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

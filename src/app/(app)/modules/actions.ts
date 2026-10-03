@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
+import { nameMatches, removablePaths } from "@/lib/modules/delete";
 import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
 import {
   canUndoArchive,
@@ -197,13 +199,75 @@ export async function updateModule(
   redirect(`/modules/${id}`);
 }
 
-export async function deleteModule(id: string) {
-  "use server";
+export interface DeleteModuleState {
+  error?: string;
+}
+
+/** Retire récursivement tout ce qui se trouve sous `prefix` dans un bucket privé. */
+async function removeFolder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  bucket: string,
+  prefix: string,
+): Promise<void> {
+  const { data } = await supabase.storage.from(bucket).list(prefix, { limit: 1000 });
+  const files: string[] = [];
+  for (const entry of data ?? []) {
+    if (entry.id) files.push(`${prefix}/${entry.name}`);
+    else await removeFolder(supabase, bucket, `${prefix}/${entry.name}`);
+  }
+  if (files.length) await supabase.storage.from(bucket).remove(files);
+}
+
+/**
+ * Suppression définitive d'un module, après avoir retapé son nom. La base supprime en cascade
+ * séances, attendus, évaluations et notes, groupes, projet, documents, liens publics, etc. ; les
+ * ressources de la bibliothèque et les étudiant·es ne sont pas touchés. Les fichiers de stockage
+ * (documents du module, fichiers des évaluations) sont retirés, sauf ceux qu'un autre module
+ * référence encore.
+ */
+export async function deleteModule(id: string, typedName: string): Promise<DeleteModuleState> {
   const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: SESSION_EXPIRED };
+  const { data: mod } = await supabase.from("module").select("id, name").eq("id", id).maybeSingle();
+  if (!mod) return { error: NOT_FOUND.module };
+  if (!nameMatches(typedName, mod.name)) {
+    return { error: "Le nom saisi ne correspond pas au module : rien n’a été supprimé." };
+  }
+
+  const [{ data: docs }, { data: assessments }] = await Promise.all([
+    supabase.from("module_document").select("path").eq("module_id", id),
+    supabase.from("assessment").select("id").eq("module_id", id),
+  ]);
+  const own = (docs ?? []).map((d) => d.path);
+  let elsewhere: string[] = [];
+  if (own.length) {
+    const { data: others } = await supabase
+      .from("module_document")
+      .select("path")
+      .in("path", own)
+      .neq("module_id", id);
+    elsewhere = (others ?? []).map((d) => d.path);
+  }
+
   const { error } = await supabase.from("module").delete().eq("id", id);
-  if (error) return;
+  if (error) return { error: failure("supprimer le module") };
+
+  // La base est à jour : un échec de nettoyage du stockage ne doit pas défaire la suppression.
+  try {
+    const paths = removablePaths(own, elsewhere);
+    if (paths.length) await supabase.storage.from("module-documents").remove(paths);
+    for (const a of assessments ?? []) {
+      await removeFolder(supabase, ASSESSMENT_FILES_BUCKET, `${auth.user.id}/${a.id}`);
+    }
+  } catch {
+    // Fichiers orphelins éventuels : sans conséquence pour les données.
+  }
+
   revalidatePath("/modules");
-  redirect("/modules");
+  revalidatePath("/dashboard");
+  revalidatePath("/billing");
+  redirect(`/modules?deleted=${encodeURIComponent(mod.name)}`);
 }
 
 async function setModuleArchived(id: string, archived: boolean) {

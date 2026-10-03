@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { groupResults, type SearchCandidate } from "@/lib/search/search";
+import { schoolYearLabel } from "@/lib/modules/list-state";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
       kind: "module" as const,
       id: m.id,
       label: m.name,
-      detail: [m.ycode, m.year].filter(Boolean).join(" · ") || undefined,
+      detail: [schoolYearLabel(m.year), m.ycode].filter(Boolean).join(" · "),
       terms: m.ycode ? [m.ycode] : [],
     })),
     ...(resources.data ?? []).map((r) => ({ kind: "resource" as const, id: r.id, label: r.title })),

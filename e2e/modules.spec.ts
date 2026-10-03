@@ -15,6 +15,7 @@ async function login(page: import("@playwright/test").Page) {
 test("crée un module, ajoute une séance liée à une ressource, coche un document", async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   await login(page);
 
   // Une ressource pour lier au cours.

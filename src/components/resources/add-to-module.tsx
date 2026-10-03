@@ -1,5 +1,6 @@
 "use client";
 
+import { schoolYearOf } from "@/lib/modules/list-state";
 import { useActionState, useState, useTransition } from "react";
 
 import { ActionError } from "@/components/action-error";
@@ -56,7 +57,7 @@ export function AddToModule({
           </option>
           {modules.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} ({m.year})
+              {m.name} ({schoolYearOf(m.year)})
             </option>
           ))}
         </select>

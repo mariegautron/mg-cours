@@ -42,8 +42,14 @@ export function neighborId(
  * Enregistrer automatiquement seulement s'il y a des modifications, qu'aucun enregistrement n'est en
  * cours et que la copie est enregistrable (une note directe vide ne l'est pas).
  */
-export function shouldAutosave(state: { dirty: boolean; pending: boolean; ready: boolean }) {
-  return state.dirty && !state.pending && state.ready;
+export function shouldAutosave(state: {
+  dirty: boolean;
+  pending: boolean;
+  ready: boolean;
+  /** Réseau disponible (par défaut oui) : hors connexion, la copie attend le retour du réseau. */
+  online?: boolean;
+}) {
+  return state.dirty && !state.pending && state.ready && (state.online ?? true);
 }
 
 /** Empreinte stable de la saisie d'une copie : différente de la dernière enregistrée = à enregistrer. */

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -169,9 +170,12 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
           ) : (
             <>
               {linkedQuestions.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  Aucune question de la banque n’est liée à cette ressource.
-                </p>
+                <EmptyState
+                  compact
+                  title="Cette ressource n’a pas de question"
+                  description="Ajoutes-en pour lancer un quiz ou générer un QCM."
+                  actions={[{ label: "Ajouter une question", href: "/questions/new" }]}
+                />
               ) : (
                 <ul className="space-y-1 text-sm">
                   {linkedQuestions.map((q) => (

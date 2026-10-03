@@ -163,14 +163,18 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
       {all.length === 0 ? (
         <EmptyState
           title="Pas encore de question"
-          description="Écris la première ici, ou importe une banque exportée de Moodle au format XML."
+          description="Écris la première, copie-les depuis une ressource, ou importe une banque exportée de Moodle (XML)."
           actions={[
             { label: "Écrire une question", href: "/questions/new" },
             { label: "Importer une banque", href: "/questions/import" },
           ]}
         />
       ) : shown.length === 0 ? (
-        <p className="text-muted-foreground">Aucune question ne correspond à ces filtres.</p>
+        <EmptyState
+          title="Aucune question ne correspond"
+          description="Enlève un filtre pour en voir plus."
+          actions={[{ label: "Effacer les filtres", href: "/questions" }]}
+        />
       ) : (
         <section aria-label="Questions" className="bg-card rounded-xl border p-5">
           <ul className="divide-y">

@@ -55,6 +55,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
   const filter = parseListFilter(rawFilter === "all" ? "running" : rawFilter);
   const schoolId = str("school");
   const year = str("year");
+  const deleted = str("deleted");
 
   const [all, progress, askNote] = await Promise.all([
     listModules({ includeArchived: true }),
@@ -95,6 +96,55 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
     const qs = params.toString();
     return qs ? `/modules?${qs}` : "/modules";
   };
+
+  const byYear =
+    !year && years.length > 1
+      ? years
+          .map((y) => ({ year: y, rows: shown.filter((r) => schoolYearOf(r.m.year) === y) }))
+          .filter((g) => g.rows.length > 0)
+      : null;
+
+  const list = (rows: typeof shown, Heading: "h2" | "h3") => (
+    <ul>
+      {rows.map(({ m, courses, state }) => {
+        const pill = statePill(state, courses);
+        const next = journeys.get(m.id);
+        return (
+          <li
+            key={m.id}
+            className="flex min-h-[84px] flex-wrap items-center gap-3 border-t py-3 first:border-t-0"
+          >
+            <Link
+              href={`/modules/${m.id}`}
+              className="focus-visible:ring-ring min-w-0 flex-1 basis-64 rounded-md focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <Heading className="text-[1.05rem] font-bold">{m.name}</Heading>
+              <p className="text-muted-foreground text-sm">
+                {metaLine({
+                  year: m.year,
+                  ycode: m.ycode,
+                  schoolName: m.school?.name ?? null,
+                  level: m.level,
+                  totalHours: m.total_hours,
+                  firstSessionDate: m.first_session_date,
+                  state,
+                })}
+              </p>
+              {state === "archived" ? (
+                <p className="mt-0.5 text-sm">
+                  Rangé le {new Date(m.archived_at!).toLocaleDateString("fr-FR")}
+                </p>
+              ) : next ? (
+                <p className="mt-0.5 text-sm">{next}</p>
+              ) : null}
+            </Link>
+            <Pill tone={pill.tone}>{pill.label}</Pill>
+            <ModuleRowActions id={m.id} name={m.name} state={state} askNote={askNote} />
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <div className="space-y-4">
@@ -172,11 +222,26 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         </form>
       </nav>
 
+      <p
+        role="status"
+        className={
+          deleted ? "text-sm font-semibold text-emerald-600 dark:text-emerald-400" : "sr-only"
+        }
+      >
+        {deleted ? `Module « ${deleted} » supprimé.` : ""}
+      </p>
+
       {all.length === 0 ? (
         <EmptyState
           title="Aucun module"
           description="Un module regroupe les séances, les évaluations et la facture d’un cours."
           actions={[{ label: "Créer un module", href: "/modules/new" }]}
+        />
+      ) : scoped.length === 0 ? (
+        <EmptyState
+          title="Aucun module ne correspond"
+          description="Enlève un filtre pour en voir plus."
+          actions={[{ label: "Effacer les filtres", href: "/modules" }]}
         />
       ) : shown.length === 0 ? (
         <EmptyState
@@ -185,49 +250,29 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           actions={[{ label: "Créer un module", href: "/modules/new" }]}
         />
       ) : (
-        <section
-          aria-label="Liste des modules"
-          className="bg-card rounded-3xl border px-5 shadow-sm"
-        >
-          <ul>
-            {shown.map(({ m, courses, state }) => {
-              const pill = statePill(state, courses);
-              const next = journeys.get(m.id);
-              return (
-                <li
-                  key={m.id}
-                  className="flex min-h-[84px] flex-wrap items-center gap-3 border-t py-3 first:border-t-0"
-                >
-                  <Link
-                    href={`/modules/${m.id}`}
-                    className="focus-visible:ring-ring min-w-0 flex-1 basis-64 rounded-md focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    <h2 className="text-[1.05rem] font-bold">{m.name}</h2>
-                    <p className="text-muted-foreground text-sm">
-                      {metaLine({
-                        ycode: m.ycode,
-                        schoolName: m.school?.name ?? null,
-                        level: m.level,
-                        totalHours: m.total_hours,
-                        firstSessionDate: m.first_session_date,
-                        state,
-                      })}
-                    </p>
-                    {state === "archived" ? (
-                      <p className="mt-0.5 text-sm">
-                        Rangé le {new Date(m.archived_at!).toLocaleDateString("fr-FR")}
-                      </p>
-                    ) : next ? (
-                      <p className="mt-0.5 text-sm">{next}</p>
-                    ) : null}
-                  </Link>
-                  <Pill tone={pill.tone}>{pill.label}</Pill>
-                  <ModuleRowActions id={m.id} name={m.name} state={state} askNote={askNote} />
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <div className="space-y-6">
+          {byYear ? (
+            byYear.map((g) => (
+              <section
+                key={g.year}
+                aria-labelledby={`year-${g.year}`}
+                className="bg-card rounded-3xl border px-5 shadow-sm"
+              >
+                <h2 id={`year-${g.year}`} className="font-heading pt-4 text-lg font-bold">
+                  {g.year}
+                </h2>
+                {list(g.rows, "h3")}
+              </section>
+            ))
+          ) : (
+            <section
+              aria-label="Liste des modules"
+              className="bg-card rounded-3xl border px-5 shadow-sm"
+            >
+              {list(shown, "h2")}
+            </section>
+          )}
+        </div>
       )}
 
       <div className="flex flex-wrap gap-3">

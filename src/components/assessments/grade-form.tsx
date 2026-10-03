@@ -2,6 +2,7 @@
 
 import { CriterionExpectations } from "@/components/assessments/criterion-expectations";
 import { checksKey, splitDescription } from "@/lib/assessments/expectations";
+import { useOnline } from "@/lib/use-online";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import Link from "next/link";
@@ -236,6 +237,7 @@ export function GradeForm({
     }
   }
   const dirty = snapshot !== saved;
+  const online = useOnline();
   const ready = absent || grid ? true : directValue.trim() !== "";
 
   const dirtyRef = useRef(dirty);
@@ -244,10 +246,10 @@ export function GradeForm({
   }, [dirty]);
 
   useEffect(() => {
-    if (!shouldAutosave({ dirty, pending, ready })) return;
+    if (!shouldAutosave({ dirty, pending, ready, online })) return;
     const timer = setTimeout(() => formRef.current?.requestSubmit(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [snapshot, dirty, pending, ready]);
+  }, [snapshot, dirty, pending, ready, online]);
 
   useEffect(() => {
     onStatus?.(id, { corrected, dirty });
@@ -1278,7 +1280,30 @@ export function GradeForm({
 
   const statusPill = (
     <span role="status" className="text-sm">
-      {dirty ? (
+      {!online && dirty ? (
+        <span className="border-coral/45 bg-coral/12 text-coral rounded-full border px-3 py-1 text-xs font-bold">
+          Hors connexion · 1 copie en attente
+        </span>
+      ) : pending ? (
+        <span className="border-sky/45 bg-sky/12 text-sky inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold">
+          <span
+            aria-hidden
+            className="size-3 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
+          />
+          Enregistrement…
+        </span>
+      ) : dirty && state.error ? (
+        <span className="border-sun/45 bg-sun/12 text-sun inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold">
+          ! Pas enregistré
+          <button
+            type="button"
+            className="focus-visible:ring-ring/50 min-h-6 rounded underline underline-offset-2 focus-visible:ring-3"
+            onClick={() => formRef.current?.requestSubmit()}
+          >
+            Réessayer
+          </button>
+        </span>
+      ) : dirty ? (
         <span className="border-sun/45 bg-sun/12 text-sun rounded-full border px-3 py-1 text-xs font-bold">
           Modifications non enregistrées
         </span>
@@ -1296,7 +1321,13 @@ export function GradeForm({
       id={`copy-${id}`}
       action={formAction}
       noValidate
-      onSubmit={() => setSubmitted(snapshot)}
+      onSubmit={(e) => {
+        if (!navigator.onLine) {
+          e.preventDefault();
+          return;
+        }
+        setSubmitted(snapshot);
+      }}
       onKeyDown={(e) => {
         // Alt + ← / → : copie précédente / suivante, sans quitter le clavier.
         if (!onNavigate || !e.altKey || e.ctrlKey || e.metaKey) return;

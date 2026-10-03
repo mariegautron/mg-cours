@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -102,6 +103,14 @@ export default async function ResultsPage({
           <Link href={back}>← Vue d’ensemble</Link>
         </Button>
       </div>
+
+      {!hasGrades ? (
+        <EmptyState
+          title="Rien n’est publié"
+          description="Les résultats apparaîtront ici après ta confirmation."
+          actions={[{ label: "Aller à la correction", href: `${back}/correct` }]}
+        />
+      ) : null}
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <section aria-labelledby="ver" className={`${card} min-w-0 flex-[1_1_0]`}>

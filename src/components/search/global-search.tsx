@@ -248,8 +248,20 @@ export function GlobalSearch({
             {!searchable ? (
               <span>Tape au moins {MIN_QUERY_LENGTH} lettres pour chercher.</span>
             ) : showResults && flat.length === 0 ? (
-              <span>
-                Aucun résultat pour « {trimmed} ». Essaie un autre mot, un bout de nom suffit.
+              <span className="flex flex-wrap items-center gap-3">
+                <span>
+                  Rien pour « {trimmed} ». Vérifie l’orthographe ou cherche un mot plus court.
+                </span>
+                <button
+                  type="button"
+                  className="text-foreground focus-visible:ring-ring/50 min-h-11 rounded-md px-3 font-semibold underline underline-offset-2 focus-visible:ring-3"
+                  onClick={() => {
+                    setQuery("");
+                    inputRef.current?.focus();
+                  }}
+                >
+                  Effacer la recherche
+                </button>
               </span>
             ) : (
               <span className={showResults && flat.length ? "sr-only" : undefined}>{status}</span>

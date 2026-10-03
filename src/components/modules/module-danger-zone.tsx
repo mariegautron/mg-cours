@@ -1,23 +1,12 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
-import { CopyPlus, Trash2 } from "lucide-react";
+import { useActionState } from "react";
+import { CopyPlus } from "lucide-react";
 
 import { ActionError } from "@/components/action-error";
-import { deleteModule, duplicateModule, type DuplicateState } from "@/app/(app)/modules/actions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { duplicateModule, type DuplicateState } from "@/app/(app)/modules/actions";
+import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import { Button } from "@/components/ui/button";
-import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -34,18 +23,19 @@ export interface AssessmentExperienceNote {
 
 export function ModuleDangerZone({
   id,
+  name,
   year,
   experience = [],
   assessmentExperience = [],
 }: {
   id: string;
+  name: string;
   year: number;
   /** Retours d'expérience privés des séances, à relire avant de dupliquer (US-68). */
   experience?: ExperienceNote[];
   /** Retours d'expérience privés des évaluations, à relire avant de dupliquer (US-98). */
   assessmentExperience?: AssessmentExperienceNote[];
 }) {
-  const [pending, startTransition] = useTransition();
   const [dupState, dupAction, dupPending] = useActionState(
     duplicateModule.bind(null, id),
     {} as DuplicateState,
@@ -98,33 +88,7 @@ export function ModuleDangerZone({
         sont à toi, elles servent telles quelles.
       </p>
 
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <PendingButton
-            type="button"
-            variant="destructive"
-            pending={pending}
-            pendingLabel="Suppression…"
-          >
-            <Trash2 aria-hidden />
-            Supprimer le module
-          </PendingButton>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce module ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Action définitive. Les cours, groupes et évaluations liés seront supprimés.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => startTransition(() => void deleteModule(id))}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteModuleDialog id={id} name={name} />
     </div>
   );
 }

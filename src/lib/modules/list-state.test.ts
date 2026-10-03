@@ -71,6 +71,20 @@ describe("pastilles et meta", () => {
     expect(statePill("taught", { done: 6, total: 6 }).label).toBe("Cours faits");
     expect(statePill("finished", { done: 6, total: 6 }).label).toBe("Terminé");
   });
+  it("ligne de méta avec l'année scolaire, ou « Année non renseignée »", () => {
+    const base = {
+      ycode: "A2526_0121",
+      schoolName: "YNOV Nantes",
+      level: "Bachelor 2",
+      totalHours: 20,
+      firstSessionDate: null,
+      state: "running" as const,
+    };
+    expect(metaLine({ ...base, year: 2025 })).toBe(
+      "2025-2026 · A2526_0121 · YNOV Nantes · Bachelor 2 · 20 h",
+    );
+    expect(metaLine({ ...base, year: null }).startsWith("Année non renseignée · ")).toBe(true);
+  });
   it("ligne de méta, date de début seulement si à préparer", () => {
     const base = {
       ycode: "A2627_4801",

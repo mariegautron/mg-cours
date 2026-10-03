@@ -80,6 +80,7 @@ export default async function ModuleDocumentsPage({
           <ArchiveModuleButton id={mod.id} archived={!!mod.archived_at} name={mod.name} />
           <ModuleDangerZone
             id={mod.id}
+            name={mod.name}
             year={mod.year}
             assessmentExperience={experienceNotes(assessments)}
             experience={courses.flatMap((c, i) =>

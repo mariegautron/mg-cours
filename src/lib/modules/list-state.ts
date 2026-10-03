@@ -58,6 +58,13 @@ export function schoolYearOf(year: number): string {
   return `${year}-${year + 1}`;
 }
 
+/** Comme `schoolYearOf`, mais dit « Année non renseignée » quand l'année manque. */
+export function schoolYearLabel(year: number | null | undefined): string {
+  return typeof year === "number" && Number.isFinite(year)
+    ? schoolYearOf(year)
+    : "Année non renseignée";
+}
+
 export interface PillInfo {
   label: string;
   tone: "wip" | "warn" | "ok" | "plain";
@@ -84,6 +91,8 @@ export function statePill(
 
 /** « 14 h · à partir du 09/11 » : seulement pour un module pas encore commencé. */
 export function metaLine(m: {
+  /** Année de début : quand elle est donnée, la ligne commence par l'année scolaire. */
+  year?: number | null;
   ycode: string | null;
   schoolName: string | null;
   level: string | null;
@@ -92,6 +101,7 @@ export function metaLine(m: {
   state: ModuleListState;
 }): string {
   const parts = [
+    "year" in m ? schoolYearLabel(m.year) : null,
     m.ycode,
     m.schoolName ?? "École non renseignée",
     m.level,

@@ -39,6 +39,10 @@ describe("neighborId", () => {
 });
 
 describe("shouldAutosave", () => {
+  it("attend le retour du réseau", () => {
+    expect(shouldAutosave({ dirty: true, pending: false, ready: true, online: false })).toBe(false);
+    expect(shouldAutosave({ dirty: true, pending: false, ready: true, online: true })).toBe(true);
+  });
   it("seulement si modifié, pas en cours d'enregistrement et enregistrable", () => {
     expect(shouldAutosave({ dirty: true, pending: false, ready: true })).toBe(true);
     expect(shouldAutosave({ dirty: false, pending: false, ready: true })).toBe(false);

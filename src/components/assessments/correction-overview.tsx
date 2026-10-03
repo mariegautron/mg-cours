@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -125,7 +126,13 @@ export function CorrectionOverview({
             </div>
           ) : null}
 
-          {rows.length === 0 ? (
+          {overview.rows.length === 0 ? (
+            <EmptyState
+              compact
+              title="Aucun rendu reçu"
+              description="Tu peux enregistrer un rendu à la main dès qu’il arrive."
+            />
+          ) : rows.length === 0 ? (
             <p className="text-muted-foreground text-sm">Aucune copie dans cette liste.</p>
           ) : (
             <div className="relative overflow-x-auto">

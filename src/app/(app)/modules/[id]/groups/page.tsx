@@ -54,8 +54,11 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           <EmptyState
             compact
             title="Pas encore de groupes"
-            description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes."
-            actions={[{ label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` }]}
+            description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes. Il faut des étudiant·es dans le module pour former des groupes."
+            actions={[
+              { label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` },
+              { label: "Ajouter les étudiant·es", href: "/students/import" },
+            ]}
           />
         ) : (
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
