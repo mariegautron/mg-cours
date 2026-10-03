@@ -68,6 +68,9 @@ export default async function ModuleAssessmentsPage({
           <Button asChild size="sm" variant="secondary">
             <Link href={`/modules/${id}/project`}>Projet fil rouge</Link>
           </Button>
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/modules/${id}/rattrapages`}>Rattrapages</Link>
+          </Button>
           <Button asChild size="sm" variant="outline">
             <Link href={`/modules/${id}/assessments/add`}>Ajouter une évaluation</Link>
           </Button>

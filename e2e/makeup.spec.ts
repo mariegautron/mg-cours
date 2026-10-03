@@ -69,6 +69,13 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(average(zoe)).toHaveText("15.00");
   await expect(average(leo)).toHaveText("0.00");
 
+  // US-148 : écran « Rattrapages » : Zoé, rattrapage noté, note remplacée.
+  await page.goto(`${setup.moduleUrl}/rattrapages`);
+  await expect(page.getByRole("heading", { name: /^Rattrapages —/, level: 1 })).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: zoe })).toContainText("Note remplacée");
+  await expect(page.getByText("0 à rattraper, 1 note remplacée.")).toBeVisible();
+  expect((await axe(page)).violations).toEqual([]);
+
   // Une seule évaluation « notée » côté YNOV : 1 note individuelle, pas 2.
   await page.goto(`${setup.moduleUrl}#assessments`);
   await expect(page.getByText(/2 évaluations \(1 avec des notes saisies\) · 1\//)).toBeVisible();
