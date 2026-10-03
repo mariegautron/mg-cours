@@ -34,6 +34,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      appreciation: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          owner_id: string
+          student_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          student_id: string
+          text?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          student_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appreciation_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciation_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment: {
         Row: {
           auto_validated_criterion_ids: string[]

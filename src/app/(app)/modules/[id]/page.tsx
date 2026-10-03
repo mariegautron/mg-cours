@@ -294,12 +294,17 @@ export default async function ModulePage({
           <h2 id="groups" className="scroll-mt-16 text-lg font-medium">
             Groupes ({groups.length})
           </h2>
-          <Button asChild size="sm" variant="secondary">
-            <Link href={`/modules/${mod.id}/groups/new`}>
-              <Plus aria-hidden />
-              Ajouter un groupe
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
+            </Button>
+            <Button asChild size="sm" variant="secondary">
+              <Link href={`/modules/${mod.id}/groups/new`}>
+                <Plus aria-hidden />
+                Ajouter un groupe
+              </Link>
+            </Button>
+          </div>
         </div>
         {groups.length === 0 ? (
           <EmptyState

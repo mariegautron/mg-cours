@@ -34,6 +34,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   assessments: { key: "assessments", label: "Évaluations" },
   project: { key: "assessments", label: "Projet fil rouge" },
   groups: { key: "students", label: "Groupes" },
+  appreciations: { key: "students", label: "Appréciations" },
   billing: { key: "invoice", label: "Facture" },
   edit: { key: null, label: "Modifier" },
 };
