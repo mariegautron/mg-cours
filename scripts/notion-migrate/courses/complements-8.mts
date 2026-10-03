@@ -76,43 +76,61 @@ async function corpora(imp: Importer, moduleId: string): Promise<SessionCorpus[]
   return out;
 }
 
+/**
+ * Rattachement attendus ↔ séances relu séance par séance (objectifs, livrables et ressources de
+ * chaque séance), par YCODE : { position de l'attendu : [positions des séances] }.
+ * Le recoupement automatique de mots donnait des faux amis (« utilisateurs », « accessibilité »).
+ */
+const EXPECTATION_MAP: Record<string, Record<number, number[]>> = {
+  // Gestion d'un projet IT. 10 (maintenance) : aucune séance ne la traite : non rattaché.
+  A2526_0172: {
+    1: [4],
+    2: [2, 3],
+    3: [2],
+    4: [1],
+    5: [2],
+    6: [4, 6],
+    7: [4, 5],
+    8: [4],
+    9: [5, 8],
+  },
+  // B2 Accessibilité. 5 (compatibilité navigateurs, appareils) : non traité : non rattaché.
+  A2526_0121: {
+    1: [1],
+    2: [1, 4],
+    3: [2, 3, 4],
+    4: [4],
+    6: [2, 3],
+  },
+};
+
 async function expectationLinks(imp: Importer, mod: Record<string, unknown>) {
+  const map = EXPECTATION_MAP[String(mod.ycode)];
   const expectations = (
     await select(imp, "module_expectation", "id, label, position", { module_id: mod.id })
   ).sort((a, b) => Number(a.position) - Number(b.position));
-  if (!expectations.length) return;
-  const sessions = await corpora(imp, String(mod.id));
+  if (!map || !expectations.length) return;
+  const courses = await select(imp, "course", "id, position, title", { module_id: mod.id });
   const existing = await select(imp, "course_expectation", "course_id, expectation_id", {});
   const label = `${String(mod.name)} (${String(mod.year)})`;
-  let unmatched = 0;
+  const loose: string[] = [];
   for (const e of expectations) {
-    const words = stems(String(e.label));
-    const scored = sessions
-      .map((s) => ({ s, hits: overlap(words, s.stems) }))
-      .filter((x) => x.hits.length > 0)
-      .sort((a, b) => b.hits.length - a.hits.length || a.s.position - b.s.position);
-    if (!scored.length) {
-      unmatched++;
-      continue;
-    }
-    // Séances dont le recoupement atteint au moins la moitié du meilleur, 3 au plus.
-    const best = scored[0].hits.length;
-    // Au moins 2 mots en commun (1 si l'attendu n'en compte qu'un), pour éviter les faux amis.
-    const min = Math.max(Math.min(2, words.size), Math.ceil(best / 2));
-    const kept = scored.filter((x) => x.hits.length >= min).slice(0, 3);
-    for (const { s, hits } of kept) {
-      if (existing.some((x) => x.expectation_id === e.id && x.course_id === s.id)) continue;
+    const positions = map[Number(e.position)] ?? [];
+    if (!positions.length) loose.push(String(e.position));
+    for (const n of positions) {
+      const c = courses.find((x) => Number(x.position) === n);
+      if (!c || existing.some((x) => x.expectation_id === e.id && x.course_id === c.id)) continue;
       await imp.link(
         "course_expectation",
-        { course_id: s.id, expectation_id: e.id },
+        { course_id: c.id, expectation_id: e.id },
         "course_id,expectation_id",
-        `${label} › « ${String(e.label).slice(0, 50)} » ↔ séance ${s.position} « ${s.title.slice(0, 40)} » [${hits.join(", ")}]`,
+        `${label} › attendu ${String(e.position)} « ${String(e.label).slice(0, 50)} » ↔ séance ${n} « ${String(c.title).slice(0, 45)} »`,
       );
     }
   }
-  if (unmatched)
+  if (loose.length)
     imp.warnings.push(
-      `${label} : ${unmatched} attendu(s) sans séance évidente (à rattacher dans l'application).`,
+      `${label} : attendu(s) ${loose.join(", ")} sans séance qui les traite : non rattaché(s).`,
     );
 }
 
@@ -177,6 +195,6 @@ export async function migrate({ imp }: CourseContext): Promise<void> {
     }
   }
   imp.warnings.push(
-    "Rattachements attendus ↔ séances calculés par recoupement de mots : relire la liste ; M2 déjà rattaché par construction.",
+    "Rattachements attendus ↔ séances relus à la main d'après les objectifs et livrables de chaque séance : à valider ; M2 déjà rattaché par construction.",
   );
 }
