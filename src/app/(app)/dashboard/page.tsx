@@ -1,24 +1,38 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  BookMarked,
   CalendarCheck,
-  CalendarDays,
+  ClipboardCheck,
   ListChecks,
   NotebookPen,
+  PenLine,
   Play,
-  Receipt,
-  TimerReset,
+  Users,
 } from "lucide-react";
 
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { Pill } from "@/components/dashboard/pill";
 import { TodayPrep } from "@/components/dashboard/today-prep";
+import { WeekCard } from "@/components/dashboard/week-card";
+import {
+  listCourseProgress,
+  loadCourseAssessments,
+  loadFocusKpis,
+  loadPreviousSession,
+} from "@/lib/dashboard/overview-queries";
+import {
+  dayLine,
+  dayTile,
+  meanLabel,
+  percent,
+  progressLabel,
+  untilLabel,
+} from "@/lib/dashboard/overview";
 import { CopyMessageButton } from "@/components/projects/copy-message-button";
 import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
 import { copyText, dueToday } from "@/lib/projects/surprises";
 import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   getSessionPrep,
   listCoursesAfter,
@@ -29,81 +43,48 @@ import {
 import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
 import { formatSessionDay, nextSession, todaySessions } from "@/lib/dashboard/today";
-import { weekDays, weekRange } from "@/lib/dashboard/week";
+import { daysBetween, weekDays, weekRange } from "@/lib/dashboard/week";
 import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
 import { getProfile } from "@/lib/settings/queries";
-import {
-  alertMascotMood,
-  othersLabel,
-  outlineAlerts,
-  outlineAlertSummary,
-  type OutlineAlert,
-} from "@/lib/ynov/trame";
+import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
-function StatCard({
-  title,
-  icon,
-  chip,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  chip: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      aria-label={title}
-      className="bg-card animate-pop-in relative overflow-hidden rounded-2xl border p-5 transition-transform hover:-translate-y-0.5"
-    >
-      <div className="mb-3 flex items-center gap-3">
-        <span className={`flex size-9 items-center justify-center rounded-xl ${chip}`}>{icon}</span>
-        <h2 className="text-base font-semibold">{title}</h2>
-      </div>
-      {children}
-    </section>
-  );
-}
+const BTN =
+  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
 
-/** En retard et J-7 : rouge ; J-15 : contour, libellé « à préparer » (pas seulement la couleur). */
-function AlertBadge({ alert }: { alert: OutlineAlert<unknown> }) {
-  if (alert.level === "overdue") {
-    return <Badge variant="destructive">En retard de {Math.abs(alert.daysUntilDue)} j</Badge>;
-  }
-  if (alert.level === "urgent") {
-    return <Badge variant="destructive">Urgent · J-{alert.daysUntilDue}</Badge>;
-  }
-  return <Badge variant="outline">À préparer · J-{alert.daysUntilDue}</Badge>;
-}
+const TODO_TONES = ["bg-primary/20 text-primary", "bg-sun/20 text-sun", "bg-mint/20 text-mint"];
 
 export default async function DashboardPage() {
   const today = todayInParis();
   const week = weekRange(today);
-  const [modules, billing, profile, coursesToday, coursesAfter, coursesWeek, resumeCandidates] =
-    await Promise.all([
-      listModules(),
-      listBillingOverview(),
-      getProfile(),
-      listCoursesOn(today),
-      listCoursesAfter(today),
-      listCoursesBetween(week.from, week.to),
-      listResumeCandidates(),
-    ]);
+  const [
+    modules,
+    billing,
+    profile,
+    coursesToday,
+    coursesAfter,
+    coursesWeek,
+    resumeCandidates,
+    progress,
+  ] = await Promise.all([
+    listModules(),
+    listBillingOverview(),
+    getProfile(),
+    listCoursesOn(today),
+    listCoursesAfter(today),
+    listCoursesBetween(week.from, week.to),
+    listResumeCandidates(),
+    listCourseProgress(),
+  ]);
   const resume = pickResume(resumeCandidates);
   const sessions = todaySessions(coursesToday, today);
-  // Sans cours aujourd'hui, la carte dit quand est la suite (jamais de silence : « ça a chargé ? »).
   const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
-  const toInvoice = billing.filter((b) => b.kind === "ready");
-  const toSend = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "ready");
-  const toCollect = billing.filter((b) => b.kind === "invoiced" && b.invoice.status === "sent");
   const alerts = outlineAlerts(modules);
   const summary = outlineAlertSummary(alerts);
-
   const firstName = profile?.legal_name?.split(" ")[0];
 
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
@@ -140,328 +121,390 @@ export default async function DashboardPage() {
     today,
     coursesWeek.filter((c) => c.module && !c.module.archived_at),
   );
+  const doneIds = new Set(
+    coursesWeek.filter((c) => c.session_date && c.session_date < today).map((c) => c.id),
+  );
+  const tiles = days.map((d) => dayTile(d, today, (c) => doneIds.has(c.id)));
+  const hrefs = days.map((d) =>
+    d.courses[0]?.module
+      ? `/modules/${d.courses[0].module.id}/courses/${d.courses[0].id}/edit`
+      : null,
+  );
+  const activeModules = modules.filter((m) => !m.archived_at);
 
-  return (
-    <div className="space-y-8">
-      {sessions.length ? (
-        <section aria-labelledby="today" className="bg-card halo space-y-3 rounded-2xl border p-5">
-          <div className="flex items-center gap-3">
-            <span className="bg-primary/15 text-primary flex size-9 items-center justify-center rounded-xl">
-              <CalendarCheck aria-hidden className="size-5" />
-            </span>
-            <h2 id="today" className="text-base font-semibold">
-              Aujourd’hui
-            </h2>
-          </div>
-          <ul className="divide-y">
-            {sessions.map((c, i) => (
-              <li
-                key={c.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div>
-                  <p className="text-muted-foreground text-sm">
-                    {formatTimeRange(c.start_time, c.end_time)
-                      ? `${formatTimeRange(c.start_time, c.end_time)} · `
-                      : ""}
-                    {c.module.name}
-                  </p>
-                  <p className="font-heading text-lg font-semibold">{c.title}</p>
-                  <p className="text-muted-foreground text-sm">
-                    Séance {preps[i].number} sur {preps[i].total}
-                    {preps[i].objective ? ` · Objectif : ${preps[i].objective}` : ""}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild>
-                    <Link href={`/present/modules/${c.module.id}/courses/${c.id}`}>
-                      <Play aria-hidden />
-                      Faire cours<span className="sr-only"> : {c.title}</span>
-                    </Link>
-                  </Button>
-                  <Button asChild variant="secondary">
-                    <Link href={`/modules/${c.module.id}/courses/${c.id}/notebook`}>
-                      <NotebookPen aria-hidden />
-                      Carnet de séance<span className="sr-only"> : {c.title}</span>
-                    </Link>
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : (
-        <section aria-labelledby="today" className="bg-card space-y-3 rounded-2xl border p-5">
-          <div className="flex items-center gap-3">
-            <span className="bg-primary/15 text-primary flex size-9 items-center justify-center rounded-xl">
-              <CalendarCheck aria-hidden className="size-5" />
-            </span>
-            <h2 id="today" className="text-base font-semibold">
-              Aujourd’hui
-            </h2>
-          </div>
-          <p>Pas de cours aujourd’hui.</p>
-          {upcoming ? (
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-primary text-sm font-medium">Prochain cours</p>
-                <p className="font-heading text-2xl font-semibold">
-                  Séance {upcoming.position} — {upcoming.title}
-                </p>
-                <p className="text-muted-foreground">
-                  {upcoming.module.name} · {formatSessionDay(upcoming.session_date!)}
-                  {formatTimeRange(upcoming.start_time, upcoming.end_time)
-                    ? ` · ${formatTimeRange(upcoming.start_time, upcoming.end_time)}`
-                    : ""}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild>
-                  <Link href={`/modules/${upcoming.module.id}/courses/${upcoming.id}/edit`}>
-                    Préparer<span className="sr-only"> : {upcoming.title}</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary">
-                  <Link href={`/modules/${upcoming.module.id}`}>Voir le module</Link>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Aucune séance datée n’est à venir.</p>
-          )}
-        </section>
-      )}
+  // Module « du moment » : celui de la séance du jour, sinon du prochain cours, sinon le premier actif.
+  const focusFrom = sessions[0]?.module ?? upcoming?.module ?? activeModules[0] ?? null;
+  const focusName = focusFrom && "name" in focusFrom ? focusFrom.name : "";
+  const focus = focusFrom ? await loadFocusKpis(focusFrom.id, focusName) : null;
+  const hero = sessions[0] ?? null;
+  const [previous, heroAssessments] = hero
+    ? await Promise.all([
+        loadPreviousSession(hero.module.id, hero.id),
+        loadCourseAssessments(hero.module.id, hero.id),
+      ])
+    : [null, []];
+  const dayText = formatSessionDay(today);
+  const nextUntil = upcoming ? daysBetween(today, upcoming.session_date!) : null;
 
-      {surprises.length ? (
-        <section aria-labelledby="surprises" className="bg-card space-y-3 rounded-2xl border p-5">
-          <h2 id="surprises" className="font-heading text-lg font-semibold">
-            Imprévu{surprises.length > 1 ? "s" : ""} à envoyer
-          </h2>
-          <ul className="space-y-3">
-            {surprises.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium">Imprévu à envoyer : {s.title}</p>
-                  <p className="text-muted-foreground text-sm">
-                    <Link
-                      href={`/modules/${s.moduleId}/project`}
-                      className="underline underline-offset-2"
-                    >
-                      {s.moduleName}
-                    </Link>
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <CopyMessageButton text={copyText(s)} label={s.title} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {sessions.map((c, i) => (
-        <TodayPrep
-          key={c.id}
-          prep={preps[i]}
-          moduleId={c.module.id}
-          courseId={c.id}
-          title={c.title}
+  const todoCard = (
+    <section aria-labelledby="todo" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <h2 id="todo" className="font-heading text-xl font-bold">
+        À faire
+      </h2>
+      <p className="text-muted-foreground mb-1 text-sm">Trois choses, par urgence.</p>
+      {todos.length === 0 ? (
+        <EmptyState
+          compact
+          title="Rien d’urgent"
+          description="Tout est à jour. Profites-en pour préparer la suite."
         />
-      ))}
+      ) : (
+        <ol>
+          {todos.map((t, i) => (
+            <li
+              key={t.key}
+              className="flex min-h-16 items-center justify-between gap-3 border-t py-3 first:border-t-0"
+            >
+              <div className="flex min-w-0 items-center gap-3.5">
+                <span
+                  aria-hidden
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-full font-extrabold ${TODO_TONES[i % 3]}`}
+                >
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="font-semibold">{t.title}</p>
+                  <p className="text-muted-foreground text-sm">{t.detail}</p>
+                </div>
+              </div>
+              <Link href={t.href} className={`${BTN} shrink-0`}>
+                Ouvrir<span className="sr-only"> : {t.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
 
-      {resume ? (
-        <section
-          aria-labelledby="resume"
-          className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-5"
+  const surprisesCard = surprises.length ? (
+    <section aria-labelledby="surprises" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <h2 id="surprises" className="font-heading mb-2 text-xl font-bold">
+        Imprévu{surprises.length > 1 ? "s" : ""} à envoyer
+      </h2>
+      <ul className="space-y-3">
+        {surprises.map((s) => (
+          <li key={s.id} className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold">Imprévu à envoyer : {s.title}</p>
+              <p className="text-muted-foreground text-sm">
+                <Link
+                  href={`/modules/${s.moduleId}/project`}
+                  className="underline underline-offset-2"
+                >
+                  {s.moduleName}
+                </Link>
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <CopyMessageButton text={copyText(s)} label={s.title} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
+
+  const resumeCard = resume ? (
+    <section aria-labelledby="resume" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden
+          className="bg-coral/15 text-coral flex size-11 shrink-0 items-center justify-center rounded-2xl"
         >
-          <div>
-            <h2 id="resume" className="text-primary text-sm font-medium">
-              Reprendre là où tu t’étais arrêtée
+          <PenLine className="size-5" />
+        </span>
+        <div>
+          <h2 id="resume" className="font-heading text-lg font-bold">
+            Reprendre
+          </h2>
+          <p className="font-semibold">{resume.title}</p>
+          <p className="text-muted-foreground text-sm">
+            {RESUME_LABELS[resume.kind].prefix}
+            {resume.context ? ` · ${resume.context}` : ""} · modifié {formatWhen(resume.updatedAt)}
+          </p>
+        </div>
+      </div>
+      <Link href={resume.href} className={`${BTN} mt-3`}>
+        Reprendre<span className="sr-only"> : {resume.title}</span>
+      </Link>
+    </section>
+  ) : null;
+
+  const modulesCard = (
+    <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
+        Tes modules en cours
+      </h2>
+      {activeModules.length === 0 ? (
+        <p className="text-muted-foreground mb-2 text-sm">Aucun module actif pour l’instant.</p>
+      ) : (
+        <ul className="mb-2 space-y-2">
+          {activeModules.slice(0, 3).map((m) => {
+            const p = progress.get(m.id);
+            return (
+              <li key={m.id}>
+                <Link
+                  href={`/modules/${m.id}`}
+                  className="font-semibold underline-offset-2 hover:underline"
+                >
+                  {m.name}
+                </Link>
+                {p && p.total ? (
+                  <p className="text-muted-foreground text-sm">{progressLabel(p.done, p.total)}</p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <Link href="/modules" className={BTN}>
+        Voir tous les modules
+      </Link>
+    </section>
+  );
+
+  const weekCard = (
+    <WeekCard
+      title={nextWeek ? "La semaine prochaine" : "Cette semaine"}
+      tiles={tiles}
+      hrefs={hrefs}
+    />
+  );
+
+  if (hero) {
+    const prep = preps[0];
+    const range = formatTimeRange(hero.start_time, hero.end_time);
+    return (
+      <div className="space-y-5">
+        <header>
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            Aujourd’hui · {dayText}
+          </h1>
+          <p className="text-muted-foreground mt-1.5">
+            Ta journée en un coup d’œil : la séance en cours, ce qu’il faut savoir avant d’entrer,
+            ce qui vient après.
+          </p>
+        </header>
+
+        <section
+          aria-labelledby="seance"
+          className="bg-primary/15 border-primary/60 flex flex-wrap items-center justify-between gap-6 rounded-3xl border p-6 sm:p-7"
+        >
+          <div className="min-w-0">
+            <p className="text-primary mb-1.5 text-[0.8rem] font-bold tracking-wider uppercase">
+              {range ? `${range} · ` : ""}Séance {prep.number} sur {prep.total} · {hero.module.name}
+            </p>
+            <h2 id="seance" className="font-heading text-3xl font-bold">
+              {hero.title}
             </h2>
-            <p className="font-heading text-lg font-semibold">{resume.title}</p>
-            <p className="text-muted-foreground text-sm">
-              {RESUME_LABELS[resume.kind].prefix}
-              {resume.context ? ` · ${resume.context}` : ""} · modifié{" "}
-              {formatWhen(resume.updatedAt)}
+            <p className="mt-2 flex flex-wrap gap-1.5">
+              {heroAssessments.map((a) => (
+                <Pill key={a.id} tone="key">
+                  Aujourd’hui : {a.title}
+                </Pill>
+              ))}
+              <Pill>
+                {focus?.groupNames.length ? `${focus.groupNames.join(", ")} · ` : ""}
+                {prep.studentCount} étudiant·e{prep.studentCount > 1 ? "s" : ""}
+              </Pill>
             </p>
           </div>
-          <Button asChild>
-            <Link href={resume.href}>
-              Reprendre<span className="sr-only"> : {resume.title}</span>
+          <div className="flex w-full flex-col gap-2.5 sm:w-72">
+            <Link
+              href={`/present/modules/${hero.module.id}/courses/${hero.id}`}
+              className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <Play aria-hidden className="size-4" />
+              Commencer le cours<span className="sr-only"> : {hero.title}</span>
+              <span aria-hidden> →</span>
             </Link>
-          </Button>
+            <Link
+              href={`/modules/${hero.module.id}/courses/${hero.id}/notebook`}
+              className={`${BTN} min-h-12`}
+            >
+              <NotebookPen aria-hidden className="mr-2 size-4" />
+              Ouvrir mon carnet<span className="sr-only"> : {hero.title}</span>
+            </Link>
+          </div>
         </section>
-      ) : null}
 
-      <header className="flex flex-wrap items-center justify-between gap-3">
+        <TodayPrep
+          prep={prep}
+          moduleId={hero.module.id}
+          courseId={hero.id}
+          title={hero.title}
+          previous={previous}
+          observations={focus?.students.observations ?? 0}
+        />
+
+        {surprisesCard}
+
+        {sessions.length > 1 ? (
+          <section aria-labelledby="after" className="bg-card rounded-3xl border p-5 shadow-sm">
+            <h2 id="after" className="font-heading text-lg font-bold">
+              Ensuite aujourd’hui
+            </h2>
+            <ul>
+              {sessions.slice(1).map((c, i) => {
+                const range2 = formatTimeRange(c.start_time, c.end_time);
+                return (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center justify-between gap-4 border-t py-3 first:border-t-0"
+                  >
+                    <p className="text-muted-foreground">
+                      {range2 ? `${range2} · ` : ""}Séance {preps[i + 1].number} · {c.title} ·{" "}
+                      {c.module.name}
+                    </p>
+                    <Link href={`/modules/${c.module.id}/courses/${c.id}/edit`} className={BTN}>
+                      Ouvrir la séance<span className="sr-only"> : {c.title}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
+
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
+          <div className="min-w-0 space-y-4">{todoCard}</div>
+          <div className="min-w-0 space-y-4">
+            {weekCard}
+            {resumeCard}
+            {modulesCard}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const kpi = focus;
+  return (
+    <div className="space-y-5">
+      <header className="flex flex-wrap items-center gap-3.5">
+        <Mascot mood={alertMascotMood(summary)} className="size-14" />
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
             {firstName ? `Bonjour ${firstName}` : "Bonjour"}
           </h1>
           <p className="text-muted-foreground">
-            {formatSessionDay(today)} ·{" "}
-            {sessions.length
-              ? `${sessions.length} séance${sessions.length > 1 ? "s" : ""} aujourd’hui`
-              : "pas de cours aujourd’hui"}
+            {dayLine(
+              dayText,
+              0,
+              upcoming && nextUntil ? { daysUntil: nextUntil, position: upcoming.position } : null,
+            )}
           </p>
         </div>
-        <Mascot mood={alertMascotMood(summary)} className="size-14" />
       </header>
 
-      <section aria-labelledby="todo" className="bg-card space-y-3 rounded-2xl border p-5">
-        <div className="flex items-center gap-3">
-          <span className="bg-coral/15 text-coral flex size-9 items-center justify-center rounded-xl">
-            <ListChecks aria-hidden className="size-5" />
-          </span>
-          <div>
-            <h2 id="todo" className="text-base font-semibold">
-              À faire
-            </h2>
-            <p className="text-muted-foreground text-sm">Trois choses au plus, par urgence.</p>
-          </div>
-        </div>
-        {todos.length === 0 ? (
-          <EmptyState
-            compact
-            title="Rien d’urgent"
-            description="Tout est à jour. Profites-en pour préparer la suite."
+      {kpi ? (
+        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            tone="violet"
+            icon={<CalendarCheck aria-hidden className="size-5" />}
+            label="Séances faites"
+            value={`${kpi.courses.done} / ${kpi.courses.total}`}
+            percent={percent(kpi.courses.done, kpi.courses.total)}
+            barLabel={`${percent(kpi.courses.done, kpi.courses.total)} % des séances`}
+            detail={kpi.moduleName}
           />
-        ) : (
-          <ol className="divide-y">
-            {todos.map((t, i) => (
-              <li
-                key={t.key}
-                className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="flex items-start gap-3">
-                  <span
-                    aria-hidden
-                    className="bg-primary/15 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-                  >
-                    {i + 1}
-                  </span>
-                  <div>
-                    <p className="font-medium">{t.title}</p>
-                    <p className="text-muted-foreground text-sm">{t.detail}</p>
-                  </div>
-                </div>
-                <Button asChild variant="secondary">
-                  <Link href={t.href}>
-                    Ouvrir<span className="sr-only"> : {t.title}</span>
-                  </Link>
-                </Button>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <section aria-labelledby="week" className="bg-card space-y-3 rounded-2xl border p-5">
-        <div className="flex items-center gap-3">
-          <span className="bg-sky/15 text-sky flex size-9 items-center justify-center rounded-xl">
-            <CalendarDays aria-hidden className="size-5" />
-          </span>
-          <h2 id="week" className="text-base font-semibold">
-            {nextWeek ? "La semaine prochaine" : "Cette semaine"}
-          </h2>
+          <KpiCard
+            tone="mint"
+            icon={<ClipboardCheck aria-hidden className="size-5" />}
+            label={kpi.graded ? `${kpi.graded.title} corrigé` : "Évaluations corrigées"}
+            value={kpi.graded ? `${kpi.graded.done} / ${kpi.graded.expected}` : "—"}
+            percent={kpi.graded ? percent(kpi.graded.done, kpi.graded.expected) : 0}
+            barLabel={kpi.graded ? "Copies corrigées" : "Aucune évaluation corrigée"}
+            detail={
+              kpi.graded && meanLabel(kpi.graded.valuesOn20)
+                ? `moyenne de la classe ${meanLabel(kpi.graded.valuesOn20)}`
+                : "pas encore de note"
+            }
+          />
+          <KpiCard
+            tone="sky"
+            icon={<Users aria-hidden className="size-5" />}
+            label="Étudiant·es suivis"
+            value={String(kpi.students.total)}
+            percent={percent(kpi.students.withPhoto, kpi.students.total)}
+            barLabel={`${kpi.students.withPhoto} photo${kpi.students.withPhoto > 1 ? "s" : ""} sur ${kpi.students.total}`}
+            detail={`${kpi.students.observations} observation${kpi.students.observations > 1 ? "s" : ""} notée${kpi.students.observations > 1 ? "s" : ""}`}
+          />
+          <KpiCard
+            tone="sun"
+            icon={<ListChecks aria-hidden className="size-5" />}
+            label="À faire"
+            value={String(todos.length)}
+            percent={percent(todos.length, 3)}
+            barLabel={`${todos.length} sur 3 au plus`}
+            detail={todos.length ? "par urgence, ci-dessous" : "rien d’urgent"}
+          />
         </div>
-        <ol className="grid gap-2 sm:grid-cols-5">
-          {days.map((d) => (
-            <li
-              key={d.date}
-              aria-current={d.isToday ? "date" : undefined}
-              className={`rounded-xl border p-3 ${d.isToday ? "border-primary bg-primary/10" : ""}`}
+      ) : null}
+
+      <div className="flex flex-wrap items-start gap-4.5 lg:flex-nowrap">
+        <div className="min-w-0 flex-1 basis-full space-y-3.5 lg:basis-0">
+          {upcoming ? (
+            <section
+              aria-labelledby="next"
+              className="bg-card border-l-primary rounded-3xl border border-l-[6px] p-6 shadow-sm"
             >
-              <p className="text-sm font-semibold">
-                {d.label} {d.day}
-                {d.isToday ? <span className="text-primary"> · aujourd’hui</span> : null}
+              <p className="mb-1.5 flex flex-wrap items-center gap-2.5">
+                <Pill tone="wip">{untilLabel(today, upcoming.session_date!)}</Pill>
+                <span className="text-muted-foreground text-sm">
+                  {formatSessionDay(upcoming.session_date!)}
+                  {formatTimeRange(upcoming.start_time, upcoming.end_time)
+                    ? ` · ${formatTimeRange(upcoming.start_time, upcoming.end_time)}`
+                    : ""}
+                </span>
               </p>
-              {d.courses.length ? (
-                <ul className="mt-1 space-y-1 text-sm">
-                  {d.courses.map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        href={`/modules/${c.module!.id}/courses/${c.id}/edit`}
-                        className="focus-visible:ring-ring rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
-                      >
-                        Séance {c.position}
-                      </Link>
-                      <span className="text-muted-foreground"> · {c.module!.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground mt-1 text-sm">Pas de séance</p>
-              )}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Modules actifs"
-          chip="bg-coral/15 text-coral"
-          icon={<BookMarked aria-hidden className="size-5" />}
-        >
-          <p className="font-heading text-4xl font-bold">{modules.length}</p>
-          <Link href="/modules" className="text-sm underline underline-offset-2">
-            Voir les modules
-          </Link>
-        </StatCard>
-
-        <StatCard
-          title="Progressions pédagogiques à envoyer"
-          chip="bg-sun/15 text-sun"
-          icon={<TimerReset aria-hidden className="size-5" />}
-        >
-          {alerts.length === 0 ? (
-            <EmptyState
-              compact
-              title="Rien d’urgent"
-              description="Aucune progression à envoyer dans les 15 prochains jours."
-            />
+              <h2 id="next" className="font-heading text-2xl font-bold sm:text-3xl">
+                Séance {upcoming.position} · {upcoming.title}
+              </h2>
+              <p className="text-muted-foreground mt-1 mb-4">
+                {upcoming.module.name}
+                {focus?.groupNames.length ? ` · ${focus.groupNames.join(", ")}` : ""}
+                {focus ? ` · ${focus.students.total} étudiant·es` : ""}
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                <Link
+                  href={`/modules/${upcoming.module.id}/courses/${upcoming.id}/edit`}
+                  className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  Préparer la séance {upcoming.position}
+                </Link>
+                <Link href={`/modules/${upcoming.module.id}`} className={`${BTN} min-h-12`}>
+                  Voir le module
+                </Link>
+              </div>
+            </section>
           ) : (
-            <ul className="space-y-2 text-sm">
-              {alerts.slice(0, 5).map((a) => (
-                <li key={a.module.id} className="flex flex-wrap items-center gap-2">
-                  <Link href={`/modules/${a.module.id}`} className="underline underline-offset-2">
-                    {a.module.name}
-                  </Link>
-                  <AlertBadge alert={a} />
-                </li>
-              ))}
-              {alerts.length > 5 ? (
-                <li className="text-muted-foreground">+ {othersLabel(alerts.length - 5)}</li>
-              ) : null}
-            </ul>
+            <section aria-labelledby="next" className="bg-card rounded-3xl border p-6 shadow-sm">
+              <h2 id="next" className="font-heading text-xl font-bold">
+                Pas de cours aujourd’hui
+              </h2>
+              <p className="text-muted-foreground mt-1">Aucune séance datée n’est à venir.</p>
+            </section>
           )}
-        </StatCard>
-
-        <StatCard
-          title="Facturation"
-          chip="bg-mint/15 text-mint"
-          icon={<Receipt aria-hidden className="size-5" />}
-        >
-          <dl className="space-y-1 text-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">Prêts à facturer</dt>
-              <dd className="font-heading text-xl font-bold">{toInvoice.length}</dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">À envoyer</dt>
-              <dd className="font-heading text-xl font-bold">{toSend.length}</dd>
-            </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">Paiements attendus</dt>
-              <dd className="font-heading text-xl font-bold">{toCollect.length}</dd>
-            </div>
-          </dl>
-          <Link href="/billing" className="mt-2 inline-block text-sm underline underline-offset-2">
-            Voir la facturation
-          </Link>
-        </StatCard>
+          {todoCard}
+          {surprisesCard}
+        </div>
+        <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">
+          {weekCard}
+          {resumeCard}
+          {modulesCard}
+        </div>
       </div>
     </div>
   );

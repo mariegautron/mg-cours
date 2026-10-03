@@ -17,7 +17,7 @@ const isoIn = (days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-test("US-74 : une progression à J-15 est signalée, jamais « Tout est en ordre »", async ({
+test("US-74 : « À faire » liste au plus trois choses, jamais « Tout est en ordre » à tort", async ({
   page,
 }) => {
   await login(page);
@@ -33,15 +33,10 @@ test("US-74 : une progression à J-15 est signalée, jamais « Tout est en ordre
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
   await page.goto("/dashboard");
-  const card = page.getByRole("region", { name: "Progressions pédagogiques à envoyer" });
-  // La carte n'affiche que les 5 plus pressantes : sur une base de test chargée, le module peut
-  // être résumé dans « + N autres ». Le tri et les niveaux sont couverts par Vitest.
-  const item = card.getByRole("listitem").filter({ hasText: name });
-  if (await item.count()) {
-    await expect(item.getByText(/^À préparer · J-1[01]$/)).toBeVisible();
-  } else {
-    await expect(card.getByText(/\d+ autres?/)).toBeVisible();
-  }
+  const todo = page.getByRole("region", { name: "À faire" });
+  await expect(todo).toBeVisible();
+  // Trois choses au plus ; le tri et les niveaux d'urgence sont couverts par Vitest.
+  expect(await todo.getByRole("listitem").count()).toBeLessThanOrEqual(3);
   await expect(page.getByText(/Tout est en ordre/)).toHaveCount(0);
 
   const axe = await new AxeBuilder({ page })
@@ -63,7 +58,6 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   await page.getByLabel("Nombre d’heures total").fill("21");
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
-  const moduleId = page.url().split("/").pop();
 
   await openTab(page, /Séances/);
   await page.getByRole("link", { name: "Ajouter une séance" }).click();
@@ -75,34 +69,40 @@ test("US-63 : la séance du jour est accessible en un clic depuis le tableau de 
   await expect(page.getByText(`Séance du jour ${suffix}`).first()).toBeVisible();
 
   await page.goto("/dashboard");
-  const card = page.getByRole("region", { name: "Aujourd’hui" });
-  const item = card.getByRole("listitem").filter({ hasText: `Séance du jour ${suffix}` });
-  await expect(item.getByText(`14:00–16:00 · Module Jour J ${suffix}`)).toBeVisible();
-  await expect(item.getByRole("link", { name: /^Faire cours/ })).toHaveAttribute(
+  await expect(page.getByRole("heading", { name: /^Aujourd’hui · /, level: 1 })).toBeVisible();
+  // La séance est la grande carte (ou « Ensuite aujourd'hui » si d'autres séances sont plus tôt).
+  await expect(page.getByText(`Séance du jour ${suffix}`).first()).toBeVisible();
+  await expect(
+    page.getByText(new RegExp(`14:00–16:00 · .*Module Jour J ${suffix}`, "i")).first(),
+  ).toBeVisible();
+  const start = page.getByRole("link", { name: /^Commencer le cours/ }).first();
+  await expect(start).toHaveAttribute(
     "href",
-    new RegExp(`^/present/modules/${moduleId}/courses/[0-9a-f-]{36}$`),
+    new RegExp(`^/present/modules/[0-9a-f-]{36}/courses/[0-9a-f-]{36}$`),
   );
+  // Les trois cartes de la maquette.
+  for (const name of [
+    /Ce qu’on avait dit la dernière fois/,
+    /Prêt pour aujourd’hui/,
+    /Tes étudiant·es/,
+  ]) {
+    await expect(page.getByRole("region", { name }).first()).toBeVisible();
+  }
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
 
-  await item.getByRole("link", { name: /^Faire cours/ }).click();
+  await start.click();
   await page.waitForURL(/\/present\/modules\/.+\/courses\//);
 });
 
-test("la carte « Aujourd’hui » précède le bandeau d’accueil, avec ou sans cours", async ({
-  page,
-}) => {
+test("l'accueil dit toujours où on en est : séance du jour ou prochain cours", async ({ page }) => {
   await login(page);
-  const card = page.getByRole("heading", { name: "Aujourd’hui", level: 2 });
-  await expect(card).toBeVisible();
-  const [cardBox, titleBox] = await Promise.all([
-    card.boundingBox(),
-    page.getByRole("heading", { level: 1 }).boundingBox(),
-  ]);
-  expect(cardBox!.y).toBeLessThan(titleBox!.y);
-  // Jamais de silence : une phrase quand il n'y a pas cours, ou le bouton de la séance.
-  await expect(page.getByText(/Pas de cours aujourd’hui|Faire cours/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // Jamais de silence : le bouton de la séance du jour, ou la phrase « pas de cours aujourd'hui ».
+  await expect(
+    page.getByText(/pas de cours aujourd’hui|Commencer le cours/i).first(),
+  ).toBeVisible();
 });
