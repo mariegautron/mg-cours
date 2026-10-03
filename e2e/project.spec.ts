@@ -22,7 +22,13 @@ test("projet fil rouge : squelette depuis les notes exigées, compteur juste", a
 
   await page.goto(`${moduleUrl}/project`);
   await page.getByLabel("Titre du projet").fill("Refonte accessible");
-  await page.getByLabel("Brief (Markdown)").fill("## Objectif\n\nConcevoir un site accessible.");
+  await page.getByRole("button", { name: /Page blanche/ }).click();
+  await page.getByLabel("Titre de la section 1").fill("Objectif");
+  await page.getByLabel("Texte de la section 1").fill("Concevoir un site accessible.");
+  await page.getByRole("button", { name: "Ajouter une section" }).click();
+  await page.getByLabel("Titre de la section 2").fill("Phases");
+  await page.getByRole("button", { name: "Monter la section « Phases »" }).click();
+  await expect(page.getByLabel("Titre de la section 1")).toHaveValue("Phases");
   await page.getByLabel("Contexte client (Markdown)").fill("Une mutuelle fictive.");
   await page.getByRole("button", { name: "Créer le projet" }).click();
   await expect(page.getByRole("heading", { name: "Objectif" })).toBeVisible();

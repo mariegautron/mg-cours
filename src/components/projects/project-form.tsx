@@ -7,6 +7,7 @@ import { saveProject } from "@/app/(app)/modules/[id]/project/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BriefEditor } from "@/components/projects/brief-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { keepFormValues } from "@/lib/use-kept-form";
 
@@ -44,21 +45,7 @@ export function ProjectForm({
         <FieldError id="title" errors={fe.title} />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="briefMd">Brief (Markdown)</Label>
-        <p id="briefMd-hint" className="text-muted-foreground text-sm">
-          Objectif général, organisation, attendus : titres (#), listes (-), **gras**.
-        </p>
-        <Textarea
-          id="briefMd"
-          name="briefMd"
-          rows={10}
-          maxLength={20000}
-          defaultValue={project?.brief_md ?? ""}
-          aria-describedby={fe.briefMd ? "briefMd-hint briefMd-error" : "briefMd-hint"}
-        />
-        <FieldError id="briefMd" errors={fe.briefMd} />
-      </div>
+      <BriefEditor initial={project?.brief_md ?? ""} error={fe.briefMd} />
 
       <div className="space-y-2">
         <Label htmlFor="clientContextMd">Contexte client (Markdown)</Label>
