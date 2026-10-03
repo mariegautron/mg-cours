@@ -14,7 +14,8 @@ import { SurprisesEditor } from "@/components/projects/surprises-editor";
 import { listProjectSurprises } from "@/lib/projects/surprise-queries";
 import { sortSurprises } from "@/lib/projects/surprises";
 import { getModuleCourses } from "@/lib/modules/queries";
-import { getModuleProject } from "@/lib/projects/queries";
+import { ReuseProject } from "@/components/projects/reuse-project";
+import { getModuleProject, listReusableProjects } from "@/lib/projects/queries";
 import { getModule } from "@/lib/modules/queries";
 import {
   PROJECT_ROLE_LABELS,
@@ -36,6 +37,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   if (!mod) notFound();
 
   const project = await getModuleProject(id);
+  const reusable = project ? [] : await listReusableProjects(id);
   const [courses, surprises] = project
     ? await Promise.all([getModuleCourses(id), listProjectSurprises(project.id)])
     : [[], { available: true, items: [] }];
@@ -65,7 +67,8 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
         <h2 id="project-heading" className="text-lg font-medium">
           Le projet
         </h2>
-        <ProjectForm moduleId={mod.id} project={project} />
+        {project ? null : <ReuseProject moduleId={mod.id} projects={reusable} />}
+        <ProjectForm key={project?.id ?? "new"} moduleId={mod.id} project={project} />
         {project ? (
           <div className="space-y-4 rounded-lg border p-4">
             {project.brief_md ? (

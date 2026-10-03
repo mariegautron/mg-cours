@@ -68,3 +68,36 @@ export async function themeTitleByGroup(
   }
   return out;
 }
+
+export interface ReusableProject {
+  id: string;
+  title: string;
+  moduleId: string;
+  moduleName: string;
+  year: number;
+}
+
+/** Projets des autres modules (récents d'abord), pour « Partir d'un projet existant ». */
+export async function listReusableProjects(excludeModuleId: string): Promise<ReusableProject[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module_project")
+    .select("id, title, module:module_id(id, name, year)")
+    .neq("module_id", excludeModuleId);
+  return (
+    (data ?? []) as unknown as {
+      id: string;
+      title: string;
+      module: { id: string; name: string; year: number } | null;
+    }[]
+  )
+    .filter((p) => p.module)
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      moduleId: p.module!.id,
+      moduleName: p.module!.name,
+      year: p.module!.year,
+    }))
+    .sort((a, b) => b.year - a.year || a.moduleName.localeCompare(b.moduleName, "fr"));
+}
