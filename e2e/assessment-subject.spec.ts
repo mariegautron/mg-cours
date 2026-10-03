@@ -88,7 +88,7 @@ test("sujet lié à la séance : préparation, fichier en téléchargement forc�
   // Fiche : sujet complet, bouton « Présenter le sujet ».
   await page.goto(assessmentUrl);
   await expect(page.getByText("Prête", { exact: true })).toBeVisible();
-  await expect(page.getByText("Votre version corrigée.")).toBeVisible();
+  await expect(page.getByText("Votre version corrigée.").first()).toBeVisible();
   await expect(page.getByRole("link", { name: /Présenter le sujet/ })).toBeVisible();
   expect((await axe(page)).violations).toEqual([]);
 

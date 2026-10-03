@@ -24,7 +24,8 @@ test("préparer une évaluation : grille, cadre, correction ; ajouter une évalu
     );
 
   await page.goto(setup.assessmentUrl);
-  const gridCard = page.getByRole("region", { name: "Grille de correction" });
+  const gridCard = page.getByRole("region", { name: "Grille à paliers" });
+  await gridCard.getByText("Voir les critères et les paliers").click();
   await expect(gridCard.getByText("Structure")).toBeVisible();
   await expect(gridCard.getByText("Contenu")).toBeVisible();
   await expect(gridCard.getByText("10 points").first()).toBeVisible();
@@ -32,9 +33,16 @@ test("préparer une évaluation : grille, cadre, correction ; ajouter une évalu
   const frame = page.getByRole("region", { name: "Le cadre pour les étudiant·es" });
   await expect(frame.getByText("À écrire", { exact: true })).toBeVisible();
   await expect(frame.getByText("À construire", { exact: true })).toBeVisible();
-  const correction = page.getByRole("region", { name: "Pour la correction" });
-  await expect(correction.getByText("Toi seule")).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Utilisée dans 1 module/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Quelle épreuve ?" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Le jour J" })).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({
+      path: "docs/captures/evaluation-individuelle-prep.png",
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 1280, height: 1000 });
+  }
   await expect(page.getByRole("link", { name: /Mes phrases pour cette grille/ })).toBeVisible();
 
   for (const width of [1280, 320]) {

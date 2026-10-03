@@ -85,6 +85,7 @@ export function GradeForm({
   members,
   memberOverrides,
   theme = null,
+  subtitle = null,
   onStatus,
   register,
   onNavigate,
@@ -119,6 +120,8 @@ export function GradeForm({
   memberOverrides?: Record<string, MemberOverride>;
   /** Thème du projet fil rouge du groupe (US-89), rappelé pendant la correction. */
   theme?: string | null;
+  /** Sous le titre : « Rendu 4 sur 13 · 3 éléments reçus » (évaluation individuelle). */
+  subtitle?: string | null;
   onStatus?: (id: string, status: CopyStatus) => void;
   register?: (id: string, controls: CopyControls | null) => void;
   onNavigate?: (direction: -1 | 1) => void;
@@ -1142,40 +1145,47 @@ export function GradeForm({
     </section>
   );
 
+  // Bande « Rendu » (maquette IndCopie) : sur toute la largeur, avant les critères.
   const submissionsCard =
     submissions !== undefined ? (
       <section
         aria-label={`Rendu de ${title}`}
         className="bg-card space-y-2 rounded-3xl border p-4 text-sm shadow-sm"
       >
-        <h2 className="font-heading text-base font-bold">Rendu</h2>
-        <p>{submissionSummary(submissions.length)}</p>
-        {submissions.length > 0 ? (
-          <ul className="space-y-1.5">
-            {submissions.map((l) => (
-              <li key={l.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {l.title}
-                  <span className="text-muted-foreground"> · {l.detail}</span>
-                </span>
-                <Button asChild size="touch" variant="secondary">
-                  <a
-                    href={l.href}
-                    {...(l.kind === "link"
-                      ? { target: "_blank", rel: "noopener noreferrer" }
-                      : { download: true })}
-                  >
-                    Ouvrir
-                    <span className="sr-only">
-                      {" "}
-                      {l.title} de {title}
-                    </span>
-                  </a>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-heading text-base font-bold">Rendu</h2>
+          {submissions.length === 0 ? <span>{submissionSummary(0)}</span> : null}
+          {submissions.map((l) => (
+            <a
+              key={l.id}
+              href={l.href}
+              className="bg-muted/40 focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-3 font-medium focus-visible:ring-2 focus-visible:outline-none"
+              {...(l.kind === "link"
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : { download: true })}
+            >
+              <span className="sr-only">
+                Ouvrir {l.title} de {title}
+              </span>
+              <span>
+                {l.kind === "link" ? "Lien" : "Fichier"} · {l.title}
+              </span>
+              <span className="text-muted-foreground font-normal">{l.detail}</span>
+            </a>
+          ))}
+          {overviewHref ? (
+            <a
+              href={`${overviewHref.split("#")[0]}#rendus`}
+              className="text-primary inline-flex min-h-11 items-center font-semibold underline-offset-2 hover:underline"
+            >
+              Ajouter un fichier ou un lien (GitHub, Figma…)
+            </a>
+          ) : null}
+        </div>
+        <p className="text-muted-foreground text-xs">
+          Le rendu arrive de la personne (lien personnel) ou de toi : fichiers, ou liens GitHub,
+          Figma ou autre. Rien reçu ? Tu ajoutes ce que tu as.
+        </p>
       </section>
     ) : null;
 
@@ -1319,6 +1329,7 @@ export function GradeForm({
               {maxScore !== DEFAULT_MAX_SCORE ? ` (${toTwenty(grade.value, maxScore)}/20)` : ""}
             </p>
           ) : null}
+          {subtitle ? <p className="text-muted-foreground text-sm">{subtitle}</p> : null}
           {theme ? <p className="text-sm">Thème : {theme}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1373,111 +1384,114 @@ export function GradeForm({
           {hiddenMembers}
         </div>
       ) : (
-        <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap">
-          <div className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
-            {absent ? (
-              <>
-                <p className="bg-muted rounded-2xl p-3 text-sm">
-                  {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette copie.
-                </p>
-                {hiddenCriteria(null)}
-                {hiddenChecks(null)}
-                {hiddenAxisComments}
-              </>
-            ) : grid ? (
-              <>
-                <div
-                  className="flex flex-wrap items-center gap-2"
-                  role="group"
-                  aria-label="Affichage des critères"
-                >
-                  <Button
-                    type="button"
-                    variant={compact ? "outline" : "default"}
-                    aria-pressed={!compact}
-                    onClick={() => setCompact(false)}
+        <>
+          {submissionsCard}
+          <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap">
+            <div className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
+              {absent ? (
+                <>
+                  <p className="bg-muted rounded-2xl p-3 text-sm">
+                    {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette
+                    copie.
+                  </p>
+                  {hiddenCriteria(null)}
+                  {hiddenChecks(null)}
+                  {hiddenAxisComments}
+                </>
+              ) : grid ? (
+                <>
+                  <div
+                    className="flex flex-wrap items-center gap-2"
+                    role="group"
+                    aria-label="Affichage des critères"
                   >
-                    Un critère à la fois
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={compact ? "default" : "outline"}
-                    aria-pressed={compact}
-                    onClick={() => setCompact(true)}
-                  >
-                    Tous les critères d’un coup
-                  </Button>
-                </div>
-                {compact ? (
-                  <section className="bg-card rounded-3xl border p-4 shadow-sm">
-                    {compactView()}
-                  </section>
-                ) : step ? (
-                  <>
-                    <div role="group" aria-label="Critères" className="flex flex-wrap gap-2">
-                      {ordered.map((c) => {
-                        const pill = pointsPill(c);
-                        const on = c.id === step.id;
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            aria-current={on ? "step" : undefined}
-                            onClick={() => setStepId(c.id)}
-                            className={`focus-visible:ring-ring flex min-h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
-                          >
-                            {c.is_bonus ? "Bonus · " : ""}
-                            {c.label}
-                            <span
-                              className={`rounded-full border px-2 text-xs font-bold ${pill.tone === "ok" ? "border-mint/45 text-mint" : pill.tone === "wip" ? "border-sky/45 text-sky" : "border-sun/45 text-sun"}`}
+                    <Button
+                      type="button"
+                      variant={compact ? "outline" : "default"}
+                      aria-pressed={!compact}
+                      onClick={() => setCompact(false)}
+                    >
+                      Un critère à la fois
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={compact ? "default" : "outline"}
+                      aria-pressed={compact}
+                      onClick={() => setCompact(true)}
+                    >
+                      Tous les critères d’un coup
+                    </Button>
+                  </div>
+                  {compact ? (
+                    <section className="bg-card rounded-3xl border p-4 shadow-sm">
+                      {compactView()}
+                    </section>
+                  ) : step ? (
+                    <>
+                      <div role="group" aria-label="Critères" className="flex flex-wrap gap-2">
+                        {ordered.map((c) => {
+                          const pill = pointsPill(c);
+                          const on = c.id === step.id;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              aria-current={on ? "step" : undefined}
+                              onClick={() => setStepId(c.id)}
+                              className={`focus-visible:ring-ring flex min-h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
                             >
-                              {pill.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {stepCard(step, stepIndex)}
-                    {hiddenCriteria(step.id)}
-                    {hiddenChecks(step.id)}
-                    {hiddenAxisComments}
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <div className="bg-card space-y-1 rounded-3xl border p-5 shadow-sm">
-                <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
-                <Input
-                  id={`${uid}-value`}
-                  name="value"
-                  type="number"
-                  step="0.5"
-                  min={0}
-                  max={maxScore}
-                  value={directValue}
-                  onChange={(e) => setDirectValue(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-            {members ? (
-              <div className="bg-card rounded-3xl border p-4 shadow-sm">
-                {membersFieldset(members)}
-              </div>
-            ) : null}
-          </div>
+                              {c.is_bonus ? "Bonus · " : ""}
+                              {c.label}
+                              <span
+                                className={`rounded-full border px-2 text-xs font-bold ${pill.tone === "ok" ? "border-mint/45 text-mint" : pill.tone === "wip" ? "border-sky/45 text-sky" : "border-sun/45 text-sun"}`}
+                              >
+                                {pill.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {stepCard(step, stepIndex)}
+                      {hiddenCriteria(step.id)}
+                      {hiddenChecks(step.id)}
+                      {hiddenAxisComments}
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <div className="bg-card space-y-1 rounded-3xl border p-5 shadow-sm">
+                  <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
+                  <Input
+                    id={`${uid}-value`}
+                    name="value"
+                    type="number"
+                    step="0.5"
+                    min={0}
+                    max={maxScore}
+                    value={directValue}
+                    onChange={(e) => setDirectValue(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+              {members ? (
+                <div className="bg-card rounded-3xl border p-4 shadow-sm">
+                  {membersFieldset(members)}
+                </div>
+              ) : null}
+            </div>
 
-          <aside
-            className="w-full min-w-0 space-y-3 lg:sticky lg:top-2 lg:w-80 lg:flex-none"
-            aria-label="Contexte de la copie"
-          >
-            {totalCard}
-            {attendanceFieldset}
-            {submissionsCard}
-            {bilanCard}
-            {observationsCard}
-          </aside>
-        </div>
+            <aside
+              className="w-full min-w-0 space-y-3 lg:sticky lg:top-2 lg:w-80 lg:flex-none"
+              aria-label="Contexte de la copie"
+            >
+              {totalCard}
+              {attendanceFieldset}
+              {bilanCard}
+              {observationsCard}
+            </aside>
+          </div>
+        </>
       )}
 
       {legacyComments.length > 0 ? (

@@ -310,40 +310,53 @@ export function GradingSession({
           {section.items.length === 0 && section.empty ? (
             <p className="text-muted-foreground">{section.empty}</p>
           ) : null}
-          {section.items.map((item) => (
-            <div key={item.id} hidden={shownId !== null && item.id !== shownId}>
-              <GradeForm
-                id={item.id}
-                action={item.action}
-                title={item.title}
-                grid={grid}
-                maxScore={maxScore}
-                grade={item.grade}
-                comments={comments}
-                autoValidatedIds={autoValidatedIds}
-                subject={subject}
-                focusCriterionId={focused}
-                observations={item.observations}
-                members={item.members}
-                memberOverrides={item.memberOverrides}
-                theme={item.theme}
-                submissions={item.submissions}
-                others={others}
-                absenceRule={absenceRule}
-                onStatus={onStatus}
-                register={register}
-                onNavigate={(direction) => {
-                  const next = neighborId(ids, item.id, direction);
-                  if (next) focusCopy(next);
-                }}
-                prevLabel={titleOf(neighborId(ids, item.id, -1))}
-                nextLabel={titleOf(neighborId(ids, item.id, 1))}
-                overviewHref={activeId === undefined ? overviewHref : null}
-                hasPrev={neighborId(ids, item.id, -1) !== null}
-                hasNext={neighborId(ids, item.id, 1) !== null}
-              />
-            </div>
-          ))}
+          {section.items.map((item) => {
+            const position = items.findIndex((i) => i.id === item.id);
+            const received = item.submissions?.length;
+            return (
+              <div key={item.id} hidden={shownId !== null && item.id !== shownId}>
+                <GradeForm
+                  id={item.id}
+                  action={item.action}
+                  title={item.title}
+                  grid={grid}
+                  maxScore={maxScore}
+                  grade={item.grade}
+                  comments={comments}
+                  autoValidatedIds={autoValidatedIds}
+                  subject={subject}
+                  focusCriterionId={focused}
+                  observations={item.observations}
+                  members={item.members}
+                  memberOverrides={item.memberOverrides}
+                  theme={item.theme}
+                  subtitle={
+                    item.members
+                      ? null
+                      : `Rendu ${position + 1} sur ${items.length}${
+                          received === undefined
+                            ? ""
+                            : ` · ${received === 0 ? "rien reçu" : `${received} élément${received > 1 ? "s" : ""} reçu${received > 1 ? "s" : ""}`}`
+                        }`
+                  }
+                  submissions={item.submissions}
+                  others={others}
+                  absenceRule={absenceRule}
+                  onStatus={onStatus}
+                  register={register}
+                  onNavigate={(direction) => {
+                    const next = neighborId(ids, item.id, direction);
+                    if (next) focusCopy(next);
+                  }}
+                  prevLabel={titleOf(neighborId(ids, item.id, -1))}
+                  nextLabel={titleOf(neighborId(ids, item.id, 1))}
+                  overviewHref={activeId === undefined ? overviewHref : null}
+                  hasPrev={neighborId(ids, item.id, -1) !== null}
+                  hasNext={neighborId(ids, item.id, 1) !== null}
+                />
+              </div>
+            );
+          })}
         </section>
       ))}
     </div>

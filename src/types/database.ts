@@ -84,6 +84,10 @@ export type Database = {
           auto_validated_criterion_ids: string[]
           coefficient: number
           course_id: string | null
+          exam_kind: string | null
+          makeup_prepared: boolean
+          submission_mode: string | null
+          subject_versions: string
           created_at: string
           date: string | null
           deliverable_md: string | null
@@ -114,6 +118,10 @@ export type Database = {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           course_id?: string | null
+          exam_kind?: string | null
+          makeup_prepared?: boolean
+          submission_mode?: string | null
+          subject_versions?: string
           created_at?: string
           date?: string | null
           deliverable_md?: string | null
@@ -144,6 +152,10 @@ export type Database = {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           course_id?: string | null
+          exam_kind?: string | null
+          makeup_prepared?: boolean
+          submission_mode?: string | null
+          subject_versions?: string
           created_at?: string
           date?: string | null
           deliverable_md?: string | null

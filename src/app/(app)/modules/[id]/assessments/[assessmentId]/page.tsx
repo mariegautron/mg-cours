@@ -8,6 +8,7 @@ import {
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { CorrectionOverview } from "@/components/assessments/correction-overview";
+import { ExamKindForm } from "@/components/assessments/exam-kind-form";
 import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
@@ -24,6 +25,12 @@ import {
   getGradesByAssessment,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
+import {
+  examKindOf,
+  individualFrame,
+  parseSubjectVersions,
+  parseSubmissionMode,
+} from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
@@ -297,217 +304,431 @@ export default async function AssessmentPage({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
-        <section
-          aria-labelledby="gr"
-          className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="gr" className="font-heading text-xl font-bold">
-              Grille de correction
-            </h2>
-            {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
+      {assessment.is_group_grade ? (
+        <>
+          <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+            <section
+              aria-labelledby="gr"
+              className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 id="gr" className="font-heading text-xl font-bold">
+                  Grille de correction
+                </h2>
+                {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
+              </div>
+              {grid ? (
+                <>
+                  <p className="text-muted-foreground text-sm">
+                    Chaque critère a ses paliers. Les étudiant·es la reçoivent avant le travail.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="ghost">
+                      <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                        Reprendre une grille existante
+                      </Link>
+                    </Button>
+                    {canPresent(assessment.prep_status) ? (
+                      <DownloadButton
+                        href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
+                        icon={<FileDown aria-hidden />}
+                        doneLabel="Grille téléchargée."
+                      >
+                        Grille pour les étudiant·es (PDF)
+                      </DownloadButton>
+                    ) : (
+                      <p className="text-muted-foreground self-center text-sm">
+                        La grille se remet aux étudiant·es une fois le sujet « Prête » ou « Fournie
+                        ».
+                      </p>
+                    )}
+                  </div>
+                  {gridGroups.map((g, gi) => (
+                    <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
+                      {g.axis ? (
+                        <div className="flex items-center justify-between gap-3 pt-1">
+                          <strong>Axe · {g.axis.label}</strong>
+                          <span className="text-muted-foreground text-sm">
+                            {formatNumber(
+                              g.criteria
+                                .filter((c) => !c.is_bonus)
+                                .reduce((n, c) => n + c.weight, 0),
+                            )}{" "}
+                            points
+                          </span>
+                        </div>
+                      ) : null}
+                      {g.criteria.map((c) => (
+                        <div key={c.id} className="rounded-2xl border p-3">
+                          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                            <strong>
+                              {c.label}
+                              {c.is_bonus ? " (bonus)" : ""}
+                            </strong>
+                            <span className="text-muted-foreground text-sm">
+                              {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          {c.levels.length > 0 ? (
+                            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                              {c.levels.map((l) => (
+                                <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
+                                  <strong>{formatNumber(l.points)} pts</strong>
+                                  <span className="text-muted-foreground block text-[0.8rem]">
+                                    {l.description}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground text-sm">
+                              Saisie libre des points, de 0 à {formatNumber(c.weight)}.
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap items-center gap-3 border-t pt-3">
+                    <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
+                      <span role="status">
+                        Total {formatNumber(gridTotal)} sur {formatNumber(assessment.maxScore)}
+                      </span>
+                    </Pill>
+                    <span className="text-muted-foreground text-sm">
+                      Un bonus est plafonné : la note ne dépasse jamais le barème.
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-muted-foreground text-sm">
+                    Pas de grille pour l’instant : la note se saisit directement, sur{" "}
+                    {formatNumber(assessment.maxScore)}. Une grille donne des critères et des
+                    paliers à la correction, et se remet aux étudiant·es avant le travail.
+                  </p>
+                  <Button asChild>
+                    <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                      Choisir ou reprendre une grille
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </section>
+
+            <aside
+              aria-label="Préparation de l’évaluation"
+              className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
+            >
+              <section aria-labelledby="ce" className={card}>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="ce" className="font-heading text-xl font-bold">
+                    Le cadre pour les étudiant·es
+                  </h2>
+                  <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
+                    {frame.label}
+                  </Pill>
+                </div>
+                <ul className="mb-2 flex flex-wrap gap-1.5">
+                  {frameChecks.map(([label, ok]) => (
+                    <li key={label}>
+                      <Pill tone={ok ? "ok" : "warn"}>
+                        {ok ? "✓" : "!"} {label}
+                        <span className="sr-only"> : {ok ? "renseigné" : "à renseigner"}</span>
+                      </Pill>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Pill tone={assessment.prep_status === "to_build" ? "warn" : "ok"}>
+                    {PREP_STATUS_LABELS[assessment.prep_status]}
+                  </Pill>
+                  <Button asChild variant="ghost">
+                    <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                      Modifier le cadre
+                    </Link>
+                  </Button>
+                  {canPresent(assessment.prep_status) ? (
+                    <Button asChild variant="ghost">
+                      <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                        <Presentation aria-hidden />
+                        Présenter le sujet
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+                {canPresent(assessment.prep_status) ? null : (
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Le sujet se projette une fois « Prête » ou « Fournie ».
+                  </p>
+                )}
+                {course ? (
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Séance {courseNumber} — {course.title}
+                  </p>
+                ) : null}
+                <p className="text-muted-foreground mt-2 text-[0.8rem]">
+                  Rempli une fois : les réponses connues (séance, groupes, type de note) sont
+                  préremplies.
+                </p>
+              </section>
+
+              <section aria-labelledby="ae" className={card}>
+                <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
+                  Ce qu’on évalue
+                </h2>
+                {blank(assessment.evaluated_md) ? (
+                  <p className="text-muted-foreground text-sm">
+                    Pas encore renseigné : dis dans le cadre ce qui sera évalué.
+                  </p>
+                ) : (
+                  <Markdown source={assessment.evaluated_md ?? ""} />
+                )}
+              </section>
+
+              <section aria-labelledby="cr" className={card}>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="cr" className="font-heading text-xl font-bold">
+                    Pour la correction
+                  </h2>
+                  <Pill tone="warn">Toi seule</Pill>
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t py-2 text-sm">
+                  <span>{assessment.is_group_grade ? "Groupes" : "Étudiant·es"} à noter</span>
+                  <strong>
+                    {assessment.is_group_grade
+                      ? targets.length
+                      : targets.reduce((n, t) => n + t.students.length, 0)}
+                  </strong>
+                </div>
+                <Button asChild variant="ghost">
+                  <Link href="/assessments/comments">Mes phrases pour cette grille</Link>
+                </Button>
+              </section>
+
+              {grid ? (
+                <section aria-labelledby="ut" className={card}>
+                  <h2 id="ut" className="font-heading mb-1.5 text-xl font-bold">
+                    Utilisée dans {gridModules} module{gridModules > 1 ? "s" : ""}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {gridModules > 1
+                      ? "Si tu modifies la grille alors qu’elle sert ailleurs, elle change pour tous ces modules."
+                      : "Cette grille ne sert que dans ce module."}
+                  </p>
+                </section>
+              ) : null}
+            </aside>
           </div>
-          {grid ? (
-            <>
-              <p className="text-muted-foreground text-sm">
-                Chaque critère a ses paliers. Les étudiant·es la reçoivent avant le travail.
+        </>
+      ) : (
+        <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+          <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
+            <section aria-labelledby="ty" className={`${card} space-y-3`}>
+              <h2 id="ty" className="font-heading text-xl font-bold">
+                Quelle épreuve ?
+              </h2>
+              <ExamKindForm
+                moduleId={id}
+                assessmentId={assessmentId}
+                available={"exam_kind" in assessment}
+                quizHref={`/modules/${id}/assessments/${assessmentId}/quiz`}
+                initial={{
+                  kind: examKindOf(assessment),
+                  versions: parseSubjectVersions(assessment.subject_versions),
+                  mode: parseSubmissionMode(assessment.submission_mode),
+                  makeupPrepared: !!assessment.makeup_prepared,
+                }}
+              />
+            </section>
+
+            <section aria-labelledby="ce" className={card}>
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <h2 id="ce" className="font-heading text-xl font-bold">
+                  Le cadre pour les étudiant·es
+                </h2>
+                <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
+                  {frame.label}
+                </Pill>
+              </div>
+              <p className="text-muted-foreground mb-1 text-sm">
+                Écrit au vouvoiement. Projeté en début d’épreuve.
               </p>
-              <div className="flex flex-wrap gap-2">
+              <ul className="divide-y">
+                {individualFrame({
+                  kind: examKindOf(assessment),
+                  mode: parseSubmissionMode(assessment.submission_mode),
+                  courseNumber: course ? courseNumber : null,
+                  date: assessment.date,
+                  deliverable: assessment.deliverable_md,
+                  evaluated: assessment.evaluated_md,
+                  maxScore: assessment.maxScore,
+                  coefficient: assessment.coefficient,
+                }).map((line) => (
+                  <li key={line.label} className="flex flex-wrap items-start gap-3 py-2.5 text-sm">
+                    <strong className="w-40 flex-none">{line.label}</strong>
+                    <span className="min-w-0 flex-1">{line.text || "À renseigner."}</span>
+                    <Pill tone={line.filled ? "ok" : "warn"}>
+                      {line.filled ? "Prérempli" : "À renseigner"}
+                    </Pill>
+                  </li>
+                ))}
+              </ul>
+              {course ? (
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Séance {courseNumber} — {course.title}
+                </p>
+              ) : null}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Pill tone={assessment.prep_status === "to_build" ? "warn" : "ok"}>
+                  {PREP_STATUS_LABELS[assessment.prep_status]}
+                </Pill>
                 <Button asChild variant="ghost">
                   <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
-                    Reprendre une grille existante
+                    Modifier le cadre
                   </Link>
                 </Button>
                 {canPresent(assessment.prep_status) ? (
-                  <DownloadButton
-                    href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
-                    icon={<FileDown aria-hidden />}
-                    doneLabel="Grille téléchargée."
-                  >
-                    Grille pour les étudiant·es (PDF)
-                  </DownloadButton>
+                  <Button asChild variant="ghost">
+                    <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                      <Presentation aria-hidden />
+                      Présenter le sujet
+                    </Link>
+                  </Button>
                 ) : (
-                  <p className="text-muted-foreground self-center text-sm">
-                    La grille se remet aux étudiant·es une fois le sujet « Prête » ou « Fournie ».
-                  </p>
+                  <span className="text-muted-foreground text-sm">
+                    Le sujet se projette une fois « Prête » ou « Fournie ».
+                  </span>
                 )}
               </div>
-              {gridGroups.map((g, gi) => (
-                <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
-                  {g.axis ? (
-                    <div className="flex items-center justify-between gap-3 pt-1">
-                      <strong>Axe · {g.axis.label}</strong>
-                      <span className="text-muted-foreground text-sm">
-                        {formatNumber(
-                          g.criteria.filter((c) => !c.is_bonus).reduce((n, c) => n + c.weight, 0),
-                        )}{" "}
-                        points
-                      </span>
-                    </div>
-                  ) : null}
-                  {g.criteria.map((c) => (
-                    <div key={c.id} className="rounded-2xl border p-3">
-                      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                        <strong>
-                          {c.label}
-                          {c.is_bonus ? " (bonus)" : ""}
-                        </strong>
-                        <span className="text-muted-foreground text-sm">
-                          {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      {c.levels.length > 0 ? (
-                        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                          {c.levels.map((l) => (
-                            <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
-                              <strong>{formatNumber(l.points)} pts</strong>
-                              <span className="text-muted-foreground block text-[0.8rem]">
-                                {l.description}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-muted-foreground text-sm">
-                          Saisie libre des points, de 0 à {formatNumber(c.weight)}.
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <div className="flex flex-wrap items-center gap-3 border-t pt-3">
-                <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
-                  <span role="status">
-                    Total {formatNumber(gridTotal)} sur {formatNumber(assessment.maxScore)}
-                  </span>
-                </Pill>
-                <span className="text-muted-foreground text-sm">
-                  Un bonus est plafonné : la note ne dépasse jamais le barème.
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-muted-foreground text-sm">
-                Pas de grille pour l’instant : la note se saisit directement, sur{" "}
-                {formatNumber(assessment.maxScore)}. Une grille donne des critères et des paliers à
-                la correction, et se remet aux étudiant·es avant le travail.
-              </p>
-              <Button asChild>
-                <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
-                  Choisir ou reprendre une grille
-                </Link>
-              </Button>
-            </div>
-          )}
-        </section>
+            </section>
+          </div>
 
-        <aside
-          aria-label="Préparation de l’évaluation"
-          className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
-        >
-          <section aria-labelledby="ce" className={card}>
-            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-              <h2 id="ce" className="font-heading text-xl font-bold">
-                Le cadre pour les étudiant·es
-              </h2>
-              <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
-                {frame.label}
-              </Pill>
-            </div>
-            <ul className="mb-2 flex flex-wrap gap-1.5">
-              {frameChecks.map(([label, ok]) => (
-                <li key={label}>
-                  <Pill tone={ok ? "ok" : "warn"}>
-                    {ok ? "✓" : "!"} {label}
-                    <span className="sr-only"> : {ok ? "renseigné" : "à renseigner"}</span>
+          <aside
+            aria-label="Préparation de l’évaluation"
+            className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
+          >
+            <section aria-labelledby="gr" className={card}>
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <h2 id="gr" className="font-heading text-xl font-bold">
+                  Grille à paliers
+                </h2>
+                {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
+              </div>
+              {grid ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-sm">
+                    {grid.name}. Chaque critère a ses paliers ; les étudiant·es la reçoivent avant
+                    le travail.
+                  </p>
+                  <details className="text-sm">
+                    <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+                      Voir les critères et les paliers
+                    </summary>
+                    <ul className="space-y-2 pt-1">
+                      {gridGroups.flatMap((g) =>
+                        g.criteria.map((c) => (
+                          <li key={c.id} className="rounded-xl border p-2.5">
+                            <div className="flex flex-wrap justify-between gap-2">
+                              <strong>
+                                {c.label}
+                                {c.is_bonus ? " (bonus)" : ""}
+                              </strong>
+                              <span className="text-muted-foreground">
+                                {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            {c.levels.length > 0 ? (
+                              <ul className="text-muted-foreground mt-1">
+                                {c.levels.map((l) => (
+                                  <li key={l.id}>
+                                    {formatNumber(l.points)} pts : {l.description}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </li>
+                        )),
+                      )}
+                    </ul>
+                  </details>
+                  <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
+                    <span role="status">
+                      Total {formatNumber(gridTotal)} sur {formatNumber(assessment.maxScore)}
+                    </span>
                   </Pill>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap items-center gap-2">
-              <Pill tone={assessment.prep_status === "to_build" ? "warn" : "ok"}>
-                {PREP_STATUS_LABELS[assessment.prep_status]}
-              </Pill>
+                  <div className="flex flex-col gap-2 pt-1">
+                    <Button asChild variant="ghost">
+                      <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                        Reprendre la grille d’un jalon
+                      </Link>
+                    </Button>
+                    {canPresent(assessment.prep_status) ? (
+                      <DownloadButton
+                        href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
+                        icon={<FileDown aria-hidden />}
+                        doneLabel="Grille téléchargée."
+                      >
+                        Grille pour les étudiant·es (PDF)
+                      </DownloadButton>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground text-sm">
+                    À créer. Tu peux reprendre celle d’une évaluation existante.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Button asChild>
+                      <Link href="/assessments/grids/new">Créer la grille</Link>
+                    </Button>
+                    <Button asChild variant="ghost">
+                      <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                        Reprendre la grille d’un jalon
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section aria-labelledby="at" className={card}>
+              <h2 id="at" className="font-heading mb-1.5 text-lg font-bold">
+                Attendus évalués
+              </h2>
+              <p className="text-muted-foreground mb-2 text-sm">
+                Choisis ceux que l’épreuve vérifie.
+              </p>
               <Button asChild variant="ghost">
-                <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
-                  Modifier le cadre
-                </Link>
+                <Link href={`/modules/${id}/expectations`}>Choisir les attendus</Link>
               </Button>
-              {canPresent(assessment.prep_status) ? (
-                <Button asChild variant="ghost">
-                  <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
-                    <Presentation aria-hidden />
-                    Présenter le sujet
+            </section>
+
+            <section
+              aria-labelledby="dday"
+              className="bg-primary/10 border-primary/40 rounded-3xl border p-5"
+            >
+              <h2 id="dday" className="font-heading mb-1.5 text-xl font-bold">
+                Le jour J
+              </h2>
+              <p className="text-muted-foreground mb-2 text-sm">
+                Après l’épreuve, tu corriges copie par copie. Les absences se règlent à part.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button asChild>
+                  <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
+                    Voir la correction
                   </Link>
                 </Button>
-              ) : null}
-            </div>
-            {canPresent(assessment.prep_status) ? null : (
-              <p className="text-muted-foreground mt-2 text-sm">
-                Le sujet se projette une fois « Prête » ou « Fournie ».
-              </p>
-            )}
-            {course ? (
-              <p className="text-muted-foreground mt-2 text-sm">
-                Séance {courseNumber} — {course.title}
-              </p>
-            ) : null}
-            <p className="text-muted-foreground mt-2 text-[0.8rem]">
-              Rempli une fois : les réponses connues (séance, groupes, type de note) sont
-              préremplies.
-            </p>
-          </section>
-
-          <section aria-labelledby="ae" className={card}>
-            <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
-              Ce qu’on évalue
-            </h2>
-            {blank(assessment.evaluated_md) ? (
-              <p className="text-muted-foreground text-sm">
-                Pas encore renseigné : dis dans le cadre ce qui sera évalué.
-              </p>
-            ) : (
-              <Markdown source={assessment.evaluated_md ?? ""} />
-            )}
-          </section>
-
-          <section aria-labelledby="cr" className={card}>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 id="cr" className="font-heading text-xl font-bold">
-                Pour la correction
-              </h2>
-              <Pill tone="warn">Toi seule</Pill>
-            </div>
-            <div className="flex items-center justify-between gap-3 border-t py-2 text-sm">
-              <span>{assessment.is_group_grade ? "Groupes" : "Étudiant·es"} à noter</span>
-              <strong>
-                {assessment.is_group_grade
-                  ? targets.length
-                  : targets.reduce((n, t) => n + t.students.length, 0)}
-              </strong>
-            </div>
-            <Button asChild variant="ghost">
-              <Link href="/assessments/comments">Mes phrases pour cette grille</Link>
-            </Button>
-          </section>
-
-          {grid ? (
-            <section aria-labelledby="ut" className={card}>
-              <h2 id="ut" className="font-heading mb-1.5 text-xl font-bold">
-                Utilisée dans {gridModules} module{gridModules > 1 ? "s" : ""}
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {gridModules > 1
-                  ? "Si tu modifies la grille alors qu’elle sert ailleurs, elle change pour tous ces modules."
-                  : "Cette grille ne sert que dans ce module."}
-              </p>
+                <Button asChild variant="ghost">
+                  <Link href="/assessments/comments">Mes phrases pour cette grille</Link>
+                </Button>
+              </div>
             </section>
-          ) : null}
-        </aside>
-      </div>
+          </aside>
+        </div>
+      )}
 
       <section aria-labelledby="subject" className={`${card} space-y-4`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -616,25 +837,6 @@ export default async function AssessmentPage({
         <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
       ) : (
         <>
-          {!assessment.is_group_grade ? (
-            <section
-              aria-labelledby="dday"
-              className="bg-primary/10 border-primary/40 space-y-2 rounded-xl border p-5"
-            >
-              <h2 id="dday" className="text-lg font-semibold">
-                Le jour J
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Après l’épreuve, tu corriges copie par copie. Les absences se règlent à part :
-                excusé·e, un rattrapage est possible ; non prévenu·e, la note est 0.
-              </p>
-              <Button asChild size="touch">
-                <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
-                  Corriger les rendus
-                </Link>
-              </Button>
-            </section>
-          ) : null}
           <CorrectionOverview
             overview={overview}
             maxScore={assessment.maxScore}
