@@ -189,6 +189,24 @@ export function CriterionComparison({
       </div>
 
       {hasLevels ? (
+        <dl
+          aria-label="Description des paliers"
+          className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {[...criterion.levels]
+            .sort((a, b) => b.points - a.points)
+            .map((l) => (
+              <div key={l.points} className="bg-muted/40 rounded-lg border p-2">
+                <dt className="font-semibold">
+                  {fmt(l.points)} pt{l.points > 1 ? "s" : ""}
+                </dt>
+                <dd className="text-muted-foreground">{l.description || "—"}</dd>
+              </div>
+            ))}
+        </dl>
+      ) : null}
+
+      {hasLevels ? (
         <ul className="flex flex-wrap gap-2 text-sm" aria-label="Répartition par palier">
           {analysis.counts.map((c) => (
             <li key={c.points} className="rounded-md border px-2 py-1">

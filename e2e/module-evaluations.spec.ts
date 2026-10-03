@@ -25,6 +25,8 @@ test("évaluations du module : notes exigées, grille de la bibliothèque, note 
   await expect(page.getByText("Membres (0)")).toBeVisible();
 
   await page.goto(`${moduleUrl}/assessments`);
+  // Attendre la fin du streaming : pendant le rendu, Next garde une copie masquée du contenu.
+  await page.waitForLoadState("networkidle");
   await expect(page.getByText(/21 h : 3 notes exigées\. Il te manque 3 notes/)).toBeVisible({
     timeout: 20_000,
   });
@@ -50,5 +52,6 @@ test("évaluations du module : notes exigées, grille de la bibliothèque, note 
     .getByRole("heading", { name: "Contrôle continu 1", level: 1 })
     .waitFor({ timeout: 20_000 });
   await page.goto(`${moduleUrl}/assessments`);
+  await page.waitForLoadState("networkidle");
   await expect(page.getByText(/Note de l'école · coefficient 1/)).toBeVisible();
 });

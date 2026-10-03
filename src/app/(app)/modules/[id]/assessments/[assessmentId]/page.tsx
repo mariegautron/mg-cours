@@ -15,14 +15,10 @@ import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons"
 import { Submissions } from "@/components/assessments/submissions";
 import { GradingSession } from "@/components/assessments/grading-session";
 import { Markdown } from "@/components/markdown";
-import { HyperplanningTable } from "@/components/assessments/hyperplanning-table";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
-import { PublishResults } from "@/components/assessments/publish-results";
 import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
-import { listResultLinks } from "@/lib/result-links/queries";
-import { ResultsActions } from "@/components/assessments/results-actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,11 +27,8 @@ import {
   listComments,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
-import { hyperplanningRows } from "@/lib/assessments/hyperplanning";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
-import { loadResultSheets } from "@/lib/assessments/results-data";
-import { resultsRecipients } from "@/lib/assessments/results";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { assessmentFileUrl } from "@/lib/assessments/files";
@@ -130,22 +123,16 @@ export default async function AssessmentPage({
   );
   const hasGrades = grades.some((g) => g.value !== null);
   // Les six lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
-  const [overrideRows, themes, submissionRows, makeup, loadedSheets, resultLinks, submissionData] =
-    await Promise.all([
-      listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
-      themeTitleByGroup(assessment.project_id),
-      // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
-      assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
-      // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
-      // un rattrapage, rappel de l'originale.
-      loadMakeupInfo(assessment, assessmentId),
-      // Fiches de résultats : notes saisies ou absences excusées (elles sont mentionnées).
-      hasGrades || grades.some((g) => g.attendance === "absent_excused")
-        ? loadResultSheets(id, assessmentId)
-        : null,
-      listResultLinks(assessmentId),
-      listSubmissionItems(assessmentId),
-    ]);
+  const [overrideRows, themes, submissionRows, makeup, submissionData] = await Promise.all([
+    listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
+    themeTitleByGroup(assessment.project_id),
+    // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
+    assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
+    // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
+    // un rattrapage, rappel de l'originale.
+    loadMakeupInfo(assessment, assessmentId),
+    listSubmissionItems(assessmentId),
+  ]);
   let makeupPanel: React.ReactNode = null;
   const makeupOf = makeup.original;
   if (makeup.panel) {
@@ -159,8 +146,6 @@ export default async function AssessmentPage({
     );
   }
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
-  const sheets = loadedSheets ?? [];
-  const recipients = hasGrades ? resultsRecipients(sheets) : { emails: 0, withoutEmail: [] };
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
   const observations = toObservationLines(moduleObservations);
   const sections = buildSessionSections({
@@ -609,41 +594,22 @@ export default async function AssessmentPage({
 
       {makeupPanel}
 
-      {sheets.length > 0 ? (
-        <HyperplanningTable
-          moduleId={id}
-          assessmentId={assessmentId}
-          rows={hyperplanningRows(sheets)}
-        />
-      ) : null}
-
       {hasGrades ? (
-        <PublishResults
-          moduleId={id}
-          assessmentId={assessmentId}
-          available={resultLinks.available}
-          students={Array.from(
-            new Map(
-              sheets
-                .flatMap((sheet) => sheet.recipients)
-                .filter((r) => r.id)
-                .map((r) => [r.id as string, r.name]),
-            ),
-          ).map(([studentId, name]) => ({
-            id: studentId,
-            name,
-            link: resultLinks.byStudent.get(studentId) ?? null,
-          }))}
-        />
+        <section aria-labelledby="send" className="bg-card space-y-2 rounded-xl border p-5">
+          <h2 id="send" className="text-lg font-semibold">
+            Envoyer les résultats
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Vérifie, puis publie par lien personnel, exporte ou envoie par e-mail : rien ne part
+            sans ta confirmation.
+          </p>
+          <Button asChild variant="secondary" size="touch">
+            <Link href={`/modules/${id}/assessments/${assessmentId}/results`}>
+              Envoyer les résultats
+            </Link>
+          </Button>
+        </section>
       ) : null}
-
-      <ResultsActions
-        moduleId={id}
-        assessmentId={assessmentId}
-        hasGrades={hasGrades}
-        recipients={recipients}
-        sentAt={assessment.results_sent_at}
-      />
 
       {targets.length === 0 ? (
         <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>

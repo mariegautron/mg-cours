@@ -75,7 +75,8 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   const pdf = await page.request.get(pdfUrl);
   expect(pdf.status()).toBe(200);
   expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
-  // US-76 : confirmation avec le nombre de destinataires avant l'envoi.
+  // US-76 : confirmation avec le nombre de destinataires avant l'envoi (écran dédié aux résultats).
+  await page.goto(`${page.url()}/results`);
   await page.getByRole("button", { name: "Envoyer par e-mail" }).click();
   const dialog = page.getByRole("alertdialog", { name: "Envoyer les résultats par e-mail ?" });
   await expect(dialog.getByText(/1 destinataire\./)).toBeVisible();

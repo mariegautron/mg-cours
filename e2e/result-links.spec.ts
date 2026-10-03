@@ -36,6 +36,11 @@ test("publier les résultats : lien personnel, rien des autres, suivi, révocati
   await page.waitForLoadState("networkidle");
   await page.reload();
 
+  await page.goto(`${page.url().split("?")[0]}/results`);
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/envoyer-resultats.png", fullPage: true });
+  }
   await page.getByRole("button", { name: "Publier les résultats" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Publier", exact: true }).click();
   await expect(page.getByText("Copie ces liens maintenant")).toBeVisible({ timeout: 20_000 });

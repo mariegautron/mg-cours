@@ -84,6 +84,10 @@ test("comparer un critère : modification en place, écart signalé, tri, access
   await page.getByLabel("Trier par").selectOption("points_desc");
   await expect(page.locator("tbody tr").first()).toContainText(`Élève ${names[1]}`);
 
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/comparer-critere.png", fullPage: true });
+  }
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

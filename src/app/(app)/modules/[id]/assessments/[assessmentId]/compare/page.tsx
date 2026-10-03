@@ -52,14 +52,19 @@ export default async function CompareCriterionPage({
   const selected =
     criteria.find((c) => c.id === (typeof critere === "string" ? critere : "")) ?? criteria[0];
 
+  const following = selected ? criteria[criteria.indexOf(selected) + 1] : undefined;
+
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Comparer un critère</h1>
+          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
+          <h1 className="text-3xl font-semibold">
+            Comparer un critère entre les {assessment.is_group_grade ? "groupes" : "étudiant·es"}
+          </h1>
           <p className="text-muted-foreground">
             {assessment.title} : tous les {assessment.is_group_grade ? "groupes" : "étudiant·es"}{" "}
-            côte à côte, pour harmoniser les notes et les commentaires.
+            côte à côte, tu harmonises les notes et les commentaires pour les mêmes erreurs.
           </p>
         </div>
         <Button asChild variant="outline">
@@ -122,6 +127,18 @@ export default async function CompareCriterionPage({
               };
             })}
           />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Button asChild variant="secondary" size="touch">
+              <Link href={back}>Terminer ce critère</Link>
+            </Button>
+            {following ? (
+              <Button asChild variant="ghost" size="touch">
+                <Link href={`${back}/compare?critere=${following.id}`}>
+                  Passer au critère « {following.label} » →
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </>
       )}
     </div>
