@@ -183,6 +183,7 @@ async function gpSurprises({ imp, page }: CourseContext, projectId: string | nul
     const n = Number(parts[i]);
     const block = parts[i + 1];
     const subject = /\*\*Objet :\*\*\s*(.+)/.exec(block)?.[1]?.trim() ?? `Mail #${n}`;
+    const title = subject.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
     // Message à copier : la citation du mail ; les notes « Effet pédagogique » restent à l'intervenante.
     const message = block
       .split(/^🎯/m)[0]
@@ -197,8 +198,8 @@ async function gpSurprises({ imp, page }: CourseContext, projectId: string | nul
       "project_surprise",
       "notion",
       `${mails.id}#imprevu-${n}`,
-      { project_id: projectId, course_id: courseId, title: plain(subject), body: message },
-      `Imprévu #${n} après la séance ${n} : « ${plain(subject)} » (${message.length} car.)`,
+      { project_id: projectId, course_id: courseId, title: title, body: message },
+      `Imprévu #${n} après la séance ${n} : « ${title} » (${message.length} car.)`,
     );
   }
 }
@@ -208,7 +209,11 @@ async function gpSurprises({ imp, page }: CourseContext, projectId: string | nul
 async function gpDeliverables({ imp, page, has }: CourseContext) {
   for (const [i, id] of GP_SESSIONS.entries()) {
     if (!has(id)) continue;
-    const deliverable = headingSections(page(id).body).get("livrable") ?? "";
+    const raw = (headingSections(page(id).body).get("livrable") ?? "").trim();
+    // Un livrable d'une ligne n'a pas besoin de puce ni d'italique.
+    const deliverable = raw.includes("\n")
+      ? raw
+      : raw.replace(/^[-*]\s+/, "").replace(/^\*(.+)\*$/, "$1");
     const courseId = await imp.findRef("notion", id, "course");
     if (!courseId || !deliverable.trim()) continue;
     await imp.ensure(
