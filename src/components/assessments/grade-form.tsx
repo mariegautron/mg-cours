@@ -52,6 +52,7 @@ import {
   type ObservationLine,
 } from "@/lib/assessments/session";
 import { DEFAULT_MAX_SCORE, toTwenty } from "@/lib/ynov/notation";
+import { submissionSummary, type SubmissionLine } from "@/lib/projects/submission-items";
 import type { Tables } from "@/types/db";
 
 type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormState>;
@@ -88,6 +89,7 @@ export function GradeForm({
   hasPrev = false,
   hasNext = false,
   others = [],
+  submissions,
   absenceRule = "keep_group_grade",
 }: {
   /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
@@ -119,6 +121,8 @@ export function GradeForm({
   hasNext?: boolean;
   /** Les autres copies de l'évaluation : « déjà noté chez les autres » (US-139). */
   others?: OtherCopy[];
+  /** Rendu de la personne ou du groupe (US-146) ; `undefined` : pas de suivi des rendus. */
+  submissions?: SubmissionLine[];
   /** Règle de l'école pour une absence excusée sur une note de groupe (US-162). */
   absenceRule?: "keep_group_grade" | "makeup";
 }) {
@@ -871,6 +875,41 @@ export function GradeForm({
         ) : null}
       </div>
       {theme ? <p className="text-sm">Thème : {theme}</p> : null}
+
+      {submissions !== undefined ? (
+        <section
+          aria-label={`Rendu de ${title}`}
+          className="space-y-2 rounded-md border p-3 text-sm"
+        >
+          <p className="font-medium">Rendu : {submissionSummary(submissions.length)}</p>
+          {submissions.length > 0 ? (
+            <ul className="space-y-1">
+              {submissions.map((l) => (
+                <li key={l.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    {l.title}
+                    <span className="text-muted-foreground"> · {l.detail}</span>
+                  </span>
+                  <Button asChild size="touch" variant="secondary">
+                    <a
+                      href={l.href}
+                      {...(l.kind === "link"
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : { download: true })}
+                    >
+                      Ouvrir
+                      <span className="sr-only">
+                        {" "}
+                        {l.title} de {title}
+                      </span>
+                    </a>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       {observations.length > 0 ? (
         <details className="rounded-md border p-2">

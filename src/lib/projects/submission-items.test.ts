@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  submissionLines,
   groupByOwner,
   itemTitle,
   linkHost,
@@ -73,5 +74,23 @@ describe("affichage et regroupement", () => {
     expect(submissionSummary(0)).toBe("Aucun rendu");
     expect(submissionSummary(1)).toBe("1 élément");
     expect(submissionSummary(3)).toBe("3 éléments");
+  });
+});
+
+describe("submissionLines", () => {
+  it("lien : son adresse ; fichier : la route de téléchargement ; élément incomplet ignoré", () => {
+    const base = { student_id: "s1", group_id: null, label: "", size_bytes: null, created_at: "x" };
+    const lines = submissionLines(
+      [
+        { ...base, id: "l", kind: "link", url: "https://github.com/a", file_name: null },
+        { ...base, id: "f", kind: "file", url: null, file_name: "rendu.pdf" },
+        { ...base, id: "bad", kind: "link", url: null, file_name: null },
+      ],
+      "A1",
+    );
+    expect(lines.map((l) => [l.id, l.href, l.detail])).toEqual([
+      ["l", "https://github.com/a", "github.com"],
+      ["f", "/api/assessments/A1/submissions/f", "fichier"],
+    ]);
   });
 });

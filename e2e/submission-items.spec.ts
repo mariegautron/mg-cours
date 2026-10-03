@@ -47,6 +47,15 @@ test("rendus multiples : liens et fichiers, ouverture, suppression", async ({ pa
     .analyze();
   expect(axe.violations).toEqual([]);
 
+  // US-146 : la bande « Rendu » de la copie montre les éléments, avec « Ouvrir ».
+  await page.reload();
+  const copy = page.getByRole("form", { name: ana });
+  await expect(copy.getByText("Rendu : 2 éléments")).toBeVisible({ timeout: 20_000 });
+  const copyLink = copy.getByRole("link", { name: /Ouvrir Dépôt Git/ });
+  await expect(copyLink).toHaveAttribute("target", "_blank");
+  await expect(copyLink).toHaveAttribute("rel", /noopener/);
+  await expect(copy.getByRole("link", { name: /Ouvrir rendu-ana\.pdf/ })).toBeVisible();
+
   // Suppression confirmée.
   await card.getByRole("button", { name: /Supprimer Dépôt Git/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Supprimer" }).click();

@@ -173,6 +173,7 @@ export default async function AssessmentPage({
     overrideRows,
     observations,
     themes,
+    submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
   });
   const overview = correctionOverview(
     sections.flatMap((section) =>

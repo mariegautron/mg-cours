@@ -92,3 +92,39 @@ export function groupByOwner<T extends SubmissionItemLike>(items: readonly T[]):
 export function submissionSummary(count: number): string {
   return count === 0 ? "Aucun rendu" : `${count} élément${count > 1 ? "s" : ""}`;
 }
+
+export interface SubmissionLine {
+  id: string;
+  title: string;
+  kind: "file" | "link";
+  /** Où ouvrir : le lien lui-même, ou la route de téléchargement du fichier. */
+  href: string;
+  /** « github.com » pour un lien, « fichier » sinon. */
+  detail: string;
+}
+
+/** Éléments d'un rendu prêts à afficher dans la copie à corriger (bande « Rendu »). */
+export function submissionLines(
+  items: readonly SubmissionItemLike[],
+  assessmentId: string,
+): SubmissionLine[] {
+  return items.flatMap((i): SubmissionLine[] => {
+    if (i.kind === "link" && i.url) {
+      return [
+        { id: i.id, title: itemTitle(i), kind: "link", href: i.url, detail: linkHost(i.url) },
+      ];
+    }
+    if (i.kind === "file") {
+      return [
+        {
+          id: i.id,
+          title: itemTitle(i),
+          kind: "file",
+          href: `/api/assessments/${assessmentId}/submissions/${i.id}`,
+          detail: "fichier",
+        },
+      ];
+    }
+    return [];
+  });
+}

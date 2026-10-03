@@ -5,6 +5,8 @@ import { observationsForCopy, type ObservationLine } from "@/lib/assessments/ses
 import { gradingTargets } from "@/lib/assessments/targets";
 import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import type { ModuleObservation } from "@/lib/notebook/queries";
+import type { SubmissionItemLike } from "@/lib/projects/submission-items";
+import { submissionLines } from "@/lib/projects/submission-items";
 import type { Tables } from "@/types/db";
 
 /** Observations du carnet (privées) mises en forme pour la correction : consultables, jamais exportées. */
@@ -31,6 +33,7 @@ export function buildSessionSections({
   overrideRows,
   observations,
   themes,
+  submissions,
 }: {
   moduleId: string;
   assessment: AssessmentDetail;
@@ -39,6 +42,8 @@ export function buildSessionSections({
   observations: ObservationLine[];
   /** Titre du thème de chaque groupe (identifiant de groupe → titre). */
   themes: Record<string, string>;
+  /** Rendus (fichiers et liens) par étudiant·e ou par groupe (US-146). */
+  submissions?: Map<string, SubmissionItemLike[]>;
 }): SessionSection[] {
   const assessmentId = assessment.id;
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
@@ -52,6 +57,9 @@ export function buildSessionSections({
           title: `Note du groupe « ${group.name} »`,
           action: saveGroupGrade.bind(null, moduleId, assessmentId, group.id),
           theme: themes[group.id] ?? null,
+          submissions: submissions
+            ? submissionLines(submissions.get(group.id) ?? [], assessmentId)
+            : undefined,
           grade: grades.find((g) => g.student_group_id === group.id),
           observations: observationsForCopy(
             group.members.map((m) => m.id),
@@ -89,6 +97,9 @@ export function buildSessionSections({
       title: `${m.first_name} ${m.last_name}`,
       action: saveStudentGrade.bind(null, moduleId, assessmentId, m.id),
       theme: themes[group.id] ?? null,
+      submissions: submissions
+        ? submissionLines(submissions.get(m.id) ?? [], assessmentId)
+        : undefined,
       grade: grades.find((g) => g.student_id === m.id),
       observations: observationsForCopy([m.id], observations),
     })),

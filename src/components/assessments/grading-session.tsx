@@ -16,6 +16,7 @@ import {
   type ObservationLine,
 } from "@/lib/assessments/session";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
+import type { SubmissionLine } from "@/lib/projects/submission-items";
 import type { Tables } from "@/types/db";
 
 type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormState>;
@@ -32,6 +33,8 @@ export interface SessionItem {
   memberOverrides?: Record<string, MemberOverride>;
   /** Thème du projet fil rouge du groupe (US-89). */
   theme?: string | null;
+  /** Rendus (fichiers et liens) de la personne ou du groupe (US-146). */
+  submissions?: SubmissionLine[];
 }
 
 export interface SessionSection {
@@ -313,6 +316,7 @@ export function GradingSession({
                 members={item.members}
                 memberOverrides={item.memberOverrides}
                 theme={item.theme}
+                submissions={item.submissions}
                 others={others}
                 absenceRule={absenceRule}
                 onStatus={onStatus}
