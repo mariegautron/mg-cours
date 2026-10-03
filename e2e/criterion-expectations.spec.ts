@@ -14,7 +14,7 @@ test("attendus d'un critère : saisis dans la grille, cochés à la correction, 
 
   await page.goto("/assessments/grids/new");
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Clarté de l’oral");
+  await page.getByLabel("Libellé du critère 1").first().fill("Clarté de l’oral");
   await page.getByLabel("Points", { exact: true }).first().fill("6");
   await page.getByText("Description et attendus").first().click();
   await page

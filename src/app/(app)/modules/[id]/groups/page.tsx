@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
@@ -33,6 +34,11 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
             <Button asChild size="sm" variant="outline">
               <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
             </Button>
+            {groups.length > 0 ? (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/present/modules/${mod.id}/groups`}>Projeter la liste</Link>
+              </Button>
+            ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
             </Button>
@@ -63,6 +69,13 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
                   <p className="text-muted-foreground text-sm">
                     {g.members.length} étudiant·e{g.members.length > 1 ? "s" : ""}
                   </p>
+                  {g.members.length > 0 ? (
+                    <span className="mt-2 flex flex-wrap gap-1" aria-hidden>
+                      {g.members.slice(0, 8).map((m) => (
+                        <StudentPhoto key={m.id} student={m} size="sm" />
+                      ))}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}

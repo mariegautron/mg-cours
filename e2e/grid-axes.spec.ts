@@ -30,7 +30,7 @@ test("axes, référence, bonus et critère validé d'office : total ramené sur 
   await page.getByRole("button", { name: "Ajouter un axe" }).click();
   await page.getByLabel("Nom de l’axe 2").fill("Composants");
 
-  await page.getByLabel("Libellé du critère 1").fill("Header et footer");
+  await page.getByLabel("Libellé du critère 1").first().fill("Header et footer");
   await page.getByLabel("Points", { exact: true }).first().fill("8");
   await page.getByLabel("Axe du critère 1").selectOption({ label: "Structure" });
   await page.getByLabel("Référence du critère 1").fill("RGAA 1.3.1");

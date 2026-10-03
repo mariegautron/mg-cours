@@ -23,7 +23,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.goto("/assessments/grids/new");
   const gridName = `Grille Édition ${suffix}`;
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Présentation");
+  await page.getByLabel("Libellé du critère 1").first().fill("Présentation");
   await page.getByLabel("Points").first().fill("4");
   await page.getByRole("button", { name: "Ajouter un critère" }).click();
   await page.getByLabel("Libellé du critère 2").fill("Contenu");
@@ -76,7 +76,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
     .getByRole("link", { name: "Modifier" })
     .click();
   await expect(page.getByRole("heading", { name: `Modifier « ${gridName} »` })).toBeVisible();
-  await page.getByLabel("Libellé du critère 1").fill("Présentation orale");
+  await page.getByLabel("Libellé du critère 1").first().fill("Présentation orale");
   await page.getByText("Description et attendus (facultatifs)").first().click();
   await page
     .getByLabel("Description du critère 1")

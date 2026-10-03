@@ -20,7 +20,7 @@ test("une grille se saisit avec des paliers propres à chaque critère", async (
 
   await page.goto("/assessments/grids/new");
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Structure");
+  await page.getByLabel("Libellé du critère 1").first().fill("Structure");
 
   // Critère 1 : 6/4/2/0. Le barème du critère devient le palier le plus haut.
   const points = [0, 6, 2, 4];

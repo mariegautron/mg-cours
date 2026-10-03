@@ -25,7 +25,7 @@ test("noter par palier : un choix attribue les points, propose la description, s
   // Grille : « Structure » 6/4/2/0 et « Bouton » 2/1/0.
   await page.goto("/assessments/grids/new");
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Structure");
+  await page.getByLabel("Libellé du critère 1").first().fill("Structure");
   for (const [i, [points, description]] of [
     ["6", "Structure sémantique correcte"],
     ["4", "Structure approximative"],

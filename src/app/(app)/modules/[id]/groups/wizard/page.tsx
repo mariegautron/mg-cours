@@ -27,25 +27,28 @@ export default async function GroupWizardPage({
   for (const m of members ?? []) {
     byGroup.set(m.student_group_id, [...(byGroup.get(m.student_group_id) ?? []), m.student_id]);
   }
-  let hasThemes = false;
+  let themeCount = 0;
   if (project) {
     const { count } = await supabase
       .from("project_theme")
       .select("id", { count: "exact", head: true })
       .eq("project_id", project.id);
-    hasThemes = (count ?? 0) > 0;
+    themeCount = count ?? 0;
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold">Constituer les groupes — {mod.name}</h1>
-      <GroupWizard
-        moduleId={id}
-        students={students.map((s) => ({ id: s.id, name: `${s.first_name} ${s.last_name}` }))}
-        takenNames={(existing ?? []).map((g) => g.name)}
-        pastGroups={[...byGroup.values()]}
-        hasThemes={hasThemes}
-      />
-    </div>
+    <GroupWizard
+      moduleId={id}
+      moduleName={mod.name}
+      students={students.map((s) => ({
+        id: s.id,
+        first: s.first_name,
+        last: s.last_name,
+        photoPath: s.photo_path,
+      }))}
+      takenNames={(existing ?? []).map((g) => g.name)}
+      pastGroups={[...byGroup.values()]}
+      themeCount={themeCount}
+    />
   );
 }

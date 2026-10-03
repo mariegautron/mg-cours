@@ -20,7 +20,7 @@ test("grille, groupe, évaluation notée et compteur de notes", async ({ page })
   await page.goto("/assessments/grids/new");
   const gridName = `Grille Oral ${suffix}`;
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Présentation");
+  await page.getByLabel("Libellé du critère 1").first().fill("Présentation");
   await page.getByLabel("Points").first().fill("4");
   await page.getByRole("button", { name: "Ajouter un critère" }).click();
   await page.getByLabel("Libellé du critère 2").fill("Contenu");

@@ -16,7 +16,7 @@ test("déjà noté chez les autres : même palier et commentaire en un clic", as
 
   await page.goto("/assessments/grids/new");
   await page.getByLabel("Nom de la grille").fill(gridName);
-  await page.getByLabel("Libellé du critère 1").fill("Priorisation");
+  await page.getByLabel("Libellé du critère 1").first().fill("Priorisation");
   for (const [i, points] of ["6", "4", "2", "0"].entries()) {
     await page.getByRole("button", { name: "Ajouter un palier au critère 1" }).click();
     await page.getByLabel(`Valeur du palier ${i + 1} (critère 1)`).fill(points);
