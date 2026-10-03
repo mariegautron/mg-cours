@@ -345,9 +345,48 @@ async function deliverableDuplicates({ imp }: CourseContext) {
   }
 }
 
+// ── e) Type d'épreuve et mode d'arrivée des rendus (migration 20261102) ─────
+
+/** Type d'épreuve déduit du type texte posé à l'import. */
+export function examKindOf(type: string): "files" | "qcm" | "in_class" | "oral" | null {
+  if (/oral/i.test(type)) return "oral";
+  if (/qcm/i.test(type)) return "qcm";
+  if (/écrit individuel/i.test(type)) return "in_class";
+  if (/projet|écrit|dossier|spécif/i.test(type)) return "files";
+  return null;
+}
+
+async function examKinds({ imp }: CourseContext) {
+  const refs = await select(imp, "import_ref", "target_id", { target_table: "assessment" });
+  for (const ref of refs) {
+    const [a] = await select(imp, "assessment", "id, title, type, exam_kind, submission_mode", {
+      id: ref.target_id,
+    });
+    if (!a) continue;
+    const patch: Record<string, unknown> = {};
+    const kind = examKindOf(String(a.type ?? ""));
+    if (kind && !a.exam_kind) patch.exam_kind = kind;
+    // Rendus connus par liens seulement (projet fil rouge M2, liens des groupes) : saisie manuelle.
+    if (!a.submission_mode) {
+      const links = await select(imp, "submission_item", "id", { assessment_id: a.id });
+      if (links.length) patch.submission_mode = "manual";
+    }
+    await complete(
+      imp,
+      "assessment",
+      String(a.id),
+      patch,
+      `« ${String(a.title).slice(0, 45)} » (${String(a.type)}) → ${Object.entries(patch)
+        .map(([k, v]) => `${k} = ${String(v)}`)
+        .join(", ")}`,
+    );
+  }
+}
+
 export async function migrate(ctx: CourseContext): Promise<void> {
   await completions(ctx);
   await resourceTags(ctx);
   await banks(ctx);
   await deliverableDuplicates(ctx);
+  await examKinds(ctx);
 }
