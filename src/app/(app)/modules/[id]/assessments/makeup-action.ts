@@ -23,7 +23,11 @@ export interface MakeupState {
  * rattrapage par évaluation : s'il existe déjà, les absent·es excusé·es pas encore inscrit·es le
  * rejoignent. Le sujet est copié (fichiers compris) en brouillon « à construire ».
  */
-export async function prepareMakeup(moduleId: string, originalId: string): Promise<MakeupState> {
+async function createMakeup(
+  moduleId: string,
+  originalId: string,
+  options: { inAdvance?: boolean },
+): Promise<MakeupState> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { error: "Ta session a expiré : reconnecte-toi puis réessaie." };
@@ -41,7 +45,8 @@ export async function prepareMakeup(moduleId: string, originalId: string): Promi
     .select("student_id, attendance")
     .eq("assessment_id", originalId);
   const excused = excusedStudentIds(grades ?? []);
-  const blocker = makeupBlocker(original, excused.length);
+  // Préparé d'avance (US-144) : personne n'est encore absent·e, le sujet attend d'être utile.
+  const blocker = makeupBlocker(original, options.inAdvance ? 1 : excused.length);
   if (blocker) return { error: blocker };
 
   const { data: existing } = await supabase
@@ -119,4 +124,16 @@ export async function prepareMakeup(moduleId: string, originalId: string): Promi
       ? `/modules/${moduleId}/assessments/${makeupId}/quiz`
       : `/modules/${moduleId}/assessments/${makeupId}/edit`,
   );
+}
+
+export async function prepareMakeup(moduleId: string, originalId: string): Promise<MakeupState> {
+  return createMakeup(moduleId, originalId, {});
+}
+
+/** Sujet de rattrapage préparé dès la création de l'évaluation (US-144), sans absent·e excusé·e. */
+export async function prepareMakeupInAdvance(
+  moduleId: string,
+  originalId: string,
+): Promise<MakeupState> {
+  return createMakeup(moduleId, originalId, { inAdvance: true });
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { prepareMakeupInAdvance } from "@/app/(app)/modules/[id]/assessments/makeup-action";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -141,6 +142,11 @@ export async function createAssessment(
   if (groupsError) {
     await supabase.from("assessment").delete().eq("id", data.id);
     return { error: failure("enregistrer", { kept: true }) };
+  }
+
+  // Rattrapage préparé d'avance (US-144, option) : un échec ne bloque pas la création.
+  if (formData.get("prepareMakeup") === "on" && !parsed.data.isGroupGrade) {
+    await prepareMakeupInAdvance(moduleId, data.id);
   }
 
   revalidatePath(`/modules/${moduleId}/assessments`);

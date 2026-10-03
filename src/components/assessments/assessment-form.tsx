@@ -13,6 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import type { Tables } from "@/types/db";
+import {
+  canPrepareMakeupInAdvance,
+  frameFor,
+  frameWarnings,
+  TYPE_PRESETS,
+} from "@/lib/assessments/individual";
 import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: AssessmentFormState, formData: FormData) => Promise<AssessmentFormState>;
@@ -45,6 +51,13 @@ export function AssessmentForm({
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
   const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? "");
+  // Cadre selon le type (US-144) : libellé de la date, durée attendue, points à vérifier.
+  const [typeText, setTypeText] = useState(assessment?.type ?? "");
+  const [dateText, setDateText] = useState(assessment?.date ?? "");
+  const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
+  const [groupGrade, setGroupGrade] = useState(assessment?.is_group_grade ?? false);
+  const frame = frameFor(typeText);
+  const warnings = frameWarnings({ type: typeText, date: dateText, durationMinutes: durationText });
   const gridCriteria = (grids.find((g) => g.id === gridId)?.criteria ?? []).filter(
     (c) => !c.is_bonus,
   );
@@ -198,13 +211,26 @@ export function AssessmentForm({
           <Input
             id="type"
             name="type"
-            placeholder="oral, écrit, projet…"
-            defaultValue={assessment?.type ?? ""}
+            list="assessment-types"
+            placeholder="Rendu de fichiers ou de liens, QCM, oral…"
+            value={typeText}
+            onChange={(e) => setTypeText(e.target.value)}
           />
+          <datalist id="assessment-types">
+            {TYPE_PRESETS.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
-          <Input id="date" name="date" type="date" defaultValue={assessment?.date ?? ""} />
+          <Label htmlFor="date">{frame.dateLabel}</Label>
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            value={dateText}
+            onChange={(e) => setDateText(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="durationMinutes">Durée (minutes)</Label>
@@ -212,7 +238,8 @@ export function AssessmentForm({
             id="durationMinutes"
             name="durationMinutes"
             type="number"
-            defaultValue={assessment?.duration_minutes ?? ""}
+            value={durationText}
+            onChange={(e) => setDurationText(e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -313,14 +340,33 @@ export function AssessmentForm({
         ) : null}
       </div>
 
+      <div className="space-y-1 rounded-md border border-dashed p-3 text-sm">
+        <p className="text-muted-foreground">{frame.hint}</p>
+        {warnings.length > 0 ? (
+          <ul role="status" className="list-disc pl-5">
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
           name="isGroupGrade"
-          defaultChecked={assessment?.is_group_grade ?? false}
+          checked={groupGrade}
+          onChange={(e) => setGroupGrade(e.target.checked)}
         />
         Note de groupe (une note par groupe coché, coefficient ×1 au lieu de ×3)
       </label>
+
+      {!assessment && canPrepareMakeupInAdvance(groupGrade, false) ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="prepareMakeup" />
+          Préparer dès maintenant le sujet de rattrapage (même grille, même coefficient)
+        </label>
+      ) : null}
 
       {state.error ? <ActionError error={state.error} /> : null}
 
