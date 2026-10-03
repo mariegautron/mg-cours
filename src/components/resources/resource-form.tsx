@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { ActionError } from "@/components/action-error";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { resolveImageSrc } from "@/lib/resources/files";
+import { cleanPaste, insertAtSelection, slidePreviews } from "@/lib/resources/paste";
 import {
   AUDIENCE_LABELS,
   KIND_LABELS,
@@ -65,6 +66,84 @@ export function ResourceForm({
   const [dirty, setDirty] = useState(false);
   useUnsavedChangesGuard(dirty && !pending);
 
+  // Brouillon gardé sur cet appareil (US-152) : pas de version de plus dans l'historique de la ressource.
+  const draftKey = `mg-resource-draft:${resource?.id ?? "new"}`;
+  const [title, setTitle] = useState(resource?.title ?? "");
+  const [draftNote, setDraftNote] = useState("");
+  const [restorable, setRestorable] = useState<{ title: string; content: string } | null>(null);
+  const [pasteNote, setPasteNote] = useState("");
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const deferredContent = useDeferredValue(content);
+  const slides = useMemo(() => slidePreviews(deferredContent), [deferredContent]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const d = JSON.parse(raw) as { title?: string; content?: string };
+      const saved = { title: d.title ?? "", content: d.content ?? "" };
+      if (saved.content !== (resource?.content ?? "") || saved.title !== (resource?.title ?? "")) {
+        /* eslint-disable-next-line react-hooks/set-state-in-effect -- brouillon local lu après hydratation */
+        if (saved.content.trim() || saved.title.trim()) setRestorable(saved);
+      }
+    } catch {
+      /* stockage indisponible : pas de brouillon */
+    }
+  }, [draftKey, resource?.content, resource?.title]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ title, content }));
+        setDraftNote(
+          `Brouillon enregistré sur cet appareil à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`,
+        );
+      } catch {
+        setDraftNote("Enregistrement automatique indisponible : pense à enregistrer.");
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [dirty, title, content, draftKey]);
+
+  // Une erreur au serveur : le brouillon est remis (il est effacé à l'envoi).
+  useEffect(() => {
+    if (state.error || state.fieldErrors) {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ title, content }));
+      } catch {
+        /* sans effet */
+      }
+    }
+  }, [state, draftKey, title, content]);
+
+  function onPasteContent(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const text = e.clipboardData.getData("text/plain");
+    if (!text) return;
+    const cleaned = cleanPaste(text);
+    if (cleaned === text) return; // rien à nettoyer : collage normal
+    e.preventDefault();
+    const el = e.currentTarget;
+    const next = insertAtSelection(content, el.selectionStart, el.selectionEnd, cleaned);
+    setContent(next.text);
+    setDirty(true);
+    setPasteNote("Collage nettoyé : puces, espaces et sauts de ligne remis en forme.");
+    requestAnimationFrame(() => el.setSelectionRange(next.cursor, next.cursor));
+  }
+
+  function cleanAll() {
+    const cleaned = cleanPaste(content);
+    setPasteNote(
+      cleaned === content
+        ? "Rien à nettoyer."
+        : "Texte nettoyé : puces, espaces et sauts de ligne remis en forme.",
+    );
+    if (cleaned !== content) {
+      setContent(cleaned);
+      setDirty(true);
+    }
+  }
+
   function onKindChange(kind: string) {
     // Un corrigé, une banque de questions ou des notes sont réservés à l'enseignante par défaut.
     if (!audienceTouched) {
@@ -74,9 +153,16 @@ export function ResourceForm({
 
   return (
     <form
-      onSubmit={keepFormValues(formAction)}
+      onSubmit={(e) => {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {
+          /* sans effet */
+        }
+        keepFormValues(formAction)(e);
+      }}
       onChange={() => setDirty(true)}
-      className="max-w-4xl space-y-6"
+      className="max-w-6xl space-y-6"
     >
       <div className="space-y-2">
         <Label htmlFor="title">Titre</Label>
@@ -85,6 +171,7 @@ export function ResourceForm({
           name="title"
           required
           defaultValue={resource?.title ?? ""}
+          onChange={(e) => setTitle(e.target.value)}
           aria-invalid={fe.title ? true : undefined}
           aria-describedby={fe.title ? "title-error" : undefined}
         />
@@ -244,70 +331,165 @@ export function ResourceForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <Label htmlFor="content">Contenu (Markdown)</Label>
-          <div
-            role="tablist"
-            aria-label="Écrire ou prévisualiser"
-            className="bg-muted flex rounded-md p-0.5"
+      {restorable ? (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
+        >
+          <span>Un brouillon plus récent existe sur cet appareil.</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setContent(restorable.content);
+              setTitle(restorable.title);
+              const input = document.getElementById("title") as HTMLInputElement | null;
+              if (input && restorable.title) input.value = restorable.title;
+              setDirty(true);
+              setRestorable(null);
+            }}
           >
-            {(
-              [
-                ["write", "Écrire"],
-                ["preview", "Aperçu"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                id={`tab-${value}`}
-                aria-selected={tab === value}
-                aria-controls={`panel-${value}`}
-                onClick={() => setTab(value)}
-                className={cn(
-                  "focus-visible:ring-ring rounded px-3 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none",
-                  tab === value ? "bg-background font-medium shadow-sm" : "text-muted-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
+            Reprendre le brouillon
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              try {
+                localStorage.removeItem(draftKey);
+              } catch {
+                /* sans effet */
+              }
+              setRestorable(null);
+            }}
+          >
+            Ignorer
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="lg:grid lg:grid-cols-2 lg:gap-6">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <Label htmlFor="content">Contenu (Markdown)</Label>
+            <div
+              role="tablist"
+              aria-label="Écrire ou prévisualiser"
+              className="bg-muted flex rounded-md p-0.5"
+            >
+              {(
+                [
+                  ["write", "Écrire"],
+                  ["preview", "Aperçu"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  id={`tab-${value}`}
+                  aria-selected={tab === value}
+                  aria-controls={`panel-${value}`}
+                  onClick={() => setTab(value)}
+                  className={cn(
+                    "focus-visible:ring-ring rounded px-3 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none",
+                    tab === value ? "bg-background font-medium shadow-sm" : "text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div
+            id="panel-write"
+            role="tabpanel"
+            aria-labelledby="tab-write"
+            hidden={tab !== "write"}
+          >
+            <Textarea
+              id="content"
+              name="content"
+              ref={contentRef}
+              onPaste={onPasteContent}
+              rows={18}
+              className="font-mono text-sm"
+              aria-describedby="content-hint"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+            <p id="content-hint" className="text-muted-foreground mt-2 text-sm">
+              Titres <code>##</code> ou séparateur <code>---</code> = nouvelle diapositive en mode
+              présentation. Image déposée sur la ressource :{" "}
+              <code>![description](fichier.png)</code>. Tu peux coller depuis Notion ou Word : le
+              texte est nettoyé.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <Button type="button" size="sm" variant="secondary" onClick={cleanAll}>
+                Nettoyer le texte
+              </Button>
+              <p role="status" aria-live="polite" className="text-muted-foreground text-sm">
+                {pasteNote}
+              </p>
+            </div>
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-muted-foreground mt-1 min-h-5 text-sm"
+            >
+              {draftNote}
+            </p>
+          </div>
+          <div
+            id="panel-preview"
+            role="tabpanel"
+            aria-labelledby="tab-preview"
+            tabIndex={0}
+            hidden={tab !== "preview"}
+            className="bg-card min-h-40 rounded-md border p-4"
+          >
+            {tab !== "preview" ? null : content.trim() ? (
+              <Markdown
+                source={content}
+                resolveImageSrc={resource ? (src) => resolveImageSrc(resource.id, src) : undefined}
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm">Rien à afficher pour l’instant.</p>
+            )}
           </div>
         </div>
-        <div id="panel-write" role="tabpanel" aria-labelledby="tab-write" hidden={tab !== "write"}>
-          <Textarea
-            id="content"
-            name="content"
-            rows={18}
-            className="font-mono text-sm"
-            aria-describedby="content-hint"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <p id="content-hint" className="text-muted-foreground mt-2 text-sm">
-            Titres <code>##</code> ou séparateur <code>---</code> = nouvelle diapositive en mode
-            présentation. Image déposée sur la ressource : <code>![description](fichier.png)</code>.
-          </p>
-        </div>
-        <div
-          id="panel-preview"
-          role="tabpanel"
-          aria-labelledby="tab-preview"
-          tabIndex={0}
-          hidden={tab !== "preview"}
-          className="bg-card min-h-40 rounded-md border p-4"
-        >
-          {tab !== "preview" ? null : content.trim() ? (
-            <Markdown
-              source={content}
-              resolveImageSrc={resource ? (src) => resolveImageSrc(resource.id, src) : undefined}
-            />
+
+        <aside aria-labelledby="slides-title" className="mt-6 space-y-2 lg:mt-0">
+          <h2 id="slides-title" className="text-sm font-medium">
+            Diapositives ({slides.length})
+          </h2>
+          {slides.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Les diapositives apparaissent ici dès que tu écris.
+            </p>
           ) : (
-            <p className="text-muted-foreground text-sm">Rien à afficher pour l’instant.</p>
+            <ol className="max-h-[32rem] space-y-2 overflow-auto">
+              {slides.map((sl) => (
+                <li key={sl.number} className="bg-card rounded-md border p-3 text-sm">
+                  <p className="font-medium">
+                    <span className="text-muted-foreground">{sl.number}.</span>{" "}
+                    {sl.title ?? "Sans titre"}
+                  </p>
+                  {sl.summary ? <p className="text-muted-foreground mt-1">{sl.summary}</p> : null}
+                  {sl.extras.length ? (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {sl.extras
+                        .map((x) => ({ image: "Image", table: "Tableau", code: "Code" })[x])
+                        .join(" · ")}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
           )}
-        </div>
+        </aside>
       </div>
 
       {state.error ? <ActionError error={state.error} /> : null}
