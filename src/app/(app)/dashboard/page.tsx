@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 
 import { TodayPrep } from "@/components/dashboard/today-prep";
+import { CopyMessageButton } from "@/components/projects/copy-message-button";
+import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
+import { copyText, dueToday } from "@/lib/projects/surprises";
 import { EmptyState } from "@/components/empty-state";
 import { Mascot } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +107,9 @@ export default async function DashboardPage() {
   const firstName = profile?.legal_name?.split(" ")[0];
 
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
+  // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.
+  const todayIds = new Set(sessions.map((c) => c.id));
+  const surprises = dueToday(await listSurprisesForCourses([...todayIds]), todayIds);
 
   const todos = pickTodos(
     buildTodos({
@@ -225,6 +231,34 @@ export default async function DashboardPage() {
           )}
         </section>
       )}
+
+      {surprises.length ? (
+        <section aria-labelledby="surprises" className="bg-card space-y-3 rounded-2xl border p-5">
+          <h2 id="surprises" className="font-heading text-lg font-semibold">
+            Imprévu{surprises.length > 1 ? "s" : ""} à envoyer
+          </h2>
+          <ul className="space-y-3">
+            {surprises.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">Imprévu à envoyer : {s.title}</p>
+                  <p className="text-muted-foreground text-sm">
+                    <Link
+                      href={`/modules/${s.moduleId}/project`}
+                      className="underline underline-offset-2"
+                    >
+                      {s.moduleName}
+                    </Link>
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CopyMessageButton text={copyText(s)} label={s.title} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {sessions.map((c, i) => (
         <TodayPrep

@@ -1551,6 +1551,57 @@ export type Database = {
           },
         ]
       }
+      project_surprise: {
+        Row: {
+          body: string
+          course_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          project_id: string
+          sent_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          project_id: string
+          sent_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          project_id?: string
+          sent_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_surprise_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_surprise_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "module_project"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_theme: {
         Row: {
           created_at: string

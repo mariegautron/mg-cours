@@ -10,6 +10,10 @@ import { SkeletonEditor } from "@/components/projects/skeleton-editor";
 import { ThemeAssignment } from "@/components/projects/theme-assignment";
 import { ThemesEditor } from "@/components/projects/themes-editor";
 import { Badge } from "@/components/ui/badge";
+import { SurprisesEditor } from "@/components/projects/surprises-editor";
+import { listProjectSurprises } from "@/lib/projects/surprise-queries";
+import { sortSurprises } from "@/lib/projects/surprises";
+import { getModuleCourses } from "@/lib/modules/queries";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModule } from "@/lib/modules/queries";
 import {
@@ -32,6 +36,11 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   if (!mod) notFound();
 
   const project = await getModuleProject(id);
+  const [courses, surprises] = project
+    ? await Promise.all([getModuleCourses(id), listProjectSurprises(project.id)])
+    : [[], { available: true, items: [] }];
+  const courseOptions = courses.map((c, i) => ({ id: c.id, number: i + 1, title: c.title }));
+  const courseOrder = new Map(courseOptions.map((c) => [c.id, c.number]));
   const proposed = project
     ? remainingSkeleton(
         projectSkeleton(mod.total_hours),
@@ -140,6 +149,22 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                   .sort((a, b) => (b.drawn_at ?? "").localeCompare(a.drawn_at ?? ""))[0]
                   ?.draw_seed ?? null
               }
+            />
+          </section>
+
+          <section aria-labelledby="surprises-heading" className="space-y-3">
+            <h2 id="surprises-heading" className="text-lg font-medium">
+              Imprévus du client ({surprises.items.length})
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Des mails du client qui bousculent le projet, à envoyer pendant une séance. Le jour de
+              la séance, « Aujourd’hui » te le rappelle avec le message prêt à copier.
+            </p>
+            <SurprisesEditor
+              moduleId={mod.id}
+              items={sortSurprises(surprises.items, courseOrder)}
+              courses={courseOptions}
+              available={surprises.available}
             />
           </section>
 
