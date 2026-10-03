@@ -130,7 +130,7 @@ export default async function DashboardPage() {
       ? `/modules/${d.courses[0].module.id}/courses/${d.courses[0].id}/edit`
       : null,
   );
-  const activeModules = modules.filter((m) => !m.archived_at);
+  const activeModules = modules.filter((m) => !m.archived_at && !m.finished_at);
 
   // Module « du moment » : celui de la séance du jour, sinon du prochain cours, sinon le premier actif.
   const focusFrom = sessions[0]?.module ?? upcoming?.module ?? activeModules[0] ?? null;

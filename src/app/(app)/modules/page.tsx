@@ -1,234 +1,254 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Archive, Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
-import { FinishModuleButton } from "@/components/modules/finish-module-button";
+import { Pill } from "@/components/dashboard/pill";
+import { ModuleRowActions } from "@/components/modules/module-row-actions";
+import { listCourseProgress } from "@/lib/dashboard/overview-queries";
+import { getModuleJourney } from "@/lib/modules/journey-queries";
+import {
+  FILTERS,
+  filterCounts,
+  inFilter,
+  metaLine,
+  moduleListState,
+  parseListFilter,
+  schoolYearOf,
+  statePill,
+  type ListFilter,
+} from "@/lib/modules/list-state";
+import { listModules } from "@/lib/modules/queries";
 import { retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { type ModuleFilter, parseModuleFilter, splitModules } from "@/lib/modules/archive-filter";
-import { listModules, type ModuleWithSchool } from "@/lib/modules/queries";
 import { cn } from "@/lib/utils";
-import { requiredNotes } from "@/lib/ynov/notation";
-import { trameStatus } from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Modules" };
 
-const TRAME_BADGE: Record<
-  string,
-  { label: string; variant: "default" | "destructive" | "outline" | "secondary" }
-> = {
-  sent: { label: "Progression envoyée", variant: "secondary" },
-  overdue: { label: "Progression en retard", variant: "destructive" },
-  urgent: { label: "Progression — J-7", variant: "destructive" },
-  warning: { label: "Progression — J-15", variant: "outline" },
-  ok: { label: "Progression OK", variant: "outline" },
-  unknown: { label: "1re séance à renseigner", variant: "outline" },
+const CHIP =
+  "focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-3.5 text-sm font-semibold whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none";
+
+const EMPTY: Record<ListFilter, { title: string; description: string }> = {
+  running: {
+    title: "Aucun module en cours",
+    description:
+      "Un module commence dès que sa première séance est faite. Prépare le suivant ou crée-en un.",
+  },
+  to_prepare: {
+    title: "Rien à préparer",
+    description: "Tous tes modules ont déjà commencé. Crée un module pour la prochaine rentrée.",
+  },
+  finished: {
+    title: "Aucun module terminé",
+    description:
+      "« Terminer » range un module dans cette liste une fois les cours faits et les notes saisies.",
+  },
+  archived: {
+    title: "Aucun module rangé",
+    description: "« Ranger » masque un module sans rien effacer : tu le retrouves ici.",
+  },
 };
-
-const FILTER_HREF: Record<ModuleFilter, string> = {
-  active: "/modules",
-  archived: "/modules?filter=archived",
-  all: "/modules?filter=all",
-};
-
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString("fr-FR");
-
-const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 export default async function ModulesPage({ searchParams }: PageProps<"/modules">) {
-  const filter = parseModuleFilter(await searchParams);
-  const [all, askNote] = await Promise.all([
+  const sp = await searchParams;
+  const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
+  // Anciennes URL : ?filter=archived → Rangés ; ?filter=all → En cours.
+  const rawFilter = str("filter");
+  const filter = parseListFilter(rawFilter === "all" ? "running" : rawFilter);
+  const schoolId = str("school");
+  const year = str("year");
+
+  const [all, progress, askNote] = await Promise.all([
     listModules({ includeArchived: true }),
+    listCourseProgress(),
     retrospectiveAvailable(),
   ]);
-  const { active, archived } = splitModules(all);
+  const rows = all.map((m) => {
+    const courses = progress.get(m.id) ?? { done: 0, total: 0 };
+    return { m, courses, state: moduleListState({ ...m, courses }) };
+  });
 
-  const tabs: { value: ModuleFilter; label: string }[] = [
-    { value: "active", label: `En cours (${active.length})` },
-    { value: "archived", label: `Rangés (${archived.length})` },
-    { value: "all", label: `Tous (${active.length + archived.length})` },
+  const schools = [
+    ...new Map(all.filter((m) => m.school).map((m) => [m.school!.id, m.school!.name])).entries(),
   ];
+  const years = [...new Set(all.map((m) => schoolYearOf(m.year)))].sort().reverse();
+  const scoped = rows.filter(
+    (r) => (!schoolId || r.m.school_id === schoolId) && (!year || schoolYearOf(r.m.year) === year),
+  );
+  const counts = filterCounts(scoped.map((r) => r.state));
+  const shown = scoped.filter((r) => inFilter(r.state, filter));
+
+  // « Prochaine étape » : le parcours du module (non rangé).
+  const journeys = new Map(
+    await Promise.all(
+      shown
+        .filter((r) => r.state !== "archived")
+        .map(async (r) => [r.m.id, (await getModuleJourney(r.m.id))?.badge ?? null] as const),
+    ),
+  );
+
+  const href = (f: ListFilter, extra: { school?: string; year?: string } = {}) => {
+    const params = new URLSearchParams();
+    if (f !== "running") params.set("filter", f);
+    const s = extra.school ?? schoolId;
+    const y = extra.year ?? year;
+    if (s) params.set("school", s);
+    if (y) params.set("year", y);
+    const qs = params.toString();
+    return qs ? `/modules?${qs}` : "/modules";
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Modules</h1>
-          <p className="text-muted-foreground">
-            Tous tes modules, toutes écoles et toutes années confondues.
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Modules</h1>
+          <p className="text-muted-foreground mt-1 max-w-2xl">
+            Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Tu peux terminer ou
+            ranger un module depuis ici.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="secondary">
-            <Link href="/billing">Facturation</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/assessments">Évaluations</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/modules/new">
-              <Plus aria-hidden />
-              Nouveau module
-            </Link>
-          </Button>
-        </div>
+        <Link
+          href="/modules/new"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Créer un module
+        </Link>
       </div>
 
-      <nav aria-label="Filtrer les modules">
-        <ul className="bg-muted inline-flex flex-wrap gap-1 rounded-lg p-1">
-          {tabs.map((t) => (
-            <li key={t.value}>
-              <Link
-                href={FILTER_HREF[t.value]}
-                aria-current={filter === t.value ? "page" : undefined}
-                className={cn(
-                  "focus-visible:ring-ring block rounded-md px-3 py-1.5 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none",
-                  filter === t.value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <nav aria-label="Filtrer les modules" className="flex flex-wrap items-center gap-2.5">
+        {FILTERS.map((f) => (
+          <Link
+            key={f.key}
+            href={href(f.key)}
+            aria-current={filter === f.key ? "page" : undefined}
+            className={cn(
+              CHIP,
+              filter === f.key
+                ? "bg-primary text-primary-foreground border-transparent"
+                : "bg-card hover:bg-accent",
+            )}
+          >
+            {f.label} · {counts[f.key]}
+          </Link>
+        ))}
+        <form action="/modules" className="flex flex-wrap items-center gap-2.5">
+          {filter !== "running" ? <input type="hidden" name="filter" value={filter} /> : null}
+          <label className="sr-only" htmlFor="school">
+            École
+          </label>
+          <select
+            id="school"
+            name="school"
+            defaultValue={schoolId}
+            className={cn(CHIP, "bg-card")}
+            aria-label="École"
+          >
+            <option value="">Toutes les écoles</option>
+            {schools.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <label className="sr-only" htmlFor="year">
+            Année scolaire
+          </label>
+          <select
+            id="year"
+            name="year"
+            defaultValue={year}
+            className={cn(CHIP, "bg-card")}
+            aria-label="Année scolaire"
+          >
+            <option value="">Toutes les années</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className={cn(CHIP, "bg-card hover:bg-accent")}>
+            Filtrer
+          </button>
+        </form>
       </nav>
 
-      {filter === "active" ? (
-        active.length > 0 ? (
-          <ModuleGrid modules={active} askNote={askNote} />
-        ) : archived.length > 0 ? (
-          <EmptyState
-            title="Aucun module actif"
-            description={`${plural(archived.length, "module archivé")}. Crée un module pour la nouvelle année ou retrouve tes modules passés.`}
-            actions={[
-              { label: "Nouveau module", href: "/modules/new" },
-              { label: "Voir les archivés", href: FILTER_HREF.archived },
-            ]}
-          />
-        ) : (
-          <EmptyState
-            title="Aucun module"
-            description="Un module regroupe les séances, les évaluations et la facture d’un cours. Crée le premier pour préparer ta rentrée."
-            actions={[{ label: "Créer un module", href: "/modules/new" }]}
-          />
-        )
-      ) : filter === "archived" ? (
-        archived.length > 0 ? (
-          <ModuleGrid modules={archived} />
-        ) : (
-          <EmptyState
-            title="Aucun module archivé"
-            description="Archive un module depuis sa fiche une fois l’année terminée."
-          />
-        )
-      ) : active.length + archived.length === 0 ? (
+      {all.length === 0 ? (
         <EmptyState
           title="Aucun module"
           description="Un module regroupe les séances, les évaluations et la facture d’un cours. Crée le premier pour préparer ta rentrée."
           actions={[{ label: "Créer un module", href: "/modules/new" }]}
         />
+      ) : shown.length === 0 ? (
+        <EmptyState
+          title={EMPTY[filter].title}
+          description={EMPTY[filter].description}
+          actions={[{ label: "Créer un module", href: "/modules/new" }]}
+        />
       ) : (
-        <div className="space-y-8">
-          {active.length > 0 ? (
-            <section aria-labelledby="modules-actifs" className="space-y-3">
-              <h2 id="modules-actifs" className="text-lg font-semibold">
-                En cours
-              </h2>
-              <ModuleGrid modules={active} headingLevel={3} askNote={askNote} />
-            </section>
-          ) : null}
-          {archived.length > 0 ? (
-            <section aria-labelledby="modules-archives" className="space-y-3">
-              <h2 id="modules-archives" className="text-lg font-semibold">
-                Rangés
-              </h2>
-              <ModuleGrid modules={archived} headingLevel={3} />
-            </section>
-          ) : null}
-        </div>
+        <section
+          aria-label="Liste des modules"
+          className="bg-card rounded-3xl border px-5 shadow-sm"
+        >
+          <ul>
+            {shown.map(({ m, courses, state }) => {
+              const pill = statePill(state, courses);
+              const next = journeys.get(m.id);
+              return (
+                <li
+                  key={m.id}
+                  className="flex min-h-[84px] flex-wrap items-center gap-3 border-t py-3 first:border-t-0"
+                >
+                  <Link
+                    href={`/modules/${m.id}`}
+                    className="focus-visible:ring-ring min-w-0 flex-1 basis-64 rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    <h2 className="text-[1.05rem] font-bold">{m.name}</h2>
+                    <p className="text-muted-foreground text-sm">
+                      {metaLine({
+                        ycode: m.ycode,
+                        schoolName: m.school?.name ?? null,
+                        level: m.level,
+                        totalHours: m.total_hours,
+                        firstSessionDate: m.first_session_date,
+                        state,
+                      })}
+                    </p>
+                    {state === "archived" ? (
+                      <p className="mt-0.5 text-sm">
+                        Rangé le {new Date(m.archived_at!).toLocaleDateString("fr-FR")}
+                      </p>
+                    ) : next ? (
+                      <p className="mt-0.5 text-sm">{next}</p>
+                    ) : null}
+                  </Link>
+                  <Pill tone={pill.tone}>{pill.label}</Pill>
+                  <ModuleRowActions id={m.id} name={m.name} state={state} askNote={askNote} />
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
-    </div>
-  );
-}
 
-function ModuleGrid({
-  modules,
-  headingLevel = 2,
-  askNote = false,
-}: {
-  modules: ModuleWithSchool[];
-  headingLevel?: 2 | 3;
-  askNote?: boolean;
-}) {
-  return (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {modules.map((m) => (
-        <li key={m.id}>
-          <ModuleCard module={m} headingLevel={headingLevel} askNote={askNote} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function ModuleCard({
-  module: m,
-  headingLevel,
-  askNote,
-}: {
-  module: ModuleWithSchool;
-  headingLevel: 2 | 3;
-  askNote: boolean;
-}) {
-  const Heading = headingLevel === 2 ? "h2" : "h3";
-  const meta = (
-    <p className="text-muted-foreground text-sm">
-      {m.school?.name ?? "École non renseignée"} · {m.level ?? "—"} · {m.year}
-    </p>
-  );
-  const cardClass =
-    "hover:bg-accent focus-visible:ring-ring block h-full rounded-lg border p-4 focus-visible:ring-2 focus-visible:outline-none";
-
-  if (m.archived_at) {
-    return (
-      <Link href={`/modules/${m.id}`} className={cn(cardClass, "bg-muted border-dashed")}>
-        <Heading className="flex items-start gap-2 font-medium">
-          <Archive aria-hidden className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-          {m.name}
-        </Heading>
-        {meta}
-        <div className="mt-3 flex flex-wrap gap-1">
-          <Badge variant="outline">Archivé le {formatDate(m.archived_at)}</Badge>
-          <Badge variant="secondary">{m.total_hours} h</Badge>
-        </div>
-      </Link>
-    );
-  }
-
-  const notes = requiredNotes(m.total_hours);
-  const badge = TRAME_BADGE[trameStatus(m.first_session_date, m.iceberg_state).level];
-  return (
-    <div className="flex h-full flex-col rounded-lg border">
-      <Link
-        href={`/modules/${m.id}`}
-        className="hover:bg-accent focus-visible:ring-ring block flex-1 rounded-t-lg p-4 focus-visible:ring-2 focus-visible:outline-none"
-      >
-        <Heading className="font-medium">{m.name}</Heading>
-        {meta}
-        <div className="mt-3 flex flex-wrap gap-1">
-          <Badge variant="secondary">{m.total_hours} h</Badge>
-          <Badge variant="outline">
-            {notes.total} note{notes.total > 1 ? "s" : ""} min.
-          </Badge>
-          <Badge variant={badge.variant}>{badge.label}</Badge>
-        </div>
-      </Link>
-      <div className="flex justify-end border-t px-2 py-1">
-        <FinishModuleButton id={m.id} name={m.name} askNote={askNote} />
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/dashboard"
+          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+        >
+          ← Aujourd’hui
+        </Link>
+        <Link
+          href="/assessments"
+          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Évaluations
+        </Link>
+        <Link
+          href="/billing"
+          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Facturation
+        </Link>
       </div>
     </div>
   );

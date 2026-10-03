@@ -231,27 +231,49 @@ export async function unarchiveModule(id: string) {
 export interface FinishModuleResult {
   ok?: boolean;
   error?: string;
-  /** Horodatage du rangement : jeton à renvoyer pour « Annuler ». */
-  archivedAt?: string;
+  /** Horodatage de « Terminer » : jeton à renvoyer pour « Annuler ». */
+  finishedAt?: string;
+  /** `true` si la base n'a pas encore la colonne « terminé » : le module a été rangé à la place. */
+  archivedInstead?: boolean;
+}
+
+function refreshModule(id: string) {
+  revalidatePath("/modules");
+  revalidatePath(`/modules/${id}`);
+  revalidatePath("/billing");
+  revalidatePath("/dashboard");
 }
 
 /**
- * Termine et range un module depuis la liste (US-160). Le mot « Ce que je retiens » est gardé au
- * mieux : sans la table `module_retrospective`, le module est rangé quand même.
+ * Termine un module (maquette « Modules ») : il sort de « En cours » et passe dans « Terminés » ; la
+ * facture reste à faire. Le mot « Ce que je retiens » est gardé au mieux. Sans la colonne
+ * `finished_at` (migration pas appliquée), le module est rangé comme avant (US-160).
  */
 export async function finishModule(id: string, note: string | null): Promise<FinishModuleResult> {
   const cleaned = cleanRetrospective(note);
   if ("error" in cleaned) return { error: cleaned.error };
 
   const supabase = await createClient();
-  const archivedAt = new Date().toISOString();
-  const { data, error } = await supabase
+  const now = new Date().toISOString();
+  let archivedInstead = false;
+  const first = await supabase
     .from("module")
-    .update({ archived_at: archivedAt })
+    .update({ finished_at: now })
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (error) return { error: failure("ranger le module") };
+  let data = first.data;
+  if (first.error) {
+    const fallback = await supabase
+      .from("module")
+      .update({ archived_at: now })
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (fallback.error) return { error: failure("terminer le module") };
+    data = fallback.data;
+    archivedInstead = true;
+  }
   if (!data) return { error: NOT_FOUND.module };
 
   if (cleaned.note) {
@@ -260,38 +282,48 @@ export async function finishModule(id: string, note: string | null): Promise<Fin
         .from("module_retrospective")
         .upsert({ module_id: id, note: cleaned.note }, { onConflict: "module_id" });
     } catch {
-      // Table pas encore créée : le module est rangé, sans le mot.
+      // Table pas encore créée : le module est terminé, sans le mot.
     }
   }
-  revalidatePath("/modules");
-  revalidatePath(`/modules/${id}`);
-  revalidatePath("/billing");
-  revalidatePath("/dashboard");
-  return { ok: true, archivedAt };
+  refreshModule(id);
+  return { ok: true, finishedAt: now, archivedInstead };
 }
 
-/** « Annuler » après le rangement : seulement dans le délai et pour ce rangement-là. */
+/** « Annuler » après « Terminer » : seulement dans le délai et pour ce geste-là. */
 export async function undoFinishModule(
   id: string,
-  archivedAt: string,
+  finishedAt: string,
+  archivedInstead = false,
 ): Promise<FinishModuleResult> {
   const supabase = await createClient();
-  const { data } = await supabase.from("module").select("archived_at").eq("id", id).maybeSingle();
+  const column = archivedInstead ? "archived_at" : "finished_at";
+  const { data } = await supabase.from("module").select(column).eq("id", id).maybeSingle();
   if (!data) return { error: NOT_FOUND.module };
-  if (!canUndoArchive(data.archived_at, archivedAt, Date.now())) {
+  const current = (data as unknown as Record<string, string | null>)[column] ?? null;
+  if (!canUndoArchive(current, finishedAt, Date.now())) {
     return {
-      error: "Le délai pour annuler est passé : tu peux restaurer le module depuis « Rangés ».",
+      error: "Le délai pour annuler est passé : tu peux rouvrir le module depuis « Terminés ».",
     };
   }
   const { error } = await supabase
     .from("module")
-    .update({ archived_at: RESTORED_ARCHIVED_AT })
+    .update(
+      archivedInstead
+        ? { archived_at: RESTORED_ARCHIVED_AT }
+        : { finished_at: RESTORED_ARCHIVED_AT },
+    )
     .eq("id", id);
-  if (error) return { error: failure("annuler le rangement") };
-  revalidatePath("/modules");
-  revalidatePath(`/modules/${id}`);
-  revalidatePath("/billing");
-  revalidatePath("/dashboard");
+  if (error) return { error: failure("annuler") };
+  refreshModule(id);
+  return { ok: true };
+}
+
+/** Rouvre un module terminé : il redevient « en cours ». */
+export async function reopenModule(id: string): Promise<FinishModuleResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("module").update({ finished_at: null }).eq("id", id);
+  if (error) return { error: failure("rouvrir le module") };
+  refreshModule(id);
   return { ok: true };
 }
 

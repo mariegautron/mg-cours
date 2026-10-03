@@ -998,6 +998,7 @@ export type Database = {
           archived_at: string | null
           created_at: string
           end_date: string | null
+          finished_at: string | null
           first_session_date: string | null
           hourly_rate: number | null
           hours_lecture: number | null
@@ -1023,6 +1024,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           end_date?: string | null
+          finished_at?: string | null
           first_session_date?: string | null
           hourly_rate?: number | null
           hours_lecture?: number | null
@@ -1048,6 +1050,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           end_date?: string | null
+          finished_at?: string | null
           first_session_date?: string | null
           hourly_rate?: number | null
           hours_lecture?: number | null

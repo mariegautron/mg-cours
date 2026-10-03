@@ -16,3 +16,16 @@ export async function openTab(page: Page, name: string | RegExp) {
 export async function openOtherBilling(page: Page) {
   await page.getByText("Autres options de facturation").click();
 }
+
+/** Ouvre un module depuis la liste, quel que soit son état (En cours, À préparer, Terminés, Rangés). */
+export async function openModuleFromList(page: Page, name: string | RegExp) {
+  for (const filter of ["", "?filter=to_prepare", "?filter=finished", "?filter=archived"]) {
+    await page.goto(`/modules${filter}`);
+    const link = page.getByRole("link", { name }).first();
+    if ((await link.count()) > 0) {
+      await link.click();
+      return;
+    }
+  }
+  throw new Error(`Module introuvable dans la liste : ${String(name)}`);
+}

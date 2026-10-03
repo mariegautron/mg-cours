@@ -43,11 +43,12 @@ export function FinishModuleButton({
   const confirm = () =>
     start(async () => {
       const result = await finishModule(id, askNote ? note : null);
-      if (!result.ok || !result.archivedAt) {
+      if (!result.ok || !result.finishedAt) {
         setError(result.error ?? "On n’a pas pu ranger le module. Réessaie.");
         return;
       }
-      const token = result.archivedAt;
+      const token = result.finishedAt!;
+      const archivedInstead = result.archivedInstead ?? false;
       setOpen(false);
       setNote("");
       setError(null);
@@ -57,7 +58,7 @@ export function FinishModuleButton({
         action: {
           label: "Annuler",
           onClick: () =>
-            void undoFinishModule(id, token).then((r) => {
+            void undoFinishModule(id, token, archivedInstead).then((r) => {
               if (r.ok) toast.success(`« ${name} » est de retour dans les modules en cours.`);
               else toast.error(r.error ?? "On n’a pas pu annuler.");
               router.refresh();

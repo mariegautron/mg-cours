@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { localEnv } from "./env";
 import { openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
@@ -33,16 +34,15 @@ test("archive un module : masqué de la liste puis visible dans l’onglet « Ra
     .analyze();
   expect(done.violations).toEqual([]);
 
-  await page.goto("/modules");
+  await page.goto("/modules?filter=to_prepare");
   await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
 
-  await page.getByRole("link", { name: /^Rangés \(\d+\)$/ }).click();
-  await expect(page.getByRole("link", { name: /^Rangés/ })).toHaveAttribute("aria-current", "page");
+  await page.goto("/modules?filter=archived");
+  await expect(page.getByRole("link", { name: /^Rangés · \d+$/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
-
-  await page.getByRole("link", { name: /^Tous/ }).click();
-  await expect(page.getByRole("heading", { name: "Rangés", level: 2 })).toBeVisible();
-  await expect(page.getByRole("heading", { name, level: 3 })).toBeVisible();
 
   await page.goto("/billing");
   await expect(page.getByText(name)).toHaveCount(0);
@@ -66,15 +66,55 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
   await page.getByRole("button", { name: "Enregistrer" }).click();
   await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
 
+  // « En cours » = au moins une séance faite : on crée une séance puis on la marque faite (API locale).
+  const moduleUrl = page.url();
+  const moduleId = moduleUrl.split("/").pop()!;
+  await page.goto(`${moduleUrl}/courses/new`);
+  await page.getByLabel("Titre de la séance").fill("Séance unique");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}(#.*)?$/);
+  const env = localEnv();
+  const res = await fetch(
+    `${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/course?module_id=eq.${moduleId}`,
+    {
+      method: "PATCH",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ completion: "done" }),
+    },
+  );
+  expect(res.ok).toBe(true);
+
   await page.goto("/modules");
-  await page.getByRole("button", { name: `Terminer le module : ${name}` }).click();
-  const dialog = page.getByRole("alertdialog");
+  const row = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name, level: 2 }) });
+  await expect(row.getByText("Cours faits")).toBeVisible();
+  await row.getByRole("button", { name: `Terminer : ${name}` }).click();
+  const dialog = page.getByRole("alertdialog", { name: "Terminer le module" });
   await expect(dialog.getByText(`Terminer « ${name} » ?`)).toBeVisible();
-  await dialog.getByRole("button", { name: "Terminer et ranger" }).click();
-  await expect(page.getByText(`« ${name} » est rangé.`)).toBeVisible();
+  await dialog.getByRole("button", { name: "Terminer", exact: true }).click();
+  await expect(page.getByText(`« ${name} » est terminé.`)).toBeVisible();
   await expect(page.getByRole("heading", { name, level: 2 })).toHaveCount(0);
 
   // Annuler pendant les 10 secondes : le module revient dans « En cours ».
   await page.getByRole("button", { name: "Annuler" }).click();
   await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
+
+  // Terminer pour de bon : « Terminés », puis Ranger → « Rangés ».
+  await row.getByRole("button", { name: `Terminer : ${name}` }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Terminer", exact: true })
+    .click();
+  await page.goto("/modules?filter=finished");
+  const finished = page
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("heading", { name, level: 2 }) });
+  await expect(finished.getByText("Terminé", { exact: true })).toBeVisible();
+  await finished.getByRole("button", { name: `Ranger : ${name}` }).click();
+  await expect(page.getByText(`« ${name} » est rangé.`)).toBeVisible();
 });

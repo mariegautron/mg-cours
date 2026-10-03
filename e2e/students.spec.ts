@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { openTab } from "./helpers";
+import { openModuleFromList, openTab } from "./helpers";
 
 // Nécessite Supabase local (`pnpm db:start` + `pnpm db:reset`).
 async function login(page: import("@playwright/test").Page) {
@@ -24,11 +24,7 @@ test("crée un·e étudiant·e, un groupe, et les relie", async ({ page }) => {
   await expect(page.getByRole("heading", { name: `Léa Martin${suffix}` })).toBeVisible();
 
   // Groupe sur le module exemple (seed).
-  await page.goto("/modules");
-  await page
-    .getByRole("link", { name: /Méthodologies Agile/ })
-    .first()
-    .click();
+  await openModuleFromList(page, /Méthodologies Agile/);
   await openTab(page, /Groupes/);
   await page.getByRole("link", { name: "Ajouter un groupe" }).click();
   const groupName = `Groupe A ${suffix}`;

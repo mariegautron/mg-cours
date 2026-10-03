@@ -140,7 +140,7 @@ export default async function ModulePage({
   });
 
   // États de fin (US-131) : « tout est prêt » et « terminé ».
-  const stage = moduleStage(journey, !!mod.archived_at);
+  const stage = moduleStage(journey, !!(mod.archived_at || mod.finished_at));
   const completion =
     stage === "in_progress"
       ? null
