@@ -704,3 +704,16 @@ manual` pour le projet fil rouge M2 (liens de rendu).
   - **11 phrases** de correction « erreurs fréquentes » (matière Accessibilité) ; 6 groupes ;
     31 fiches de correction nominatives (à n'importer qu'en « Prénom N. » si la PO le veut).
   - Variante légère : seulement les 11 phrases et la grille /80.
+
+#### Fiches école — état (03/10)
+
+- **GP** (texte) : `complements-5` (10 attendus + présentation) ; **B2 2025-26** (texte,
+  A2526_0121) : `complements-6` (6 attendus + présentation ; module conservé à 20 h, fiche
+  à 16 h) ; simulations lancées, écriture sur validation.
+- **M2 2024-25** : pas de fiche, seulement l'en-tête Moodle (« M2S2-Elective 2 », Mastère 2,
+  programme « Mastère2 Expert Développement Web », module « M2 Elective au choix
+  informatique », semestre 2, 2024/2025, 28 h, aucun prérequis, pas de YCODE) : conforme au
+  module importé. `complements-7` : 18 objectifs des 4 journées → attendus « ajoutés par
+  l'intervenante » (`origin = 'custom'`) rattachés à leur journée (simulation, décision PO).
+- **Édition archivée** : PDF `~/Téléchargements/B2 Accessibilité et qualité web.pdf` (fiche
+  2024, Bachelor 2 Initial, 16 h) à déposer comme fiche du module archivé à la reprise.
