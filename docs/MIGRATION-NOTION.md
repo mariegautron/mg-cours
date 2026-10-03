@@ -664,3 +664,20 @@ Refonte des écrans : conventions de stockage et nouvelles tables (migrations ju
 - **Non importé** : 12 appréciations > 250 car. (5 GP, 7 M2 : à raccourcir, limite
   Hyperplanning), dates de factures, bilans de module, attendus de l'école, banques QCM
   (à faire, catégorie « À classer »).
+
+#### Compléments 4 (03/10) — `--course complements-4` (écrit sur le cloud)
+
+- **Séances faites** : 17 (`course.completion = 'done'`, modules terminés).
+- **Tags** de 6 ressources d'activités (type, objectif pédagogique).
+- **Banque de questions** : 129 questions + 423 choix, catégorie « À classer ». GP 69 avec
+  bonnes réponses (sauvegarde `.mbz`) ; M2 60 **sans bonne réponse** (export HTML) : 58 à
+  reprendre (47 à cocher, 11 associations importées en « ouverte »), tag « réponses à
+  définir ». Les ressources-banques en Markdown restent en place.
+  À faire : sauvegarde `.mbz` du M2 pour importer les vraies réponses ; 2 questions GP
+  ouvertes portent le même nom (`OUV_TRI02_TriangleOr_SansSpoiler`), à renommer.
+- **Doublon « Livrable »** retiré de `course.assessment_notes` (8 séances GP).
+- **Évaluations** (10) : `exam_kind` (oral / qcm / in_class / files) ; `submission_mode =
+  manual` pour le projet fil rouge M2 (liens de rendu).
+- Restent : horaires B2, 12 appréciations > 250 car., fiches YNOV (Rapprochement), photos,
+  page Archives « [Ynov] Accessibilité & Qualité Web » (proposition : 11 phrases, grille /80).
+
