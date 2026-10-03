@@ -9,12 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
+import { readView } from "@/lib/students/indicators";
+import { loadStudentIndicators } from "@/lib/students/indicators-queries";
 import { plural } from "@/lib/plural";
 import { schoolYearLabel } from "@/lib/students/groups";
 import { listScholarGroups, listStudentYears, listStudents } from "@/lib/students/queries";
 import { promotionToShow } from "@/lib/students/years";
 
-export const metadata: Metadata = { title: "Étudiants" };
+export const metadata: Metadata = { title: "Étudiant·es" };
+
+function IndicatorBadges({ items }: { items: { key: string; label: string }[] }) {
+  if (items.length === 0) return null;
+  return (
+    <span className="mt-2 flex flex-wrap gap-1">
+      {items.map((i) => (
+        <Badge key={i.key} variant={i.key === "appreciation_written" ? "outline" : "secondary"}>
+          {i.label}
+        </Badge>
+      ))}
+    </span>
+  );
+}
 
 export default async function StudentsPage({ searchParams }: PageProps<"/students">) {
   const sp = await searchParams;
@@ -24,18 +39,28 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
   const yearParam = typeof sp.year === "string" && sp.year !== "" ? Number(sp.year) : NaN;
   const year = Number.isInteger(yearParam) ? yearParam : undefined;
 
-  const [students, scholarGroups, modules, years] = await Promise.all([
+  const view = readView(sp.view);
+  const [students, scholarGroups, modules, years, indicators] = await Promise.all([
     listStudents({ q, scholarGroup, moduleId, year }),
     listScholarGroups(year),
     listModules(),
     listStudentYears(),
+    loadStudentIndicators().catch(() => new Map()),
   ]);
+  const viewHref = (v: string) => {
+    const params = new URLSearchParams();
+    for (const [k, val] of Object.entries(sp))
+      if (k !== "view" && typeof val === "string" && val) params.set(k, val);
+    if (v !== "tiles") params.set("view", v);
+    const qs = params.toString();
+    return qs ? `/students?${qs}` : "/students";
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Étudiants</h1>
+          <h1 className="text-2xl font-semibold">Étudiant·es</h1>
           <p className="text-muted-foreground">
             {plural(students.length, "étudiant·e", "étudiant·es")}.
           </p>
@@ -120,6 +145,24 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
         </Button>
       </form>
 
+      <nav aria-label="Affichage de la liste" className="flex gap-2">
+        {(
+          [
+            ["tiles", "Tuiles"],
+            ["list", "Liste"],
+          ] as const
+        ).map(([v, label]) => (
+          <Link
+            key={v}
+            href={viewHref(v)}
+            aria-current={view === v ? "page" : undefined}
+            className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${view === v ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       {students.length === 0 ? (
         <EmptyState
           title="Personne pour l’instant"
@@ -129,6 +172,27 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             { label: "Importer le trombinoscope", href: "/students/photos" },
           ]}
         />
+      ) : view === "list" ? (
+        <ul className="divide-y rounded-lg border">
+          {students.map((s) => {
+            const promo = promotionToShow(s.years, year);
+            return (
+              <li key={s.id}>
+                <Link
+                  href={`/students/${s.id}`}
+                  className="hover:bg-accent focus-visible:ring-ring flex min-h-14 flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <StudentPhoto student={s} size="sm" />
+                  <span className="min-w-40 flex-1 font-medium">
+                    {s.last_name} {s.first_name}
+                  </span>
+                  <span className="text-muted-foreground text-sm">{promo?.group ?? ""}</span>
+                  <IndicatorBadges items={indicators.get(s.id) ?? []} />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {students.map((s) => (
@@ -155,6 +219,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                     </Badge>
                   ) : null;
                 })()}
+                <IndicatorBadges items={indicators.get(s.id) ?? []} />
               </Link>
             </li>
           ))}

@@ -28,7 +28,7 @@ test("US-80b : promotion par année scolaire, import d'une année pour un·e ét
   await page.waitForURL("**/students");
 
   // Modification : la promotion de 2025-26 s'ajoute sans écraser celle de 2024-25.
-  await page.getByLabel("Recherche").fill(`Promo${stamp}`);
+  await page.getByLabel("Recherche", { exact: true }).fill(`Promo${stamp}`);
   await page.getByRole("button", { name: "Filtrer" }).click();
   await page.getByRole("link", { name: new RegExp(`Camille Promo${stamp}`) }).click();
   await page.getByRole("link", { name: "Modifier" }).click();

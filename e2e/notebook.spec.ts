@@ -143,7 +143,7 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
 
   // Journal sur la fiche étudiant·e.
   await page.goto("/students");
-  await page.getByLabel("Recherche").fill(`Carnet${suffix}`);
+  await page.getByLabel("Recherche", { exact: true }).fill(`Carnet${suffix}`);
   await page.getByRole("link", { name: student }).click();
   await expect(page.getByRole("heading", { name: student, level: 1 })).toBeVisible();
   const journal = page.getByRole("region", { name: "Journal d’observations" });
