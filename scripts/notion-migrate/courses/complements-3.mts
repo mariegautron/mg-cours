@@ -302,7 +302,28 @@ async function m2Submissions({ imp, page }: CourseContext) {
   }
 }
 
+// ── Modules terminés (« Terminé » distinct de « Rangé », refonte du 01/11) ────
+
+/** Modules importés, rangés et sans `finished_at` : terminés à leur dernière séance. */
+async function finishedModules({ imp }: CourseContext) {
+  const refs = await select(imp, "import_ref", "target_id", { target_table: "module" });
+  for (const ref of refs) {
+    const [m] = await select(imp, "module", "id, name, year, end_date, archived_at, finished_at", {
+      id: ref.target_id,
+    });
+    if (!m || m.finished_at || !m.archived_at || !m.end_date) continue;
+    await complete(
+      imp,
+      "module",
+      String(m.id),
+      { finished_at: `${String(m.end_date)}T18:00:00+02:00` },
+      `${String(m.name)} (${String(m.year)}) : terminé le ${String(m.end_date)}`,
+    );
+  }
+}
+
 export async function migrate(ctx: CourseContext): Promise<void> {
+  await finishedModules(ctx);
   const projectId = await gpBrief(ctx);
   await gpGrids(ctx);
   await gpSurprises(ctx, projectId);
