@@ -1975,6 +1975,82 @@ export type Database = {
           },
         ]
       }
+      quiz_claim: {
+        Row: {
+          attempt_id: string
+          claimed_at: string
+          created_at: string
+          id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_id: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_id?: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_claim_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: true
+            referencedRelation: "quiz_attempt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_class_link: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          quiz_id: string
+          revoked_at: string | null
+          token: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          quiz_id: string
+          revoked_at?: string | null
+          token: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          quiz_id?: string
+          revoked_at?: string | null
+          token?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_class_link_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_draw_rule: {
         Row: {
           category: string | null
@@ -2604,6 +2680,15 @@ export type Database = {
         Args: { p_count?: boolean; p_token_hash: string }
         Returns: Json
       }
+      mg_quiz_class_claim: {
+        Args: {
+          p_attempt_id: string
+          p_link_hash: string
+          p_new_token_hash: string
+        }
+        Returns: Json
+      }
+      mg_quiz_class_names: { Args: { p_link_hash: string }; Returns: Json }
       mg_quiz_clean_answers: {
         Args: { p_answers: Json; p_count: number }
         Returns: Json

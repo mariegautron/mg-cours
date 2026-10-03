@@ -191,6 +191,14 @@ export default async function QuizPage({
         ) : (
           <PrepareLinks moduleId={id} assessmentId={assessmentId} missing={missing} />
         )}
+        {students.length > 0 ? (
+          <p className="text-sm">
+            <Link href={`${back}/qr`} className="underline underline-offset-2">
+              Projeter un QR code de classe
+            </Link>{" "}
+            : chaque étudiant·e choisit son nom et passe le QCM, sans lien personnel.
+          </p>
+        ) : null}
         {absent > 0 ? (
           <p className="text-muted-foreground text-sm">
             {absent} absent·e{absent > 1 ? "s" : ""} déclaré·e{absent > 1 ? "s" : ""} sur

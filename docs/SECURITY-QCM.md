@@ -68,3 +68,23 @@ non bloqué ; aucune donnée d'autres étudiant·es ni indice de correction dans
 - L'heure limite est vérifiée à l'enregistrement, pas interrompue en direct : la remise automatique à 0 est faite
   par le navigateur ; un navigateur fermé laisse la copie « en cours » jusqu'à ce que Marie la rende ou clôture le QCM
   (les réponses enregistrées sont alors corrigées).
+
+## Lien de classe et choix du nom (US-155)
+
+Seconde surface publique : `/q/classe/[token]`. Marie projette un QR code ; chaque étudiant·e choisit son nom et reçoit
+son lien personnel.
+
+- **Lien de classe** : 256 bits aléatoires ; haché SHA-256 pour la recherche, jeton en clair gardé dans
+  `quiz_class_link.token` (RLS propriétaire, aucun droit `anon`) pour que Marie reprojette le QR. Un seul lien actif par
+  QCM ; « Remplacer » révoque l'ancien.
+- **Ce que la page publique expose** (fonction `mg_quiz_class_names`) : le titre du QCM et les **noms (prénom + nom) des
+  copies encore libres de CE QCM**, avec un identifiant de copie aléatoire (UUID). Rien d'autre : ni note, ni tirage, ni
+  e-mail, ni noms déjà pris. Rien du tout hors fenêtre du QCM publié (« pas encore ouvert » / « fermé »).
+- **Prise d'un nom** (`mg_quiz_class_claim`) : atomique (contrainte d'unicité sur `quiz_claim.attempt_id`) ; seulement
+  pour une copie « prête » (non commencée) ; pose un **nouveau jeton** (généré côté serveur, haché en base, renvoyé
+  une seule fois par redirection) : un lien envoyé auparavant cesse de fonctionner. Un nom pris disparaît de la liste.
+- **Libération** par Marie (copie non commencée seulement) : le jeton est remplacé par un jeton jeté, le nom revient.
+- **Limite par IP** : les liens de classe invalides comptent dans la même limite que les jetons invalides.
+- **Risque assumé** : quiconque a le QR peut prendre un nom libre pendant la fenêtre (usurpation possible par une
+  personne présente). Atténuation : QR projeté en classe, fenêtre du QCM, liste des noms pris visible par Marie, nom
+  libérable. Marie peut aussi arrêter ou remplacer le QR à tout moment.

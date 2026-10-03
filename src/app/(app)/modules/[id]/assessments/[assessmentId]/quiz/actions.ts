@@ -18,6 +18,8 @@ import {
   type ResultsMode,
 } from "@/lib/quiz/config";
 import { drawQuiz, DrawError, quizTotalPoints, reuseNotice, shortages } from "@/lib/quiz/draw";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { emailFromTemplate } from "@/lib/settings/school-rules";
 import { regradeAttempt } from "@/lib/quiz/grade-server";
 import { inviteSubject, inviteText, type InviteContext } from "@/lib/quiz/links";
 import { getQuizByAssessment, loadBank, passingStudents } from "@/lib/quiz/queries";
@@ -339,6 +341,7 @@ export async function prepareLinks(
   }
 
   const base = clientEnv.NEXT_PUBLIC_APP_URL;
+  const rules = await getSchoolRulesForModule(moduleId);
   const links: GeneratedLink[] = [];
   const errors: string[] = [];
   const notices: string[] = [];
@@ -369,8 +372,12 @@ export async function prepareLinks(
     if (notice) notices.push(`${name} : ${notice}`);
     const url = quizUrl(base, d.token);
     let mailed = false;
-    if (send && d.student.email) {
-      const res = await sendInvite(d.student.email, {
+    // Sans adresse enregistrée, l'adresse se construit avec le modèle de l'école (réglages).
+    const to =
+      d.student.email ??
+      emailFromTemplate(rules.emailTemplate, d.student.first_name, d.student.last_name);
+    if (send && to) {
+      const res = await sendInvite(to, {
         firstName: d.student.first_name,
         quizTitle: quiz.title,
         url,
