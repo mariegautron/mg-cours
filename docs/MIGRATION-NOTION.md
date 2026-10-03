@@ -764,3 +764,55 @@ réel du B2 : 08/01, 12/01, 22/01, 23/01, 05/02/2026** (l'application est juste 
 ne sont donc pas non plus des horaires réels : **horaires du B2 toujours à fournir** par la PO.
 Les attendus du B2 sont rattachés aux séances d'après leurs objectifs, jamais d'après les
 dates Hyperplanning. Le GP, lui, correspond exactement à l'export.
+
+## Rapport de santé des données (nuit du 03/10) — état et corrections prêtes
+
+Rapport chiffré complet : `scripts/notion-migrate/health.mts` (lecture seule, sortie Markdown :
+hygiène des ressources, tags, étudiant·es, groupes, séances, banque de questions, inventaire
+de la bibliothèque réutilisable). À lancer par la PO (lecture du cloud) :
+
+```
+node scripts/notion-migrate/health.mts --env .env.vercel.local > ~/Bureau/exports/sante.md
+```
+
+### Constats déjà connus (audit du 03/10, `audit.mts`)
+
+| Point                                                         | Module | Correction                                                                  |
+| ------------------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| YCODE vide ; présentation étudiante vide                      | M2     | YCODE à saisir (inconnu) ; pas de fiche école                               |
+| 47 questions à choix sans bonne réponse (+ 11 associations)   | M2     | sauvegarde `.mbz` du M2 à fournir, ou cocher dans l'application             |
+| Séance 5 sans ressource                                       | GP     | aucune ressource libre ne correspond                                        |
+| 10 attendus non rattachés à une séance                        | GP     | `complements-8` (9 rattachés ; « maintenance » sans séance)                 |
+| 1 étudiant·e sans année scolaire (sans promotion dans Notion) | GP     | `complements-8` (année sans promotion)                                      |
+| 5 séances sans horaires (0 h planifiée / 20 h)                | B2     | horaires réels à fournir par la PO (pas ceux d'Hyperplanning, prévisionnel) |
+| 6 attendus non rattachés à une séance                         | B2     | `complements-8` (5 rattachés ; « compatibilité navigateurs » sans séance)   |
+| Aucune fiche école PDF, aucune convention déposée             | tous   | type « convention » en cours de développement ; fiches en texte seulement   |
+| 12 appréciations > 250 caractères non importées               | GP, M2 | à raccourcir par la PO (limite Hyperplanning)                               |
+
+Évaluations : 10/10 liées à leur séance, type d'épreuve, groupes visés, grille et notes.
+
+### Scripts prêts, à valider d'un coup (simulation puis `--apply`)
+
+- `complements-8` : rattachement des attendus aux séances (GP 9, B2 5), année de l'étudiant·e GP.
+- `complements-9` : **nettoyage des ressources de gestion de projet** (GP) : titres, type,
+  état, tags par mots-clés (agile, scrum, kanban, safe, cadrage, besoins, estimation,
+  planification, rétrospective, user story, backlog, méthodes, risques, RACI, parties
+  prenantes, SWOT, MVP, sprint, vélocité, pilotage…), Markdown normalisé (puces `-`, titres
+  `# titre`, `<br>`, sauts de ligne) pour le découpage en diapositives, questions de la banque
+  liées aux ressources du même thème (`resource_question`), doublons et corrigés listés.
+  Rien n'est supprimé ni réécrit hors mise en forme. Le lien corrigé ↔ ressource n'existe pas
+  encore dans l'application : les paires sont seulement listées.
+- Dépôt des conventions (M2 convention + avenant n° 1, contrat 2025-26 GP + B2, contrat de
+  l'édition archivée) : en attente du type de document « convention ».
+
+### Bibliothèque réutilisable (ce que contiennent les imports)
+
+- **Gestion de projet (GP 2025-26)** : 13 activités de cours (lancement, analyse du besoin,
+  cadrage, méthodes / RACI, spécifications et pilotage, management et communication, soutenance,
+  rétrospective), bibliothèque « méthodes de gestion de projet », « Focus Scrum »,
+  « estimation des tâches », brief SantaConnect, mails client, organigramme, réponses du client
+  (enseignante), 3 corrigés (enseignante), modèle de dossier de cadrage, retour d'expérience
+  anonymisé, banque QCM de 69 questions avec bonnes réponses, 3 grilles (cadrage /20,
+  spécifications /20, oral /20) avec attendus, 20 phrases de correction.
+- **Accessibilité** : 21 ressources B2, 20 activités + 34 références + 3 briefs M2, grilles à
+  paliers (B2), grille du projet M2 (6 axes, bonus), banque de 60 questions M2 (sans réponses).
