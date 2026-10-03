@@ -115,6 +115,7 @@ test("US-160 : terminer un module depuis la liste, avec annulation pendant 10 se
     .getByRole("alertdialog")
     .getByRole("button", { name: "Terminer", exact: true })
     .click();
+  await expect(page.getByText(`« ${name} » est terminé.`)).toBeVisible();
   await page.goto("/modules?filter=finished");
   const finished = page
     .getByRole("listitem")
