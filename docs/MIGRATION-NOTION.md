@@ -680,3 +680,27 @@ Refonte des écrans : conventions de stockage et nouvelles tables (migrations ju
 manual` pour le projet fil rouge M2 (liens de rendu).
 - Restent : horaires B2, 12 appréciations > 250 car., fiches YNOV (Rapprochement), photos,
   page Archives « [Ynov] Accessibilité & Qualité Web » (proposition : 11 phrases, grille /80).
+
+#### Fiche école GP et édition archivée « Accessibilité & Qualité Web » (03/10)
+
+- **Fiche école GP** (texte, A2526_0172) : `--course complements-5` prêt (commit d115353) :
+  10 attendus (`origin = 'school'`) + `student_intro` si vide. Module GP déjà conforme
+  (28 h, YCODE, année 2025) ; les 8 séances totalisent 28 h. **En attente** : simulation puis
+  validation de la PO.
+- **Édition archivée** (fiche F2B2ACCESSIB, 16 h, Bachelor 2 Initial, 2024/2025, Opquast) =
+  page Archives « [Ynov] Accessibilité & Qualité Web » (3 séances de 4 h = 12 h mentor + 4 h
+  TD ouverts). **Décision PO (03/10) : pas importée maintenant**, à reprendre plus tard.
+  Proposition prête, sans écriture :
+  - **Module** archivé / terminé : « Accessibilité & Qualité Web », Bachelor 2 Initial, année
+    2024, YCODE F2B2ACCESSIB, 16 h. Manquent : taux horaire, payé ou non, dates des séances.
+  - **3 séances** de 4 h : Sensibilisation, légalité & conception UX/UI ; Audit & correction
+    de code ; Production finale & perfectionnement.
+  - **3 évaluations** pondérées 30 / 30 / 40 % (conception UX/UI et wireframe ; audit et
+    correction d'une page ; production finale).
+  - **Grille** de projet « Phase Conception » /80 (4 axes de 20).
+  - **5 attendus** : 4 objectifs de la fiche (enjeux de l'accessibilité ; normes et pratiques
+    WCAG ; qualité web et bonnes pratiques ; tests et validation) + « Développer une
+    check-list qualité Web ». Prérequis HTML / CSS / JS et UI/UX → `student_intro`.
+  - **11 phrases** de correction « erreurs fréquentes » (matière Accessibilité) ; 6 groupes ;
+    31 fiches de correction nominatives (à n'importer qu'en « Prénom N. » si la PO le veut).
+  - Variante légère : seulement les 11 phrases et la grille /80.
