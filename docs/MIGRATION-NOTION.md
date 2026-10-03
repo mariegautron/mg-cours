@@ -648,3 +648,20 @@ critère, phrases, horaires, projets, thèmes). Reste à faire, dans l'ordre :
 4. Bibliothèque : pages non liées à un cours (proposition à la PO).
 5. Fonctionnalité QCM : migrer les banques (B2 ? GP 69 questions avec réponses, M2 60 sans
    réponses) une fois livrée (`docs/specs/qcm-banque-questions.md`).
+
+#### Compléments 3 (03/10) — `--course complements-3` (écrit sur le cloud)
+
+Refonte des écrans : conventions de stockage et nouvelles tables (migrations jusqu'à
+`20261101`). Valeurs par défaut de la session de pilotage, Marie n'ayant pas répondu :
+
+- **Modules** : `finished_at` = dernière séance (B2 05/02/2026, GP 18/12/2025, M2 08/07/2025).
+- **Brief GP** : 10 sections `## Titre` ; contexte client = organigramme (les mails
+  « Mails client », avec les notes pédagogiques, en sortent).
+- **Grilles GP** : 25 critères, attendus sous `### Attendus` en liste (points libres).
+- **Imprévus** : 2 (`project_surprise`, séances 1 et 2), date d'envoi vide.
+- **Livrables** : 8 (`course_plan.deliverable`) ; **appréciations** : 45 (≤ 250 car.) ;
+  **rendus M2** : 18 liens (`submission_item`).
+- **Non importé** : 12 appréciations > 250 car. (5 GP, 7 M2 : à raccourcir, limite
+  Hyperplanning), dates de factures, bilans de module, attendus de l'école, banques QCM
+  (à faire, catégorie « À classer »).
+
