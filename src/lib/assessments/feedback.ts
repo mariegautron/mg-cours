@@ -29,6 +29,13 @@ export function readFeedback(
     const text = clean(formData.get(`comment_${id}`));
     if (text) criterionComments[id] = text;
   }
+  // Attendus cochés (US-143) : `checks_<critère>` = positions « 0,2 », rangées sous `checks:<critère>`.
+  for (const id of criterionIds) {
+    const raw = formData.get(`checks_${id}`);
+    if (typeof raw === "string" && /^\d+(,\d+)*$/.test(raw.trim()) && raw.length <= 200) {
+      criterionComments[`checks:${id}`] = raw.trim();
+    }
+  }
   // Commentaire d'axe (vue compacte, US-140) : rangé sous `axis:<axe>` dans les mêmes commentaires.
   for (const id of axisIds) {
     const text = clean(formData.get(`comment_axis:${id}`));

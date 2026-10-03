@@ -1,3 +1,4 @@
+import { plainDescription } from "@/lib/assessments/expectations";
 import { groupByAxis } from "@/lib/assessments/scoring";
 import { criteriaTotal, effectiveMaxScore } from "@/lib/ynov/notation";
 
@@ -82,7 +83,7 @@ export function buildGridHandout(
   const groups = groupByAxis(criteria, axes).map((g): HandoutAxis => {
     const handoutCriteria = g.criteria.map((c): HandoutCriterion => ({
       label: c.label,
-      description: clean(c.description),
+      description: clean(plainDescription(c.description)),
       reference: clean(c.reference),
       isBonus: c.is_bonus,
       max: c.weight,

@@ -1,5 +1,7 @@
 "use client";
 
+import { CriterionExpectations } from "@/components/assessments/criterion-expectations";
+import { checksKey, splitDescription } from "@/lib/assessments/expectations";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import Link from "next/link";
@@ -257,6 +259,20 @@ export function GradeForm({
 
   const phraseCriteria = criteria.map((c) => ({ id: c.id, label: c.label }));
 
+  function expectationsBlock(c: CriterionWithLevels) {
+    const items = splitDescription(c.description).items;
+    if (items.length === 0) return null;
+    return (
+      <CriterionExpectations
+        criterionId={c.id}
+        label={c.label}
+        items={items}
+        value={criterionComments[checksKey(c.id)] ?? ""}
+        onChange={(v) => setCriterionComments((prev) => ({ ...prev, [checksKey(c.id)]: v }))}
+      />
+    );
+  }
+
   function criterionComment(c: CriterionWithLevels) {
     return (
       <CommentField
@@ -438,16 +454,17 @@ export function GradeForm({
             Référence : {c.reference}
           </p>
         ) : null}
-        {c.description ? (
+        {splitDescription(c.description).text ? (
           <details>
             <summary className="text-muted-foreground cursor-pointer text-xs">
               Voir le barème
             </summary>
             <p className="text-muted-foreground mt-1 text-xs whitespace-pre-wrap">
-              {c.description}
+              {splitDescription(c.description).text}
             </p>
           </details>
         ) : null}
+        {expectationsBlock(c)}
         {criterionComment(c)}
       </div>
     );
@@ -611,6 +628,7 @@ export function GradeForm({
             />
           )}
         </div>
+        {expectationsBlock(c)}
         {commentOpen ? (
           <Input
             id={`${uid}-cm-${c.id}`}

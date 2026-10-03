@@ -61,7 +61,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
   await page.getByLabel("Grille de correction (optionnel)").selectOption({ label: gridName });
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
-  await expect(page.getByText(`Léa Girard${suffix}`)).toBeVisible();
+  await expect(page.getByText(`Léa Girard${suffix}`).first()).toBeVisible();
   await page.getByLabel("Présentation (/4)").fill("3");
   await page.getByLabel("Contenu (/6)").fill("5");
   await page.getByRole("button", { name: "Enregistrer la note" }).click();
@@ -77,7 +77,7 @@ test("modifier une grille conserve les identifiants et demande confirmation pour
     .click();
   await expect(page.getByRole("heading", { name: `Modifier « ${gridName} »` })).toBeVisible();
   await page.getByLabel("Libellé du critère 1").fill("Présentation orale");
-  await page.getByText("Description (facultative)").first().click();
+  await page.getByText("Description et attendus (facultatifs)").first().click();
   await page
     .getByLabel("Description du critère 1")
     .fill("6 pts : excellent\n4 pts : correct\n0 pt : absent");

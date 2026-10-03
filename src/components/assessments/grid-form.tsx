@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  cleanExpectations,
+  joinDescription,
+  splitDescription,
+} from "@/lib/assessments/expectations";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
@@ -402,6 +407,10 @@ function CriterionRow({
   const uid = useId();
   const focusLevelRef = useRef<string | null>(null);
   const hasLevels = row.levels.length > 0;
+  // Attendus détaillés (US-143) : texte brut local (on peut taper des retours à la ligne), rangés
+  // dans la description sous « ### Attendus ».
+  const parts = splitDescription(row.description);
+  const [expectationsRaw, setExpectationsRaw] = useState(parts.items.join("\n"));
 
   useEffect(() => {
     if (!focusLevelRef.current) return;
@@ -595,7 +604,7 @@ function CriterionRow({
       </fieldset>
       <details>
         <summary className="text-muted-foreground cursor-pointer text-sm">
-          Description {row.description ? "" : "(facultative)"}
+          Description et attendus {row.description ? "" : "(facultatifs)"}
         </summary>
         <div className="mt-2 space-y-1">
           <Label htmlFor={`${uid}-description`} className="sr-only">
@@ -606,9 +615,33 @@ function CriterionRow({
             rows={3}
             maxLength={4000}
             placeholder="Ex. niveaux de notation : 6 pts excellent, 4 pts correct, 0 pt absent…"
-            value={row.description}
-            onChange={(e) => onChange({ description: e.target.value })}
+            value={parts.text}
+            onChange={(e) =>
+              onChange({
+                description: joinDescription(e.target.value, cleanExpectations(expectationsRaw)),
+              })
+            }
           />
+          <Label htmlFor={`${uid}-expectations`}>
+            Attendus détaillés (un par ligne, facultatif)
+          </Label>
+          <Textarea
+            id={`${uid}-expectations`}
+            rows={4}
+            placeholder={"Ex. Présente le contexte\nRespecte le temps\nRépond aux questions"}
+            aria-describedby={`${uid}-expectations-hint`}
+            value={expectationsRaw}
+            onChange={(e) => {
+              setExpectationsRaw(e.target.value);
+              onChange({
+                description: joinDescription(parts.text, cleanExpectations(e.target.value)),
+              });
+            }}
+          />
+          <p id={`${uid}-expectations-hint`} className="text-muted-foreground text-xs">
+            Affichés avec des cases à cocher pendant la correction ; les points restent saisis de 0
+            au maximum du critère.
+          </p>
         </div>
       </details>
     </li>
