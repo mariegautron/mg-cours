@@ -30,6 +30,7 @@ test("US-55 : retenir une ressource pour un module, la retrouver en tête de sé
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible();
 
   // Depuis la fiche ressource.
+  await page.getByRole("button", { name: /Ajouter au module/ }).click();
   await page.getByLabel("Ajouter au module…").selectOption({ label: `${moduleName} (2026)` });
   await page.getByRole("button", { name: "Ajouter" }).click();
   await expect(page.getByText(`Ressource retenue pour « ${moduleName} ».`)).toBeVisible();

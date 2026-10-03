@@ -14,6 +14,10 @@ test("familles de la bibliothèque : onglets, filtre par famille, liens rattach�
   await page.getByRole("heading", { level: 1 }).first().waitFor();
 
   await page.goto("/resources");
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/bibliotheque.png" });
+  }
   const tabs = page.getByRole("navigation", { name: "Familles de la bibliothèque" });
   await expect(tabs.getByRole("link")).toHaveCount(5);
   await expect(tabs.getByRole("link", { name: /^Toutes/ })).toHaveAttribute("aria-current", "page");

@@ -19,7 +19,7 @@ test("crée une ressource et la retrouve dans la liste", async ({ page }) => {
   await page.goto("/resources");
   await expect(page.getByRole("heading", { name: "Bibliothèque", level: 1 })).toBeVisible();
 
-  await page.getByRole("link", { name: "Nouvelle ressource" }).first().click();
+  await page.getByRole("link", { name: "Créer", exact: true }).first().click();
   const title = `Scrum – bases ${Date.now()}`;
   await page.getByLabel("Titre").fill(title);
   await page.getByLabel("Type").selectOption("course");
@@ -71,6 +71,7 @@ test("classe une ressource (type, matière, visibilité), filtre et regroupe la 
 
   // Filtres Type / Matière / Visibilité + regroupement par matière.
   await page.goto("/resources");
+  await page.getByText("Plus de filtres").click();
   await page.getByLabel("Type").selectOption("teacher_notes");
   await page.getByLabel("Matière").selectOption(subject);
   await page.getByLabel("Visibilité").selectOption("teacher");
@@ -79,12 +80,13 @@ test("classe une ressource (type, matière, visibilité), filtre et regroupe la 
 
   await expect(page).toHaveURL(/audience=teacher/);
   await expect(page.getByRole("heading", { name: new RegExp(subject), level: 2 })).toBeVisible();
-  const card = page.getByRole("link", { name: new RegExp(title) });
+  const card = page.getByRole("listitem").filter({ hasText: title });
   await expect(card).toBeVisible();
-  await expect(card.getByText("Enseignante uniquement")).toBeVisible();
+  await expect(card.getByText("Toi seule")).toBeVisible();
   await expect(page.getByRole("status")).toHaveText("1 ressource");
 
   // Regroupement par type.
+  await page.getByText("Plus de filtres").click();
   await page.getByLabel("Regrouper").selectOption("kind");
   await page.getByRole("button", { name: "Filtrer" }).click();
   await expect(page.getByRole("heading", { name: /^Notes/, level: 2 })).toBeVisible();
@@ -113,11 +115,11 @@ test("US-57 : note une ressource à construire, la filtre et l'enregistre depuis
   await page.waitForLoadState("networkidle");
 
   await page.goto(`/resources?status=progress&q=${encodeURIComponent(title)}`);
-  const card = page.getByRole("link", { name: new RegExp(title) });
+  const card = page.getByRole("listitem").filter({ hasText: title });
   await expect(card).toBeVisible();
   await expect(card.getByText("À construire", { exact: true })).toBeVisible();
 
-  await card.click();
+  await card.getByRole("link", { name: new RegExp(title) }).click();
   await expect(page.getByText("Un TP sur les tests d’accessibilité.")).toBeVisible();
 
   const axe = await new AxeBuilder({ page })

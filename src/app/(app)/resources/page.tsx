@@ -3,8 +3,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
-import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
-import { Badge } from "@/components/ui/badge";
+import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +25,6 @@ import {
   groupByKind,
   KIND_LABELS,
   RESOURCE_KINDS,
-  RESOURCE_STATUSES,
   STATUS_LABELS,
   UNCLASSIFIED_LABEL,
   type ResourceGroup,
@@ -36,76 +34,66 @@ import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/res
 
 export const metadata: Metadata = { title: "Bibliothèque" };
 
+/** Lignes affichées : les plus récemment modifiées ; une recherche ou un filtre précise le reste. */
+const ROW_LIMIT = 60;
+
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
 const GROUPINGS: Record<ResourceGrouping, string> = {
+  none: "Sans regroupement",
   kind: "Par type",
   category: "Par matière",
-  none: "Sans regroupement",
 };
 
-function ResourceCard({ r }: { r: ResourceWithUsage }) {
-  return (
-    <Link
-      href={`/resources/${r.id}`}
-      className="hover:bg-accent focus-visible:ring-ring block h-full rounded-lg border p-4 focus-visible:ring-2 focus-visible:outline-none"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-medium">{r.title}</h3>
-        {r.archived_at ? <Badge variant="outline">Archivée</Badge> : null}
-      </div>
-      {r.description ? (
-        <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{r.description}</p>
-      ) : null}
-      {r.excerpt ? (
-        <p className="text-muted-foreground mt-2 text-xs">
-          {SEARCH_FIELD_LABELS[r.excerpt.field]} : {r.excerpt.before}
-          <mark className="bg-yellow-200 text-black">{r.excerpt.match}</mark>
-          {r.excerpt.after}
-        </p>
-      ) : null}
-      <div className="mt-3 flex flex-wrap gap-1">
-        <KindBadge kind={r.kind} />
-        <AudienceBadge audience={r.audience} />
-        <StatusBadge status={r.status} />
-        {r.category ? <Badge variant="secondary">{r.category}</Badge> : null}
-        {r.tags.map((t) => (
-          <Badge key={t} variant="outline">
-            {t}
-          </Badge>
-        ))}
-      </div>
-      <p className="text-muted-foreground mt-3 text-xs">
-        {r.moduleCount === 0
-          ? "Pas encore utilisée"
-          : `Utilisée dans ${r.moduleCount} module${r.moduleCount > 1 ? "s" : ""}`}
-      </p>
-    </Link>
-  );
-}
-
-function CardGrid({
-  items,
+function ResourceRow({
+  r,
   modules,
 }: {
-  items: ResourceWithUsage[];
+  r: ResourceWithUsage;
   modules: { id: string; name: string; year: number }[];
 }) {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map((r) => (
-        <li key={r.id}>
-          <ResourceCard r={r} />
-          <div className="mt-2">
-            <AddToModule
-              resourceId={r.id}
-              modules={modules}
-              action={addResourceToModule.bind(null, r.id)}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <li className="flex flex-wrap items-center gap-3 py-3">
+      <Link
+        href={`/resources/${r.id}`}
+        className="focus-visible:ring-ring min-w-0 flex-1 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <strong className="block">{r.title}</strong>
+        <span className="text-muted-foreground block text-sm">
+          {[
+            r.category,
+            r.moduleCount === 0
+              ? "Pas encore utilisée"
+              : `Utilisée dans ${r.moduleCount} module${r.moduleCount > 1 ? "s" : ""}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+        {r.excerpt ? (
+          <span className="text-muted-foreground block text-xs">
+            {SEARCH_FIELD_LABELS[r.excerpt.field]} : {r.excerpt.before}
+            <mark className="bg-yellow-200 text-black">{r.excerpt.match}</mark>
+            {r.excerpt.after}
+          </span>
+        ) : null}
+      </Link>
+      <span className="flex flex-wrap items-center gap-1.5">
+        {r.archived_at ? <Pill>Archivée</Pill> : null}
+        {r.audience === "teacher" ? <Pill tone="lock">Toi seule</Pill> : null}
+        {r.tags.slice(0, 2).map((t) => (
+          <Pill key={t}>{t}</Pill>
+        ))}
+        <Pill>{r.kind ? KIND_LABELS[r.kind] : "Type à définir"}</Pill>
+        <Pill tone={r.status === "ready" ? "ok" : "warn"}>
+          {r.status === "ready" ? "Prête" : STATUS_LABELS[r.status]}
+        </Pill>
+      </span>
+      <AddToModule
+        resourceId={r.id}
+        modules={modules}
+        action={addResourceToModule.bind(null, r.id)}
+      />
+    </li>
   );
 }
 
@@ -130,41 +118,46 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     const qs = params.toString();
     return qs ? `/resources?${qs}` : "/resources";
   };
+  const shown = resources.slice(0, ROW_LIMIT);
   const groups: ResourceGroup<ResourceWithUsage>[] | null =
-    group === "kind"
-      ? groupByKind(resources)
-      : group === "category"
-        ? groupByCategory(resources)
-        : null;
+    group === "kind" ? groupByKind(shown) : group === "category" ? groupByCategory(shown) : null;
+
+  const ready = resources.filter((r) => r.status === "ready").length;
+  const toBuild = resources.length - ready;
+  const statusHref = (status?: string) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) {
+      if (k !== "status" && typeof v === "string" && v) params.set(k, v);
+    }
+    if (status) params.set("status", status);
+    const qs = params.toString();
+    return qs ? `/resources?${qs}` : "/resources";
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Bibliothèque</h1>
-          <p className="text-muted-foreground">Supports réutilisables dans plusieurs modules.</p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Bibliothèque</h1>
+          <p className="text-muted-foreground">
+            Ce que tu enseignes, rangé par nature. Chaque chose garde avec elle ce qui va avec.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="secondary">
-            <Link href="/questions">Questions</Link>
+          <Button asChild variant="ghost" size="touch">
+            <Link href="/resources/new#import">Importer</Link>
           </Button>
-          <Button asChild variant="secondary">
-            <Link href="/assessments/grids">Grilles</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/assessments/comments">Phrases</Link>
-          </Button>
-          <Button asChild>
+          <Button asChild size="touch">
             <Link href="/resources/new">
               <Plus aria-hidden />
-              Nouvelle ressource
+              Créer
             </Link>
           </Button>
         </div>
       </div>
 
-      <nav aria-label="Familles de la bibliothèque">
-        <ul className="flex flex-wrap gap-2">
+      <nav aria-label="Familles de la bibliothèque" className="border-b">
+        <ul className="flex flex-wrap gap-x-6">
           {[undefined, ...FAMILIES].map((f) => {
             const active = filters.family === f;
             return (
@@ -172,7 +165,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
                 <Link
                   href={familyHref(f)}
                   aria-current={active ? "page" : undefined}
-                  className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${active ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${active ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
                 >
                   {f ? FAMILY_LABELS[f] : "Toutes"}
                   {f ? <span className="text-xs opacity-80">({counts[f]})</span> : null}
@@ -182,7 +175,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
           })}
         </ul>
         {filters.family && FAMILY_LINKS[filters.family].length ? (
-          <p className="text-muted-foreground mt-2 text-sm">
+          <p className="text-muted-foreground py-2 text-sm">
             Rattaché à cette famille :{" "}
             {FAMILY_LINKS[filters.family].map((l, i) => (
               <span key={l.href}>
@@ -197,106 +190,139 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         ) : null}
       </nav>
 
-      <form
-        className="flex flex-wrap items-end gap-3"
-        role="search"
-        aria-label="Filtrer les ressources"
-      >
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="bg-card rounded-xl border px-4 py-2">
+          <span className="text-muted-foreground text-sm">
+            {filters.family ? FAMILY_LABELS[filters.family] : "Toutes les ressources"}
+          </span>
+          <strong className="font-heading block text-2xl">{resources.length}</strong>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          Cours {counts.courses} · Ateliers {counts.workshops} · Évaluations {counts.assessments} ·
+          QCM {counts.quizzes}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Statut">
+        {[
+          { label: `Toutes · ${resources.length}`, status: undefined },
+          { label: `Prêtes · ${ready}`, status: "ready" },
+          { label: `À construire · ${toBuild}`, status: "progress" },
+        ].map((c) => {
+          const active = (filters.status ?? undefined) === c.status;
+          return (
+            <Link
+              key={c.label}
+              href={statusHref(c.status)}
+              aria-current={active ? "true" : undefined}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${active ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
+            >
+              {c.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <form className="space-y-3" role="search" aria-label="Filtrer les ressources">
         {filters.family ? <input type="hidden" name="family" value={filters.family} /> : null}
-        <div className="space-y-1">
-          <Label htmlFor="q">Recherche</Label>
-          <Input id="q" name="q" defaultValue={filters.q} placeholder="Titre, tag, contenu…" />
+        {filters.status ? <input type="hidden" name="status" value={filters.status} /> : null}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-64 flex-1 space-y-1">
+            <Label htmlFor="q">Recherche</Label>
+            <Input
+              id="q"
+              name="q"
+              defaultValue={filters.q}
+              placeholder="Chercher : titre, tag, contenu…"
+            />
+          </div>
+          <Button type="submit" variant="secondary" size="touch">
+            Filtrer
+          </Button>
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="kind">Type</Label>
-          <select id="kind" name="kind" defaultValue={filters.kind ?? ""} className={SELECT_CLASS}>
-            <option value="">Tous</option>
-            {RESOURCE_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {KIND_LABELS[k]}
-              </option>
-            ))}
-            <option value="none">{UNCLASSIFIED_LABEL}</option>
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="category">Matière</Label>
-          <select
-            id="category"
-            name="category"
-            defaultValue={filters.category ?? ""}
-            className={SELECT_CLASS}
-          >
-            <option value="">Toutes</option>
-            {facets.categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="audience">Visibilité</Label>
-          <select
-            id="audience"
-            name="audience"
-            defaultValue={filters.audience ?? ""}
-            className={SELECT_CLASS}
-          >
-            <option value="">Toutes</option>
-            <option value="students">{AUDIENCE_LABELS.students}</option>
-            <option value="teacher">{AUDIENCE_LABELS.teacher}</option>
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="status">Statut</Label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={filters.status ?? ""}
-            className={SELECT_CLASS}
-          >
-            <option value="">Tous</option>
-            {RESOURCE_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="tag">Tag</Label>
-          <select id="tag" name="tag" defaultValue={filters.tag ?? ""} className={SELECT_CLASS}>
-            <option value="">Tous</option>
-            {facets.tags.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="group">Regrouper</Label>
-          <select id="group" name="group" defaultValue={group} className={SELECT_CLASS}>
-            {Object.entries(GROUPINGS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <label className="flex h-9 items-center gap-2 text-sm">
-          <input type="checkbox" name="archived" value="1" defaultChecked={filters.archived} />
-          Archivées
-        </label>
-        <Button type="submit" variant="secondary">
-          Filtrer
-        </Button>
+        <details>
+          <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+            Plus de filtres
+          </summary>
+          <div className="flex flex-wrap items-end gap-3 pt-2">
+            <div className="space-y-1">
+              <Label htmlFor="kind">Type</Label>
+              <select
+                id="kind"
+                name="kind"
+                defaultValue={filters.kind ?? ""}
+                className={SELECT_CLASS}
+              >
+                <option value="">Tous</option>
+                {RESOURCE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {KIND_LABELS[k]}
+                  </option>
+                ))}
+                <option value="none">{UNCLASSIFIED_LABEL}</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="category">Matière</Label>
+              <select
+                id="category"
+                name="category"
+                defaultValue={filters.category ?? ""}
+                className={SELECT_CLASS}
+              >
+                <option value="">Toutes</option>
+                {facets.categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="audience">Visibilité</Label>
+              <select
+                id="audience"
+                name="audience"
+                defaultValue={filters.audience ?? ""}
+                className={SELECT_CLASS}
+              >
+                <option value="">Toutes</option>
+                <option value="students">{AUDIENCE_LABELS.students}</option>
+                <option value="teacher">{AUDIENCE_LABELS.teacher}</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="tag">Tag</Label>
+              <select id="tag" name="tag" defaultValue={filters.tag ?? ""} className={SELECT_CLASS}>
+                <option value="">Tous</option>
+                {facets.tags.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="group">Regrouper</Label>
+              <select id="group" name="group" defaultValue={group} className={SELECT_CLASS}>
+                {Object.entries(GROUPINGS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex h-9 items-center gap-2 text-sm">
+              <input type="checkbox" name="archived" value="1" defaultChecked={filters.archived} />
+              Archivées
+            </label>
+          </div>
+        </details>
       </form>
 
       <form
         action={createDraftResource}
-        className="flex flex-wrap items-end gap-3 rounded-lg border border-dashed p-3"
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed p-3"
         aria-label="Création rapide"
       >
         <div className="space-y-1">
@@ -313,7 +339,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
             className="w-80 max-w-full"
           />
         </div>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" size="touch">
           Noter à construire
         </Button>
       </form>
@@ -329,22 +355,42 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
           actions={[{ label: "Créer une ressource", href: "/resources/new" }]}
         />
       ) : groups ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {groups.map((g, i) => (
-            <section key={g.key} aria-labelledby={`group-${i}`} className="space-y-3">
-              <h2 id={`group-${i}`} className="flex items-baseline gap-2 text-lg font-medium">
+            <section
+              key={g.key}
+              aria-labelledby={`group-${i}`}
+              className="bg-card rounded-xl border p-5"
+            >
+              <h2 id={`group-${i}`} className="flex items-baseline gap-2 text-lg font-semibold">
                 {g.label}
                 <span className="text-muted-foreground text-sm font-normal">
                   ({g.items.length})
                 </span>
               </h2>
-              <CardGrid items={g.items} modules={modules} />
+              <ul className="divide-y">
+                {g.items.map((r) => (
+                  <ResourceRow key={r.id} r={r} modules={modules} />
+                ))}
+              </ul>
             </section>
           ))}
         </div>
       ) : (
-        <CardGrid items={resources} modules={modules} />
+        <section aria-label="Liste" className="bg-card rounded-xl border p-5">
+          <ul className="divide-y">
+            {shown.map((r) => (
+              <ResourceRow key={r.id} r={r} modules={modules} />
+            ))}
+          </ul>
+        </section>
       )}
+      {resources.length > ROW_LIMIT ? (
+        <p className="text-muted-foreground text-sm">
+          Les {ROW_LIMIT} plus récentes sur {resources.length} : cherche ou filtre pour retrouver
+          les autres.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -35,6 +35,7 @@ test("US-62 : lier des ressources à une séance avec recherche, filtres et cré
 
   // Retenir l'atelier pour ce module.
   await page.goto("/resources?q=" + encodeURIComponent(atelier));
+  await page.getByRole("button", { name: /Ajouter au module/ }).click();
   await page
     .getByLabel("Ajouter au module…")
     .selectOption({ label: `Module picker ${stamp} (2026)` });

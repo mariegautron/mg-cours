@@ -49,6 +49,6 @@ export function readResourceFilters(sp: SearchParams): {
       archived: sp.archived === "1",
       family: isResourceFamily(str(sp.family)) ? (str(sp.family) as ResourceFamily) : undefined,
     },
-    group: group === "category" || group === "none" ? group : "kind",
+    group: group === "category" || group === "kind" ? group : "none",
   };
 }
