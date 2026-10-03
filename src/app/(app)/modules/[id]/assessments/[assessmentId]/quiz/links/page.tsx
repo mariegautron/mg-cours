@@ -107,7 +107,9 @@ export default async function QuizLinksPage({
                   </a>
                 </p>
                 <Button asChild size="touch" className="w-full">
-                  <Link href={`${back}/quiz/qr`}>Afficher sur l’écran projeté</Link>
+                  <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
+                    Afficher sur l’écran projeté
+                  </Link>
                 </Button>
               </>
             ) : (

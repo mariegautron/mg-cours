@@ -16,3 +16,9 @@ export function announcementAt(remainingSeconds: number): string | null {
   if (remainingSeconds === 0) return "Le temps est écoulé : ta copie est rendue automatiquement.";
   return null;
 }
+
+/** Minutes entières restantes avant `iso` (0 si passé) ; `null` sans date. */
+export function minutesUntil(iso: string | null, now: number = Date.now()): number | null {
+  if (!iso) return null;
+  return Math.max(0, Math.round((new Date(iso).getTime() - now) / 60000));
+}

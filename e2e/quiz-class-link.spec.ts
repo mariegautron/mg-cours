@@ -31,7 +31,7 @@ test("QR de classe : choix du nom, nom pris disparu, libération, accès fermé 
   await createAndPublishQuiz(page, setup.assessmentUrl, suffix);
   await prepareLinks(page);
 
-  await page.goto(`${setup.assessmentUrl}/quiz/qr`);
+  await page.goto(`${setup.assessmentUrl}/quiz/links`);
   await page.getByRole("button", { name: "Créer le QR code" }).click();
   const link = page.getByRole("link", { name: /\/q\/classe\// });
   await expect(link).toBeVisible();
@@ -58,10 +58,25 @@ test("QR de classe : choix du nom, nom pris disparu, libération, accès fermé 
   await expect(s2.page.getByRole("button", { name: ana })).toHaveCount(0);
 
   // Marie libère le nom : il revient.
-  await page.goto(`${setup.assessmentUrl}/quiz/qr`);
-  await expect(page.getByText(/Noms pris \(1\)/)).toBeVisible();
+  await page.goto(`${setup.assessmentUrl}/quiz/links`);
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("button", { name: `Libérer le nom ${ana}` })).toBeVisible();
+  // Écran projeté : plein écran, sans menu, aucun nom d'étudiant·e.
+  const projected = await page.context().newPage();
+  await projected.goto(`${setup.assessmentUrl.replace("/modules/", "/present/modules/")}/quiz`);
+  await expect(
+    projected.getByRole("heading", { name: "Scannez pour passer le QCM" }),
+  ).toBeVisible();
+  await expect(projected.getByRole("navigation")).toHaveCount(0);
+  expect(await projected.content()).not.toContain(ana);
+  await expect(projected.getByRole("status")).toContainText("1 personne");
+  if (process.env.CAPTURE) {
+    await projected.setViewportSize({ width: 1280, height: 720 });
+    await projected.screenshot({ path: "docs/captures/qcm-qr-projete.png" });
+  }
+  await projected.close();
   await page.getByRole("button", { name: `Libérer le nom ${ana}` }).click();
-  await expect(page.getByText(/Noms pris \(0\)/)).toBeVisible();
+  await expect(page.getByRole("button", { name: `Libérer le nom ${ana}` })).toHaveCount(0);
   await s2.page.reload();
   await expect(s2.page.getByRole("button", { name: ana })).toBeVisible();
 
