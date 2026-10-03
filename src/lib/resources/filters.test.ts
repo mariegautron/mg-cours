@@ -25,7 +25,7 @@ describe("readResourceFilters", () => {
     expect(readResourceFilters({ kind: "none" }).filters.kind).toBe("none");
   });
 
-  it("ignore les valeurs inconnues et regroupe par type par défaut", () => {
+  it("ignore les valeurs inconnues et ne regroupe pas par défaut (liste simple)", () => {
     const { filters, group } = readResourceFilters({
       kind: "slides",
       audience: "everyone",
@@ -35,6 +35,6 @@ describe("readResourceFilters", () => {
     expect(filters.kind).toBeUndefined();
     expect(filters.audience).toBeUndefined();
     expect(filters.tag).toBeUndefined();
-    expect(group).toBe("kind");
+    expect(group).toBe("none");
   });
 });
