@@ -5,6 +5,7 @@ import {
   clockInParis,
   minutesInParis,
   parseSyncMessage,
+  elapsedLabel,
   remainingLabel,
   syncChannelName,
 } from "./sync";
@@ -81,5 +82,18 @@ describe("remainingLabel", () => {
   it("ne dit rien sans heure de fin", () => {
     expect(remainingLabel(at(10, 0), null)).toBeNull();
     expect(remainingLabel(at(10, 0), "abc")).toBeNull();
+  });
+});
+
+describe("elapsedLabel", () => {
+  const at = (h: number, m: number) => h * 60 + m;
+  it("dit le temps écoulé depuis le début", () => {
+    expect(elapsedLabel(at(10, 5), "09:00:00")).toBe("1 h 05 écoulée");
+    expect(elapsedLabel(at(10, 0), "09:00")).toBe("1 h écoulée");
+    expect(elapsedLabel(at(9, 20), "09:00")).toBe("20 min écoulée");
+  });
+  it("ne dit rien sans heure de début ou avant le début", () => {
+    expect(elapsedLabel(at(8, 0), "09:00")).toBeNull();
+    expect(elapsedLabel(at(10, 0), null)).toBeNull();
   });
 });

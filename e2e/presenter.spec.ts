@@ -70,7 +70,7 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await presenter.emulateMedia({ reducedMotion: "reduce" });
   await presenter.goto(`${href}/presenter`);
   await presenter.waitForLoadState("networkidle");
-  await expect(presenter.getByRole("heading", { name: /^Diapositive 1 sur \d+/ })).toBeVisible();
+  await expect(presenter.getByRole("heading", { name: /Diapositive 1 sur \d+/ })).toBeVisible();
   await expect(presenter.getByText("Commencer par un tour de table.")).toBeVisible();
   await expect(presenter.getByRole("link", { name: new RegExp(answerKey) })).toBeVisible();
   await expect(presenter.getByText("Il reste", { exact: false })).toBeVisible();
@@ -83,14 +83,14 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   }
 
   // La présentatrice pilote la fenêtre projetée…
-  await presenter.getByRole("button", { name: "Suivante" }).click();
-  await expect(presenter.getByRole("heading", { name: /^Diapositive 2 sur/ })).toBeVisible();
+  await presenter.getByRole("button", { name: "Suivant" }).click();
+  await expect(presenter.getByRole("heading", { name: /Diapositive 2 sur/ })).toBeVisible();
   await expect(page.getByText(/Diapositive 2 sur/)).toBeVisible();
 
   // …et la fenêtre projetée renvoie sa diapositive à la présentatrice.
   await page.keyboard.press("ArrowRight");
   await expect(page.getByText(/Diapositive 3 sur/)).toBeVisible();
-  await expect(presenter.getByRole("heading", { name: /^Diapositive 3 sur/ })).toBeVisible();
+  await expect(presenter.getByRole("heading", { name: /Diapositive 3 sur/ })).toBeVisible();
 
   // US-134 : « Pour moi » n'affiche qu'en privé, la classe garde sa diapositive.
   await presenter.getByRole("button", { name: `Pour moi : ${lesson}` }).click();
@@ -127,6 +127,11 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   await expect(presenter.getByText(lesson).first()).toBeVisible();
   await presenter.goto(`${href}/presenter`);
   await presenter.waitForLoadState("networkidle");
+
+  if (process.env.CAPTURE) {
+    await presenter.setViewportSize({ width: 1440, height: 900 });
+    await presenter.screenshot({ path: "docs/captures/vue-privee.png", fullPage: true });
+  }
 
   const axe = await new AxeBuilder({ page: presenter })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

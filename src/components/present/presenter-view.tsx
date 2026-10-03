@@ -11,6 +11,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, Presentation } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { recordProjection } from "@/app/(present)/present/modules/[id]/courses/[courseId]/presenter/actions";
 import {
@@ -35,6 +36,7 @@ import {
 import {
   clampIndex,
   clockInParis,
+  elapsedLabel,
   minutesInParis,
   parseSyncMessage,
   remainingLabel,
@@ -79,6 +81,9 @@ export function PresenterView({
   courseId,
   sessionNotes,
   projectionName,
+  startTime,
+  closeHref,
+  studentsPanel,
 }: {
   title: string;
   backHref: string;
@@ -101,6 +106,12 @@ export function PresenterView({
   sessionNotes: string;
   /** Nom de la fenêtre projetée, pour la retrouver. */
   projectionName: string;
+  /** Heure de début (`HH:MM`) pour le temps écoulé, seulement le jour de la séance. */
+  startTime: string | null;
+  /** Clôture de la séance. */
+  closeHref: string;
+  /** Carnet des étudiant·es (observations en direct), rendu côté serveur. */
+  studentsPanel: ReactNode;
 }) {
   const total = slides.length;
   const [index, setIndex] = useState(0);
@@ -124,7 +135,10 @@ export function PresenterView({
     [slides, sections.length],
   );
   const entries = useMemo(() => jumpEntries(sections, starts, slides), [sections, starts, slides]);
-  const jumps = findJumps(jumpQuery, entries, total);
+  const searching = jumpQuery.trim().length > 0;
+  const found_ = findJumps(jumpQuery, entries, total);
+  // Sans saisie : les sections du déroulé en raccourcis ; avec saisie : les résultats.
+  const jumps = searching ? found_ : entries.filter((e) => e.kind === "section");
   const found = searchLibrary(libraryQuery, library);
   const minutes = useSyncExternalStore(subscribeMinute, minuteSnapshot, serverSnapshot);
 
@@ -208,6 +222,7 @@ export function PresenterView({
     });
   const clock = minutes ? clockInParis() : "";
   const remaining = minutes ? remainingLabel(Number(minutes), endTime) : null;
+  const elapsed = minutes ? elapsedLabel(Number(minutes), startTime) : null;
 
   return (
     <div className="bg-background text-foreground flex min-h-dvh flex-col">
@@ -218,6 +233,7 @@ export function PresenterView({
         <h1 className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium">
           Vue présentatrice · {title}
         </h1>
+        <Badge variant="outline">Vue privée : jamais projetée</Badge>
         <Button asChild variant="ghost" size="touch">
           <a
             href={projectedHref}
@@ -237,15 +253,20 @@ export function PresenterView({
           <p className="text-2xl leading-none font-semibold" aria-label="Heure à Paris">
             {clock}
           </p>
+          {elapsed ? <p className="text-sm font-medium">{elapsed}</p> : null}
           {remaining ? <p className="text-muted-foreground text-sm">{remaining}</p> : null}
         </div>
+        <Button asChild variant="secondary" size="touch">
+          <Link href={closeHref}>Terminer la séance</Link>
+        </Button>
       </header>
 
-      <main className="grid flex-1 gap-4 p-4 lg:grid-cols-[2fr_1fr]">
+      <main className="grid flex-1 gap-4 p-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)]">
         <div className="space-y-4">
           <section aria-labelledby="pv-current" className="space-y-2">
             <h2 id="pv-current" className="text-sm font-medium">
-              Diapositive {total ? shownIndex + 1 : 0} sur {total}
+              {isPrivate ? "Pour toi seule" : "Projeté en ce moment"} · Diapositive{" "}
+              {total ? shownIndex + 1 : 0} sur {total}
               {current?.label ? ` : ${current.label}` : ""}
             </h2>
             {isPrivate ? (
@@ -281,7 +302,7 @@ export function PresenterView({
               onClick={() => go(index - 1)}
             >
               <ChevronLeft aria-hidden />
-              Précédente
+              Précédent
             </Button>
             <Button
               type="button"
@@ -289,11 +310,11 @@ export function PresenterView({
               disabled={index >= total - 1}
               onClick={() => go(index + 1)}
             >
-              Suivante
+              Suivant
               <ChevronRight aria-hidden />
             </Button>
             <p aria-live="polite" className="text-muted-foreground text-sm">
-              Affichée à l’écran : diapositive {index + 1}
+              Projeté : diapositive {index + 1}
             </p>
           </div>
 
@@ -320,7 +341,7 @@ export function PresenterView({
               />
             </div>
             <div aria-live="polite" className="text-sm">
-              {jumpQuery.trim() && jumps.length === 0 ? (
+              {searching && jumps.length === 0 ? (
                 <p className="text-muted-foreground">Rien ne porte ce titre dans le déroulé.</p>
               ) : null}
               {jumps.length ? (
@@ -609,6 +630,13 @@ export function PresenterView({
             </p>
           </section>
         </aside>
+
+        <section aria-labelledby="pv-students" className="space-y-2 rounded-lg border p-4">
+          <h2 id="pv-students" className="font-medium">
+            Étudiant·es
+          </h2>
+          {studentsPanel}
+        </section>
       </main>
     </div>
   );

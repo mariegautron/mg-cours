@@ -67,8 +67,10 @@ describe("carnet de séance : données privées", () => {
 
   it("la vue présentatrice ne lit que retro_note ; la page projetée ne lit rien du carnet", () => {
     const privateView = readFileSync(join(ROOT, PRIVATE_VIEW_PAGE), "utf8");
+    // Le carnet des étudiant·es (saisie seule : ObservationPanel) vit dans la vue privée ; elle ne
+    // lit en revanche aucune donnée de clôture ni aucune observation existante.
     const others =
-      /student_observation|observation_tag|experience_note|not_covered|\bcompletion\b|next_time|lib\/notebook|components\/notebook/;
+      /student_observation|observation_tag|experience_note|not_covered|\bcompletion\b|next_time|lib\/notebook\/queries/;
     expect(others.test(privateView)).toBe(false);
     expect(PRIVATE.test(readFileSync(join(ROOT, PROJECTED_PAGE), "utf8"))).toBe(false);
   });

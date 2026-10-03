@@ -72,3 +72,15 @@ export function remainingLabel(nowMinutes: number, endTime: string | null): stri
   if (left === 0) return "C’est l’heure de finir";
   return `Séance terminée depuis ${fmt(-left)}`;
 }
+
+/** « 1 h 05 écoulée » depuis l'heure de début (`HH:MM`) ; `null` sans heure de début ou avant le début. */
+export function elapsedLabel(nowMinutes: number, startTime: string | null): string | null {
+  const m = startTime ? /^(\d{1,2}):(\d{2})/.exec(startTime) : null;
+  if (!m) return null;
+  const done = nowMinutes - (Number(m[1]) * 60 + Number(m[2]));
+  if (done < 0) return null;
+  const h = Math.floor(done / 60);
+  const r = done % 60;
+  if (h && r) return `${h} h ${String(r).padStart(2, "0")} écoulée`;
+  return h ? `${h} h écoulée` : `${r} min écoulée`;
+}

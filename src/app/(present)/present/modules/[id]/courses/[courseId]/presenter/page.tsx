@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import { ObservationPanel } from "@/components/notebook/observation-panel";
+import { notebookStudents } from "@/lib/notebook/notebook";
+import { listModuleGroups } from "@/lib/students/queries";
 import { listResources } from "@/lib/resources/queries";
 import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresenterView } from "@/components/present/presenter-view";
@@ -24,12 +28,13 @@ export default async function PresenterPage({
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
   const hidden = parseHidden((await searchParams).hide);
-  const [mod, courses, allResources, subjects, libraryRows] = await Promise.all([
+  const [mod, courses, allResources, subjects, libraryRows, groups] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     getCourseResourcesFull(courseId),
     loadCourseSubjects(id, courseId),
     listResources(),
+    listModuleGroups(id),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
@@ -63,6 +68,14 @@ export default async function PresenterPage({
       content: r.content,
     }));
 
+  const students = notebookStudents(groups).map(({ id, first_name, last_name, photo_path }) => ({
+    id,
+    first_name,
+    last_name,
+    photo_path,
+  }));
+  const today = course.session_date === todayInParis();
+
   return (
     <PresenterView
       title={`${mod.name} — Séance ${position + 1} : ${course.title}`}
@@ -72,7 +85,7 @@ export default async function PresenterPage({
       projectedHref={`/present/modules/${mod.id}/courses/${courseId}`}
       notes={notes}
       teacherResources={teacherResources}
-      endTime={course.session_date === todayInParis() ? course.end_time : null}
+      endTime={today ? course.end_time : null}
       sections={sections}
       sectionKeys={sectionKeys}
       library={libraryRows.map((r) => ({
@@ -86,6 +99,14 @@ export default async function PresenterPage({
       courseId={courseId}
       sessionNotes={course.retro_note ?? ""}
       projectionName={`mg-projection-${courseId}`}
+      startTime={today ? course.start_time : null}
+      closeHref={`/modules/${mod.id}/courses/${courseId}/notebook`}
+      studentsPanel={
+        <ObservationPanel
+          action={addObservation.bind(null, mod.id, courseId)}
+          students={students}
+        />
+      }
     />
   );
 }

@@ -71,6 +71,7 @@ export function PresentShell({
   slides,
   syncChannel,
   presenterHref,
+  footerNote,
 }: {
   title: string;
   backHref: string;
@@ -81,6 +82,8 @@ export function PresentShell({
   syncChannel?: string;
   /** Lien de la vue présentatrice : ouverte dans une seconde fenêtre. */
   presenterHref?: string;
+  /** Rappel discret en pied de diapositive, à droite (« Module · Séance 3 »). */
+  footerNote?: string;
 }) {
   const [mode, setMode] = useState<Mode>("document");
   const [scaleIndex, setScaleIndex] = useState(2);
@@ -362,6 +365,9 @@ export function PresentShell({
               {current.label ? <span className="sr-only"> : {current.label}</span> : null}
             </p>
           </div>
+          {footerNote ? (
+            <p className="text-muted-foreground hidden truncate text-sm md:block">{footerNote}</p>
+          ) : null}
           <Button
             type="button"
             variant="ghost"

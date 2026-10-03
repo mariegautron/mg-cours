@@ -58,6 +58,7 @@ export default async function PresentCoursePage({
       slides={slides}
       syncChannel={syncChannelName(courseId)}
       presenterHref={`/present/modules/${mod.id}/courses/${courseId}/presenter`}
+      footerNote={`${mod.name} · Séance ${position + 1}`}
     />
   );
 }
