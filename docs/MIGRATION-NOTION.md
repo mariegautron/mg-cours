@@ -816,3 +816,18 @@ node scripts/notion-migrate/health.mts --env .env.vercel.local > ~/Bureau/export
   spécifications /20, oral /20) avec attendus, 20 phrases de correction.
 - **Accessibilité** : 21 ressources B2, 20 activités + 34 références + 3 briefs M2, grilles à
   paliers (B2), grille du projet M2 (6 axes, bonus), banque de 60 questions M2 (sans réponses).
+
+#### Dépôt des contrats — `complements-10` (prêt, simulation)
+
+Type « Convention de formation » livré (migration `20261104000000_training_agreement_document.sql`,
+**à appliquer avant l'écriture**). Une ligne `module_document` (`kind = 'training_agreement'`,
+`label`, `signed_on`) par contrat et par module :
+
+- **M2 2024-25** : convention de formation (signée le 25/05/2025) et avenant n° 1 (signé le
+  15/07/2025, fin d'intervention au 08/07/2025) : fichiers
+  `Complétez_avec_Docusign _CONVENTION_FORMATIO.pdf` (exemplaire terminé le 25/05 ; le « -1 »
+  est une copie retéléchargée) et `…_Avenant_1_de_modifi.pdf`.
+- **GP et B2 2025-26** : `convention_prestation.pdf` (signée le 07/11/2025, 48 h, 2 680 € HT) :
+  **un seul fichier de stockage, deux lignes** (une par module).
+- Non déposés : contrat de l'édition archivée (pas de module), planning Hyperplanning
+  (prévisionnel, périmé).
