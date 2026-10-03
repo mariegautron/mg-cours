@@ -33,25 +33,35 @@ export function ProjectForm({
 
   return (
     <form onSubmit={keepFormValues(formAction)} className="space-y-5">
-      <div className="space-y-2">
-        <Label htmlFor="title">Titre du projet</Label>
-        <Input
-          id="title"
-          name="title"
-          required
-          defaultValue={project?.title ?? ""}
-          aria-describedby={fe.title ? "title-error" : undefined}
-        />
-        <FieldError id="title" errors={fe.title} />
+      <div className="bg-card rounded-3xl border p-5 shadow-sm">
+        <div className="space-y-2">
+          <Label htmlFor="title" className="text-muted-foreground font-normal">
+            Titre du projet
+          </Label>
+          <Input
+            id="title"
+            name="title"
+            required
+            defaultValue={project?.title ?? ""}
+            aria-describedby={fe.title ? "title-error" : undefined}
+          />
+          <FieldError id="title" errors={fe.title} />
+        </div>
       </div>
 
       <BriefEditor initial={project?.brief_md ?? ""} error={fe.briefMd} />
 
-      <div className="space-y-2">
-        <Label htmlFor="clientContextMd">Contexte client (Markdown)</Label>
-        <p id="clientContextMd-hint" className="text-muted-foreground text-sm">
-          Le client fictif, son besoin, ses contraintes.
+      <section aria-labelledby="client-card" className="bg-card rounded-3xl border p-5 shadow-sm">
+        <h2 id="client-card" className="font-heading mb-1 text-xl font-bold">
+          Le client et le contexte
+        </h2>
+        <p id="clientContextMd-hint" className="text-muted-foreground mb-3 text-sm">
+          Le client fictif, son besoin, ses contraintes. Propre à ce projet : à réécrire quand tu
+          pars d’un autre.
         </p>
+        <Label htmlFor="clientContextMd" className="sr-only">
+          Contexte client (Markdown)
+        </Label>
         <Textarea
           id="clientContextMd"
           name="clientContextMd"
@@ -65,18 +75,19 @@ export function ProjectForm({
           }
         />
         <FieldError id="clientContextMd" errors={fe.clientContextMd} />
-      </div>
+      </section>
 
       {state.error ? <ActionError error={state.error} /> : null}
-      {state.saved ? (
-        <p role="status" className="text-sm">
-          Projet enregistré.
-        </p>
-      ) : null}
-
-      <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
-        {project ? "Enregistrer le projet" : "Créer le projet"}
-      </PendingButton>
+      <div className="bg-background/95 flex flex-wrap items-center gap-3 rounded-2xl border p-3 backdrop-blur md:sticky md:bottom-2">
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          {project ? "Enregistrer le projet" : "Créer le projet"}
+        </PendingButton>
+        {state.saved ? (
+          <p role="status" className="text-sm">
+            Projet enregistré.
+          </p>
+        ) : null}
+      </div>
     </form>
   );
 }

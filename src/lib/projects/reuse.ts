@@ -27,6 +27,29 @@ export const COPIED_LABELS = [
   "Les thèmes au choix (si tu le demandes)",
 ] as const;
 
+/** Lignes « Ce qu'on garde » de l'écran de reprise : ce qui reste, et ce qui est à réécrire. */
+export const KEEP_ROWS = [
+  {
+    key: "phases",
+    title: "Les phases et leurs livrables",
+    hint: "Le brief en sections, phases comprises",
+    kept: true,
+  },
+  {
+    key: "assessments",
+    title: "Les évaluations du projet",
+    hint: "Jalons, oral, évaluation individuelle, avec leur coefficient",
+    kept: true,
+  },
+  { key: "grids", title: "Les grilles", hint: "Les critères de chaque évaluation", kept: true },
+  {
+    key: "context",
+    title: "Le client et le contexte",
+    hint: "Propres au projet d'origine : à réécrire",
+    kept: false,
+  },
+] as const;
+
 export const NOT_COPIED_LABELS = [
   "Les notes et appréciations",
   "Les groupes et l’affectation des thèmes",

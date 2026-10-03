@@ -31,7 +31,7 @@ test("projet fil rouge : squelette depuis les notes exigées, compteur juste", a
   await expect(page.getByLabel("Titre de la section 1")).toHaveValue("Phases");
   await page.getByLabel("Contexte client (Markdown)").fill("Une mutuelle fictive.");
   await page.getByRole("button", { name: "Créer le projet" }).click();
-  await expect(page.getByRole("heading", { name: "Objectif" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Évaluations du projet/ })).toBeVisible();
 
   // 21 h : 3 notes exigées → 1 jalon de groupe + oral + individuelle.
   await expect(page.getByLabel(/^Titre de l’évaluation \d$/)).toHaveCount(3);
@@ -60,7 +60,9 @@ test("projet fil rouge : squelette depuis les notes exigées, compteur juste", a
 
   // Aucune proposition restante ; le compteur reste juste.
   await page.reload();
-  await expect(page.getByText(/Toutes les évaluations du squelette existent déjà/)).toBeVisible();
+  await expect(
+    page.getByText(/Toutes les évaluations du squelette existent déjà/).first(),
+  ).toBeVisible();
   await page.goto(`${moduleUrl}/assessments`);
   await expect(page.getByText("0/3 note")).toBeVisible();
   expect((await axe(page)).violations).toEqual([]);

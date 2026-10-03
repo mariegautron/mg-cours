@@ -37,18 +37,27 @@ test("partir d'un projet existant : brief et évaluations repris, contexte clien
 
   const second = await newModule(`Reprise ${suffix}`);
   await page.goto(`${second}/project`);
-  await page.getByText("Partir d’un projet existant").click();
+  await page.getByRole("link", { name: "Partir d’un projet existant" }).click();
+  await page.waitForURL(/\/project\/reuse/);
+  await expect(page.getByRole("heading", { name: "Partir d’un projet existant" })).toBeVisible();
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();
   expect(axe.violations).toEqual([]);
-  const option = page.locator("#sourceProjectId option", { hasText: `SantaConnect ${suffix}` });
-  await page
-    .getByLabel("Projet à reprendre")
-    .selectOption({ value: (await option.getAttribute("value"))! });
-  await page.getByRole("button", { name: "Créer le projet à partir de celui-ci" }).click();
+  // Le projet à reprendre se choisit dans la liste de gauche ; le client est repris dans le contexte.
+  await page.getByRole("link", { name: new RegExp(`SantaConnect ${suffix}`) }).click();
+  await expect(
+    page.getByRole("heading", { name: new RegExp(`Ce qu’on garde de SantaConnect ${suffix}`) }),
+  ).toBeVisible();
+  await expect(page.getByText("Les phases et leurs livrables")).toBeVisible();
+  await expect(page.getByText("À réécrire", { exact: true })).toBeVisible();
+  await page.getByLabel("Le client").fill("la directrice du festival");
+  await page.getByRole("button", { name: "Créer le projet" }).click();
+  await page.waitForURL(/\/project$/);
   await expect(page.getByText(/Évaluations du projet \(3\)/)).toBeVisible();
   await expect(page.getByLabel("Titre du projet")).toHaveValue(`SantaConnect ${suffix}`);
   await expect(page.getByLabel("Titre de la section 1")).toHaveValue("Phases du projet");
-  await expect(page.getByLabel("Contexte client (Markdown)")).toHaveValue("");
+  await expect(page.getByLabel("Contexte client (Markdown)")).toHaveValue(
+    "**Client :** la directrice du festival",
+  );
 });

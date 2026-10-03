@@ -38,7 +38,7 @@ describe("outlineChecks", () => {
   const base = {
     moduleHours: 6,
     assessments: { total: 2, linked: 2 },
-    expectations: { total: 3, uncovered: 0 },
+    expectations: { total: 3, uncovered: 0, objectives: 2, units: 1 },
   };
 
   it("tout est prêt", () => {
@@ -51,7 +51,7 @@ describe("outlineChecks", () => {
     const checks = outlineChecks({
       ...base,
       assessments: { total: 3, linked: 1 },
-      expectations: { total: 3, uncovered: 2 },
+      expectations: { total: 3, uncovered: 2, objectives: 2, units: 1 },
       courses: [
         course({ title: "Séance 1", objectives: [] }),
         course({ title: "Atelier", sessionDate: null }),
@@ -72,6 +72,7 @@ describe("outlineChecks", () => {
       title: "2 évaluations à rattacher à une séance",
     });
     expect(byKey.expectations).toMatchObject({ ok: false, title: "2 attendus non couverts" });
+    expect(byKey.expectations.detail).toContain("2 objectifs pédagogiques · 1 unité");
   });
 
   it("sans séance ni attendu : on le dit, rien ne bloque", () => {
@@ -79,7 +80,7 @@ describe("outlineChecks", () => {
       courses: [],
       moduleHours: 0,
       assessments: { total: 0, linked: 0 },
-      expectations: { total: 0, uncovered: 0 },
+      expectations: { total: 0, uncovered: 0, objectives: 0, units: 0 },
     });
     expect(checks.map((c) => c.key)).toEqual(["dated", "assessments", "expectations"]);
     expect(checks.every((c) => !c.ok)).toBe(true);

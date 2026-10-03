@@ -119,8 +119,32 @@ export function addSection(sections: readonly BriefSection[], title = ""): Brief
   return sections.length >= MAX_SECTIONS ? [...sections] : [...sections, { title, body: "" }];
 }
 
-export function removeSection(sections: readonly BriefSection[], index: number): BriefSection[] {
+export function removeSection<T extends BriefSection>(sections: readonly T[], index: number): T[] {
   return sections.filter((_, i) => i !== index);
+}
+
+/** Section laissée telle que le modèle l'a posée (ou vide) : elle reste « à rédiger ». */
+export function isPlaceholderSection(section: BriefSection): boolean {
+  const body = section.body.trim();
+  if (!body) return true;
+  return BRIEF_MODELS.some((m) =>
+    m.sections.some((s) => s.title === section.title.trim() && s.body.trim() === body),
+  );
+}
+
+/** Première ligne utile du texte d'une section (puces et titres retirés), coupée à 110 caractères. */
+export function sectionSummary(body: string): string {
+  const first =
+    body
+      .split("\n")
+      .map((l) =>
+        l
+          .replace(/^\s*(?:[-*+]|\d+[.)]|#+)\s*/, "")
+          .replace(/\*\*/g, "")
+          .trim(),
+      )
+      .find(Boolean) ?? "";
+  return first.length > 110 ? `${first.slice(0, 109)}…` : first;
 }
 
 /** Vrai si le brief ne contient aucun texte (le choix du modèle est alors proposé d'emblée). */

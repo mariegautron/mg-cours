@@ -105,7 +105,7 @@ test("facturation YNOV : blocages puis facture Factur-X, envoi et paiement", asy
   await openTab(page, "Progression");
   await page.getByRole("button", { name: "Générer la progression" }).click();
   await expect(page.getByText(/Générée le/)).toBeVisible();
-  await page.getByRole("button", { name: "Marquer comme envoyée" }).click();
+  await page.getByRole("button", { name: /J’ai envoyé la progression/ }).click();
   await page.getByRole("button", { name: "Oui, je l’ai envoyée" }).click();
   await expect(page.getByText(/envoyée le/)).toBeVisible();
 

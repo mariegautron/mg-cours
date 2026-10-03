@@ -59,7 +59,12 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     })),
     moduleHours: mod.total_hours,
     assessments: { total: regular.length, linked: regular.filter((a) => a.course_id).length },
-    expectations: { total: expectations.length, uncovered: coverage.uncovered },
+    expectations: {
+      total: expectations.length,
+      uncovered: coverage.uncovered,
+      objectives: expectations.filter((e) => e.kind === "objective").length,
+      units: expectations.filter((e) => e.kind === "unit").length,
+    },
   });
   const todo = checks.filter((c) => !c.ok).length;
 

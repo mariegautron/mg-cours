@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { failure, NOT_FOUND } from "@/lib/messages";
 import { planProjectReuse } from "@/lib/projects/reuse";
@@ -25,6 +26,13 @@ export async function startFromProject(
 ): Promise<ReuseState> {
   const sourceId = String(formData.get("sourceProjectId") ?? "");
   const keepThemes = formData.get("keepThemes") === "on";
+  // Nouveau thème : titre et client facultatifs (à défaut, le titre du projet repris et un contexte vide).
+  const newTitle = String(formData.get("title") ?? "")
+    .trim()
+    .slice(0, 200);
+  const newClient = String(formData.get("client") ?? "")
+    .trim()
+    .slice(0, 2000);
   if (!UUID.test(sourceId)) return { error: "Choisis un projet à reprendre." };
 
   const supabase = await createClient();
@@ -56,9 +64,9 @@ export async function startFromProject(
     .from("module_project")
     .insert({
       module_id: moduleId,
-      title: source.title,
+      title: newTitle || source.title,
       brief_md: source.brief_md,
-      client_context_md: "",
+      client_context_md: newClient ? `**Client :** ${newClient}` : "",
     })
     .select("id")
     .single();
@@ -116,5 +124,5 @@ export async function startFromProject(
   revalidatePath(`/modules/${moduleId}/project`);
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}`);
-  return { done: true, toRewrite: plan.toRewrite };
+  redirect(`/modules/${moduleId}/project`);
 }

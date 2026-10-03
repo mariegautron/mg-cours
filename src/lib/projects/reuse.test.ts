@@ -4,6 +4,7 @@ import type { Tables } from "@/types/db";
 
 import {
   COPIED_LABELS,
+  KEEP_ROWS,
   NOT_COPIED_LABELS,
   planProjectReuse,
   reusableLabel,
@@ -111,5 +112,16 @@ describe("planProjectReuse", () => {
     expect(reusableLabel({ moduleName: "Agile", year: 2025, title: "Refonte" })).toBe(
       "Agile (2025) : Refonte",
     );
+  });
+});
+
+describe("lignes « ce qu'on garde »", () => {
+  it("tout est repris sauf le client et le contexte, à réécrire", () => {
+    expect(KEEP_ROWS.filter((r) => r.kept).map((r) => r.key)).toEqual([
+      "phases",
+      "assessments",
+      "grids",
+    ]);
+    expect(KEEP_ROWS.filter((r) => !r.kept).map((r) => r.key)).toEqual(["context"]);
   });
 });

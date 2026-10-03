@@ -20,7 +20,7 @@ export interface OutlineCheckInput {
   moduleHours: number;
   /** Évaluations hors rattrapage. */
   assessments: { total: number; linked: number };
-  expectations: { total: number; uncovered: number };
+  expectations: { total: number; uncovered: number; objectives: number; units: number };
 }
 
 export interface OutlineCheck {
@@ -48,6 +48,11 @@ export function formatNumbers(numbers: number[]): string {
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n > 1 ? many : one}`;
+
+/** « 2 objectifs pédagogiques · 2 unités ». */
+export function expectationsSummary(objectives: number, units: number): string {
+  return `${plural(objectives, "objectif pédagogique", "objectifs pédagogiques")} · ${plural(units, "unité", "unités")}`;
+}
 
 export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
   const { courses, moduleHours, assessments, expectations } = input;
@@ -193,7 +198,7 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
       key: "expectations",
       ok: false,
       title: `${plural(expectations.uncovered, "attendu non couvert", "attendus non couverts")}`,
-      detail: "Tu peux générer quand même : ils seront signalés dans le PDF",
+      detail: `${expectationsSummary(expectations.objectives, expectations.units)} · tu peux générer quand même : ils seront signalés dans le PDF`,
       to: "/matching",
       toLabel: "rapprocher",
     });
@@ -202,7 +207,7 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
       key: "expectations",
       ok: true,
       title: "Tous les attendus sont couverts",
-      detail: "",
+      detail: expectationsSummary(expectations.objectives, expectations.units),
     });
   }
 

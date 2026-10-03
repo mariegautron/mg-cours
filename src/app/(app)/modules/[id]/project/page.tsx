@@ -4,17 +4,16 @@ import { notFound } from "next/navigation";
 
 import { deleteProject } from "@/app/(app)/modules/[id]/project/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
-import { Markdown } from "@/components/markdown";
 import { ProjectForm } from "@/components/projects/project-form";
 import { SkeletonEditor } from "@/components/projects/skeleton-editor";
 import { ThemeAssignment } from "@/components/projects/theme-assignment";
 import { ThemesEditor } from "@/components/projects/themes-editor";
-import { Badge } from "@/components/ui/badge";
+import { Pill } from "@/components/dashboard/pill";
+import { Button } from "@/components/ui/button";
 import { SurprisesEditor } from "@/components/projects/surprises-editor";
 import { listProjectSurprises } from "@/lib/projects/surprise-queries";
 import { sortSurprises } from "@/lib/projects/surprises";
 import { getModuleCourses } from "@/lib/modules/queries";
-import { ReuseProject } from "@/components/projects/reuse-project";
 import { getModuleProject, listReusableProjects } from "@/lib/projects/queries";
 import { getModule } from "@/lib/modules/queries";
 import {
@@ -50,160 +49,171 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
       )
     : [];
 
+  const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const hasThemes = !!project && project.themes.length > 0;
+
   return (
-    <div className="max-w-3xl space-y-8">
-      <div>
-        <Link href={`/modules/${mod.id}`} className="text-sm underline underline-offset-2">
-          ← {mod.name}
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Projet fil rouge</h1>
-        <p className="text-muted-foreground">
-          Un projet suivi tout au long du module : jalons, oral de fin de projet et évaluation
-          individuelle sont des évaluations comme les autres, comptées dans les notes YNOV.
-        </p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
+            Évaluations
+          </p>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">
+            Le projet fil rouge : {hasThemes ? "plusieurs thèmes" : "le brief"}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Un projet suivi tout au long du module : jalons, oral de fin de projet et évaluation
+            individuelle sont des évaluations comme les autres, comptées dans les notes YNOV. Un
+            projet se réutilise d’un module à l’autre.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {project ? null : reusable.length > 0 ? (
+            <Button asChild variant="outline">
+              <Link href={`/modules/${mod.id}/project/reuse`}>Partir d’un projet existant</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="ghost">
+            <Link href={`/modules/${mod.id}/assessments`}>← Les évaluations</Link>
+          </Button>
+        </div>
       </div>
 
-      <section aria-labelledby="project-heading" className="space-y-4">
-        <h2 id="project-heading" className="text-lg font-medium">
-          Le projet
-        </h2>
-        {project ? null : <ReuseProject moduleId={mod.id} projects={reusable} />}
-        <ProjectForm key={project?.id ?? "new"} moduleId={mod.id} project={project} />
+      <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+        <div className="w-full min-w-0 flex-1 lg:basis-0">
+          <ProjectForm key={project?.id ?? "new"} moduleId={mod.id} project={project} />
+        </div>
+
         {project ? (
-          <div className="space-y-4 rounded-lg border p-4">
-            {project.brief_md ? (
-              <div>
-                <h3 className="mb-2 font-medium">Brief</h3>
-                <Markdown source={project.brief_md} />
+          <div className="w-full min-w-0 space-y-5 lg:w-[34rem] lg:flex-none">
+            <section aria-labelledby="project-assessments" className={card}>
+              <h2 id="project-assessments" className="font-heading mb-1 text-xl font-bold">
+                Évaluations du projet ({project.assessments.length})
+              </h2>
+              <p className="text-muted-foreground mb-2 text-sm">
+                Chaque évaluation a son livrable. Tu choisis lesquelles sont notées.
+              </p>
+              {project.assessments.length === 0 ? (
+                <p className="text-muted-foreground border-t pt-3 text-sm">
+                  Aucune évaluation rattachée. Propose le squelette plus bas.
+                </p>
+              ) : (
+                <ul>
+                  {project.assessments.map((a, i) => (
+                    <li key={a.id} className="border-t">
+                      <Link
+                        href={`/modules/${mod.id}/assessments/${a.id}`}
+                        className="hover:bg-accent/50 focus-visible:ring-ring flex min-h-14 items-center gap-3 rounded-lg py-2 focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        <Pill>{i + 1}</Pill>
+                        <span className="min-w-0 flex-1">
+                          <strong>{a.title}</strong>
+                          <span className="text-muted-foreground block text-[0.8rem]">
+                            {PROJECT_ROLE_LABELS[a.project_role!]} ·{" "}
+                            {a.is_group_grade ? "note de groupe" : "note individuelle"}
+                            {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
+                          </span>
+                        </span>
+                        <Pill tone={a.gradeCount > 0 ? "ok" : "warn"}>
+                          {a.gradeCount > 0 ? "Notée" : "À noter"}
+                        </Pill>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section aria-labelledby="themes-heading" className={card}>
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h2 id="themes-heading" className="font-heading text-xl font-bold">
+                  Thèmes au choix ({project.themes.length})
+                </h2>
               </div>
-            ) : null}
-            {project.client_context_md ? (
-              <div>
-                <h3 className="mb-2 font-medium">Contexte client</h3>
-                <Markdown source={project.client_context_md} />
-              </div>
-            ) : null}
+              <p className="text-muted-foreground mb-3 text-sm">
+                Un seul sujet pour toute la classe, ou plusieurs thèmes : un ou plusieurs groupes
+                par thème, attribués par tirage, par choix des groupes ou par toi.
+              </p>
+              <ThemesEditor moduleId={mod.id} initial={project.themes} />
+            </section>
+
+            <section aria-labelledby="assignment-heading" className={card}>
+              <h2 id="assignment-heading" className="font-heading mb-3 text-xl font-bold">
+                Affectation des thèmes
+              </h2>
+              <ThemeAssignment
+                moduleId={mod.id}
+                themes={project.themes.map((t) => ({ id: t.id, title: t.title }))}
+                groups={project.groups.map((g) => {
+                  const a = project.assignments.find((x) => x.student_group_id === g.id);
+                  return {
+                    id: g.id,
+                    name: g.name,
+                    themeId: a?.theme_id ?? "",
+                    method: a?.method ?? null,
+                  };
+                })}
+                drawSeed={
+                  project.assignments
+                    .filter((a) => a.method === "draw" && a.draw_seed)
+                    .sort((a, b) => (b.drawn_at ?? "").localeCompare(a.drawn_at ?? ""))[0]
+                    ?.draw_seed ?? null
+                }
+              />
+            </section>
+
+            <section aria-labelledby="surprises-heading" className={card}>
+              <h2 id="surprises-heading" className="font-heading mb-1 text-xl font-bold">
+                Imprévus du client ({surprises.items.length})
+              </h2>
+              <p className="text-muted-foreground mb-3 text-sm">
+                Des messages du client entre les séances, pour simuler les changements de besoin. Le
+                jour de la séance, « Aujourd’hui » te le rappelle avec le message prêt à copier.
+                Rien n’est envoyé par l’appli.
+              </p>
+              <SurprisesEditor
+                moduleId={mod.id}
+                items={sortSurprises(surprises.items, courseOrder)}
+                courses={courseOptions}
+                available={surprises.available}
+              />
+            </section>
+
+            <section aria-labelledby="skeleton-heading" className={card}>
+              <h2 id="skeleton-heading" className="font-heading mb-1 text-xl font-bold">
+                Squelette proposé
+              </h2>
+              <p className="text-muted-foreground mb-3 text-sm">
+                Déduit des notes exigées pour {mod.total_hours} h : 1 évaluation individuelle, 1
+                oral, et un jalon pour chaque note restante. Modifie avant de créer.
+              </p>
+              <SkeletonEditor
+                resetKey={project.assessments.map((a) => a.id).join(",")}
+                moduleId={mod.id}
+                totalHours={mod.total_hours}
+                proposed={proposed}
+                existing={project.assessments.map((a) => ({ isGroupGrade: a.is_group_grade }))}
+              />
+            </section>
+
+            <section aria-labelledby="danger-heading" className="space-y-2 px-1">
+              <h2 id="danger-heading" className="font-heading text-lg font-bold">
+                Supprimer le projet
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Les évaluations et leurs notes sont conservées, simplement détachées du projet.
+              </p>
+              <ConfirmDeleteButton
+                itemName="le projet fil rouge"
+                title="Supprimer le projet fil rouge ?"
+                description="Le brief et le contexte client seront supprimés. Les évaluations et leurs notes sont conservées."
+                onConfirm={deleteProject.bind(null, mod.id)}
+              />
+            </section>
           </div>
         ) : null}
-      </section>
-
-      {project ? (
-        <>
-          <section aria-labelledby="project-assessments" className="space-y-3">
-            <h2 id="project-assessments" className="text-lg font-medium">
-              Évaluations du projet ({project.assessments.length})
-            </h2>
-            {project.assessments.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucune évaluation rattachée. Propose le squelette ci-dessous.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {project.assessments.map((a) => (
-                  <li key={a.id}>
-                    <Link
-                      href={`/modules/${mod.id}/assessments/${a.id}`}
-                      className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
-                    >
-                      <div>
-                        <p className="font-medium">{a.title}</p>
-                        <p className="text-muted-foreground text-sm">
-                          {PROJECT_ROLE_LABELS[a.project_role!]} ·{" "}
-                          {a.is_group_grade ? "note de groupe" : "note individuelle"}
-                          {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
-                        </p>
-                      </div>
-                      <Badge variant={a.gradeCount > 0 ? "secondary" : "outline"}>
-                        {a.gradeCount > 0 ? "notée" : "à noter"}
-                      </Badge>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section aria-labelledby="themes-heading" className="space-y-3">
-            <h2 id="themes-heading" className="text-lg font-medium">
-              Thèmes au choix ({project.themes.length})
-            </h2>
-            <ThemesEditor moduleId={mod.id} initial={project.themes} />
-          </section>
-
-          <section aria-labelledby="assignment-heading" className="space-y-3">
-            <h2 id="assignment-heading" className="text-lg font-medium">
-              Affectation des thèmes
-            </h2>
-            <ThemeAssignment
-              moduleId={mod.id}
-              themes={project.themes.map((t) => ({ id: t.id, title: t.title }))}
-              groups={project.groups.map((g) => {
-                const a = project.assignments.find((x) => x.student_group_id === g.id);
-                return {
-                  id: g.id,
-                  name: g.name,
-                  themeId: a?.theme_id ?? "",
-                  method: a?.method ?? null,
-                };
-              })}
-              drawSeed={
-                project.assignments
-                  .filter((a) => a.method === "draw" && a.draw_seed)
-                  .sort((a, b) => (b.drawn_at ?? "").localeCompare(a.drawn_at ?? ""))[0]
-                  ?.draw_seed ?? null
-              }
-            />
-          </section>
-
-          <section aria-labelledby="surprises-heading" className="space-y-3">
-            <h2 id="surprises-heading" className="text-lg font-medium">
-              Imprévus du client ({surprises.items.length})
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Des mails du client qui bousculent le projet, à envoyer pendant une séance. Le jour de
-              la séance, « Aujourd’hui » te le rappelle avec le message prêt à copier.
-            </p>
-            <SurprisesEditor
-              moduleId={mod.id}
-              items={sortSurprises(surprises.items, courseOrder)}
-              courses={courseOptions}
-              available={surprises.available}
-            />
-          </section>
-
-          <section aria-labelledby="skeleton-heading" className="space-y-3">
-            <h2 id="skeleton-heading" className="text-lg font-medium">
-              Squelette proposé
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Déduit des notes exigées pour {mod.total_hours} h : 1 évaluation individuelle, 1 oral,
-              et un jalon pour chaque note restante. Modifie avant de créer.
-            </p>
-            <SkeletonEditor
-              resetKey={project.assessments.map((a) => a.id).join(",")}
-              moduleId={mod.id}
-              totalHours={mod.total_hours}
-              proposed={proposed}
-              existing={project.assessments.map((a) => ({ isGroupGrade: a.is_group_grade }))}
-            />
-          </section>
-
-          <section aria-labelledby="danger-heading" className="space-y-2 border-t pt-4">
-            <h2 id="danger-heading" className="text-lg font-medium">
-              Supprimer le projet
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Les évaluations et leurs notes sont conservées, simplement détachées du projet.
-            </p>
-            <ConfirmDeleteButton
-              itemName="le projet fil rouge"
-              title="Supprimer le projet fil rouge ?"
-              description="Le brief et le contexte client seront supprimés. Les évaluations et leurs notes sont conservées."
-              onConfirm={deleteProject.bind(null, mod.id)}
-            />
-          </section>
-        </>
-      ) : null}
+      </div>
     </div>
   );
 }

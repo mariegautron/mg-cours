@@ -4,11 +4,13 @@ import {
   addSection,
   BRIEF_MODELS,
   isBriefEmpty,
+  isPlaceholderSection,
   MAX_SECTIONS,
   modelByKey,
   moveSection,
   parseBrief,
   removeSection,
+  sectionSummary,
   serializeBrief,
 } from "./brief";
 
@@ -82,5 +84,25 @@ describe("ordre et ajout", () => {
     const full = Array.from({ length: MAX_SECTIONS }, (_, i) => s(String(i)));
     expect(addSection(full)).toHaveLength(MAX_SECTIONS);
     expect(removeSection([s("a"), s("b")], 0).map((x) => x.title)).toEqual(["b"]);
+  });
+});
+
+describe("sectionSummary", () => {
+  it("première ligne utile, sans puce ni mise en forme, coupée", () => {
+    expect(sectionSummary("\n- **Délai** : 6 semaines\n- Budget")).toBe("Délai : 6 semaines");
+    expect(sectionSummary("1. Cadrage\n2. Réalisation")).toBe("Cadrage");
+    expect(sectionSummary("")).toBe("");
+    expect(sectionSummary("a".repeat(200))).toHaveLength(110);
+  });
+});
+
+describe("isPlaceholderSection", () => {
+  it("une section du modèle laissée telle quelle reste à rédiger", () => {
+    const model = BRIEF_MODELS[0].sections[0];
+    expect(isPlaceholderSection({ ...model })).toBe(true);
+    expect(isPlaceholderSection({ title: model.title, body: "" })).toBe(true);
+    expect(isPlaceholderSection({ title: model.title, body: "Le Père Noël, qui gère…" })).toBe(
+      false,
+    );
   });
 });
