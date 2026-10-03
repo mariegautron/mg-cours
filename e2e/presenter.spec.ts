@@ -116,7 +116,7 @@ test("US-64 : vue présentatrice synchronisée avec la fenêtre projetée, sans 
   expect(await page.content()).not.toContain("Insister sur la valeur");
 
   // US-136 : la projection est retenue et relue à la clôture (statut en mots, ressource projetée).
-  const notebookUrl = href!.replace("/present", "") + "/notebook";
+  const notebookUrl = href!.replace("/present", "") + "/close";
   await expect(async () => {
     await presenter.goto(notebookUrl);
     await expect(presenter.getByText(/Relevé de la projection/)).toBeVisible({ timeout: 2000 });

@@ -83,6 +83,7 @@ export function PresenterView({
   projectionName,
   startTime,
   closeHref,
+  trombiHref,
   studentsPanel,
 }: {
   title: string;
@@ -110,6 +111,8 @@ export function PresenterView({
   startTime: string | null;
   /** Clôture de la séance. */
   closeHref: string;
+  /** Trombinoscope de la classe (vue privée). */
+  trombiHref: string;
   /** Carnet des étudiant·es (observations en direct), rendu côté serveur. */
   studentsPanel: ReactNode;
 }) {
@@ -636,6 +639,9 @@ export function PresenterView({
             Étudiant·es
           </h2>
           {studentsPanel}
+          <Button asChild variant="outline" size="touch" className="w-full">
+            <Link href={trombiHref}>Voir en trombinoscope</Link>
+          </Button>
         </section>
       </main>
     </div>

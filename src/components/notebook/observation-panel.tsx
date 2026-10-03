@@ -29,10 +29,29 @@ interface Student {
  * l'étiquette, Entrée enregistre (« Autre » sans choix), Échap annule et rend le focus à la liste.
  * Un appui sur une étiquette enregistre aussi. « Liste » par défaut, « Photos » en grille.
  */
-export function ObservationPanel({ action, students }: { action: Action; students: Student[] }) {
+export interface StudentStat {
+  /** Observations de tout le module. */
+  total: number;
+  /** Observations prises pendant cette séance. */
+  today: number;
+  group: string | null;
+}
+
+export function ObservationPanel({
+  action,
+  students,
+  stats,
+  defaultView = "list",
+}: {
+  action: Action;
+  students: Student[];
+  /** Notes et groupe de chaque étudiant·e : active les filtres et les compteurs du trombinoscope. */
+  stats?: Record<string, StudentStat>;
+  defaultView?: "list" | "grid";
+}) {
   const [state, formAction, pending] = useActionState(action, {});
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">(defaultView);
   const [active, setActive] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<ObservationTag | null>(null);
@@ -43,7 +62,18 @@ export function ObservationPanel({ action, students }: { action: Action; student
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const filterId = useId();
 
-  const visible = findStudents(students, query);
+  const [filter, setFilter] = useState<string>("all");
+  const groupNames = stats
+    ? [...new Set(Object.values(stats).flatMap((x) => (x.group ? [x.group] : [])))].sort((a, b) =>
+        a.localeCompare(b, "fr"),
+      )
+    : [];
+  const withoutNote = students.filter((s) => !stats?.[s.id]?.total).length;
+  const visible = findStudents(students, query).filter((s) => {
+    if (filter === "all" || !stats) return true;
+    if (filter === "none") return !stats[s.id]?.total;
+    return stats[s.id]?.group === filter;
+  });
   const current = clampActive(active, visible.length);
 
   // Après un enregistrement réussi : on referme et on rend le focus au nom de l'étudiant·e.
@@ -195,6 +225,23 @@ export function ObservationPanel({ action, students }: { action: Action; student
       >
         <StudentPhoto student={s} size={view === "grid" ? "md" : "sm"} />
         <span className="font-medium">{name}</span>
+        {stats?.[s.id] ? (
+          <span className="text-muted-foreground flex flex-col text-xs">
+            <span>
+              {[
+                stats[s.id].group,
+                stats[s.id].total
+                  ? `${stats[s.id].total} note${stats[s.id].total > 1 ? "s" : ""}`
+                  : "aucune note",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+            {stats[s.id].today ? (
+              <span className="text-mint font-semibold">+{stats[s.id].today} aujourd’hui</span>
+            ) : null}
+          </span>
+        ) : null}
         <span className="sr-only"> : ajouter une observation</span>
       </button>
     );
@@ -246,6 +293,29 @@ export function ObservationPanel({ action, students }: { action: Action; student
           </Button>
         </div>
       </div>
+      {stats ? (
+        <div role="group" aria-label="Filtrer" className="flex flex-wrap gap-1">
+          {[
+            { key: "all", label: `Tous · ${students.length}` },
+            { key: "none", label: `Sans note · ${withoutNote}` },
+            ...groupNames.map((g) => ({ key: g, label: g })),
+          ].map((f) => (
+            <Button
+              key={f.key}
+              type="button"
+              size="touch"
+              variant={filter === f.key ? "default" : "secondary"}
+              aria-pressed={filter === f.key}
+              onClick={() => {
+                setFilter(f.key);
+                setActive(0);
+              }}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       <p id={`${filterId}-count`} className="text-muted-foreground text-xs" aria-live="polite">
         {visible.length} étudiant·e{visible.length > 1 ? "s" : ""}
         {selectedName ? ` · sélection : ${selectedName} (Entrée pour noter, ↑ ↓ pour changer)` : ""}

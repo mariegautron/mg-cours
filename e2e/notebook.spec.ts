@@ -62,7 +62,7 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   // Carnet utilisé debout, au téléphone : chaque action fait au moins 44 px de haut.
   for (const target of [
     page.getByRole("link", { name: /Ouvrir la présentation/ }),
-    page.getByRole("button", { name: "Enregistrer la clôture" }),
+    page.getByRole("link", { name: "Clôturer la séance", exact: true }),
   ]) {
     expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
@@ -100,17 +100,43 @@ test("carnet de séance : observation en direct, clôture, journal de la fiche �
   await expect(page.getByText("Notées pendant cette séance (2)")).toBeVisible();
   await expect(page.getByText("Très bonne question sur le backlog")).toBeVisible();
 
-  // Clôture.
+  // Trombinoscope de la séance : groupe, nombre de notes, filtres.
+  const notebookUrl = page.url();
+  await page.goto(notebookUrl.replace(/\/notebook$/, "/trombinoscope"));
+  await expect(page.getByRole("heading", { name: /Ma classe/, level: 1 })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tous · 1" })).toBeVisible();
+  await expect(page.getByText(`Groupe Carnet ${suffix} · 2 notes`)).toBeVisible();
+  await expect(page.getByText("+2 aujourd’hui")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: "docs/captures/trombinoscope.png" });
+  }
+  await page.getByRole("button", { name: "Sans note · 0" }).click();
+  await expect(page.getByText("Personne ne porte ce nom.")).toBeVisible();
+  expect((await axe(page)).violations).toEqual([]);
+  await page.goto(notebookUrl);
+
+  // Clôture : écran dédié, quatre questions.
+  await page.getByRole("link", { name: "Clôturer la séance", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Clôturer la séance 1", level: 1 })).toBeVisible();
+  await expect(page.getByText("Ce que tu as noté aujourd’hui")).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.screenshot({ path: "docs/captures/cloture.png", fullPage: true });
+  }
   await page.getByLabel("Partiellement faite").check();
   await page.getByLabel("Points non traités, à reporter").fill("Estimation en points");
   await page.getByLabel("À faire pour la prochaine fois").fill("Lire le Scrum Guide");
   await page.getByLabel("Retour d’expérience (privé)").fill("Trop dense, couper la partie 2");
-  await page.getByRole("button", { name: "Enregistrer la clôture" }).click();
+  await page.getByRole("button", { name: "Clôturer la séance 1" }).click();
   // US-137 : l'enregistrement mène à l'écran de fin de séance.
   await page.waitForURL(/\/courses\/[0-9a-f-]{36}\/closed$/);
-  await expect(page.getByRole("heading", { name: /^Séance 1 terminée/, level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^Séance 1 clôturée/, level: 1 })).toBeVisible();
   await expect(page.getByText("Faite en partie")).toBeVisible();
   await expect(page.getByText(/Estimation en points/)).toBeVisible();
+  if (process.env.CAPTURE) {
+    await page.screenshot({ path: "docs/captures/cloturee.png", fullPage: true });
+  }
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: /Télécharger le cours rédigé/ }).click(),

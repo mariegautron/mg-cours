@@ -100,7 +100,8 @@ export default async function PresenterPage({
       sessionNotes={course.retro_note ?? ""}
       projectionName={`mg-projection-${courseId}`}
       startTime={today ? course.start_time : null}
-      closeHref={`/modules/${mod.id}/courses/${courseId}/notebook`}
+      closeHref={`/modules/${mod.id}/courses/${courseId}/close`}
+      trombiHref={`/modules/${mod.id}/courses/${courseId}/trombinoscope`}
       studentsPanel={
         <ObservationPanel
           action={addObservation.bind(null, mod.id, courseId)}

@@ -17,7 +17,7 @@ import { studentFacing } from "@/lib/resources/kind";
 import { listCourseObservations } from "@/lib/notebook/queries";
 import { closureRecap, type RecapState } from "@/lib/notebook/recap";
 
-export const metadata: Metadata = { title: "Séance terminée" };
+export const metadata: Metadata = { title: "Séance clôturée" };
 
 const STATE: Record<RecapState, { label: string; Icon: typeof Check; tone: string }> = {
   done: { label: "Fait", Icon: Check, tone: "bg-mint/20 text-mint" },
@@ -75,7 +75,7 @@ export default async function ClosedCoursePage({
       <section aria-labelledby="closed" className="bg-card space-y-4 rounded-2xl border p-6">
         <div>
           <h1 id="closed" className="font-heading text-3xl font-bold tracking-tight">
-            Séance {position + 1} terminée
+            Séance {position + 1} clôturée
           </h1>
           <p className="text-muted-foreground">
             {course.title} · {mod.name}
@@ -108,9 +108,7 @@ export default async function ClosedCoursePage({
         </ul>
         {projection.status !== "none" ? <ProjectionStatus recap={projection} /> : null}
         <Button asChild variant="secondary" size="touch">
-          <Link href={`/modules/${id}/courses/${courseId}/notebook#closure`}>
-            Modifier la clôture
-          </Link>
+          <Link href={`/modules/${id}/courses/${courseId}/close`}>Modifier la clôture</Link>
         </Button>
       </section>
 
@@ -139,8 +137,11 @@ export default async function ClosedCoursePage({
 
         <section aria-labelledby="pdf" className="bg-card space-y-3 rounded-2xl border p-5">
           <h2 id="pdf" className="font-heading text-xl font-semibold">
-            Le cours rédigé
+            Il reste à faire
           </h2>
+          <p className="text-sm">
+            <strong>Donner le cours rédigé</strong>
+          </p>
           <p className="text-muted-foreground text-sm">
             Le PDF de cette séance pour les étudiant·es, à déposer sur Moodle. Il ne contient que
             les ressources qui leur sont destinées.

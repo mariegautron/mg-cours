@@ -44,7 +44,7 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
   const second = await notebookHref("Seconde");
 
   // Clôture de la première séance.
-  await page.goto(first!);
+  await page.goto(first!.replace("/notebook", "/close"));
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Partiellement faite").check();
   await page.getByLabel("Points non traités, à reporter").fill("Estimation en points");
@@ -52,7 +52,7 @@ test("US-68 : la consigne de la séance précédente ouvre la séance suivante, 
     .getByLabel("À faire pour la prochaine fois")
     .fill("Lire le Scrum Guide\nPréparer trois questions");
   await page.getByLabel("Retour d’expérience (privé)").fill("Trop dense, couper la partie 2");
-  await page.getByRole("button", { name: "Enregistrer la clôture" }).click();
+  await page.getByRole("button", { name: "Clôturer la séance 1" }).click();
   await page.waitForURL(/\/closed$/);
 
   // Vue privée de la séance suivante : points reportés et retour d'expérience.
