@@ -39,6 +39,7 @@ export function AssessmentForm({
   grids,
   courses = [],
   assessment,
+  initialGridId = "",
 }: {
   action: Action;
   moduleId: string;
@@ -47,10 +48,12 @@ export function AssessmentForm({
   /** Séances du module (rattachement du sujet, US-90). */
   courses?: Pick<Tables<"course">, "id" | "title">[];
   assessment?: AssessmentDetail;
+  /** Grille choisie depuis la bibliothèque (US-126). */
+  initialGridId?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
-  const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? "");
+  const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? initialGridId);
   // Cadre selon le type (US-144) : libellé de la date, durée attendue, points à vérifier.
   const [typeText, setTypeText] = useState(assessment?.type ?? "");
   const [dateText, setDateText] = useState(assessment?.date ?? "");

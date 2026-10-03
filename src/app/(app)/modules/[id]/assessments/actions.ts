@@ -1,5 +1,6 @@
 "use server";
 
+import { SCHOOL_GRADE_TYPE, validateSchoolGrade } from "@/lib/assessments/module-notes";
 import { prepareMakeupInAdvance } from "@/app/(app)/modules/[id]/assessments/makeup-action";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -542,4 +543,56 @@ export async function deleteAssessmentFile(assessmentId: string, path: string) {
   if (error) return;
   await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove([path]);
   revalidatePath(`/modules/${assessment.module_id}/assessments/${assessmentId}`);
+}
+
+export interface SchoolGradeState {
+  error?: string;
+}
+
+/**
+ * « Note de l'école » (US-126) : note imposée par l'école (contrôle continu), sans sujet ni grille.
+ * Individuelle, pour tous les groupes du module : on saisit ensuite les notes directement.
+ */
+export async function createSchoolGrade(
+  moduleId: string,
+  _prev: SchoolGradeState,
+  formData: FormData,
+): Promise<SchoolGradeState> {
+  const check = validateSchoolGrade({
+    title: String(formData.get("title") ?? ""),
+    coefficient: String(formData.get("coefficient") ?? "1"),
+  });
+  if (!check.ok) return { error: check.error };
+
+  const supabase = await createClient();
+  const { data: groups } = await supabase
+    .from("student_group")
+    .select("id")
+    .eq("module_id", moduleId);
+  if (!groups || groups.length === 0) {
+    return { error: "Crée d’abord un groupe pour ce module : la note s’y rattache." };
+  }
+  const { data, error } = await supabase
+    .from("assessment")
+    .insert({
+      module_id: moduleId,
+      title: check.title,
+      type: SCHOOL_GRADE_TYPE,
+      coefficient: check.coefficient,
+      is_group_grade: false,
+      max_score: 20,
+      prep_status: "provided",
+    })
+    .select("id")
+    .single();
+  if (error || !data) return { error: failure("enregistrer", { kept: true }) };
+  const { error: groupsError } = await supabase
+    .from("assessment_group")
+    .insert(groups.map((g) => ({ assessment_id: data.id, student_group_id: g.id })));
+  if (groupsError) {
+    await supabase.from("assessment").delete().eq("id", data.id);
+    return { error: failure("enregistrer", { kept: true }) };
+  }
+  revalidatePath(`/modules/${moduleId}/assessments`);
+  redirect(`/modules/${moduleId}/assessments/${data.id}`);
 }

@@ -11,8 +11,10 @@ export const metadata: Metadata = { title: "Nouvelle évaluation" };
 
 export default async function NewAssessmentPage({
   params,
+  searchParams,
 }: PageProps<"/modules/[id]/assessments/new">) {
   const { id } = await params;
+  const { grille } = await searchParams;
   const [mod, groups, grids, courses] = await Promise.all([
     getModule(id),
     listModuleGroups(id),
@@ -35,6 +37,9 @@ export default async function NewAssessmentPage({
           groups={groups}
           grids={grids}
           courses={courses}
+          initialGridId={
+            typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
+          }
         />
       )}
     </div>

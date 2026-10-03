@@ -11,6 +11,12 @@ import {
   moduleNoteProgress,
   moduleStudentAverages,
 } from "@/lib/assessments/queries";
+import {
+  jalonsCount,
+  notesMessage,
+  requirementLabel,
+  totalCoefficient,
+} from "@/lib/assessments/module-notes";
 import { getModule } from "@/lib/modules/queries";
 import { PROJECT_ROLE_LABELS } from "@/lib/ynov/project-skeleton";
 
@@ -53,10 +59,17 @@ export default async function ModuleAssessmentsPage({
               </span>
             ) : null}
           </div>
+          <p role="status" className="text-muted-foreground mt-2 text-sm">
+            {requirementLabel(mod.total_hours, progress)}. {notesMessage(progress)} Jalons du projet
+            : {jalonsCount(assessments)} · coefficients cumulés : {totalCoefficient(assessments)}.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link href={`/modules/${id}/project`}>Projet fil rouge</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/modules/${id}/assessments/add`}>Ajouter une évaluation</Link>
           </Button>
           <Button asChild size="sm">
             <Link href={`/modules/${id}/assessments/new`}>
@@ -92,6 +105,7 @@ export default async function ModuleAssessmentsPage({
                     <p className="font-medium">{a.title}</p>
                     <p className="text-muted-foreground text-sm">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
+                      {a.type ? `${a.type} · ` : ""}coefficient {a.coefficient} ·{" "}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {a.groups.map((g) => g.name).join(", ") || "—"} ·{" "}
                       {a.is_group_grade ? "note de groupe" : "note individuelle"} · sur {a.maxScore}
