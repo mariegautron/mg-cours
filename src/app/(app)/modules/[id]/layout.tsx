@@ -1,3 +1,4 @@
+import { ModuleNavRegister } from "@/components/modules/module-nav-context";
 import { ModuleSubnav } from "@/components/modules/module-subnav";
 import { nextStepButton } from "@/lib/modules/journey";
 import { getModuleJourney } from "@/lib/modules/journey-queries";
@@ -12,6 +13,7 @@ export default async function ModuleLayout({ children, params }: LayoutProps<"/m
 
   return (
     <>
+      <ModuleNavRegister id={mod.id} name={mod.name} />
       <ModuleSubnav
         moduleId={mod.id}
         moduleName={mod.name}

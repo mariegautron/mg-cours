@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Ellipsis } from "lucide-react";
 
 import { NAV_ICONS } from "@/components/app-sidebar";
+import { ModuleSideNav } from "@/components/modules/module-side-nav";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -75,10 +76,11 @@ export function BottomNav({ email }: { email: string }) {
           <SheetHeader className="p-0">
             <SheetTitle>Plus</SheetTitle>
             <SheetDescription className="sr-only">
-              Réglages, recherche, thème et compte.
+              Module ouvert, réglages, recherche, thème et compte.
             </SheetDescription>
           </SheetHeader>
           <GlobalSearch />
+          <ModuleSideNav variant="drawer" onNavigate={() => setOpen(false)} />
           <nav aria-label="Autres pages">
             <ul className="space-y-1">
               {drawer.map((e) => {

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
+import { ModuleNavProvider } from "@/components/modules/module-nav-context";
 import { RailSync } from "@/components/rail-sync";
 import { GlobalSearch } from "@/components/search/global-search";
 import { NavigationStatusProvider } from "@/components/navigation-status";
@@ -26,25 +27,31 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       >
         Aller au contenu
       </a>
-      <SidebarProvider>
-        <RailSync />
-        <AppSidebar />
-        <SidebarInset className="bg-shell">
-          <header className="flex h-14 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="max-md:hidden" />
-            <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm max-md:sr-only">
-              {user.email}
-            </span>
-            {/* Seule instance qui écoute Ctrl K ; le bouton n'est visible qu'au téléphone. */}
-            <GlobalSearch variant="icon" hotkey className="md:hidden" />
-            <ThemeToggle />
-          </header>
-          <div id="contenu" tabIndex={-1} className="flex-1 p-4 pb-20 outline-none sm:p-6 md:pb-6">
-            {children}
-          </div>
-        </SidebarInset>
-        <BottomNav email={user.email ?? ""} />
-      </SidebarProvider>
+      <ModuleNavProvider>
+        <SidebarProvider>
+          <RailSync />
+          <AppSidebar />
+          <SidebarInset className="bg-shell">
+            <header className="flex h-14 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="max-md:hidden" />
+              <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm max-md:sr-only">
+                {user.email}
+              </span>
+              {/* Seule instance qui écoute Ctrl K ; le bouton n'est visible qu'au téléphone. */}
+              <GlobalSearch variant="icon" hotkey className="md:hidden" />
+              <ThemeToggle />
+            </header>
+            <div
+              id="contenu"
+              tabIndex={-1}
+              className="flex-1 p-4 pb-20 outline-none sm:p-6 md:pb-6"
+            >
+              {children}
+            </div>
+          </SidebarInset>
+          <BottomNav email={user.email ?? ""} />
+        </SidebarProvider>
+      </ModuleNavProvider>
     </NavigationStatusProvider>
   );
 }

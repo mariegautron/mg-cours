@@ -74,7 +74,11 @@ export function ModuleSubnav({
         ) : null}
       </div>
 
-      <nav aria-label="Sections du module (liens)" className="-mx-1 overflow-x-auto px-1">
+      {/* Le menu latéral porte ces liens dès l'ordinateur ; la tablette (rail d'icônes) garde la barre. */}
+      <nav
+        aria-label="Sections du module (liens)"
+        className="-mx-1 overflow-x-auto px-1 max-md:hidden lg:hidden"
+      >
         <ul className="flex w-max min-w-full gap-1 border-b">
           {moduleNavItems(moduleId).map((item) => (
             <li key={item.key}>

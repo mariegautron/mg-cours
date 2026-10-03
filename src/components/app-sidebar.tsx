@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { BookMarked, GraduationCap, Library, Settings, Sun } from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
+import { ModuleSideNav } from "@/components/modules/module-side-nav";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
 import { MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
@@ -89,6 +90,7 @@ export function AppSidebar() {
                           <LinkPending />
                         </Link>
                       </SidebarMenuButton>
+                      {item.key === "modules" ? <ModuleSideNav /> : null}
                     </SidebarMenuItem>
                   );
                 })}
