@@ -726,3 +726,19 @@ la fiche) et `complements-7` (M2 : 18 attendus `origin = 'custom'` rattachés à
 18 `course_expectation`) appliqués sans erreur. Restent : description étudiante du B2
 (texte complet à fournir), barème Opquast (à structurer côté application), YCODE du M2,
 horaires du B2, 12 appréciations > 250 car., photos, sauvegarde `.mbz` du M2, édition archivée.
+
+#### Documents contractuels fournis (03/10) — à déposer quand le type « convention » existera
+
+Source : export DocuSign (`EnvelopeList_10_03_2026…csv`, 4 enveloppes) et 3 PDF dans
+`~/Téléchargements/`.
+
+- **M2 2024-25** : convention de formation du 19/05/2025 (signée le 25/05/2025) :
+  « du 11/06 au 30/06/2025 », 28 h, 1 680 € HT ; **avenant n° 1** (signé le 15/07/2025, une
+  première version a expiré) : fin d'intervention décalée au **08/07/2025**, 8 interventions,
+  28 h, 1 680 € HT. L'écart de dates avec les séances réelles (11/06 → 08/07) est donc
+  **régularisé par l'avenant** : à noter dans l'application.
+- **Édition archivée « Accessibilité & Qualité Web »** : convention de prestation de
+  services du 16/12/2024 (signée le 08/01/2025) : 3 interventions, 12 h, du 17/03 au
+  14/04/2025, **600 € HT (50 €/h)**. À la reprise : taux horaire 50 €/h, 12 h facturées
+  (la fiche école annonce 16 h, dont 4 h de projet autonome).
+- GP et B2 2025-26 : aucune convention fournie à ce jour.

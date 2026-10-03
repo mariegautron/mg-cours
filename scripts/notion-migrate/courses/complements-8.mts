@@ -97,9 +97,9 @@ async function expectationLinks(imp: Importer, mod: Record<string, unknown>) {
     }
     // Séances dont le recoupement atteint au moins la moitié du meilleur, 3 au plus.
     const best = scored[0].hits.length;
-    const kept = scored
-      .filter((x) => x.hits.length >= Math.max(1, Math.ceil(best / 2)))
-      .slice(0, 3);
+    // Au moins 2 mots en commun (1 si l'attendu n'en compte qu'un), pour éviter les faux amis.
+    const min = Math.max(Math.min(2, words.size), Math.ceil(best / 2));
+    const kept = scored.filter((x) => x.hits.length >= min).slice(0, 3);
     for (const { s, hits } of kept) {
       if (existing.some((x) => x.expectation_id === e.id && x.course_id === s.id)) continue;
       await imp.link(
