@@ -60,7 +60,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   // Proposition par mots-clés, avec le type ; « Retenir » couvre l'attendu.
   const first = page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) });
   await expect(first.getByRole("link", { name: title })).toBeVisible();
-  await expect(first.getByText(/Mots communs : .*zorglub/)).toBeVisible();
+  await expect(first.getByText(/Mots de l’attendu retrouvés dans .*zorglub/)).toBeVisible();
   await expect(first.getByText("Pas encore utilisée")).toBeVisible();
   await first.getByRole("button", { name: `Retenir ${title}` }).click();
   await expect(first.getByText("Retenue", { exact: true })).toBeVisible();

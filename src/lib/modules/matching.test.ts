@@ -4,6 +4,9 @@ import {
   coverageState,
   formatCoverage,
   keywords,
+  matchLevel,
+  matchPercent,
+  matchReason,
   matchResources,
   summarizeCoverage,
   type MatchableResource,
@@ -110,5 +113,46 @@ describe("summarizeCoverage / formatCoverage", () => {
     expect(formatCoverage({ covered: 0, toBuild: 0, uncovered: 0, total: 0 })).toBe(
       "Aucun attendu à rapprocher.",
     );
+  });
+});
+
+describe("niveau de correspondance (US-153)", () => {
+  it("score sur 100 relatif aux mots de l'attendu, niveau en mots", () => {
+    expect(matchPercent(8, 2)).toBe(100);
+    expect(matchPercent(4, 2)).toBe(50);
+    expect(matchPercent(1, 4)).toBe(6);
+    expect(matchPercent(5, 0)).toBe(0);
+    expect(matchLevel(100)).toBe("strong");
+    expect(matchLevel(50)).toBe("strong");
+    expect(matchLevel(49)).toBe("medium");
+    expect(matchLevel(25)).toBe("medium");
+    expect(matchLevel(24)).toBe("weak");
+  });
+  it("raison en une phrase, par endroit", () => {
+    expect(matchReason({ tag: ["agile"], title: [], description: [], content: [] })).toBe(
+      "Mots de l’attendu retrouvés dans les tags (agile).",
+    );
+    expect(
+      matchReason({
+        tag: ["agile"],
+        title: ["scrum"],
+        description: [],
+        content: ["sprint", "backlog"],
+      }),
+    ).toBe(
+      "Mots de l’attendu retrouvés dans les tags (agile), le titre (scrum) et le contenu (sprint, backlog).",
+    );
+    expect(matchReason({ tag: [], title: [], description: [], content: [] })).toBe(
+      "Aucun mot commun.",
+    );
+  });
+  it("matchResources renseigne niveau, score et raison", () => {
+    const [m] = matchResources("Méthodes agiles et scrum", [
+      { id: "1", title: "Scrum en pratique", tags: ["agile"], content: null },
+    ]);
+    expect(m.level).toBe("strong");
+    expect(m.percent).toBe(58);
+    expect(m.reason).toContain("les tags (agile)");
+    expect(m.reason).toContain("le titre (scrum)");
   });
 });

@@ -50,6 +50,53 @@ export interface ResourceMatch<R> {
   score: number;
   /** US-56 : extrait (tag, description ou contenu) où figure un mot commun. */
   excerpt: SearchExcerpt | null;
+  /** US-153 : où chaque mot commun a été retrouvé (au meilleur endroit : tag > titre > description > contenu). */
+  where: Record<MatchField, string[]>;
+  /** US-153 : niveau de correspondance et score sur 100, relatifs aux mots-clés de l'attendu. */
+  level: MatchLevel;
+  percent: number;
+  /** Raison en une phrase. */
+  reason: string;
+}
+
+export type MatchField = "tag" | "title" | "description" | "content";
+export type MatchLevel = "strong" | "medium" | "weak";
+
+export const MATCH_LEVEL_LABELS: Record<MatchLevel, string> = {
+  strong: "Correspondance forte",
+  medium: "Correspondance moyenne",
+  weak: "Correspondance faible",
+};
+
+const FIELD_LABELS: Record<MatchField, string> = {
+  tag: "les tags",
+  title: "le titre",
+  description: "la description",
+  content: "le contenu",
+};
+
+/** Score sur 100 : part du score maximal possible (tous les mots de l'attendu retrouvés dans les tags). */
+export function matchPercent(score: number, wantedCount: number): number {
+  if (wantedCount <= 0) return 0;
+  return Math.min(100, Math.round((score / (wantedCount * WEIGHTS.tag)) * 100));
+}
+
+/** Fort dès 50 %, moyen dès 25 %, faible en dessous. */
+export function matchLevel(percent: number): MatchLevel {
+  return percent >= 50 ? "strong" : percent >= 25 ? "medium" : "weak";
+}
+
+/** « Mots de l'attendu retrouvés dans les tags (agile) et le contenu (sprint). » */
+export function matchReason(where: Record<MatchField, string[]>): string {
+  const parts = (Object.keys(FIELD_LABELS) as MatchField[])
+    .filter((f) => where[f].length > 0)
+    .map((f) => `${FIELD_LABELS[f]} (${where[f].join(", ")})`);
+  if (parts.length === 0) return "Aucun mot commun.";
+  const joined =
+    parts.length === 1
+      ? parts[0]
+      : `${parts.slice(0, -1).join(", ")} et ${parts[parts.length - 1]}`;
+  return `Mots de l’attendu retrouvés dans ${joined}.`;
 }
 
 /** Poids d'un mot-clé retrouvé : tag > titre > description > contenu. */
@@ -77,24 +124,41 @@ export function matchResources<R extends MatchableResource>(
     const content = new Set(keywords((resource.content ?? "").slice(0, CONTENT_LIMIT)));
 
     const shared: string[] = [];
+    const where: Record<MatchField, string[]> = {
+      tag: [],
+      title: [],
+      description: [],
+      content: [],
+    };
     let score = 0;
     for (const word of wanted) {
-      const weight = tags.has(word)
-        ? WEIGHTS.tag
+      const field: MatchField | null = tags.has(word)
+        ? "tag"
         : title.has(word)
-          ? WEIGHTS.title
+          ? "title"
           : description.has(word)
-            ? WEIGHTS.description
+            ? "description"
             : content.has(word)
-              ? WEIGHTS.content
-              : 0;
-      if (weight) {
+              ? "content"
+              : null;
+      if (field) {
         shared.push(word);
-        score += weight;
+        where[field].push(word);
+        score += WEIGHTS[field];
       }
     }
     if (score >= MIN_SCORE) {
-      matches.push({ resource, shared, score, excerpt: excerptForTerms(resource, shared) });
+      const percent = matchPercent(score, wanted.length);
+      matches.push({
+        resource,
+        shared,
+        score,
+        excerpt: excerptForTerms(resource, shared),
+        where,
+        level: matchLevel(percent),
+        percent,
+        reason: matchReason(where),
+      });
     }
   }
   return matches

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import {
   coverageState,
   formatCoverage,
+  MATCH_LEVEL_LABELS,
   matchResources,
   summarizeCoverage,
   type CoverageState,
@@ -29,6 +30,8 @@ import {
 } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Rapprochement" };
+
+const PREVIEW_LENGTH = 1500;
 
 const STATE_LABELS: Record<CoverageState, string> = {
   covered: "Couvert",
@@ -136,7 +139,7 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
 
                   {matches.length ? (
                     <ul className="divide-y rounded-md border">
-                      {matches.map(({ resource, shared, excerpt }) => {
+                      {matches.map(({ resource, excerpt, level, percent, reason }) => {
                         const isRetained = retainedIds.has(resource.id);
                         return (
                           <li
@@ -154,11 +157,16 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
                                 <KindBadge kind={resource.kind} />
                                 <StatusBadge status={resource.status} />
                               </div>
+                              <p className="text-sm">
+                                <Badge variant={level === "weak" ? "outline" : "secondary"}>
+                                  {MATCH_LEVEL_LABELS[level]} · {percent} %
+                                </Badge>
+                              </p>
                               <p className="text-muted-foreground text-sm">
-                                Mots communs : {shared.join(", ")} ·{" "}
+                                {reason}{" "}
                                 {resource.moduleNames.length
-                                  ? `Sert déjà dans : ${resource.moduleNames.join(", ")}`
-                                  : "Pas encore utilisée"}
+                                  ? `Sert déjà dans : ${resource.moduleNames.join(", ")}.`
+                                  : "Pas encore utilisée."}
                               </p>
                               {excerpt ? (
                                 <p className="text-muted-foreground text-xs">
@@ -167,6 +175,22 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
                                   {excerpt.after}
                                 </p>
                               ) : null}
+                              <details className="text-sm">
+                                <summary className="cursor-pointer underline underline-offset-2">
+                                  Aperçu<span className="sr-only"> de {resource.title}</span>
+                                </summary>
+                                <div className="bg-muted/40 mt-2 max-h-64 overflow-auto rounded-md p-3 whitespace-pre-wrap">
+                                  {resource.description ? (
+                                    <p className="mb-2 font-medium">{resource.description}</p>
+                                  ) : null}
+                                  {(resource.content ?? "").trim()
+                                    ? (resource.content ?? "").trim().slice(0, PREVIEW_LENGTH) +
+                                      ((resource.content ?? "").trim().length > PREVIEW_LENGTH
+                                        ? "…"
+                                        : "")
+                                    : "Cette ressource n’a pas encore de contenu."}
+                                </div>
+                              </details>
                             </div>
                             {isRetained ? (
                               <Badge variant="secondary">Retenue</Badge>
@@ -191,6 +215,14 @@ export default async function MatchingPage({ params }: PageProps<"/modules/[id]/
                       Aucune ressource ne partage de mot-clé avec cet attendu.
                     </p>
                   )}
+
+                  <p className="text-sm">
+                    <span className="font-medium">Rien ne convient ?</span>{" "}
+                    <Link href="/resources/new" className="underline underline-offset-2">
+                      Créer une ressource
+                    </Link>{" "}
+                    ou la noter à construire ci-dessous.
+                  </p>
 
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <form action={buildForExpectation.bind(null, mod.id, e.id)}>
