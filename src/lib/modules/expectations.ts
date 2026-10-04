@@ -86,6 +86,38 @@ function readObjectives(text: string): ExpectationDraft[] {
     .map(objective);
 }
 
+/** En-tête de tableau répété par le PDF à chaque page : « # Modalité VH Objectifs UP Projet lié … ». */
+const TABLE_HEADER =
+  /#\s*Modalit[ée]\s+VH\s+Objectifs?\s+UP(?:\s+Projet\s+li[ée])?(?:\s+Description\s*\/?\s*Livrable)?(?:\s+Syllabus(?:\s+capsule)?)?/gi;
+/** Colonnes vides du tableau (« Néant Néant Néant ») en fin de ligne. */
+const EMPTY_COLUMNS = /(?:\s*\b(?:N[ée]ant|N\/A)\b)+\s*$/i;
+/** Marqueur de puce au milieu d'un texte fusionné : « • », « - », « – ». */
+const INLINE_BULLET = /(?:^|\s+)(?:[•▪●◦]|[-–—])\s+/;
+
+/** Texte d'un attendu débarrassé des restes du tableau de la fiche (en-tête répété, colonnes vides). */
+export function cleanExpectationLabel(raw: string): string {
+  return oneLine(raw.replace(TABLE_HEADER, " ").replace(EMPTY_COLUMNS, ""));
+}
+
+/**
+ * Découpe un attendu qui en contient plusieurs : le titre d'abord (sans « : »), puis un élément par
+ * puce ; un retour à la ligne suivi d'une majuscule sépare aussi deux éléments (liste du PDF sans
+ * puces). `[label]` quand il n'y a rien à découper.
+ */
+export function splitExpectationLabel(raw: string): string[] {
+  const text = raw
+    .replace(TABLE_HEADER, " ")
+    .replace(/\r\n?/g, "\n")
+    .replace(EMPTY_COLUMNS, "")
+    .replace(/\n+(?=[A-ZÀ-Ý])/g, "\n");
+  const parts = text
+    .split("\n")
+    .flatMap((line) => line.split(INLINE_BULLET))
+    .map((p) => oneLine(p).replace(/\s*:\s*$/, ""))
+    .filter((p) => p.length >= 3);
+  return parts.length > 1 ? parts : [cleanExpectationLabel(raw)].filter(Boolean);
+}
+
 const UNIT_ROW = /(?:^|\s)(\d{1,2})\s*[.)]?\s+(FFP|TDP)\s+(\d{1,3}(?:[.,]\d)?)\s*h(?:eures?)?\b/gi;
 
 /** Lignes du tableau des unités : « 1 FFP 3h Cadrage du besoin ». */
@@ -97,14 +129,19 @@ function readUnits(text: string): ExpectationDraft[] {
   return rows.flatMap((row, i) => {
     const start = row.index + row[0].length;
     const end = i + 1 < rows.length ? rows[i + 1].index : table.length;
-    const label = oneLine(table.slice(start, end));
+    const raw = table.slice(start, end);
+    // Un titre suivi d'une liste à puces : le titre est l'unité, chaque puce un objectif à part.
+    const hasBullets = INLINE_BULLET.test(raw.replace(TABLE_HEADER, " "));
+    const parts = hasBullets ? splitExpectationLabel(raw) : [cleanExpectationLabel(raw)];
+    const [title, ...bullets] = parts;
     return [
       {
         kind: "unit" as const,
-        label: cap(label || `Unité ${row[1]}`),
+        label: cap(title || `Unité ${row[1]}`),
         hours: Number(row[3].replace(",", ".")),
         modality: row[2].toUpperCase() as Modality,
       },
+      ...bullets.map(objective),
     ];
   });
 }

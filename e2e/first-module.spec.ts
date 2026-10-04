@@ -196,6 +196,15 @@ test("premier module : de la fiche de l'école à la première séance", async (
     .click();
   await expect(page.getByLabel("Durée estimée (min)").first()).toHaveValue("45");
   await axeClean(page, "séance (déroulé)");
+  // Quiz de fin de séance : l'état est explicite et mène à la liaison des questions.
+  await expect(page.getByText(/2 ressources, 0 question liée\./)).toBeVisible();
+  await page
+    .getByRole("link", { name: "Lier des questions aux ressources de cette séance" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: /^Questions de la séance/, level: 1 }),
+  ).toBeVisible();
+  await page.goBack();
 
   // La séance prête change la « Prochaine étape » : on passe aux évaluations et au fil rouge.
   await followNext(page, moduleUrl, /Prévoir mes évaluations/);

@@ -97,3 +97,38 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
   await expect(page.getByText("Cadrage du besoin").first()).toBeVisible();
   await expect(page.getByText("Etude de faisabilite").first()).toBeVisible();
 });
+
+// Un attendu qui en contient plusieurs (puces collées sur une ligne) se scinde en un clic.
+test("scinder un attendu fusionné en plusieurs attendus", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill("marie@local.test");
+  await page.getByLabel("Mot de passe").fill("password123");
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+
+  await page.goto("/modules/new");
+  await page.getByLabel("Nom du module").fill(`Scinder ${Date.now()}`);
+  await page.getByLabel("Année").fill("2026");
+  await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  await page.goto(`${page.url()}/expectations`);
+  await page.waitForLoadState("networkidle");
+
+  await page
+    .getByLabel(/Ou coller le texte/)
+    .fill("Introduction à l’Agilité: - Valeurs et principes - Différence agile vs cycle en V");
+  await page.getByRole("button", { name: "Lire ce texte" }).click();
+  await expect(page.getByLabel("Objectif 1", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Objectif 2", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Scinder l’objectif 1 en 3 attendus/ }).click();
+  await expect(page.getByLabel("Objectif 1", { exact: true })).toHaveValue(
+    "Introduction à l’Agilité",
+  );
+  await expect(page.getByLabel("Objectif 2", { exact: true })).toHaveValue("Valeurs et principes");
+  await expect(page.getByLabel("Objectif 3", { exact: true })).toHaveValue(
+    "Différence agile vs cycle en V",
+  );
+});

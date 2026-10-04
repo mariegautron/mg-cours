@@ -21,12 +21,15 @@ export function LinkPicker({
   selected,
   legend,
   filterLabel,
+  idPrefix = "link",
 }: {
   action: (state: LinkState, formData: FormData) => Promise<LinkState>;
   items: PickerItem[];
   selected: string[];
   legend: string;
   filterLabel: string;
+  /** Préfixe des identifiants quand plusieurs sélecteurs sont sur la même page. */
+  idPrefix?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [query, setQuery] = useState("");
@@ -42,9 +45,9 @@ export function LinkPicker({
         <input key={id} type="hidden" name="ids" value={id} />
       ))}
       <div className="space-y-1">
-        <Label htmlFor="link-filter">{filterLabel}</Label>
+        <Label htmlFor={`${idPrefix}-filter`}>{filterLabel}</Label>
         <Input
-          id="link-filter"
+          id={`${idPrefix}-filter`}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

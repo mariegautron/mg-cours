@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  splitExpectationLabel,
   unitsHours,
   type ExpectationDraft,
   type ExpectationKind,
@@ -149,6 +150,29 @@ export function ExpectationsEditor({
     })),
   );
 
+  // « Scinder » : un attendu qui en contient plusieurs (puces, lignes) devient autant de lignes.
+  const splitRow = (r: Row) =>
+    change((prev) => {
+      const parts = splitExpectationLabel(r.label);
+      if (parts.length < 2) return prev;
+      return prev.flatMap((x) =>
+        x.key !== r.key
+          ? [x]
+          : parts.map((label, i) =>
+              i === 0
+                ? { ...x, label }
+                : {
+                    key: crypto.randomUUID(),
+                    id: null,
+                    kind: "objective" as const,
+                    label,
+                    modality: "" as const,
+                    hours: "",
+                  },
+            ),
+      );
+    });
+
   const renderRow = (r: Row, index: number) => (
     <li key={r.key} className="flex flex-wrap items-start gap-2">
       <Textarea
@@ -180,6 +204,17 @@ export function ExpectationsEditor({
             onChange={(e) => patch(r.key, { hours: e.target.value })}
           />
         </>
+      ) : null}
+      {splitExpectationLabel(r.label).length > 1 ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          aria-label={`Scinder ${r.kind === "objective" ? "l’objectif" : "l’unité"} ${index + 1} en ${splitExpectationLabel(r.label).length} attendus`}
+          onClick={() => splitRow(r)}
+        >
+          Scinder
+        </Button>
       ) : null}
       <Button
         type="button"

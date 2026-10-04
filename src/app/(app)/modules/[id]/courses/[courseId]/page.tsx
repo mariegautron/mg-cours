@@ -308,14 +308,24 @@ export default async function CoursePage({
           <h2 id="qz" className="font-heading mb-1 text-base font-bold">
             Quiz de fin de séance
           </h2>
-          <p className="text-muted-foreground mb-2 text-sm">
-            {links.available
-              ? `${questionCount} question${questionCount > 1 ? "s" : ""} disponible${questionCount > 1 ? "s" : ""} dans les ressources de cette séance.`
-              : "Les questions liées seront disponibles après la mise à jour de la base de données."}
+          <p className="text-muted-foreground mb-1 text-sm">
+            Les questions viennent des ressources du déroulé de cette séance.
           </p>
-          <Link href="/questions" className={BTN}>
-            Voir la banque de questions
-          </Link>
+          <p role="status" className="mb-2 text-sm font-medium">
+            {!links.available
+              ? "Les questions liées seront disponibles après la mise à jour de la base de données."
+              : ordered.length === 0
+                ? "0 ressource dans le déroulé."
+                : `${ordered.length} ressource${ordered.length > 1 ? "s" : ""}, ${questionCount} question${questionCount > 1 ? "s" : ""} liée${questionCount > 1 ? "s" : ""}.`}
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link href="#deroule" className={BTN}>
+              Ajouter une ressource au déroulé
+            </Link>
+            <Link href={`/modules/${id}/courses/${courseId}/questions`} className={BTN}>
+              Lier des questions aux ressources de cette séance
+            </Link>
+          </div>
         </section>
       </aside>
     </div>
