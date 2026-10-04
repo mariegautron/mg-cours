@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { createAssessment, createSimpleGrid } from "./grading-setup";
+
 // Parcours « préparer un module » sur téléphone (320 px) et tablette (768 px) : pas de défilement
 // horizontal, axe sans violation, cibles tactiles d'au moins 44 px. Zoom 400 % ≈ 320 px de large.
 async function login(page: Page) {
@@ -35,7 +37,7 @@ async function smallTargets(page: Page): Promise<string[]> {
       }
       if (r.width < 44 || r.height < 44) {
         out.push(
-          `${el.tagName.toLowerCase()} « ${(el.getAttribute("aria-label") ?? el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 50)} » ${Math.round(r.width)}×${Math.round(r.height)}`,
+          `${el.tagName.toLowerCase()} « ${(el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 50)} » ${Math.round(r.width)}×${Math.round(r.height)}`,
         );
       }
     }
@@ -70,7 +72,18 @@ for (const [label, width, height] of [
     await page.waitForURL(/\/assessments\/[0-9a-f-]{36}$/, { timeout: 30_000 });
     const evalUrl = page.url();
 
+    // Correction sur téléphone (CopieMobile) : une copie, un critère à la fois.
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    const gridName = `Grille mobile ${stamp}`;
+    await createSimpleGrid(page, gridName, [
+      ["Structure", 4],
+      ["Contenu", 6],
+    ]);
+    const setup = await createAssessment(page, gridName, stamp, { firstNames: ["Ana"] });
+    await page.setViewportSize({ width, height });
+
     const pages: [string, string][] = [
+      ["correction d'une copie", setup.correctUrl],
       ["tableau de bord", "/dashboard"],
       ["liste des modules", "/modules"],
       ["création du module", "/modules/new"],
@@ -100,6 +113,18 @@ for (const [label, width, height] of [
         .analyze();
       for (const v of axe.violations) problems.push(`${name} : axe ${v.id} (${v.nodes.length})`);
       for (const t of await smallTargets(page)) problems.push(`${name} : cible trop petite ${t}`);
+    }
+    // Menu du téléphone (MobileMenu) : « Plus » ouvre tous les écrans, sans débordement.
+    if (width < 768) {
+      await page.goto("/dashboard");
+      await page.waitForLoadState("networkidle");
+      await page.getByRole("button", { name: /Plus/ }).click();
+      await expect(page.getByRole("link", { name: "Réglages" }).first()).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      if (overflow > 1) problems.push(`menu : défilement horizontal de ${overflow} px`);
+      for (const t of await smallTargets(page)) problems.push(`menu : cible trop petite ${t}`);
     }
     if (process.env.RESPONSIVE_REPORT) console.log(`REPORT ${label}\n${problems.join("\n")}`);
     expect(problems).toEqual([]);

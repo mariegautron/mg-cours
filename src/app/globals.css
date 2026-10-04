@@ -259,6 +259,8 @@ html {
   select,
   textarea,
   summary,
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
   input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.sr-only) {
     min-height: 2.75rem;
   }
@@ -266,6 +268,7 @@ html {
 @media (max-width: 64rem), (pointer: coarse) {
   [data-slot="button"][data-size^="icon"],
   button[data-sidebar="trigger"],
+  [data-slot$="-close"],
   [data-search-trigger] {
     min-width: 2.75rem;
   }

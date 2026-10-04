@@ -36,7 +36,17 @@ Légende : ✅ conforme · 🟡 fait autrement ou en partie · ⬜ pas fait. L'e
 
 ## Adaptation écran (⑯)
 
-Le parcours « préparer un module » est vérifié à **320 px** (équivalent d'un zoom à 400 %) et à **768 px**
-par `e2e/responsive-journey.spec.ts` : 15 écrans, aucun défilement horizontal, axe sans violation,
-cibles tactiles d'au moins 44 px. Hors de ce parcours (correction sur téléphone `CopieMobile`, menu
-`MobileMenu`, tableaux de bord `DashTablette` / `DashMobile`), l'adaptation reste à vérifier écran par écran.
+`e2e/responsive-journey.spec.ts` vérifie à **320 px** (équivalent d'un zoom à 400 %) et à **768 px** les
+écrans du parcours « préparer un module », plus la **correction d'une copie** (`CopieMobile`) et le
+**menu « Plus »** du téléphone (`MobileMenu`) : aucun défilement horizontal, axe sans violation, cibles
+tactiles d'au moins 44 px (règle globale dans `globals.css` : boutons, champs, listes, cases et boutons
+radio avec leur libellé, boutons de fermeture). Le tableau de bord est vérifié aux deux largeurs
+(`DashMobile`, `DashTablette`).
+
+Écarts de mise en page restants face aux maquettes (fonctionnels et accessibles, pas pixel-perfect) :
+
+| Maquette      | Écart                                                                                                                                     | Estimation |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `CopieMobile` | La copie reste empilée (titre, avancement, puis critères) au lieu d'un en-tête compact + barre basse collée « Total · Critère suivant → » | 1 j        |
+| `DashMobile`  | Barre basse à 5 entrées (dont « Plus ») au lieu de 4 + bouton de menu dans l'en-tête                                                      | 0,5 j      |
+| `MobileMenu`  | Menu ouvert depuis « Plus » (volet) au lieu d'un écran plein                                                                              | 0,5 j      |
