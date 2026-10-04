@@ -12,9 +12,16 @@ export async function loginLight(page: Page) {
 }
 
 /** Crée une grille à critères numériques simples (`[libellé, points]`). */
-export async function createSimpleGrid(page: Page, name: string, criteria: [string, number][]) {
+export async function createSimpleGrid(
+  page: Page,
+  name: string,
+  criteria: [string, number][],
+  reminders?: string,
+) {
   await page.goto("/assessments/grids/new");
   await page.getByLabel("Nom de la grille").fill(name);
+  if (reminders)
+    await page.getByLabel("Rappels pédagogiques et consignes générales").fill(reminders);
   for (const [i, [label, points]] of criteria.entries()) {
     if (i > 0) await page.getByRole("button", { name: "Ajouter un critère" }).click();
     await page.getByLabel(`Libellé du critère ${i + 1}`).fill(label);

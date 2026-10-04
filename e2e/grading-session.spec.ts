@@ -12,10 +12,15 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await loginLight(page);
   const suffix = Date.now();
   const gridName = `Grille Session ${suffix}`;
-  await createSimpleGrid(page, gridName, [
-    ["Structure", 4],
-    ["Contenu", 6],
-  ]);
+  await createSimpleGrid(
+    page,
+    gridName,
+    [
+      ["Structure", 4],
+      ["Contenu", 6],
+    ],
+    `Rappel : valoriser la démarche ${suffix}.`,
+  );
   const setup = await createAssessment(page, gridName, suffix, { firstNames: ["Ana", "Zoé"] });
   const [ana, zoe] = setup.studentNames;
   const anaForm = page.getByRole("form", { name: ana });
@@ -29,6 +34,9 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
     });
 
   await expect(progress).toHaveText("0/2 corrigée");
+  // Les rappels de la grille se lisent à la correction (repliés).
+  await page.getByText("Rappels pédagogiques de la grille").first().click();
+  await expect(page.getByText(`Rappel : valoriser la démarche ${suffix}.`).first()).toBeVisible();
   await expect(page.getByText("Tout est enregistré")).toBeVisible();
 
   // Noter un critère : l'avancement suit la frappe, la copie est « à enregistrer » et protégée.

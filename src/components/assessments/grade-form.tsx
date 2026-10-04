@@ -1393,6 +1393,15 @@ export function GradeForm({
         </div>
       </div>
 
+      {grid?.description?.trim() ? (
+        <details className="bg-muted/40 rounded-2xl border p-3">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Rappels pédagogiques de la grille
+          </summary>
+          <p className="text-sm whitespace-pre-wrap">{grid.description.trim()}</p>
+        </details>
+      ) : null}
+
       {focused ? (
         <div className="space-y-4">
           {absent ? (

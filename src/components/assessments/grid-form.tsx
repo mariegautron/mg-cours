@@ -242,11 +242,16 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
         ) : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Rappels pédagogiques et consignes générales</Label>
+        <p id="description-hint" className="text-muted-foreground text-sm">
+          Affichés à la correction (repliés) et en tête de la grille remise aux étudiant·es : à
+          écrire en pensant à elles et eux. Facultatif.
+        </p>
         <Textarea
           id="description"
           name="description"
-          rows={2}
+          rows={3}
+          aria-describedby="description-hint"
           defaultValue={grid?.description ?? ""}
         />
       </div>
