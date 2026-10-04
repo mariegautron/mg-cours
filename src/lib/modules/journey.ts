@@ -71,6 +71,8 @@ export type NextStepButton =
   | null;
 
 export function nextStepButton(journey: ModuleSteps): NextStepButton {
+  // Module rangé : pas de « prochaine étape » (ni « Tout est prêt »).
+  if (journey.badge === null) return null;
   if (journey.current) {
     return {
       kind: "action",

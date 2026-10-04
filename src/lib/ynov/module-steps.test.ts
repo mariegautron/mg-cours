@@ -264,9 +264,12 @@ describe("moduleSteps — module déjà réalisé", () => {
 });
 
 describe("moduleSteps — module archivé", () => {
-  it("n'affiche pas de parcours", () => {
+  it("garde les dix étapes, sans prochaine étape", () => {
     const r = moduleSteps({ ...empty, archived: true, outlineSent: true });
-    expect(r).toEqual({ steps: [], current: null, badge: null });
+    expect(r.steps).toHaveLength(10);
+    expect(r.current).toBeNull();
+    expect(r.badge).toBeNull();
+    expect(r.steps.every((s) => s.action.href.startsWith("/"))).toBe(true);
   });
 });
 

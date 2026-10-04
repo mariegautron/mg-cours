@@ -2,6 +2,7 @@
  * E18 : « Où j'en suis » — parcours d'un module en 10 étapes, de la fiche de l'école au paiement.
  * Fonction pure, source unique du badge « Prochaine étape » de la fiche module. La facturation
  * (`/billing`) continue d'utiliser `nextStep()` (next-step.ts) pour ses raisons de blocage.
+ * Un module rangé garde ses dix étapes (consultables), sans « prochaine étape ».
  * Les étapes ne sont pas rigides : un module déjà réalisé valide directement les étapes concernées.
  */
 import type { CoverageSummary } from "@/lib/modules/matching";
@@ -55,7 +56,7 @@ export interface ModuleStep {
 }
 
 export interface ModuleSteps {
-  /** Vide pour un module archivé. */
+  /** Toujours les dix étapes, même pour un module archivé. */
   steps: ModuleStep[];
   /** Première étape non terminée ; `null` si tout est fait ou module archivé. */
   current: ModuleStep | null;
@@ -84,8 +85,6 @@ export function coverageSummary(c: CoverageSummary): string {
 }
 
 export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
-  if (ctx.archived) return { steps: [], current: null, badge: null };
-
   const base = `/modules/${ctx.moduleId}`;
   const { courses, coverage, notes, adminDocs, invoice } = ctx;
 
@@ -234,6 +233,8 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   ];
 
   const numbered = steps.map((s, i) => ({ ...s, number: i + 1 }));
+  // Module rangé : les dix étapes restent visibles et consultables, sans « prochaine étape ».
+  if (ctx.archived) return { steps: numbered, current: null, badge: null };
   const current = numbered.find((s) => s.state !== "done") ?? null;
   return {
     steps: numbered,
