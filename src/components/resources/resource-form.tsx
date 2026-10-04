@@ -5,8 +5,10 @@ import Link from "next/link";
 
 import { ActionError } from "@/components/action-error";
 import {
+  autosaveResource,
   getResourceSeed,
   listSeedChoices,
+  updateResource,
   type ResourceFormState,
 } from "@/app/(app)/resources/actions";
 import { Markdown } from "@/components/markdown";
@@ -61,7 +63,17 @@ export function ResourceForm({
   /** Matières proposées dans le champ « Matière » (déjà utilisées + liste guidée). */
   subjects: string[];
 }) {
-  const [state, formAction, pending] = useActionState(action, {});
+  // Enregistrement automatique côté serveur : une fois la ressource créée en brouillon, « Enregistrer »
+  // la met à jour au lieu d'en créer une seconde.
+  const savedIdRef = useRef<string | null>(resource?.id ?? null);
+  const [autoSavedAt, setAutoSavedAt] = useState("");
+  const [state, formAction, pending] = useActionState<ResourceFormState, FormData>(
+    (prev, formData) =>
+      savedIdRef.current && !resource
+        ? updateResource(savedIdRef.current, prev, formData)
+        : action(prev, formData),
+    {},
+  );
   const fe = state.fieldErrors ?? {};
   const [audience, setAudience] = useState<ResourceAudience>(resource?.audience ?? "students");
   const [audienceTouched, setAudienceTouched] = useState(!!resource);
@@ -71,6 +83,11 @@ export function ResourceForm({
   const [importNote, setImportNote] = useState("");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [dirty, setDirty] = useState(false);
+  const [tick, setTick] = useState(0);
+  const tickRef = useRef(0);
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
   useUnsavedChangesGuard(dirty && !pending);
 
   // Brouillon gardé sur cet appareil (US-152) : pas de version de plus dans l'historique de la ressource.
@@ -166,6 +183,29 @@ export function ResourceForm({
   }
 
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Enregistrement serveur 2,5 s après la dernière modification (titre et type connus).
+  useEffect(() => {
+    if (!dirty || pending) return;
+    const startedAt = tick;
+    const timer = setTimeout(async () => {
+      const form = formRef.current;
+      if (!form) return;
+      const result = await autosaveResource(savedIdRef.current, new FormData(form));
+      if (!result.savedAt) return;
+      if (result.id && !savedIdRef.current) savedIdRef.current = result.id;
+      setAutoSavedAt(
+        new Date(result.savedAt).toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+      // Rien n'a bougé pendant l'envoi : plus rien à perdre en quittant la page.
+      setDirty((d) => (startedAt === tickRef.current ? false : d));
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [dirty, pending, tick]);
+
   function markReady() {
     const select = formRef.current?.elements.namedItem("status");
     if (select instanceof HTMLSelectElement) select.value = "ready";
@@ -190,7 +230,10 @@ export function ResourceForm({
         }
         keepFormValues(formAction)(e);
       }}
-      onChange={() => setDirty(true)}
+      onChange={() => {
+        setDirty(true);
+        setTick((n) => n + 1);
+      }}
       className="max-w-7xl space-y-5"
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -390,7 +433,7 @@ export function ResourceForm({
                 aria-live="polite"
                 className="text-muted-foreground mt-1 min-h-5 text-sm"
               >
-                {draftNote}
+                {autoSavedAt ? `Enregistré automatiquement à ${autoSavedAt}.` : draftNote}
               </p>
             </div>
             <div

@@ -93,6 +93,52 @@ export async function updateResource(
   redirect(`/resources/${id}`);
 }
 
+export interface AutosaveResult {
+  id?: string;
+  savedAt?: string;
+}
+
+/**
+ * Enregistrement automatique côté serveur (maquette « BibCreer ») : dès que le titre et le type sont
+ * connus, la ressource existe, « à construire » ; ensuite chaque pause d'écriture la met à jour.
+ * Rien n'est enregistré tant que la saisie est incomplète (pas d'erreur affichée : la personne n'a
+ * pas demandé d'enregistrer). Le statut d'une ressource existante n'est jamais modifié ici : c'est
+ * « Marquer comme prête » qui le change.
+ */
+export async function autosaveResource(
+  id: string | null,
+  formData: FormData,
+): Promise<AutosaveResult> {
+  const parsed = readResourceForm(formData);
+  if (!parsed.success) return {};
+  const d = parsed.data;
+  const fields = {
+    title: d.title,
+    description: d.description || null,
+    content: d.content || null,
+    url: d.url || null,
+    kind: d.kind,
+    audience: d.audience,
+    category: d.category || null,
+    tags: d.tags,
+    intent_note: d.intentNote?.trim() || null,
+  };
+  const supabase = await createClient();
+  const savedAt = new Date().toISOString();
+  if (id) {
+    const { error } = await supabase.from("resource").update(fields).eq("id", id);
+    return error ? {} : { id, savedAt };
+  }
+  const { data, error } = await supabase
+    .from("resource")
+    .insert({ ...fields, status: "progress" })
+    .select("id")
+    .single();
+  if (error || !data) return {};
+  revalidatePath("/resources");
+  return { id: data.id, savedAt };
+}
+
 /** Création rapide d'une ressource « à construire » : un titre et une note d'intention. */
 export async function createDraftResource(formData: FormData): Promise<void> {
   const title = String(formData.get("title") ?? "").trim();
