@@ -226,6 +226,52 @@ export function coverageState({ courseIds, retainedMatches }: CoverageInput): Co
   return "uncovered";
 }
 
+/**
+ * Couverture par liens EXPLICITES : un attendu est couvert s'il a une séance, ou une ressource prête
+ * liée ; « à construire » si seules des ressources à construire lui sont liées. La correspondance par
+ * mots ne compte jamais : elle ne fait que proposer.
+ */
+export function coverageFromLinks(input: {
+  courseIds: string[];
+  linkedResources: { status: "ready" | "progress" }[];
+}): CoverageState {
+  return coverageState({ courseIds: input.courseIds, retainedMatches: input.linkedResources });
+}
+
+export interface AutoLinkProposal {
+  expectationId: string;
+  label: string;
+  resourceId: string;
+  title: string;
+  percent: number;
+}
+
+/**
+ * « Reprendre le rapprochement automatique » : pour chaque attendu sans lien, la ressource déjà
+ * retenue pour le module qui correspond le mieux (une seule). Ne crée rien : sert à l'aperçu.
+ */
+export function proposeAutoLinks<R extends MatchableResource>(
+  expectations: { id: string; label: string }[],
+  retained: R[],
+  linked: ReadonlyMap<string, ReadonlySet<string>>,
+): AutoLinkProposal[] {
+  return expectations.flatMap((e) => {
+    if ((linked.get(e.id)?.size ?? 0) > 0) return [];
+    const [best] = matchResources(e.label, retained, 1, { excerpts: false });
+    return best
+      ? [
+          {
+            expectationId: e.id,
+            label: e.label,
+            resourceId: best.resource.id,
+            title: best.resource.title,
+            percent: best.percent,
+          },
+        ]
+      : [];
+  });
+}
+
 export interface CoverageSummary {
   covered: number;
   toBuild: number;

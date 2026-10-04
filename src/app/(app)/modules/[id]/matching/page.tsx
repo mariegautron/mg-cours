@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import {
+  associateForExpectation,
   buildForExpectation,
   dismissMatch,
-  retainForModule,
+  unlinkFromExpectation,
   unretainForModule,
 } from "@/app/(app)/modules/[id]/matching/actions";
 import { Pill } from "@/components/dashboard/pill";
@@ -15,11 +16,17 @@ import { KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LibrarySearch } from "@/components/modules/library-search";
+import { resourceFacets } from "@/lib/resources/queries";
+import { AutoLinkPanel } from "@/components/modules/auto-link-panel";
+import { getExpectationLinks } from "@/lib/modules/expectation-links";
 import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
 import { planExpectationSplits } from "@/lib/modules/expectations";
 import { CUSTOM_ORIGIN_LABEL, isCustomExpectation } from "@/lib/modules/custom-expectations";
 import {
+  coverageFromLinks,
   coverageState,
+  proposeAutoLinks,
   formatCoverage,
   isWholeCourse,
   MATCH_LEVEL_LABELS,
@@ -69,13 +76,16 @@ export default async function MatchingPage({
   const previewId = typeof sp.r === "string" ? sp.r : undefined;
   const filter = parseMatchingFilter(typeof sp.f === "string" ? sp.f : undefined);
 
-  const [mod, expectations, retained, candidates, coursesByExpectation] = await Promise.all([
-    getModule(id),
-    getModuleExpectations(id),
-    getRetainedResources(id),
-    listCandidateResources(),
-    getExpectationCourses(id),
-  ]);
+  const [mod, expectations, retained, candidates, coursesByExpectation, links, facets] =
+    await Promise.all([
+      getModule(id),
+      getModuleExpectations(id),
+      getRetainedResources(id),
+      listCandidateResources(),
+      getExpectationCourses(id),
+      getExpectationLinks(id),
+      resourceFacets(),
+    ]);
   if (!mod) notFound();
   // Ressources écartées par « Ce n'est pas la bonne » (table facultative : sans elle, rien n'est écarté).
   const dismissed = new Map<string, Set<string>>();
@@ -99,21 +109,40 @@ export default async function MatchingPage({
     // cinq premières proposées ; l'affichage garde les cinq premières et les ressources retenues.
     const all = matchResources(e.label, candidates, candidates.length, { excerpts: false });
     const courseIds = coursesByExpectation.get(e.id) ?? [];
-    const state = coverageState({
-      courseIds,
-      retainedMatches: all
-        .filter((m) => retainedIds.has(m.resource.id))
-        .map((m) => ({ status: m.resource.status })),
-    });
+    // Liens explicites attendu ↔ ressource ; sans la table (base pas à jour), l'ancien calcul par mots.
+    const linked: ReadonlySet<string> = links.available
+      ? (links.byExpectation.get(e.id) ?? new Set<string>())
+      : retainedIds;
+    const state = links.available
+      ? coverageFromLinks({
+          courseIds,
+          linkedResources: candidates
+            .filter((c) => linked.has(c.id))
+            .map((c) => ({ status: c.status })),
+        })
+      : coverageState({
+          courseIds,
+          retainedMatches: all
+            .filter((m) => retainedIds.has(m.resource.id))
+            .map((m) => ({ status: m.resource.status })),
+        });
     const away = dismissed.get(e.id);
     const matches = all
-      .filter((m) => !away?.has(m.resource.id) || retainedIds.has(m.resource.id))
-      .filter((m, i) => i < 5 || retainedIds.has(m.resource.id))
+      .filter((m) => !away?.has(m.resource.id) || linked.has(m.resource.id))
+      .filter((m, i) => i < 5 || linked.has(m.resource.id))
       // Les extraits ne se calculent que pour ce qui s'affiche.
       .map((m) => ({ ...m, excerpt: excerptForTerms(m.resource, m.shared) }));
     const matchedIds = new Set(all.map((m) => m.resource.id));
-    return { e, matches, courseIds, state, matchedIds };
+    return { e, matches, courseIds, state, matchedIds, linked };
   });
+  // Ressources déjà retenues pour le module mais liées à aucun attendu : proposées, jamais appliquées seules.
+  const autoProposals = links.available
+    ? proposeAutoLinks(
+        expectations,
+        candidates.filter((c) => retainedIds.has(c.id)),
+        links.byExpectation,
+      )
+    : [];
   const summary = summarizeCoverage(rows.map((r) => r.state));
   const counts = filterCounts(rows.map((r) => r.state));
   const segments = coverageSegments(summary);
@@ -132,11 +161,7 @@ export default async function MatchingPage({
 
   const preview = previewId ? (candidates.find((c) => c.id === previewId) ?? null) : null;
   const alsoFor = preview
-    ? rows
-        .filter(
-          (r) => r.e.id !== openId && retainedIds.has(preview.id) && r.matchedIds.has(preview.id),
-        )
-        .map((r) => r.e.label)
+    ? rows.filter((r) => r.e.id !== openId && r.linked.has(preview.id)).map((r) => r.e.label)
     : [];
 
   const href = (expectationId: string, f: MatchingFilter = filter) =>
@@ -161,6 +186,8 @@ export default async function MatchingPage({
           <Link href={`/modules/${mod.id}`}>← Retour au module</Link>
         </Button>
       </div>
+
+      <AutoLinkPanel moduleId={mod.id} proposals={autoProposals} />
 
       <SplitLongExpectations
         moduleId={mod.id}
@@ -282,6 +309,52 @@ export default async function MatchingPage({
                 </div>
               </div>
 
+              {links.available ? (
+                <section
+                  aria-labelledby="associees"
+                  className="bg-card rounded-3xl border p-5 shadow-sm"
+                >
+                  <h3 id="associees" className="font-heading mb-3 text-lg font-bold">
+                    Ressources associées à cet attendu
+                  </h3>
+                  {open.linked.size ? (
+                    <ul className="flex flex-col gap-2">
+                      {candidates
+                        .filter((c) => open.linked.has(c.id))
+                        .map((c) => (
+                          <li
+                            key={c.id}
+                            className="bg-muted/40 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3"
+                          >
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <Link
+                                href={`/resources/${c.id}`}
+                                className="font-bold underline-offset-2 hover:underline"
+                              >
+                                {c.title}
+                              </Link>
+                              <KindBadge kind={c.kind} />
+                              <StatusBadge status={c.status} />
+                            </div>
+                            <MatchingForm
+                              action={unlinkFromExpectation.bind(null, mod.id, open.e.id, c.id)}
+                              label="Retirer"
+                              pendingLabel="Retrait…"
+                              variant="ghost"
+                              ariaLabel={`Retirer ${c.title} de cet attendu`}
+                            />
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Aucune ressource associée pour l’instant. Associe une ressource proposée
+                      ci-dessous, ou cherche-la dans la bibliothèque.
+                    </p>
+                  )}
+                </section>
+              ) : null}
+
               <div className="bg-card rounded-3xl border p-5 shadow-sm">
                 <h3 className="font-heading mb-3 text-lg font-bold">
                   Ressources qui pourraient convenir
@@ -289,6 +362,7 @@ export default async function MatchingPage({
                 {open.matches.length ? (
                   <ul className="flex flex-col gap-2.5">
                     {open.matches.map(({ resource, excerpt, level, percent, reason }) => {
+                      const isLinked = open.linked.has(resource.id);
                       const isRetained = retainedIds.has(resource.id);
                       return (
                         <li key={resource.id} className="bg-muted/40 space-y-2 rounded-xl p-3.5">
@@ -313,6 +387,9 @@ export default async function MatchingPage({
                               </p>
                               <p className="text-muted-foreground text-sm">
                                 {reason}{" "}
+                                {isRetained && !isLinked && links.available
+                                  ? "Ressource déjà retenue pour le module, pas encore associée à cet attendu. "
+                                  : ""}
                                 {resource.moduleNames.length
                                   ? `Sert déjà dans : ${resource.moduleNames.join(", ")}.`
                                   : "Pas encore utilisée."}
@@ -325,11 +402,16 @@ export default async function MatchingPage({
                                 </p>
                               ) : null}
                             </div>
-                            {isRetained ? (
+                            {isLinked ? (
                               <div className="flex flex-wrap items-center gap-2">
                                 <Pill tone="ok">Associée</Pill>
                                 <MatchingForm
-                                  action={unretainForModule.bind(null, mod.id, resource.id)}
+                                  action={unlinkFromExpectation.bind(
+                                    null,
+                                    mod.id,
+                                    open.e.id,
+                                    resource.id,
+                                  )}
                                   label="Retirer"
                                   pendingLabel="Retrait…"
                                   variant="ghost"
@@ -337,12 +419,28 @@ export default async function MatchingPage({
                                 />
                               </div>
                             ) : (
-                              <MatchingForm
-                                action={retainForModule.bind(null, mod.id, resource.id)}
-                                label="Associer à cet attendu"
-                                pendingLabel="Association…"
-                                ariaLabel={`Associer ${resource.title} à cet attendu`}
-                              />
+                              <div className="flex flex-wrap items-center gap-2">
+                                <MatchingForm
+                                  action={associateForExpectation.bind(
+                                    null,
+                                    mod.id,
+                                    open.e.id,
+                                    resource.id,
+                                  )}
+                                  label="Associer à cet attendu"
+                                  pendingLabel="Association…"
+                                  ariaLabel={`Associer ${resource.title} à cet attendu`}
+                                />
+                                {isRetained && links.available ? (
+                                  <MatchingForm
+                                    action={unretainForModule.bind(null, mod.id, resource.id)}
+                                    label="Retirer du module"
+                                    pendingLabel="Retrait…"
+                                    variant="ghost"
+                                    ariaLabel={`Retirer ${resource.title} du module`}
+                                  />
+                                ) : null}
+                              </div>
                             )}
                           </div>
                           <Link
@@ -363,6 +461,16 @@ export default async function MatchingPage({
                     Aucune ressource ne partage de mot-clé avec cet attendu.
                   </p>
                 )}
+                {links.available ? (
+                  <div className="mt-4">
+                    <LibrarySearch
+                      moduleId={mod.id}
+                      expectationId={open.e.id}
+                      linkedIds={[...open.linked]}
+                      categories={facets.categories}
+                    />
+                  </div>
+                ) : null}
               </div>
 
               <div className="bg-card rounded-3xl border p-5 shadow-sm">
@@ -449,11 +557,11 @@ export default async function MatchingPage({
                   : "Déjà rapprochée : aucun autre attendu."}
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                {retainedIds.has(preview.id) ? (
+                {open.linked.has(preview.id) ? (
                   <>
                     <Pill tone="ok">Associée</Pill>
                     <MatchingForm
-                      action={unretainForModule.bind(null, mod.id, preview.id)}
+                      action={unlinkFromExpectation.bind(null, mod.id, open.e.id, preview.id)}
                       label="Retirer"
                       pendingLabel="Retrait…"
                       variant="ghost"
@@ -462,7 +570,7 @@ export default async function MatchingPage({
                   </>
                 ) : (
                   <MatchingForm
-                    action={retainForModule.bind(null, mod.id, preview.id)}
+                    action={associateForExpectation.bind(null, mod.id, open.e.id, preview.id)}
                     label="Associer à cet attendu"
                     pendingLabel="Association…"
                     ariaLabel={`Associer ${preview.title} à cet attendu (aperçu)`}
@@ -473,7 +581,7 @@ export default async function MatchingPage({
                     Ouvrir en entier<span className="sr-only"> : {preview.title}</span>
                   </Link>
                 </Button>
-                {retainedIds.has(preview.id) ? null : (
+                {open.linked.has(preview.id) ? null : (
                   <MatchingForm
                     action={dismissMatch.bind(null, mod.id, open.e.id, preview.id)}
                     label="Ce n’est pas la bonne"

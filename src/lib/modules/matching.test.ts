@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  coverageFromLinks,
   coverageState,
   formatCoverage,
   isWholeCourse,
@@ -9,6 +10,7 @@ import {
   matchPercent,
   matchReason,
   matchResources,
+  proposeAutoLinks,
   summarizeCoverage,
   type MatchableResource,
 } from "./matching";
@@ -170,5 +172,49 @@ describe("cours complet et briques", () => {
     expect(ids).toEqual(["b1", "b2", "parent"]);
     expect(isWholeCourse(resources[0])).toBe(true);
     expect(isWholeCourse(resources[1])).toBe(false);
+  });
+});
+
+describe("couverture par liens explicites", () => {
+  it("une ressource liée à un seul attendu ne couvre pas les autres", () => {
+    const linked = new Map([["e1", new Set(["r1"])]]);
+    const status = (id: string) =>
+      coverageFromLinks({
+        courseIds: [],
+        linkedResources: [...(linked.get(id) ?? [])].map(() => ({ status: "ready" as const })),
+      });
+    expect([status("e1"), status("e2")]).toEqual(["covered", "uncovered"]);
+  });
+
+  it("à construire tant que seules des ressources à construire sont liées", () => {
+    expect(coverageFromLinks({ courseIds: [], linkedResources: [{ status: "progress" }] })).toBe(
+      "to_build",
+    );
+    expect(
+      coverageFromLinks({
+        courseIds: [],
+        linkedResources: [{ status: "progress" }, { status: "ready" }],
+      }),
+    ).toBe("covered");
+    expect(coverageFromLinks({ courseIds: ["c1"], linkedResources: [] })).toBe("covered");
+  });
+
+  it("propose la meilleure ressource retenue pour les seuls attendus sans lien", () => {
+    const base = { description: null, content: null };
+    const retained = [
+      { ...base, id: "r1", title: "Audit accessibilité", tags: ["audit"] },
+      { ...base, id: "r2", title: "Fiscalité", tags: ["impôts"] },
+    ];
+    const expectations = [
+      { id: "e1", label: "Réaliser un audit d'accessibilité" },
+      { id: "e2", label: "Maîtriser la fiscalité des impôts" },
+      { id: "e3", label: "Réaliser un audit" },
+      { id: "e4", label: "Sujet sans rapport xyz" },
+    ];
+    const proposals = proposeAutoLinks(expectations, retained, new Map([["e3", new Set(["r1"])]]));
+    expect(proposals.map((p) => [p.expectationId, p.resourceId])).toEqual([
+      ["e1", "r1"],
+      ["e2", "r2"],
+    ]);
   });
 });

@@ -104,9 +104,9 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await page.getByRole("link", { name: /Réaliser un audit/ }).click();
   await page.waitForLoadState("networkidle");
   const audit = page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) });
-  await audit.getByRole("button", { name: `Retirer ${title}` }).click();
+  await audit.getByRole("button", { name: `Retirer ${title}`, exact: true }).click();
   await expect(
-    audit.getByRole("button", { name: `Associer ${title} à cet attendu` }),
+    audit.getByRole("button", { name: `Associer ${title} à cet attendu`, exact: true }),
   ).toBeVisible();
   // L'aperçu s'ouvre dans un panneau à droite, sans quitter l'écran.
   await audit
