@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { proposeSkeleton } from "@/app/(app)/modules/[id]/expectations/actions";
 import { CustomExpectations } from "@/components/modules/custom-expectations";
 import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
 import { planExpectationSplits } from "@/lib/modules/expectations";
@@ -10,12 +9,7 @@ import { ExpectationsEditor } from "@/components/modules/expectations-editor";
 import { Button } from "@/components/ui/button";
 import { splitExpectations } from "@/lib/modules/custom-expectations";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getModule,
-  getModuleCourses,
-  getModuleDocuments,
-  getModuleExpectations,
-} from "@/lib/modules/queries";
+import { getModule, getModuleDocuments, getModuleExpectations } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Attendus de l’école" };
 
@@ -25,11 +19,10 @@ export default async function ExpectationsPage({
 }: PageProps<"/modules/[id]/expectations">) {
   const { id } = await params;
   const { saved } = await searchParams;
-  const [mod, expectations, documents, courses] = await Promise.all([
+  const [mod, expectations, documents] = await Promise.all([
     getModule(id),
     getModuleExpectations(id),
     getModuleDocuments(id),
-    getModuleCourses(id),
   ]);
   if (!mod) notFound();
 
@@ -40,7 +33,6 @@ export default async function ExpectationsPage({
     .select("origin")
     .limit(1);
   const doc = documents.find((d) => d.kind === "school_expectations") ?? null;
-  const hasUnits = expectations.some((e) => e.kind === "unit");
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -94,34 +86,18 @@ export default async function ExpectationsPage({
         items={custom.map((e) => ({ id: e.id, label: e.label }))}
       />
 
-      {hasUnits ? (
-        <section aria-labelledby="skeleton" className="space-y-2 rounded-lg border p-4">
-          <h2 id="skeleton" className="text-lg font-medium">
-            Squelette de séances
-          </h2>
-          {courses.length ? (
-            <p className="text-muted-foreground text-sm">
-              Ce module a déjà {courses.length} séance{courses.length > 1 ? "s" : ""} : le squelette
-              ne se propose que pour un module sans séance, pour ne pas en ajouter en double.{" "}
-              <Link href={`/modules/${mod.id}/courses`} className="underline underline-offset-2">
-                Voir les séances
-              </Link>
-            </p>
-          ) : (
-            <>
-              <p className="text-muted-foreground text-sm">
-                Propose une séance vide par unité enregistrée (le module n’a pas encore de séance).
-                Un repère seulement : renomme, fusionne ou supprime ces séances librement.
-              </p>
-              <form action={proposeSkeleton.bind(null, mod.id)}>
-                <Button type="submit" variant="secondary">
-                  Proposer un squelette de séances depuis les unités
-                </Button>
-              </form>
-            </>
-          )}
-        </section>
-      ) : null}
+      <section aria-labelledby="planning" className="space-y-2 rounded-lg border p-4">
+        <h2 id="planning" className="text-lg font-medium">
+          Séances
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Les attendus ne créent jamais de séance. Les séances viennent du planning (créneaux datés)
+          : colle l’export du planning pour les ajouter, avec un aperçu avant de valider.
+        </p>
+        <Button asChild variant="secondary">
+          <Link href={`/modules/${mod.id}/schedule`}>Ajouter des séances depuis un planning</Link>
+        </Button>
+      </section>
     </div>
   );
 }

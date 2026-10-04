@@ -89,13 +89,16 @@ test("US-53 : attendus lus dans la fiche PDF, corrigés, enregistrés, squelette
   await openTab(page, "Progression");
   await expect(page.getByText("2 objectifs pédagogiques · 2 unités")).toBeVisible();
 
-  // Squelette : une séance vide par unité.
+  // Les attendus ne créent jamais de séance : aucune séance après lecture et enregistrement.
+  await page.goto(`${moduleUrl}/courses`);
+  await expect(page.getByText("Aucune séance")).toBeVisible();
   await page.goto(`${moduleUrl}/expectations`);
-  await page.getByRole("button", { name: /Proposer un squelette de séances/ }).click();
-  await page.waitForURL(/\/courses(\/[0-9a-f-]{36})?$/);
-  await openTab(page, /Séances/);
-  await expect(page.getByText("Cadrage du besoin").first()).toBeVisible();
-  await expect(page.getByText("Etude de faisabilite").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Proposer un squelette de séances/ })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole("link", { name: "Ajouter des séances depuis un planning" }),
+  ).toBeVisible();
 });
 
 // Un attendu qui en contient plusieurs (puces collées sur une ligne) se scinde en un clic.
@@ -175,6 +178,10 @@ test("découper en une action les attendus trop longs : aperçu, confirmation, l
   await expect(page.getByLabel("Objectif 2", { exact: true })).toHaveValue(
     "Planification suite en sprint backlog",
   );
+
+  // Découper ne crée aucune séance.
+  await page.goto(`${moduleUrl}/courses`);
+  await expect(page.getByText("Aucune séance")).toBeVisible();
 
   // Le Rapprochement propose la même action quand il reste des attendus à découper (aucun ici).
   await page.goto(`${moduleUrl}/matching`);

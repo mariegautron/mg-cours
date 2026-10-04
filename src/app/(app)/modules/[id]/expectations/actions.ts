@@ -9,7 +9,6 @@ import { cleanCustomLabel, nextExpectationPosition } from "@/lib/modules/custom-
 import {
   draftsFromText,
   planExpectationSplits,
-  unitsToSkeleton,
   type ExpectationDraft,
 } from "@/lib/modules/expectations";
 import { createClient } from "@/lib/supabase/server";
@@ -211,50 +210,6 @@ export async function splitLongExpectations(moduleId: string): Promise<SplitLong
   revalidatePath(`/modules/${moduleId}/expectations`);
   revalidatePath(`/modules/${moduleId}/matching`);
   return { ok: true, count: plans.size };
-}
-
-/** « Proposer un squelette de séances depuis les unités » : séances vides à la suite des existantes. */
-export async function proposeSkeleton(moduleId: string): Promise<void> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return;
-  const { data: mod } = await supabase
-    .from("module")
-    .select("id, owner_id")
-    .eq("id", moduleId)
-    .maybeSingle();
-  if (!mod || mod.owner_id !== auth.user.id) return;
-
-  const { data: units } = await supabase
-    .from("module_expectation")
-    .select("kind, label")
-    .eq("module_id", moduleId)
-    .eq("kind", "unit")
-    .order("position");
-  const skeleton = unitsToSkeleton(units ?? []);
-  if (!skeleton.length) return;
-
-  const { count } = await supabase
-    .from("course")
-    .select("id", { count: "exact", head: true })
-    .eq("module_id", moduleId);
-  // Un squelette n'a de sens que pour un module sans séance : il ne s'ajoute jamais à celles qui existent.
-  if ((count ?? 0) > 0) redirect(`/modules/${moduleId}/expectations`);
-  const start = 0;
-
-  const { error } = await supabase.from("course").insert(
-    skeleton.map((s, i) => ({
-      module_id: moduleId,
-      title: s.title,
-      position: start + i + 1,
-      learning_objectives: [s.objective],
-      prep_status: "todo",
-    })),
-  );
-  if (error) return;
-
-  revalidatePath(`/modules/${moduleId}`);
-  redirect(`/modules/${moduleId}/courses`);
 }
 
 export interface CustomExpectationState {

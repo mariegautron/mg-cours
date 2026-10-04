@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { failure, NOT_FOUND } from "@/lib/messages";
+import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
+import { listEmptySessions } from "@/lib/modules/empty-sessions-queries";
 import { cleanSlidesUrl } from "@/lib/modules/slides";
 import { cleanActivity, type Activity } from "@/lib/modules/activity";
 import { PREP_STATUSES } from "@/lib/modules/schema";
@@ -186,5 +187,41 @@ export async function deleteCourseAndBack(moduleId: string, courseId: string): P
   const supabase = await createClient();
   await supabase.from("course").delete().eq("id", courseId).eq("module_id", moduleId);
   revalidatePath(`/modules/${moduleId}`, "layout");
+  redirect(`/modules/${moduleId}/courses`);
+}
+
+export interface PruneState {
+  error?: string;
+  done?: string;
+}
+
+/**
+ * « Supprimer les séances vides sans date » : les séances concernées sont recalculées ici (jamais
+ * prises du navigateur) et la suppression exige de retaper leur nombre.
+ */
+export async function deleteEmptySessions(
+  moduleId: string,
+  _prev: PruneState,
+  formData: FormData,
+): Promise<PruneState> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: SESSION_EXPIRED };
+  const empty = await listEmptySessions(moduleId);
+  if (empty.length === 0) return { done: "Il n’y a plus de séance vide sans date." };
+  if (String(formData.get("count") ?? "").trim() !== String(empty.length)) {
+    return { error: `Retape ${empty.length} pour confirmer.` };
+  }
+  const { error } = await supabase
+    .from("course")
+    .delete()
+    .eq("module_id", moduleId)
+    .in(
+      "id",
+      empty.map((c) => c.id),
+    );
+  if (error) return { error: failure("supprimer les séances") };
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  // La séance affichée a peut-être disparu : retour à la liste des séances.
   redirect(`/modules/${moduleId}/courses`);
 }

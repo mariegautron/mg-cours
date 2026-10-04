@@ -5,7 +5,6 @@ import {
   parseExpectationLines,
   parseExpectationsFromFiche,
   unitsHours,
-  unitsToSkeleton,
 } from "./expectations";
 
 const FICHE = `FICHE PÉDAGOGIQUE
@@ -87,20 +86,12 @@ describe("parseExpectationLines", () => {
   });
 });
 
-describe("unitsToSkeleton / unitsHours", () => {
+describe("unitsHours", () => {
   const list = [
     { kind: "objective" as const, label: "Objectif", hours: null },
     { kind: "unit" as const, label: "Cadrage", hours: 3 },
     { kind: "unit" as const, label: "x".repeat(200), hours: 4 },
   ];
-
-  it("crée une séance par unité, titre raccourci, objectifs ignorés", () => {
-    const sessions = unitsToSkeleton(list);
-    expect(sessions).toHaveLength(2);
-    expect(sessions[0]).toEqual({ title: "Cadrage", objective: "Cadrage" });
-    expect(sessions[1].title.length).toBeLessThanOrEqual(80);
-    expect(sessions[1].objective).toHaveLength(200);
-  });
 
   it("additionne les heures des unités à titre indicatif", () => {
     expect(unitsHours(list)).toBe(7);

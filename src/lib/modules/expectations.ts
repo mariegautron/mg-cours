@@ -272,28 +272,6 @@ export function draftsFromText(text: string): ExpectationDraft[] {
   return fromFiche.length ? fromFiche : parseExpectationLines(text);
 }
 
-export interface SkeletonSession {
-  title: string;
-  objective: string;
-}
-
-const MAX_TITLE = 80;
-
-/**
- * « Proposer un squelette de séances depuis les unités » : une séance vide par unité, titrée
- * d'après son objectif. Repère indicatif, entièrement modifiable ensuite.
- */
-export function unitsToSkeleton(
-  units: { kind: ExpectationKind; label: string }[],
-): SkeletonSession[] {
-  return units
-    .filter((u) => u.kind === "unit")
-    .map((u) => ({
-      title: u.label.length > MAX_TITLE ? `${u.label.slice(0, MAX_TITLE - 1).trimEnd()}…` : u.label,
-      objective: u.label,
-    }));
-}
-
 /** Total des heures des unités — indicatif, jamais comparé au volume du module. */
 export function unitsHours(units: { kind: ExpectationKind; hours: number | null }[]): number {
   return units.reduce((sum, u) => sum + (u.kind === "unit" ? (u.hours ?? 0) : 0), 0);

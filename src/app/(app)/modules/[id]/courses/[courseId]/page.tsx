@@ -8,6 +8,8 @@ import { DownloadButton } from "@/components/download-button";
 import { RetainedResources } from "@/components/modules/retained-resources";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
+import { PruneEmptySessions } from "@/components/modules/prune-empty-sessions";
+import { listEmptySessions } from "@/lib/modules/empty-sessions-queries";
 import { SessionList } from "@/components/modules/session-list";
 import { SessionWorkspace, type WorkspaceResource } from "@/components/modules/session-workspace";
 import { deleteCourseAndBack } from "@/app/(app)/modules/[id]/courses/workspace-actions";
@@ -119,215 +121,223 @@ export default async function CoursePage({
     ? `${formatSessionDay(course.session_date)}${course.start_time ? `, ${course.start_time.slice(0, 5)}–${course.end_time?.slice(0, 5) ?? ""}` : ""}${minutes ? ` (${hoursLabel(minutes)})` : ""}`
     : "date à fixer";
 
+  const emptySessions = await listEmptySessions(id);
+
   return (
-    <div className="flex flex-wrap items-stretch gap-4 lg:flex-nowrap">
-      <SessionList
+    <div className="space-y-4">
+      <PruneEmptySessions
         moduleId={id}
-        courses={courses}
-        currentId={courseId}
-        totalHours={mod.total_hours}
-        missing={missing.map((e) => e.label)}
-        hoursMessage={hours.consistent || totalPlannedHours(courses) === 0 ? null : hours.message}
+        sessions={emptySessions.map((c) => ({ id: c.id, title: c.title, position: c.position }))}
       />
-
-      <section aria-labelledby="ws" className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-muted-foreground text-[0.8rem]">
-              Séance {index + 1} sur {courses.length} · {when}
-            </p>
-            <p className="text-primary mb-1 text-[0.75rem] font-bold tracking-widest uppercase">
-              {mod.name}
-            </p>
-            <h1 id="ws" className="font-heading text-2xl font-bold">
-              {course.title}
-            </h1>
-            {course.completion ? (
-              <p className="mt-1">
-                <Pill tone={course.completion === "done" ? "ok" : "warn"}>
-                  {COMPLETION_LABELS[course.completion]}
-                </Pill>
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {prev ? (
-              <Link href={`/modules/${id}/courses/${prev.id}`} className={BTN}>
-                ← Séance {index}
-              </Link>
-            ) : null}
-            {next ? (
-              <Link href={`/modules/${id}/courses/${next.id}`} className={BTN}>
-                Séance {index + 2} →
-              </Link>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/modules/${id}/courses/${courseId}/start`} className={BTN}>
-            <Play aria-hidden className="mr-2 size-4" />
-            Faire cours<span className="sr-only"> : {course.title}</span>
-          </Link>
-          <Link href={`/modules/${id}/courses/${courseId}/notebook`} className={BTN}>
-            <NotebookPen aria-hidden className="mr-2 size-4" />
-            Carnet<span className="sr-only"> de séance : {course.title}</span>
-          </Link>
-          <Link href={`/modules/${id}/courses/${courseId}/edit`} className={BTN}>
-            <Pencil aria-hidden className="mr-2 size-4" />
-            Modifier
-            <span className="sr-only"> la séance {index + 1} (date, horaires, objectifs)</span>
-          </Link>
-          <CourseOrderButtons
-            moduleId={id}
-            courseId={courseId}
-            title={course.title}
-            index={index}
-            total={courses.length}
-          />
-          <ConfirmDeleteButton
-            itemName={`la séance ${index + 1}`}
-            title={`Supprimer la séance ${index + 1} ?`}
-            description="La séance et son déroulé sont supprimés. Les ressources restent dans la bibliothèque."
-            onConfirm={deleteCourseAndBack.bind(null, id, courseId)}
-          />
-        </div>
-
-        <SessionWorkspace
-          key={courseId}
+      <div className="flex flex-wrap items-stretch gap-4 lg:flex-nowrap">
+        <SessionList
           moduleId={id}
-          courseId={courseId}
-          planAvailable={available}
-          addable={addable}
-          activitiesAvailable={activities.available}
-          sessionMinutes={minutes}
-          slidesUrl={course.slides_url ?? null}
-          sessionStart={course.start_time ? course.start_time.slice(0, 5) : null}
-          initial={{
-            title: course.title,
-            prepStatus: course.prep_status,
-            deliverable: plan?.deliverable ?? "",
-            resources: workspaceResources,
-          }}
+          courses={courses}
+          currentId={courseId}
+          totalHours={mod.total_hours}
+          missing={missing.map((e) => e.label)}
+          hoursMessage={hours.consistent || totalPlannedHours(courses) === 0 ? null : hours.message}
         />
 
-        <details open className="bg-card rounded-3xl border p-4">
-          <summary className="cursor-pointer font-semibold">
-            Ressources retenues du module ({retained.length}) et cours en PDF
-          </summary>
-          <div className="mt-3 space-y-3">
-            <RetainedResources moduleId={id} resources={retained} />
+        <section aria-labelledby="ws" className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-muted-foreground text-[0.8rem]">
+                Séance {index + 1} sur {courses.length} · {when}
+              </p>
+              <p className="text-primary mb-1 text-[0.75rem] font-bold tracking-widest uppercase">
+                {mod.name}
+              </p>
+              <h1 id="ws" className="font-heading text-2xl font-bold">
+                {course.title}
+              </h1>
+              {course.completion ? (
+                <p className="mt-1">
+                  <Pill tone={course.completion === "done" ? "ok" : "warn"}>
+                    {COMPLETION_LABELS[course.completion]}
+                  </Pill>
+                </p>
+              ) : null}
+            </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
-              <DownloadButton
-                href={`/api/modules/${id}/courses`}
-                doneLabel="Cours téléchargés (un seul PDF)."
-              >
-                Un seul PDF
-              </DownloadButton>
-              <DownloadButton
-                href={`/api/modules/${id}/courses?format=zip`}
-                kind="zip"
-                doneLabel="Cours téléchargés (un PDF par séance)."
-              >
-                Un PDF par séance (zip)
-              </DownloadButton>
+              {prev ? (
+                <Link href={`/modules/${id}/courses/${prev.id}`} className={BTN}>
+                  ← Séance {index}
+                </Link>
+              ) : null}
+              {next ? (
+                <Link href={`/modules/${id}/courses/${next.id}`} className={BTN}>
+                  Séance {index + 2} →
+                </Link>
+              ) : null}
             </div>
           </div>
-        </details>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-          <Link href={`/modules/${id}`} className={BTN}>
-            ← Retour au module
-          </Link>
-          {next ? (
-            <Link
-              href={`/modules/${id}/courses/${next.id}`}
-              className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
-            >
-              Séance suivante →
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/modules/${id}/courses/${courseId}/start`} className={BTN}>
+              <Play aria-hidden className="mr-2 size-4" />
+              Faire cours<span className="sr-only"> : {course.title}</span>
             </Link>
-          ) : null}
-        </div>
-      </section>
+            <Link href={`/modules/${id}/courses/${courseId}/notebook`} className={BTN}>
+              <NotebookPen aria-hidden className="mr-2 size-4" />
+              Carnet<span className="sr-only"> de séance : {course.title}</span>
+            </Link>
+            <Link href={`/modules/${id}/courses/${courseId}/edit`} className={BTN}>
+              <Pencil aria-hidden className="mr-2 size-4" />
+              Modifier
+              <span className="sr-only"> la séance {index + 1} (date, horaires, objectifs)</span>
+            </Link>
+            <CourseOrderButtons
+              moduleId={id}
+              courseId={courseId}
+              title={course.title}
+              index={index}
+              total={courses.length}
+            />
+            <ConfirmDeleteButton
+              itemName={`la séance ${index + 1}`}
+              title={`Supprimer la séance ${index + 1} ?`}
+              description="La séance et son déroulé sont supprimés. Les ressources restent dans la bibliothèque."
+              onConfirm={deleteCourseAndBack.bind(null, id, courseId)}
+            />
+          </div>
 
-      <aside
-        className="w-full min-w-0 space-y-3 lg:w-72 lg:flex-none"
-        aria-label="Autour de la séance"
-      >
-        <section aria-labelledby="at" className="bg-card rounded-3xl border p-4 shadow-sm">
-          <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
-            Attendus traités
-          </h2>
-          {covered.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun attendu relié à cette séance.</p>
-          ) : (
-            <ul className="flex flex-col gap-1.5">
-              {covered.map((e) => (
-                <li key={e.id}>
-                  <Pill className="min-h-9 py-1.5 !whitespace-normal">{e.label}</Pill>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link href={`/modules/${id}/matching`} className={`${BTN} mt-2`}>
-            Ajouter un attendu
-          </Link>
-        </section>
+          <SessionWorkspace
+            key={courseId}
+            moduleId={id}
+            courseId={courseId}
+            planAvailable={available}
+            addable={addable}
+            activitiesAvailable={activities.available}
+            sessionMinutes={minutes}
+            slidesUrl={course.slides_url ?? null}
+            sessionStart={course.start_time ? course.start_time.slice(0, 5) : null}
+            initial={{
+              title: course.title,
+              prepStatus: course.prep_status,
+              deliverable: plan?.deliverable ?? "",
+              resources: workspaceResources,
+            }}
+          />
 
-        <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4 shadow-sm">
-          <h2 id="ev" className="font-heading mb-1 text-base font-bold">
-            Évaluation liée
-          </h2>
-          {linked.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune évaluation à cette séance.</p>
-          ) : (
-            linked.map((a) => (
-              <div key={a.id} className="mb-2">
-                <strong>{a.title}</strong>
-                <p className="text-muted-foreground text-[0.8rem]">
-                  {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
-                </p>
-                <p className="my-1.5 flex flex-wrap gap-1.5">
-                  <Pill tone={a.prep_status === "to_build" ? "warn" : "ok"}>
-                    {a.prep_status === "to_build" ? "Sujet à construire" : "Sujet prêt"}
-                  </Pill>
-                  <Pill tone={a.grading_grid_id ? "ok" : "warn"}>
-                    {a.grading_grid_id ? "Grille prête" : "Grille à créer"}
-                  </Pill>
-                </p>
-                <Link href={`/modules/${id}/assessments/${a.id}`} className={BTN}>
-                  Ouvrir l’évaluation<span className="sr-only"> : {a.title}</span>
-                </Link>
+          <details open className="bg-card rounded-3xl border p-4">
+            <summary className="cursor-pointer font-semibold">
+              Ressources retenues du module ({retained.length}) et cours en PDF
+            </summary>
+            <div className="mt-3 space-y-3">
+              <RetainedResources moduleId={id} resources={retained} />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
+                <DownloadButton
+                  href={`/api/modules/${id}/courses`}
+                  doneLabel="Cours téléchargés (un seul PDF)."
+                >
+                  Un seul PDF
+                </DownloadButton>
+                <DownloadButton
+                  href={`/api/modules/${id}/courses?format=zip`}
+                  kind="zip"
+                  doneLabel="Cours téléchargés (un PDF par séance)."
+                >
+                  Un PDF par séance (zip)
+                </DownloadButton>
               </div>
-            ))
-          )}
-        </section>
+            </div>
+          </details>
 
-        <section aria-labelledby="qz" className="bg-card rounded-3xl border p-4 shadow-sm">
-          <h2 id="qz" className="font-heading mb-1 text-base font-bold">
-            Quiz de fin de séance
-          </h2>
-          <p className="text-muted-foreground mb-1 text-sm">
-            Les questions viennent des ressources du déroulé de cette séance.
-          </p>
-          <p role="status" className="mb-2 text-sm font-medium">
-            {!links.available
-              ? "Les questions liées seront disponibles après la mise à jour de la base de données."
-              : ordered.length === 0
-                ? "0 ressource dans le déroulé."
-                : `${ordered.length} ressource${ordered.length > 1 ? "s" : ""}, ${questionCount} question${questionCount > 1 ? "s" : ""} liée${questionCount > 1 ? "s" : ""}.`}
-          </p>
-          <div className="flex flex-col gap-2">
-            <Link href="#deroule" className={BTN}>
-              Ajouter une ressource au déroulé
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+            <Link href={`/modules/${id}`} className={BTN}>
+              ← Retour au module
             </Link>
-            <Link href={`/modules/${id}/courses/${courseId}/questions`} className={BTN}>
-              Lier des questions aux ressources de cette séance
-            </Link>
+            {next ? (
+              <Link
+                href={`/modules/${id}/courses/${next.id}`}
+                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+              >
+                Séance suivante →
+              </Link>
+            ) : null}
           </div>
         </section>
-      </aside>
+
+        <aside
+          className="w-full min-w-0 space-y-3 lg:w-72 lg:flex-none"
+          aria-label="Autour de la séance"
+        >
+          <section aria-labelledby="at" className="bg-card rounded-3xl border p-4 shadow-sm">
+            <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
+              Attendus traités
+            </h2>
+            {covered.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Aucun attendu relié à cette séance.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {covered.map((e) => (
+                  <li key={e.id}>
+                    <Pill className="min-h-9 py-1.5 !whitespace-normal">{e.label}</Pill>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link href={`/modules/${id}/matching`} className={`${BTN} mt-2`}>
+              Ajouter un attendu
+            </Link>
+          </section>
+
+          <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4 shadow-sm">
+            <h2 id="ev" className="font-heading mb-1 text-base font-bold">
+              Évaluation liée
+            </h2>
+            {linked.length === 0 ? (
+              <p className="text-muted-foreground text-sm">Aucune évaluation à cette séance.</p>
+            ) : (
+              linked.map((a) => (
+                <div key={a.id} className="mb-2">
+                  <strong>{a.title}</strong>
+                  <p className="text-muted-foreground text-[0.8rem]">
+                    {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
+                  </p>
+                  <p className="my-1.5 flex flex-wrap gap-1.5">
+                    <Pill tone={a.prep_status === "to_build" ? "warn" : "ok"}>
+                      {a.prep_status === "to_build" ? "Sujet à construire" : "Sujet prêt"}
+                    </Pill>
+                    <Pill tone={a.grading_grid_id ? "ok" : "warn"}>
+                      {a.grading_grid_id ? "Grille prête" : "Grille à créer"}
+                    </Pill>
+                  </p>
+                  <Link href={`/modules/${id}/assessments/${a.id}`} className={BTN}>
+                    Ouvrir l’évaluation<span className="sr-only"> : {a.title}</span>
+                  </Link>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section aria-labelledby="qz" className="bg-card rounded-3xl border p-4 shadow-sm">
+            <h2 id="qz" className="font-heading mb-1 text-base font-bold">
+              Quiz de fin de séance
+            </h2>
+            <p className="text-muted-foreground mb-1 text-sm">
+              Les questions viennent des ressources du déroulé de cette séance.
+            </p>
+            <p role="status" className="mb-2 text-sm font-medium">
+              {!links.available
+                ? "Les questions liées seront disponibles après la mise à jour de la base de données."
+                : ordered.length === 0
+                  ? "0 ressource dans le déroulé."
+                  : `${ordered.length} ressource${ordered.length > 1 ? "s" : ""}, ${questionCount} question${questionCount > 1 ? "s" : ""} liée${questionCount > 1 ? "s" : ""}.`}
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link href="#deroule" className={BTN}>
+                Ajouter une ressource au déroulé
+              </Link>
+              <Link href={`/modules/${id}/courses/${courseId}/questions`} className={BTN}>
+                Lier des questions aux ressources de cette séance
+              </Link>
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
