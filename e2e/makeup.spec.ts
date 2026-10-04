@@ -69,12 +69,16 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
 
   // Le rattrapage ne compte pas comme une note de plus ; sa note remplace l'absence excusée.
-  await page.goto(`${setup.moduleUrl}/assessments`);
-  await expect(page.getByText("Rattrapage · ")).toBeVisible();
+  // « Tout est enregistré » s'affiche aussi avant que la saisie soit prise en compte : on recharge
+  // jusqu'à ce que la note du rattrapage soit bien en base.
   const average = (name: string) =>
     page.getByRole("row").filter({ hasText: name }).getByRole("cell").nth(1);
+  await expect(async () => {
+    await page.goto(`${setup.moduleUrl}/assessments`);
+    await expect(page.getByText("Rattrapage · ")).toBeVisible();
+    await expect(average(zoe)).toHaveText("15.00", { timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
   await expect(average(ana)).toHaveText("20.00");
-  await expect(average(zoe)).toHaveText("15.00");
   await expect(average(leo)).toHaveText("0.00");
 
   // US-148 : écran « Rattrapages » : Zoé, rattrapage noté, note remplacée.

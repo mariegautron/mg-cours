@@ -120,6 +120,8 @@ for (const [label, width, height] of [
       await page.waitForLoadState("networkidle");
       await page.getByRole("button", { name: /Plus/ }).click();
       await expect(page.getByRole("link", { name: "Réglages" }).first()).toBeVisible();
+      // Le panneau s'ouvre en glissant : on mesure les cibles une fois l'animation terminée.
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );

@@ -81,7 +81,7 @@ test("supprimer un module depuis la liste (⋯) et depuis la fiche (zone sensibl
 
   // Liste : menu « ⋯ » de la ligne.
   await page.goto("/modules?filter=to_prepare");
-  await page.getByRole("button", { name: `Plus d’actions : ${nameA}` }).click();
+  await page.getByLabel(`Plus d’actions : ${nameA}`).click();
   await page.getByRole("button", { name: `Supprimer le module : ${nameA}` }).click();
   const dialogA = page.getByRole("alertdialog");
   await dialogA.getByLabel(/retape le nom/).fill(nameA);
