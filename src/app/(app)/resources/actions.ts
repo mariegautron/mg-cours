@@ -1,5 +1,6 @@
 "use server";
 
+import { retainResource } from "@/app/(app)/modules/[id]/retained/actions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -24,6 +25,13 @@ function flatten(fieldErrors: Record<string, string[] | undefined>): Record<stri
   return Object.fromEntries(
     Object.entries(fieldErrors).filter(([, v]) => v && v.length) as [string, string[]][],
   );
+}
+
+/** « Où l'utiliser ? » : la ressource créée est retenue pour le module choisi (sans doublon). */
+async function retainIfAsked(resourceId: string, formData: FormData): Promise<void> {
+  const moduleId = String(formData.get("retainModuleId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(moduleId)) return;
+  await retainResource(moduleId, resourceId);
 }
 
 export async function createResource(
@@ -55,6 +63,7 @@ export async function createResource(
 
   if (error) return { error: failure("enregistrer", { kept: true }) };
 
+  await retainIfAsked(data.id, formData);
   revalidatePath("/resources");
   redirect(`/resources/${data.id}`);
 }
@@ -127,7 +136,9 @@ export async function autosaveResource(
   const savedAt = new Date().toISOString();
   if (id) {
     const { error } = await supabase.from("resource").update(fields).eq("id", id);
-    return error ? {} : { id, savedAt };
+    if (error) return {};
+    await retainIfAsked(id, formData);
+    return { id, savedAt };
   }
   const { data, error } = await supabase
     .from("resource")
@@ -135,6 +146,7 @@ export async function autosaveResource(
     .select("id")
     .single();
   if (error || !data) return {};
+  await retainIfAsked(data.id, formData);
   revalidatePath("/resources");
   return { id: data.id, savedAt };
 }

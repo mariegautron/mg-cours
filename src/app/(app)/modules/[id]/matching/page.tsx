@@ -384,7 +384,10 @@ export default async function MatchingPage({
                 <p className="text-muted-foreground mb-3 text-sm">
                   Je crée une ressource vide « à construire », déjà retenue pour ce module. Tu peux
                   aussi{" "}
-                  <Link href="/resources/new" className="underline underline-offset-2">
+                  <Link
+                    href={`/resources/new?module=${mod.id}&title=${encodeURIComponent(open.e.label)}`}
+                    className="underline underline-offset-2"
+                  >
                     créer une ressource
                   </Link>{" "}
                   dans la bibliothèque.

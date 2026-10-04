@@ -11,6 +11,7 @@ import {
   updateResource,
   type ResourceFormState,
 } from "@/app/(app)/resources/actions";
+import { schoolYearOf } from "@/lib/modules/list-state";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
@@ -57,9 +58,16 @@ export function ResourceForm({
   action,
   resource,
   subjects,
+  modules = [],
+  defaultModuleId = "",
+  defaultTitle = "",
 }: {
   action: Action;
   resource?: Tables<"resource">;
+  /** Modules proposés par « Où l'utiliser ? » (création seulement). */
+  modules?: { id: string; name: string; year: number }[];
+  defaultModuleId?: string;
+  defaultTitle?: string;
   /** Matières proposées dans le champ « Matière » (déjà utilisées + liste guidée). */
   subjects: string[];
 }) {
@@ -92,7 +100,7 @@ export function ResourceForm({
 
   // Brouillon gardé sur cet appareil (US-152) : pas de version de plus dans l'historique de la ressource.
   const draftKey = `mg-resource-draft:${resource?.id ?? "new"}`;
-  const [title, setTitle] = useState(resource?.title ?? "");
+  const [title, setTitle] = useState(resource?.title ?? defaultTitle);
   const [draftNote, setDraftNote] = useState("");
   const [restorable, setRestorable] = useState<{ title: string; content: string } | null>(null);
   const [pasteNote, setPasteNote] = useState("");
@@ -287,7 +295,7 @@ export function ResourceForm({
               className="h-12 text-xl font-semibold"
               name="title"
               required
-              defaultValue={resource?.title ?? ""}
+              defaultValue={resource?.title ?? defaultTitle}
               onChange={(e) => setTitle(e.target.value)}
               aria-invalid={fe.title ? true : undefined}
               aria-describedby={fe.title ? "title-error" : undefined}
@@ -625,6 +633,30 @@ export function ResourceForm({
                 ))}
               </div>
             </fieldset>
+
+            {!resource && modules.length ? (
+              <div className="space-y-2">
+                <Label htmlFor="retainModuleId">Où l’utiliser ? (facultatif)</Label>
+                <select
+                  id="retainModuleId"
+                  name="retainModuleId"
+                  className={SELECT_CLASS}
+                  defaultValue={defaultModuleId}
+                  aria-describedby="retain-hint"
+                >
+                  <option value="">Pas encore</option>
+                  {modules.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({schoolYearOf(m.year)})
+                    </option>
+                  ))}
+                </select>
+                <p id="retain-hint" className="text-muted-foreground text-sm">
+                  La ressource est retenue pour ce module : tu la retrouves dans ses séances et son
+                  rapprochement.
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
