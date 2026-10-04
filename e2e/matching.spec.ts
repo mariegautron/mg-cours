@@ -60,7 +60,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
 
   // Proposition par mots-clés, avec le type ; « Associer à cet attendu » couvre l'attendu.
   const first = page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) });
-  await expect(first.getByRole("link", { name: title })).toBeVisible();
+  await expect(first.getByRole("link", { name: title, exact: true })).toBeVisible();
   await expect(
     first.locator("p", { hasText: new RegExp(`Mots de l’attendu retrouvés dans .*${word}`) }),
   ).toBeVisible();
@@ -109,13 +109,25 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await expect(
     audit.getByRole("button", { name: `Associer ${title} à cet attendu` }),
   ).toBeVisible();
-  await audit.getByText("Aperçu sans quitter l’écran").first().click();
-  await audit.getByRole("button", { name: `Ce n’est pas la bonne : ${title}` }).click();
-  await expect(audit.getByRole("link", { name: title })).toHaveCount(0);
+  // L'aperçu s'ouvre dans un panneau à droite, sans quitter l'écran.
+  await audit
+    .getByRole("link", { name: /^Aperçu sans quitter l’écran/ })
+    .first()
+    .click();
+  const panel = page.getByRole("complementary", { name: "Aperçu" });
+  await expect(panel.getByText(title, { exact: true })).toBeVisible();
+  await expect(panel.getByText(/Déjà rapprochée/)).toBeVisible();
+  const axePanel = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(axePanel.violations).toEqual([]);
+  await panel.getByRole("button", { name: `Ce n’est pas la bonne : ${title}` }).click();
+  await expect(audit.getByRole("link", { name: title, exact: true })).toHaveCount(0);
   await page.reload();
   await expect(
     page.getByRole("region", { name: new RegExp(`Réaliser un audit ${word}`) }).getByRole("link", {
       name: title,
+      exact: true,
     }),
   ).toHaveCount(0);
   if (process.env.CAPTURE) {

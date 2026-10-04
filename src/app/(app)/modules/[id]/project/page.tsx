@@ -140,7 +140,19 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                 Un seul sujet pour toute la classe, ou plusieurs thèmes : un ou plusieurs groupes
                 par thème, attribués par tirage, par choix des groupes ou par toi.
               </p>
-              <ThemesEditor moduleId={mod.id} initial={project.themes} />
+              <ThemesEditor
+                moduleId={mod.id}
+                initial={project.themes}
+                groupsByTheme={Object.fromEntries(
+                  project.themes.map((t) => [
+                    t.id,
+                    project.assignments
+                      .filter((a) => a.theme_id === t.id)
+                      .map((a) => project.groups.find((g) => g.id === a.student_group_id)?.name)
+                      .filter((n): n is string => !!n),
+                  ]),
+                )}
+              />
             </section>
 
             <section aria-labelledby="assignment-heading" className={card}>

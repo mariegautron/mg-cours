@@ -10,6 +10,7 @@ import {
 import { CorrectionOverview } from "@/components/assessments/correction-overview";
 import { AssessmentExpectations } from "@/components/assessments/assessment-expectations";
 import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
+import { WhereToSubmit } from "@/components/assessments/where-to-submit";
 import { ExamKindForm } from "@/components/assessments/exam-kind-form";
 import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
@@ -482,6 +483,11 @@ export default async function AssessmentPage({
                   Rempli une fois : les réponses connues (séance, groupes, type de note) sont
                   préremplies.
                 </p>
+                <WhereToSubmit
+                  moduleId={id}
+                  assessmentId={assessmentId}
+                  initial={assessment.where_to_submit ?? ""}
+                />
               </section>
 
               <section aria-labelledby="ae" className={card}>
@@ -575,6 +581,7 @@ export default async function AssessmentPage({
                   evaluated: assessment.evaluated_md,
                   maxScore: assessment.maxScore,
                   coefficient: assessment.coefficient,
+                  whereToSubmit: assessment.where_to_submit,
                 }).map((line) => (
                   <li key={line.label} className="flex flex-wrap items-start gap-3 py-2.5 text-sm">
                     <strong className="w-40 flex-none">{line.label}</strong>
@@ -612,6 +619,11 @@ export default async function AssessmentPage({
                   </span>
                 )}
               </div>
+              <WhereToSubmit
+                moduleId={id}
+                assessmentId={assessmentId}
+                initial={assessment.where_to_submit ?? ""}
+              />
             </section>
           </div>
 

@@ -63,6 +63,8 @@ export function individualFrame(input: {
   evaluated: string | null;
   maxScore: number;
   coefficient: number;
+  /** « Où rendre » saisi par l'enseignante : remplace le texte déduit. */
+  whereToSubmit?: string | null;
 }): FrameLine[] {
   const what: Record<ExamKind, string> = {
     files: "Un travail individuel à rendre : un ou plusieurs fichiers (rapport, code, captures…).",
@@ -94,7 +96,11 @@ export function individualFrame(input: {
   return [
     { label: "Quoi", text: what[input.kind], filled: true },
     { label: "Quand", text: when, filled: when !== "" },
-    { label: "Où", text: where[input.kind], filled: true },
+    {
+      label: "Où",
+      text: input.whereToSubmit?.trim() || where[input.kind],
+      filled: true,
+    },
     { label: "Avec qui", text: "Seul·e, sans échange.", filled: true },
     {
       label: "À rendre",

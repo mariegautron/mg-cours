@@ -155,6 +155,7 @@ export type Database = {
           title: string
           type: string | null
           updated_at: string
+          where_to_submit: string | null
         }
         Insert: {
           auto_validated_criterion_ids?: string[]
@@ -189,6 +190,7 @@ export type Database = {
           title: string
           type?: string | null
           updated_at?: string
+          where_to_submit?: string | null
         }
         Update: {
           auto_validated_criterion_ids?: string[]
@@ -223,6 +225,7 @@ export type Database = {
           title?: string
           type?: string | null
           updated_at?: string
+          where_to_submit?: string | null
         }
         Relationships: [
           {

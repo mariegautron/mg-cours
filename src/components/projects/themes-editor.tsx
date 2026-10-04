@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -10,6 +11,7 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface Row {
   key: number;
@@ -22,9 +24,12 @@ interface Row {
 export function ThemesEditor({
   moduleId,
   initial,
+  groupsByTheme = {},
 }: {
   moduleId: string;
   initial: { id: string; title: string; description_md: string }[];
+  /** Noms des groupes affectés à chaque thème (identifiant du thème → noms). */
+  groupsByTheme?: Record<string, string[]>;
 }) {
   const signature = initial.map((t) => `${t.id}:${t.title}:${t.description_md}`).join("|");
   const [state, formAction, pending] = useActionState(saveThemes.bind(null, moduleId), {});
@@ -47,6 +52,15 @@ export function ThemesEditor({
     rows.map(({ id, title, descriptionMd }) => ({ id, title, descriptionMd })),
   );
 
+  const [selected, setSelected] = useState(0);
+  const current = rows[Math.min(selected, rows.length - 1)] ?? null;
+  const currentIndex = current ? rows.indexOf(current) : -1;
+  const firstLine = (md: string) =>
+    md
+      .split("\n")
+      .find((l) => l.trim())
+      ?.trim() ?? "";
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="themesJson" value={themesJson} />
@@ -55,43 +69,102 @@ export function ThemesEditor({
           Aucun thème : tous les groupes font le même sujet.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {rows.map((row, i) => (
-            <li key={row.key} className="space-y-3 rounded-md border p-3">
-              <div className="flex items-end gap-2">
-                <div className="flex-1 space-y-1">
-                  <Label htmlFor={`theme-title-${row.key}`}>Titre du thème {i + 1}</Label>
-                  <Input
-                    id={`theme-title-${row.key}`}
-                    value={row.title}
-                    onChange={(e) => update(row.key, { title: e.target.value })}
-                  />
-                </div>
+        <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap">
+          <div className="w-full min-w-0 space-y-2 lg:w-[20rem] lg:flex-none">
+            <p className="text-muted-foreground text-sm">
+              {rows.length} thème{rows.length > 1 ? "s" : ""}. Clique un thème pour voir et modifier
+              son détail.
+            </p>
+            <ul className="space-y-1.5">
+              {rows.map((row, i) => {
+                const groups = row.id ? (groupsByTheme[row.id] ?? []) : [];
+                return (
+                  <li key={row.key}>
+                    <button
+                      type="button"
+                      aria-pressed={i === currentIndex}
+                      onClick={() => setSelected(i)}
+                      className={cn(
+                        "focus-visible:ring-ring min-h-14 w-full rounded-xl border p-3 text-left focus-visible:ring-2 focus-visible:outline-none",
+                        i === currentIndex ? "bg-accent border-primary" : "hover:bg-accent/60",
+                      )}
+                    >
+                      <span className="block font-bold">
+                        {row.title.trim() || "Thème sans titre"}
+                      </span>
+                      {firstLine(row.descriptionMd) ? (
+                        <span className="text-muted-foreground block truncate text-sm">
+                          {firstLine(row.descriptionMd)}
+                        </span>
+                      ) : null}
+                      <span className="text-muted-foreground block text-xs">
+                        {groups.length} groupe{groups.length > 1 ? "s" : ""}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {current ? (
+            <div className="bg-muted/30 w-full min-w-0 flex-1 space-y-3 rounded-2xl border p-4">
+              <h3 className="font-heading text-lg font-bold">
+                Détail du thème : {current.title.trim() || "sans titre"}
+              </h3>
+              <div className="space-y-1">
+                <Label htmlFor={`theme-title-${current.key}`}>
+                  Titre du thème {currentIndex + 1}
+                </Label>
+                <Input
+                  id={`theme-title-${current.key}`}
+                  value={current.title}
+                  onChange={(e) => update(current.key, { title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor={`theme-desc-${current.key}`}>
+                  Description du thème {currentIndex + 1} (Markdown)
+                </Label>
+                <p className="text-muted-foreground text-sm">
+                  Le brief de ce thème : ce que les groupes reçoivent en plus du commun.
+                </p>
+                <Textarea
+                  id={`theme-desc-${current.key}`}
+                  rows={5}
+                  maxLength={20000}
+                  value={current.descriptionMd}
+                  onChange={(e) => update(current.key, { descriptionMd: e.target.value })}
+                />
+              </div>
+              <p className="text-sm">
+                <strong>Groupes sur ce thème :</strong>{" "}
+                {current.id && (groupsByTheme[current.id] ?? []).length
+                  ? (groupsByTheme[current.id] ?? []).join(", ")
+                  : "aucun pour l’instant (voir « Affectation des thèmes »)"}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant="ghost" asChild>
+                  <Link href={`/modules/${moduleId}/frise`}>
+                    Voir ce que voient les étudiant·es
+                  </Link>
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  aria-label={`Retirer le thème ${i + 1} (${row.title || "sans titre"})`}
-                  onClick={() => setRows((rs) => rs.filter((r) => r.key !== row.key))}
+                  aria-label={`Retirer ce thème : ${current.title.trim() || "sans titre"}`}
+                  onClick={() => {
+                    setRows((rs) => rs.filter((r) => r.key !== current.key));
+                    setSelected(Math.max(0, currentIndex - 1));
+                  }}
                 >
                   <Trash2 aria-hidden />
+                  Retirer ce thème
                 </Button>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor={`theme-desc-${row.key}`}>
-                  Description du thème {i + 1} (Markdown)
-                </Label>
-                <Textarea
-                  id={`theme-desc-${row.key}`}
-                  rows={4}
-                  maxLength={20000}
-                  value={row.descriptionMd}
-                  onChange={(e) => update(row.key, { descriptionMd: e.target.value })}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+            </div>
+          ) : null}
+        </div>
       )}
 
       {state.error ? <ActionError error={state.error} /> : null}
@@ -107,6 +180,7 @@ export function ThemesEditor({
           variant="secondary"
           onClick={() => {
             setRows((rs) => [...rs, { key: nextKey, id: null, title: "", descriptionMd: "" }]);
+            setSelected(rows.length);
             setNextKey((k) => k + 1);
           }}
         >

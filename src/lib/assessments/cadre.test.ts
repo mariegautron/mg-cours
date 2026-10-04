@@ -15,6 +15,13 @@ const base: CadreInput = {
 };
 
 describe("cadre projeté", () => {
+  it("« Où » n'apparaît que s'il est renseigné", () => {
+    expect(cadreBlocks(base).some((b) => b.key === "where")).toBe(false);
+    const blocks = cadreBlocks({ ...base, whereToSubmit: "  Moodle, section Projet " });
+    expect(blocks.map((b) => b.key)).toEqual(["when", "who", "where", "deliver", "graded"]);
+    expect(blocks[2]).toMatchObject({ label: "Où", value: "Moodle, section Projet" });
+  });
+
   it("date en toutes lettres", () => {
     expect(longDay("2026-11-02")).toBe("Lundi 2 novembre");
   });

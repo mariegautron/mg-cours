@@ -16,10 +16,12 @@ export interface CadreInput {
   deliverableMd: string | null;
   maxScore: number;
   hasGrid: boolean;
+  /** « Où rendre » : Moodle, section… ; absent, le bloc « Où » n'est pas projeté. */
+  whereToSubmit?: string | null;
 }
 
 export interface CadreBlock {
-  key: "when" | "who" | "deliver" | "graded";
+  key: "when" | "where" | "who" | "deliver" | "graded";
   label: string;
   value: string;
   sub: string | null;
@@ -70,6 +72,8 @@ export function cadreBlocks(c: CadreInput): CadreBlock[] {
       sub: c.isGroupGrade ? "votre groupe de projet" : "un travail personnel",
     },
   ];
+  const where = c.whereToSubmit?.trim();
+  if (where) blocks.push({ key: "where", label: "Où", value: where, sub: null });
   const items = deliverableItems(c.deliverableMd);
   if (items.length) {
     blocks.push({

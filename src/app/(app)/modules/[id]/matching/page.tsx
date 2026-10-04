@@ -70,6 +70,7 @@ export default async function MatchingPage({
   const { id } = await params;
   const sp = await searchParams;
   const asked = typeof sp.e === "string" ? sp.e : undefined;
+  const previewId = typeof sp.r === "string" ? sp.r : undefined;
   const filter = parseMatchingFilter(typeof sp.f === "string" ? sp.f : undefined);
 
   const [mod, expectations, courses, retained, candidates, coursesByExpectation] =
@@ -116,7 +117,8 @@ export default async function MatchingPage({
       .filter((m, i) => i < 5 || retainedIds.has(m.resource.id))
       // Les extraits ne se calculent que pour ce qui s'affiche.
       .map((m) => ({ ...m, excerpt: excerptForTerms(m.resource, m.shared) }));
-    return { e, matches, courseIds, state };
+    const matchedIds = new Set(all.map((m) => m.resource.id));
+    return { e, matches, courseIds, state, matchedIds };
   });
   const summary = summarizeCoverage(rows.map((r) => r.state));
   const counts = filterCounts(rows.map((r) => r.state));
@@ -133,6 +135,15 @@ export default async function MatchingPage({
   if (openId && asked !== openId) {
     redirect(`/modules/${mod.id}/matching?e=${openId}${filter === "all" ? "" : `&f=${filter}`}`);
   }
+
+  const preview = previewId ? (candidates.find((c) => c.id === previewId) ?? null) : null;
+  const alsoFor = preview
+    ? rows
+        .filter(
+          (r) => r.e.id !== openId && retainedIds.has(preview.id) && r.matchedIds.has(preview.id),
+        )
+        .map((r) => r.e.label)
+    : [];
 
   const href = (expectationId: string, f: MatchingFilter = filter) =>
     `/modules/${mod.id}/matching?e=${expectationId}${f === "all" ? "" : `&f=${f}`}`;
@@ -334,40 +345,15 @@ export default async function MatchingPage({
                               />
                             )}
                           </div>
-                          <details className="text-sm">
-                            <summary className="min-h-8 cursor-pointer underline underline-offset-2">
-                              Aperçu sans quitter l’écran
-                              <span className="sr-only"> : {resource.title}</span>
-                            </summary>
-                            <div className="bg-background mt-2 max-h-64 overflow-auto rounded-md border p-3 whitespace-pre-wrap">
-                              {resource.description ? (
-                                <p className="mb-2 font-medium">{resource.description}</p>
-                              ) : null}
-                              {(resource.content ?? "").trim()
-                                ? (resource.content ?? "").trim().slice(0, PREVIEW_LENGTH) +
-                                  ((resource.content ?? "").trim().length > PREVIEW_LENGTH
-                                    ? "…"
-                                    : "")
-                                : "Cette ressource n’a pas encore de contenu."}
-                            </div>
-                            <Link
-                              href={`/resources/${resource.id}`}
-                              className="mt-2 inline-block underline underline-offset-2"
-                            >
-                              Ouvrir en entier
-                              <span className="sr-only"> : {resource.title}</span>
-                            </Link>
-                            {isRetained ? null : (
-                              <MatchingForm
-                                action={dismissMatch.bind(null, mod.id, open.e.id, resource.id)}
-                                label="Ce n’est pas la bonne"
-                                pendingLabel="Un instant…"
-                                variant="ghost"
-                                className="mt-1"
-                                ariaLabel={`Ce n’est pas la bonne : ${resource.title}`}
-                              />
-                            )}
-                          </details>
+                          <Link
+                            href={`${href(open.e.id)}${href(open.e.id).includes("?") ? "&" : "?"}r=${resource.id}`}
+                            scroll={false}
+                            aria-current={previewId === resource.id ? "true" : undefined}
+                            className="inline-flex min-h-11 items-center text-sm underline underline-offset-2"
+                          >
+                            Aperçu sans quitter l’écran
+                            <span className="sr-only"> : {resource.title}</span>
+                          </Link>
                         </li>
                       );
                     })}
@@ -455,6 +441,80 @@ export default async function MatchingPage({
                 </form>
               ) : null}
             </section>
+          ) : null}
+
+          {open && preview ? (
+            <aside
+              aria-labelledby="apercu"
+              className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:sticky lg:top-4 lg:w-[22rem] lg:flex-none"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h3 id="apercu" className="font-heading text-lg font-bold">
+                  Aperçu
+                </h3>
+                <Link
+                  href={href(open.e.id)}
+                  scroll={false}
+                  className="inline-flex min-h-11 items-center text-sm underline underline-offset-2"
+                >
+                  Fermer l’aperçu
+                </Link>
+              </div>
+              <p className="font-bold">{preview.title}</p>
+              <p className="flex flex-wrap gap-1.5">
+                <KindBadge kind={preview.kind} />
+                <StatusBadge status={preview.status} />
+              </p>
+              {preview.description ? (
+                <p className="text-muted-foreground text-sm">{preview.description}</p>
+              ) : null}
+              <div className="bg-background max-h-72 overflow-auto rounded-md border p-3 text-sm whitespace-pre-wrap">
+                {(preview.content ?? "").trim()
+                  ? (preview.content ?? "").trim().slice(0, PREVIEW_LENGTH) +
+                    ((preview.content ?? "").trim().length > PREVIEW_LENGTH ? "…" : "")
+                  : "Cette ressource n’a pas encore de contenu."}
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {alsoFor.length
+                  ? `Déjà rapprochée de : ${alsoFor.join(", ")}.`
+                  : "Déjà rapprochée : aucun autre attendu."}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {retainedIds.has(preview.id) ? (
+                  <>
+                    <Pill tone="ok">Associée</Pill>
+                    <MatchingForm
+                      action={unretainForModule.bind(null, mod.id, preview.id)}
+                      label="Retirer"
+                      pendingLabel="Retrait…"
+                      variant="ghost"
+                      ariaLabel={`Retirer ${preview.title} (aperçu)`}
+                    />
+                  </>
+                ) : (
+                  <MatchingForm
+                    action={retainForModule.bind(null, mod.id, preview.id)}
+                    label="Associer à cet attendu"
+                    pendingLabel="Association…"
+                    ariaLabel={`Associer ${preview.title} à cet attendu (aperçu)`}
+                  />
+                )}
+                <Button asChild variant="outline" size="touch">
+                  <Link href={`/resources/${preview.id}`}>
+                    Ouvrir en entier<span className="sr-only"> : {preview.title}</span>
+                  </Link>
+                </Button>
+                {retainedIds.has(preview.id) ? null : (
+                  <MatchingForm
+                    action={dismissMatch.bind(null, mod.id, open.e.id, preview.id)}
+                    label="Ce n’est pas la bonne"
+                    pendingLabel="Un instant…"
+                    variant="ghost"
+                    ariaLabel={`Ce n’est pas la bonne : ${preview.title}`}
+                  />
+                )}
+              </div>
+            </aside>
           ) : null}
         </div>
       )}

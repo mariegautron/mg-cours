@@ -48,6 +48,7 @@ export async function loadSubjectDeck(assessmentId: string): Promise<SubjectDeck
         deliverableMd: assessment.deliverable_md,
         maxScore: assessment.maxScore,
         hasGrid: !!grid && grid.criteria.length > 0,
+        whereToSubmit: assessment.where_to_submit ?? null,
       }),
     },
     grid:

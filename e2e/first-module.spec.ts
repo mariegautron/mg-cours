@@ -220,6 +220,11 @@ test("premier module : de la fiche de l'école à la première séance", async (
   await page.waitForURL(/\/assessments\/[0-9a-f-]{36}$/, { timeout: 30_000 });
   const evalUrl = page.url();
   await expect(page.getByRole("heading", { name: `Rendu final ${stamp}`, level: 1 })).toBeVisible();
+  // « Où rendre » : repris dans le cadre de l'évaluation.
+  await page.getByLabel("Où rendre", { exact: true }).fill("Moodle, section Projet");
+  await page.getByRole("button", { name: /Enregistrer « où rendre »/ }).click();
+  await expect(page.getByText("« Où rendre » enregistré.")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText("Moodle, section Projet").first()).toBeVisible();
   // Attendus évalués : on coche deux attendus du module, le compte suit.
   await page.getByLabel("Cadrer un projet agile", { exact: true }).check();
   await page.getByLabel("Estimer et planifier un sprint", { exact: true }).check();

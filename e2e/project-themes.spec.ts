@@ -58,11 +58,19 @@ test("thèmes du projet : volontaire, tirage, nouveau tirage confirmé, thème e
       .getByLabel(`Thème de ${name}`)
       .evaluate((el: HTMLSelectElement) => el.selectedOptions[0].text);
   expect(await themeOf(groupNames[0])).toBe("ClimActif");
-  expect([await themeOf(groupNames[1]), await themeOf(groupNames[2])].sort()).toEqual([
-    "AssurLibre",
-    "JustiFacile",
-  ]);
+  await expect
+    .poll(async () => [await themeOf(groupNames[1]), await themeOf(groupNames[2])].sort(), {
+      timeout: 20_000,
+    })
+    .toEqual(["AssurLibre", "JustiFacile"]);
   expect((await axe(page)).violations).toEqual([]);
+
+  // Le détail d'un thème dit quels groupes le travaillent.
+  await page.getByRole("button", { name: /^ClimActif/ }).click();
+  await expect(page.locator("p", { hasText: "Groupes sur ce thème :" })).toContainText(
+    groupNames[0],
+  );
+  await expect(page.getByRole("button", { name: /^Retirer ce thème/ })).toBeVisible();
 
   // Nouveau tirage : confirmation obligatoire, le volontaire est conservé.
   await page.getByRole("button", { name: "Refaire le tirage" }).click();
