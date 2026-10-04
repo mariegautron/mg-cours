@@ -154,13 +154,10 @@ export default async function ModuleAssessmentsPage({
               </Link>
             </Button>
             <Button asChild>
-              <Link href={`/modules/${id}/assessments/new`}>
+              <Link href={`/modules/${id}/assessments/add`}>
                 <Plus aria-hidden />
-                Nouvelle évaluation
+                Ajouter une évaluation
               </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href={`/modules/${id}/assessments/add`}>Ajouter une évaluation</Link>
             </Button>
             <Button asChild variant="ghost">
               <Link href={`/modules/${id}/rattrapages`}>Rattrapages</Link>
@@ -180,7 +177,7 @@ export default async function ModuleAssessmentsPage({
           description="Commence par le projet fil rouge : il organise les jalons. Tu peux aussi créer directement une évaluation."
           actions={[
             { label: "Créer le projet", href: `/modules/${id}/project` },
-            { label: "Nouvelle évaluation", href: `/modules/${id}/assessments/new` },
+            { label: "Ajouter une évaluation", href: `/modules/${id}/assessments/add` },
           ]}
         />
       ) : (

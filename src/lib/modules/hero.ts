@@ -46,7 +46,7 @@ const TEXTS: Record<StepKey, (s: ModuleStep) => string> = {
   sessions: (s) =>
     `${cap(s.summary)}. Prépare chaque séance : déroulé, ressources, consigne de fin.`,
   planning: (s) =>
-    `${cap(s.summary)}. Place les évaluations et le fil rouge dans tes séances pour atteindre les notes exigées.`,
+    `${cap(s.summary)}. Prévois les évaluations et le fil rouge, et place-les dans tes séances, pour atteindre les notes exigées.`,
   outline: () =>
     "Les séances sont prêtes : génère la progression pédagogique que l’école attend, tu la relis avant de l’envoyer.",
   send: (s) => `${cap(s.summary)}. Envoie la progression à l’école, puis marque-la comme envoyée.`,

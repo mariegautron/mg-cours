@@ -31,7 +31,7 @@ test("évaluations du module : notes exigées, grille de la bibliothèque, note 
     timeout: 20_000,
   });
 
-  await page.getByRole("link", { name: "Ajouter une évaluation" }).click();
+  await page.getByRole("link", { name: "Ajouter une évaluation" }).first().click();
   await expect(
     page.getByRole("heading", { name: /Ajouter une évaluation/, level: 1 }),
   ).toBeVisible();

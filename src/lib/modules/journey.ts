@@ -51,7 +51,8 @@ export function buildJourney(d: JourneyData): ModuleSteps {
       required: d.notes.requirement.total,
       satisfied: d.notes.satisfied,
     },
-    plannedAssessments: d.assessments.filter((a) => !a.makeup_of_id && a.course_id).length,
+    // Toute évaluation du module compte, rattachée à une séance ou non (un rattrapage n'est pas une note de plus).
+    plannedAssessments: d.assessments.filter((a) => !a.makeup_of_id).length,
     adminDocs: {
       done: REQUIRED_ADMIN_DOCS.filter((x) => adminDocsDone[x.key]).length,
       total: REQUIRED_ADMIN_DOCS.length,

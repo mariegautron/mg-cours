@@ -155,7 +155,7 @@ export default async function ModulePage({
   const askNote = hero?.offerFinish ? await retrospectiveAvailable() : false;
   const finishedView = hero?.kind === "finished";
   const upcoming = closed ? null : highlightedSession(courses, today);
-  const planned = assessments.filter((a) => !a.makeup_of_id && a.course_id);
+  const planned = assessments.filter((a) => !a.makeup_of_id);
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
   const [mean, retro] = finishedView

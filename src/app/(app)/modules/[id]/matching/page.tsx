@@ -10,6 +10,7 @@ import {
   unretainForModule,
 } from "@/app/(app)/modules/[id]/matching/actions";
 import { Pill } from "@/components/dashboard/pill";
+import { MatchingForm } from "@/components/modules/matching-form";
 import { AddExpectationForm } from "@/components/modules/add-expectation-form";
 import { KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Button } from "@/components/ui/button";
@@ -314,26 +315,21 @@ export default async function MatchingPage({
                             {isRetained ? (
                               <div className="flex flex-wrap items-center gap-2">
                                 <Pill tone="ok">Associée</Pill>
-                                <form action={unretainForModule.bind(null, mod.id, resource.id)}>
-                                  <Button
-                                    type="submit"
-                                    variant="ghost"
-                                    aria-label={`Retirer ${resource.title}`}
-                                  >
-                                    Retirer
-                                  </Button>
-                                </form>
+                                <MatchingForm
+                                  action={unretainForModule.bind(null, mod.id, resource.id)}
+                                  label="Retirer"
+                                  pendingLabel="Retrait…"
+                                  variant="ghost"
+                                  ariaLabel={`Retirer ${resource.title}`}
+                                />
                               </div>
                             ) : (
-                              <form action={retainForModule.bind(null, mod.id, resource.id)}>
-                                <Button
-                                  type="submit"
-                                  variant="secondary"
-                                  aria-label={`Associer ${resource.title} à cet attendu`}
-                                >
-                                  Associer à cet attendu
-                                </Button>
-                              </form>
+                              <MatchingForm
+                                action={retainForModule.bind(null, mod.id, resource.id)}
+                                label="Associer à cet attendu"
+                                pendingLabel="Association…"
+                                ariaLabel={`Associer ${resource.title} à cet attendu`}
+                              />
                             )}
                           </div>
                           <details className="text-sm">
@@ -360,18 +356,14 @@ export default async function MatchingPage({
                               <span className="sr-only"> : {resource.title}</span>
                             </Link>
                             {isRetained ? null : (
-                              <form
+                              <MatchingForm
                                 action={dismissMatch.bind(null, mod.id, open.e.id, resource.id)}
+                                label="Ce n’est pas la bonne"
+                                pendingLabel="Un instant…"
+                                variant="ghost"
                                 className="mt-1"
-                              >
-                                <Button
-                                  type="submit"
-                                  variant="ghost"
-                                  aria-label={`Ce n’est pas la bonne : ${resource.title}`}
-                                >
-                                  Ce n’est pas la bonne
-                                </Button>
-                              </form>
+                                ariaLabel={`Ce n’est pas la bonne : ${resource.title}`}
+                              />
                             )}
                           </details>
                         </li>
@@ -395,8 +387,11 @@ export default async function MatchingPage({
                   </Link>{" "}
                   dans la bibliothèque.
                 </p>
-                <form
+                <MatchingForm
                   action={buildForExpectation.bind(null, mod.id, open.e.id)}
+                  label="Créer et retenir"
+                  pendingLabel="Création…"
+                  variant="default"
                   className="flex flex-wrap items-end gap-3"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
@@ -414,8 +409,7 @@ export default async function MatchingPage({
                       required
                     />
                   </div>
-                  <Button type="submit">Créer et retenir</Button>
-                </form>
+                </MatchingForm>
               </div>
 
               {courses.length ? (

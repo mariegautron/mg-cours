@@ -3,7 +3,14 @@
 import { revalidatePath } from "next/cache";
 
 import { retainResource, unretainResource } from "@/app/(app)/modules/[id]/retained/actions";
+import { failure, SESSION_EXPIRED } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
+
+/** Résultat d'un geste du rapprochement : dit ce qui s'est passé, ou pourquoi ça n'a pas marché. */
+export interface MatchState {
+  done?: string;
+  error?: string;
+}
 
 const refresh = (moduleId: string) => {
   revalidatePath(`/modules/${moduleId}/matching`);
@@ -11,15 +18,18 @@ const refresh = (moduleId: string) => {
 };
 
 /** « Retenir » : la ressource proposée rejoint les ressources retenues du module (US-55). */
-export async function retainForModule(moduleId: string, resourceId: string): Promise<void> {
-  await retainResource(moduleId, resourceId);
+export async function retainForModule(moduleId: string, resourceId: string): Promise<MatchState> {
+  const result = await retainResource(moduleId, resourceId);
+  if (result.error) return { error: result.error };
   refresh(moduleId);
+  return { done: "Ressource associée." };
 }
 
 /** « Retirer » : la ressource n'est plus retenue pour ce module. */
-export async function unretainForModule(moduleId: string, resourceId: string): Promise<void> {
+export async function unretainForModule(moduleId: string, resourceId: string): Promise<MatchState> {
   await unretainResource(moduleId, resourceId);
   refresh(moduleId);
+  return { done: "Ressource retirée." };
 }
 
 /**
@@ -29,18 +39,21 @@ export async function unretainForModule(moduleId: string, resourceId: string): P
 export async function buildForExpectation(
   moduleId: string,
   expectationId: string,
+  _prev: MatchState,
   formData?: FormData,
-): Promise<void> {
+): Promise<MatchState> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return;
+  if (!auth.user) return { error: SESSION_EXPIRED };
 
   const { data: expectation } = await supabase
     .from("module_expectation")
     .select("label, module_id")
     .eq("id", expectationId)
     .maybeSingle();
-  if (!expectation || expectation.module_id !== moduleId) return;
+  if (!expectation || expectation.module_id !== moduleId) {
+    return { error: "Cet attendu n’existe plus." };
+  }
 
   const typed = String(formData?.get("title") ?? "").trim();
   const wanted = typed || expectation.label;
@@ -54,11 +67,13 @@ export async function buildForExpectation(
     })
     .select("id")
     .single();
-  if (!resource) return;
+  if (!resource) return { error: failure("créer la ressource") };
 
-  await retainResource(moduleId, resource.id);
+  const retained = await retainResource(moduleId, resource.id);
+  if (retained.error) return { error: retained.error };
   revalidatePath("/resources");
   refresh(moduleId);
+  return { done: "Ressource à construire créée et retenue." };
 }
 
 /** Séances qui couvrent un attendu : remplace les liens par la sélection reçue. */
@@ -101,19 +116,11 @@ export async function setExpectationCourses(
   refresh(moduleId);
 }
 
-export interface DismissState {
-  error?: string;
-}
-
-/**
- * « Ce n'est pas la bonne » : écarte la ressource de cet attendu (elle n'est plus proposée). Table
- * additive : sans la migration, on le dit au lieu d'échouer.
- */
 export async function dismissMatch(
   moduleId: string,
   expectationId: string,
   resourceId: string,
-): Promise<void> {
+): Promise<MatchState> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("expectation_dismissal")
@@ -121,6 +128,9 @@ export async function dismissMatch(
       { module_id: moduleId, expectation_id: expectationId, resource_id: resourceId },
       { onConflict: "module_id,expectation_id,resource_id" },
     );
-  if (error) return;
+  if (error) {
+    return { error: "Cette fonction sera disponible après la mise à jour de la base de données." };
+  }
   refresh(moduleId);
+  return { done: "Ressource écartée pour cet attendu." };
 }

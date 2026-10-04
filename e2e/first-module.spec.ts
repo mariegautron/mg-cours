@@ -184,6 +184,10 @@ test("premier module : de la fiche de l'école à la première séance", async (
   const evalUrl = page.url();
   await expect(page.getByRole("heading", { name: `Rendu final ${stamp}`, level: 1 })).toBeVisible();
   await axeClean(page, "évaluation sans groupe");
+  // Une évaluation du module compte pour l'étape « Prévoir les évaluations », même hors séance.
+  await page.goto(moduleUrl);
+  await expect(page.getByText("1 / 3 notes prévues").first()).toBeVisible();
+  await page.goto(evalUrl);
 
   // 7. Les étudiant·es arrivent (liste importée dans le module) : les groupes rejoignent l'évaluation.
   await page.goto("/students/import");
@@ -209,4 +213,69 @@ test("premier module : de la fiche de l'école à la première séance", async (
   await page.waitForLoadState("networkidle");
   await expect(page.getByText(/TP1/).first()).toBeVisible();
   await axeClean(page, "évaluation avec groupes");
+
+  // 8. Progression pédagogique : générer, voir le PDF, la marquer envoyée.
+  await page.goto(moduleUrl);
+  await page.getByRole("link", { name: /Passer à la progression/ }).click();
+  await expect(page).toHaveURL(/\/outline/);
+  await page.getByRole("button", { name: "Générer la progression" }).click();
+  await expect(page.getByText(/Générée le/)).toBeVisible({ timeout: 30_000 });
+  const moduleId = moduleUrl.split("/").pop()!;
+  const pdfRes = await page.request.get(`/api/modules/${moduleId}/outline`);
+  expect(pdfRes.status()).toBe(200);
+  expect((await pdfRes.body()).subarray(0, 4).toString()).toBe("%PDF");
+  await axeClean(page, "progression");
+  await page.getByRole("button", { name: /J’ai envoyé la progression à l’école/ }).click();
+  await page.getByRole("button", { name: "Oui, je l’ai envoyée" }).click();
+  await expect(page.getByText(/envoyée le/)).toBeVisible({ timeout: 20_000 });
+
+  // 9. Faire cours : « Avant de commencer » puis la fenêtre projetée.
+  await page.goto(`${moduleUrl}/courses`);
+  await page.waitForLoadState("networkidle");
+  const startLink = page.getByRole("link", { name: /^Faire cours/ }).first();
+  await expect(startLink).toBeVisible();
+  await startLink.click();
+  await page.waitForURL(/\/start$/, { timeout: 30_000 });
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("heading", { name: "Avant de commencer", level: 1 })).toBeVisible();
+  await axeClean(page, "avant de commencer");
+  const startUrl = page.url();
+  const projected = await page
+    .getByRole("link", { name: /Ouvrir la fenêtre projetée/ })
+    .getAttribute("href");
+  const privateView = await page
+    .getByRole("link", { name: /Ouvrir ma vue privée/ })
+    .getAttribute("href");
+
+  // La fenêtre projetée ne montre jamais la vue privée, et la vue privée s'ouvre.
+  await page.goto(projected!);
+  await expect(page.getByRole("heading", { name: /Séance 1/ }).first()).toBeVisible();
+  await expect(page.getByText("Vue privée : jamais projetée")).toHaveCount(0);
+  await axeClean(page, "fenêtre projetée");
+  await page.goto(privateView!);
+  await expect(page.getByText("Vue privée : jamais projetée")).toBeVisible();
+  await axeClean(page, "vue privée");
+
+  // Clôturer la séance : le carnet se ferme, la suite est annoncée.
+  await page.goto(startUrl.replace(/\/start$/, "/close"));
+  await page.getByRole("radio").first().check();
+  await page.getByRole("button", { name: /Clôturer la séance 1/ }).click();
+  await page.waitForURL(/\/closed$/, { timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: /Séance 1 clôturée/ })).toBeVisible();
+
+  // 10. Supprimer le module puis le recréer sous le même nom : rien ne reste, rien ne gêne.
+  await page.goto(`${moduleUrl}/documents`);
+  await page.getByRole("button", { name: "Supprimer le module" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await dialog.getByLabel(/retape le nom/).fill(moduleName);
+  await dialog.getByRole("button", { name: "Supprimer définitivement" }).click();
+  await page.waitForURL(/\/modules\?deleted=/, { timeout: 60_000 });
+  await expect(page.getByText(`Module « ${moduleName} » supprimé.`)).toBeVisible();
+  await page.goto("/modules/new");
+  await page.getByLabel("Nom du module").fill(moduleName);
+  await page.getByLabel("Année").fill("2026");
+  await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { name: moduleName, level: 1 })).toBeVisible();
 });
