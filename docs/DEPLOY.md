@@ -32,10 +32,11 @@ Quatre buckets privés sont créés par les migrations : `module-documents`, `re
 `student-photos`, `assessment-files`. Si une migration manque, la fonction concernée affiche
 « disponible après la mise à jour » au lieu de planter.
 
-Migrations récentes à appliquer dans l'ordre (SQL Editor ou `supabase db push`), toutes additives :
-`20261101…` et `20261102000000_assessment_individual` (déjà appliquées),
-`20261103000000_expectation_dismissal` (« Ce n'est pas la bonne » du rapprochement),
-`20261104000000_training_agreement_document` (convention de formation).
+Les migrations sont additives et s'appliquent avec `supabase db push` (même commande qu'à la mise en
+place). Déjà appliquées en cloud : jusqu'à `20261103000000_expectation_dismissal` (« Ce n'est pas la
+bonne » du rapprochement). **En attente** : `20261104000000_training_agreement_document` (convention de
+formation : plusieurs fichiers, libellé, date de signature). Sans elle, la fonction affiche « disponible
+après la mise à jour » au lieu de planter.
 
 ## Mise en place de Supabase Cloud (une fois)
 
