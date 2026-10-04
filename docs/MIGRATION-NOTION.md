@@ -847,3 +847,15 @@ Type « Convention de formation » livré (migration `20261104000000_training_ag
   écrit individuel → 1-3, oral → 2, 3 ; M2 : projet → 6-14, oral → 15-17, QCM → 18).
 - Barème Opquast (`score_scale`, `is_bonus`, `raw_score`) : pas de score à importer ; la saisie
   se fait dans l'application.
+
+#### Passes écrites sur le cloud (04/10)
+
+`complements-10` (4 contrats : convention et avenant n° 1 du M2, contrat 2025-26 déposé dans
+GP et B2 avec un seul fichier), `complements-8` (22 rattachements attendus ↔ séances, année de
+l'étudiant·e GP), `complements-9` (nettoyage des 25 ressources de gestion de projet : 1 titre,
+tags, 23 mises en forme Markdown ; 67 liens question ↔ ressource) et `complements-11` (3 slides
+par séance, 19 activités structurées, 4 « où rendre », 29 attendus évalués) appliquées sans
+erreur. Restent : horaires du B2, YCODE et présentation du M2, bonnes réponses des questions du
+M2 (sauvegarde `.mbz`), 12 appréciations > 250 caractères, photos, lien corrigé ↔ ressource
+(champ à créer côté application), barème Opquast (saisie dans l'application), édition archivée
+(reportée), rapport de santé (`health.mts`) à lancer.
