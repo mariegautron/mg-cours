@@ -41,3 +41,51 @@ test("supprimer un module : confirmation par le nom, puis plus de trace", async 
     page.getByRole("heading", { name: "Cette page n’existe pas", level: 1 }),
   ).toBeVisible();
 });
+
+// Trois accès à la suppression : onglet Documents, menu « ⋯ » de la liste, zone sensible de la fiche.
+test("supprimer un module depuis la liste (⋯) et depuis la fiche (zone sensible)", async ({
+  page,
+}) => {
+  test.setTimeout(150_000);
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill("marie@local.test");
+  await page.getByLabel("Mot de passe").fill("password123");
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+
+  const stamp = Date.now();
+  const make = async (name: string) => {
+    await page.goto("/modules/new");
+    await page.getByLabel("Nom du module").fill(name);
+    await page.getByLabel("Année").fill("2026");
+    await page.getByLabel("Nombre d’heures total").fill("21");
+    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+    return page.url();
+  };
+  const nameA = `Module liste ${stamp}`;
+  const nameB = `Module fiche ${stamp}`;
+  await make(nameA);
+  const urlB = await make(nameB);
+
+  // Fiche : zone sensible.
+  await page.goto(urlB);
+  await page.getByRole("heading", { name: "Zone sensible" }).scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: /Supprimer le module/ }).click();
+  const dialogB = page.getByRole("alertdialog");
+  await dialogB.getByLabel(/retape le nom/).fill(nameB);
+  await dialogB.getByRole("button", { name: "Supprimer définitivement" }).click();
+  await page.waitForURL(/\/modules\?deleted=/, { timeout: 60_000 });
+  await expect(page.getByText(`Module « ${nameB} » supprimé.`)).toBeVisible();
+
+  // Liste : menu « ⋯ » de la ligne.
+  await page.goto("/modules?filter=to_prepare");
+  await page.getByRole("button", { name: `Plus d’actions : ${nameA}` }).click();
+  await page.getByRole("button", { name: `Supprimer le module : ${nameA}` }).click();
+  const dialogA = page.getByRole("alertdialog");
+  await dialogA.getByLabel(/retape le nom/).fill(nameA);
+  await dialogA.getByRole("button", { name: "Supprimer définitivement" }).click();
+  await page.waitForURL(/\/modules\?deleted=/, { timeout: 60_000 });
+  await expect(page.getByText(`Module « ${nameA} » supprimé.`)).toBeVisible();
+});

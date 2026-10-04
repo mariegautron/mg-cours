@@ -1,3 +1,4 @@
+import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -350,6 +351,21 @@ export default async function ModulePage({
           )}
         </div>
       </div>
+
+      <section
+        aria-labelledby="zone-sensible"
+        className="border-destructive/40 space-y-2 rounded-2xl border p-5"
+      >
+        <h2 id="zone-sensible" className="font-heading text-lg font-bold">
+          Zone sensible
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Supprimer le module efface définitivement ses séances, évaluations, notes, groupes et
+          documents. Ta bibliothèque et tes étudiant·es ne sont pas touchés. Il faut retaper le nom
+          du module pour confirmer.
+        </p>
+        <DeleteModuleDialog id={mod.id} name={mod.name} />
+      </section>
     </div>
   );
 }

@@ -22,7 +22,15 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { nameMatches } from "@/lib/modules/delete";
 
 /** Suppression définitive : il faut retaper le nom du module. « Garder » est le premier choix. */
-export function DeleteModuleDialog({ id, name }: { id: string; name: string }) {
+export function DeleteModuleDialog({
+  id,
+  name,
+  variant = "destructive",
+}: {
+  id: string;
+  name: string;
+  variant?: "destructive" | "outline";
+}) {
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -31,9 +39,10 @@ export function DeleteModuleDialog({ id, name }: { id: string; name: string }) {
   return (
     <AlertDialog onOpenChange={() => (setTyped(""), setError(null))}>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="destructive">
+        <Button type="button" variant={variant}>
           <Trash2 aria-hidden />
           Supprimer le module
+          <span className="sr-only"> : {name}</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

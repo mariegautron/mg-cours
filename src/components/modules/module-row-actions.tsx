@@ -12,6 +12,7 @@ import {
   undoFinishModule,
   unarchiveModule,
 } from "@/app/(app)/modules/actions";
+import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import { Label } from "@/components/ui/label";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Textarea } from "@/components/ui/textarea";
@@ -135,6 +136,18 @@ export function ModuleRowActions({
           Restaurer<span className="sr-only"> : {name}</span>
         </button>
       ) : null}
+
+      <details className="relative">
+        <summary
+          className={`${BTN} cursor-pointer list-none`}
+          aria-label={`Plus d’actions : ${name}`}
+        >
+          ⋯
+        </summary>
+        <div className="bg-popover absolute right-0 z-10 mt-1 rounded-xl border p-2 shadow-lg">
+          <DeleteModuleDialog id={id} name={name} variant="outline" />
+        </div>
+      </details>
 
       {confirming ? (
         <div
