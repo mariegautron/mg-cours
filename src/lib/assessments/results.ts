@@ -76,6 +76,8 @@ export interface ResultSheet {
   feedback: string | null;
   /** Anciennes phrases liées par identifiant (avant US-84) : lecture seule. */
   comments: string[];
+  /** Note bonus de certification : « +x,x point(s) sur la moyenne » (effet réel), ou absent. */
+  bonusLine?: string | null;
 }
 
 interface Input {

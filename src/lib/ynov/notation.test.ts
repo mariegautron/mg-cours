@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  averageWithBonus,
   criteriaTotal,
   effectiveMaxScore,
   noteProgress,
@@ -117,5 +118,34 @@ describe("criteriaTotal", () => {
   it("renvoie null sans critère noté (aucun critère, ou bonus seuls)", () => {
     expect(criteriaTotal([])).toBeNull();
     expect(criteriaTotal([{ weight: 0.5, is_bonus: true }])).toBeNull();
+  });
+});
+
+describe("averageWithBonus (jamais pénalisant)", () => {
+  const reg = [
+    { value: 12, kind: "individual" as const },
+    { value: 10, kind: "group" as const },
+  ];
+  it("une bonne note bonus remonte la moyenne", () => {
+    const r = averageWithBonus(reg, [{ value: 20, kind: "individual" as const }]);
+    // sans bonus : (12×3 + 10×1) / 4 = 11,5 ; avec : (36 + 10 + 60) / 7 ≈ 15,14
+    expect(r.average).toBeCloseTo(106 / 7, 5);
+    expect(r.bonusEffect).toBeCloseTo(106 / 7 - 11.5, 5);
+  });
+  it("une note bonus basse ne baisse jamais la moyenne", () => {
+    const r = averageWithBonus(reg, [{ value: 2, kind: "individual" as const }]);
+    expect(r.average).toBeCloseTo(11.5, 5);
+    expect(r.bonusEffect).toBe(0);
+  });
+  it("sans bonus ou sans autre note : moyenne des notes normales", () => {
+    expect(averageWithBonus(reg, []).bonusEffect).toBeNull();
+    expect(averageWithBonus([], [{ value: 20, kind: "individual" as const }]).average).toBeNull();
+  });
+  it("plafond à 20", () => {
+    const r = averageWithBonus(
+      [{ value: 19.5, kind: "individual" as const }],
+      [{ value: 20, kind: "individual" as const }],
+    );
+    expect(r.average).toBeLessThanOrEqual(20);
   });
 });

@@ -162,6 +162,36 @@ export function weightedAverage(grades: readonly GradeInput[]): WeightedResult {
   };
 }
 
+export interface BonusResult extends WeightedResult {
+  /**
+   * Points que le bonus ajoute à la moyenne (jamais négatif), ou `null` sans note bonus ou sans
+   * autre note : alors la moyenne est celle des notes normales.
+   */
+  bonusEffect: number | null;
+}
+
+/**
+ * Moyenne avec note(s) bonus (règle « jamais pénalisant ») : moyenne finale = le plus élevé de la
+ * moyenne SANS le bonus et de la moyenne pondérée AVEC le bonus, puis plafond à 20. Une note bonus
+ * basse ou une absence de certification ne baisse donc jamais la moyenne.
+ */
+export function averageWithBonus(
+  regular: readonly GradeInput[],
+  bonus: readonly GradeInput[],
+): BonusResult {
+  const base = weightedAverage(regular);
+  if (base.average === null || bonus.length === 0) return { ...base, bonusEffect: null };
+  const withBonus = weightedAverage([...regular, ...bonus]);
+  const better = (withBonus.average ?? 0) > base.average;
+  const average = Math.min(20, better ? (withBonus.average ?? base.average) : base.average);
+  return {
+    points: better ? withBonus.points : base.points,
+    weight: better ? withBonus.weight : base.weight,
+    average,
+    bonusEffect: Math.max(0, average - base.average),
+  };
+}
+
 export interface NoteProgress {
   requirement: NoteRequirement;
   enteredGroup: number;

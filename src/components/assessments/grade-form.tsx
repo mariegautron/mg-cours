@@ -1,5 +1,6 @@
 "use client";
 
+import { scaleToPoints, type ScaleBand } from "@/lib/assessments/score-scale";
 import { CriterionExpectations } from "@/components/assessments/criterion-expectations";
 import { checksKey, splitDescription } from "@/lib/assessments/expectations";
 import { useOnline } from "@/lib/use-online";
@@ -98,6 +99,8 @@ export function GradeForm({
   others = [],
   submissions,
   absenceRule = "keep_group_grade",
+  bonusScale = null,
+  bonusEffectLine = null,
 }: {
   /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
   id: string;
@@ -137,6 +140,10 @@ export function GradeForm({
   others?: OtherCopy[];
   /** Rendu de la personne ou du groupe (US-146) ; `undefined` : pas de suivi des rendus. */
   submissions?: SubmissionLine[];
+  /** Barème d'une note bonus de certification : le score saisi donne la note sur 20. */
+  bonusScale?: ScaleBand[] | null;
+  /** « Bonus certification : +x point(s) sur la moyenne » pour cette personne (note enregistrée). */
+  bonusEffectLine?: string | null;
   /** Règle de l'école pour une absence excusée sur une note de groupe (US-162). */
   absenceRule?: "keep_group_grade" | "makeup";
 }) {
@@ -157,6 +164,10 @@ export function GradeForm({
     ),
   );
   const [directValue, setDirectValue] = useState(String(grade?.value ?? ""));
+  const [rawScore, setRawScore] = useState(
+    grade?.raw_score === null || grade?.raw_score === undefined ? "" : String(grade.raw_score),
+  );
+  const scaleResult = bonusScale ? scaleToPoints(bonusScale, rawScore) : null;
   // Commentaire structuré : un commentaire par critère, points forts, progrès, commentaire libre.
   const [criterionComments, setCriterionComments] = useState(() =>
     parseCriterionComments(grade?.criterion_comments),
@@ -208,7 +219,9 @@ export function GradeForm({
     absent ||
     (grid
       ? hasScoredInput(scoringCriteria, numericScores, autoValidatedIds)
-      : directValue.trim() !== "");
+      : bonusScale
+        ? scaleResult?.status === "ok"
+        : directValue.trim() !== "");
   const scaled = totals.max !== totals.maxScore;
   const overflow = describeOverflow(totals);
   const groups = grid ? groupByAxis(grid.criteria, grid.axes) : [];
@@ -219,6 +232,7 @@ export function GradeForm({
   const snapshot = formSnapshot([
     inputs,
     directValue,
+    rawScore,
     criterionComments,
     strengths,
     progress,
@@ -238,7 +252,8 @@ export function GradeForm({
   }
   const dirty = snapshot !== saved;
   const online = useOnline();
-  const ready = absent || grid ? true : directValue.trim() !== "";
+  const ready =
+    absent || grid ? true : bonusScale ? scaleResult?.status === "ok" : directValue.trim() !== "";
 
   const dirtyRef = useRef(dirty);
   useEffect(() => {
@@ -1498,6 +1513,39 @@ export function GradeForm({
                     </>
                   ) : null}
                 </>
+              ) : bonusScale ? (
+                <div className="bg-card space-y-2 rounded-3xl border p-5 shadow-sm">
+                  <Label htmlFor={`${uid}-raw`}>
+                    Score de certification (0–{Math.max(...bonusScale.map((b) => b.max))})
+                  </Label>
+                  <Input
+                    id={`${uid}-raw`}
+                    name="rawScore"
+                    type="number"
+                    step="1"
+                    min={0}
+                    max={Math.max(...bonusScale.map((b) => b.max))}
+                    inputMode="numeric"
+                    value={rawScore}
+                    onChange={(e) => setRawScore(e.target.value)}
+                    aria-describedby={`${uid}-raw-note`}
+                  />
+                  <p id={`${uid}-raw-note`} role="status" className="text-sm">
+                    {scaleResult?.status === "ok" ? (
+                      <strong>Note bonus : {scaleResult.points} / 20</strong>
+                    ) : scaleResult?.status === "error" ? (
+                      <span className="text-destructive">{scaleResult.message}</span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Pas de score saisi : pas de note, la moyenne n’est pas touchée.
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    {bonusEffectLine ??
+                      "Bonus : la note ne peut que remonter la moyenne du module, jamais la baisser."}
+                  </p>
+                </div>
               ) : (
                 <div className="bg-card space-y-1 rounded-3xl border p-5 shadow-sm">
                   <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>

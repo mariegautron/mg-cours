@@ -1,3 +1,5 @@
+import { moduleStudentAverages } from "@/lib/assessments/queries";
+import { bonusLine, parseScale } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -55,6 +57,15 @@ export default async function CorrectPage({
     themes,
     submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
   });
+  // Note bonus : l'effet réel (enregistré) sur la moyenne de chaque personne, à côté du score.
+  if (assessment.is_bonus) {
+    const effectOf = new Map(
+      (await moduleStudentAverages(id)).map((a) => [a.student.id, a.bonusEffect]),
+    );
+    for (const item of sections.flatMap((s) => s.items)) {
+      item.bonusLine = bonusLine(effectOf.get(item.id) ?? null);
+    }
+  }
   const back = `/modules/${id}/assessments/${assessmentId}`;
 
   return (
@@ -81,6 +92,7 @@ export default async function CorrectPage({
           autoValidatedIds={assessment.auto_validated_criterion_ids}
           subject={mod?.name ?? null}
           absenceRule={absenceRule}
+          bonusScale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
           initialId={typeof copy === "string" ? copy : undefined}
           overviewHref={back}
         />

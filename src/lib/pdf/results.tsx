@@ -142,6 +142,7 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                 {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
               </Text>
             )}
+            {s.bonusLine ? <Text style={styles.overflow}>{s.bonusLine}</Text> : null}
             {s.overflow ? (
               <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
             ) : null}

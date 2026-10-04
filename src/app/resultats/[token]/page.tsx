@@ -157,7 +157,8 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
               {sheet.maxScore !== 20 && sheet.valueOn20 !== null
                 ? `Soit ${fmt(sheet.valueOn20)} / 20. `
                 : ""}
-              {sheet.overflow ? `Total avec bonus : ${sheet.overflow}.` : ""}
+              {sheet.overflow ? `Total avec bonus : ${sheet.overflow}. ` : ""}
+              {sheet.bonusLine ?? ""}
             </p>
           </section>
         )}

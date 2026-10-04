@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
 import { makeupInvariants } from "@/lib/assessments/makeup";
+import { parseScale, scaleToPoints } from "@/lib/assessments/score-scale";
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { parseResourceFiles, upsertFile } from "@/lib/resources/files";
 import { createClient } from "@/lib/supabase/server";
@@ -105,6 +106,21 @@ async function groupRequired(supabase: Supabase, moduleId: string, groupIds: str
     .select("id", { count: "exact", head: true })
     .eq("module_id", moduleId);
   return (count ?? 0) > 0;
+}
+
+/** Barème de la note bonus de l'évaluation, ou `null` (pas un bonus, ou migration pas appliquée). */
+async function readBonusScale(supabase: Supabase, assessmentId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("assessment")
+      .select("is_bonus, score_scale")
+      .eq("id", assessmentId)
+      .maybeSingle();
+    if (error || !data?.is_bonus) return null;
+    return parseScale(data.score_scale);
+  } catch {
+    return null;
+  }
 }
 
 export async function createAssessment(
@@ -333,6 +349,9 @@ async function saveGrade(
     [...new Set(criteria.flatMap((c) => (c.axisId ? [c.axisId] : [])))],
   );
 
+  // Note bonus de certification : colonnes additives, lues à part (sans elles, rien ne change).
+  const bonusBands = await readBonusScale(supabase, assessmentId);
+  let rawScore: number | null | undefined;
   let value: number | null;
   let scores: Record<string, number> = {};
   if (criteria.length > 0) {
@@ -346,6 +365,13 @@ async function saveGrade(
       : null;
   } else if (attendance !== "present") {
     value = null;
+  } else if (bonusBands) {
+    // Note bonus : le serveur calcule la note sur 20 depuis le score saisi, d'après le barème.
+    const rawField = formData.get("rawScore");
+    const result = scaleToPoints(bonusBands, typeof rawField === "string" ? rawField : null);
+    if (result.status === "error") return { error: result.message };
+    rawScore = result.status === "ok" ? Number(String(rawField).replace(",", ".")) : null;
+    value = result.status === "ok" ? result.points : null;
   } else {
     const raw = formData.get("value");
     const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;
@@ -393,6 +419,7 @@ async function saveGrade(
     progress: text.progress,
     criterion_comments: text.criterionComments,
     predefined_comment_ids: predefinedCommentIds,
+    ...(rawScore !== undefined ? { raw_score: rawScore } : {}),
   };
 
   const saved = existing

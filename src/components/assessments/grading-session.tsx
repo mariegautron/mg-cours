@@ -3,6 +3,7 @@
 import { useCallback, useId, useRef, useState } from "react";
 
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
+import type { ScaleBand } from "@/lib/assessments/score-scale";
 import { GradeForm, type CopyControls } from "@/components/assessments/grade-form";
 import type { MemberOverride } from "@/lib/assessments/attendance";
 import { Celebration } from "@/components/celebration";
@@ -35,6 +36,8 @@ export interface SessionItem {
   theme?: string | null;
   /** Rendus (fichiers et liens) de la personne ou du groupe (US-146). */
   submissions?: SubmissionLine[];
+  /** « Bonus certification : +x point(s) sur la moyenne » (note bonus, effet réel enregistré). */
+  bonusLine?: string | null;
 }
 
 export interface SessionSection {
@@ -61,6 +64,7 @@ export function GradingSession({
   activeId,
   onActivate,
   absenceRule,
+  bonusScale = null,
   initialId,
   overviewHref = "#overview",
 }: {
@@ -79,6 +83,8 @@ export function GradingSession({
   onActivate?: (id: string) => void;
   /** Règle de l'école pour une absence excusée sur une note de groupe. */
   absenceRule?: "keep_group_grade" | "makeup";
+  /** Barème d'une note bonus de certification : le score saisi donne la note. */
+  bonusScale?: ScaleBand[] | null;
   /** Copie ouverte au départ (page de correction plein écran). */
   initialId?: string;
   /** Lien « Vue d'ensemble » de la copie. */
@@ -342,6 +348,8 @@ export function GradingSession({
                   submissions={item.submissions}
                   others={others}
                   absenceRule={absenceRule}
+                  bonusScale={bonusScale}
+                  bonusEffectLine={item.bonusLine ?? null}
                   onStatus={onStatus}
                   register={register}
                   onNavigate={(direction) => {

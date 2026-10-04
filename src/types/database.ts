@@ -156,6 +156,8 @@ export type Database = {
           type: string | null
           updated_at: string
           where_to_submit: string | null
+          is_bonus: boolean
+          score_scale: Json | null
         }
         Insert: {
           auto_validated_criterion_ids?: string[]
@@ -191,6 +193,8 @@ export type Database = {
           type?: string | null
           updated_at?: string
           where_to_submit?: string | null
+          is_bonus?: boolean
+          score_scale?: Json | null
         }
         Update: {
           auto_validated_criterion_ids?: string[]
@@ -226,6 +230,8 @@ export type Database = {
           type?: string | null
           updated_at?: string
           where_to_submit?: string | null
+          is_bonus?: boolean
+          score_scale?: Json | null
         }
         Relationships: [
           {
@@ -672,6 +678,7 @@ export type Database = {
           student_group_id: string | null
           student_id: string | null
           updated_at: string
+          raw_score: number | null
           value: number | null
         }
         Insert: {
@@ -690,6 +697,7 @@ export type Database = {
           student_group_id?: string | null
           student_id?: string | null
           updated_at?: string
+          raw_score?: number | null
           value?: number | null
         }
         Update: {
@@ -708,6 +716,7 @@ export type Database = {
           student_group_id?: string | null
           student_id?: string | null
           updated_at?: string
+          raw_score?: number | null
           value?: number | null
         }
         Relationships: [

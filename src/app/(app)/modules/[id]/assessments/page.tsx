@@ -326,7 +326,10 @@ export default async function ModuleAssessmentsPage({
                           {a.title}
                         </Link>
                       </h3>
-                      <Pill>{a.is_group_grade ? "Groupe ×1" : "Individuelle ×3"}</Pill>
+                      <span className="flex flex-wrap gap-1.5">
+                        <Pill>{a.is_group_grade ? "Groupe ×1" : "Individuelle ×3"}</Pill>
+                        {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
+                      </span>
                     </div>
                     <p className="text-muted-foreground mb-1 text-[0.8rem]">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
@@ -399,7 +402,7 @@ export default async function ModuleAssessmentsPage({
                 </tr>
               </thead>
               <tbody>
-                {averages.map(({ student, average }) => (
+                {averages.map(({ student, average, bonusEffect }) => (
                   <tr key={student.id} className="border-t">
                     <td className="p-2">
                       <Link
@@ -411,6 +414,11 @@ export default async function ModuleAssessmentsPage({
                     </td>
                     <td className="p-2">
                       {average.average !== null ? average.average.toFixed(2) : "—"}
+                      {bonusEffect !== null && bonusEffect >= 0.005 ? (
+                        <span className="text-muted-foreground block text-xs">
+                          dont bonus certification +{bonusEffect.toFixed(2)}
+                        </span>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

@@ -117,7 +117,10 @@ export async function listCourseProgress(): Promise<Map<string, { done: number; 
 export async function loadModuleMean(moduleId: string): Promise<number[]> {
   const supabase = await createClient();
   const assessments = await listModuleAssessments(moduleId);
-  const byId = new Map(assessments.filter((a) => !a.makeup_of_id).map((a) => [a.id, a.maxScore]));
+  // Une note bonus n'entre pas dans le bilan de la classe : elle ne sert qu'à remonter une moyenne.
+  const byId = new Map(
+    assessments.filter((a) => !a.makeup_of_id && !a.is_bonus).map((a) => [a.id, a.maxScore]),
+  );
   if (byId.size === 0) return [];
   const { data } = await supabase
     .from("grade")

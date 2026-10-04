@@ -7,6 +7,7 @@ import {
   criteriaTotal,
   effectiveMaxScore,
   noteProgress,
+  averageWithBonus,
   weightedAverage,
   type GradeInput,
   type NoteProgress,
@@ -309,7 +310,8 @@ export async function moduleNoteProgress(
 ): Promise<NoteProgress> {
   const assessments = loaded ?? (await listModuleAssessments(moduleId));
   // Un rattrapage remplace l'absence excusée de l'original : il ne compte pas comme une note de plus.
-  const counted = assessments.filter((a) => !a.makeup_of_id);
+  // Une note bonus (certification) ne compte pas dans les notes exigées d'après les heures.
+  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
   const group = counted.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
   const individual = counted.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
   return noteProgress(totalHours, { group, individual });
@@ -318,6 +320,8 @@ export async function moduleNoteProgress(
 export interface StudentAverage {
   student: Tables<"student">;
   average: ReturnType<typeof weightedAverage>;
+  /** Points que la note bonus de certification ajoute à la moyenne (jamais négatif) ; `null` sans bonus. */
+  bonusEffect: number | null;
 }
 
 /** Moyenne pondérée YNOV sur 20 (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
@@ -376,7 +380,11 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
   );
 
   const perStudent = new Map<string, GradeInput[]>();
-  for (const student of allStudents.values()) perStudent.set(student.id, []);
+  const bonusPerStudent = new Map<string, GradeInput[]>();
+  for (const student of allStudents.values()) {
+    perStudent.set(student.id, []);
+    bonusPerStudent.set(student.id, []);
+  }
 
   for (const assessment of assessments) {
     const rows = gradesByAssessment.get(assessment.id) ?? [];
@@ -397,12 +405,25 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
           if (value !== null) perStudent.get(s.id)?.push({ value, kind, max });
         }
       } else if (row.student_id) {
-        perStudent.get(row.student_id)?.push({ value: row.value, kind, max });
+        // Note bonus : mise de côté, elle ne fait que remonter la moyenne (« jamais pénalisante »).
+        (assessment.is_bonus ? bonusPerStudent : perStudent)
+          .get(row.student_id)
+          ?.push({ value: row.value, kind, max });
       }
     }
   }
 
   return Array.from(allStudents.values())
-    .map((student) => ({ student, average: weightedAverage(perStudent.get(student.id) ?? []) }))
+    .map((student) => {
+      const result = averageWithBonus(
+        perStudent.get(student.id) ?? [],
+        bonusPerStudent.get(student.id) ?? [],
+      );
+      return {
+        student,
+        average: { points: result.points, weight: result.weight, average: result.average },
+        bonusEffect: result.bonusEffect,
+      };
+    })
     .sort((a, b) => a.student.last_name.localeCompare(b.student.last_name, "fr"));
 }

@@ -94,3 +94,23 @@ La facture **PDF simple n'est plus acceptée**. Deux canaux :
 L'app génère du **Factur-X** dès le départ (profil BASIC). Implémentation : `src/lib/ynov/invoice.ts`
 
 - lib CII dédiée.
+
+## Note bonus de certification (ex. Opquast)
+
+Une évaluation **individuelle** peut être marquée « note bonus de certification » (page de
+l'évaluation → « Note bonus »). Règles, appliquées par `lib/ynov/notation.ts` (`averageWithBonus`) et
+`lib/assessments/score-scale.ts` :
+
+- **Saisie** : à la correction, on saisit le **score** (0 à 1000) ; la note sur 20 se calcule par un
+  **barème à bandes** entières inclusives (modifiable ; barème Opquast proposé : 0–99 → 2, 100–199 → 4,
+  … 939–1000 → 20, bornes à confirmer avec l'école). Score hors de toutes les bandes : erreur claire.
+  Score vide : pas de note. Le serveur recalcule toujours la note depuis le score.
+- **Notes exigées** : une note bonus **ne compte pas** dans les notes exigées d'après les heures, ni
+  dans « Évaluations prévues ».
+- **Moyenne (décision provisoire, à valider par Marie)** : le bonus est **jamais pénalisant**.
+  Moyenne finale = le plus élevé de (moyenne **sans** le bonus) et (moyenne pondérée **avec** la note
+  bonus, individuelle ×3), puis plafond à **20**. Une note bonus basse ou une absence de certification
+  ne baisse donc jamais la moyenne.
+- **Affichage** : « Bonus certification : +x,x point(s) sur la moyenne » (effet réel) dans la copie, la
+  vue d'ensemble des moyennes, les appréciations, le PDF et la page étudiante ; « sans effet » quand le
+  bonus ne remonte pas la moyenne. La note bonus n'entre pas dans le bilan de classe d'un module terminé.

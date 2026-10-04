@@ -10,6 +10,8 @@ import {
 import { CorrectionOverview } from "@/components/assessments/correction-overview";
 import { AssessmentExpectations } from "@/components/assessments/assessment-expectations";
 import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
+import { BonusSettings } from "@/components/assessments/bonus-settings";
+import { parseScale } from "@/lib/assessments/score-scale";
 import { WhereToSubmit } from "@/components/assessments/where-to-submit";
 import { ExamKindForm } from "@/components/assessments/exam-kind-form";
 import { DownloadButton } from "@/components/download-button";
@@ -729,6 +731,18 @@ export default async function AssessmentPage({
                 expectations={moduleExpectations.map((e) => ({ id: e.id, label: e.label }))}
                 initialIds={evaluatedExpectations.byAssessment.get(assessmentId) ?? []}
                 available={evaluatedExpectations.available}
+              />
+            </section>
+
+            <section aria-labelledby="bonus" className={card}>
+              <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">
+                Note bonus
+              </h2>
+              <BonusSettings
+                moduleId={id}
+                assessmentId={assessmentId}
+                isBonus={!!assessment.is_bonus}
+                scale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
               />
             </section>
 

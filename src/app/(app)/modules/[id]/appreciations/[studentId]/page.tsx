@@ -1,3 +1,4 @@
+import { bonusLine } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -38,7 +39,9 @@ export default async function AppreciationPage({
     ]);
   if (!mod || !student) notFound();
 
-  const average = averages.find((a) => a.student.id === studentId)?.average.average ?? null;
+  const found = averages.find((a) => a.student.id === studentId);
+  const average = found?.average.average ?? null;
+  const bonusText = bonusLine(found?.bonusEffect ?? null);
   const own = (
     (grades ?? []) as unknown as {
       value: number | null;
@@ -88,6 +91,9 @@ export default async function AppreciationPage({
             </h2>
             <p className="text-muted-foreground text-sm">
               {average !== null ? `Note du module ${fmt(average)} sur 20` : "Pas encore de note"}
+              {bonusText && found?.bonusEffect && found.bonusEffect >= 0.005
+                ? ` · ${bonusText}`
+                : ""}
             </p>
           </div>
         </div>
