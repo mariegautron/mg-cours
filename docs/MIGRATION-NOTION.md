@@ -859,3 +859,14 @@ erreur. Restent : horaires du B2, YCODE et présentation du M2, bonnes réponses
 M2 (sauvegarde `.mbz`), 12 appréciations > 250 caractères, photos, lien corrigé ↔ ressource
 (champ à créer côté application), barème Opquast (saisie dans l'application), édition archivée
 (reportée), rapport de santé (`health.mts`) à lancer.
+
+#### Découpe des cours en briques et suppression du QCM M2 (04/10) — écrits sur le cloud
+
+- **`complements-12`** : 35 cours examinés, 33 découpés en **221 briques** (14 cours de gestion de
+  projet, 19 d'accessibilité) sur les titres `##` ; 56 sections de moins de 400 caractères
+  rattachées à la précédente ; 13 images copiées dans le stockage. Brique = ressource « Cours »
+  « <Cours> — <Section> », même matière, prête, tags du parent + mots-clés du titre + « source :
+  <cours> ». Cours d'origine conservés (tag « cours complet »), aucun lien de séance ni de module
+  ajouté. Rejouable (clé `fragment:<id parent>#<section>`) ; les cours en double sont ignorés.
+- **`complements-13`** : ressource « QCM — Accessibilité M2 (questions) » (brouillon redondant)
+  supprimée ; ses 60 questions restent dans la banque (catégorie « À classer »).
