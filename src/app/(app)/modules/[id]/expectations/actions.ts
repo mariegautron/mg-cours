@@ -6,7 +6,12 @@ import { extractText } from "unpdf";
 import { z } from "zod";
 
 import { cleanCustomLabel, nextExpectationPosition } from "@/lib/modules/custom-expectations";
-import { draftsFromText, unitsToSkeleton, type ExpectationDraft } from "@/lib/modules/expectations";
+import {
+  draftsFromText,
+  planExpectationSplits,
+  unitsToSkeleton,
+  type ExpectationDraft,
+} from "@/lib/modules/expectations";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
@@ -145,6 +150,67 @@ export async function saveExpectations(
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath(`/modules/${moduleId}/expectations`);
   redirect(`/modules/${moduleId}/expectations?saved=1`);
+}
+
+export interface SplitLongResult {
+  ok: boolean;
+  /** Attendus découpés. */
+  count?: number;
+  error?: string;
+}
+
+/**
+ * « Découper les attendus trop longs » : chaque attendu qui en contient plusieurs est scindé. Le
+ * premier fragment garde l'attendu (identité, rapprochements, séances liées) ; les suivants sont
+ * créés sans lien, juste après lui. Les attendus ajoutés à la main ne sont pas touchés.
+ */
+export async function splitLongExpectations(moduleId: string): Promise<SplitLongResult> {
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { ok: false, error: SESSION_EXPIRED };
+  const { data: mod } = await supabase
+    .from("module")
+    .select("id, owner_id")
+    .eq("id", moduleId)
+    .maybeSingle();
+  if (!mod || mod.owner_id !== auth.user.id) return { ok: false, error: NOT_FOUND.module };
+
+  const { data } = await supabase
+    .from("module_expectation")
+    .select("*")
+    .eq("module_id", moduleId)
+    .order("position");
+  const rows = (data ?? []).filter((e) => (e as { origin?: string }).origin !== "custom");
+  const plans = new Map(planExpectationSplits(rows).map((p) => [p.id, p]));
+  if (plans.size === 0) return { ok: true, count: 0 };
+
+  let position = 0;
+  for (const row of (data ?? []) as typeof rows) {
+    const plan = plans.get(row.id);
+    if (plan) {
+      const { error } = await supabase
+        .from("module_expectation")
+        .update({ label: plan.parts[0], position: position++ })
+        .eq("id", row.id);
+      if (error) return { ok: false, error: failure("découper", { kept: true }) };
+      for (const label of plan.parts.slice(1)) {
+        const { error: insertError } = await supabase
+          .from("module_expectation")
+          .insert({ module_id: moduleId, kind: "objective", label, position: position++ });
+        if (insertError) return { ok: false, error: failure("découper", { kept: true }) };
+      }
+    } else {
+      if (row.position !== position) {
+        await supabase.from("module_expectation").update({ position }).eq("id", row.id);
+      }
+      position++;
+    }
+  }
+
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
+  revalidatePath(`/modules/${moduleId}/matching`);
+  return { ok: true, count: plans.size };
 }
 
 /** « Proposer un squelette de séances depuis les unités » : séances vides à la suite des existantes. */

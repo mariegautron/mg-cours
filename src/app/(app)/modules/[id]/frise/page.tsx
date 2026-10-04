@@ -18,7 +18,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">

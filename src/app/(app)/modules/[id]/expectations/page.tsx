@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { proposeSkeleton } from "@/app/(app)/modules/[id]/expectations/actions";
 import { CustomExpectations } from "@/components/modules/custom-expectations";
+import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
+import { planExpectationSplits } from "@/lib/modules/expectations";
 import { ExpectationsEditor } from "@/components/modules/expectations-editor";
 import { Button } from "@/components/ui/button";
 import { splitExpectations } from "@/lib/modules/custom-expectations";
@@ -61,7 +63,11 @@ export default async function ExpectationsPage({
         </p>
       ) : null}
 
+      <SplitLongExpectations moduleId={mod.id} plans={planExpectationSplits(school)} />
+
       <ExpectationsEditor
+        // Remonté quand le découpage change les attendus enregistrés (l'éditeur garde son propre état).
+        key={school.map((e) => `${e.id}:${e.label.length}`).join("|")}
         moduleId={mod.id}
         moduleHours={mod.total_hours}
         document={

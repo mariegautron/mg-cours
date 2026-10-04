@@ -99,6 +99,100 @@ export function cleanExpectationLabel(raw: string): string {
   return oneLine(raw.replace(TABLE_HEADER, " ").replace(EMPTY_COLUMNS, ""));
 }
 
+/** Mots qui ouvrent une nouvelle ligne de liste (« Les rôles… », « Un atelier… »). */
+const LINE_STARTERS = new Set(["le", "la", "les", "l'", "l’", "des", "un", "une", "du"]);
+/** Mots qui ne terminent jamais une ligne : le mot suivant en fait partie (« de Scrum »). */
+const CONNECTORS = new Set([
+  "de",
+  "d'",
+  "d’",
+  "du",
+  "des",
+  "en",
+  "et",
+  "à",
+  "au",
+  "aux",
+  "la",
+  "le",
+  "les",
+  "l'",
+  "l’",
+  "un",
+  "une",
+  "pour",
+  "sur",
+  "avec",
+  "vs",
+  "par",
+  "dans",
+  "ou",
+  "sans",
+  "entre",
+  "selon",
+]);
+/** Noms propres du domaine qui prennent une majuscule au milieu d'une ligne. */
+const PROPER_NOUNS = new Set([
+  "agile",
+  "scrum",
+  "kanban",
+  "xp",
+  "safe",
+  "jira",
+  "trello",
+  "git",
+  "github",
+  "gitlab",
+  "product",
+  "owner",
+  "master",
+  "backlog",
+  "sprint",
+  "figma",
+  "docker",
+  "linux",
+  "web",
+]);
+const RUN_ON_MIN_LENGTH = 50;
+
+const bare = (word: string) => word.toLowerCase().replace(/[:;,.()]/g, "");
+
+/**
+ * Lignes d'une liste que l'extraction du PDF a collées sur une seule : « Création d'un backlog
+ * produit Construction d'un board Scrum ». On coupe devant un déterminant (« Les », « Un »…) ou
+ * devant un mot à majuscule qui suit un mot en minuscules ; jamais après un mot de liaison, jamais
+ * devant un nom propre connu, jamais pour un fragment de moins de deux mots. Heuristique : le texte
+ * court (moins de 50 caractères) reste entier, et l'aperçu avant application laisse corriger.
+ */
+function splitRunOnLines(text: string): string[] {
+  if (text.length < RUN_ON_MIN_LENGTH) return [text];
+  const words = text.split(" ");
+  const lines: string[][] = [[]];
+  words.forEach((word, i) => {
+    const prev = words[i - 1];
+    const current = lines[lines.length - 1];
+    const capital = /^[A-ZÀ-Ý]/.test(word);
+    const starter = LINE_STARTERS.has(bare(word)) || /^[LD][’']/.test(word);
+    const cut =
+      i > 0 &&
+      current.length >= 2 &&
+      capital &&
+      !CONNECTORS.has(bare(prev)) &&
+      !/[,;]$/.test(prev) &&
+      !PROPER_NOUNS.has(bare(word)) &&
+      (starter || /^[a-zà-ÿ]/.test(prev));
+    if (cut) lines.push([word]);
+    else current.push(word);
+  });
+  // Un fragment d'un seul mot appartient à la ligne d'avant (« … Scrum »).
+  const merged: string[][] = [];
+  for (const line of lines) {
+    if (line.length < 2 && merged.length) merged[merged.length - 1].push(...line);
+    else merged.push(line);
+  }
+  return merged.map((l) => l.join(" "));
+}
+
 /**
  * Découpe un attendu qui en contient plusieurs : le titre d'abord (sans « : »), puis un élément par
  * puce ; un retour à la ligne suivi d'une majuscule sépare aussi deux éléments (liste du PDF sans
@@ -114,8 +208,28 @@ export function splitExpectationLabel(raw: string): string[] {
     .split("\n")
     .flatMap((line) => line.split(INLINE_BULLET))
     .map((p) => oneLine(p).replace(/\s*:\s*$/, ""))
-    .filter((p) => p.length >= 3);
+    .filter((p) => p.length >= 3)
+    .flatMap(splitRunOnLines);
   return parts.length > 1 ? parts : [cleanExpectationLabel(raw)].filter(Boolean);
+}
+
+export interface SplitPlan {
+  id: string;
+  kind: ExpectationKind;
+  /** Libellé actuel. */
+  label: string;
+  /** Titre conservé (le premier fragment garde l'identité et les liens) puis les nouveaux attendus. */
+  parts: string[];
+}
+
+/** « Découper les attendus trop longs » : ce qui serait scindé, sans rien modifier. */
+export function planExpectationSplits(
+  expectations: { id: string; kind: ExpectationKind; label: string }[],
+): SplitPlan[] {
+  return expectations.flatMap((e) => {
+    const parts = splitExpectationLabel(e.label);
+    return parts.length > 1 ? [{ id: e.id, kind: e.kind, label: e.label, parts }] : [];
+  });
 }
 
 const UNIT_ROW = /(?:^|\s)(\d{1,2})\s*[.)]?\s+(FFP|TDP)\s+(\d{1,3}(?:[.,]\d)?)\s*h(?:eures?)?\b/gi;

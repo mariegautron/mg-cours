@@ -56,7 +56,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   const phases = project ? parsePhases(project.brief_md) : [];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">

@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
+import { planExpectationSplits } from "@/lib/modules/expectations";
 import { CUSTOM_ORIGIN_LABEL, isCustomExpectation } from "@/lib/modules/custom-expectations";
 import {
   coverageState,
@@ -150,7 +152,7 @@ export default async function MatchingPage({
     `/modules/${mod.id}/matching?e=${expectationId}${f === "all" ? "" : `&f=${f}`}`;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
@@ -169,6 +171,11 @@ export default async function MatchingPage({
         </Button>
       </div>
 
+      <SplitLongExpectations
+        moduleId={mod.id}
+        plans={planExpectationSplits(expectations.filter((e) => !isCustomExpectation(e)))}
+      />
+
       {expectations.length === 0 ? (
         <div className="space-y-4">
           <p className="bg-card rounded-3xl border border-dashed p-5 text-sm">
@@ -186,7 +193,7 @@ export default async function MatchingPage({
         <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
           <aside
             aria-labelledby="att"
-            className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:w-[26rem] lg:flex-none"
+            className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:w-[26rem] lg:flex-none xl:w-[30%] xl:min-w-[26rem]"
           >
             <h2 id="att" className="font-heading text-xl font-bold">
               Les {rows.length} attendus
@@ -448,7 +455,7 @@ export default async function MatchingPage({
           {open && preview ? (
             <aside
               aria-labelledby="apercu"
-              className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:sticky lg:top-4 lg:w-[22rem] lg:flex-none"
+              className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:sticky lg:top-4 lg:w-[22rem] lg:flex-none xl:w-[28%] xl:min-w-[22rem]"
             >
               <div className="flex items-start justify-between gap-2">
                 <h3 id="apercu" className="font-heading text-lg font-bold">

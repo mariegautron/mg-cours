@@ -40,7 +40,7 @@ export default async function ReuseProjectPage({
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-5">
       {projects.length === 0 || !chosen ? (
         <div className="bg-card max-w-xl space-y-3 rounded-3xl border border-dashed p-6">
           <h1 className="font-heading text-2xl font-bold">Partir d’un projet existant</h1>

@@ -237,7 +237,7 @@ export default async function AssessmentPage({
   const toneOf = { ok: "ok", warn: "warn", build: "warn" } as const;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">

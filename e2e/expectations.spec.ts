@@ -132,3 +132,51 @@ test("scinder un attendu fusionné en plusieurs attendus", async ({ page }) => {
     "Différence agile vs cycle en V",
   );
 });
+
+test("découper en une action les attendus trop longs : aperçu, confirmation, liens conservés", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill("marie@local.test");
+  await page.getByLabel("Mot de passe").fill("password123");
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await page.waitForURL("**/dashboard");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+
+  await page.goto("/modules/new");
+  await page.getByLabel("Nom du module").fill(`Découper ${Date.now()}`);
+  await page.getByLabel("Année").fill("2026");
+  await page.getByLabel("Nombre d’heures total").fill("21");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.waitForURL(/\/modules\/[0-9a-f-]{36}$/);
+  const moduleUrl = page.url();
+  await page.goto(`${moduleUrl}/expectations`);
+  await page.waitForLoadState("networkidle");
+
+  await page
+    .getByLabel(/Ou coller le texte/)
+    .fill("Atelier de poker planning Planification suite en sprint backlog Néant Néant");
+  await page.getByRole("button", { name: "Lire ce texte" }).click();
+  await expect(page.getByLabel("Objectif 1", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Enregistrer les attendus" }).click();
+  await page.waitForURL(/saved=1/);
+
+  // Aperçu, puis confirmation : un attendu devient deux.
+  await expect(page.getByRole("heading", { name: "1 attendu à découper" })).toBeVisible();
+  await page.getByRole("button", { name: "Découper les attendus trop longs" }).click();
+  await expect(page.getByText("Aperçu du découpage")).toBeVisible();
+  await expect(page.getByText("Planification suite en sprint backlog").first()).toBeVisible();
+  await page.getByRole("button", { name: "Confirmer le découpage" }).click();
+  await expect(page.getByText(/1 attendu découpé\./)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByLabel("Objectif 1", { exact: true })).toHaveValue(
+    "Atelier de poker planning",
+  );
+  await expect(page.getByLabel("Objectif 2", { exact: true })).toHaveValue(
+    "Planification suite en sprint backlog",
+  );
+
+  // Le Rapprochement propose la même action quand il reste des attendus à découper (aucun ici).
+  await page.goto(`${moduleUrl}/matching`);
+  await expect(page.getByRole("heading", { name: /à découper/ })).toHaveCount(0);
+});
