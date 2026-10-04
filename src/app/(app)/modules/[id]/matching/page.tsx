@@ -21,6 +21,7 @@ import { CUSTOM_ORIGIN_LABEL, isCustomExpectation } from "@/lib/modules/custom-e
 import {
   coverageState,
   formatCoverage,
+  isWholeCourse,
   MATCH_LEVEL_LABELS,
   matchResources,
   summarizeCoverage,
@@ -303,6 +304,7 @@ export default async function MatchingPage({
                                   {resource.title}
                                 </Link>
                                 <KindBadge kind={resource.kind} />
+                                {isWholeCourse(resource) ? <Pill>Cours complet</Pill> : null}
                                 <StatusBadge status={resource.status} />
                               </div>
                               <p>

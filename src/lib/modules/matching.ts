@@ -136,6 +136,13 @@ function wordsOf(resource: MatchableResource): PreparedWords {
   return words;
 }
 
+/** Étiquette des cours entiers, découpés par ailleurs en briques « Cours — Section ». */
+export const WHOLE_COURSE_TAG = "cours complet";
+
+export function isWholeCourse(resource: Pick<MatchableResource, "tags">): boolean {
+  return resource.tags.some((t) => t.trim().toLowerCase() === WHOLE_COURSE_TAG);
+}
+
 export function matchResources<R extends MatchableResource>(
   expectationLabel: string,
   resources: R[],
@@ -190,7 +197,13 @@ export function matchResources<R extends MatchableResource>(
     }
   }
   return matches
-    .sort((a, b) => b.score - a.score || a.resource.title.localeCompare(b.resource.title, "fr"))
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        // À score égal, les briques passent avant le cours complet dont elles sont issues.
+        Number(isWholeCourse(a.resource)) - Number(isWholeCourse(b.resource)) ||
+        a.resource.title.localeCompare(b.resource.title, "fr"),
+    )
     .slice(0, limit);
 }
 

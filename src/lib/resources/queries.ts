@@ -29,11 +29,19 @@ async function moduleUsage(): Promise<Map<string, number>> {
   return new Map(Array.from(byResource, ([id, set]) => [id, set.size]));
 }
 
+const RESOURCE_LIST_COLUMNS =
+  "id, owner_id, title, description, url, category, tags, files, archived_at, created_at, updated_at, kind, audience, status, intent_note";
+
 export async function listResources(
   filters: ResourceListFilters = {},
 ): Promise<ResourceWithUsage[]> {
   const supabase = await createClient();
-  let query = supabase.from("resource").select("*").order("updated_at", { ascending: false });
+  // Le contenu (long : cours entiers) n'est lu que pour la recherche ; la liste n'en a pas besoin.
+  const searching = Boolean(filters.q?.trim());
+  let query = supabase
+    .from("resource")
+    .select(searching ? "*" : RESOURCE_LIST_COLUMNS)
+    .order("updated_at", { ascending: false });
 
   if (!filters.archived) query = query.is("archived_at", null);
   if (filters.category) query = query.eq("category", filters.category);
@@ -43,7 +51,11 @@ export async function listResources(
   if (filters.audience) query = query.eq("audience", filters.audience);
   if (filters.status) query = query.eq("status", filters.status);
 
-  const [{ data }, usage] = await Promise.all([query, moduleUsage()]);
+  const [{ data: rows }, usage] = await Promise.all([query, moduleUsage()]);
+  const data = ((rows ?? []) as unknown as Omit<Tables<"resource">, "content">[]).map((r) => ({
+    content: null,
+    ...r,
+  })) as Tables<"resource">[];
   // La recherche (titre, description, tags, contenu ; sans accent ni casse) se fait ici : le
   // volume est celui d'une bibliothèque personnelle et Postgres ne replie pas les accents.
   return searchResources(data ?? [], filters.q ?? "").map(({ resource, excerpt }) => ({

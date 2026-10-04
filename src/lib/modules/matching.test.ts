@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   coverageState,
   formatCoverage,
+  isWholeCourse,
   keywords,
   matchLevel,
   matchPercent,
@@ -154,5 +155,20 @@ describe("niveau de correspondance (US-153)", () => {
     expect(m.percent).toBe(58);
     expect(m.reason).toContain("les tags (agile)");
     expect(m.reason).toContain("le titre (scrum)");
+  });
+});
+
+describe("cours complet et briques", () => {
+  it("à score égal, les briques passent avant le cours complet", () => {
+    const base = { description: null, content: null };
+    const resources = [
+      { ...base, id: "parent", title: "Agile", tags: ["agile", "Cours complet"] },
+      { ...base, id: "b2", title: "Agile — Section 2", tags: ["agile"] },
+      { ...base, id: "b1", title: "Agile — Section 1", tags: ["agile"] },
+    ];
+    const ids = matchResources("agile", resources).map((m) => m.resource.id);
+    expect(ids).toEqual(["b1", "b2", "parent"]);
+    expect(isWholeCourse(resources[0])).toBe(true);
+    expect(isWholeCourse(resources[1])).toBe(false);
   });
 });
