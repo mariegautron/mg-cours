@@ -113,6 +113,7 @@ test("correction sans perte : avancement, enregistrement automatique, garde, vue
   await expect(anaForm.getByLabel("Structure (/4)")).toHaveValue("3");
   await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
   await page.reload();
+  await page.waitForLoadState("networkidle");
   await showCriterion(page.getByRole("form", { name: ana }), "Contenu");
   await expect(page.getByRole("form", { name: ana }).getByLabel("Contenu (/6)")).toHaveValue("5");
   await anaForm.getByRole("button", { name: new RegExp(`${zoe} →`) }).click();
