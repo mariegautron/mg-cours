@@ -26,6 +26,19 @@ l'appli le dit (les liens restent copiables).
 Les variables `NEXT_PUBLIC_*` sont figées **au build** : après modification → **redéployer**.
 Ne jamais nommer un fichier d'identifiants `.env.production.local` (voir ADR-009).
 
+## Mot de passe oublié (réinitialisation par e-mail)
+
+Le lien « Mot de passe oublié ? » de la page de connexion envoie un e-mail de Supabase Auth ; le lien
+reçu ramène sur `/auth/callback` puis `/login/nouveau`. À régler **une fois** dans Supabase →
+Authentication → URL Configuration :
+
+- **Site URL** : l'URL publique de l'appli (la même que `NEXT_PUBLIC_APP_URL`, sans « / » final) ;
+- **Redirect URLs** : ajouter `https://<url publique>/auth/callback` (liste exacte, sans joker).
+
+Sans cette URL autorisée, le lien de l'e-mail est refusé. Le service d'e-mail par défaut de Supabase
+limite le nombre d'envois par heure : suffisant pour un compte personnel. La réponse de l'appli est la
+même que l'adresse existe ou non (on ne révèle pas quels comptes existent).
+
 ## Fichiers (Storage) et migrations
 
 Quatre buckets privés sont créés par les migrations : `module-documents`, `resource-files`,

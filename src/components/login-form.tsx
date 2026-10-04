@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -52,6 +53,12 @@ export function LoginForm() {
               </button>
             </div>
           </div>
+          <Link
+            href="/login/oubli"
+            className="text-primary inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-2"
+          >
+            Mot de passe oublié ?
+          </Link>
           {state.error ? <ActionError error={state.error} /> : null}
           <PendingButton
             type="submit"

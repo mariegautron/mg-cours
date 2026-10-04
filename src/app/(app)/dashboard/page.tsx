@@ -58,7 +58,8 @@ const BTN =
 
 const TODO_TONES = ["bg-primary/20 text-primary", "bg-sun/20 text-sun", "bg-mint/20 text-mint"];
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
+  const passwordChanged = (await searchParams).password === "changed";
   const today = todayInParis();
   const week = weekRange(today);
   const [
@@ -287,6 +288,11 @@ export default async function DashboardPage() {
     const range = formatTimeRange(hero.start_time, hero.end_time);
     return (
       <div className="space-y-5">
+        {passwordChanged ? (
+          <p role="status" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            Mot de passe changé. Tu es connectée.
+          </p>
+        ) : null}
         <header>
           <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
             Aujourd’hui · {dayText}
@@ -392,6 +398,11 @@ export default async function DashboardPage() {
   const kpi = focus;
   return (
     <div className="space-y-5">
+      {passwordChanged ? (
+        <p role="status" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          Mot de passe changé. Tu es connectée.
+        </p>
+      ) : null}
       <header className="flex flex-wrap items-center gap-3.5">
         <Mascot mood={alertMascotMood(summary)} className="size-14" />
         <div>
