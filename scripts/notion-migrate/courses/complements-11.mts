@@ -79,7 +79,14 @@ async function activities({ imp, page, has }: CourseContext) {
     const p = page(sourceId);
     const duration = parseMinutes(p.properties["Durée estimée"]);
     const type = (p.properties["Type"] ?? "").trim() || null;
-    const when = frenchDateTimeRange(p.properties["Date et heure"]);
+    const rawWhen = frenchDateTimeRange(p.properties["Date et heure"]);
+    // Horaire avant 7 h : saisie manifestement fausse dans Notion, ignorée (signalée).
+    const early = rawWhen.start !== null && Number(rawWhen.start.split(":")[0]) < 7;
+    if (early)
+      imp.warnings.push(
+        `« ${p.title} » : horaire ${rawWhen.start} ignoré (avant 7 h, probable erreur de saisie dans Notion).`,
+      );
+    const when = early ? { ...rawWhen, start: null } : rawWhen;
     const objective = objectiveText(p.properties["Objectifs pédagogiques"]);
     const state = prepStateOf(p.properties["État"]);
     if (!duration && !type && !when.start && !objective && !state) continue;
