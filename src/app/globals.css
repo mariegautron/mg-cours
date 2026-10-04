@@ -246,3 +246,8 @@ html[data-text-size="large"] {
 html[data-text-size="xlarge"] {
   font-size: 125%;
 }
+
+/* Focus et défilement jamais cachés par une barre d'actions collée en bas (RGAA 4.1 / WCAG 2.4.11). */
+html {
+  scroll-padding-bottom: 6rem;
+}

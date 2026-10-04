@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Camera, Plus, Upload } from "lucide-react";
@@ -140,7 +141,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             <option value="">Tous</option>
             {modules.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} ({m.year})
+                {m.name} ({schoolYearOf(m.year)})
               </option>
             ))}
           </select>

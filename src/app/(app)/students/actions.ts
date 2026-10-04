@@ -1,5 +1,6 @@
 "use server";
 
+import { attachGroupsToUngroupedAssessments } from "@/lib/assessments/attach-groups";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -400,6 +401,11 @@ export async function confirmStudentsImport(
       if (error || !made) return { error: failure("créer les groupes") };
       for (const g of made) idByGroup.set(g.name, g.id);
       groupsCreated = made.length;
+      await attachGroupsToUngroupedAssessments(
+        supabase,
+        target.moduleId,
+        made.map((g) => g.id),
+      );
     }
 
     const studentByRow = new Map<number, string>();

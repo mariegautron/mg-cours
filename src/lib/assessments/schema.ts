@@ -100,7 +100,6 @@ export const assessmentSchema = z.object({
   durationMinutes: optionalMinutes,
   studentGroupIds: z
     .array(z.string().uuid("Groupe invalide."))
-    .min(1, "Choisis au moins un groupe.")
     .transform((ids) => Array.from(new Set(ids))),
   gradingGridId: z
     .string()

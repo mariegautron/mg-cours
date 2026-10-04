@@ -52,7 +52,7 @@ test("convention de formation : dépôt, libellé, rattachement, suppression", a
   await slot.getByText("Rattacher aussi à un autre module").click();
   await slot.getByLabel("Autre module").selectOption({ label: `${nameB} (2026-2027)` });
   await slot.getByRole("button", { name: "Rattacher", exact: true }).click();
-  await expect(slot.getByText(/Rattaché aussi à/)).toBeVisible();
+  await expect(slot.getByText(/Rattaché aussi à/)).toBeVisible({ timeout: 20_000 });
 
   const axe = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

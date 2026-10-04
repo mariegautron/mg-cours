@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -77,7 +78,7 @@ export default async function ReuseProjectPage({
                     >
                       <strong>{p.title}</strong>
                       <span className="text-muted-foreground block text-[0.8rem]">
-                        {p.moduleName} ({p.year})
+                        {p.moduleName} ({schoolYearOf(p.year)})
                       </span>
                     </Link>
                   </li>

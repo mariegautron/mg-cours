@@ -1,5 +1,6 @@
 "use client";
 
+import { schoolYearOf } from "@/lib/modules/list-state";
 import { useActionState } from "react";
 import Link from "next/link";
 
@@ -91,7 +92,7 @@ export function StudentsImportForm({
               <option value="">Aucun : promotion seulement</option>
               {modules.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} ({m.year})
+                  {m.name} ({schoolYearOf(m.year)})
                 </option>
               ))}
             </select>

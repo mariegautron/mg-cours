@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import { EmptyState } from "@/components/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -228,7 +229,7 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
                   <Link href={`/modules/${m.id}`} className="underline underline-offset-2">
                     {m.name}
                   </Link>
-                  <span className="text-muted-foreground">{m.year}</span>
+                  <span className="text-muted-foreground">{schoolYearOf(m.year)}</span>
                 </li>
               ))}
             </ul>

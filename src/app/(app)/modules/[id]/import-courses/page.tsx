@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -69,7 +70,8 @@ export default async function ImportCoursesPage({
               <option value="">Choisir un module…</option>
               {sources.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.year}) — {s.courseCount} séance{s.courseCount > 1 ? "s" : ""}
+                  {s.name} ({schoolYearOf(s.year)}) — {s.courseCount} séance
+                  {s.courseCount > 1 ? "s" : ""}
                   {s.archived ? " · archivé" : ""}
                 </option>
               ))}

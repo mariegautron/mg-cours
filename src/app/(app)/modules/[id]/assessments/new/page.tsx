@@ -27,21 +27,21 @@ export default async function NewAssessmentPage({
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Nouvelle évaluation — {mod.name}</h1>
       {groups.length === 0 ? (
-        <p className="text-muted-foreground">
-          Crée d’abord un groupe pour ce module (page du module → section Groupes).
+        <p role="status" className="text-muted-foreground">
+          Aucun groupe pour l’instant : l’évaluation sera rattachée à un groupe « Toute la promotion
+          », où tu ajouteras les étudiant·es ensuite.
         </p>
-      ) : (
-        <AssessmentForm
-          action={createAssessment.bind(null, id)}
-          moduleId={id}
-          groups={groups}
-          grids={grids}
-          courses={courses}
-          initialGridId={
-            typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
-          }
-        />
-      )}
+      ) : null}
+      <AssessmentForm
+        action={createAssessment.bind(null, id)}
+        moduleId={id}
+        groups={groups}
+        grids={grids}
+        courses={courses}
+        initialGridId={
+          typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
+        }
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardList, MessageSquareText } from "lucide-react";
@@ -52,7 +53,7 @@ export default async function AssessmentsPage() {
                 <div>
                   <p className="font-medium">{a.title}</p>
                   <p className="text-muted-foreground text-sm">
-                    {a.module?.name} ({a.module?.year}) ·{" "}
+                    {a.module?.name} ({a.module ? schoolYearOf(a.module.year) : ""}) ·{" "}
                     {a.groups.map((g) => g.name).join(", ") || "—"}
                   </p>
                 </div>

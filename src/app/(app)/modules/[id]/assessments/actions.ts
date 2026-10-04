@@ -93,6 +93,20 @@ const subjectColumns = (d: {
   prep_status: d.prepStatus as "to_build" | "ready" | "provided",
 });
 
+/**
+ * Au moins un groupe est exigé seulement quand le module en a : on peut prévoir les évaluations
+ * avant l'arrivée des étudiant·es. Les groupes créés ensuite les rejoignent
+ * (`attachGroupsToUngroupedAssessments`).
+ */
+async function groupRequired(supabase: Supabase, moduleId: string, groupIds: string[]) {
+  if (groupIds.length > 0) return false;
+  const { count } = await supabase
+    .from("student_group")
+    .select("id", { count: "exact", head: true })
+    .eq("module_id", moduleId);
+  return (count ?? 0) > 0;
+}
+
 export async function createAssessment(
   moduleId: string,
   _prev: AssessmentFormState,
@@ -103,6 +117,9 @@ export async function createAssessment(
 
   const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
+  if (await groupRequired(supabase, moduleId, groupIds)) {
+    return { fieldErrors: { studentGroupIds: ["Choisis au moins un groupe."] } };
+  }
   if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
   }
@@ -137,9 +154,11 @@ export async function createAssessment(
 
   if (error || !data) return { error: failure("enregistrer", { kept: true }) };
 
-  const { error: groupsError } = await supabase
-    .from("assessment_group")
-    .insert(groupIds.map((student_group_id) => ({ assessment_id: data.id, student_group_id })));
+  const { error: groupsError } = groupIds.length
+    ? await supabase
+        .from("assessment_group")
+        .insert(groupIds.map((student_group_id) => ({ assessment_id: data.id, student_group_id })))
+    : { error: null };
   if (groupsError) {
     await supabase.from("assessment").delete().eq("id", data.id);
     return { error: failure("enregistrer", { kept: true }) };
@@ -165,6 +184,9 @@ export async function updateAssessment(
 
   const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
+  if (await groupRequired(supabase, moduleId, groupIds)) {
+    return { fieldErrors: { studentGroupIds: ["Choisis au moins un groupe."] } };
+  }
   if (!(await groupsBelongToModule(supabase, moduleId, groupIds))) {
     return { fieldErrors: { studentGroupIds: ["Groupe inconnu pour ce module."] } };
   }
@@ -569,9 +591,7 @@ export async function createSchoolGrade(
     .from("student_group")
     .select("id")
     .eq("module_id", moduleId);
-  if (!groups || groups.length === 0) {
-    return { error: "Crée d’abord un groupe pour ce module : la note s’y rattache." };
-  }
+  if (!groups) return { error: failure("enregistrer", { kept: true }) };
   const { data, error } = await supabase
     .from("assessment")
     .insert({
@@ -586,9 +606,11 @@ export async function createSchoolGrade(
     .select("id")
     .single();
   if (error || !data) return { error: failure("enregistrer", { kept: true }) };
-  const { error: groupsError } = await supabase
-    .from("assessment_group")
-    .insert(groups.map((g) => ({ assessment_id: data.id, student_group_id: g.id })));
+  const { error: groupsError } = groups.length
+    ? await supabase
+        .from("assessment_group")
+        .insert(groups.map((g) => ({ assessment_id: data.id, student_group_id: g.id })))
+    : { error: null };
   if (groupsError) {
     await supabase.from("assessment").delete().eq("id", data.id);
     return { error: failure("enregistrer", { kept: true }) };

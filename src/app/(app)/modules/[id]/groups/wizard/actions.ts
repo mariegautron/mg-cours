@@ -1,5 +1,6 @@
 "use server";
 
+import { attachGroupsToUngroupedAssessments } from "@/lib/assessments/attach-groups";
 import { revalidatePath } from "next/cache";
 
 import { drawGroupThemes } from "@/app/(app)/modules/[id]/project/actions";
@@ -79,6 +80,12 @@ export async function createGroupsFromWizard(
       );
     return { error: failure("ajouter les membres") };
   }
+
+  await attachGroupsToUngroupedAssessments(
+    supabase,
+    moduleId,
+    created.map((c) => c.id),
+  );
 
   let themesMessage: string | undefined;
   if (input.assignThemes && input.type === "project") {

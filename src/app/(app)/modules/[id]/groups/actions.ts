@@ -1,5 +1,6 @@
 "use server";
 
+import { attachGroupsToUngroupedAssessments } from "@/lib/assessments/attach-groups";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -42,6 +43,7 @@ export async function createGroup(
     };
   }
 
+  await attachGroupsToUngroupedAssessments(supabase, moduleId, [data.id]);
   revalidatePath(`/modules/${moduleId}`);
   redirect(`/modules/${moduleId}/groups/${data.id}`);
 }

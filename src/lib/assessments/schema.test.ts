@@ -45,12 +45,9 @@ describe("readAssessmentForm", () => {
     expect(parsed.success && parsed.data.studentGroupIds).toEqual([G1, G2]);
   });
 
-  it("exige au moins un groupe", () => {
+  it("accepte aucun groupe : le serveur l'exige seulement si le module en a", () => {
     const parsed = readAssessmentForm(form([]));
-    expect(parsed.success).toBe(false);
-    expect(parsed.error?.flatten().fieldErrors.studentGroupIds).toEqual([
-      "Choisis au moins un groupe.",
-    ]);
+    expect(parsed.success && parsed.data.studentGroupIds).toEqual([]);
   });
 
   it("barème : vide → null, décimal accepté (virgule ou point), zéro refusé", () => {

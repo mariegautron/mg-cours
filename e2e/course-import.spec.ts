@@ -59,7 +59,7 @@ test("US-58 : importer des séances d'un autre module sans dates ni statut", asy
   await page.getByRole("link", { name: "Depuis un autre module" }).click();
   await page
     .getByLabel("Module source", { exact: true })
-    .selectOption({ label: `${sourceName} (2026) — 2 séances` });
+    .selectOption({ label: `${sourceName} (2026-2027) — 2 séances` });
   await page.getByRole("button", { name: "Voir les séances" }).click();
 
   await expect(page.getByRole("button", { name: /^Importer 0 séance/ })).toBeDisabled();

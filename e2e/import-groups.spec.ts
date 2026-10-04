@@ -25,7 +25,9 @@ test("US-77 : import vers les groupes d'un module et ajout de membres en masse",
 
   // Import : la colonne « groupe » = groupe du module, plus un groupe pour tout le monde.
   await page.goto("/students/import");
-  await page.getByLabel("Module", { exact: true }).selectOption({ label: `${moduleName} (2026)` });
+  await page
+    .getByLabel("Module", { exact: true })
+    .selectOption({ label: `${moduleName} (2026-2027)` });
   await page.getByLabel("un groupe du module (créé s’il n’existe pas)").check();
   await page.getByLabel("Ajouter tout le monde au groupe").fill(`Classe ${stamp}`);
   const csv =
