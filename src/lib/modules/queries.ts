@@ -90,24 +90,26 @@ export async function getCourse(id: string): Promise<CourseWithResources | null>
   };
 }
 
-/** Ressource du sélecteur : champs cherchés en plus (US-56). */
-export type PickerSource = LinkedResource &
-  Pick<Tables<"resource">, "description" | "tags" | "content">;
+/**
+ * Ressource du sélecteur : titre, type, matière, tags, état et un début de description. Le contenu
+ * (long : cours entiers) n'est jamais envoyé au navigateur ; la recherche dans le contenu se fait
+ * côté serveur (`searchResourceContent`).
+ */
+export type PickerSource = LinkedResource & Pick<Tables<"resource">, "description" | "tags">;
 
-/** Contenu Markdown gardé par ressource pour la recherche du sélecteur (envoyé au navigateur). */
-const PICKER_CONTENT_LIMIT = 20000;
+const PICKER_DESCRIPTION_LIMIT = 200;
 
 /** Ressources actives, pour le sélecteur d'un cours. */
 export async function listActiveResources(): Promise<PickerSource[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("resource")
-    .select("id, title, kind, audience, status, category, description, tags, content")
+    .select("id, title, kind, audience, status, category, description, tags")
     .is("archived_at", null)
     .order("title");
   return (data ?? []).map((r) => ({
     ...r,
-    content: r.content?.slice(0, PICKER_CONTENT_LIMIT) ?? null,
+    description: r.description?.slice(0, PICKER_DESCRIPTION_LIMIT) ?? null,
   }));
 }
 

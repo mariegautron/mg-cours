@@ -13,6 +13,7 @@ import {
 import { isResourceKind, TEACHER_KINDS, type ResourceKind } from "@/lib/resources/kind";
 import { readResourceForm } from "@/lib/resources/schema";
 import { listActiveModules } from "@/lib/modules/queries";
+import { searchResources, type SearchExcerpt } from "@/lib/resources/search";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
@@ -209,6 +210,25 @@ export async function createResourceInline(input: {
 
   revalidatePath("/resources");
   return { resource: { ...data, kind: data.kind } };
+}
+
+/**
+ * Recherche dans le contenu des ressources actives (sélecteur d'une séance) : le contenu reste côté
+ * serveur, le navigateur ne reçoit que les identifiants trouvés et un extrait.
+ */
+export async function searchResourceContent(
+  query: string,
+): Promise<{ id: string; excerpt: SearchExcerpt | null }[]> {
+  const q = query.trim();
+  if (q.length < 2 || q.length > 100) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resource")
+    .select("id, title, description, tags, content")
+    .is("archived_at", null);
+  return searchResources(data ?? [], q)
+    .slice(0, 100)
+    .map(({ resource, excerpt }) => ({ id: resource.id, excerpt }));
 }
 
 async function setArchived(id: string, archived: boolean) {

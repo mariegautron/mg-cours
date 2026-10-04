@@ -1,10 +1,10 @@
 "use client";
 
-import { useId, useMemo, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 
 import { ActionError } from "@/components/action-error";
-import { createResourceInline } from "@/app/(app)/resources/actions";
+import { createResourceInline, searchResourceContent } from "@/app/(app)/resources/actions";
 import { AudienceBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,10 +19,10 @@ import {
   pickerCategories,
   type PickerFilters,
 } from "@/lib/resources/picker";
-import { SEARCH_FIELD_LABELS, searchResource } from "@/lib/resources/search";
+import { SEARCH_FIELD_LABELS, searchResource, type SearchExcerpt } from "@/lib/resources/search";
 import { failure } from "@/lib/messages";
 
-type PickerItem = LinkedResource & Partial<Pick<PickerSource, "description" | "tags" | "content">>;
+type PickerItem = LinkedResource & Partial<Pick<PickerSource, "description" | "tags">>;
 
 const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
@@ -52,9 +52,37 @@ export function ResourcePicker({
 
   const retained = useMemo(() => new Set(retainedIds), [retainedIds]);
   const categories = useMemo(() => pickerCategories(items), [items]);
+  // Le contenu des ressources reste sur le serveur : la recherche y est faite (après une courte
+  // pause de frappe) et ne renvoie que les ressources trouvées avec un extrait.
+  const [contentHits, setContentHits] = useState<{
+    q: string;
+    byId: Map<string, SearchExcerpt | null>;
+  }>({ q: "", byId: new Map() });
+  useEffect(() => {
+    const q = filters.q.trim();
+    if (q.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      searchResourceContent(q)
+        .then((hits) => {
+          if (!cancelled) {
+            setContentHits({ q, byId: new Map(hits.map((h) => [h.id, h.excerpt])) });
+          }
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filters.q]);
+  const hits = contentHits.q === filters.q.trim() ? contentHits.byId : null;
   const visible = useMemo(
-    () => filterPickerResources(items, filters, retained),
-    [items, filters, retained],
+    () =>
+      filterPickerResources(items, { ...filters, q: "" }, retained).filter(
+        (r) => !filters.q.trim() || searchResource(r, filters.q).matched || hits?.has(r.id),
+      ),
+    [items, filters, retained, hits],
   );
   const groups = useMemo(() => {
     const split = splitRetained(visible, retained);
@@ -66,7 +94,7 @@ export function ResourcePicker({
     ];
   }, [visible, retained]);
   const excerptOf = (r: PickerItem) => {
-    const { excerpt } = searchResource(r, filters.q);
+    const excerpt = searchResource(r, filters.q).excerpt ?? hits?.get(r.id) ?? null;
     if (!excerpt) return null;
     return (
       <span className="text-muted-foreground basis-full pl-6 text-xs">
