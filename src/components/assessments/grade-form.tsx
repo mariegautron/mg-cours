@@ -243,7 +243,10 @@ export function GradeForm({
   const [saved, setSaved] = useState(snapshot);
   const [submitted, setSubmitted] = useState(snapshot);
   const [lastState, setLastState] = useState(state);
-  if (state !== lastState) {
+  // Une réponse n'est prise en compte qu'une fois tous les envois terminés : une sauvegarde
+  // automatique qui répond pendant qu'un envoi plus récent est en cours ne doit pas faire croire
+  // que la saisie la plus récente est enregistrée.
+  if (state !== lastState && !pending) {
     setLastState(state);
     if (state.saved) {
       setSaved(submitted);
