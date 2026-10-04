@@ -33,3 +33,10 @@ Légende : ✅ conforme · 🟡 fait autrement ou en partie · ⬜ pas fait. L'e
 - Année scolaire absente de six écrans qui citaient un module par son nom.
 - Pages du module lentes avec 150 ressources (calcul des extraits à chaque page) : 4 à 7 s → 1 à 2 s.
 - Déroulé d'une séance impossible à construire sans passer par le formulaire complet.
+
+## Adaptation écran (⑯)
+
+Le parcours « préparer un module » est vérifié à **320 px** (équivalent d'un zoom à 400 %) et à **768 px**
+par `e2e/responsive-journey.spec.ts` : 15 écrans, aucun défilement horizontal, axe sans violation,
+cibles tactiles d'au moins 44 px. Hors de ce parcours (correction sur téléphone `CopieMobile`, menu
+`MobileMenu`, tableaux de bord `DashTablette` / `DashMobile`), l'adaptation reste à vérifier écran par écran.

@@ -323,7 +323,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
                 ))}
               </select>
             </div>
-            <label className="flex h-9 items-center gap-2 text-sm">
+            <label className="flex min-h-11 items-center gap-2 text-sm">
               <input type="checkbox" name="archived" value="1" defaultChecked={filters.archived} />
               Archivées
             </label>
@@ -336,11 +336,11 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed p-3"
         aria-label="Création rapide"
       >
-        <div className="space-y-1">
+        <div className="max-w-full min-w-0 space-y-1">
           <Label htmlFor="draft-title">Ressource à construire</Label>
           <Input id="draft-title" name="title" required maxLength={200} placeholder="Titre" />
         </div>
-        <div className="space-y-1">
+        <div className="max-w-full min-w-0 space-y-1">
           <Label htmlFor="draft-note">Note d’intention</Label>
           <Input
             id="draft-note"

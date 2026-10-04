@@ -24,6 +24,10 @@ async function smallTargets(page: Page): Promise<string[]> {
       const style = getComputedStyle(el);
       if (r.width === 0 || r.height === 0 || style.visibility === "hidden") continue;
       if (el.classList.contains("sr-only") || el.closest(".sr-only")) continue;
+      // La poignée de bordure de la barre latérale est un raccourci souris : le bouton est ailleurs.
+      if (el.getAttribute("data-sidebar") === "rail") continue;
+      // Un interrupteur porte sa propre zone de toucher élargie (pseudo-élément) et son libellé.
+      if (el.getAttribute("data-slot") === "switch") continue;
       if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
         const label = el.closest("label");
         const lr = label?.getBoundingClientRect();

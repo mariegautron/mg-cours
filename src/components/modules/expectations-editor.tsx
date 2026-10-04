@@ -306,7 +306,7 @@ export function ExpectationsEditor({
 
         {state.error ? <ActionError error={state.error} /> : null}
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button type="submit" disabled={saving}>
             {saving ? "Enregistrement…" : "Enregistrer les attendus"}
           </Button>

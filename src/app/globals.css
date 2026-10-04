@@ -251,3 +251,32 @@ html[data-text-size="xlarge"] {
 html {
   scroll-padding-bottom: 6rem;
 }
+
+/* Cibles tactiles d'au moins 44 px sur téléphone, tablette et écrans tactiles (RGAA 4.1 / WCAG 2.5.8). */
+@media (max-width: 64rem), (pointer: coarse) {
+  button:not([data-sidebar="rail"]):not([data-slot="switch"]):not(.sr-only),
+  [data-slot="button"],
+  select,
+  textarea,
+  summary,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.sr-only) {
+    min-height: 2.75rem;
+  }
+}
+@media (max-width: 64rem), (pointer: coarse) {
+  [data-slot="button"][data-size^="icon"],
+  button[data-sidebar="trigger"],
+  [data-search-trigger] {
+    min-width: 2.75rem;
+  }
+}
+
+/* Téléphone : un bouton à libellé long passe à la ligne au lieu de déborder de l'écran. */
+@media (max-width: 40rem) {
+  [data-slot="button"] {
+    height: auto;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}

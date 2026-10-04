@@ -97,7 +97,7 @@ export function DocumentSlot({
   const headingId = `doc-${kind}-title`;
 
   return (
-    <section aria-labelledby={headingId} className="space-y-3 rounded-lg border p-4">
+    <section aria-labelledby={headingId} className="min-w-0 space-y-3 rounded-lg border p-4">
       <div>
         <h3 id={headingId} className="font-medium">
           {title}

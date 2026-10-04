@@ -49,7 +49,7 @@ test("crée un module, ajoute une séance liée à une ressource, coche un docum
   await page.getByRole("button", { name: "Enregistrer" }).click();
 
   await expect(page.getByText("Séance 1").first()).toBeVisible();
-  await expect(page.getByText(/1 sur 1 prêtes/)).toBeVisible();
+  await expect(page.getByText(/1 sur 1 prête/)).toBeVisible();
   await expect(page.getByRole("link", { name: resourceTitle })).toBeVisible();
 
   // Document administratif.

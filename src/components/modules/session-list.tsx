@@ -39,11 +39,11 @@ export function SessionList({
       className="bg-card w-full min-w-0 rounded-3xl border p-3.5 shadow-sm lg:w-80 lg:flex-none"
     >
       <h2 id="ls" className="font-heading mx-1.5 text-lg font-bold">
-        Les {courses.length} séances
+        {courses.length > 1 ? `Les ${courses.length} séances` : "La séance"}
       </h2>
       <p className="text-muted-foreground mx-1.5 mb-2 text-[0.8rem]">
         {minutes ? `${hoursLabel(minutes)} sur ${totalHours} h · ` : ""}
-        {ready} sur {courses.length} prêtes
+        {ready} sur {courses.length} {courses.length > 1 ? "prêtes" : "prête"}
       </p>
       <ol>
         {courses.map((c, i) => {
