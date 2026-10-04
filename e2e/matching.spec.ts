@@ -86,7 +86,7 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   await expect(third.getByLabel("Séance de cadrage")).toHaveCount(0);
   await expect(
     third.getByRole("link", { name: /Dire quelle séance traite cet attendu/ }),
-  ).toHaveAttribute("href", `${moduleUrl}/courses`);
+  ).toHaveAttribute("href", `${new URL(moduleUrl).pathname}/courses`);
   await expect(page.getByRole("link", { name: /Maîtriser la fiscalité.*À voir/ })).toBeVisible();
 
   // Filtre « Sans ressource » : plus aucun attendu dans ce cas ; « À construire » en garde un.

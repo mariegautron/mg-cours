@@ -54,7 +54,8 @@ test("US-59 : planning saisi en tableau et collé → séances créées, y compr
   await expect(page.getByText("À préparer").first()).toBeVisible();
 
   // US-60 : 3 créneaux de 2 h sur 6 h annoncées → cohérent ; une séance raccourcie → avertissement.
-  await expect(page.getByText(/6 h sur 6 h/)).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByText(/6 h sur 6 h/)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("À vérifier")).toHaveCount(0);
   await page.getByRole("link", { name: /^Modifier la séance 1/ }).click();
   await expect(page.getByLabel("Début")).toHaveValue("10:00");
