@@ -34,6 +34,7 @@ const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCas
 const cleanTitle = (s: string) =>
   s
     .replace(/\*\*|__/g, "")
+    .replace(/\p{Extended_Pictographic}\uFE0F?/gu, "")
     .replace(/^[^\p{L}\d]+/u, "")
     .replace(/\s+/g, " ")
     .trim();
