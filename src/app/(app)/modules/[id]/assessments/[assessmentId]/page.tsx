@@ -8,6 +8,8 @@ import {
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { CorrectionOverview } from "@/components/assessments/correction-overview";
+import { AssessmentExpectations } from "@/components/assessments/assessment-expectations";
+import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
 import { ExamKindForm } from "@/components/assessments/exam-kind-form";
 import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
@@ -40,7 +42,7 @@ import { isOralAssessment } from "@/lib/assessments/oral";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
 import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
 import { createClient } from "@/lib/supabase/server";
-import { getModuleCourses } from "@/lib/modules/queries";
+import { getModuleCourses, getModuleExpectations } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
@@ -110,11 +112,20 @@ export default async function AssessmentPage({
   params,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
-  const [assessment, grades, moduleObservations, courses] = await Promise.all([
+  const [
+    assessment,
+    grades,
+    moduleObservations,
+    courses,
+    moduleExpectations,
+    evaluatedExpectations,
+  ] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
     listModuleObservations(id),
     getModuleCourses(id),
+    getModuleExpectations(id),
+    listAssessmentExpectations([assessmentId]),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
@@ -700,9 +711,13 @@ export default async function AssessmentPage({
               <p className="text-muted-foreground mb-2 text-sm">
                 Choisis ceux que l’épreuve vérifie.
               </p>
-              <Button asChild variant="ghost">
-                <Link href={`/modules/${id}/expectations`}>Choisir les attendus</Link>
-              </Button>
+              <AssessmentExpectations
+                moduleId={id}
+                assessmentId={assessmentId}
+                expectations={moduleExpectations.map((e) => ({ id: e.id, label: e.label }))}
+                initialIds={evaluatedExpectations.byAssessment.get(assessmentId) ?? []}
+                available={evaluatedExpectations.available}
+              />
             </section>
 
             <section

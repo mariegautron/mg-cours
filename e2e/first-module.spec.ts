@@ -156,7 +156,16 @@ test("premier module : de la fiche de l'école à la première séance", async (
   // 5. Construire une séance : le déroulé, le livrable, « prête ».
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("heading", { name: "Séance 1", level: 1 })).toBeVisible();
-  await page.getByText("Prête", { exact: true }).click();
+  // Le déroulé se construit sur place : on ajoute deux ressources retenues, sans quitter la page.
+  await page.getByText("Ajouter une ressource retenue", { exact: true }).click();
+  const addButtons = page.getByRole("button", { name: /^Ajouter au déroulé/ });
+  await addButtons.first().click();
+  await expect(page.getByRole("list").filter({ hasText: "Retirer" }).first()).toBeVisible({
+    timeout: 20_000,
+  });
+  await addButtons.first().click();
+  await expect(page.getByText(/est ajoutée à la fin du déroulé/)).toBeAttached();
+  await page.getByLabel("Statut de préparation").getByText("Prête").click();
   await expect(page.getByText(/1 sur 7 prêtes/)).toBeVisible({ timeout: 20_000 });
   await axeClean(page, "séance (déroulé)");
 
@@ -183,8 +192,15 @@ test("premier module : de la fiche de l'école à la première séance", async (
   await page.waitForURL(/\/assessments\/[0-9a-f-]{36}$/, { timeout: 30_000 });
   const evalUrl = page.url();
   await expect(page.getByRole("heading", { name: `Rendu final ${stamp}`, level: 1 })).toBeVisible();
+  // Attendus évalués : on coche deux attendus du module, le compte suit.
+  await page.getByLabel("Cadrer un projet agile", { exact: true }).check();
+  await page.getByLabel("Estimer et planifier un sprint", { exact: true }).check();
+  await page.getByRole("button", { name: "Enregistrer les attendus" }).click();
+  await expect(page.getByText("2 sur 5").first()).toBeVisible({ timeout: 20_000 });
   await axeClean(page, "évaluation sans groupe");
   // Une évaluation du module compte pour l'étape « Prévoir les évaluations », même hors séance.
+  await page.goto(`${moduleUrl}/assessments`);
+  await expect(page.getByText("2 sur 5").first()).toBeVisible();
   await page.goto(moduleUrl);
   await expect(page.getByText("1 / 3 notes prévues").first()).toBeVisible();
   await page.goto(evalUrl);

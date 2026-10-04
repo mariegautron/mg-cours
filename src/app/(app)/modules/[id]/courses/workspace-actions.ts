@@ -82,6 +82,56 @@ export async function removeCourseResource(
   return { savedAt: new Date().toISOString() };
 }
 
+/**
+ * Ajoute une ressource au déroulé de la séance, en dernière position. La ressource devient aussi
+ * « retenue » pour le module (sans doublon) : elle reste proposée dans les autres séances.
+ */
+export async function addCourseResource(
+  moduleId: string,
+  courseId: string,
+  resourceId: string,
+): Promise<WorkspaceState> {
+  if (!UUID.test(resourceId)) return { error: failure("ajouter la ressource") };
+  const supabase = await createClient();
+  const [{ data: course }, { data: resource }] = await Promise.all([
+    supabase.from("course").select("id").eq("id", courseId).eq("module_id", moduleId).maybeSingle(),
+    supabase.from("resource").select("id").eq("id", resourceId).maybeSingle(),
+  ]);
+  if (!course) return { error: NOT_FOUND.course };
+  if (!resource) return { error: NOT_FOUND.resource };
+
+  const { error } = await supabase
+    .from("course_resource")
+    .upsert(
+      { course_id: courseId, resource_id: resourceId },
+      { onConflict: "course_id,resource_id", ignoreDuplicates: true },
+    );
+  if (error) return { error: failure("ajouter la ressource") };
+
+  await supabase
+    .from("module_resource")
+    .upsert(
+      { module_id: moduleId, resource_id: resourceId },
+      { onConflict: "module_id,resource_id", ignoreDuplicates: true },
+    );
+
+  // Plan : la ressource prend la dernière place (tolérant sans la table `course_plan`).
+  const { data: plan } = await supabase
+    .from("course_plan")
+    .select("deliverable, resource_order")
+    .eq("course_id", courseId)
+    .maybeSingle();
+  if (plan) {
+    const order = (plan.resource_order ?? []).filter((id: string) => id !== resourceId);
+    await supabase
+      .from("course_plan")
+      .update({ resource_order: [...order, resourceId] })
+      .eq("course_id", courseId);
+  }
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  return { savedAt: new Date().toISOString() };
+}
+
 /** Supprime la séance puis revient à la liste des séances. */
 export async function deleteCourseAndBack(moduleId: string, courseId: string): Promise<void> {
   const supabase = await createClient();

@@ -1,3 +1,6 @@
+import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
+import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
+import { getModuleExpectations } from "@/lib/modules/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -74,6 +77,12 @@ export default async function ModuleAssessmentsPage({
     getModuleCourses(id),
     getModuleProject(id),
   ]);
+
+  const [expectations, evaluated] = await Promise.all([
+    getModuleExpectations(id),
+    listAssessmentExpectations(assessments.map((a) => a.id)),
+  ]);
+  const expectationCount = expectations.length;
 
   const regular = assessments.filter((a) => !a.makeup_of_id);
   const makeups = assessments.filter((a) => a.makeup_of_id);
@@ -332,6 +341,18 @@ export default async function ModuleAssessmentsPage({
                       label="Grille de correction"
                       status={gridStatus(a.grading_grid?.name ?? null)}
                     />
+                    {evaluated.available ? (
+                      <StatusRow
+                        label="Attendus évalués"
+                        status={{
+                          tone: (evaluated.byAssessment.get(a.id)?.length ?? 0) > 0 ? "ok" : "warn",
+                          label: evaluatedLabel(
+                            evaluated.byAssessment.get(a.id)?.length ?? 0,
+                            expectationCount,
+                          ),
+                        }}
+                      />
+                    ) : null}
                     <StatusRow
                       label="Notes"
                       status={

@@ -262,6 +262,45 @@ export type Database = {
           },
         ]
       }
+      assessment_expectation: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          module_expectation_id: string
+          owner_id: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          module_expectation_id: string
+          owner_id?: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          module_expectation_id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_expectation_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_expectation_module_expectation_id_fkey"
+            columns: ["module_expectation_id"]
+            isOneToOne: false
+            referencedRelation: "module_expectation"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_group: {
         Row: {
           assessment_id: string

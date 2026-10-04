@@ -76,6 +76,22 @@ export default async function CoursePage({
     }),
   }));
 
+  const inSession = new Set(ordered.map((r) => r.id));
+  const addable: WorkspaceResource[] = retained
+    .filter((r) => !inSession.has(r.id))
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      kindLabel: r.kind ? KIND_LABELS[r.kind] : "Ressource",
+      ready: r.status === "ready",
+      subtitle: resourceSubtitle({
+        status: r.status,
+        audience: r.audience,
+        kind: r.kind,
+        slideCount: 0,
+      }),
+    }));
+
   const covered = expectations.filter((e) => (byExpectation.get(e.id) ?? []).includes(courseId));
   const missing = uncoveredExpectations(expectations, byExpectation);
   const linked = assessments.filter((a) => a.course_id === courseId && !a.makeup_of_id);
@@ -168,6 +184,7 @@ export default async function CoursePage({
           moduleId={id}
           courseId={courseId}
           planAvailable={available}
+          addable={addable}
           initial={{
             title: course.title,
             prepStatus: course.prep_status,

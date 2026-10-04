@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 
 import {
+  addCourseResource,
   removeCourseResource,
   saveWorkspace,
 } from "@/app/(app)/modules/[id]/courses/workspace-actions";
@@ -35,6 +36,7 @@ export function SessionWorkspace({
   moduleId,
   courseId,
   initial,
+  addable: addableInitial,
   planAvailable,
 }: {
   moduleId: string;
@@ -45,12 +47,16 @@ export function SessionWorkspace({
     deliverable: string;
     resources: WorkspaceResource[];
   };
+  /** Ressources retenues du module qui ne sont pas encore dans le déroulé de cette séance. */
+  addable: WorkspaceResource[];
   planAvailable: boolean;
 }) {
   const [title, setTitle] = useState(initial.title);
   const [status, setStatus] = useState(initial.prepStatus);
   const [deliverable, setDeliverable] = useState(initial.deliverable);
   const [resources, setResources] = useState(initial.resources);
+  const [addable, setAddable] = useState(addableInitial);
+  const [adding, setAdding] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [announce, setAnnounce] = useState("");
@@ -96,12 +102,29 @@ export function SessionWorkspace({
     );
   }
 
+  function add(r: WorkspaceResource) {
+    if (adding) return;
+    setAdding(r.id);
+    start(async () => {
+      const res = await addCourseResource(moduleId, courseId, r.id);
+      setAdding(null);
+      if (res.error) setError(res.error);
+      else {
+        setError(undefined);
+        setResources((list) => [...list, r]);
+        setAddable((list) => list.filter((x) => x.id !== r.id));
+        setAnnounce(`« ${r.title} » est ajoutée à la fin du déroulé.`);
+      }
+    });
+  }
+
   function remove(r: WorkspaceResource) {
     start(async () => {
       const res = await removeCourseResource(moduleId, courseId, r.id);
       if (res.error) setError(res.error);
       else {
         setResources((list) => list.filter((x) => x.id !== r.id));
+        setAddable((list) => (list.some((x) => x.id === r.id) ? list : [...list, r]));
         setAnnounce(`« ${r.title} » est retirée du déroulé.`);
       }
     });
@@ -233,13 +256,50 @@ export function SessionWorkspace({
             ))}
           </ol>
         )}
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          <Link
-            href={`/modules/${moduleId}/courses/${courseId}/edit`}
-            className={cn(BTN, "min-h-12")}
+        <details className="mt-3">
+          <summary
+            className={cn(BTN, "min-h-12 cursor-pointer list-none")}
+            aria-label="Ajouter une ressource retenue"
           >
             Ajouter une ressource retenue
-          </Link>
+          </summary>
+          <div className="bg-muted/30 mt-2 rounded-xl border p-3">
+            {addable.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Toutes les ressources retenues du module sont déjà dans le déroulé.{" "}
+                <Link
+                  href={`/modules/${moduleId}/matching`}
+                  className="underline underline-offset-2"
+                >
+                  Retenir d’autres ressources (rapprochement)
+                </Link>
+                .
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {addable.map((r) => (
+                  <li key={r.id} className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <strong className="block truncate">{r.title}</strong>
+                      <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
+                    </div>
+                    <Pill>{r.kindLabel}</Pill>
+                    <button
+                      type="button"
+                      className={BTN}
+                      aria-busy={adding === r.id || undefined}
+                      onClick={() => add(r)}
+                    >
+                      {adding === r.id ? "Ajout…" : "Ajouter"}
+                      <span className="sr-only"> au déroulé : {r.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </details>
+        <div className="mt-3 flex flex-wrap gap-2.5">
           <Link href="/resources/new" className={cn(BTN, "min-h-12 bg-transparent")}>
             Créer une ressource
           </Link>
