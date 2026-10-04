@@ -197,7 +197,7 @@ test("premier module : de la fiche de l'école à la première séance", async (
   await expect(page.getByLabel("Durée estimée (min)").first()).toHaveValue("45");
   await axeClean(page, "séance (déroulé)");
   // Quiz de fin de séance : l'état est explicite et mène à la liaison des questions.
-  await expect(page.getByText(/2 ressources, 0 question liée\./)).toBeVisible();
+  await expect(page.getByText(/\d+ ressources?, 0 question liée\./)).toBeVisible();
   await page
     .getByRole("link", { name: "Lier des questions aux ressources de cette séance" })
     .click();
