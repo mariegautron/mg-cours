@@ -238,7 +238,9 @@ export async function proposeSkeleton(moduleId: string): Promise<void> {
     .from("course")
     .select("id", { count: "exact", head: true })
     .eq("module_id", moduleId);
-  const start = count ?? 0;
+  // Un squelette n'a de sens que pour un module sans séance : il ne s'ajoute jamais à celles qui existent.
+  if ((count ?? 0) > 0) redirect(`/modules/${moduleId}/expectations`);
+  const start = 0;
 
   const { error } = await supabase.from("course").insert(
     skeleton.map((s, i) => ({

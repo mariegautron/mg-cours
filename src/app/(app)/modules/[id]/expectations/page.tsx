@@ -99,18 +99,27 @@ export default async function ExpectationsPage({
           <h2 id="skeleton" className="text-lg font-medium">
             Squelette de séances
           </h2>
-          <p className="text-muted-foreground text-sm">
-            Propose une séance vide par unité enregistrée (
-            {courses.length
-              ? `à la suite des ${courses.length} séance${courses.length > 1 ? "s" : ""} existante${courses.length > 1 ? "s" : ""}`
-              : "le module n’a pas encore de séance"}
-            ). Un repère seulement : renomme, fusionne ou supprime ces séances librement.
-          </p>
-          <form action={proposeSkeleton.bind(null, mod.id)}>
-            <Button type="submit" variant="secondary">
-              Proposer un squelette de séances depuis les unités
-            </Button>
-          </form>
+          {courses.length ? (
+            <p className="text-muted-foreground text-sm">
+              Ce module a déjà {courses.length} séance{courses.length > 1 ? "s" : ""} : le squelette
+              ne se propose que pour un module sans séance, pour ne pas en ajouter en double.{" "}
+              <Link href={`/modules/${mod.id}/courses`} className="underline underline-offset-2">
+                Voir les séances
+              </Link>
+            </p>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-sm">
+                Propose une séance vide par unité enregistrée (le module n’a pas encore de séance).
+                Un repère seulement : renomme, fusionne ou supprime ces séances librement.
+              </p>
+              <form action={proposeSkeleton.bind(null, mod.id)}>
+                <Button type="submit" variant="secondary">
+                  Proposer un squelette de séances depuis les unités
+                </Button>
+              </form>
+            </>
+          )}
         </section>
       ) : null}
     </div>

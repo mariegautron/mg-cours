@@ -6,7 +6,6 @@ import {
   buildForExpectation,
   dismissMatch,
   retainForModule,
-  setExpectationCourses,
   unretainForModule,
 } from "@/app/(app)/modules/[id]/matching/actions";
 import { Pill } from "@/components/dashboard/pill";
@@ -14,7 +13,6 @@ import { MatchingForm } from "@/components/modules/matching-form";
 import { AddExpectationForm } from "@/components/modules/add-expectation-form";
 import { KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
@@ -42,12 +40,7 @@ import {
 import { excerptForTerms, SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { createClient } from "@/lib/supabase/server";
 import { getExpectationCourses, listCandidateResources } from "@/lib/modules/matching-queries";
-import {
-  getModule,
-  getModuleCourses,
-  getModuleExpectations,
-  getRetainedResources,
-} from "@/lib/modules/queries";
+import { getModule, getModuleExpectations, getRetainedResources } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Rapprochement" };
 
@@ -76,15 +69,13 @@ export default async function MatchingPage({
   const previewId = typeof sp.r === "string" ? sp.r : undefined;
   const filter = parseMatchingFilter(typeof sp.f === "string" ? sp.f : undefined);
 
-  const [mod, expectations, courses, retained, candidates, coursesByExpectation] =
-    await Promise.all([
-      getModule(id),
-      getModuleExpectations(id),
-      getModuleCourses(id),
-      getRetainedResources(id),
-      listCandidateResources(),
-      getExpectationCourses(id),
-    ]);
+  const [mod, expectations, retained, candidates, coursesByExpectation] = await Promise.all([
+    getModule(id),
+    getModuleExpectations(id),
+    getRetainedResources(id),
+    listCandidateResources(),
+    getExpectationCourses(id),
+  ]);
   if (!mod) notFound();
   // Ressources écartées par « Ce n'est pas la bonne » (table facultative : sans elle, rien n'est écarté).
   const dismissed = new Map<string, Set<string>>();
@@ -412,43 +403,12 @@ export default async function MatchingPage({
                 </MatchingForm>
               </div>
 
-              {courses.length ? (
-                <form
-                  action={setExpectationCourses.bind(null, mod.id, open.e.id)}
-                  className="bg-card space-y-3 rounded-3xl border p-5 shadow-sm"
-                >
-                  <fieldset className="space-y-2.5">
-                    <legend className="font-heading mb-1 text-lg font-bold">
-                      Couvert par quelles séances ?
-                    </legend>
-                    <ul className="flex flex-wrap gap-2">
-                      {courses.map((c) => (
-                        <li
-                          key={c.id}
-                          className="has-[:checked]:bg-accent flex min-h-11 items-center gap-2 rounded-full border px-3"
-                        >
-                          <Checkbox
-                            id={`c-${open.e.id}-${c.id}`}
-                            name="courseIds"
-                            value={c.id}
-                            defaultChecked={open.courseIds.includes(c.id)}
-                          />
-                          <Label htmlFor={`c-${open.e.id}-${c.id}`} className="font-normal">
-                            {c.title}
-                          </Label>
-                        </li>
-                      ))}
-                    </ul>
-                  </fieldset>
-                  <Button
-                    type="submit"
-                    variant="secondary"
-                    aria-label={`Enregistrer les séances de « ${open.e.label} »`}
-                  >
-                    Enregistrer
-                  </Button>
-                </form>
-              ) : null}
+              {/* L'association attendu ↔ séance se fait dans l'écran Séances (« Attendus traités »). */}
+              <p className="text-muted-foreground px-1 text-sm">
+                <Link href={`/modules/${mod.id}/courses`} className="underline underline-offset-2">
+                  Dire quelle séance traite cet attendu : dans l’écran Séances
+                </Link>
+              </p>
             </section>
           ) : null}
 

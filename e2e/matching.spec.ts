@@ -80,14 +80,13 @@ test("US-54 : rapprocher attendus et ressources, retenir, noter à construire, c
   ).toBeVisible({ timeout: 20_000 });
   await expect(second.getByText("À construire", { exact: true }).first()).toBeVisible();
 
-  // Couvert par une séance.
+  // L'association à une séance ne se fait plus ici : un lien discret mène à l'écran Séances.
   await page.getByRole("link", { name: /Présenter un projet/ }).click();
   const third = page.getByRole("region", { name: /Présenter un projet/ });
-  await third.getByLabel("Séance de cadrage").check();
-  await third.getByRole("button", { name: /Enregistrer les séances/ }).click();
+  await expect(third.getByLabel("Séance de cadrage")).toHaveCount(0);
   await expect(
-    page.getByRole("status").filter({ hasText: "2 couverts, 1 à construire" }),
-  ).toBeVisible();
+    third.getByRole("link", { name: /Dire quelle séance traite cet attendu/ }),
+  ).toHaveAttribute("href", `${moduleUrl}/courses`);
   await expect(page.getByRole("link", { name: /Maîtriser la fiscalité.*À voir/ })).toBeVisible();
 
   // Filtre « Sans ressource » : plus aucun attendu dans ce cas ; « À construire » en garde un.
