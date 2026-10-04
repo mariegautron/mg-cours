@@ -107,7 +107,19 @@ export async function migrate({ imp }: CourseContext): Promise<void> {
   let total = 0;
   let merged = 0;
   let split = 0;
+  // Cours en double (même titre et même contenu) : seul le premier est découpé.
+  const seen = new Set<string>();
   for (const parent of courses) {
+    const key = `${fold(cleanTitle(String(parent.title)))}|${fold(String(parent.content ?? ""))
+      .replace(/\s+/g, " ")
+      .slice(0, 4000)}`;
+    if (seen.has(key)) {
+      imp.warnings.push(
+        `Cours en double ignoré : « ${String(parent.title)} » (même contenu qu'un autre cours déjà découpé).`,
+      );
+      continue;
+    }
+    seen.add(key);
     const { fragments, merged: m } = splitCourse(String(parent.content ?? ""));
     merged += m;
     if (!fragments.length) continue;
