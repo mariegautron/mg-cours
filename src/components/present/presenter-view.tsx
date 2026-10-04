@@ -85,6 +85,7 @@ export function PresenterView({
   startTime,
   closeHref,
   trombiHref,
+  slidesUrl = null,
   studentsPanel,
 }: {
   title: string;
@@ -116,6 +117,8 @@ export function PresenterView({
   closeHref: string;
   /** Trombinoscope de la classe (vue privée). */
   trombiHref: string;
+  /** Slides de la séance (lien externe), ouverts à part ; jamais projetés par l'appli. */
+  slidesUrl?: string | null;
   /** Carnet des étudiant·es (observations en direct), rendu côté serveur. */
   studentsPanel: ReactNode;
 }) {
@@ -262,6 +265,13 @@ export function PresenterView({
           {elapsed ? <p className="text-sm font-medium">{elapsed}</p> : null}
           {remaining ? <p className="text-muted-foreground text-sm">{remaining}</p> : null}
         </div>
+        {slidesUrl ? (
+          <Button asChild variant="outline" size="touch">
+            <a href={slidesUrl} target="_blank" rel="noopener noreferrer">
+              Slides de la séance<span className="sr-only"> (nouvel onglet)</span>
+            </a>
+          </Button>
+        ) : null}
         <Button asChild variant="secondary" size="touch">
           <Link href={closeHref}>Terminer la séance</Link>
         </Button>

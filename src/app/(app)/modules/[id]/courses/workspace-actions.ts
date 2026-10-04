@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { failure, NOT_FOUND } from "@/lib/messages";
+import { cleanSlidesUrl } from "@/lib/modules/slides";
 import { cleanActivity, type Activity } from "@/lib/modules/activity";
 import { PREP_STATUSES } from "@/lib/modules/schema";
 import { cleanDeliverable } from "@/lib/modules/session-builder";
@@ -81,6 +82,29 @@ export async function saveWorkspace(
 
   revalidatePath(`/modules/${moduleId}`, "layout");
   return { savedAt: new Date().toISOString() };
+}
+
+/** Lien de slides de la séance (vide : on l'enlève). Sans la colonne, on le dit au lieu d'échouer. */
+export async function saveSlidesUrl(
+  moduleId: string,
+  courseId: string,
+  value: string,
+): Promise<{ error?: string; url?: string | null }> {
+  const clean = cleanSlidesUrl(value);
+  if (!clean.ok) return { error: clean.error };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("course")
+    .update({ slides_url: clean.url })
+    .eq("id", courseId)
+    .eq("module_id", moduleId);
+  if (error) {
+    return {
+      error: "Les slides par séance seront disponibles après la mise à jour de la base de données.",
+    };
+  }
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  return { url: clean.url };
 }
 
 /** Retire une ressource du déroulé de la séance (la ressource elle-même n'est pas supprimée). */

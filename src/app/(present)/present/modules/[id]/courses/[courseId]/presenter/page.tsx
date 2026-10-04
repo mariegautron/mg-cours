@@ -10,6 +10,7 @@ import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresenterView } from "@/components/present/presenter-view";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { publicSlidesUrl } from "@/lib/modules/frise";
 import { describeActivity, EMPTY_ACTIVITY, startTimes } from "@/lib/modules/activity";
 import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { todayInParis } from "@/lib/modules/next-session";
@@ -107,6 +108,7 @@ export default async function PresenterPage({
       sections={sections}
       sectionKeys={sectionKeys}
       sectionMeta={sectionMeta}
+      slidesUrl={publicSlidesUrl(course.slides_url)}
       library={libraryRows.map((r) => ({
         id: r.id,
         title: r.title,

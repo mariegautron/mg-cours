@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { canPresent } from "@/lib/assessments/subject";
+import { publicSlidesUrl } from "@/lib/modules/frise";
 import { checkDuration, EMPTY_ACTIVITY, totalMinutes } from "@/lib/modules/activity";
 import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { minutesBetween } from "@/lib/modules/workspace";
@@ -87,6 +88,15 @@ export default async function StartCoursePage({
               minutesBetween(course.start_time, course.end_time),
             ).message
           }
+        </p>
+      ) : null}
+      {publicSlidesUrl(course.slides_url) ? (
+        <p>
+          <Button asChild variant="outline" size="touch">
+            <a href={publicSlidesUrl(course.slides_url)!} target="_blank" rel="noopener noreferrer">
+              Ouvrir les slides de la séance<span className="sr-only"> (nouvel onglet)</span>
+            </a>
+          </Button>
         </p>
       ) : null}
       <PrepPanel

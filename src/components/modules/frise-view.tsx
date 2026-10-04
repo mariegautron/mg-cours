@@ -204,6 +204,19 @@ export function FriseStudent({
                     {s.period ? ` · ${PERIOD_LABELS[s.period]}` : ""}
                   </p>
                   <p className="text-base font-bold">{sessionHeading(s)}</p>
+                  {s.slidesUrl ? (
+                    <p className="mt-1">
+                      <a
+                        href={s.slidesUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-2"
+                      >
+                        Slides de la séance {s.number}
+                        <span className="sr-only"> (nouvel onglet)</span>
+                      </a>
+                    </p>
+                  ) : null}
                   {list.length ? (
                     <p className="mt-1.5 flex flex-wrap gap-1.5">
                       {list.map((e) => (

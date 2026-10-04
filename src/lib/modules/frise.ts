@@ -8,6 +8,8 @@ export interface FriseCourseInput {
   title: string;
   session_date: string | null;
   start_time: string | null;
+  /** Lien de slides de la séance, repris dans la page étudiante (http/https seulement). */
+  slides_url?: string | null;
 }
 
 export interface FriseAssessmentInput {
@@ -32,6 +34,8 @@ export interface FriseSession {
   date: string | null;
   period: "morning" | "afternoon" | null;
   title: string;
+  /** Slides de la séance, ou `null`. */
+  slidesUrl: string | null;
 }
 
 export type MilestoneRole = "milestone" | "oral" | "individual";
@@ -80,6 +84,17 @@ export function periodOf(startTime: string | null): FriseSession["period"] {
   return h * 60 + (m || 0) < 12 * 60 + 30 ? "morning" : "afternoon";
 }
 
+/** Un lien de slides ne sort en public que s'il est http(s) : rien d'autre n'entre dans l'instantané. */
+export function publicSlidesUrl(url: unknown): string | null {
+  if (typeof url !== "string" || url.length > 500) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildFrise(input: {
   moduleName: string;
   totalHours: number | null;
@@ -93,6 +108,7 @@ export function buildFrise(input: {
     date: c.session_date,
     period: periodOf(c.start_time),
     title: c.title,
+    slidesUrl: publicSlidesUrl(c.slides_url),
   }));
   const regular = input.assessments.filter((a) => !a.makeup_of_id);
   const milestones: FriseMilestone[] = regular
@@ -157,6 +173,7 @@ export function parseFrise(raw: unknown): Frise | null {
       title: o.title,
       date: typeof o.date === "string" ? o.date : null,
       period: o.period === "morning" || o.period === "afternoon" ? o.period : null,
+      slidesUrl: publicSlidesUrl(o.slidesUrl),
     });
   }
   const milestones: FriseMilestone[] = [];

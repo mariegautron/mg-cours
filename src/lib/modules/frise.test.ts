@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFrise,
+  publicSlidesUrl,
   bandLayout,
   firstLine,
   milestoneLabel,
@@ -63,7 +64,16 @@ describe("frise", () => {
       "sessions",
       "totalHours",
     ]);
-    expect(Object.keys(f.sessions[0]).sort()).toEqual(["date", "number", "period", "title"]);
+    expect(Object.keys(f.sessions[0]).sort()).toEqual([
+      "date",
+      "number",
+      "period",
+      "slidesUrl",
+      "title",
+    ]);
+    // Le lien de slides ne sort que s'il est http(s).
+    expect(publicSlidesUrl("javascript:alert(1)")).toBeNull();
+    expect(publicSlidesUrl("https://figma.com/slides/x")).toBe("https://figma.com/slides/x");
   });
   it("dates courtes", () => {
     expect(shortDate("2026-10-12")).toBe("12/10");

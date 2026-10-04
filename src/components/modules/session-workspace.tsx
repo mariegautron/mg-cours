@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 import {
   addCourseResource,
   removeCourseResource,
+  saveSlidesUrl,
   saveWorkspace,
 } from "@/app/(app)/modules/[id]/courses/workspace-actions";
 import { ActionError } from "@/components/action-error";
@@ -53,6 +54,7 @@ export function SessionWorkspace({
   activitiesAvailable,
   sessionMinutes,
   sessionStart,
+  slidesUrl: slidesUrlInitial,
 }: {
   moduleId: string;
   courseId: string;
@@ -70,6 +72,8 @@ export function SessionWorkspace({
   /** Durée de la séance en minutes et heure de début, pour comparer et déduire les horaires. */
   sessionMinutes: number | null;
   sessionStart: string | null;
+  /** Lien des slides de la séance (colonne `slides_url`), s'il y en a un. */
+  slidesUrl: string | null;
 }) {
   const [title, setTitle] = useState(initial.title);
   const [status, setStatus] = useState(initial.prepStatus);
@@ -77,6 +81,9 @@ export function SessionWorkspace({
   const [resources, setResources] = useState(initial.resources);
   const [addable, setAddable] = useState(addableInitial);
   const [adding, setAdding] = useState<string | null>(null);
+  const [slides, setSlides] = useState(slidesUrlInitial ?? "");
+  const [slidesSaved, setSlidesSaved] = useState(slidesUrlInitial ?? "");
+  const [slidesNote, setSlidesNote] = useState("");
   const [saved, setSaved] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [announce, setAnnounce] = useState("");
@@ -130,6 +137,20 @@ export function SessionWorkspace({
     sessionStart,
     resources.map((r) => r.activity),
   );
+
+  function commitSlides() {
+    if (slides.trim() === slidesSaved.trim()) return;
+    start(async () => {
+      const res = await saveSlidesUrl(moduleId, courseId, slides);
+      if (res.error) {
+        setSlidesNote(res.error);
+        return;
+      }
+      setSlides(res.url ?? "");
+      setSlidesSaved(res.url ?? "");
+      setSlidesNote(res.url ? "Lien des slides enregistré." : "Lien des slides retiré.");
+    });
+  }
 
   function patchActivity(id: string, patch: Partial<Activity>) {
     setResources((list) =>
@@ -213,6 +234,47 @@ export function SessionWorkspace({
           </div>
         </div>
       </div>
+
+      <section aria-labelledby="slides-seance" className="bg-card rounded-3xl border p-5 shadow-sm">
+        <h2 id="slides-seance" className="font-heading mb-1 text-lg font-bold">
+          Slides de la séance
+        </h2>
+        <p className="text-muted-foreground mb-2 text-sm">
+          Le lien (Figma, Google Slides…) s’affiche dans « Avant de commencer », la vue privée et la
+          page des étudiant·es. Facultatif.
+        </p>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-64 flex-1 space-y-1">
+            <label htmlFor="slides-url" className="text-sm font-medium">
+              Lien des slides
+            </label>
+            <input
+              id="slides-url"
+              type="url"
+              inputMode="url"
+              value={slides}
+              placeholder="https://…"
+              onChange={(e) => setSlides(e.target.value)}
+              onBlur={commitSlides}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitSlides();
+                }
+              }}
+              className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+            />
+          </div>
+          {slidesSaved ? (
+            <a href={slidesSaved} target="_blank" rel="noopener noreferrer" className={BTN}>
+              Ouvrir les slides<span className="sr-only"> (nouvel onglet)</span>
+            </a>
+          ) : null}
+        </div>
+        <p role="status" aria-live="polite" className="text-muted-foreground mt-1 min-h-5 text-sm">
+          {slidesNote}
+        </p>
+      </section>
 
       <section aria-labelledby="deroule" className="bg-card rounded-3xl border p-5 shadow-sm">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

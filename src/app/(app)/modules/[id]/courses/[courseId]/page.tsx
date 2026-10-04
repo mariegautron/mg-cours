@@ -201,6 +201,7 @@ export default async function CoursePage({
           addable={addable}
           activitiesAvailable={activities.available}
           sessionMinutes={minutes}
+          slidesUrl={course.slides_url ?? null}
           sessionStart={course.start_time ? course.start_time.slice(0, 5) : null}
           initial={{
             title: course.title,

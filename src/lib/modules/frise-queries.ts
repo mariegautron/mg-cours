@@ -22,10 +22,21 @@ export async function loadFrise(moduleId: string): Promise<Frise | null> {
       .eq("module_id", moduleId),
   ]);
   if (!mod) return null;
+  // Slides par séance : colonne additive, lue à part pour que la frise survive sans la migration.
+  const slides = new Map<string, string | null>();
+  try {
+    const { data, error } = await supabase
+      .from("course")
+      .select("id, slides_url")
+      .eq("module_id", moduleId);
+    if (!error) for (const c of data ?? []) slides.set(c.id, c.slides_url);
+  } catch {
+    /* colonne absente : pas de slides */
+  }
   return buildFrise({
     moduleName: mod.name,
     totalHours: mod.total_hours ?? null,
-    courses: courses ?? [],
+    courses: (courses ?? []).map((c) => ({ ...c, slides_url: slides.get(c.id) ?? null })),
     assessments: assessments ?? [],
   });
 }

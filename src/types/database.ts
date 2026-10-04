@@ -405,6 +405,7 @@ export type Database = {
           retro_note: string | null
           session_date: string | null
           slides: Json
+          slides_url: string | null
           start_time: string | null
           title: string
           type: Database["public"]["Enums"]["course_type"]
@@ -429,6 +430,7 @@ export type Database = {
           retro_note?: string | null
           session_date?: string | null
           slides?: Json
+          slides_url?: string | null
           start_time?: string | null
           title: string
           type?: Database["public"]["Enums"]["course_type"]
@@ -453,6 +455,7 @@ export type Database = {
           retro_note?: string | null
           session_date?: string | null
           slides?: Json
+          slides_url?: string | null
           start_time?: string | null
           title?: string
           type?: Database["public"]["Enums"]["course_type"]

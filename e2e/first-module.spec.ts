@@ -156,6 +156,17 @@ test("premier module : de la fiche de l'école à la première séance", async (
   // 5. Construire une séance : le déroulé, le livrable, « prête ».
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("heading", { name: "Séance 1", level: 1 })).toBeVisible();
+  // Slides de la séance : un lien par séance (https ajouté, jamais javascript:).
+  await page.getByLabel("Lien des slides").fill("javascript:alert(1)");
+  await page.getByLabel("Lien des slides").blur();
+  await expect(page.getByText("Seuls les liens http et https sont acceptés.")).toBeVisible();
+  await page.getByLabel("Lien des slides").fill("figma.com/slides/abc");
+  await page.getByLabel("Lien des slides").blur();
+  await expect(page.getByText("Lien des slides enregistré.")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("link", { name: /Ouvrir les slides/ })).toHaveAttribute(
+    "href",
+    "https://figma.com/slides/abc",
+  );
   // Le déroulé se construit sur place : on ajoute deux ressources retenues, sans quitter la page.
   await page.getByText("Ajouter une ressource retenue", { exact: true }).click();
   const addButtons = page.getByRole("button", { name: /^Ajouter au déroulé/ });
@@ -272,6 +283,7 @@ test("premier module : de la fiche de l'école à la première séance", async (
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("heading", { name: "Avant de commencer", level: 1 })).toBeVisible();
   await axeClean(page, "avant de commencer");
+  await expect(page.getByRole("link", { name: /Ouvrir les slides de la séance/ })).toBeVisible();
   const startUrl = page.url();
   const projected = await page
     .getByRole("link", { name: /Ouvrir la fenêtre projetée/ })
