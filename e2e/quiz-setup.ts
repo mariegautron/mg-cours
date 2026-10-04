@@ -38,7 +38,9 @@ export async function importBank(page: Page, suffix: number, single = 12, open =
     buffer: Buffer.from(bankXml(suffix, single, open)),
   });
   await page.getByRole("button", { name: "Vérifier le fichier" }).click();
-  await page.getByRole("button", { name: `Importer ${single + open} questions` }).click();
+  await page
+    .getByRole("button", { name: `Importer ${single + open} questions` })
+    .click({ timeout: 30_000 });
   await expect(page.getByRole("status")).toContainText(`${single + open} questions importées.`);
 }
 

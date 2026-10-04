@@ -45,7 +45,12 @@ export async function openModuleFromList(page: Page, name: string | RegExp) {
   for (const filter of ["", "?filter=to_prepare", "?filter=finished", "?filter=archived"]) {
     await page.goto(`/modules${filter}`);
     const link = page.getByRole("link", { name }).first();
-    if ((await link.count()) > 0) {
+    // La liste peut s'afficher après la page : on laisse quelques secondes avant de passer au filtre suivant.
+    const found = await link
+      .waitFor({ state: "attached", timeout: 4_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (found) {
       await link.click();
       await page.waitForURL(/\/modules\/[0-9a-f-]{36}/);
       return;
