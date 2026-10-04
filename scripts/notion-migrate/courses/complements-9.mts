@@ -86,13 +86,44 @@ export function mergeTags(existing: string[], extra: string[]): string[] {
   return out.slice(0, MAX_TAGS);
 }
 
+/**
+ * Tags d'une ressource, par pertinence : un mot-clé du titre (5 points) ou d'un intertitre ou d'un
+ * objectif de séance (3 points) compte ; dans le corps, il faut qu'il revienne au moins 4 fois.
+ * Les plus pertinents d'abord, au plus `limit`.
+ */
+export function scoredTags(
+  title: string,
+  body: string,
+  objectives: string[] = [],
+  limit = 6,
+): string[] {
+  const headings = body
+    .split("\n")
+    .filter((l) => /^#{1,6}\s/.test(l))
+    .join(" \n ");
+  const inTitle = new Set(keywordTags(title));
+  const inHeadings = new Set(keywordTags(`${headings} ${objectives.join(" ")}`));
+  const folded = fold(body);
+  return KEYWORDS.map(([tag, re]) => {
+    const count = (folded.match(new RegExp(re.source, "g")) ?? []).length;
+    const score = (inTitle.has(tag) ? 5 : 0) + (inHeadings.has(tag) ? 3 : 0) + (count >= 4 ? 2 : 0);
+    return { tag, score, count };
+  })
+    .filter((x) => x.score >= 3)
+    .sort((a, b) => b.score - a.score || b.count - a.count)
+    .slice(0, limit)
+    .map((x) => x.tag);
+}
+
 // ── e) Markdown ────────────────────────────────────────────────────────────
 
 /** Mise en forme seulement (jamais de réécriture du fond) : puces, titres, sauts de ligne, `<br>`. */
 export function normalizeMarkdown(md: string): string {
   return md
     .replace(/\r\n/g, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
+    .split("\n")
+    .map((l) => (l.trimStart().startsWith("|") ? l : l.replace(/<br\s*\/?>/gi, "\n")))
+    .join("\n")
     .replace(/^[ \t]*[•·▪●◦][ \t]*/gm, "- ")
     .replace(/^(#{1,6})([^\s#])/gm, "$1 $2")
     .replace(/[ \t]+$/gm, "")
@@ -206,10 +237,9 @@ export async function migrate({ imp }: CourseContext): Promise<void> {
     }
 
     // d) tags
-    const text = [title, String(r.content ?? "").slice(0, 6000), ...r.objectives].join(" \n ");
     const tags = mergeTags((r.tags as string[] | null) ?? [], [
       "gestion de projet",
-      ...keywordTags(text),
+      ...scoredTags(title, String(r.content ?? ""), r.objectives),
     ]);
     if (JSON.stringify(tags) !== JSON.stringify(r.tags ?? [])) {
       patch.tags = tags;
@@ -266,9 +296,10 @@ export async function migrate({ imp }: CourseContext): Promise<void> {
     tags: new Set(
       mergeTags(
         (r.tags as string[] | null) ?? [],
-        keywordTags([r.title, String(r.content ?? "").slice(0, 6000), ...r.objectives].join(" ")),
+        scoredTags(String(r.title), String(r.content ?? ""), r.objectives),
       ),
     ),
+    titleTags: new Set(keywordTags(String(r.title))),
   }));
   let linked = 0;
   let free = 0;
@@ -281,11 +312,16 @@ export async function migrate({ imp }: CourseContext): Promise<void> {
       free++;
       continue;
     }
+    // Une seule ressource : celle dont le titre porte le thème, sinon le plus de tags en commun.
     const best = tagged
-      .map((x) => ({ x, hits: [...wanted].filter((w) => x.tags.has(w)).length }))
+      .map((x) => ({
+        x,
+        hits: [...wanted].filter((w) => x.tags.has(w)).length,
+        title: [...wanted].filter((w) => x.titleTags.has(w)).length,
+      }))
       .filter((c) => c.hits > 0)
-      .sort((a, b) => b.hits - a.hits)
-      .slice(0, 2);
+      .sort((a, b) => b.title - a.title || b.hits - a.hits)
+      .slice(0, 1);
     if (!best.length) {
       free++;
       continue;
