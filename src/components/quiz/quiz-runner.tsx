@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { QuestionType } from "@/lib/questions/types";
 import { announcementAt, formatRemaining } from "@/lib/quiz/timer";
+import { clearPendingAnswers, mergePendingAnswers, storePendingAnswers } from "@/lib/quiz/pending";
+import { useOnline } from "@/lib/use-online";
 import type { StoredAnswer } from "@/lib/quiz/types";
 
 export interface PublicQuestion {
@@ -54,6 +56,11 @@ export function QuizRunner({
   const deadline = deadlineAt ? new Date(deadlineAt).getTime() : null;
   const [remaining, setRemaining] = useState<number | null>(null);
 
+  const online = useOnline();
+  // Réponses gardées sur l'appareil tant qu'elles n'ont pas toutes été envoyées (connexion coupée,
+  // onglet fermé) ; « recovered » : combien sont parties au retour du réseau.
+  const [recovered, setRecovered] = useState<number | null>(null);
+  const wasFailing = useRef(false);
   const latest = useRef(answers);
   const dirty = useRef(false);
   const inFlight = useRef(false);
@@ -62,6 +69,12 @@ export function QuizRunner({
 
   const flush = useCallback(async () => {
     if (inFlight.current || submitted.current) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      dirty.current = true;
+      wasFailing.current = true;
+      setSaveState("error");
+      return;
+    }
     inFlight.current = true;
     dirty.current = false;
     setSaveState("saving");
@@ -76,14 +89,23 @@ export function QuizRunner({
           }),
         );
         setSaveState(dirty.current ? "dirty" : "saved");
+        if (!dirty.current) {
+          clearPendingAnswers(token);
+          if (wasFailing.current) {
+            wasFailing.current = false;
+            setRecovered(Object.keys(latest.current).length);
+          }
+        }
       } else if (result.status === "already_submitted") {
         router.refresh();
       } else {
         dirty.current = true;
+        wasFailing.current = true;
         setSaveState("error");
       }
     } catch {
       dirty.current = true;
+      wasFailing.current = true;
       setSaveState("error");
     } finally {
       inFlight.current = false;
@@ -96,6 +118,40 @@ export function QuizRunner({
     const timer = setTimeout(flush, saveState === "error" ? 5000 : 1200);
     return () => clearTimeout(timer);
   }, [saveState, answers, flush]);
+
+  // Les réponses en attente sont gardées sur l'appareil, et reprises si la page est rouverte.
+  useEffect(() => {
+    if (saveState === "dirty" || saveState === "error") {
+      storePendingAnswers(token, latest.current);
+    }
+  }, [saveState, answers, token]);
+
+  useEffect(() => {
+    const restored = mergePendingAnswers(token, initialAnswers);
+    if (restored) {
+      latest.current = restored;
+      dirty.current = true;
+      /* eslint-disable react-hooks/set-state-in-effect -- réponses gardées sur l'appareil, lues après hydratation */
+      setAnswers(restored);
+      setSaveState("dirty");
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [token, initialAnswers]);
+
+  // Retour du réseau : tout ce qui attend part tout de suite.
+  useEffect(() => {
+    if (!online || (saveState !== "error" && saveState !== "dirty")) return;
+    const timer = setTimeout(() => void flush(), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online]);
+
+  // Le message « connexion rétablie » ne reste pas indéfiniment.
+  useEffect(() => {
+    if (recovered === null) return;
+    const timer = setTimeout(() => setRecovered(null), 10_000);
+    return () => clearTimeout(timer);
+  }, [recovered]);
 
   // Un enregistrement en attente n'est jamais abandonné en silence.
   useEffect(() => {
@@ -116,12 +172,19 @@ export function QuizRunner({
 
   const submit = useCallback(async () => {
     if (submitted.current) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setSubmitError(
+        "Vous êtes hors connexion : vos réponses sont gardées sur votre téléphone. Rendez votre copie dès que le réseau revient.",
+      );
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
       const result = await submitQuiz(token, latest.current);
       if (result.status === "ok" || result.status === "already_submitted") {
         submitted.current = true;
+        clearPendingAnswers(token);
         router.refresh();
         return;
       }
@@ -172,6 +235,7 @@ export function QuizRunner({
             ? `Vos réponses sont enregistrées (à ${savedAt}).`
             : "Vos réponses sont enregistrées au fur et à mesure.";
 
+  const pendingCount = Object.keys(answers).length;
   const total = questions.length;
   const current = Math.min(index, total - 1);
   const answered = (position: number) => {
@@ -210,6 +274,24 @@ export function QuizRunner({
       <p aria-live="polite" role="status" className="sr-only">
         {announcement}
       </p>
+      {saveState === "error" || !online ? (
+        <div role="alert" className="border-sun/60 bg-sun/12 rounded-xl border p-3 text-sm">
+          <strong>Connexion perdue.</strong>
+          <p className="text-muted-foreground">
+            Vos réponses sont gardées sur votre téléphone et partiront dès le retour du réseau. Le
+            temps continue de tourner.
+          </p>
+          <p className="mt-1 font-medium">
+            {pendingCount} réponse{pendingCount > 1 ? "s" : ""} en attente d’envoi
+          </p>
+        </div>
+      ) : null}
+      {recovered !== null ? (
+        <p role="status" className="border-mint/50 bg-mint/12 rounded-xl border p-3 text-sm">
+          <strong>Connexion rétablie.</strong> Vos {recovered} réponse{recovered > 1 ? "s" : ""} en
+          attente ont été envoyées.
+        </p>
+      ) : null}
 
       <div
         role="img"

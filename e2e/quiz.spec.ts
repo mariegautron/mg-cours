@@ -111,6 +111,47 @@ test("QCM : tirage individuel, passation, correction, corrigé après clôture",
   ])
     expect(html, `« ${forbidden} » ne doit pas être dans la page`).not.toContain(forbidden);
 
+  // Connexion perdue : les réponses sont gardées, puis envoyées au retour du réseau.
+  await a.context.setOffline(true);
+  const firstRadios = a.page.getByRole("group", { name: /Question 1 sur 4/ }).getByRole("radio");
+  if ((await firstRadios.count()) > 0) await firstRadios.first().check({ force: true });
+  else
+    await a.page
+      .getByRole("group", { name: /Question 1 sur 4/ })
+      .getByRole("textbox")
+      .fill("réponse gardée");
+  await expect(a.page.getByRole("alert").filter({ hasText: "Connexion perdue." })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(a.page.getByText(/\d+ réponses? en attente d’envoi/)).toBeVisible();
+  // Hors connexion assez longtemps pour qu'un envoi ait échoué (essai automatique à 1,2 s).
+  await a.page.waitForTimeout(3000);
+  await a.context.setOffline(false);
+  await expect(a.page.getByText("Connexion rétablie.")).toBeVisible({ timeout: 30_000 });
+  await expect(a.page.getByRole("alert").filter({ hasText: "Connexion perdue." })).toHaveCount(0);
+
+  // Page rechargée avant l'envoi : les réponses gardées sur l'appareil sont reprises, rien n'est perdu.
+  await a.page.route("**/q/**", (route) =>
+    route.request().method() === "POST" ? route.abort() : route.continue(),
+  );
+  const q1 = a.page.getByRole("group", { name: /Question 1 sur 4/ });
+  const q1Radios = q1.getByRole("radio");
+  const chosenText = `reprise ${Date.now()}`;
+  if ((await q1Radios.count()) > 0) await q1Radios.nth(2).check({ force: true });
+  else await q1.getByRole("textbox").fill(chosenText);
+  await expect(a.page.getByRole("alert").filter({ hasText: "Connexion perdue." })).toBeVisible({
+    timeout: 20_000,
+  });
+  await a.page.unroute("**/q/**");
+  await a.page.reload();
+  await a.page.waitForLoadState("networkidle");
+  const q1After = a.page.getByRole("group", { name: /Question 1 sur 4/ });
+  if ((await q1After.getByRole("radio").count()) > 0) {
+    await expect(q1After.getByRole("radio").nth(2)).toBeChecked();
+  } else {
+    await expect(q1After.getByRole("textbox")).toHaveValue(chosenText);
+  }
+
   // Une question à la fois (l'ordre est mélangé : la réponse libre peut venir n'importe où).
   const statements = async (p: Page) =>
     (await p.getByText(/^Énoncé \d+ du lot/).allTextContents()).sort().join("|");
