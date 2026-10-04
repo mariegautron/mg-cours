@@ -49,8 +49,9 @@ test("imprévu du client : ajout, rappel du jour, copie, envoyé", async ({ page
   expect(axe.violations).toEqual([]);
 
   await page.goto("/dashboard");
-  await expect(page.getByText("Imprévu à envoyer : Budget réduit")).toBeVisible();
-  await page.getByRole("button", { name: "Copier le message : Budget réduit" }).click();
+  // Le tableau de bord montre les imprévus du jour de tous les modules (d'autres tests en créent aussi).
+  await expect(page.getByText("Imprévu à envoyer : Budget réduit").first()).toBeVisible();
+  await page.getByRole("button", { name: "Copier le message : Budget réduit" }).first().click();
   await expect(page.getByText("Message copié.")).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     "Bonjour, le budget est réduit de moitié.",
