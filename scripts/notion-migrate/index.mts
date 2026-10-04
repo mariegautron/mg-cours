@@ -24,6 +24,7 @@ import * as complements8 from "./courses/complements-8.mts";
 import * as complements9 from "./courses/complements-9.mts";
 import * as complements10 from "./courses/complements-10.mts";
 import * as complements11 from "./courses/complements-11.mts";
+import * as complements12 from "./courses/complements-12.mts";
 import * as gp from "./courses/gp-2526.mts";
 import * as m2 from "./courses/m2-accessibilite-2425.mts";
 import { Importer } from "./lib/importer.mts";
@@ -58,6 +59,7 @@ const COURSES: Record<string, { migrate: (ctx: MigrationContext) => Promise<void
   "complements-9": complements9,
   "complements-10": complements10,
   "complements-11": complements11,
+  "complements-12": complements12,
 };
 
 function args(): Record<string, string | true> {
