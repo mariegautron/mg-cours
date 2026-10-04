@@ -132,19 +132,38 @@ export function isPlaceholderSection(section: BriefSection): boolean {
   );
 }
 
-/** Première ligne utile du texte d'une section (puces et titres retirés), coupée à 110 caractères. */
+/**
+ * Texte lisible d'une ligne de Markdown : sans titres, puces, numéros, citations, gras, italique,
+ * code ni adresses de liens. Fonction pure.
+ */
+export function plainText(markdown: string): string {
+  return markdown
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s*(?:>\s*)+/, "")
+    .replace(/^\s*(?:#{1,6}\s+|(?:[-*+•▪●◦]|\d+\s*[.)°]|[a-z]\))\s+)/i, "")
+    .replace(/[`*]/g, "")
+    .replace(/(^|\s)_+|_+(?=\s|$|[.,;:!?])/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Coupe au dernier mot entier avant `max` caractères, avec « … ». */
+export function truncateText(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.\-–—]+$/, "")}…`;
+}
+
+/** Première ligne utile du texte d'une section, en texte propre, coupée proprement à 110 caractères. */
 export function sectionSummary(body: string): string {
   const first =
     body
       .split("\n")
-      .map((l) =>
-        l
-          .replace(/^\s*(?:[-*+]|\d+[.)]|#+)\s*/, "")
-          .replace(/\*\*/g, "")
-          .trim(),
-      )
-      .find(Boolean) ?? "";
-  return first.length > 110 ? `${first.slice(0, 109)}…` : first;
+      .map(plainText)
+      .find((l) => /[\p{L}\p{N}]/u.test(l)) ?? "";
+  return truncateText(first, 110);
 }
 
 /** Vrai si le brief ne contient aucun texte (le choix du modèle est alors proposé d'emblée). */

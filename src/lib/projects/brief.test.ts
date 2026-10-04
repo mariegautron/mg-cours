@@ -106,3 +106,26 @@ describe("isPlaceholderSection", () => {
     );
   });
 });
+
+describe("résumé de section en texte propre", () => {
+  it("retire gras, citations, liens et astérisques parasites", () => {
+    expect(sectionSummary("**Client :** Coup de main, une petite association")).toBe(
+      "Client : Coup de main, une petite association",
+    );
+    expect(sectionSummary("> « Un service numérique **simple** »")).toBe(
+      "« Un service numérique simple »",
+    );
+    expect(sectionSummary("*Client : Coup de main")).toBe("Client : Coup de main");
+    expect(sectionSummary("- Voir [le site](https://exemple.fr) du client")).toBe(
+      "Voir le site du client",
+    );
+  });
+
+  it("saute les lignes sans texte et coupe au dernier mot entier", () => {
+    expect(sectionSummary("\n---\n### \n1. Premier point")).toBe("Premier point");
+    const long = sectionSummary(`${"mot ".repeat(60)}fin`);
+    expect(long.length).toBeLessThanOrEqual(110);
+    expect(long.endsWith("…")).toBe(true);
+    expect(long).not.toMatch(/mo…$/);
+  });
+});

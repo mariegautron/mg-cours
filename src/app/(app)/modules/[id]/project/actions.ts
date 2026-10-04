@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
+import { parseResourceFiles } from "@/lib/resources/files";
 import { drawThemes } from "@/lib/projects/draw";
+import { unnoteConfirmation, unnoteWordMatches } from "@/lib/projects/unnote";
 import { readProjectForm, readSkeletonJson, readThemesJson } from "@/lib/projects/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
@@ -181,6 +184,45 @@ export async function notePhase(
   }
   revalidatePath(`/modules/${moduleId}`, "layout");
   return { done: `« ${title} » est maintenant une évaluation du projet.` };
+}
+
+/**
+ * « Ne plus noter cette phase » : supprime l'évaluation (jalon) créée pour une phase. Les notes
+ * déjà saisies ne partent que si le mot « supprimer » est retapé (recalculé ici : jamais pris du
+ * navigateur). La phase repasse à « Sans note ».
+ */
+export async function unnotePhase(
+  moduleId: string,
+  assessmentId: string,
+  typed: string,
+): Promise<PhaseState> {
+  const supabase = await createClient();
+  const { data: assessment } = await supabase
+    .from("assessment")
+    .select("id, module_id, title, project_id, project_role, files")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  if (
+    !assessment ||
+    assessment.module_id !== moduleId ||
+    !assessment.project_id ||
+    assessment.project_role !== "milestone"
+  ) {
+    return { error: "Cette évaluation n’est pas une phase du projet." };
+  }
+  const { count } = await supabase
+    .from("grade")
+    .select("id", { count: "exact", head: true })
+    .eq("assessment_id", assessmentId);
+  if (unnoteConfirmation(count ?? 0) === "typed" && !unnoteWordMatches(typed)) {
+    return { error: "Retape « supprimer » pour confirmer." };
+  }
+  const { error } = await supabase.from("assessment").delete().eq("id", assessmentId);
+  if (error) return { error: failure("supprimer l’évaluation") };
+  const paths = parseResourceFiles(assessment.files).map((f) => f.path);
+  if (paths.length) await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  return { done: `« ${assessment.title} » n’est plus notée.` };
 }
 
 /** Supprime le projet ; les évaluations (et leurs notes) sont conservées, détachées du projet. */

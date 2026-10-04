@@ -110,7 +110,14 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                     return {
                       title: p.title,
                       deliverable: p.deliverable,
-                      assessment: a ? { id: a.id, title: a.title, graded: a.gradeCount > 0 } : null,
+                      assessment: a
+                        ? {
+                            id: a.id,
+                            title: a.title,
+                            graded: a.gradeCount > 0,
+                            gradeCount: a.gradeCount,
+                          }
+                        : null,
                     };
                   })}
                 />

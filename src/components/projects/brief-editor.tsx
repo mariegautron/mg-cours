@@ -7,7 +7,7 @@ import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownField } from "@/components/markdown-field";
 import {
   addSection,
   BRIEF_MODELS,
@@ -146,8 +146,8 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
           Le brief, section par section
         </h2>
         <p id="brief-hint" className="text-muted-foreground mb-2 text-sm">
-          C’est ce que les étudiant·es reçoivent. Chaque section se modifie à part (Markdown :
-          listes, **gras**).
+          C’est ce que les étudiant·es reçoivent. Chaque section se modifie à part : la barre de
+          mise en forme et l’aperçu t’évitent d’écrire du Markdown à la main.
         </p>
 
         {rows.length === 0 ? (
@@ -228,15 +228,13 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
                         <Trash2 aria-hidden className="mx-auto size-4" />
                       </button>
                     </div>
-                    <div className="space-y-1">
-                      <Label htmlFor={`sec-body-${s.key}`}>Texte de la section {i + 1}</Label>
-                      <Textarea
-                        id={`sec-body-${s.key}`}
-                        rows={5}
-                        value={s.body}
-                        onChange={(e) => patch(s.key, { body: e.target.value })}
-                      />
-                    </div>
+                    <MarkdownField
+                      id={`sec-body-${s.key}`}
+                      label={`Texte de la section ${i + 1}`}
+                      value={s.body}
+                      rows={6}
+                      onChange={(body) => patch(s.key, { body })}
+                    />
                   </div>
                 </details>
               </li>

@@ -32,3 +32,20 @@ describe("assessmentForPhase", () => {
     expect(assessmentForPhase({ title: "Organisation", deliverable: null }, list)).toBeNull();
   });
 });
+
+describe("noms de phases propres", () => {
+  it("retire la ponctuation finale et les marques Markdown", () => {
+    const md = `## Phases du projet\n\n1. **Cadrage** : récolte et reformulation du besoin ;\n2. Sprint Retrospective.\n- *Restitution* finale,\n3) Conception –`;
+    expect(parsePhases(md).map((p) => p.title)).toEqual([
+      "Cadrage",
+      "Sprint Retrospective",
+      "Restitution finale",
+      "Conception",
+    ]);
+  });
+
+  it("retrouve les phases sous un sous-titre « Phases du projet » d'une grande section", () => {
+    const md = `## Le projet\n\nTexte.\n\n### 📅 Phases du projet\n\n1. Cadrage\n2. Réalisation\n\n### Livrables\n\n- Rendu`;
+    expect(parsePhases(md).map((p) => p.title)).toEqual(["Cadrage", "Réalisation"]);
+  });
+});

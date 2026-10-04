@@ -1,19 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { notePhase } from "@/app/(app)/modules/[id]/project/actions";
+import { notePhase, unnotePhase } from "@/app/(app)/modules/[id]/project/actions";
 import { ActionError } from "@/components/action-error";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PendingButton } from "@/components/ui/pending-button";
+import { UNDO_WINDOW_MS } from "@/lib/modules/archive-undo";
+import { unnoteConfirmation, unnoteMessage, unnoteWordMatches } from "@/lib/projects/unnote";
 
 export interface PhaseRow {
   title: string;
   deliverable: string | null;
   /** Évaluation du projet qui porte déjà cette phase. */
-  assessment: { id: string; title: string; graded: boolean } | null;
+  assessment: { id: string; title: string; graded: boolean; gradeCount: number } | null;
 }
 
 /** « Les phases » du brief : lesquelles sont notées, et « Noter la phase » pour les autres. */
@@ -22,6 +28,47 @@ export function PhaseList({ moduleId, phases }: { moduleId: string; phases: Phas
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [, start] = useTransition();
+  const router = useRouter();
+  const uid = useId();
+  // Phase dont on propose de ne plus la noter (confirmation dans la ligne), et mot retapé.
+  const [confirming, setConfirming] = useState<number | null>(null);
+  const [typed, setTyped] = useState("");
+  const [removing, setRemoving] = useState(false);
+
+  const unnote = (i: number, p: PhaseRow) => {
+    const a = p.assessment;
+    if (!a || removing) return;
+    setRemoving(true);
+    start(async () => {
+      const r = await unnotePhase(moduleId, a.id, typed);
+      setRemoving(false);
+      if (r.error) {
+        setError(r.error);
+        return;
+      }
+      setError(undefined);
+      setConfirming(null);
+      setTyped("");
+      setMessage(r.done ?? "");
+      // Sans note saisie, « Annuler » (10 s) recrée l'évaluation de la phase.
+      if (a.gradeCount === 0) {
+        toast.success(r.done ?? "La phase n’est plus notée.", {
+          duration: UNDO_WINDOW_MS,
+          action: {
+            label: "Annuler",
+            onClick: () =>
+              void notePhase(moduleId, p.title, p.deliverable ?? "").then((again) => {
+                if (again.error) toast.error(again.error);
+                else toast.success(`La phase ${i + 1} est de nouveau notée.`);
+                router.refresh();
+              }),
+          },
+        });
+      }
+      router.refresh();
+    });
+  };
+
   return (
     <div className="space-y-2">
       <ol>
@@ -47,6 +94,60 @@ export function PhaseList({ moduleId, phases }: { moduleId: string; phases: Phas
                     <span className="sr-only"> : {p.title}</span>
                   </Link>
                 </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="touch"
+                  aria-expanded={confirming === i}
+                  aria-label={`Ne plus noter la phase ${i + 1} : ${p.title}`}
+                  onClick={() => {
+                    setConfirming(confirming === i ? null : i);
+                    setTyped("");
+                    setError(undefined);
+                  }}
+                >
+                  Ne plus noter cette phase
+                </Button>
+                {confirming === i ? (
+                  <div
+                    role="group"
+                    aria-label={`Confirmer : ne plus noter la phase ${i + 1}`}
+                    className="bg-destructive/5 border-destructive/40 basis-full space-y-2 rounded-xl border p-3"
+                  >
+                    <p className="text-sm font-medium">{unnoteMessage(p.assessment.gradeCount)}</p>
+                    {unnoteConfirmation(p.assessment.gradeCount) === "typed" ? (
+                      <div className="space-y-1">
+                        <Label htmlFor={`${uid}-word-${i}`}>
+                          Pour confirmer, retape « supprimer »
+                        </Label>
+                        <Input
+                          id={`${uid}-word-${i}`}
+                          value={typed}
+                          autoComplete="off"
+                          className="w-48"
+                          onChange={(e) => setTyped(e.target.value)}
+                        />
+                      </div>
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={
+                          removing ||
+                          (unnoteConfirmation(p.assessment.gradeCount) === "typed" &&
+                            !unnoteWordMatches(typed))
+                        }
+                        onClick={() => unnote(i, p)}
+                      >
+                        {removing ? "Suppression…" : "Supprimer l’évaluation"}
+                      </Button>
+                      <Button type="button" variant="ghost" onClick={() => setConfirming(null)}>
+                        Garder la note
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </>
             ) : (
               <>
