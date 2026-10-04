@@ -108,20 +108,48 @@ const MIN_SCORE = 2;
 /** Nombre de caractères de contenu lus par ressource. */
 const CONTENT_LIMIT = 4000;
 
+interface PreparedWords {
+  tags: Set<string>;
+  title: Set<string>;
+  description: Set<string>;
+  content: Set<string>;
+}
+
+/**
+ * Mots-clés de chaque champ d'une ressource, calculés une seule fois : avec 150 ressources et une
+ * vingtaine d'attendus, relire et découper tous les contenus pour chaque attendu rendait les pages
+ * du module lentes (plusieurs secondes).
+ */
+const prepared = new WeakMap<object, PreparedWords>();
+
+function wordsOf(resource: MatchableResource): PreparedWords {
+  let words = prepared.get(resource);
+  if (!words) {
+    words = {
+      tags: new Set(resource.tags.flatMap(keywords)),
+      title: new Set(keywords(resource.title)),
+      description: new Set(keywords(resource.description ?? "")),
+      content: new Set(keywords((resource.content ?? "").slice(0, CONTENT_LIMIT))),
+    };
+    prepared.set(resource, words);
+  }
+  return words;
+}
+
 export function matchResources<R extends MatchableResource>(
   expectationLabel: string,
   resources: R[],
   limit = 5,
+  /** `excerpts: false` : la couverture n'a pas besoin des extraits (le plus coûteux du calcul). */
+  options: { excerpts?: boolean } = {},
 ): ResourceMatch<R>[] {
+  const withExcerpts = options.excerpts !== false;
   const wanted = keywords(expectationLabel);
   if (wanted.length === 0) return [];
 
   const matches: ResourceMatch<R>[] = [];
   for (const resource of resources) {
-    const tags = new Set(resource.tags.flatMap(keywords));
-    const title = new Set(keywords(resource.title));
-    const description = new Set(keywords(resource.description ?? ""));
-    const content = new Set(keywords((resource.content ?? "").slice(0, CONTENT_LIMIT)));
+    const { tags, title, description, content } = wordsOf(resource);
 
     const shared: string[] = [];
     const where: Record<MatchField, string[]> = {
@@ -153,7 +181,7 @@ export function matchResources<R extends MatchableResource>(
         resource,
         shared,
         score,
-        excerpt: excerptForTerms(resource, shared),
+        excerpt: withExcerpts ? excerptForTerms(resource, shared) : null,
         where,
         level: matchLevel(percent),
         percent,

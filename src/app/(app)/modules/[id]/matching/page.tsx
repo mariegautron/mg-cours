@@ -36,7 +36,7 @@ import {
   selectedExpectationId,
   type MatchingFilter,
 } from "@/lib/modules/matching-view";
-import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
+import { excerptForTerms, SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { createClient } from "@/lib/supabase/server";
 import { getExpectationCourses, listCandidateResources } from "@/lib/modules/matching-queries";
 import {
@@ -102,7 +102,7 @@ export default async function MatchingPage({
   const rows = expectations.map((e) => {
     // La couverture compte toutes les ressources retenues qui correspondent, pas seulement les
     // cinq premières proposées ; l'affichage garde les cinq premières et les ressources retenues.
-    const all = matchResources(e.label, candidates, candidates.length);
+    const all = matchResources(e.label, candidates, candidates.length, { excerpts: false });
     const courseIds = coursesByExpectation.get(e.id) ?? [];
     const state = coverageState({
       courseIds,
@@ -113,7 +113,9 @@ export default async function MatchingPage({
     const away = dismissed.get(e.id);
     const matches = all
       .filter((m) => !away?.has(m.resource.id) || retainedIds.has(m.resource.id))
-      .filter((m, i) => i < 5 || retainedIds.has(m.resource.id));
+      .filter((m, i) => i < 5 || retainedIds.has(m.resource.id))
+      // Les extraits ne se calculent que pour ce qui s'affiche.
+      .map((m) => ({ ...m, excerpt: excerptForTerms(m.resource, m.shared) }));
     return { e, matches, courseIds, state };
   });
   const summary = summarizeCoverage(rows.map((r) => r.state));

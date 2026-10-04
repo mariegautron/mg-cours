@@ -10,14 +10,26 @@ import type { Tables } from "@/types/db";
 export async function loadInvoiceContext(moduleId: string): Promise<InvoiceContext | null> {
   const mod = await getModule(moduleId);
   if (!mod) return null;
+  return buildInvoiceContext(mod, await getProfile());
+}
 
+/**
+ * Même contexte à partir d'un module et d'un profil déjà chargés : la vue d'ensemble de la
+ * facturation en traite plusieurs, le profil et la fiche module ne sont lus qu'une fois.
+ */
+async function buildInvoiceContext(
+  mod: ModuleWithSchool,
+  profile: Tables<"teacher_profile"> | null,
+  schools?: Map<string, Tables<"school">>,
+): Promise<InvoiceContext> {
   const supabase = await createClient();
-  const [profile, notes, schoolRes] = await Promise.all([
-    getProfile(),
-    moduleNoteProgress(moduleId, mod.total_hours),
-    mod.school_id
-      ? supabase.from("school").select("*").eq("id", mod.school_id).maybeSingle()
-      : Promise.resolve({ data: null }),
+  const [notes, schoolRes] = await Promise.all([
+    moduleNoteProgress(mod.id, mod.total_hours),
+    schools
+      ? Promise.resolve({ data: mod.school_id ? (schools.get(mod.school_id) ?? null) : null })
+      : mod.school_id
+        ? supabase.from("school").select("*").eq("id", mod.school_id).maybeSingle()
+        : Promise.resolve({ data: null }),
   ]);
 
   return {
@@ -73,23 +85,20 @@ export type BillingRow =
 /** Vue d'ensemble : pour chaque module, facturé / prêt à facturer / bloqué (raisons détaillées). */
 export async function listBillingOverview(): Promise<BillingRow[]> {
   const supabase = await createClient();
-  const [modules, { data: invoices }] = await Promise.all([
+  const [modules, { data: invoices }, profile, { data: schoolRows }] = await Promise.all([
     listModules(),
     supabase.from("invoice").select("*"),
+    getProfile(),
+    supabase.from("school").select("*"),
   ]);
+  const schools = new Map((schoolRows ?? []).map((sc) => [sc.id, sc]));
   const byModule = new Map((invoices ?? []).map((i) => [i.module_id, i]));
 
   return Promise.all(
     modules.map(async (m): Promise<BillingRow> => {
       const invoice = byModule.get(m.id) ?? null;
-      const ctx = await loadInvoiceContext(m.id);
-      const next: NextStep = ctx
-        ? nextStep(ctx, invoice)
-        : {
-            label: "Prochaine étape : compléter le module",
-            done: false,
-            reasons: ["Module introuvable."],
-          };
+      const ctx = await buildInvoiceContext(m, profile, schools);
+      const next: NextStep = nextStep(ctx, invoice);
       if (invoice) return { kind: "invoiced", module: m, invoice, next };
       return next.reasons.length === 0
         ? { kind: "ready", module: m, next }
