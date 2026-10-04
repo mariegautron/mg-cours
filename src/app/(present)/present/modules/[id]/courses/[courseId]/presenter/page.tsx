@@ -10,6 +10,8 @@ import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresenterView } from "@/components/present/presenter-view";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { describeActivity, EMPTY_ACTIVITY, startTimes } from "@/lib/modules/activity";
+import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { parseHidden, resourceKey } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
@@ -28,14 +30,17 @@ export default async function PresenterPage({
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
   const hidden = parseHidden((await searchParams).hide);
-  const [mod, courses, allResources, subjects, libraryRows, groups] = await Promise.all([
-    getModule(id),
-    getModuleCourses(id),
-    getCourseResourcesFull(courseId),
-    loadCourseSubjects(id, courseId),
-    listResources(),
-    listModuleGroups(id),
-  ]);
+  const [mod, courses, allResources, subjects, libraryRows, groups, activities] = await Promise.all(
+    [
+      getModule(id),
+      getModuleCourses(id),
+      getCourseResourcesFull(courseId),
+      loadCourseSubjects(id, courseId),
+      listResources(),
+      listModuleGroups(id),
+      getCourseActivities(courseId),
+    ],
+  );
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
@@ -50,6 +55,19 @@ export default async function PresenterPage({
     subjects,
     hidden,
   });
+
+  // Détails du déroulé (horaire, durée, type, objectif), alignés sur les sections du plan.
+  const startsAt = startTimes(
+    courses[position].start_time ? courses[position].start_time.slice(0, 5) : null,
+    allResources.map((r) => activities.byResource.get(r.id) ?? EMPTY_ACTIVITY),
+  );
+  const metaByKey = new Map(
+    allResources.map((r, i) => [
+      resourceKey(r.id),
+      describeActivity(activities.byResource.get(r.id) ?? EMPTY_ACTIVITY, startsAt[i]),
+    ]),
+  );
+  const sectionMeta = sectionKeys.map((k) => metaByKey.get(k) ?? null);
 
   const notes = [
     { label: "Modalités d’animation", text: course.animation_notes },
@@ -88,6 +106,7 @@ export default async function PresenterPage({
       endTime={today ? course.end_time : null}
       sections={sections}
       sectionKeys={sectionKeys}
+      sectionMeta={sectionMeta}
       library={libraryRows.map((r) => ({
         id: r.id,
         title: r.title,

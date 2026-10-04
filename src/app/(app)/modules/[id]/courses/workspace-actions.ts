@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { failure, NOT_FOUND } from "@/lib/messages";
+import { cleanActivity, type Activity } from "@/lib/modules/activity";
 import { PREP_STATUSES } from "@/lib/modules/schema";
 import { cleanDeliverable } from "@/lib/modules/session-builder";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +23,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function saveWorkspace(
   moduleId: string,
   courseId: string,
-  input: { title: string; prepStatus: string; deliverable: string; resourceOrder: string[] },
+  input: {
+    title: string;
+    prepStatus: string;
+    deliverable: string;
+    resourceOrder: string[];
+    /** Détails par activité (id de ressource → activité) ; absent = rien à enregistrer. */
+    activities?: Record<string, Partial<Record<keyof Activity, unknown>>>;
+  },
 ): Promise<WorkspaceState> {
   const title = input.title.replace(/\s+/g, " ").trim();
   if (!title) return { error: "Le titre de la séance ne peut pas être vide." };
@@ -53,6 +61,23 @@ export async function saveWorkspace(
     },
     { onConflict: "course_id" },
   );
+
+  // Activités du déroulé : tolérant (colonnes absentes → ignoré, le déroulé reste simple).
+  for (const [resourceId, raw] of Object.entries(input.activities ?? {})) {
+    if (!UUID.test(resourceId)) continue;
+    const a = cleanActivity(raw);
+    await supabase
+      .from("course_resource")
+      .update({
+        duration_minutes: a.durationMinutes,
+        activity_type: a.type,
+        start_time: a.startTime,
+        pedagogical_objective: a.objective,
+        prep_state: a.prepState,
+      })
+      .eq("course_id", courseId)
+      .eq("resource_id", resourceId);
+  }
 
   revalidatePath(`/modules/${moduleId}`, "layout");
   return { savedAt: new Date().toISOString() };

@@ -12,6 +12,16 @@ import {
 import { ActionError } from "@/components/action-error";
 import { Pill } from "@/components/dashboard/pill";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  ACTIVITY_PREP_STATES,
+  ACTIVITY_TYPES,
+  describeActivity,
+  checkDuration,
+  OBJECTIVES,
+  startTimes,
+  totalMinutes,
+  type Activity,
+} from "@/lib/modules/activity";
 import { moveDown, moveUp, reorder } from "@/lib/modules/session-builder";
 import { DELIVERABLE_MAX } from "@/lib/modules/session-builder";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/modules/schema";
@@ -23,6 +33,8 @@ export interface WorkspaceResource {
   kindLabel: string;
   ready: boolean;
   subtitle: string;
+  /** Détails de l'activité dans le déroulé (durée, type, horaire, objectif, état). */
+  activity: Activity;
 }
 
 const BTN =
@@ -38,6 +50,9 @@ export function SessionWorkspace({
   initial,
   addable: addableInitial,
   planAvailable,
+  activitiesAvailable,
+  sessionMinutes,
+  sessionStart,
 }: {
   moduleId: string;
   courseId: string;
@@ -50,6 +65,11 @@ export function SessionWorkspace({
   /** Ressources retenues du module qui ne sont pas encore dans le déroulé de cette séance. */
   addable: WorkspaceResource[];
   planAvailable: boolean;
+  /** Colonnes du déroulé structuré présentes en base (migration appliquée). */
+  activitiesAvailable: boolean;
+  /** Durée de la séance en minutes et heure de début, pour comparer et déduire les horaires. */
+  sessionMinutes: number | null;
+  sessionStart: string | null;
 }) {
   const [title, setTitle] = useState(initial.title);
   const [status, setStatus] = useState(initial.prepStatus);
@@ -78,6 +98,9 @@ export function SessionWorkspace({
           prepStatus: status,
           deliverable,
           resourceOrder: resources.map((r) => r.id),
+          activities: activitiesAvailable
+            ? Object.fromEntries(resources.map((r) => [r.id, r.activity]))
+            : undefined,
         });
         setError(res.error);
         setSaved(
@@ -88,7 +111,7 @@ export function SessionWorkspace({
       });
     }, 700);
     return () => clearTimeout(timer);
-  }, [title, status, deliverable, resources, moduleId, courseId]);
+  }, [title, status, deliverable, resources, moduleId, courseId, activitiesAvailable]);
 
   function move(index: number, dir: "up" | "down") {
     const next = dir === "up" ? moveUp(resources, index) : moveDown(resources, index);
@@ -99,6 +122,18 @@ export function SessionWorkspace({
     );
     requestAnimationFrame(() =>
       document.getElementById(`mv-${resources[index].id}-${dir}`)?.focus(),
+    );
+  }
+
+  const duration = checkDuration(totalMinutes(resources.map((r) => r.activity)), sessionMinutes);
+  const starts = startTimes(
+    sessionStart,
+    resources.map((r) => r.activity),
+  );
+
+  function patchActivity(id: string, patch: Partial<Activity>) {
+    setResources((list) =>
+      list.map((r) => (r.id === id ? { ...r, activity: { ...r.activity, ...patch } } : r)),
     );
   }
 
@@ -188,6 +223,18 @@ export function SessionWorkspace({
             Glisse pour changer l’ordre : c’est l’ordre du cours
           </span>
         </div>
+        {activitiesAvailable && resources.length > 0 ? (
+          <p
+            role="status"
+            className={cn(
+              "mb-2 text-sm font-medium",
+              duration.status === "over" && "text-warning",
+              duration.status === "ok" && "text-emerald-600 dark:text-emerald-400",
+            )}
+          >
+            {duration.message}
+          </p>
+        ) : null}
         {resources.length === 0 ? (
           <p className="text-muted-foreground rounded-xl border border-dashed p-4 text-sm">
             Aucune ressource dans le déroulé. Ajoute une ressource retenue ou crée-en une.
@@ -223,9 +270,27 @@ export function SessionWorkspace({
                 <div className="min-w-0 flex-1">
                   <strong className="block truncate">{r.title}</strong>
                   <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
+                  {activitiesAvailable ? (
+                    <span className="text-muted-foreground block text-[0.8rem]">
+                      {describeActivity(r.activity, starts[i]) ?? "Pas encore de détails"}
+                    </span>
+                  ) : null}
                 </div>
                 <Pill>{r.kindLabel}</Pill>
                 <Pill tone={r.ready ? "ok" : "warn"}>{r.ready ? "Prêt" : "À construire"}</Pill>
+                {activitiesAvailable ? (
+                  <Pill
+                    tone={
+                      r.activity.prepState === "ready"
+                        ? "ok"
+                        : r.activity.prepState === "in_progress"
+                          ? "wip"
+                          : "plain"
+                    }
+                  >
+                    {ACTIVITY_PREP_STATES.find((s) => s.value === r.activity.prepState)?.label}
+                  </Pill>
+                ) : null}
                 <button
                   id={`mv-${r.id}-up`}
                   type="button"
@@ -252,6 +317,107 @@ export function SessionWorkspace({
                 <button type="button" className={BTN} onClick={() => remove(r)}>
                   Retirer<span className="sr-only"> : {r.title}</span>
                 </button>
+                {activitiesAvailable ? (
+                  <details className="basis-full">
+                    <summary className="text-primary min-h-11 cursor-pointer py-2 text-sm font-semibold underline underline-offset-2">
+                      Détails de l’activité<span className="sr-only"> : {r.title}</span>
+                    </summary>
+                    <div className="grid gap-3 pb-2 sm:grid-cols-2 lg:grid-cols-5">
+                      <div className="space-y-1">
+                        <label htmlFor={`dur-${r.id}`} className="text-sm font-medium">
+                          Durée estimée (min)
+                        </label>
+                        <input
+                          id={`dur-${r.id}`}
+                          type="number"
+                          min={1}
+                          max={600}
+                          inputMode="numeric"
+                          value={r.activity.durationMinutes ?? ""}
+                          onChange={(e) =>
+                            patchActivity(r.id, {
+                              durationMinutes: e.target.value ? Number(e.target.value) : null,
+                            })
+                          }
+                          className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label htmlFor={`typ-${r.id}`} className="text-sm font-medium">
+                          Type
+                        </label>
+                        <select
+                          id={`typ-${r.id}`}
+                          value={r.activity.type ?? ""}
+                          onChange={(e) => patchActivity(r.id, { type: e.target.value || null })}
+                          className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+                        >
+                          <option value="">Non précisé</option>
+                          {ACTIVITY_TYPES.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label htmlFor={`sta-${r.id}`} className="text-sm font-medium">
+                          Début
+                        </label>
+                        <input
+                          id={`sta-${r.id}`}
+                          type="time"
+                          value={r.activity.startTime ?? ""}
+                          onChange={(e) =>
+                            patchActivity(r.id, { startTime: e.target.value || null })
+                          }
+                          className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label htmlFor={`obj-${r.id}`} className="text-sm font-medium">
+                          Objectif pédagogique
+                        </label>
+                        <select
+                          id={`obj-${r.id}`}
+                          value={r.activity.objective ?? ""}
+                          onChange={(e) =>
+                            patchActivity(r.id, { objective: e.target.value || null })
+                          }
+                          className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+                        >
+                          <option value="">Non précisé</option>
+                          {OBJECTIVES.map((o) => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label htmlFor={`prp-${r.id}`} className="text-sm font-medium">
+                          Préparation
+                        </label>
+                        <select
+                          id={`prp-${r.id}`}
+                          value={r.activity.prepState}
+                          onChange={(e) =>
+                            patchActivity(r.id, {
+                              prepState: e.target.value as Activity["prepState"],
+                            })
+                          }
+                          className="border-input bg-background min-h-11 w-full rounded-xl border px-3"
+                        >
+                          {ACTIVITY_PREP_STATES.map((s) => (
+                            <option key={s.value} value={s.value}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </details>
+                ) : null}
               </li>
             ))}
           </ol>

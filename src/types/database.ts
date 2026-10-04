@@ -550,30 +550,45 @@ export type Database = {
       }
       course_resource: {
         Row: {
+          activity_type: string | null
           course_id: string
           created_at: string
+          duration_minutes: number | null
           id: string
           owner_id: string
+          pedagogical_objective: string | null
+          prep_state: string | null
           resource_id: string
           role: Database["public"]["Enums"]["course_resource_role"]
+          start_time: string | null
           updated_at: string
         }
         Insert: {
+          activity_type?: string | null
           course_id: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           owner_id?: string
+          pedagogical_objective?: string | null
+          prep_state?: string | null
           resource_id: string
           role?: Database["public"]["Enums"]["course_resource_role"]
+          start_time?: string | null
           updated_at?: string
         }
         Update: {
+          activity_type?: string | null
           course_id?: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           owner_id?: string
+          pedagogical_objective?: string | null
+          prep_state?: string | null
           resource_id?: string
           role?: Database["public"]["Enums"]["course_resource_role"]
+          start_time?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -165,8 +165,25 @@ test("premier module : de la fiche de l'école à la première séance", async (
   });
   await addButtons.first().click();
   await expect(page.getByText(/est ajoutée à la fin du déroulé/)).toBeAttached();
+  // Déroulé structuré : durée, type, objectif ; le total se compare à la durée de la séance (3 h).
+  await page
+    .getByText(/^Détails de l’activité/)
+    .first()
+    .click();
+  await page.getByLabel("Durée estimée (min)").first().fill("45");
+  await page.getByLabel("Type", { exact: true }).first().selectOption("atelier");
+  await page.getByLabel("Objectif pédagogique").first().selectOption("Analyser");
+  await expect(page.getByText(/Déroulé : 45 min sur 3 h de séance, il reste 2 h 15/)).toBeVisible();
+  await expect(page.getByText(/08:00 · 45 min · Atelier · Analyser/)).toBeVisible();
   await page.getByLabel("Statut de préparation").getByText("Prête").click();
   await expect(page.getByText(/1 sur 7 prêtes/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/Enregistré à/)).toBeVisible({ timeout: 20_000 });
+  await page.reload();
+  await page
+    .getByText(/^Détails de l’activité/)
+    .first()
+    .click();
+  await expect(page.getByLabel("Durée estimée (min)").first()).toHaveValue("45");
   await axeClean(page, "séance (déroulé)");
 
   // La séance prête change la « Prochaine étape » : on passe aux évaluations et au fil rouge.

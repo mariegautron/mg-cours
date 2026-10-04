@@ -22,6 +22,8 @@ import {
   getRetainedResources,
 } from "@/lib/modules/queries";
 import { checkPlannedHours, totalPlannedHours } from "@/lib/modules/course-duration";
+import { EMPTY_ACTIVITY } from "@/lib/modules/activity";
+import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { orderResources } from "@/lib/modules/session-builder";
 import { formatSessionDay } from "@/lib/dashboard/today";
 import { listQuestionLinks } from "@/lib/questions/link-queries";
@@ -45,17 +47,27 @@ export default async function CoursePage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
-  const [mod, courses, fullResources, expectations, byExpectation, assessments, links, retained] =
-    await Promise.all([
-      getModule(id),
-      getModuleCourses(id),
-      getCourseResourcesFull(courseId),
-      getModuleExpectations(id),
-      getExpectationCourses(id),
-      listModuleAssessments(id),
-      listQuestionLinks(),
-      getRetainedResources(id),
-    ]);
+  const [
+    mod,
+    courses,
+    fullResources,
+    expectations,
+    byExpectation,
+    assessments,
+    links,
+    retained,
+    activities,
+  ] = await Promise.all([
+    getModule(id),
+    getModuleCourses(id),
+    getCourseResourcesFull(courseId),
+    getModuleExpectations(id),
+    getExpectationCourses(id),
+    listModuleAssessments(id),
+    listQuestionLinks(),
+    getRetainedResources(id),
+    getCourseActivities(courseId),
+  ]);
   const course = courses.find((c) => c.id === courseId);
   if (!mod || !course) notFound();
   const { available, plans } = await getModulePlans(courses.map((c) => c.id));
@@ -74,6 +86,7 @@ export default async function CoursePage({
       kind: r.kind,
       slideCount: r.content ? slidePreviews(r.content).length : 0,
     }),
+    activity: activities.byResource.get(r.id) ?? EMPTY_ACTIVITY,
   }));
 
   const inSession = new Set(ordered.map((r) => r.id));
@@ -90,6 +103,7 @@ export default async function CoursePage({
         kind: r.kind,
         slideCount: 0,
       }),
+      activity: EMPTY_ACTIVITY,
     }));
 
   const covered = expectations.filter((e) => (byExpectation.get(e.id) ?? []).includes(courseId));
@@ -185,6 +199,9 @@ export default async function CoursePage({
           courseId={courseId}
           planAvailable={available}
           addable={addable}
+          activitiesAvailable={activities.available}
+          sessionMinutes={minutes}
+          sessionStart={course.start_time ? course.start_time.slice(0, 5) : null}
           initial={{
             title: course.title,
             prepStatus: course.prep_status,

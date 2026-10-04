@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { canPresent } from "@/lib/assessments/subject";
+import { checkDuration, EMPTY_ACTIVITY, totalMinutes } from "@/lib/modules/activity";
+import { getCourseActivities } from "@/lib/modules/activity-queries";
+import { minutesBetween } from "@/lib/modules/workspace";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { prepItems } from "@/lib/present/items";
 import { previousNextTime } from "@/lib/present/reprise";
@@ -18,12 +21,13 @@ export default async function StartCoursePage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/start">) {
   const { id, courseId } = await params;
-  const [mod, courses, resources, subjects, assessments] = await Promise.all([
+  const [mod, courses, resources, subjects, assessments, activities] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     getCourseResourcesFull(courseId),
     loadCourseSubjects(id, courseId),
     listModuleAssessments(id),
+    getCourseActivities(courseId),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
@@ -75,6 +79,16 @@ export default async function StartCoursePage({
           <Link href={`/modules/${id}/courses/${courseId}`}>← Retour à la séance</Link>
         </Button>
       </div>
+      {activities.available && resources.length > 0 ? (
+        <p role="status" className="text-sm font-medium">
+          {
+            checkDuration(
+              totalMinutes(resources.map((r) => activities.byResource.get(r.id) ?? EMPTY_ACTIVITY)),
+              minutesBetween(course.start_time, course.end_time),
+            ).message
+          }
+        </p>
+      ) : null}
       <PrepPanel
         moduleId={id}
         courseId={courseId}

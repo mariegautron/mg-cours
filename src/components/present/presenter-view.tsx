@@ -76,6 +76,7 @@ export function PresenterView({
   endTime,
   sections,
   sectionKeys,
+  sectionMeta = [],
   library,
   moduleId,
   courseId,
@@ -99,6 +100,8 @@ export function PresenterView({
   sections: string[];
   /** Clé stable de chaque section (même ordre), pour le journal de projection. */
   sectionKeys: string[];
+  /** Détails de l'activité de chaque section (horaire, durée, type, objectif), ou `null`. */
+  sectionMeta?: (string | null)[];
   /** Ressources de la bibliothèque, pour en projeter une à l'improviste. */
   library: LibraryResource[];
   moduleId: string;
@@ -390,6 +393,11 @@ export function PresenterView({
                         <Badge variant="secondary" className="ml-2">
                           Projeté
                         </Badge>
+                      ) : null}
+                      {sectionMeta[i] ? (
+                        <span className="text-muted-foreground block text-xs font-normal">
+                          {sectionMeta[i]}
+                        </span>
                       ) : null}
                     </span>
                     <span className="flex gap-2">
