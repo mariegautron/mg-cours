@@ -121,6 +121,68 @@ export async function createSkeleton(
   return { created: created.length };
 }
 
+export interface PhaseState {
+  error?: string;
+  done?: string;
+}
+
+/**
+ * « Noter la phase » : crée l'évaluation (jalon de groupe) qui porte une phase du brief, rattachée
+ * au projet et à tous les groupes du module, avec le livrable de la phase comme rendu attendu.
+ */
+export async function notePhase(
+  moduleId: string,
+  phaseTitle: string,
+  deliverable: string,
+): Promise<PhaseState> {
+  const title = phaseTitle.replace(/\s+/g, " ").trim().slice(0, 200);
+  if (!title) return { error: "La phase n’a pas de titre." };
+  const supabase = await createClient();
+  const { data: project } = await supabase
+    .from("module_project")
+    .select("id")
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!project) return { error: "Enregistre d’abord le projet." };
+
+  const [{ data: groups }, { count: existing }] = await Promise.all([
+    supabase.from("student_group").select("id").eq("module_id", moduleId),
+    supabase
+      .from("assessment")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", project.id),
+  ]);
+  const { data: created, error } = await supabase
+    .from("assessment")
+    .insert({
+      module_id: moduleId,
+      title,
+      type: "projet",
+      is_group_grade: true,
+      project_id: project.id,
+      project_role: "milestone",
+      project_position: (existing ?? 0) + 1,
+      deliverable_md: deliverable.trim().slice(0, 20000) || null,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { error: failure("noter la phase") };
+  const groupIds = (groups ?? []).map((g) => g.id);
+  if (groupIds.length) {
+    const { error: groupsError } = await supabase
+      .from("assessment_group")
+      .insert(
+        groupIds.map((student_group_id) => ({ assessment_id: created.id, student_group_id })),
+      );
+    if (groupsError) {
+      await supabase.from("assessment").delete().eq("id", created.id);
+      return { error: failure("noter la phase") };
+    }
+  }
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  return { done: `« ${title} » est maintenant une évaluation du projet.` };
+}
+
 /** Supprime le projet ; les évaluations (et leurs notes) sont conservées, détachées du projet. */
 export async function deleteProject(moduleId: string): Promise<void> {
   const supabase = await createClient();
