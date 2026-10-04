@@ -831,3 +831,19 @@ Type « Convention de formation » livré (migration `20261104000000_training_ag
   **un seul fichier de stockage, deux lignes** (une par module).
 - Non déposés : contrat de l'édition archivée (pas de module), planning Hyperplanning
   (prévisionnel, périmé).
+
+#### Nouvelles données des écrans — `complements-11` (prêt, simulation ; migrations 20261105 à 20261109)
+
+- **Slides par séance** (`course.slides_url`) : M2, jours 1 à 3 (liens Figma Notion) ; GP : PDF
+  déposés comme documents du module ; B2 : aucun lien.
+- **Déroulé structuré** (`course_resource` : durée, type, horaire de début, objectif, état de
+  préparation), tiré des pages « Activités pédagogiques » de Notion pour les activités devenues
+  ressources (M2, GP). Ex. « Créer une modale accessible » : 45 min · Cours appliqué · 09:00 ·
+  Développer : implémenter une interface ou un composant accessible · prête.
+- **Où rendre** (`assessment.where_to_submit`) : seulement ce que Moodle documente : B2 (TP
+  audit, oral, évaluation individuelle) et QCM GP ; rien pour le M2 ni les projets GP.
+- **Attendus évalués** (`assessment_expectation`) : rattachements relus évaluation par
+  évaluation (GP : cadrage → 2-5, spécifications → 7-8, oral → 3, 6, 7 ; B2 : TP audit → 3, 6,
+  écrit individuel → 1-3, oral → 2, 3 ; M2 : projet → 6-14, oral → 15-17, QCM → 18).
+- Barème Opquast (`score_scale`, `is_bonus`, `raw_score`) : pas de score à importer ; la saisie
+  se fait dans l'application.
