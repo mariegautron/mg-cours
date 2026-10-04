@@ -125,10 +125,6 @@ export default async function CoursePage({
 
   return (
     <div className="space-y-4">
-      <PruneEmptySessions
-        moduleId={id}
-        sessions={emptySessions.map((c) => ({ id: c.id, title: c.title, position: c.position }))}
-      />
       <div className="flex flex-wrap items-stretch gap-4 lg:flex-nowrap">
         <SessionList
           moduleId={id}
@@ -338,6 +334,10 @@ export default async function CoursePage({
           </section>
         </aside>
       </div>
+      <PruneEmptySessions
+        moduleId={id}
+        sessions={emptySessions.map((c) => ({ id: c.id, title: c.title, position: c.position }))}
+      />
     </div>
   );
 }

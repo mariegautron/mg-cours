@@ -66,7 +66,8 @@ test("rattrapage : seul·es les absent·es excusé·es, même grille, la note re
   await expect(form(ana)).toHaveCount(0);
   await expect(form(leo)).toHaveCount(0);
   await setScore(form(zoe), "Structure", "3");
-  await expect(page.getByText("Tout est enregistré")).toBeVisible({ timeout: 10_000 });
+  // « Tout est enregistré » s'affiche aussi avant la saisie : on attend l'heure d'enregistrement.
+  await expect(page.getByText(/Enregistré à/)).toBeVisible({ timeout: 20_000 });
 
   // Le rattrapage ne compte pas comme une note de plus ; sa note remplace l'absence excusée.
   // « Tout est enregistré » s'affiche aussi avant que la saisie soit prise en compte : on recharge
