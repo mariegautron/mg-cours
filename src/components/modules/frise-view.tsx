@@ -161,10 +161,13 @@ export function FriseStudent({
   frise,
   today,
   embedded = false,
+  nextHref,
 }: {
   frise: Frise;
   today: string;
   embedded?: boolean;
+  /** Page du prochain rendu (espace étudiant·e) ; à défaut, l'ancre de la carte. */
+  nextHref?: string;
 }) {
   const Title = embedded ? "h3" : "h1";
   const events = sessionEvents(frise);
@@ -294,7 +297,7 @@ export function FriseStudent({
           )}
         >
           <a
-            href="#prochain"
+            href={nextHref ?? "#prochain"}
             className="bg-primary text-primary-foreground focus-visible:ring-ring flex min-h-[3.25rem] w-full items-center justify-center rounded-xl text-base font-semibold focus-visible:ring-2 focus-visible:outline-none"
           >
             Voir mon prochain rendu

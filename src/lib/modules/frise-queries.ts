@@ -1,6 +1,8 @@
 import "server-only";
 
 import { buildFrise, type Frise } from "@/lib/modules/frise";
+import { DEFAULT_ESPACE_OPTIONS, isStale, type EspaceOptions } from "@/lib/modules/espace";
+import { latestChange, optionsOf } from "@/lib/modules/espace-queries";
 import { createClient } from "@/lib/supabase/server";
 
 /** Frise d'un module à partir des séances et des évaluations (pas de donnée d'étudiant·e). */
@@ -44,7 +46,13 @@ export async function loadFrise(moduleId: string): Promise<Frise | null> {
 export interface ShareLinkInfo {
   /** La table existe ; sinon le lien est indisponible. */
   available: boolean;
-  active: { publishedAt: string; viewCount: number } | null;
+  active: {
+    publishedAt: string;
+    viewCount: number;
+    options: EspaceOptions;
+    /** Des données du module ont changé depuis la publication. */
+    stale: boolean;
+  } | null;
 }
 
 export async function getShareLinkInfo(moduleId: string): Promise<ShareLinkInfo> {
@@ -52,14 +60,21 @@ export async function getShareLinkInfo(moduleId: string): Promise<ShareLinkInfo>
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("module_share_link")
-      .select("published_at, view_count")
+      .select("published_at, view_count, payload")
       .eq("module_id", moduleId)
       .is("revoked_at", null)
       .maybeSingle();
     if (error) return { available: false, active: null };
     return {
       available: true,
-      active: data ? { publishedAt: data.published_at, viewCount: data.view_count } : null,
+      active: data
+        ? {
+            publishedAt: data.published_at,
+            viewCount: data.view_count,
+            options: optionsOf(data.payload) ?? DEFAULT_ESPACE_OPTIONS,
+            stale: isStale(data.published_at, await latestChange(moduleId)),
+          }
+        : null,
     };
   } catch {
     return { available: false, active: null };

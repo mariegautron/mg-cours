@@ -6,13 +6,18 @@ import { Presentation } from "lucide-react";
 import { FriseProjected, FriseStudent } from "@/components/modules/frise-view";
 import { ShareLinkPanel } from "@/components/modules/share-link-panel";
 import { Button } from "@/components/ui/button";
+import { loadEspace } from "@/lib/modules/espace-queries";
 import { getShareLinkInfo, loadFrise } from "@/lib/modules/frise-queries";
 
 export const metadata: Metadata = { title: "Frise du module" };
 
 export default async function FrisePage({ params }: PageProps<"/modules/[id]/frise">) {
   const { id } = await params;
-  const [frise, share] = await Promise.all([loadFrise(id), getShareLinkInfo(id)]);
+  const [frise, share, espace] = await Promise.all([
+    loadFrise(id),
+    getShareLinkInfo(id),
+    loadEspace(id),
+  ]);
   if (!frise) notFound();
   const today = new Date().toISOString().slice(0, 10);
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
@@ -49,7 +54,17 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
 
       <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
         <div className="w-full min-w-0 flex-1 lg:basis-0">
-          <ShareLinkPanel moduleId={id} available={share.available} active={share.active} />
+          <ShareLinkPanel
+            moduleId={id}
+            available={share.available}
+            active={share.active}
+            counts={{
+              brief: !!espace.brief,
+              evaluations: espace.evaluations.length,
+              grids: espace.evaluations.filter((e) => e.grid).length,
+              resources: espace.courses.reduce((n, c) => n + c.resources.length, 0),
+            }}
+          />
         </div>
         <section
           aria-labelledby="etu"
