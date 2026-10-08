@@ -3,22 +3,17 @@ import { zipSync } from "fflate";
 
 import { buildGridHandout } from "@/lib/assessments/grid-handout";
 import {
-  correctionCriteria,
   exportableAssessments,
   isAssessmentPart,
   PART_FILES,
-  qcmCorrectionQuestions,
+  qcmCorrectionThemes,
   subjectParts,
   type AssessmentPart,
 } from "@/lib/assessments/export";
 import { getAssessment, listModuleAssessments } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { getTeacherName } from "@/lib/outline/queries";
-import {
-  CorrectionDocument,
-  QcmCorrectionDocument,
-  SubjectDocument,
-} from "@/lib/pdf/assessment-export";
+import { QcmCorrectionDocument, SubjectDocument } from "@/lib/pdf/assessment-export";
 import { GridHandoutDocument } from "@/lib/pdf/grid";
 import { getQuizByAssessment, loadBank } from "@/lib/quiz/queries";
 
@@ -37,7 +32,7 @@ function slug(input: string): string {
 }
 
 /**
- * Export « Évaluations formatives » pour Moodle. `?assessment=ID&part=subject|criteria|correction|qcm` :
+ * Export « Évaluations formatives » pour Moodle. `?assessment=ID&part=subject|criteria|correction` :
  * un PDF ; `?assessment=ID` ou sans paramètre : les PDF en zip (un dossier par évaluation). Jamais de
  * note, de commentaire ni de contenu « enseignante » : seule la correction type (grille, QCM) sort.
  */
@@ -92,19 +87,14 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
           maxScore: a.max_score,
         });
         out.criteria = new Uint8Array(await renderToBuffer(GridHandoutDocument({ handout })));
-        const criteria = correctionCriteria(handout);
-        if (criteria.length) {
-          out.correction = new Uint8Array(
-            await renderToBuffer(CorrectionDocument({ context, criteria })),
-          );
-        }
       }
+      // Correction type : seulement quand elle existe (un QCM) ; jalons et oraux n'en ont pas.
       const quiz = await getQuizByAssessment(a.id);
       if (quiz) {
-        const questions = qcmCorrectionQuestions(await loadBank(quiz.id), quiz.rules);
-        if (questions.length) {
-          out.qcm = new Uint8Array(
-            await renderToBuffer(QcmCorrectionDocument({ context, questions })),
+        const themes = qcmCorrectionThemes(await loadBank(quiz.id), quiz.rules);
+        if (themes.length) {
+          out.correction = new Uint8Array(
+            await renderToBuffer(QcmCorrectionDocument({ context, themes })),
           );
         }
       }
@@ -149,6 +139,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return new Response("Export impossible : voir les journaux de la fonction.", { status: 500 });
+    const cause = error instanceof Error ? error.message : String(error);
+    return new Response(`Export impossible : ${cause.slice(0, 300)}`, { status: 500 });
   }
 }

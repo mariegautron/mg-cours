@@ -39,8 +39,21 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/cou
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return new Response("Export impossible : voir les journaux de la fonction.", { status: 500 });
+    // La réponse n'est lue que par l'enseignante connectée : la cause s'affiche en ouvrant le lien.
+    const cause = error instanceof Error ? error.message : String(error);
+    return new Response(`Export impossible : ${cause.slice(0, 300)}`, { status: 500 });
   }
+}
+
+/** Limite de réponse d'une fonction Vercel : 4,5 Mo. Au-delà, mieux vaut le dire que laisser échouer. */
+const MAX_RESPONSE_BYTES = 4.4 * 1024 * 1024;
+
+function tooHeavy(bytes: number, kind: string) {
+  console.error("[export cours] réponse trop lourde", { kind, bytes });
+  return new Response(
+    `Export trop lourd (${(bytes / 1024 / 1024).toFixed(1)} Mo) : la limite est de 4,5 Mo. Exporte un PDF par séance.`,
+    { status: 413 },
+  );
 }
 
 async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/courses">) {
@@ -77,6 +90,8 @@ async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/
 
   if (format === "pdf") {
     const buffer = await renderToBuffer(ModuleCoursesDocument({ mod, courses: data.courses }));
+    console.info("[export cours] pdf", { bytes: buffer.length, images: images.size });
+    if (buffer.length > MAX_RESPONSE_BYTES) return tooHeavy(buffer.length, "pdf");
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
@@ -91,7 +106,10 @@ async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/
     const name = `${String(course.number).padStart(2, "0")}-${slug(course.title)}.pdf`;
     files[name] = new Uint8Array(buffer);
   }
-  return new Response(new Uint8Array(zipSync(files, { level: 0 })), {
+  const zipped = zipSync(files, { level: 0 });
+  console.info("[export cours] zip", { bytes: zipped.length, images: images.size });
+  if (zipped.length > MAX_RESPONSE_BYTES) return tooHeavy(zipped.length, "zip");
+  return new Response(new Uint8Array(zipped), {
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="cours-${base}.zip"`,

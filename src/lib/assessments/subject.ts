@@ -39,6 +39,31 @@ export interface SubjectInput {
   evaluated_md: string | null;
 }
 
+const fold = (t: string) =>
+  t
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[\s:*#_]+/g, " ")
+    .trim();
+
+/**
+ * Retire du texte une première ligne qui répète le titre de la section (« ## Ce qui sera évalué »,
+ * « **Rendu attendu** ») : le titre est déjà affiché par la section.
+ */
+export function withoutRepeatedHeading(text: string, heading: string): string {
+  const lines = text.split("\n");
+  const first = lines.findIndex((l) => l.trim() !== "");
+  if (first === -1) return text;
+  const line = lines[first].trim();
+  const decorated = /^(#{1,6}\s|\*\*)/.test(line) || /^[^\s].*:$/.test(line);
+  if (!decorated || fold(line) !== fold(heading)) return text;
+  return lines
+    .slice(first + 1)
+    .join("\n")
+    .replace(/^\s*\n/, "");
+}
+
 /** Sections non vides du sujet, dans l'ordre de lecture. */
 export function subjectSections(input: SubjectInput): SubjectSection[] {
   const sections: SubjectSection[] = [
@@ -57,7 +82,9 @@ export function subjectSections(input: SubjectInput): SubjectSection[] {
       markdown: true,
     },
   ];
-  return sections.filter((s) => s.text.trim() !== "");
+  return sections
+    .map((s) => ({ ...s, text: s.markdown ? withoutRepeatedHeading(s.text, s.heading) : s.text }))
+    .filter((s) => s.text.trim() !== "");
 }
 
 /**

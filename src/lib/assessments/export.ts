@@ -1,7 +1,6 @@
 import { canPresent, subjectSections, type SubjectSection } from "@/lib/assessments/subject";
 import { matchesRule } from "@/lib/quiz/draw";
 import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
-import type { GridHandout, HandoutCriterion } from "@/lib/assessments/grid-handout";
 
 /**
  * Export « Évaluations formatives » (dépôt Moodle) : par évaluation, un sujet, des critères et
@@ -32,37 +31,40 @@ export function subjectParts(input: Parameters<typeof subjectSections>[0]): Subj
   return subjectSections(input);
 }
 
-/** Critères qui portent des attendus ou une référence : la matière de la « correction type ». */
-export function correctionCriteria(handout: GridHandout): HandoutCriterion[] {
-  return handout.axes
-    .flatMap((a) => a.criteria)
-    .filter((c) => (c.description?.trim() ?? "") !== "" || (c.reference?.trim() ?? "") !== "");
+/**
+ * Correction type d'un QCM, par thème (une règle de tirage = un thème) : les questions tirables
+ * avec leur corrigé. Les questions ouvertes y sont (leur retour général est la réponse attendue).
+ */
+export interface QcmTheme {
+  label: string;
+  questions: BankQuestion[];
 }
 
-/**
- * Questions du QCM d'une évaluation pour sa correction type (réponses attendues et retours) :
- * celles de la réserve du QCM qui correspondent à au moins une de ses règles de tirage.
- */
-export function qcmCorrectionQuestions(
+export function qcmCorrectionThemes(
   bank: readonly BankQuestion[],
   rules: readonly DrawRule[],
-): BankQuestion[] {
-  return bank
-    .filter(
-      (q) => q.type !== "open" && (rules.length === 0 || rules.some((r) => matchesRule(q, r))),
-    )
-    .sort((a, b) => a.name.localeCompare(b.name, "fr", { numeric: true }));
+): QcmTheme[] {
+  const byName = (a: BankQuestion, b: BankQuestion) =>
+    a.name.localeCompare(b.name, "fr", { numeric: true });
+  if (rules.length === 0) {
+    return bank.length ? [{ label: "Questions", questions: [...bank].sort(byName) }] : [];
+  }
+  return rules
+    .map((rule, i) => ({
+      label: rule.category?.trim() || rule.tags.join(", ") || `Thème ${i + 1}`,
+      questions: bank.filter((q) => matchesRule(q, rule)).sort(byName),
+    }))
+    .filter((t) => t.questions.length > 0);
 }
 
-export type AssessmentPart = "subject" | "criteria" | "correction" | "qcm";
+export type AssessmentPart = "subject" | "criteria" | "correction";
 
 export const PART_FILES: Record<AssessmentPart, string> = {
   subject: "sujet.pdf",
   criteria: "criteres-et-modalites.pdf",
   correction: "correction-type.pdf",
-  qcm: "correction-qcm.pdf",
 };
 
 export function isAssessmentPart(value: unknown): value is AssessmentPart {
-  return value === "subject" || value === "criteria" || value === "correction" || value === "qcm";
+  return value === "subject" || value === "criteria" || value === "correction";
 }

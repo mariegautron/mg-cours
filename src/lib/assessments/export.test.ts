@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { correctionCriteria, exportableAssessments } from "./export";
-import type { GridHandout } from "./grid-handout";
+import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
+import { exportableAssessments, qcmCorrectionThemes } from "./export";
+import { subjectSections, withoutRepeatedHeading } from "./subject";
 
 const a = (
   id: string,
@@ -28,27 +29,67 @@ describe("exportableAssessments", () => {
   });
 });
 
-describe("correctionCriteria", () => {
-  it("ne garde que les critères avec attendus ou référence", () => {
-    const criterion = (label: string, description: string | null, reference: string | null) => ({
-      label,
-      description,
-      reference,
-      isBonus: false,
-      max: 2,
-      levels: [],
+describe("qcmCorrectionThemes", () => {
+  const q = (id: string, category: string, type = "single_choice") =>
+    ({
+      id,
+      name: id,
+      category,
+      type,
+      statement: "?",
+      generalFeedback: "Corrigé",
+      tags: [],
+      numericValue: null,
+      numericTolerance: null,
+      choices: [],
+    }) as unknown as BankQuestion;
+  const rule = (category: string | null) =>
+    ({ category, tags: [], types: [], count: 1, pointsEach: 1 }) as DrawRule;
+
+  it("un thème par règle, avec les questions tirables (ouvertes comprises), en ordre naturel", () => {
+    const themes = qcmCorrectionThemes(
+      [q("Q10", "Agile"), q("Q2", "Agile"), q("O1", "Kanban", "open"), q("X", "Autre")],
+      [rule("Agile"), rule("Kanban"), rule("Vide")],
+    );
+    expect(themes.map((t) => [t.label, t.questions.map((x) => x.id)])).toEqual([
+      ["Agile", ["Q2", "Q10"]],
+      ["Kanban", ["O1"]],
+    ]);
+  });
+
+  it("sans règle : toute la réserve en un thème ; sans question : rien", () => {
+    expect(qcmCorrectionThemes([q("A", "x")], [])).toHaveLength(1);
+    expect(qcmCorrectionThemes([], [])).toEqual([]);
+  });
+});
+
+describe("sujet : titre répété", () => {
+  it("retire une première ligne qui répète le titre de la section", () => {
+    expect(withoutRepeatedHeading("## Ce qui sera évalué\n\n- Clarté", "Ce qui sera évalué")).toBe(
+      "- Clarté",
+    );
+    expect(withoutRepeatedHeading("**Rendu attendu :**\nUn PDF", "Rendu attendu")).toBe("Un PDF");
+    expect(withoutRepeatedHeading("Un PDF\n\n## Rendu attendu", "Rendu attendu")).toBe(
+      "Un PDF\n\n## Rendu attendu",
+    );
+  });
+
+  it("le sujet ne reçoit que ses quatre sections : jamais de question de QCM", () => {
+    const sections = subjectSections({
+      objective: "Objectif",
+      subject: "Consigne",
+      deliverable_md: "Rendu",
+      evaluated_md: "## Ce qui sera évalué\nClarté",
     });
-    const handout = {
-      axes: [
-        {
-          label: null,
-          max: 4,
-          bonusMax: 0,
-          criteria: [criterion("Avec", "Attendu", null), criterion("Sans", " ", null)],
-        },
-      ],
-    } as unknown as GridHandout;
-    expect(correctionCriteria(handout).map((c) => c.label)).toEqual(["Avec"]);
+    expect(sections.map((s) => s.heading)).toEqual([
+      "Objectif",
+      "Consigne",
+      "Rendu attendu",
+      "Ce qui sera évalué",
+    ]);
+    expect(sections[3].text).toBe("Clarté");
+    const route = readFileSync("src/app/api/modules/[id]/evaluations/route.ts", "utf8");
+    expect(route).toMatch(/SubjectDocument\(\{\s*context,\s*sections: sections/);
   });
 });
 
@@ -77,7 +118,7 @@ describe("exports pour Moodle : jamais de contenu privé", () => {
 
   it("seule la correction type du QCM sort, par une pièce dédiée", () => {
     const route = read("src/app/api/modules/[id]/evaluations/route.ts");
-    expect(route).toMatch(/qcmCorrectionQuestions/);
+    expect(route).toMatch(/qcmCorrectionThemes/);
     expect(route).not.toMatch(/quiz_attempt|submissions|grade\b/);
   });
 });
