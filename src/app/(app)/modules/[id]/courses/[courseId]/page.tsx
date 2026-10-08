@@ -238,6 +238,24 @@ export default async function CoursePage({
                   Un PDF par séance (zip)
                 </DownloadButton>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground text-sm">
+                  Évaluations formatives pour Moodle (sujet, critères, correction type) :
+                </span>
+                <DownloadButton
+                  href={`/api/modules/${id}/evaluations`}
+                  kind="zip"
+                  doneLabel="Évaluations téléchargées (un dossier par évaluation)."
+                >
+                  Toutes les évaluations (zip)
+                </DownloadButton>
+                <DownloadButton
+                  href={`/api/modules/${id}/outline`}
+                  doneLabel="Progression pédagogique téléchargée."
+                >
+                  Progression pédagogique (PDF)
+                </DownloadButton>
+              </div>
             </div>
           </details>
 

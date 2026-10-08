@@ -3,6 +3,7 @@ import { zipSync } from "fflate";
 
 import { CourseDocument, ModuleCoursesDocument } from "@/lib/pdf/courses";
 import { getCourseExport } from "@/lib/modules/queries";
+import { loadResourceImages } from "@/lib/pdf/images";
 import { getTeacherName } from "@/lib/outline/queries";
 
 export const runtime = "nodejs";
@@ -49,6 +50,14 @@ async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/
   const [data, teacherName] = await Promise.all([getCourseExport(id), getTeacherName()]);
   if (!data) return new Response("Module introuvable", { status: 404 });
   if (data.courses.length === 0) return new Response("Aucune séance à exporter", { status: 404 });
+
+  // Schémas des fiches (PNG/JPEG du bucket privé) : intégrés au PDF avec leur légende.
+  const images = await loadResourceImages(data.courses.flatMap((c) => c.resources));
+  for (const course of data.courses) {
+    for (const r of course.resources) {
+      (r as { images?: Record<string, string> }).images = (r.id && images.get(r.id)) || undefined;
+    }
+  }
 
   const mod = { ...data.module, teacherName };
   const base = slug(mod.name);

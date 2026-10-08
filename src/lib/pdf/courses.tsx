@@ -1,6 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
-import { MarkdownPdf } from "@/lib/pdf/markdown-view";
+import { MarkdownPdf, type ImageMap } from "@/lib/pdf/markdown-view";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: "Helvetica", color: "#111", lineHeight: 1.4 },
@@ -25,6 +25,8 @@ export interface ExportResource {
   description: string | null;
   content: string | null;
   url: string | null;
+  /** Images de la fiche (nom de fichier → URI de données), chargées par la route. */
+  images?: ImageMap;
 }
 
 export interface ExportCourse {
@@ -33,6 +35,8 @@ export interface ExportCourse {
   sessionDate: string | null;
   objectives: string[];
   material: string | null;
+  /** Dernière modification des fiches de la séance (ISO). */
+  updatedAt?: string | null;
   resources: ExportResource[];
 }
 
@@ -42,7 +46,53 @@ export interface ExportModule {
   schoolName: string | null;
   level: string | null;
   year: number;
+  /** « 2026-2027 » ; à défaut, l'année du module. */
+  schoolYear?: string;
   teacherName: string;
+}
+
+const cover = StyleSheet.create({
+  page: { padding: 60, fontFamily: "Helvetica", color: "#111", justifyContent: "center" },
+  kicker: { fontSize: 11, color: "#555", letterSpacing: 2, textTransform: "uppercase" },
+  title: { fontSize: 28, fontFamily: "Helvetica-Bold", marginTop: 10, marginBottom: 6 },
+  sub: { fontSize: 15, color: "#333", marginBottom: 36 },
+  row: { flexDirection: "row", marginBottom: 8, fontSize: 12 },
+  label: { width: 190, fontFamily: "Helvetica-Bold" },
+  value: { flex: 1 },
+});
+
+/** Couverture d'un support de cours : matière, année scolaire, enseignante, classe, mise à jour. */
+function CoverPage({
+  mod,
+  subtitle,
+  updatedAt,
+}: {
+  mod: ExportModule;
+  subtitle: string | null;
+  updatedAt: string | null | undefined;
+}) {
+  const rows: [string, string | null][] = [
+    ["Intitulé de la matière", mod.name],
+    ["Année scolaire", mod.schoolYear ?? String(mod.year)],
+    ["Nom et prénom de l’enseignante", mod.teacherName || null],
+    ["Groupe / classe", mod.level],
+    ["Dernière mise à jour", fmt(updatedAt ?? null)],
+  ];
+  return (
+    <Page size="A4" style={cover.page}>
+      <Text style={cover.kicker}>Support de cours</Text>
+      <Text style={cover.title}>{mod.name}</Text>
+      <Text style={cover.sub}>{subtitle ?? " "}</Text>
+      {rows.map(([label, value]) =>
+        value ? (
+          <View key={label} style={cover.row}>
+            <Text style={cover.label}>{label}</Text>
+            <Text style={cover.value}>{value}</Text>
+          </View>
+        ) : null,
+      )}
+    </Page>
+  );
 }
 
 /** Une séance = une ou plusieurs pages ; destiné aux étudiants (sans notes d'animation ni d'évaluation). */
@@ -86,7 +136,7 @@ function CoursePages({ mod, course }: { mod: ExportModule; course: ExportCourse 
           <Text style={styles.resourceTitle}>{r.title}</Text>
           {r.description ? <Text style={[styles.p, styles.muted]}>{r.description}</Text> : null}
           {r.url ? <Text style={[styles.p, styles.muted]}>{r.url}</Text> : null}
-          {r.content ? <MarkdownPdf source={r.content} /> : null}
+          {r.content ? <MarkdownPdf source={r.content} images={r.images} /> : null}
         </View>
       ))}
 
@@ -105,6 +155,11 @@ function CoursePages({ mod, course }: { mod: ExportModule; course: ExportCourse 
 export function CourseDocument({ mod, course }: { mod: ExportModule; course: ExportCourse }) {
   return (
     <Document title={`${mod.name} — Séance ${course.number}`} author={mod.teacherName}>
+      <CoverPage
+        mod={mod}
+        subtitle={`Séance ${course.number} — ${course.title}`}
+        updatedAt={course.updatedAt}
+      />
       <CoursePages mod={mod} course={course} />
     </Document>
   );
@@ -120,6 +175,14 @@ export function ModuleCoursesDocument({
 }) {
   return (
     <Document title={`${mod.name} — Cours`} author={mod.teacherName}>
+      <CoverPage
+        mod={mod}
+        subtitle={`${courses.length} séance${courses.length > 1 ? "s" : ""}`}
+        updatedAt={courses
+          .map((c) => c.updatedAt ?? "")
+          .sort()
+          .at(-1)}
+      />
       {courses.map((c) => (
         <CoursePages key={c.number} mod={mod} course={c} />
       ))}

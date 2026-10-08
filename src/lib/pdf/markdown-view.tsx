@@ -1,8 +1,24 @@
-import { StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import { parseMarkdown, type Block, type InlineRun, type ListBlock } from "@/lib/pdf/markdown";
 
+/** Nom de fichier → image en URI de données (voir `src/lib/pdf/images.ts`, serveur). */
+export type ImageMap = Record<string, string>;
+
+/** Nom de fichier visé par une image Markdown (dernier segment, décodé). */
+function imageName(src: string): string {
+  const last = src.split(/[?#]/)[0].split("/").pop() ?? "";
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
+
 const styles = StyleSheet.create({
+  figure: { marginVertical: 6, alignItems: "center" },
+  figureImage: { maxWidth: "100%", maxHeight: 300, objectFit: "contain" },
+  caption: { marginTop: 3, fontSize: 8.5, color: "#555", textAlign: "center" },
   h1: { fontSize: 14, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 3 },
   h2: { fontSize: 12.5, fontFamily: "Helvetica-Bold", marginTop: 7, marginBottom: 3 },
   h3: { fontFamily: "Helvetica-Bold", marginTop: 6, marginBottom: 2 },
@@ -110,7 +126,7 @@ function ListItemsView({ block, depth }: { block: ListBlock; depth: number }) {
   );
 }
 
-function BlockView({ block }: { block: Block }) {
+function BlockView({ block, images }: { block: Block; images?: ImageMap }) {
   switch (block.type) {
     case "heading":
       return (
@@ -128,8 +144,17 @@ function BlockView({ block }: { block: Block }) {
       return <ListItemsView block={block} depth={0} />;
     case "code":
       return <Text style={styles.code}>{block.text}</Text>;
-    case "image":
-      return <Text style={styles.p}>[Image{block.alt ? ` : ${block.alt}` : ""}]</Text>;
+    case "image": {
+      const src = images?.[imageName(block.src)];
+      if (!src) return <Text style={styles.p}>[Image{block.alt ? ` : ${block.alt}` : ""}]</Text>;
+      return (
+        <View style={styles.figure} wrap={false}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF : la légende ci-dessous porte le texte alternatif */}
+          <Image src={src} style={styles.figureImage} />
+          {block.alt ? <Text style={styles.caption}>{block.alt}</Text> : null}
+        </View>
+      );
+    }
     case "quote":
       return (
         <Text style={[styles.p, styles.quote]}>
@@ -167,7 +192,7 @@ function BlockView({ block }: { block: Block }) {
       return (
         <View style={styles.callout}>
           {block.blocks.map((b, i) => (
-            <BlockView key={i} block={b} />
+            <BlockView key={i} block={b} images={images} />
           ))}
         </View>
       );
@@ -175,11 +200,11 @@ function BlockView({ block }: { block: Block }) {
 }
 
 /** Texte Markdown (ressources, sujets d'évaluation) rendu en blocs PDF. */
-export function MarkdownPdf({ source }: { source: string }) {
+export function MarkdownPdf({ source, images }: { source: string; images?: ImageMap }) {
   return (
     <>
       {parseMarkdown(source).map((b, i) => (
-        <BlockView key={i} block={b} />
+        <BlockView key={i} block={b} images={images} />
       ))}
     </>
   );

@@ -1,3 +1,4 @@
+import { schoolYear } from "@/lib/ynov/teacher-name";
 import { cache } from "react";
 
 import {
@@ -160,7 +161,7 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
   const { data } = await supabase
     .from("course")
     .select(
-      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(title, description, content, url, audience, status))",
+      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(id, title, description, content, url, audience, status, files, updated_at))",
     )
     .eq("module_id", moduleId)
     .order("position");
@@ -172,6 +173,7 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
       schoolName: mod.school?.name ?? null,
       level: mod.level,
       year: mod.year,
+      schoolYear: schoolYear(mod.first_session_date, mod.year),
     },
     courses: toExportCourses((data ?? []) as unknown as ExportCourseRow[]),
   };

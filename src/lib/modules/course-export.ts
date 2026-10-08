@@ -1,3 +1,4 @@
+import type { Json } from "@/types/db";
 import { studentFacing, type ResourceAudience, type ResourceStatus } from "@/lib/resources/kind";
 
 export interface CourseExport {
@@ -7,6 +8,8 @@ export interface CourseExport {
     schoolName: string | null;
     level: string | null;
     year: number;
+    /** Année scolaire « 2026-2027 », déduite de la première séance. */
+    schoolYear: string;
   };
   courses: {
     number: number;
@@ -14,11 +17,16 @@ export interface CourseExport {
     sessionDate: string | null;
     objectives: string[];
     material: string | null;
+    /** Dernière modification de ses fiches (ISO) ; null sans fiche datée. */
+    updatedAt: string | null;
     resources: {
+      id: string | null;
       title: string;
       description: string | null;
       content: string | null;
       url: string | null;
+      /** Fichiers joints (images des schémas) : `resource.files` tel quel. */
+      files: Json | null;
     }[];
   }[];
 }
@@ -32,6 +40,9 @@ export interface ExportCourseRow {
   course_resource: {
     role: string;
     resource: {
+      id?: string;
+      files?: Json | null;
+      updated_at?: string;
       title: string;
       description: string | null;
       content: string | null;
@@ -47,17 +58,32 @@ export interface ExportCourseRow {
  * de ressource réservée à l'enseignante (corrigés, banques de questions, notes).
  */
 export function toExportCourses(rows: ExportCourseRow[]): CourseExport["courses"] {
-  return rows.map((c, i) => ({
-    number: i + 1,
-    title: c.title,
-    sessionDate: c.session_date,
-    objectives: c.learning_objectives,
-    material: c.material,
-    resources: studentFacing(
+  return rows.map((c, i) => {
+    const shown = studentFacing(
       [...c.course_resource]
         .sort((a, b) => (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1))
         .map((cr) => cr.resource)
         .filter((r) => r !== null),
-    ).map(({ title, description, content, url }) => ({ title, description, content, url })),
-  }));
+    );
+    return {
+      number: i + 1,
+      title: c.title,
+      sessionDate: c.session_date,
+      objectives: c.learning_objectives,
+      material: c.material,
+      updatedAt:
+        shown
+          .map((r) => r.updated_at ?? "")
+          .sort()
+          .at(-1) || null,
+      resources: shown.map(({ id, title, description, content, url, files }) => ({
+        id: id ?? null,
+        title,
+        description,
+        content,
+        url,
+        files: files ?? null,
+      })),
+    };
+  });
 }
