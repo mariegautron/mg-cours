@@ -26,6 +26,8 @@ export interface PresentSlide {
   /** Titre court, annoncé aux lecteurs d'écran et affiché dans le sommaire. */
   label: string | null;
   node: ReactNode;
+  /** Jamais en lecture continue (mini-QCM : question et correction ne doivent pas défiler ensemble). */
+  slidesOnly?: boolean;
 }
 
 type Mode = "document" | "slides";
@@ -190,6 +192,10 @@ export function PresentShell({
 
   const current = slides[index];
   const scale = SCALES[scaleIndex];
+  // Lecture continue : sans les diapos réservées au mode diapositives (mini-QCM).
+  const docSlides = slides.filter((s) => !s.slidesOnly);
+  const hasSlidesOnly = docSlides.length < slides.length;
+  const docSections = new Set(docSlides.map((s) => s.section));
 
   return (
     <div ref={rootRef} className="bg-background text-foreground flex min-h-dvh flex-col">
@@ -294,18 +300,20 @@ export function PresentShell({
           className="bg-card border-b px-4 py-3"
         >
           <ol className="flex flex-wrap gap-2">
-            {sections.map((label, i) => (
-              <li key={i}>
-                <Button
-                  type="button"
-                  size="touch"
-                  variant="outline"
-                  onClick={() => jumpToSection(i)}
-                >
-                  {label}
-                </Button>
-              </li>
-            ))}
+            {sections.map((label, i) =>
+              mode === "document" && !docSections.has(i) ? null : (
+                <li key={i}>
+                  <Button
+                    type="button"
+                    size="touch"
+                    variant="outline"
+                    onClick={() => jumpToSection(i)}
+                  >
+                    {label}
+                  </Button>
+                </li>
+              ),
+            )}
           </ol>
         </nav>
       ) : null}
@@ -315,8 +323,8 @@ export function PresentShell({
           <p className="text-muted-foreground p-12 text-center text-2xl">Rien à présenter.</p>
         ) : mode === "document" ? (
           <div style={{ zoom: scale }} className="mx-auto max-w-5xl space-y-16 px-8 py-12">
-            {slides.map((slide, i) => {
-              const startsSection = i === 0 || slides[i - 1].section !== slide.section;
+            {docSlides.map((slide, i) => {
+              const startsSection = i === 0 || docSlides[i - 1].section !== slide.section;
               return (
                 <div
                   key={i}
@@ -327,6 +335,11 @@ export function PresentShell({
                 </div>
               );
             })}
+            {hasSlidesOnly ? (
+              <p className="text-muted-foreground border-t pt-8 text-xl">
+                Les mini-QCM se projettent en mode Diapositives.
+              </p>
+            ) : null}
           </div>
         ) : (
           <section

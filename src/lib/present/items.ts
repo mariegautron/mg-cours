@@ -7,6 +7,7 @@ import {
   cadreKey,
   gridKey,
   OBJECTIVES_KEY,
+  qcmKey,
   RESUME_KEY,
   resourceKey,
   subjectKey,
@@ -25,6 +26,13 @@ export interface PrepSubject {
   title: string;
   hasCadre: boolean;
   hasGrid: boolean;
+}
+
+/** Mini-QCM d'une fiche projetée : combien de questions projetables elle porte. */
+export interface PrepQcm {
+  resourceId: string;
+  title: string;
+  count: number;
 }
 
 export interface PrepItem {
@@ -46,6 +54,8 @@ export function prepItems(input: {
   objectives: number;
   resources: readonly PrepResource[];
   subjects: readonly PrepSubject[];
+  /** Mini-QCM projetés après les ressources, un par fiche qui a des questions. */
+  qcm?: readonly PrepQcm[];
   /** Évaluations rattachées dont le sujet est « à construire » : jamais projetées. */
   unpreparedSubjects: readonly string[];
 }): PrepItem[] {
@@ -94,6 +104,11 @@ export function prepItems(input: {
       detail: r.linkOnly
         ? "Garde le lien de la ressource : il s’ouvre dans un nouvel onglet quand tu le décides."
         : null,
+    });
+  }
+  for (const q of input.qcm ?? []) {
+    toggle(qcmKey(q.resourceId), `Mini-QCM — ${q.title}`, {
+      detail: `${q.count} question${q.count > 1 ? "s" : ""} liée${q.count > 1 ? "s" : ""} à cette fiche, projetée${q.count > 1 ? "s" : ""} en fin de séance.`,
     });
   }
   for (const s of input.subjects) {

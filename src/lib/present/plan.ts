@@ -9,6 +9,7 @@ export const RESUME_KEY = "opening:resume";
 export const OBJECTIVES_KEY = "opening:objectives";
 
 export const resourceKey = (id: string) => `resource:${id}`;
+export const qcmKey = (resourceId: string) => `qcm:${resourceId}`;
 export const subjectKey = (title: string) => `subject:${title}`;
 export const cadreKey = (title: string) => `cadre:${title}`;
 export const gridKey = (title: string) => `grid:${title}`;

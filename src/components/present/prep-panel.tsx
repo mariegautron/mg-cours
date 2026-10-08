@@ -9,6 +9,13 @@ import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { projectedCount, type PrepItem } from "@/lib/present/items";
 import { withHidden } from "@/lib/present/plan";
+import {
+  QCM_DEFAULT_LIMIT,
+  QCM_LIMIT_OPTIONS,
+  qcmLimitLabel,
+  serializeQcmLimit,
+  withQcmLimit,
+} from "@/lib/present/qcm";
 
 const card = "bg-card rounded-3xl border p-5 shadow-sm";
 const EDUSIGN = "https://edusign.app/professor/home";
@@ -22,6 +29,16 @@ function readHidden(courseId: string): Set<string> {
     );
   } catch {
     return new Set();
+  }
+}
+
+function readQcmLimit(): number | null {
+  try {
+    const raw = window.localStorage.getItem("mg-qcm-limit");
+    const match = QCM_LIMIT_OPTIONS.find((o) => serializeQcmLimit(o) === raw);
+    return match === undefined ? QCM_DEFAULT_LIMIT : match;
+  } catch {
+    return QCM_DEFAULT_LIMIT;
   }
 }
 
@@ -44,6 +61,7 @@ export function PrepPanel({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [calledDone, setCalledDone] = useState(false);
   const [ready, setReady] = useState(false);
+  const [qcmLimit, setQcmLimit] = useState<number | null>(QCM_DEFAULT_LIMIT);
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- préférences locales lues après hydratation */
@@ -53,6 +71,7 @@ export function PrepPanel({
     } catch {
       /* stockage indisponible */
     }
+    setQcmLimit(readQcmLimit());
     setReady(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [courseId]);
@@ -73,6 +92,15 @@ export function PrepPanel({
     persistHidden(next);
   }
 
+  function changeQcmLimit(limit: number | null) {
+    setQcmLimit(limit);
+    try {
+      window.localStorage.setItem("mg-qcm-limit", serializeQcmLimit(limit));
+    } catch {
+      /* ignoré */
+    }
+  }
+
   function toggleCalled(on: boolean) {
     setCalledDone(on);
     try {
@@ -85,8 +113,9 @@ export function PrepPanel({
   const known = new Set(items.map((i) => i.key));
   const kept = [...hidden].filter((k) => known.has(k));
   const base = `/present/modules/${moduleId}/courses/${courseId}`;
-  const projectedHref = withHidden(base, kept);
-  const privateHref = withHidden(`${base}/presenter`, kept);
+  const projectedHref = withQcmLimit(withHidden(base, kept), qcmLimit);
+  const privateHref = withQcmLimit(withHidden(`${base}/presenter`, kept), qcmLimit);
+  const hasQcm = items.some((i) => i.key.startsWith("qcm:"));
   const count = projectedCount(items, new Set(kept));
 
   return (
@@ -163,6 +192,32 @@ export function PrepPanel({
             );
           })}
         </ol>
+        {hasQcm ? (
+          <fieldset className="mt-4 rounded-xl border p-3.5">
+            <legend className="px-1 font-semibold">Mini-QCM : questions par fiche</legend>
+            <div className="flex flex-wrap gap-2">
+              {QCM_LIMIT_OPTIONS.map((option) => (
+                <label
+                  key={serializeQcmLimit(option)}
+                  className="has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:focus-visible]:ring-ring flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold has-[:focus-visible]:ring-2"
+                >
+                  <input
+                    type="radio"
+                    name="qcm-limit"
+                    className="sr-only"
+                    checked={qcmLimit === option}
+                    onChange={() => changeQcmLimit(option)}
+                  />
+                  {qcmLimitLabel(option)}
+                </label>
+              ))}
+            </div>
+            <p className="text-muted-foreground mt-2 text-[0.8rem]">
+              Les premières questions de chaque fiche sont projetées, une question puis sa
+              correction. Les mini-QCM se projettent en mode Diapositives.
+            </p>
+          </fieldset>
+        ) : null}
         <p className="text-muted-foreground mt-3 text-[0.8rem]">
           Un élément « Pour moi » reste dans ta vue privée. Les corrigés et ce qui est « à
           construire » ne peuvent pas être projetés.

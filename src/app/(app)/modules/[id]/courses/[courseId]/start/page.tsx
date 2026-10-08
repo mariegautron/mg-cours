@@ -12,7 +12,9 @@ import { checkDuration, EMPTY_ACTIVITY, totalMinutes } from "@/lib/modules/activ
 import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { minutesBetween } from "@/lib/modules/workspace";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
+import { countCourseQcm } from "@/lib/present/qcm-data";
 import { prepItems } from "@/lib/present/items";
+import { studentFacing } from "@/lib/resources/kind";
 import { previousNextTime } from "@/lib/present/reprise";
 
 export const metadata: Metadata = { title: "Avant de commencer" };
@@ -34,6 +36,9 @@ export default async function StartCoursePage({
   if (!mod || position === -1) notFound();
   const course = courses[position];
 
+  const qcmCounts = await countCourseQcm(
+    studentFacing(resources).map((r) => ({ id: r.id, title: r.title })),
+  );
   const items = prepItems({
     hasResume: previousNextTime(courses, position).length > 0,
     objectives: course.learning_objectives.length,
@@ -49,6 +54,9 @@ export default async function StartCoursePage({
       hasCadre: !!s.cadre,
       hasGrid: !!s.grid,
     })),
+    qcm: studentFacing(resources)
+      .filter((r) => qcmCounts.has(r.id))
+      .map((r) => ({ resourceId: r.id, title: r.title, count: qcmCounts.get(r.id)! })),
     unpreparedSubjects: assessments
       .filter((a) => a.course_id === courseId && !a.makeup_of_id && !canPresent(a.prep_status))
       .map((a) => a.title),

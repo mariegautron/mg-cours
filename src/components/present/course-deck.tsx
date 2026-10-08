@@ -8,6 +8,7 @@ import {
   subjectSlides,
   type SubjectDeckInput,
 } from "@/components/present/deck";
+import { qcmSlides } from "@/components/present/qcm-deck";
 import type { PresentSlide } from "@/components/present/present-shell";
 import {
   cadreKey,
@@ -19,10 +20,11 @@ import {
   RESUME_KEY,
   subjectKey,
 } from "@/lib/present/plan";
+import type { QcmGroup } from "@/lib/present/qcm";
 import type { Tables } from "@/types/db";
 
 /**
- * Déroulé projeté d'une séance : titre → objectifs → ressources étudiant·es → sujets → clôture.
+ * Déroulé projeté d'une séance : titre → objectifs → ressources étudiant·es → mini-QCM → sujets → clôture.
  * `resources` DOIT déjà être filtré par `studentFacing()` : ce déroulé est projeté.
  * Partagé par la fenêtre projetée et la vue présentatrice, qui montrent les mêmes diapositives.
  */
@@ -34,6 +36,7 @@ export function buildCourseDeck({
   resources,
   resumeLines = [],
   subjects = [],
+  qcm = [],
   hidden = new Set<string>(),
 }: {
   moduleName: string;
@@ -46,6 +49,8 @@ export function buildCourseDeck({
   resumeLines?: string[];
   /** Sujets des évaluations rattachées à la séance (déjà réduits au contenu étudiant·es, US-90). */
   subjects?: SubjectDeckInput[];
+  /** Mini-QCM des fiches projetées (voir `loadCourseQcm`), projetés après les ressources. */
+  qcm?: QcmGroup[];
   /** Éléments « pour moi » : jamais projetés (voir `parseHidden`). */
   hidden?: ReadonlySet<string>;
 }): { sections: string[]; sectionKeys: string[]; slides: PresentSlide[] } {
@@ -80,6 +85,12 @@ export function buildCourseDeck({
     sections.push(resource.title);
     sectionKeys.push(resourceKey(resource.id));
     slides.push(...resourceSlides(sections.length - 1, resource));
+  }
+
+  for (const group of qcm) {
+    sections.push(`Mini-QCM — ${group.title}`);
+    sectionKeys.push(group.key);
+    slides.push(...qcmSlides(sections.length - 1, group));
   }
 
   for (const subject of subjects) {

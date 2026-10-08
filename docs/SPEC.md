@@ -348,6 +348,23 @@ Projeté en classe depuis la session de l'enseignante (aucune route publique). R
 - Sommaire par section, thème clair/sombre, barre de progression, « Diapositive n sur N »
   annoncé (`aria-live`), « Quitter » → fiche. Mode et taille mémorisés (`localStorage`).
 
+### Mini-QCM en fin de séance (US-163)
+
+- Après les ressources du déroulé (avant les sujets d'évaluation et la clôture), une section
+  « Mini-QCM — fiche » par fiche qui a des questions liées (`resource_question`).
+- Par fiche : un intercalaire (« n questions sur N »), puis pour chaque question une diapo
+  d'énoncé et de choix (jamais la bonne réponse), puis sa correction : bonne réponse en évidence
+  (icône + « Bonne réponse » / « À écarter »), retour de chaque choix, retour général « À retenir ».
+  « Question 3 sur 5 » en titre. Les choix gardent l'ordre de la base.
+- Exclus : questions ouvertes, archivées, catégorie « SCRUM » (banque de l'évaluation individuelle).
+  Une question liée à deux fiches de la séance ne passe qu'une fois.
+- Volume : « Avant de commencer » → « Mini-QCM : questions par fiche » (3 / 5 / 8 / toutes, 5 par
+  défaut, retenu sur l'appareil), passé dans l'adresse des deux fenêtres (`?qcm=`) ; un interrupteur
+  Projeter / Pour moi par fiche (`qcm:<id de la fiche>` dans `?hide=`).
+- Réservé au mode Diapositives : en lecture continue, question et correction ne défileraient pas
+  ensemble ; un rappel l'indique. Vue présentatrice : mêmes diapos, saut direct (« Question 2 sur 5 »),
+  « Pour moi » sur la fiche.
+
 ### Vue présentatrice (US-64) — `/present/modules/[id]/courses/[courseId]/presenter`
 
 - Bouton « Vue présentatrice » de la fenêtre projetée : ouvre une seconde fenêtre (même origine,

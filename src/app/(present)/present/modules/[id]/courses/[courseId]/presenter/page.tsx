@@ -14,7 +14,9 @@ import { publicSlidesUrl } from "@/lib/modules/frise";
 import { describeActivity, EMPTY_ACTIVITY, startTimes } from "@/lib/modules/activity";
 import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { todayInParis } from "@/lib/modules/next-session";
-import { parseHidden, resourceKey } from "@/lib/present/plan";
+import { loadCourseQcm } from "@/lib/present/qcm-data";
+import { parseQcmLimit, withQcmLimit } from "@/lib/present/qcm";
+import { parseHidden, resourceKey, withHidden } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
@@ -30,7 +32,8 @@ export default async function PresenterPage({
   searchParams,
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
-  const hidden = parseHidden((await searchParams).hide);
+  const query = await searchParams;
+  const hidden = parseHidden(query.hide);
   const [mod, courses, allResources, subjects, libraryRows, groups, activities] = await Promise.all(
     [
       getModule(id),
@@ -45,6 +48,13 @@ export default async function PresenterPage({
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
   const course = courses[position];
+  const projected = studentFacing(allResources);
+  const qcmLimit = parseQcmLimit(query.qcm);
+  const qcm = await loadCourseQcm(
+    projected.filter((r) => !hidden.has(resourceKey(r.id))),
+    qcmLimit,
+    hidden,
+  );
 
   const { sections, sectionKeys, slides } = buildCourseDeck({
     moduleName: mod.name,
@@ -54,6 +64,7 @@ export default async function PresenterPage({
     resources: studentFacing(allResources),
     resumeLines: previousNextTime(courses, position),
     subjects,
+    qcm,
     hidden,
   });
 
@@ -101,7 +112,10 @@ export default async function PresenterPage({
       backHref={`/modules/${mod.id}/courses`}
       slides={slides}
       syncChannel={syncChannelName(courseId)}
-      projectedHref={`/present/modules/${mod.id}/courses/${courseId}`}
+      projectedHref={withQcmLimit(
+        withHidden(`/present/modules/${mod.id}/courses/${courseId}`, hidden),
+        qcmLimit,
+      )}
       notes={notes}
       teacherResources={teacherResources}
       endTime={today ? course.end_time : null}

@@ -5,7 +5,9 @@ import { buildCourseDeck } from "@/components/present/course-deck";
 import { PresentShell } from "@/components/present/present-shell";
 import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
-import { parseHidden } from "@/lib/present/plan";
+import { loadCourseQcm } from "@/lib/present/qcm-data";
+import { parseQcmLimit } from "@/lib/present/qcm";
+import { parseHidden, resourceKey } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
@@ -25,7 +27,8 @@ export default async function PresentCoursePage({
   searchParams,
 }: PageProps<"/present/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
-  const hidden = parseHidden((await searchParams).hide);
+  const query = await searchParams;
+  const hidden = parseHidden(query.hide);
   const [mod, courses, allResources, subjects] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -37,6 +40,11 @@ export default async function PresentCoursePage({
   const course = courses[position];
   const next = courses[position + 1];
   const resources = studentFacing(allResources);
+  const qcm = await loadCourseQcm(
+    resources.filter((r) => !hidden.has(resourceKey(r.id))),
+    parseQcmLimit(query.qcm),
+    hidden,
+  );
 
   const { sections, slides } = buildCourseDeck({
     moduleName: mod.name,
@@ -46,6 +54,7 @@ export default async function PresentCoursePage({
     resources,
     resumeLines: previousNextTime(courses, position),
     subjects,
+    qcm,
     hidden,
   });
 
