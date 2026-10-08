@@ -69,8 +69,18 @@ export interface EspaceCourse {
   resources: EspaceResource[];
 }
 
+/** QCM individuel ouvert au moment de la publication : bannière de l'accueil. */
+export interface EspaceQuiz {
+  title: string;
+  /** Fermeture ISO ou null. */
+  closesAt: string | null;
+  /** Lien du QCM collé par l'enseignante (facultatif) : le jeton d'un QCM n'est pas relisible. */
+  url: string | null;
+}
+
 export interface Espace {
   options: EspaceOptions;
+  quiz: EspaceQuiz | null;
   brief: { title: string; text: string } | null;
   evaluations: EspaceEvaluation[];
   courses: EspaceCourse[];
@@ -112,7 +122,15 @@ export function parseEspace(payload: unknown): Espace | null {
   if (!Object.keys(raw).length) return null;
   const options = obj(raw.options);
   const brief = obj(raw.brief);
+  const quiz = obj(raw.quiz);
   return {
+    quiz: str(quiz.title)
+      ? {
+          title: quiz.title as string,
+          closesAt: str(quiz.closesAt),
+          url: publicSlidesUrl(quiz.url),
+        }
+      : null,
     options: {
       brief: options.brief !== false,
       evaluations: options.evaluations !== false,
@@ -244,4 +262,14 @@ export function previewLines(espace: Espace): string[] {
     );
   }
   return lines;
+}
+
+/** La bannière « évaluation individuelle ouverte » s'affiche tant que le QCM n'est pas fermé. */
+export function quizIsOpen(quiz: EspaceQuiz | null, now: Date = new Date()): boolean {
+  if (!quiz) return false;
+  return !quiz.closesAt || new Date(quiz.closesAt).getTime() > now.getTime();
+}
+
+export function studentSpaceUrl(baseUrl: string, token: string): string {
+  return `${baseUrl.replace(/\/+$/, "")}/espace/${token}`;
 }

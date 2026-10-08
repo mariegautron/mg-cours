@@ -7,17 +7,21 @@ import { FriseProjected, FriseStudent } from "@/components/modules/frise-view";
 import { ShareLinkPanel } from "@/components/modules/share-link-panel";
 import { Button } from "@/components/ui/button";
 import { loadEspace } from "@/lib/modules/espace-queries";
-import { getShareLinkInfo, loadFrise } from "@/lib/modules/frise-queries";
+import { notebookStudents } from "@/lib/notebook/notebook";
+import { listModuleGroups } from "@/lib/students/queries";
+import { getShareLinkInfo, getStudentLinkInfo, loadFrise } from "@/lib/modules/frise-queries";
 
 export const metadata: Metadata = { title: "Frise du module" };
 
 export default async function FrisePage({ params }: PageProps<"/modules/[id]/frise">) {
   const { id } = await params;
-  const [frise, share, espace] = await Promise.all([
+  const [frise, share, espace, groups] = await Promise.all([
     loadFrise(id),
     getShareLinkInfo(id),
     loadEspace(id),
+    listModuleGroups(id),
   ]);
+  const studentLinks = await getStudentLinkInfo(id, notebookStudents(groups).length);
   if (!frise) notFound();
   const today = new Date().toISOString().slice(0, 10);
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
@@ -58,6 +62,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
             moduleId={id}
             available={share.available}
             active={share.active}
+            studentLinks={studentLinks}
             counts={{
               brief: !!espace.brief,
               evaluations: espace.evaluations.length,

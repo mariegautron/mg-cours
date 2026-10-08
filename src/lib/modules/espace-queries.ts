@@ -24,6 +24,7 @@ const COURSE_KINDS = new Set(["course", "workshop", "project"]);
 export async function loadEspace(
   moduleId: string,
   options: EspaceOptions = DEFAULT_ESPACE_OPTIONS,
+  quizUrl: string | null = null,
 ): Promise<Espace> {
   const supabase = await createClient();
   const courses = await getModuleCourses(moduleId);
@@ -100,7 +101,19 @@ export async function loadEspace(
     }
   }
 
-  return { options, brief, evaluations, courses: espaceCourses };
+  // QCM ouvert : seulement son titre et sa fermeture (jamais ses questions).
+  let quiz: Espace["quiz"] = null;
+  const { data: quizzes } = await supabase
+    .from("quiz")
+    .select("title, closes_at, assessment!inner(module_id)")
+    .eq("assessment.module_id", moduleId)
+    .eq("status", "published");
+  const open = (quizzes ?? []).find(
+    (q) => !q.closes_at || new Date(q.closes_at).getTime() > Date.now(),
+  );
+  if (open) quiz = { title: open.title, closesAt: open.closes_at, url: quizUrl };
+
+  return { options, quiz, brief, evaluations, courses: espaceCourses };
 }
 
 /** Options de l'instantané actuellement publié (cases cochées), ou les valeurs par défaut. */

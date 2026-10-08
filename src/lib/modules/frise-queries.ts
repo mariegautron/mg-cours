@@ -2,6 +2,7 @@ import "server-only";
 
 import { buildFrise, type Frise } from "@/lib/modules/frise";
 import { DEFAULT_ESPACE_OPTIONS, isStale, type EspaceOptions } from "@/lib/modules/espace";
+import { parseEspace } from "@/lib/modules/espace";
 import { latestChange, optionsOf } from "@/lib/modules/espace-queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,6 +51,7 @@ export interface ShareLinkInfo {
     publishedAt: string;
     viewCount: number;
     options: EspaceOptions;
+    quizUrl: string | null;
     /** Des données du module ont changé depuis la publication. */
     stale: boolean;
   } | null;
@@ -72,11 +74,31 @@ export async function getShareLinkInfo(moduleId: string): Promise<ShareLinkInfo>
             publishedAt: data.published_at,
             viewCount: data.view_count,
             options: optionsOf(data.payload) ?? DEFAULT_ESPACE_OPTIONS,
+            quizUrl: parseEspace(data.payload)?.quiz?.url ?? null,
             stale: isStale(data.published_at, await latestChange(moduleId)),
           }
         : null,
     };
   } catch {
     return { available: false, active: null };
+  }
+}
+
+/** Liens personnels : combien de personnes dans le module, combien ont un lien actif. */
+export async function getStudentLinkInfo(
+  moduleId: string,
+  students: number,
+): Promise<{ available: boolean; students: number; active: number }> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("module_student_link")
+      .select("student_id")
+      .eq("module_id", moduleId)
+      .is("revoked_at", null);
+    if (error) return { available: false, students, active: 0 };
+    return { available: true, students, active: data?.length ?? 0 };
+  } catch {
+    return { available: false, students, active: 0 };
   }
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { clientEnv } from "@/lib/env";
-import { moduleShareUrl } from "@/lib/modules/frise";
+import { moduleShareUrl, publicSlidesUrl } from "@/lib/modules/frise";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
@@ -23,10 +23,10 @@ const UNAVAILABLE =
   "Le lien partageable sera disponible après la mise à jour de la base de données. La frise reste projetable.";
 
 /** Crée (ou remplace) le lien de la frise : l'ancien lien est révoqué, l'instantané est celui d'aujourd'hui. */
-async function snapshot(moduleId: string, options: EspaceOptions) {
+async function snapshot(moduleId: string, options: EspaceOptions, quizUrl: string | null) {
   const frise = await loadFrise(moduleId);
   if (!frise) return null;
-  const espace = await loadEspace(moduleId, options);
+  const espace = await loadEspace(moduleId, options, publicSlidesUrl(quizUrl));
   return { ...frise, espace } as never;
 }
 
@@ -34,9 +34,10 @@ async function snapshot(moduleId: string, options: EspaceOptions) {
 export async function updateModuleLink(
   moduleId: string,
   options: EspaceOptions = DEFAULT_ESPACE_OPTIONS,
+  quizUrl: string | null = null,
 ): Promise<ShareState> {
   const supabase = await createClient();
-  const payload = await snapshot(moduleId, options);
+  const payload = await snapshot(moduleId, options, quizUrl);
   if (!payload) return { error: NOT_FOUND.module };
   const { data, error } = await supabase
     .from("module_share_link")
@@ -53,11 +54,12 @@ export async function updateModuleLink(
 export async function publishModuleLink(
   moduleId: string,
   options: EspaceOptions = DEFAULT_ESPACE_OPTIONS,
+  quizUrl: string | null = null,
 ): Promise<ShareState> {
   const supabase = await createClient();
   const probe = await supabase.from("module_share_link").select("id").limit(1);
   if (probe.error) return { error: UNAVAILABLE };
-  const payload = await snapshot(moduleId, options);
+  const payload = await snapshot(moduleId, options, quizUrl);
   if (!payload) return { error: NOT_FOUND.module };
 
   const revoke = await supabase

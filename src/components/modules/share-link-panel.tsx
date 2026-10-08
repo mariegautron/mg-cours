@@ -8,6 +8,11 @@ import {
   updateModuleLink,
   type ShareState,
 } from "@/app/(app)/modules/[id]/frise/actions";
+import {
+  createStudentLinks,
+  revokeStudentLinks,
+  type StudentLinksState,
+} from "@/app/(app)/modules/[id]/frise/student-links";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
 import { ActionError } from "@/components/action-error";
 import { Button } from "@/components/ui/button";
@@ -27,6 +32,7 @@ export function ShareLinkPanel({
   available,
   active,
   counts,
+  studentLinks,
 }: {
   moduleId: string;
   available: boolean;
@@ -34,14 +40,18 @@ export function ShareLinkPanel({
     publishedAt: string;
     viewCount: number;
     options: EspaceOptions;
+    quizUrl: string | null;
     stale: boolean;
   } | null;
+  studentLinks: { available: boolean; students: number; active: number };
   /** Ce que contiendrait chaque partie si elle était publiée : sert à l'aperçu. */
   counts: EspaceCounts;
 }) {
   const [state, setState] = useState<ShareState>({});
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
+  const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
+  const [personal, setPersonal] = useState<StudentLinksState>({});
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -112,6 +122,23 @@ export function ShareLinkPanel({
               </label>
             ))}
           </fieldset>
+          <div className="space-y-1">
+            <label htmlFor="quiz-url" className="text-sm font-medium">
+              Lien du QCM (facultatif)
+            </label>
+            <input
+              id="quiz-url"
+              type="url"
+              value={quizUrl}
+              onChange={(e) => setQuizUrl(e.target.value)}
+              placeholder="https://…"
+              className="bg-background w-full rounded-md border px-2 py-1 text-sm"
+            />
+            <p className="text-muted-foreground text-xs">
+              Quand un QCM est ouvert, une bannière le signale ; colle ici son lien pour que le
+              bouton « Passer le QCM » y mène.
+            </p>
+          </div>
           {active?.stale ? (
             <p role="status" className="bg-muted rounded-xl border p-3 text-sm">
               <strong>Le lien n’est plus à jour.</strong> Des séances, évaluations ou fiches ont
@@ -125,7 +152,9 @@ export function ShareLinkPanel({
                 type="button"
                 size="sm"
                 disabled={pending}
-                onClick={() => run(() => updateModuleLink(moduleId, options))}
+                onClick={() =>
+                  run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
+                }
               >
                 Mettre à jour
               </Button>
@@ -134,7 +163,9 @@ export function ShareLinkPanel({
                 type="button"
                 size="sm"
                 disabled={pending}
-                onClick={() => run(() => publishModuleLink(moduleId, options))}
+                onClick={() =>
+                  run(() => publishModuleLink(moduleId, options, quizUrl.trim() || null))
+                }
               >
                 Créer le lien
               </Button>
@@ -145,7 +176,9 @@ export function ShareLinkPanel({
                 size="sm"
                 variant="outline"
                 disabled={pending}
-                onClick={() => run(() => publishModuleLink(moduleId, options))}
+                onClick={() =>
+                  run(() => publishModuleLink(moduleId, options, quizUrl.trim() || null))
+                }
               >
                 Créer un nouveau lien
               </Button>
@@ -195,6 +228,81 @@ export function ShareLinkPanel({
           </div>
         </div>
       ) : null}
+      {studentLinks.available ? (
+        <div className="space-y-2 border-t pt-4">
+          <h3 className="font-heading text-lg font-bold">Liens personnels</h3>
+          <p className="text-muted-foreground text-sm">
+            Un lien par étudiant·e : prénom, notes et corrigés publiés pour elle ou lui, et le même
+            contenu que ci-dessus (publie-le d’abord). {studentLinks.active} lien
+            {studentLinks.active > 1 ? "s" : ""} actif{studentLinks.active > 1 ? "s" : ""} sur{" "}
+            {studentLinks.students} étudiant·e{studentLinks.students > 1 ? "s" : ""}.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending || studentLinks.students === 0}
+              onClick={() =>
+                start(async () => setPersonal(await createStudentLinks(moduleId, true)))
+              }
+            >
+              Créer les liens manquants
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending || studentLinks.students === 0}
+              onClick={() =>
+                start(async () => setPersonal(await createStudentLinks(moduleId, false)))
+              }
+            >
+              Tout renouveler
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={pending || studentLinks.active === 0}
+              onClick={() => start(async () => setPersonal(await revokeStudentLinks(moduleId)))}
+            >
+              Tout dépublier
+            </Button>
+          </div>
+          {personal.links?.length ? (
+            <div className="space-y-2">
+              <label htmlFor="personal-links" className="text-sm font-medium">
+                Liens à donner (visibles une seule fois)
+              </label>
+              <textarea
+                id="personal-links"
+                readOnly
+                rows={Math.min(12, personal.links.length + 1)}
+                value={personal.links.map((l) => `${l.name} : ${l.url}`).join("\n")}
+                className="bg-background w-full rounded-md border px-2 py-1 font-mono text-xs"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  void copy(personal.links!.map((l) => `${l.name} : ${l.url}`).join("\n"))
+                }
+              >
+                Tout copier
+              </Button>
+            </div>
+          ) : personal.links ? (
+            <p className="text-sm">Rien à créer ou à retirer.</p>
+          ) : null}
+          {personal.error ? <ActionError error={personal.error} /> : null}
+        </div>
+      ) : (
+        <p className="text-muted-foreground border-t pt-4 text-sm">
+          Les liens personnels seront disponibles après la mise à jour de la base de données.
+        </p>
+      )}
       {state.revoked ? <p className="text-sm">Lien dépublié : il n’affiche plus rien.</p> : null}
       {state.updated ? <p className="text-sm">Lien mis à jour.</p> : null}
       <p role="status" aria-live="polite" className="text-muted-foreground min-h-5 text-sm">

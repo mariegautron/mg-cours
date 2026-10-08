@@ -1524,6 +1524,60 @@ export type Database = {
           },
         ]
       }
+      module_student_link: {
+        Row: {
+          created_at: string
+          first_viewed_at: string | null
+          id: string
+          module_id: string
+          owner_id: string
+          revoked_at: string | null
+          student_id: string
+          token_hash: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          module_id: string
+          owner_id?: string
+          revoked_at?: string | null
+          student_id: string
+          token_hash: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          first_viewed_at?: string | null
+          id?: string
+          module_id?: string
+          owner_id?: string
+          revoked_at?: string | null
+          student_id?: string
+          token_hash?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_student_link_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_student_link_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oral_slot: {
         Row: {
           assessment_id: string
@@ -2996,6 +3050,10 @@ export type Database = {
         Returns: undefined
       }
       mg_module_view: {
+        Args: { p_count?: boolean; p_token_hash: string }
+        Returns: Json
+      }
+      mg_student_view: {
         Args: { p_count?: boolean; p_token_hash: string }
         Returns: Json
       }
