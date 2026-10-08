@@ -13,6 +13,14 @@ export interface OutlineCourse {
   objectives: string[];
   /** Date de dernière modification du contenu de la séance. */
   contentUpdatedAt: string | null;
+  /** Texte qui sera publié (déjà débarrassé du privé) ; absent = contrôle ignoré. */
+  animation?: string | null;
+  /** La séance a une évaluation rattachée ou une note d'évaluation. */
+  hasEvaluation?: boolean;
+  /** Lignes privées retirées d'office du texte à publier (voir `private-text.ts`). */
+  removedLines?: number;
+  /** Lignes du texte publié qui contiennent un terme suspect (solution, barème…). */
+  suspectLines?: string[];
 }
 
 export interface OutlineCheckInput {
@@ -183,6 +191,69 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
     );
   }
 
+  // 5 bis. Modalités et contenu privé (seulement quand la page fournit le texte à publier).
+  const withText = numbered.filter((c) => c.animation !== undefined);
+  if (withText.length > 0) {
+    const noAnimation = withText.filter((c) => !c.animation?.trim());
+    checks.push(
+      noAnimation.length === 0
+        ? {
+            key: "animation",
+            ok: true,
+            title: "Toutes les séances ont des modalités d’animation",
+            detail: "",
+          }
+        : {
+            key: "animation",
+            ok: false,
+            title: `${plural(noAnimation.length, "séance sans modalités d’animation", "séances sans modalités d’animation")}`,
+            detail: formatNumbers(noAnimation.map((c) => c.number)),
+            to: "/courses",
+            toLabel: "les compléter",
+          },
+    );
+    const noEvaluation = withText.filter((c) => c.hasEvaluation === false);
+    checks.push(
+      noEvaluation.length === 0
+        ? {
+            key: "evaluation",
+            ok: true,
+            title: "Les modalités d’évaluation sont renseignées",
+            detail: "",
+          }
+        : {
+            key: "evaluation",
+            ok: false,
+            title: `${plural(noEvaluation.length, "séance sans modalités d’évaluation", "séances sans modalités d’évaluation")}`,
+            detail: `${formatNumbers(noEvaluation.map((c) => c.number))} · le PDF dira « Pas d’évaluation notée à cette séance »`,
+            to: "/courses",
+            toLabel: "les compléter",
+          },
+    );
+    const suspect = withText.filter((c) => (c.suspectLines?.length ?? 0) > 0);
+    const removed = withText.reduce((n, c) => n + (c.removedLines ?? 0), 0);
+    if (suspect.length > 0) {
+      checks.push({
+        key: "private",
+        ok: false,
+        title: "Du contenu privé est peut-être publié",
+        detail: `${formatNumbers(suspect.map((c) => c.number))} · « ${suspect[0].suspectLines![0].slice(0, 80)} ». Entoure le passage de [privé] … [/privé] pour qu’il ne soit jamais publié`,
+        to: "/courses",
+        toLabel: "relire les séances",
+      });
+    } else {
+      checks.push({
+        key: "private",
+        ok: true,
+        title: "Aucun contenu privé dans ce qui sera publié",
+        detail:
+          removed > 0
+            ? `${plural(removed, "ligne privée retirée", "lignes privées retirées")} d’office (corrigés, résultats attendus, [privé])`
+            : "Corrigés, résultats attendus et blocs [privé] ne sont jamais publiés",
+      });
+    }
+  }
+
   // 6. Attendus couverts.
   if (expectations.total === 0) {
     checks.push({
@@ -198,7 +269,7 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
       key: "expectations",
       ok: false,
       title: `${plural(expectations.uncovered, "attendu non couvert", "attendus non couverts")}`,
-      detail: `${expectationsSummary(expectations.objectives, expectations.units)} · tu peux générer quand même : ils seront signalés dans le PDF`,
+      detail: `${expectationsSummary(expectations.objectives, expectations.units)} · tu peux générer quand même : ils restent à rapprocher avant la remise`,
       to: "/matching",
       toLabel: "rapprocher",
     });

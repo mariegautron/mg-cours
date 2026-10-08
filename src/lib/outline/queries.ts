@@ -1,5 +1,7 @@
+import { listModuleAssessments } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
+import { displayTeacherName } from "@/lib/ynov/teacher-name";
 import { buildOutlineContent, type OutlineContent } from "@/lib/ynov/outline";
 import type { Tables } from "@/types/db";
 
@@ -16,16 +18,17 @@ export async function getOutline(moduleId: string): Promise<Tables<"pedagogical_
 export async function getTeacherName(): Promise<string> {
   const supabase = await createClient();
   const { data } = await supabase.from("teacher_profile").select("legal_name").maybeSingle();
-  return data?.legal_name ?? "";
+  return displayTeacherName(data?.legal_name);
 }
 
 /** Construit le contenu actuel de la trame à partir de l'état courant du module. */
 export async function buildCurrentOutline(moduleId: string): Promise<OutlineContent | null> {
-  const [mod, courses, teacherName] = await Promise.all([
+  const [mod, courses, teacherName, assessments] = await Promise.all([
     getModule(moduleId),
     getModuleCourses(moduleId),
     getTeacherName(),
+    listModuleAssessments(moduleId),
   ]);
   if (!mod) return null;
-  return buildOutlineContent({ teacherName, module: mod, courses });
+  return buildOutlineContent({ teacherName, module: mod, courses, assessments });
 }

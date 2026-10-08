@@ -27,8 +27,6 @@ const course = (title: string, position: number) => ({
   animation_notes: null,
   assessment_notes: null,
   material: null,
-  content_last_updated_at: "2026-09-20T08:00:00Z",
-  resources: [{ title: "Intro Scrum" }],
 });
 
 describe("buildOutlineContent", () => {
@@ -55,13 +53,44 @@ describe("buildOutlineContent", () => {
     ]);
   });
 
-  it("conserve la date de dernière MAJ de chaque séance, ressources et libellé de modalité", () => {
-    const c = buildOutlineContent({ ...base, courses: [course("A", 1)] });
-    expect(c.sessions[0]).toMatchObject({
-      typeLabel: "Cours théorique",
-      resources: ["Intro Scrum"],
-      contentLastUpdatedAt: "2026-09-20T08:00:00Z",
+  it("libellé de modalité, année scolaire déduite de la première séance", () => {
+    const c = buildOutlineContent({
+      ...base,
+      courses: [{ ...course("A", 1), session_date: "2026-10-12" }],
     });
+    expect(c.sessions[0]).toMatchObject({ typeLabel: "Cours théorique" });
+    expect(c.schoolYear).toBe("2026-2027");
+  });
+
+  it("ne publie ni corrigé ni bloc privé, et dérive l'évaluation des évaluations rattachées", () => {
+    const c = buildOutlineContent({
+      ...base,
+      courses: [
+        {
+          ...course("A", 1),
+          id: "c1",
+          animation_notes: "Atelier en binômes\n- Corrigé de l'exercice 2\n[privé]astuce[/privé]",
+          assessment_notes: "Rappel : rendu du jalon 1",
+        },
+        { ...course("B", 2), id: "c2" },
+      ],
+      assessments: [
+        {
+          course_id: "c1",
+          title: "Cadrage du produit",
+          type: "Jalon",
+          date: "2026-11-03",
+          duration_minutes: null,
+          evaluated_md: "Clarté du périmètre",
+          where_to_submit: "Moodle",
+        },
+      ],
+    });
+    expect(c.sessions[0].animation).toBe("Atelier en binômes");
+    expect(c.sessions[0].assessment).toContain("Cadrage du produit");
+    expect(c.sessions[0].assessment).toContain("Rendu : Moodle");
+    expect(c.sessions[0].assessment).not.toContain("Rappel");
+    expect(c.sessions[1].assessment).toBe("Pas d’évaluation notée à cette séance.");
   });
 });
 

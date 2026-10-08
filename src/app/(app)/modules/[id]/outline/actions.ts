@@ -17,6 +17,9 @@ export interface OutlineActionState {
 export async function generateOutline(moduleId: string): Promise<OutlineActionState> {
   const content = await buildCurrentOutline(moduleId);
   if (!content) return { error: NOT_FOUND.module };
+  if (content.sessions.length === 0) {
+    return { error: "Ajoute au moins une séance au module avant de générer la progression." };
+  }
 
   const supabase = await createClient();
   const existing = await getOutline(moduleId);

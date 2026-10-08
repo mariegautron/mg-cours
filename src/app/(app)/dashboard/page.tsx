@@ -1,3 +1,4 @@
+import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -86,7 +87,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
   const alerts = outlineAlerts(modules);
   const summary = outlineAlertSummary(alerts);
-  const firstName = profile?.legal_name?.split(" ")[0];
+  const firstName = displayFirstName(profile?.legal_name);
 
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
   // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.

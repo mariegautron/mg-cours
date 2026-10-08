@@ -20,10 +20,12 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/modules/[id]/ou
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+  const ycode = content.ycode ? `${content.ycode.replace(/[^a-zA-Z0-9_-]+/g, "")}-` : "";
+
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="progression-pedagogique-${slug}.pdf"`,
+      "Content-Disposition": `attachment; filename="progression-pedagogique-${ycode}${slug}.pdf"`,
     },
   });
 }

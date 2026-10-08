@@ -15,12 +15,35 @@ import {
   getModuleExpectations,
   getRetainedResources,
 } from "@/lib/modules/queries";
+import { publishableText, suspectLines } from "@/lib/ynov/private-text";
 import { getOutline } from "@/lib/outline/queries";
 import { trameStatus } from "@/lib/ynov/trame";
 
 export const metadata: Metadata = { title: "Progression pédagogique" };
 
 const fr = (iso: string | Date) => new Date(iso).toLocaleDateString("fr-FR");
+
+/** Ce qui sera publié pour une séance : modalités, évaluation, lignes privées retirées ou suspectes. */
+function publicationInfo(
+  c: {
+    id: string;
+    animation_notes: string | null;
+    assessment_notes: string | null;
+    material: string | null;
+  },
+  assessments: { course_id: string | null }[],
+) {
+  const animation = publishableText(c.animation_notes);
+  const note = publishableText(c.assessment_notes);
+  const material = publishableText(c.material);
+  const linked = assessments.some((a) => a.course_id === c.id);
+  return {
+    animation: animation.text || null,
+    hasEvaluation: linked || note.text.length > 0,
+    removedLines: animation.removed + note.removed + material.removed,
+    suspectLines: [animation.text, note.text, material.text].flatMap((t) => suspectLines(t)),
+  };
+}
 
 export default async function ModuleOutlinePage({ params }: PageProps<"/modules/[id]/outline">) {
   const { id } = await params;
@@ -56,6 +79,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
       endTime: c.end_time,
       objectives: c.learning_objectives ?? [],
       contentUpdatedAt: c.content_last_updated_at,
+      ...publicationInfo(c, regular),
     })),
     moduleHours: mod.total_hours,
     assessments: { total: regular.length, linked: regular.filter((a) => a.course_id).length },
@@ -131,6 +155,12 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
             {todo === 0
               ? "Tout est prêt."
               : `${todo} point${todo > 1 ? "s" : ""} à voir : rien ne t’empêche de générer quand même.`}
+          </p>
+          <p className="text-muted-foreground mb-2 text-sm">
+            La progression est remise à l’école : entoure d’un <code>[privé]</code> …{" "}
+            <code>[/privé]</code> ce qui doit rester pour toi dans les notes de séance. Les lignes
+            qui parlent de corrigé, de résultat attendu ou de « à faire verbaliser » ne sont jamais
+            publiées.
           </p>
           <ul>
             {checks.map((c) => (
