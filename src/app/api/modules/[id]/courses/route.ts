@@ -6,6 +6,9 @@ import { getCourseExport } from "@/lib/modules/queries";
 import { getTeacherName } from "@/lib/outline/queries";
 
 export const runtime = "nodejs";
+// 25 fiches avec le rendu PDF dépassent la durée par défaut d'une fonction : on laisse le maximum
+// du plan plutôt que de couper net (la coupure renvoie une page d'erreur, pas notre message).
+export const maxDuration = 60;
 
 function slug(input: string): string {
   return (
@@ -24,6 +27,22 @@ function slug(input: string): string {
  * `?number=N` : le PDF de la seule séance N (écran de fin de séance).
  */
 export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/courses">) {
+  try {
+    return await exportCourses(req, ctx);
+  } catch (error) {
+    // Visible dans les journaux de la fonction (Vercel → Logs) : module, format et cause.
+    const { id } = await ctx.params;
+    console.error("[export cours] échec", {
+      moduleId: id,
+      query: new URL(req.url).search,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return new Response("Export impossible : voir les journaux de la fonction.", { status: 500 });
+  }
+}
+
+async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/courses">) {
   const { id } = await ctx.params;
   const format = new URL(req.url).searchParams.get("format") === "zip" ? "zip" : "pdf";
 
