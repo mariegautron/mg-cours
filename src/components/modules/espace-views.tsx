@@ -1,9 +1,11 @@
 import Link from "next/link";
 
-import { Markdown } from "@/components/markdown";
+import { Markdown, markdownOutline } from "@/components/markdown";
 import { FriseProjected } from "@/components/modules/frise-view";
+import { formatMinutes } from "@/lib/modules/activity";
 import {
   dueLabel,
+  flatFiches,
   nextEvaluationIndex,
   quizIsOpen,
   type Espace,
@@ -361,28 +363,67 @@ export function CoursListView({ data }: { data: EspaceData }) {
     return <Empty title="Cours" text="Aucune fiche n’est publiée pour l’instant." />;
   return (
     <div className="max-w-4xl">
-      <h1 className="font-heading mb-4 text-3xl font-bold">Cours</h1>
-      <ul className="grid gap-3 md:grid-cols-2">
-        {courses.map((c) => (
-          <li key={c.number}>
-            <Link href={`${data.base}/cours/${c.number}`} className={tile}>
-              <strong>{sessionHeading(c)}</strong>
-              <span className="text-muted-foreground block text-sm">
-                {c.resources.map((r) => r.title).join(" · ")}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <h1 className="font-heading mb-6 text-3xl font-bold">Cours</h1>
+      <div className="space-y-8">
+        {courses.map((c) => {
+          const total = c.resources.reduce((n, r) => n + (r.minutes ?? 0), 0);
+          return (
+            <section key={c.number} aria-labelledby={`seance-${c.number}`}>
+              <h2 id={`seance-${c.number}`} className="font-heading mb-2 text-xl font-bold">
+                {sessionHeading(c)}
+                {total ? (
+                  <span className="text-muted-foreground ml-2 text-sm font-normal">
+                    · {formatMinutes(total)}
+                  </span>
+                ) : null}
+              </h2>
+              <ul className="grid gap-3 md:grid-cols-2">
+                {c.resources.map((r, i) => (
+                  <li key={i}>
+                    <Link href={`${data.base}/cours/${c.number}/${i + 1}`} className={tile}>
+                      <strong>{r.title}</strong>
+                      <span className="text-muted-foreground block text-sm">
+                        {[r.kindLabel, r.minutes ? formatMinutes(r.minutes) : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-export function CoursSeanceView({ data, number }: { data: EspaceData; number: number }) {
-  const course = data.espace?.courses.find((c) => c.number === number);
-  if (!course) return <Empty title="Cours" text="Cette séance n’a pas de fiche publiée." />;
+/** Une seule fiche à la fois : sommaire des titres, puis « Précédente / Suivante » entre les fiches. */
+export function CoursFicheView({
+  data,
+  session,
+  index,
+}: {
+  data: EspaceData;
+  session: number;
+  /** Rang de la fiche dans la séance, à partir de 1. */
+  index: number;
+}) {
+  const course = data.espace?.courses.find((c) => c.number === session);
+  const resource = course?.resources[index - 1];
+  if (!course || !resource) return <Empty title="Cours" text="Cette fiche n’existe pas." />;
+
+  const flat = flatFiches(data.espace);
+  const at = flat.findIndex((f) => f.session === session && f.index === index);
+  const prev = at > 0 ? flat[at - 1] : null;
+  const next = at >= 0 && at < flat.length - 1 ? flat[at + 1] : null;
+  const href = (f: { session: number; index: number }) =>
+    `${data.base}/cours/${f.session}/${f.index}`;
+  const toc = resource.content ? markdownOutline(resource.content, "fiche") : [];
+
   /** Une image de la fiche passe par la route protégée du lien, jamais par le bucket. */
-  const resolver = (resource: number) => (src: string) => {
+  const resolveImage = (src: string) => {
     if (/^(https?:|data:image\/)/i.test(src)) return src;
     const last = src.split(/[?#]/)[0].split("/").pop() ?? "";
     let name = last;
@@ -391,43 +432,89 @@ export function CoursSeanceView({ data, number }: { data: EspaceData; number: nu
     } catch {
       /* nom mal encodé : gardé tel quel */
     }
-    return `${data.base}/fichier/${course.number}/${resource}/${encodeURIComponent(name)}`;
+    return `${data.base}/fichier/${session}/${index - 1}/${encodeURIComponent(name)}`;
   };
+
   return (
-    <div className="max-w-3xl">
-      <p className="mb-2 text-sm">
-        <Link href={`${data.base}/cours`} className="underline underline-offset-2">
-          ← Tous les cours
-        </Link>
-      </p>
-      <h1 className="font-heading mb-6 text-3xl font-bold">{sessionHeading(course)}</h1>
-      <div className="space-y-12">
-        {course.resources.map((r, i) => (
-          <article key={i} aria-labelledby={`r-${i}`}>
-            <h2 id={`r-${i}`} className="font-heading mb-1 text-2xl font-bold">
-              {r.title}
-            </h2>
-            {r.kindLabel ? (
-              <p className="text-muted-foreground mb-3 text-sm">{r.kindLabel}</p>
-            ) : null}
-            {r.content ? (
-              <Markdown source={r.content} headingLevel={3} resolveImageSrc={resolver(i)} />
-            ) : null}
-            {r.url ? (
-              <p className="mt-3">
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  Ouvrir le lien<span className="sr-only"> (nouvel onglet)</span>
-                </a>
-              </p>
-            ) : null}
-          </article>
-        ))}
-      </div>
+    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-10">
+      <article aria-labelledby="fiche-titre" className="max-w-3xl min-w-0">
+        <p className="mb-2 text-sm">
+          <Link href={`${data.base}/cours`} className="underline underline-offset-2">
+            ← Tous les cours
+          </Link>
+          <span className="text-muted-foreground"> · {sessionHeading(course)}</span>
+        </p>
+        <h1 id="fiche-titre" className="font-heading text-3xl font-bold">
+          {resource.title}
+        </h1>
+        <p className="text-muted-foreground mt-1 mb-6 text-sm">
+          {[
+            resource.kindLabel,
+            resource.minutes ? formatMinutes(resource.minutes) : null,
+            `Fiche ${at + 1} sur ${flat.length}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        {resource.content ? (
+          <Markdown
+            source={resource.content}
+            headingLevel={2}
+            anchorPrefix="fiche"
+            resolveImageSrc={resolveImage}
+          />
+        ) : null}
+        {resource.url ? (
+          <p className="mt-3">
+            <a
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2"
+            >
+              Ouvrir le lien<span className="sr-only"> (nouvel onglet)</span>
+            </a>
+          </p>
+        ) : null}
+        <nav
+          aria-label="Fiches voisines"
+          className="mt-10 flex flex-wrap justify-between gap-3 border-t pt-5"
+        >
+          {prev ? (
+            <Link href={href(prev)} className={`${tile} flex-1 basis-60`}>
+              <span className="text-muted-foreground block text-xs">← Précédente</span>
+              <strong>{prev.title}</strong>
+            </Link>
+          ) : (
+            <span className="flex-1 basis-60" />
+          )}
+          {next ? (
+            <Link href={href(next)} className={`${tile} flex-1 basis-60 text-right`}>
+              <span className="text-muted-foreground block text-xs">Suivante →</span>
+              <strong>{next.title}</strong>
+            </Link>
+          ) : null}
+        </nav>
+      </article>
+      {toc.length > 1 ? (
+        <nav aria-label="Sommaire de la fiche" className="mt-8 xl:mt-0">
+          <div className="xl:sticky xl:top-6">
+            <p className="mb-2 text-sm font-bold">Dans cette fiche</p>
+            <ul className="space-y-1 text-sm">
+              {toc.map((h) => (
+                <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
+                  <a
+                    href={`#${h.id}`}
+                    className="focus-visible:ring-ring inline-block min-h-6 rounded hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      ) : null}
     </div>
   );
 }

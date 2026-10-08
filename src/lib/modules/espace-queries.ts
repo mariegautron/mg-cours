@@ -10,6 +10,8 @@ import {
   type EspaceEvaluation,
   type EspaceOptions,
 } from "@/lib/modules/espace";
+import { EMPTY_ACTIVITY } from "@/lib/modules/activity";
+import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { getCourseResourcesFull, getModuleCourses } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { isImageMime, parseResourceFiles } from "@/lib/resources/files";
@@ -84,6 +86,7 @@ export async function loadEspace(
         (r) => r.kind !== null && COURSE_KINDS.has(r.kind),
       );
       if (!resources.length) continue;
+      const activities = await getCourseActivities(c.id);
       espaceCourses.push({
         number: i + 1,
         title: c.title,
@@ -93,6 +96,7 @@ export async function loadEspace(
           kindLabel: r.kind ? KIND_LABELS[r.kind] : null,
           content: r.content,
           url: r.url,
+          minutes: (activities.byResource.get(r.id) ?? EMPTY_ACTIVITY).durationMinutes,
           images: parseResourceFiles(r.files)
             .filter((f) => isImageMime(f.mime))
             .map((f) => ({ name: f.name, path: f.path, mime: f.mime })),

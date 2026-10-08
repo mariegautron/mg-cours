@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import {
   AccueilView,
   CoursListView,
-  CoursSeanceView,
+  CoursFicheView,
   EspaceLayout,
   EvaluationView,
   NotesView,
@@ -65,14 +65,19 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   } else if (section === "evaluation" && slug.length === 2 && Number.isInteger(number)) {
     current = "evaluation";
     body = <EvaluationView data={data} index={number - 1} />;
-  } else if (section === "cours" && slug.length <= 2) {
+  } else if (section === "cours" && slug.length === 2 && Number.isInteger(number)) {
+    // Ancienne adresse d'une séance : on ouvre sa première fiche.
+    redirect(`/espace/${token}/cours/${number}/1`);
+  } else if (section === "cours" && slug.length <= 3) {
     current = "cours";
-    body =
-      slug.length === 1 ? (
-        <CoursListView data={data} />
-      ) : (
-        <CoursSeanceView data={data} number={number} />
-      );
+    const fiche = Number(slug[2]);
+    if (slug.length === 1) {
+      body = <CoursListView data={data} />;
+    } else if (Number.isInteger(number) && Number.isInteger(fiche)) {
+      body = <CoursFicheView data={data} session={number} index={fiche} />;
+    } else {
+      notFound();
+    }
   } else if (section === "notes" && slug.length === 1) {
     current = "notes";
     body = <NotesView data={data} />;

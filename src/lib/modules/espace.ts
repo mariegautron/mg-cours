@@ -59,6 +59,8 @@ export interface EspaceResource {
   kindLabel: string | null;
   content: string | null;
   url: string | null;
+  /** Durée prévue au déroulé de la séance, en minutes ; null si non renseignée. */
+  minutes: number | null;
   images: EspaceImage[];
 }
 
@@ -181,6 +183,7 @@ export function parseEspace(payload: unknown): Espace | null {
                 kindLabel: str(k.kindLabel),
                 content: str(k.content),
                 url: publicSlidesUrl(k.url),
+                minutes: num(k.minutes),
                 images: arr(k.images).flatMap((i) => {
                   const f = obj(i);
                   const name = str(f.name);
@@ -272,4 +275,16 @@ export function quizIsOpen(quiz: EspaceQuiz | null, now: Date = new Date()): boo
 
 export function studentSpaceUrl(baseUrl: string, token: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/espace/${token}`;
+}
+
+/** Toutes les fiches publiées à plat, dans l'ordre des séances : sert à « Précédente / Suivante ». */
+export function flatFiches(espace: Espace | null): {
+  session: number;
+  /** Rang de la fiche dans la séance, à partir de 1. */
+  index: number;
+  title: string;
+}[] {
+  return (espace?.courses ?? []).flatMap((c) =>
+    c.resources.map((r, i) => ({ session: c.number, index: i + 1, title: r.title })),
+  );
 }
