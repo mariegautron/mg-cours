@@ -4,6 +4,7 @@ import { zipSync } from "fflate";
 import { CourseDocument, ModuleCoursesDocument } from "@/lib/pdf/courses";
 import { getCourseExport } from "@/lib/modules/queries";
 import { deliverExport } from "@/lib/pdf/export-delivery";
+import type { ImageMap } from "@/lib/pdf/markdown-view";
 import { loadResourceImages } from "@/lib/pdf/images";
 import { getTeacherName } from "@/lib/outline/queries";
 
@@ -58,7 +59,7 @@ async function exportCourses(req: Request, ctx: RouteContext<"/api/modules/[id]/
   const images = await loadResourceImages(data.courses.flatMap((c) => c.resources));
   for (const course of data.courses) {
     for (const r of course.resources) {
-      (r as { images?: Record<string, string> }).images = (r.id && images.get(r.id)) || undefined;
+      (r as { images?: ImageMap }).images = (r.id && images.get(r.id)) || undefined;
     }
   }
 

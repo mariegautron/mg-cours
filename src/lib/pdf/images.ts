@@ -2,6 +2,7 @@ import "server-only";
 
 import sharp from "sharp";
 
+import { fitImage, type PdfImage } from "@/lib/pdf/image-size";
 import { RESOURCE_FILES_BUCKET, parseResourceFiles } from "@/lib/resources/files";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/db";
@@ -37,9 +38,9 @@ export async function compress(original: Buffer, mime: string): Promise<Buffer> 
  */
 export async function loadResourceImages(
   resources: { id: string | null; content: string | null; files: Json | null }[],
-): Promise<Map<string, Record<string, string>>> {
+): Promise<Map<string, Record<string, PdfImage>>> {
   const supabase = await createClient();
-  const out = new Map<string, Record<string, string>>();
+  const out = new Map<string, Record<string, PdfImage>>();
   await Promise.all(
     resources.map(async (r) => {
       if (!r.id || !r.content) return;
@@ -50,7 +51,7 @@ export async function loadResourceImages(
           f.size <= MAX_BYTES &&
           (content.includes(f.name) || content.includes(encodeURIComponent(f.name))),
       );
-      const found: Record<string, string> = {};
+      const found: Record<string, PdfImage> = {};
       await Promise.all(
         wanted.map(async (f) => {
           try {
@@ -60,7 +61,10 @@ export async function loadResourceImages(
             if (error || !data) return;
             const original = Buffer.from(await data.arrayBuffer());
             const bytes = await compress(original, f.mime);
-            found[f.name] = `data:${f.mime};base64,${bytes.toString("base64")}`;
+            const meta = await sharp(bytes).metadata();
+            const size = fitImage(meta.width, meta.height);
+            if (!size) return;
+            found[f.name] = { src: `data:${f.mime};base64,${bytes.toString("base64")}`, ...size };
           } catch (error) {
             console.error("[export cours] image illisible", {
               resource: r.id,

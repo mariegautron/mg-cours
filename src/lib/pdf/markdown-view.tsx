@@ -1,9 +1,10 @@
+import type { PdfImage } from "@/lib/pdf/image-size";
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import { parseMarkdown, type Block, type InlineRun, type ListBlock } from "@/lib/pdf/markdown";
 
 /** Nom de fichier → image en URI de données (voir `src/lib/pdf/images.ts`, serveur). */
-export type ImageMap = Record<string, string>;
+export type ImageMap = Record<string, PdfImage>;
 
 /** Nom de fichier visé par une image Markdown (dernier segment, décodé). */
 function imageName(src: string): string {
@@ -17,7 +18,6 @@ function imageName(src: string): string {
 
 const styles = StyleSheet.create({
   figure: { marginVertical: 6, alignItems: "center" },
-  figureImage: { maxWidth: "100%", maxHeight: 300, objectFit: "contain" },
   caption: { marginTop: 3, fontSize: 8.5, color: "#555", textAlign: "center" },
   h1: { fontSize: 14, fontFamily: "Helvetica-Bold", marginTop: 8, marginBottom: 3 },
   h2: { fontSize: 12.5, fontFamily: "Helvetica-Bold", marginTop: 7, marginBottom: 3 },
@@ -145,12 +145,12 @@ function BlockView({ block, images }: { block: Block; images?: ImageMap }) {
     case "code":
       return <Text style={styles.code}>{block.text}</Text>;
     case "image": {
-      const src = images?.[imageName(block.src)];
-      if (!src) return <Text style={styles.p}>[Image{block.alt ? ` : ${block.alt}` : ""}]</Text>;
+      const image = images?.[imageName(block.src)];
+      if (!image) return <Text style={styles.p}>[Image{block.alt ? ` : ${block.alt}` : ""}]</Text>;
       return (
         <View style={styles.figure} wrap={false}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF : la légende ci-dessous porte le texte alternatif */}
-          <Image src={src} style={styles.figureImage} />
+          <Image src={image.src} style={{ width: image.width, height: image.height }} />
           {block.alt ? <Text style={styles.caption}>{block.alt}</Text> : null}
         </View>
       );
