@@ -21,7 +21,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
     loadEspace(id),
     listModuleGroups(id),
   ]);
-  const studentLinks = await getStudentLinkInfo(id, notebookStudents(groups).length);
+  const studentLinks = await getStudentLinkInfo(id, notebookStudents(groups));
   if (!frise) notFound();
   const today = new Date().toISOString().slice(0, 10);
   const card = "bg-card rounded-3xl border p-5 shadow-sm";

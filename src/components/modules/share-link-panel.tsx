@@ -11,8 +11,11 @@ import {
 import {
   createStudentLinks,
   revokeStudentLinks,
+  sendStudentLinksEmail,
+  type SendLinksState,
   type StudentLinksState,
 } from "@/app/(app)/modules/[id]/frise/student-links";
+import type { StudentLinkRow } from "@/lib/modules/frise-queries";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
 import { ActionError } from "@/components/action-error";
 import { Button } from "@/components/ui/button";
@@ -43,7 +46,12 @@ export function ShareLinkPanel({
     quizUrl: string | null;
     stale: boolean;
   } | null;
-  studentLinks: { available: boolean; students: number; active: number };
+  studentLinks: {
+    available: boolean;
+    students: number;
+    active: number;
+    rows: StudentLinkRow[];
+  };
   /** Ce que contiendrait chaque partie si elle était publiée : sert à l'aperçu. */
   counts: EspaceCounts;
 }) {
@@ -52,6 +60,8 @@ export function ShareLinkPanel({
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
   const [personal, setPersonal] = useState<StudentLinksState>({});
+  const [confirmSend, setConfirmSend] = useState(false);
+  const [sending, setSending] = useState<SendLinksState>({});
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -292,9 +302,107 @@ export function ShareLinkPanel({
               >
                 Tout copier
               </Button>
+              {!confirmSend ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="ml-2"
+                  disabled={pending}
+                  onClick={() => {
+                    setSending({});
+                    setConfirmSend(true);
+                  }}
+                >
+                  Envoyer par e-mail
+                </Button>
+              ) : (
+                <div
+                  role="alertdialog"
+                  aria-labelledby="send-title"
+                  className="bg-muted mt-2 space-y-2 rounded-xl border p-3"
+                >
+                  <p id="send-title" className="text-sm font-medium">
+                    Envoyer son lien à {personal.links.length} étudiant·e
+                    {personal.links.length > 1 ? "s" : ""} ? Chacun·e reçoit un e-mail à son
+                    adresse.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={pending}
+                      onClick={() =>
+                        start(async () => {
+                          setConfirmSend(false);
+                          setSending(
+                            await sendStudentLinksEmail(
+                              moduleId,
+                              personal.links!.map((l) => ({ studentId: l.studentId, url: l.url })),
+                            ),
+                          );
+                        })
+                      }
+                    >
+                      Confirmer l’envoi
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setConfirmSend(false)}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {sending.error ? <ActionError error={sending.error} /> : null}
+              {sending.results ? (
+                <div role="status" className="mt-2 space-y-1 text-sm">
+                  <p className="font-medium">
+                    {sending.results.filter((r) => r.status === "sent").length} e-mail
+                    {sending.results.filter((r) => r.status === "sent").length > 1 ? "s" : ""}{" "}
+                    envoyé
+                    {sending.results.filter((r) => r.status === "sent").length > 1 ? "s" : ""}
+                    {sending.results.some((r) => r.status !== "sent")
+                      ? ", certains ont échoué :"
+                      : "."}
+                  </p>
+                  <ul className="list-disc pl-5">
+                    {sending.results
+                      .filter((r) => r.status !== "sent")
+                      .map((r) => (
+                        <li key={r.studentId}>
+                          {r.name} : {r.message ?? "échec"}
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : personal.links ? (
             <p className="text-sm">Rien à créer ou à retirer.</p>
+          ) : null}
+          {studentLinks.rows.length ? (
+            <ul className="divide-y rounded-xl border text-sm">
+              {studentLinks.rows.map((r) => (
+                <li
+                  key={r.studentId}
+                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                >
+                  <span>{r.name}</span>
+                  <span className="text-muted-foreground">
+                    {!r.hasLink
+                      ? "Pas de lien"
+                      : r.sentAt
+                        ? `Lien envoyé le ${new Date(r.sentAt).toLocaleDateString("fr-FR")}`
+                        : r.sendError
+                          ? `Envoi échoué : ${r.sendError}`
+                          : "Lien créé, pas encore envoyé"}
+                  </span>
+                </li>
+              ))}
+            </ul>
           ) : null}
           {personal.error ? <ActionError error={personal.error} /> : null}
         </div>

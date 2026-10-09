@@ -84,21 +84,68 @@ export async function getShareLinkInfo(moduleId: string): Promise<ShareLinkInfo>
   }
 }
 
-/** Liens personnels : combien de personnes dans le module, combien ont un lien actif. */
+export interface StudentLinkRow {
+  studentId: string;
+  name: string;
+  hasLink: boolean;
+  /** Date d'envoi de l'e-mail du lien (ISO) ; null s'il n'est pas parti. */
+  sentAt: string | null;
+  sendError: string | null;
+}
+
+/** Liens personnels : une ligne par étudiant·e (lien actif ou non, envoyé le …, cause d'un échec). */
 export async function getStudentLinkInfo(
   moduleId: string,
-  students: number,
-): Promise<{ available: boolean; students: number; active: number }> {
+  students: { id: string; first_name: string; last_name: string }[],
+): Promise<{ available: boolean; students: number; active: number; rows: StudentLinkRow[] }> {
+  const empty = (available: boolean) => ({
+    available,
+    students: students.length,
+    active: 0,
+    rows: students.map((s) => ({
+      studentId: s.id,
+      name: `${s.first_name} ${s.last_name}`,
+      hasLink: false,
+      sentAt: null,
+      sendError: null,
+    })),
+  });
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    const base = supabase
       .from("module_student_link")
-      .select("student_id")
+      .select("student_id, sent_at, send_error")
       .eq("module_id", moduleId)
       .is("revoked_at", null);
-    if (error) return { available: false, students, active: 0 };
-    return { available: true, students, active: data?.length ?? 0 };
+    const first = await base;
+    let data = first.data;
+    if (first.error) {
+      // Colonnes d'envoi pas encore migrées : on lit sans elles.
+      const fallback = await supabase
+        .from("module_student_link")
+        .select("student_id")
+        .eq("module_id", moduleId)
+        .is("revoked_at", null);
+      if (fallback.error) return empty(false);
+      data = (fallback.data ?? []).map((l) => ({ ...l, sent_at: null, send_error: null }));
+    }
+    const byStudent = new Map((data ?? []).map((l) => [l.student_id, l]));
+    return {
+      available: true,
+      students: students.length,
+      active: byStudent.size,
+      rows: students.map((s) => {
+        const link = byStudent.get(s.id);
+        return {
+          studentId: s.id,
+          name: `${s.first_name} ${s.last_name}`,
+          hasLink: !!link,
+          sentAt: link?.sent_at ?? null,
+          sendError: link?.send_error ?? null,
+        };
+      }),
+    };
   } catch {
-    return { available: false, students, active: 0 };
+    return empty(false);
   }
 }

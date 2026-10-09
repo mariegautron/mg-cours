@@ -1532,6 +1532,8 @@ export type Database = {
           module_id: string
           owner_id: string
           revoked_at: string | null
+          send_error: string | null
+          sent_at: string | null
           student_id: string
           token_hash: string
           updated_at: string
@@ -1544,6 +1546,8 @@ export type Database = {
           module_id: string
           owner_id?: string
           revoked_at?: string | null
+          send_error?: string | null
+          sent_at?: string | null
           student_id: string
           token_hash: string
           updated_at?: string
@@ -1556,6 +1560,8 @@ export type Database = {
           module_id?: string
           owner_id?: string
           revoked_at?: string | null
+          send_error?: string | null
+          sent_at?: string | null
           student_id?: string
           token_hash?: string
           updated_at?: string
