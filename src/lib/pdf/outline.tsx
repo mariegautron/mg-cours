@@ -51,9 +51,7 @@ function Field({ label, value }: { label: string; value: string }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View>
-      <Text style={styles.h} minPresenceAhead={40}>
-        {title}
-      </Text>
+      <Text style={styles.h}>{title}</Text>
       {children}
     </View>
   );
@@ -73,32 +71,33 @@ export function OutlineDocument({ content }: { content: OutlineContent }) {
       title={`Progression pédagogique — ${content.moduleName}`}
       author={content.teacherName}
     >
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>PROGRESSION PÉDAGOGIQUE</Text>
-        <Field label="Nom et prénom du formateur" value={content.teacherName || "—"} />
-        <Field label="Nom de la matière" value={content.moduleName} />
-        {content.ycode ? <Field label="YCODE" value={content.ycode} /> : null}
-        <Field label="Niveau" value={content.level ?? "—"} />
-        {content.schoolName ? <Field label="École" value={content.schoolName} /> : null}
-        <Field label="Année scolaire" value={content.schoolYear ?? String(content.year)} />
-        <Field
-          label="Nombre d’heures"
-          value={`${content.totalHours} h${hours ? ` (${hours})` : ""}`}
-        />
-
-        {content.sessions.map((s) => {
-          const duration = calculateDuration(s.startTime ?? null, s.endTime ?? null);
-          const when = [
-            s.sessionDate ? fmt(s.sessionDate) : null,
-            s.startTime ? `${s.startTime}${s.endTime ? `–${s.endTime}` : ""}` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ");
-          return (
-            <View key={s.number} style={styles.session}>
-              <Text style={styles.sessionTitle} minPresenceAhead={80}>
-                SEANCE n°{s.number}
-              </Text>
+      {content.sessions.map((s, idx) => {
+        const duration = calculateDuration(s.startTime ?? null, s.endTime ?? null);
+        const when = [
+          s.sessionDate ? fmt(s.sessionDate) : null,
+          s.startTime ? `${s.startTime}${s.endTime ? `–${s.endTime}` : ""}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return (
+          <Page key={s.number} size="A4" style={styles.page}>
+            {idx === 0 ? (
+              <>
+                <Text style={styles.title}>PROGRESSION PÉDAGOGIQUE</Text>
+                <Field label="Nom et prénom du formateur" value={content.teacherName || "—"} />
+                <Field label="Nom de la matière" value={content.moduleName} />
+                {content.ycode ? <Field label="YCODE" value={content.ycode} /> : null}
+                <Field label="Niveau" value={content.level ?? "—"} />
+                {content.schoolName ? <Field label="École" value={content.schoolName} /> : null}
+                <Field label="Année scolaire" value={content.schoolYear ?? String(content.year)} />
+                <Field
+                  label="Nombre d’heures"
+                  value={`${content.totalHours} h${hours ? ` (${hours})` : ""}`}
+                />
+              </>
+            ) : null}
+            <View style={styles.session}>
+              <Text style={styles.sessionTitle}>SEANCE n°{s.number}</Text>
               <Text style={styles.phase}>Phase de face à face intervenant</Text>
               <Section title="Titre de la séance">
                 <Text>{s.title}</Text>
@@ -135,14 +134,17 @@ export function OutlineDocument({ content }: { content: OutlineContent }) {
                 </Section>
               ) : null}
             </View>
-          );
-        })}
+            <View style={styles.footer} fixed>
+              <Text>Mise à jour le {fmt(content.generatedAt)}</Text>
+              <Text
+                render={({ pageNumber, totalPages }) => `Page ${pageNumber} sur ${totalPages}`}
+              />
+            </View>
+          </Page>
+        );
+      })}
 
-        <View style={styles.footer} fixed>
-          <Text>Mise à jour le {fmt(content.generatedAt)}</Text>
-          <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} sur ${totalPages}`} />
-        </View>
-      </Page>
+      {/* Une page de départ par séance : le moteur PDF se dérègle quand une seule page s'étale trop. */}
     </Document>
   );
 }

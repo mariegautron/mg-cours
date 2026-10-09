@@ -127,17 +127,22 @@ export function QcmCorrectionDocument({
 }) {
   return (
     <Document title={`Correction type — ${context.title}`} author={context.teacherName}>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>{context.title}</Text>
-        <Text style={styles.sub}>{subtitle(context, "Correction type")}</Text>
-        {themes.map((theme) => (
-          <View key={theme.label}>
+      {/* Une page de départ par thème : le moteur PDF se dérègle quand une seule page s'étale trop. */}
+      {themes.map((theme, t) => (
+        <Page key={theme.label} size="A4" style={styles.page}>
+          {t === 0 ? (
+            <>
+              <Text style={styles.title}>{context.title}</Text>
+              <Text style={styles.sub}>{subtitle(context, "Correction type")}</Text>
+            </>
+          ) : null}
+          <View>
             <Text style={styles.h2} minPresenceAhead={80}>
               {theme.label}
             </Text>
             {theme.questions.map((q, i) => (
-              <View key={q.id} style={styles.criterion} wrap={false}>
-                <Text style={styles.label}>
+              <View key={q.id} style={styles.criterion}>
+                <Text style={styles.label} minPresenceAhead={80}>
                   {i + 1}. {q.name}
                 </Text>
                 <MarkdownPdf source={q.statement} />
@@ -168,8 +173,8 @@ export function QcmCorrectionDocument({
               </View>
             ))}
           </View>
-        ))}
-      </Page>
+        </Page>
+      ))}
     </Document>
   );
 }
