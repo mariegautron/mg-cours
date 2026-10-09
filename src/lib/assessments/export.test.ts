@@ -2,7 +2,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
-import { exportableAssessments, qcmCorrectionThemes } from "./export";
+import {
+  buildProjectContext,
+  buildQcmPlan,
+  exportableAssessments,
+  qcmCorrectionThemes,
+} from "./export";
 import { subjectSections, withoutRepeatedHeading } from "./subject";
 
 const a = (
@@ -63,6 +68,42 @@ describe("qcmCorrectionThemes", () => {
   });
 });
 
+describe("préparation lisible par l'école", () => {
+  it("le plan du QCM donne durée, thèmes et barème, sans aucune question", () => {
+    const plan = buildQcmPlan({
+      duration_minutes: 45,
+      instructions: "Tout est autorisé.",
+      rules: [
+        { category: "Agile", tags: [], types: [], count: 3, pointsEach: 1 },
+        { category: null, tags: ["kanban"], types: [], count: 2, pointsEach: 2 },
+      ] as DrawRule[],
+    })!;
+    expect(plan.themes.map((t) => t.label)).toEqual(["Agile", "kanban"]);
+    expect(plan.totalPoints).toBe(7);
+    expect(JSON.stringify(plan)).not.toMatch(/statement|choices|generalFeedback/);
+    expect(buildQcmPlan({ duration_minutes: null, instructions: " ", rules: [] })).toBeNull();
+  });
+
+  it("le contexte du projet suit l'ordre des séances", () => {
+    const ctx = buildProjectContext({
+      title: "Coup de main",
+      briefMd: " Brief ",
+      clientContextMd: null,
+      milestones: [
+        { title: "Oral", role: "oral", sessionNumber: 6, date: null, time: null },
+        { title: "Jalon 1", role: "milestone", sessionNumber: 5, date: null, time: null },
+      ],
+      mails: [
+        { title: "Mail 2", body: "b", sessionNumber: 5, date: null },
+        { title: "Mail 1", body: "a", sessionNumber: 3, date: null },
+      ],
+    });
+    expect(ctx.briefMd).toBe("Brief");
+    expect(ctx.milestones.map((m) => m.title)).toEqual(["Jalon 1", "Oral"]);
+    expect(ctx.mails.map((m) => m.title)).toEqual(["Mail 1", "Mail 2"]);
+  });
+});
+
 describe("sujet : titre répété", () => {
   it("retire une première ligne qui répète le titre de la section", () => {
     expect(withoutRepeatedHeading("## Ce qui sera évalué\n\n- Clarté", "Ce qui sera évalué")).toBe(
@@ -89,7 +130,8 @@ describe("sujet : titre répété", () => {
     ]);
     expect(sections[3].text).toBe("Clarté");
     const route = readFileSync("src/app/api/modules/[id]/evaluations/route.ts", "utf8");
-    expect(route).toMatch(/SubjectDocument\(\{\s*context,\s*sections: sections/);
+    expect(route).toMatch(/SubjectDocument\(\{[\s\S]{0,200}sections: sections/);
+    expect(route).not.toMatch(/SubjectDocument\(\{[\s\S]{0,300}themes/);
   });
 });
 
@@ -119,6 +161,6 @@ describe("exports pour Moodle : jamais de contenu privé", () => {
   it("seule la correction type du QCM sort, par une pièce dédiée", () => {
     const route = read("src/app/api/modules/[id]/evaluations/route.ts");
     expect(route).toMatch(/qcmCorrectionThemes/);
-    expect(route).not.toMatch(/quiz_attempt|submissions|grade\b/);
+    expect(route).not.toMatch(/quiz_attempt|submissions|criterion_comments/);
   });
 });

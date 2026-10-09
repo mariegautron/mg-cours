@@ -3,6 +3,8 @@ import { zipSync } from "fflate";
 
 import { buildGridHandout } from "@/lib/assessments/grid-handout";
 import {
+  buildProjectContext,
+  buildQcmPlan,
   exportableAssessments,
   isAssessmentPart,
   PART_FILES,
@@ -11,11 +13,17 @@ import {
   type AssessmentPart,
 } from "@/lib/assessments/export";
 import { getAssessment, listModuleAssessments } from "@/lib/assessments/queries";
-import { getModule } from "@/lib/modules/queries";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { getTeacherName } from "@/lib/outline/queries";
-import { QcmCorrectionDocument, SubjectDocument } from "@/lib/pdf/assessment-export";
+import {
+  ProjectContextDocument,
+  QcmCorrectionDocument,
+  SubjectDocument,
+} from "@/lib/pdf/assessment-export";
 import { deliverExport } from "@/lib/pdf/export-delivery";
 import { GridHandoutDocument } from "@/lib/pdf/grid";
+import { getModuleProject } from "@/lib/projects/queries";
+import { listProjectSurprises } from "@/lib/projects/surprise-queries";
 import { getQuizByAssessment, loadBank } from "@/lib/quiz/queries";
 
 export const runtime = "nodejs";
@@ -54,6 +62,33 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
       return new Response("Aucune évaluation prête à exporter", { status: 404 });
     }
 
+    const [project, courses] = await Promise.all([getModuleProject(id), getModuleCourses(id)]);
+    const numberOf = new Map(courses.map((c, i) => [c.id, i + 1]));
+    const courseOf = new Map(courses.map((c) => [c.id, c]));
+    const projectContext = project
+      ? buildProjectContext({
+          title: project.title,
+          briefMd: project.brief_md,
+          clientContextMd: project.client_context_md,
+          milestones: project.assessments.map((m) => {
+            const course = m.course_id ? courseOf.get(m.course_id) : undefined;
+            return {
+              title: m.title,
+              role: m.project_role,
+              sessionNumber: m.course_id ? (numberOf.get(m.course_id) ?? null) : null,
+              date: m.date ?? course?.session_date ?? null,
+              time: m.oral_start_time?.slice(0, 5) ?? course?.start_time?.slice(0, 5) ?? null,
+            };
+          }),
+          mails: (await listProjectSurprises(project.id)).items.map((mail) => ({
+            title: mail.title,
+            body: mail.body,
+            sessionNumber: mail.courseId ? (numberOf.get(mail.courseId) ?? null) : null,
+            date: mail.courseId ? (courseOf.get(mail.courseId)?.session_date ?? null) : null,
+          })),
+        })
+      : null;
+
     async function parts(
       assessmentId: string,
     ): Promise<Partial<Record<AssessmentPart, Uint8Array>>> {
@@ -63,11 +98,19 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
         moduleName: mod!.name,
         title: a.title,
         type: a.type,
-        date: a.date,
         durationMinutes: a.duration_minutes,
         teacherName,
+        whereToSubmit: a.where_to_submit?.trim() || null,
+        // Échéance ou passage : l'heure de l'oral, sinon le début de la séance de rendu.
+        time:
+          a.oral_start_time?.slice(0, 5) ??
+          (a.course_id ? courseOf.get(a.course_id)?.start_time?.slice(0, 5) : null) ??
+          null,
+        groupGrade: a.is_group_grade,
+        date: a.date ?? (a.course_id ? (courseOf.get(a.course_id)?.session_date ?? null) : null),
       };
       const out: Partial<Record<AssessmentPart, Uint8Array>> = {};
+      const quiz = await getQuizByAssessment(a.id);
       const sections = subjectParts(a);
       if (sections.length) {
         out.subject = new Uint8Array(
@@ -75,6 +118,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
             SubjectDocument({
               context,
               sections: sections.map((s) => ({ heading: s.heading, text: s.text })),
+              plan: quiz ? buildQcmPlan(quiz) : null,
             }),
           ),
         );
@@ -89,8 +133,13 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
         });
         out.criteria = new Uint8Array(await renderToBuffer(GridHandoutDocument({ handout })));
       }
+      // Projet fil rouge (jalon, oral) : le contexte commun est joint à chaque dossier.
+      if (projectContext && a.project_id === project?.id) {
+        out.context = new Uint8Array(
+          await renderToBuffer(ProjectContextDocument({ context, project: projectContext })),
+        );
+      }
       // Correction type : seulement quand elle existe (un QCM) ; jalons et oraux n'en ont pas.
-      const quiz = await getQuizByAssessment(a.id);
       if (quiz) {
         const themes = qcmCorrectionThemes(await loadBank(quiz.id), quiz.rules);
         if (themes.length) {

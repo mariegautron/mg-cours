@@ -57,14 +57,78 @@ export function qcmCorrectionThemes(
     .filter((t) => t.questions.length > 0);
 }
 
-export type AssessmentPart = "subject" | "criteria" | "correction";
+/** Déroulement d'un QCM pour le sujet : durée, consignes, thèmes tirés au sort et barème. Aucune question. */
+export interface QcmPlan {
+  durationMinutes: number | null;
+  instructions: string;
+  themes: { label: string; count: number; pointsEach: number }[];
+  totalPoints: number;
+}
+
+export function buildQcmPlan(quiz: {
+  duration_minutes: number | null;
+  instructions: string;
+  rules: readonly DrawRule[];
+}): QcmPlan | null {
+  if (quiz.rules.length === 0 && !quiz.instructions.trim()) return null;
+  const themes = quiz.rules.map((r, i) => ({
+    label: r.category?.trim() || r.tags.join(", ") || `Thème ${i + 1}`,
+    count: r.count,
+    pointsEach: r.pointsEach,
+  }));
+  return {
+    durationMinutes: quiz.duration_minutes,
+    instructions: quiz.instructions.trim(),
+    themes,
+    totalPoints: themes.reduce((n, t) => n + t.count * t.pointsEach, 0),
+  };
+}
+
+/** Contexte d'un projet fil rouge, lisible par l'école : brief, contexte client, jalons, mails du client. */
+export interface ProjectContext {
+  title: string;
+  briefMd: string;
+  clientContextMd: string;
+  milestones: {
+    title: string;
+    role: string | null;
+    sessionNumber: number | null;
+    date: string | null;
+    time: string | null;
+  }[];
+  mails: { title: string; body: string; sessionNumber: number | null; date: string | null }[];
+}
+
+/** Jalons et mails dans l'ordre des séances ; sans séance, à la fin. */
+export function buildProjectContext(input: {
+  title: string;
+  briefMd: string | null;
+  clientContextMd: string | null;
+  milestones: ProjectContext["milestones"];
+  mails: ProjectContext["mails"];
+}): ProjectContext {
+  const bySession = <T extends { sessionNumber: number | null }>(a: T, b: T) =>
+    (a.sessionNumber ?? 999) - (b.sessionNumber ?? 999);
+  return {
+    title: input.title,
+    briefMd: input.briefMd?.trim() ?? "",
+    clientContextMd: input.clientContextMd?.trim() ?? "",
+    milestones: [...input.milestones].sort(bySession),
+    mails: [...input.mails].sort(bySession),
+  };
+}
+
+export type AssessmentPart = "subject" | "criteria" | "correction" | "context";
 
 export const PART_FILES: Record<AssessmentPart, string> = {
   subject: "sujet.pdf",
   criteria: "criteres-et-modalites.pdf",
   correction: "correction-type.pdf",
+  context: "contexte-du-projet.pdf",
 };
 
 export function isAssessmentPart(value: unknown): value is AssessmentPart {
-  return value === "subject" || value === "criteria" || value === "correction";
+  return (
+    value === "subject" || value === "criteria" || value === "correction" || value === "context"
+  );
 }
