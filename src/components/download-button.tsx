@@ -38,13 +38,32 @@ export function DownloadButton({
   className?: string;
 }) {
   const [status, setStatus] = useState<Status>("idle");
+  const [detail, setDetail] = useState("");
   const labels = downloadLabels(kind);
 
   async function download() {
     setStatus("pending");
+    setDetail("");
     try {
       const response = await fetch(href, { credentials: "same-origin" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        // La route explique l'échec en une phrase (« Export impossible : … ») : on la montre.
+        const text = (await response.text().catch(() => "")).trim();
+        setDetail(text && text.length < 400 && !text.startsWith("<") ? text : "");
+        throw new Error(`HTTP ${response.status}`);
+      }
+      // Fichier lourd : la route l'a déposé dans le stockage et renvoie une URL signée courte.
+      if (response.headers.get("Content-Type")?.includes("application/json")) {
+        const { url } = (await response.json()) as { url?: string };
+        if (!url) throw new Error("URL absente");
+        const link = document.createElement("a");
+        link.href = url;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setStatus("done");
+        return;
+      }
       const blob = await response.blob();
       const name = filenameFromDisposition(
         response.headers.get("Content-Disposition"),
@@ -84,7 +103,7 @@ export function DownloadButton({
       </span>
       {status === "failed" ? (
         <span role="alert" className="text-destructive text-sm">
-          {labels.failed} Réessaie dans un instant, ou{" "}
+          {detail || labels.failed} Réessaie dans un instant, ou{" "}
           <a href={href} className="underline underline-offset-2">
             ouvre le fichier directement
           </a>

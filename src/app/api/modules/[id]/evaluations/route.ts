@@ -14,6 +14,7 @@ import { getAssessment, listModuleAssessments } from "@/lib/assessments/queries"
 import { getModule } from "@/lib/modules/queries";
 import { getTeacherName } from "@/lib/outline/queries";
 import { QcmCorrectionDocument, SubjectDocument } from "@/lib/pdf/assessment-export";
+import { deliverExport } from "@/lib/pdf/export-delivery";
 import { GridHandoutDocument } from "@/lib/pdf/grid";
 import { getQuizByAssessment, loadBank } from "@/lib/quiz/queries";
 
@@ -127,12 +128,12 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/eva
     if (Object.keys(files).length === 0) {
       return new Response("Rien à exporter pour ces évaluations", { status: 404 });
     }
-    return new Response(new Uint8Array(zipSync(files, { level: 0 })), {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="evaluations-${slug(mod.name)}.zip"`,
-        "Cache-Control": "private, no-store",
-      },
+    return deliverExport({
+      bytes: zipSync(files, { level: 0 }),
+      contentType: "application/zip",
+      filename: `evaluations-${slug(mod.name)}.zip`,
+      moduleId: id,
+      kind: wanted ? `evaluation-${wanted}` : "evaluations-zip",
     });
   } catch (error) {
     console.error("[export évaluations] échec", {
