@@ -95,59 +95,76 @@ function CoverPage({
   );
 }
 
-/** Une séance = une ou plusieurs pages ; destiné aux étudiants (sans notes d'animation ni d'évaluation). */
+/**
+ * Une séance = une section par fiche. Le moteur PDF plante (« unsupported number ») quand une seule
+ * page logique s'étale sur trop de pages : chaque fiche a donc sa propre page de départ.
+ * Destiné aux étudiants (sans notes d'animation ni d'évaluation).
+ */
 function CoursePages({ mod, course }: { mod: ExportModule; course: ExportCourse }) {
   const date = fmt(course.sessionDate);
+  const footer = (
+    <Text
+      style={styles.footer}
+      fixed
+      render={({ pageNumber, totalPages }) =>
+        `${mod.name} — Séance ${course.number} — page ${pageNumber}/${totalPages}`
+      }
+    />
+  );
+  const resourceView = (r: ExportResource, i: number) => (
+    <View key={i} style={styles.resource}>
+      <Text style={styles.resourceTitle}>{r.title}</Text>
+      {r.description ? <Text style={[styles.p, styles.muted]}>{r.description}</Text> : null}
+      {r.url ? <Text style={[styles.p, styles.muted]}>{r.url}</Text> : null}
+      {r.content ? <MarkdownPdf source={r.content} images={r.images} /> : null}
+    </View>
+  );
   return (
-    <Page size="A4" style={styles.page}>
-      <Text style={styles.kicker}>
-        {mod.name}
-        {mod.ycode ? ` · ${mod.ycode}` : ""}
-        {mod.schoolName ? ` · ${mod.schoolName}` : ""}
-      </Text>
-      <Text style={styles.title}>
-        Séance {course.number} — {course.title}
-      </Text>
-      <Text style={styles.meta}>
-        {[date, mod.level, String(mod.year), mod.teacherName || null].filter(Boolean).join(" · ")}
-      </Text>
+    <>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.kicker}>
+          {mod.name}
+          {mod.ycode ? ` · ${mod.ycode}` : ""}
+          {mod.schoolName ? ` · ${mod.schoolName}` : ""}
+        </Text>
+        <Text style={styles.title}>
+          Séance {course.number} — {course.title}
+        </Text>
+        <Text style={styles.meta}>
+          {[date, mod.level, String(mod.year), mod.teacherName || null]
+            .filter(Boolean)
+            .join(" · ")}
+        </Text>
 
-      {course.objectives.length ? (
-        <View>
-          <Text style={styles.h2}>Objectifs</Text>
-          {course.objectives.map((o, i) => (
-            <View key={i} style={styles.li} wrap={false}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={{ flex: 1 }}>{o}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
+        {course.objectives.length ? (
+          <View>
+            <Text style={styles.h2}>Objectifs</Text>
+            {course.objectives.map((o, i) => (
+              <View key={i} style={styles.li} wrap={false}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={{ flex: 1 }}>{o}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
-      {course.material ? (
-        <View>
-          <Text style={styles.h2}>Matériel nécessaire</Text>
-          <Text>{course.material}</Text>
-        </View>
-      ) : null}
+        {course.material ? (
+          <View>
+            <Text style={styles.h2}>Matériel nécessaire</Text>
+            <Text>{course.material}</Text>
+          </View>
+        ) : null}
 
-      {course.resources.map((r, i) => (
-        <View key={i} style={styles.resource}>
-          <Text style={styles.resourceTitle}>{r.title}</Text>
-          {r.description ? <Text style={[styles.p, styles.muted]}>{r.description}</Text> : null}
-          {r.url ? <Text style={[styles.p, styles.muted]}>{r.url}</Text> : null}
-          {r.content ? <MarkdownPdf source={r.content} images={r.images} /> : null}
-        </View>
+        {course.resources.slice(0, 1).map(resourceView)}
+        {footer}
+      </Page>
+      {course.resources.slice(1).map((r, i) => (
+        <Page key={i} size="A4" style={styles.page}>
+          {resourceView(r, i)}
+          {footer}
+        </Page>
       ))}
-
-      <Text
-        style={styles.footer}
-        fixed
-        render={({ pageNumber, totalPages }) =>
-          `${mod.name} — Séance ${course.number} — page ${pageNumber}/${totalPages}`
-        }
-      />
-    </Page>
+    </>
   );
 }
 
