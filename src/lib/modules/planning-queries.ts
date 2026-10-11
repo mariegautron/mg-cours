@@ -65,6 +65,16 @@ export async function loadPlanning(
       ])
     : [{ data: [] }, { data: [] }];
 
+  // Groupes de projet : ceux rattachés à l'évaluation ; sinon la promotion répartie en groupes de 4.
+  const { data: studentGroups } = await supabase
+    .from("student_group")
+    .select("id")
+    .eq("module_id", moduleId);
+  const groupIds = (studentGroups ?? []).map((g) => g.id);
+  const { data: members } = groupIds.length
+    ? await supabase.from("group_member").select("student_id").in("student_group_id", groupIds)
+    : { data: [] };
+  const promoSize = new Set((members ?? []).map((m) => m.student_id)).size;
   const sessions = ((courses ?? []) as unknown as CourseRow[]).map<PlanningInput>((c) => {
     const own = (assessments ?? []).filter((a) => a.course_id === c.id);
     const events: PlanningInput["items"] = [];
@@ -78,7 +88,8 @@ export async function loadPlanning(
           category: "evaluation",
         });
       } else if (a.type === "oral" && a.oral_start_time && a.duration_minutes) {
-        const n = Math.max(1, (groups ?? []).filter((g) => g.assessment_id === a.id).length);
+        const attached = (groups ?? []).filter((g) => g.assessment_id === a.id).length;
+        const n = attached || Math.max(1, Math.ceil(promoSize / 4));
         events.push({
           title: `Soutenances : ${a.title} (${n} × ${a.duration_minutes} min)`,
           startTime: a.oral_start_time,

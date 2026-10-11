@@ -37,7 +37,7 @@ const LEGEND: { key: PlanningCategory; label: string; classes: string }[] = [
 const CLASSES = Object.fromEntries(LEGEND.map((l) => [l.key, l.classes])) as Record<string, string>;
 
 function Block({ row }: { row: PlanningRow }) {
-  const height = Math.max(row.minutes * PX - 3, 18);
+  const height = Math.max(row.displayMinutes * PX - 3, 18);
   const compact = row.minutes < 25;
   const pause = row.kind === "pause";
   return (
@@ -47,7 +47,7 @@ function Block({ row }: { row: PlanningRow }) {
           ? "text-muted-foreground border-dashed italic"
           : `font-medium ${CLASSES[row.category ?? "cours"]}`
       }`}
-      style={{ top: row.offset * PX, height }}
+      style={{ top: row.displayOffset * PX, height }}
     >
       {compact ? (
         <span className="flex items-baseline justify-between gap-2">
@@ -58,7 +58,10 @@ function Block({ row }: { row: PlanningRow }) {
         <>
           <span className="block">{row.title}</span>
           <span className="text-muted-foreground block font-mono text-xs font-normal not-italic">
-            {row.start}–{row.end} · {row.minutes} min
+            {row.start}–{row.end} ·{" "}
+            {row.minutes >= 90
+              ? `${Math.floor(row.minutes / 60)} h ${String(row.minutes % 60).padStart(2, "0")}`
+              : `${row.minutes} min`}
           </span>
         </>
       )}
@@ -67,11 +70,7 @@ function Block({ row }: { row: PlanningRow }) {
 }
 
 function SessionAgenda({ s, moduleId }: { s: PlanningSession; moduleId: string }) {
-  const origin = s.startTime
-    ? Number(s.startTime.slice(0, 2)) * 60 + Number(s.startTime.slice(3, 5))
-    : 0;
-  const hours: number[] = [];
-  for (let m = Math.ceil(origin / 60) * 60; m <= origin + s.totalMinutes; m += 60) hours.push(m);
+  const total = s.displayTotal * PX;
   return (
     <article className="bg-background rounded-2xl border p-4">
       <h3 className="font-semibold">
@@ -85,30 +84,18 @@ function SessionAgenda({ s, moduleId }: { s: PlanningSession; moduleId: string }
       <p className="text-muted-foreground mb-3 text-sm">{s.title}</p>
       {s.rows.length ? (
         <div className="flex gap-3">
-          <div
-            className="relative w-11 shrink-0"
-            aria-hidden="true"
-            style={{ height: s.totalMinutes * PX }}
-          >
-            {hours.map((m) => (
+          <div className="relative w-11 shrink-0" aria-hidden="true" style={{ height: total }}>
+            {s.rows.map((r) => (
               <span
-                key={m}
-                className="text-muted-foreground absolute right-0 -translate-y-1/2 font-mono text-xs"
-                style={{ top: (m - origin) * PX }}
+                key={`${r.start}-${r.title}`}
+                className="text-muted-foreground absolute right-0 font-mono text-xs"
+                style={{ top: r.displayOffset * PX + 3 }}
               >
-                {String(m / 60).padStart(2, "0")}:00
+                {r.start}
               </span>
             ))}
           </div>
-          <ol className="relative min-w-0 flex-1" style={{ height: s.totalMinutes * PX }}>
-            {hours.map((m) => (
-              <li
-                key={m}
-                aria-hidden="true"
-                className="border-border/60 pointer-events-none absolute right-0 left-0 border-t"
-                style={{ top: (m - origin) * PX }}
-              />
-            ))}
+          <ol className="relative min-w-0 flex-1" style={{ height: total }}>
             {s.rows.map((r) => (
               <Block key={`${r.start}-${r.title}`} row={r} />
             ))}

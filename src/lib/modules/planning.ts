@@ -25,6 +25,9 @@ export interface PlanningRow {
   end: string;
   /** Minutes depuis le début de la séance. */
   offset: number;
+  /** Position et hauteur à l'écran, en minutes : les longues pauses sont écourtées. */
+  displayOffset: number;
+  displayMinutes: number;
   title: string;
   minutes: number;
 }
@@ -34,14 +37,19 @@ export interface PlanningSession extends Omit<PlanningInput, "items"> {
   rows: PlanningRow[];
   /** Éléments rattachés à la séance sans horaire. */
   unscheduled: string[];
-  /** Durée affichée de la séance, en minutes (0 sans horaire). */
+  /** Durée réelle de la séance, en minutes (0 sans horaire). */
   totalMinutes: number;
+  /** Hauteur à l'écran, en minutes, une fois les longues pauses écourtées. */
+  displayTotal: number;
 }
 
 export interface PlanningDay {
   date: string | null;
   sessions: PlanningSession[];
 }
+
+/** Une pause ou marge n'occupe jamais plus que cette durée à l'écran. */
+export const MAX_PAUSE_DISPLAY = 40;
 
 const toMinutes = (t: string): number => {
   const [h, m] = t.split(":");
@@ -74,6 +82,8 @@ export function buildSession(input: PlanningInput): PlanningSession {
       start: hhmm(from),
       end: hhmm(to),
       offset: from - origin,
+      displayOffset: 0,
+      displayMinutes: 0,
       title: "Pause ou marge",
       minutes: to - from,
     });
@@ -85,15 +95,25 @@ export function buildSession(input: PlanningInput): PlanningSession {
       start: hhmm(item.start),
       end: hhmm(item.start + item.minutes),
       offset: item.start - origin,
+      displayOffset: 0,
+      displayMinutes: 0,
       title: item.title,
       minutes: item.minutes,
     });
     cursor = Math.max(cursor, item.start + item.minutes);
   }
   if (scheduled.length && end - cursor >= 5) pause(cursor, end);
+  let shown = 0;
+  for (const row of rows) {
+    row.displayOffset = shown;
+    row.displayMinutes =
+      row.kind === "pause" ? Math.min(row.minutes, MAX_PAUSE_DISPLAY) : row.minutes;
+    shown += row.displayMinutes;
+  }
   const { items, ...rest } = input;
   return {
     ...rest,
+    displayTotal: shown,
     rows,
     unscheduled: items.filter((i) => !(i.startTime && i.minutes)).map((i) => i.title),
     totalMinutes: scheduled.length ? Math.max(end, cursor) - origin : 0,
