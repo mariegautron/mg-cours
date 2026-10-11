@@ -46,6 +46,9 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
               Projeter la frise
             </Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link href={`/modules/${id}/planning`}>Voir le planning</Link>
+          </Button>
           <Button asChild variant="ghost">
             <Link href={`/modules/${id}`}>← Retour au module</Link>
           </Button>

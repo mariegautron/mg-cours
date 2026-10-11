@@ -109,6 +109,11 @@ export function SessionList({
           Depuis un autre module
         </Link>
         {courses.length ? (
+          <Link href={`/modules/${moduleId}/planning`} className={BTN}>
+            Planning du module
+          </Link>
+        ) : null}
+        {courses.length ? (
           <Link href={`/modules/${moduleId}/frise`} className={BTN}>
             Frise du module
           </Link>
