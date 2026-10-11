@@ -1,5 +1,7 @@
 /** Planning d'un module : séances groupées par jour, avec leur déroulé minuté (fonctions pures). */
 
+export type PlanningCategory = "cours" | "pratique" | "projet" | "evaluation";
+
 export interface PlanningInput {
   id: string;
   position: number;
@@ -7,14 +9,22 @@ export interface PlanningInput {
   sessionDate: string | null;
   startTime: string | null;
   endTime: string | null;
-  items: { title: string; startTime: string | null; minutes: number | null }[];
+  items: {
+    title: string;
+    startTime: string | null;
+    minutes: number | null;
+    category?: PlanningCategory;
+  }[];
   assessments: { title: string; type: string | null; oralStartTime: string | null }[];
 }
 
 export interface PlanningRow {
   kind: "item" | "pause";
+  category: PlanningCategory | null;
   start: string;
   end: string;
+  /** Minutes depuis le début de la séance. */
+  offset: number;
   title: string;
   minutes: number;
 }
@@ -24,6 +34,8 @@ export interface PlanningSession extends Omit<PlanningInput, "items"> {
   rows: PlanningRow[];
   /** Éléments rattachés à la séance sans horaire. */
   unscheduled: string[];
+  /** Durée affichée de la séance, en minutes (0 sans horaire). */
+  totalMinutes: number;
 }
 
 export interface PlanningDay {
@@ -42,44 +54,49 @@ export const hhmm = (minutes: number): string =>
 export function buildSession(input: PlanningInput): PlanningSession {
   const scheduled = input.items
     .filter((i) => i.startTime && i.minutes)
-    .map((i) => ({ title: i.title, start: toMinutes(i.startTime!), minutes: i.minutes! }))
+    .map((i) => ({
+      title: i.title,
+      start: toMinutes(i.startTime!),
+      minutes: i.minutes!,
+      category: i.category ?? "cours",
+    }))
     .sort((a, b) => a.start - b.start);
+  const origin = input.startTime ? toMinutes(input.startTime) : (scheduled[0]?.start ?? 0);
+  const end = input.endTime
+    ? toMinutes(input.endTime)
+    : Math.max(origin, ...scheduled.map((s) => s.start + s.minutes));
   const rows: PlanningRow[] = [];
-  let cursor: number | null = input.startTime ? toMinutes(input.startTime) : null;
+  let cursor = origin;
+  const pause = (from: number, to: number) =>
+    rows.push({
+      kind: "pause",
+      category: null,
+      start: hhmm(from),
+      end: hhmm(to),
+      offset: from - origin,
+      title: "Pause ou marge",
+      minutes: to - from,
+    });
   for (const item of scheduled) {
-    if (cursor !== null && item.start - cursor >= 5) {
-      rows.push({
-        kind: "pause",
-        start: hhmm(cursor),
-        end: hhmm(item.start),
-        title: "Pause ou marge",
-        minutes: item.start - cursor,
-      });
-    }
+    if (item.start - cursor >= 5) pause(cursor, item.start);
     rows.push({
       kind: "item",
+      category: item.category,
       start: hhmm(item.start),
       end: hhmm(item.start + item.minutes),
+      offset: item.start - origin,
       title: item.title,
       minutes: item.minutes,
     });
-    cursor = item.start + item.minutes;
+    cursor = Math.max(cursor, item.start + item.minutes);
   }
-  const end = input.endTime ? toMinutes(input.endTime) : null;
-  if (cursor !== null && end !== null && end - cursor >= 5) {
-    rows.push({
-      kind: "pause",
-      start: hhmm(cursor),
-      end: hhmm(end),
-      title: "Pause ou marge",
-      minutes: end - cursor,
-    });
-  }
+  if (scheduled.length && end - cursor >= 5) pause(cursor, end);
   const { items, ...rest } = input;
   return {
     ...rest,
     rows,
     unscheduled: items.filter((i) => !(i.startTime && i.minutes)).map((i) => i.title),
+    totalMinutes: scheduled.length ? Math.max(end, cursor) - origin : 0,
   };
 }
 

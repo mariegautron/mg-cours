@@ -1,6 +1,14 @@
 import Link from "next/link";
 
-import type { PlanningDay } from "@/lib/modules/planning";
+import type {
+  PlanningCategory,
+  PlanningDay,
+  PlanningRow,
+  PlanningSession,
+} from "@/lib/modules/planning";
+
+/** Hauteur d'une minute dans l'agenda, en pixels. */
+const PX = 2.2;
 
 const longDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", {
@@ -16,7 +24,115 @@ const shortDate = (iso: string) =>
 
 const hm = (t: string | null) => (t ? t.slice(0, 5) : "—");
 
-/** Planning du module : un bloc par jour, un tableau minuté par séance. */
+const LEGEND: { key: PlanningCategory; label: string; classes: string }[] = [
+  { key: "cours", label: "Cours", classes: "border-sky-500/60 bg-sky-500/15" },
+  {
+    key: "pratique",
+    label: "Exercice, atelier",
+    classes: "border-emerald-500/60 bg-emerald-500/15",
+  },
+  { key: "projet", label: "Projet fil rouge", classes: "border-violet-500/60 bg-violet-500/15" },
+  { key: "evaluation", label: "Évaluation", classes: "border-amber-500/70 bg-amber-500/20" },
+];
+const CLASSES = Object.fromEntries(LEGEND.map((l) => [l.key, l.classes])) as Record<string, string>;
+
+function Block({ row }: { row: PlanningRow }) {
+  const height = Math.max(row.minutes * PX - 3, 18);
+  const compact = row.minutes < 25;
+  const pause = row.kind === "pause";
+  return (
+    <li
+      className={`absolute right-0 left-0 overflow-hidden rounded-xl border px-2.5 py-1 text-sm leading-snug ${
+        pause
+          ? "text-muted-foreground border-dashed italic"
+          : `font-medium ${CLASSES[row.category ?? "cours"]}`
+      }`}
+      style={{ top: row.offset * PX, height }}
+    >
+      {compact ? (
+        <span className="flex items-baseline justify-between gap-2">
+          <span className="truncate">{row.title}</span>
+          <span className="shrink-0 font-mono text-xs">{row.minutes} min</span>
+        </span>
+      ) : (
+        <>
+          <span className="block">{row.title}</span>
+          <span className="text-muted-foreground block font-mono text-xs font-normal not-italic">
+            {row.start}–{row.end} · {row.minutes} min
+          </span>
+        </>
+      )}
+    </li>
+  );
+}
+
+function SessionAgenda({ s, moduleId }: { s: PlanningSession; moduleId: string }) {
+  const origin = s.startTime
+    ? Number(s.startTime.slice(0, 2)) * 60 + Number(s.startTime.slice(3, 5))
+    : 0;
+  const hours: number[] = [];
+  for (let m = Math.ceil(origin / 60) * 60; m <= origin + s.totalMinutes; m += 60) hours.push(m);
+  return (
+    <article className="bg-background rounded-2xl border p-4">
+      <h3 className="font-semibold">
+        <Link
+          href={`/modules/${moduleId}/courses/${s.id}`}
+          className="underline underline-offset-2"
+        >
+          Séance {s.position} · {hm(s.startTime)}–{hm(s.endTime)}
+        </Link>
+      </h3>
+      <p className="text-muted-foreground mb-3 text-sm">{s.title}</p>
+      {s.rows.length ? (
+        <div className="flex gap-3">
+          <div
+            className="relative w-11 shrink-0"
+            aria-hidden="true"
+            style={{ height: s.totalMinutes * PX }}
+          >
+            {hours.map((m) => (
+              <span
+                key={m}
+                className="text-muted-foreground absolute right-0 -translate-y-1/2 font-mono text-xs"
+                style={{ top: (m - origin) * PX }}
+              >
+                {String(m / 60).padStart(2, "0")}:00
+              </span>
+            ))}
+          </div>
+          <ol className="relative min-w-0 flex-1" style={{ height: s.totalMinutes * PX }}>
+            {hours.map((m) => (
+              <li
+                key={m}
+                aria-hidden="true"
+                className="border-border/60 pointer-events-none absolute right-0 left-0 border-t"
+                style={{ top: (m - origin) * PX }}
+              />
+            ))}
+            {s.rows.map((r) => (
+              <Block key={`${r.start}-${r.title}`} row={r} />
+            ))}
+          </ol>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          Aucun horaire renseigné pour les ressources de cette séance.
+        </p>
+      )}
+      {s.assessments.length ? (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {s.assessments.map((a) => (
+            <li key={a.title} className="rounded-full border px-3 py-0.5 text-xs font-semibold">
+              {a.title}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </article>
+  );
+}
+
+/** Planning du module : un agenda par jour, un bloc coloré par activité, hauteur = durée. */
 export function PlanningView({ days, moduleId }: { days: PlanningDay[]; moduleId: string }) {
   if (!days.length) {
     return <p className="text-muted-foreground">Ce module n’a pas encore de séance.</p>;
@@ -24,18 +140,27 @@ export function PlanningView({ days, moduleId }: { days: PlanningDay[]; moduleId
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
   return (
     <div className="space-y-5">
-      <nav aria-label="Les jours du module" className="flex flex-wrap gap-2">
-        {days.map((day, i) => (
-          <a
-            key={day.date ?? `sans-date-${i}`}
-            href={`#jour-${i}`}
-            className="bg-card hover:bg-accent rounded-full border px-4 py-1.5 text-sm font-semibold"
-          >
-            {day.date ? shortDate(day.date) : "Sans date"} ·{" "}
-            {day.sessions.map((s) => `S${s.position}`).join(" ")}
-          </a>
-        ))}
-      </nav>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav aria-label="Les jours du module" className="flex flex-wrap gap-2">
+          {days.map((day, i) => (
+            <a
+              key={day.date ?? `sans-date-${i}`}
+              href={`#jour-${i}`}
+              className="bg-card hover:bg-accent rounded-full border px-4 py-1.5 text-sm font-semibold"
+            >
+              {day.date ? shortDate(day.date) : "Sans date"} ·{" "}
+              {day.sessions.map((s) => `S${s.position}`).join(" ")}
+            </a>
+          ))}
+        </nav>
+        <ul aria-label="Légende" className="flex flex-wrap gap-2 text-xs font-medium">
+          {LEGEND.map((l) => (
+            <li key={l.key} className={`rounded-full border px-3 py-1 ${l.classes}`}>
+              {l.label}
+            </li>
+          ))}
+        </ul>
+      </div>
       {days.map((day, i) => (
         <section
           key={day.date ?? `sans-date-${i}`}
@@ -46,64 +171,9 @@ export function PlanningView({ days, moduleId }: { days: PlanningDay[]; moduleId
           <h2 id={`jour-t-${i}`} className="font-heading mb-4 text-xl font-bold capitalize">
             {day.date ? longDate(day.date) : "Date à fixer"}
           </h2>
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid items-start gap-5 lg:grid-cols-2">
             {day.sessions.map((s) => (
-              <article key={s.id} className="bg-background rounded-2xl border p-4">
-                <h3 className="font-semibold">
-                  <Link
-                    href={`/modules/${moduleId}/courses/${s.id}`}
-                    className="underline underline-offset-2"
-                  >
-                    Séance {s.position} · {hm(s.startTime)}–{hm(s.endTime)}
-                  </Link>
-                </h3>
-                <p className="text-muted-foreground mb-3 text-sm">{s.title}</p>
-                {s.rows.length ? (
-                  <table className="w-full text-sm">
-                    <caption className="sr-only">
-                      Déroulé de la séance {s.position} : horaire, activité, durée
-                    </caption>
-                    <thead className="sr-only">
-                      <tr>
-                        <th scope="col">Horaire</th>
-                        <th scope="col">Activité</th>
-                        <th scope="col">Durée</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {s.rows.map((r) => (
-                        <tr
-                          key={`${r.start}-${r.title}`}
-                          className={r.kind === "pause" ? "text-muted-foreground italic" : ""}
-                        >
-                          <td className="py-1 pr-3 align-top font-mono whitespace-nowrap">
-                            {r.start}–{r.end}
-                          </td>
-                          <td className="py-1 pr-3">{r.title}</td>
-                          <td className="py-1 text-right whitespace-nowrap">{r.minutes} min</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Aucun horaire renseigné pour les ressources de cette séance.
-                  </p>
-                )}
-                {s.assessments.length ? (
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {s.assessments.map((a) => (
-                      <li
-                        key={a.title}
-                        className="rounded-full border px-3 py-0.5 text-xs font-semibold"
-                      >
-                        {a.title}
-                        {a.oralStartTime ? ` · oral à ${hm(a.oralStartTime)}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
+              <SessionAgenda key={s.id} s={s} moduleId={moduleId} />
             ))}
           </div>
         </section>
