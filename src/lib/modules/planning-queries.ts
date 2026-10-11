@@ -22,6 +22,7 @@ const CATEGORY: Record<string, PlanningCategory> = {
   course: "cours",
   workshop: "pratique",
   project: "projet",
+  teacher_notes: "evaluation",
 };
 
 /** « HH:MM:SS » à l'heure de Paris pour un instant ISO. */

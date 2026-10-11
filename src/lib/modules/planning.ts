@@ -51,6 +51,9 @@ export interface PlanningDay {
 /** Une pause ou marge n'occupe jamais plus que cette durée à l'écran. */
 export const MAX_PAUSE_DISPLAY = 40;
 
+/** Un bloc court garde une hauteur lisible à l'écran (une ligne de titre et son horaire). */
+export const MIN_BLOCK_DISPLAY = 14;
+
 const toMinutes = (t: string): number => {
   const [h, m] = t.split(":");
   return Number(h) * 60 + Number(m);
@@ -106,8 +109,10 @@ export function buildSession(input: PlanningInput): PlanningSession {
   let shown = 0;
   for (const row of rows) {
     row.displayOffset = shown;
-    row.displayMinutes =
-      row.kind === "pause" ? Math.min(row.minutes, MAX_PAUSE_DISPLAY) : row.minutes;
+    row.displayMinutes = Math.max(
+      row.kind === "pause" ? Math.min(row.minutes, MAX_PAUSE_DISPLAY) : row.minutes,
+      MIN_BLOCK_DISPLAY,
+    );
     shown += row.displayMinutes;
   }
   const { items, ...rest } = input;

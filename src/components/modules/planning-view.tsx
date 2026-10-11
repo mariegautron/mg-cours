@@ -38,7 +38,7 @@ const CLASSES = Object.fromEntries(LEGEND.map((l) => [l.key, l.classes])) as Rec
 
 function Block({ row }: { row: PlanningRow }) {
   const height = Math.max(row.displayMinutes * PX - 3, 18);
-  const compact = row.minutes < 25;
+  const compact = row.displayMinutes < 25;
   const pause = row.kind === "pause";
   return (
     <li
