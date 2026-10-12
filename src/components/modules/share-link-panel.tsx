@@ -62,6 +62,8 @@ export function ShareLinkPanel({
   const [personal, setPersonal] = useState<StudentLinksState>({});
   const [confirmSend, setConfirmSend] = useState(false);
   const [sending, setSending] = useState<SendLinksState>({});
+  const [one, setOne] = useState<{ studentId: string; name: string; url: string } | null>(null);
+  const [oneError, setOneError] = useState("");
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -400,9 +402,53 @@ export function ShareLinkPanel({
                           ? `Envoi échoué : ${r.sendError}`
                           : "Lien créé, pas encore envoyé"}
                   </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() =>
+                      start(async () => {
+                        setOne(null);
+                        setOneError("");
+                        const res = await createStudentLinks(moduleId, false, r.studentId);
+                        if (res.error) setOneError(res.error);
+                        else if (res.links?.[0]) setOne(res.links[0]);
+                      })
+                    }
+                  >
+                    Nouveau lien<span className="sr-only"> pour {r.name}</span>
+                  </Button>
                 </li>
               ))}
             </ul>
+          ) : null}
+          {studentLinks.rows.length ? (
+            <p className="text-muted-foreground text-xs">
+              Un lien déjà créé ne peut pas être relu (seule son empreinte est gardée). Si quelqu’un
+              l’a perdu, « Nouveau lien » en crée un pour cette personne seulement : les autres
+              restent valables.
+            </p>
+          ) : null}
+          {oneError ? <ActionError error={oneError} /> : null}
+          {one ? (
+            <div className="space-y-2">
+              <label htmlFor="one-link" className="text-sm font-medium">
+                Nouveau lien de {one.name} (visible une seule fois)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="one-link"
+                  readOnly
+                  value={one.url}
+                  className="bg-background min-w-0 flex-1 rounded-md border px-2 py-1 text-sm"
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                <Button type="button" size="sm" variant="secondary" onClick={() => void copy(one.url)}>
+                  Copier
+                </Button>
+              </div>
+            </div>
           ) : null}
           {personal.error ? <ActionError error={personal.error} /> : null}
         </div>

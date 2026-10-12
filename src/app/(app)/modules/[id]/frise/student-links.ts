@@ -27,6 +27,8 @@ export interface StudentLinksState {
 export async function createStudentLinks(
   moduleId: string,
   onlyMissing: boolean,
+  /** Renouvelle seulement le lien de cette personne (les autres restent valables). */
+  onlyStudentId?: string,
 ): Promise<StudentLinksState> {
   const supabase = await createClient();
   const probe = await supabase.from("module_student_link").select("id").limit(1);
@@ -46,7 +48,11 @@ export async function createStudentLinks(
     .eq("module_id", moduleId)
     .is("revoked_at", null);
   const has = new Set((active ?? []).map((l) => l.student_id));
-  const targets = onlyMissing ? students.filter((s) => !has.has(s.id)) : students;
+  const targets = onlyStudentId
+    ? students.filter((s) => s.id === onlyStudentId)
+    : onlyMissing
+      ? students.filter((s) => !has.has(s.id))
+      : students;
   if (targets.length === 0) return { links: [] };
 
   const revoke = await supabase
