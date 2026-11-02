@@ -30,6 +30,26 @@ export function todaySessions<C extends TodayCourse>(
     );
 }
 
+/** Heure courante (HH:MM) à Paris, pour comparer aux `end_time` des séances. */
+export function timeInParis(now: Date = new Date()): string {
+  return now.toLocaleTimeString("fr-FR", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
+/**
+ * Séances du jour pas encore terminées à `nowTime` (HH:MM) : la séance en cours ou la suivante
+ * passe en tête de la carte « Aujourd'hui ». Une séance sans heure de fin reste affichée ; si
+ * toutes sont terminées, on garde la dernière.
+ */
+export function remainingSessions<C extends TodayCourse>(sessions: C[], nowTime: string): C[] {
+  const left = sessions.filter((c) => !c.end_time || c.end_time.slice(0, 5) > nowTime);
+  return left.length ? left : sessions.slice(-1);
+}
+
 /**
  * Prochaine séance datée après `today` (modules non archivés) : la plus proche, puis par heure de
  * début (sans horaire à la fin), module et ordre dans le module. `null` s'il n'y en a aucune.

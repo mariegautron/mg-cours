@@ -43,7 +43,13 @@ import {
 } from "@/lib/dashboard/queries";
 import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
-import { formatSessionDay, nextSession, todaySessions } from "@/lib/dashboard/today";
+import {
+  formatSessionDay,
+  nextSession,
+  remainingSessions,
+  timeInParis,
+  todaySessions,
+} from "@/lib/dashboard/today";
 import { daysBetween, weekDays, weekRange } from "@/lib/dashboard/week";
 import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
@@ -83,7 +89,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listCourseProgress(),
   ]);
   const resume = pickResume(resumeCandidates);
-  const sessions = todaySessions(coursesToday, today);
+  const sessions = remainingSessions(todaySessions(coursesToday, today), timeInParis());
   const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
   const alerts = outlineAlerts(modules);
   const summary = outlineAlertSummary(alerts);
