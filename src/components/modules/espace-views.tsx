@@ -570,6 +570,56 @@ export function NotesView({ data }: { data: EspaceData }) {
                   ))}
                 </dl>
               ) : null}
+              {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  <h3 className="font-medium">Détail par critère</h3>
+                  {sheet.axes.some((a) => a.comment) ? (
+                    <ul className="space-y-1 text-sm">
+                      {sheet.axes
+                        .filter((a) => a.comment)
+                        .map((a) => (
+                          <li key={a.label ?? "autres"}>
+                            <strong>{a.label ?? "Autres critères"}</strong> : {a.comment}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : null}
+                  <ul className="divide-y border-y text-sm">
+                    {sheet.criteria.map((c, ci) => (
+                      <li key={c.label + ci} className="space-y-1 py-3">
+                        <p className="flex flex-wrap items-center justify-between gap-2">
+                          <strong>
+                            {c.axis ? `${c.axis} · ` : ""}
+                            {c.label}
+                          </strong>
+                          <span className="font-medium">
+                            {c.points === null ? "Pas noté" : `${fmt(c.points)} / ${fmt(c.max)}`}
+                            {c.isBonus ? " (bonus)" : ""}
+                          </span>
+                        </p>
+                        {c.level?.description ? (
+                          <p className="text-muted-foreground">
+                            Palier obtenu : {c.level.description}
+                          </p>
+                        ) : null}
+                        {c.comment ? (
+                          <p className="text-muted-foreground whitespace-pre-wrap">{c.comment}</p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {sheet.comments.length > 0 ? (
+                <div className="mt-4">
+                  <h3 className="font-medium">Commentaires</h3>
+                  <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
+                    {sheet.comments.map((c, ci) => (
+                      <li key={ci}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </li>
           );
         })}
