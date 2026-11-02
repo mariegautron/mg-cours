@@ -90,9 +90,9 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
                   ))}
               </ul>
             ) : null}
-            <ul className="divide-y border-y">
+            <ul className="space-y-4">
               {sheet.criteria.map((c, i) => (
-                <li key={c.label + i} className="space-y-1 py-3">
+                <li key={c.label + i} className="bg-background space-y-3 rounded-2xl border p-4">
                   <p className="flex flex-wrap items-center justify-between gap-2">
                     <strong>
                       {c.axis ? `${c.axis} · ` : ""}
@@ -103,15 +103,24 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
                       {c.isBonus ? " (bonus)" : ""}
                     </Pill>
                   </p>
+                  {c.points !== null && c.max > 0 ? (
+                    <div className="bg-muted h-2 overflow-hidden rounded-full" aria-hidden="true">
+                      <div
+                        className="bg-primary h-2 rounded-full"
+                        style={{ width: `${Math.min(100, (c.points / c.max) * 100)}%` }}
+                      />
+                    </div>
+                  ) : null}
                   {c.levels?.length ? (
                     <CriterionLevels levels={c.levels} />
                   ) : c.level?.description ? (
-                    <p className="text-muted-foreground text-sm">
-                      Palier obtenu : {c.level.description}
+                    <p className="text-base leading-relaxed">
+                      <span className="font-semibold">Palier obtenu : </span>
+                      {c.level.description}
                     </p>
                   ) : null}
                   {c.comment ? (
-                    <div className="text-muted-foreground text-sm">
+                    <div className="border-primary/60 border-l-4 pl-4 text-base leading-relaxed">
                       <Markdown source={c.comment} headingLevel={4} />
                     </div>
                   ) : null}
@@ -125,8 +134,8 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
           <div className="space-y-2 pt-1">
             {feedback.map(([heading, text]) => (
               <div key={heading}>
-                <h2 className="font-semibold">{heading}</h2>
-                <div className="text-muted-foreground text-sm">
+                <h2 className="font-heading text-lg font-bold">{heading}</h2>
+                <div className="text-base leading-relaxed">
                   <Markdown source={text ?? ""} headingLevel={3} />
                 </div>
               </div>

@@ -549,7 +549,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                   className="flex flex-wrap items-center justify-between gap-2 py-2 underline-offset-2 hover:underline"
                 >
                   <span className="font-medium">{sheet.title}</span>
-                  <span className="font-bold">
+                  <span className="font-heading text-lg font-bold">
                     {sheet.value !== null
                       ? `${fmt(sheet.value)} / ${fmt(sheet.maxScore)}`
                       : "Pas de note"}
@@ -585,11 +585,16 @@ export function NotesView({ data }: { data: EspaceData }) {
                         .join(" · ")}
                     </p>
                     <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
-                    <p className="mt-1 text-2xl font-bold">
-                      {sheet.value !== null
-                        ? `${fmt(sheet.value)} / ${fmt(sheet.maxScore)}`
-                        : "Pas de note"}
-                    </p>
+                    {sheet.value !== null ? (
+                      <p className="bg-primary/15 mt-2 inline-flex items-baseline gap-1 rounded-2xl px-4 py-2">
+                        <span className="font-heading text-5xl font-bold">{fmt(sheet.value)}</span>
+                        <span className="text-foreground/80 text-xl font-semibold">
+                          / {fmt(sheet.maxScore)}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xl font-bold">Pas de note</p>
+                    )}
                   </div>
                   <span className="text-muted-foreground text-sm">
                     <span className="group-open:hidden">Voir le détail ▾</span>
@@ -598,11 +603,20 @@ export function NotesView({ data }: { data: EspaceData }) {
                 </summary>
                 <div className="mt-3">
                   {feedback.length ? (
-                    <dl className="mt-3 space-y-2 text-sm">
+                    <dl className="mt-4 space-y-3 text-base">
                       {feedback.map(([label, text]) => (
-                        <div key={label}>
-                          <dt className="font-medium">{label}</dt>
-                          <dd>
+                        <div
+                          key={label}
+                          className={
+                            label === "Ce qui est réussi"
+                              ? "rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4"
+                              : label === "Pour progresser"
+                                ? "rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4"
+                                : "bg-muted/30 rounded-2xl border p-4"
+                          }
+                        >
+                          <dt className="font-heading mb-1 text-lg font-bold">{label}</dt>
+                          <dd className="leading-relaxed">
                             <Markdown source={text ?? ""} headingLevel={4} />
                           </dd>
                         </div>
@@ -611,9 +625,9 @@ export function NotesView({ data }: { data: EspaceData }) {
                   ) : null}
                   {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
                     <div className="mt-4 space-y-2">
-                      <h3 className="font-medium">Détail par critère</h3>
+                      <h3 className="font-heading text-xl font-bold">Détail par critère</h3>
                       {sheet.axes.some((a) => a.comment) ? (
-                        <ul className="space-y-1 text-sm">
+                        <ul className="space-y-1 text-base">
                           {sheet.axes
                             .filter((a) => a.comment)
                             .map((a) => (
@@ -623,30 +637,45 @@ export function NotesView({ data }: { data: EspaceData }) {
                             ))}
                         </ul>
                       ) : null}
-                      <ul className="divide-y border-y text-sm">
+                      <ul className="space-y-4 text-base">
                         {sheet.criteria.map((c, ci) => (
-                          <li key={c.label + ci} className="space-y-1 py-3">
+                          <li
+                            key={c.label + ci}
+                            className="bg-background space-y-3 rounded-2xl border p-4"
+                          >
                             <p className="flex flex-wrap items-center justify-between gap-2">
-                              <strong>
+                              <strong className="font-heading text-lg">
                                 {c.axis ? `${c.axis} · ` : ""}
                                 {c.label}
                               </strong>
-                              <span className="font-medium">
+                              <span className="bg-muted rounded-full px-3 py-1 font-bold">
                                 {c.points === null
                                   ? "Pas noté"
                                   : `${fmt(c.points)} / ${fmt(c.max)}`}
                                 {c.isBonus ? " (bonus)" : ""}
                               </span>
                             </p>
+                            {c.points !== null && c.max > 0 ? (
+                              <div
+                                className="bg-muted h-2 overflow-hidden rounded-full"
+                                aria-hidden="true"
+                              >
+                                <div
+                                  className="bg-primary h-2 rounded-full"
+                                  style={{ width: `${Math.min(100, (c.points / c.max) * 100)}%` }}
+                                />
+                              </div>
+                            ) : null}
                             {c.levels?.length ? (
                               <CriterionLevels levels={c.levels} />
                             ) : c.level?.description ? (
-                              <p className="text-muted-foreground">
-                                Palier obtenu : {c.level.description}
+                              <p className="text-base leading-relaxed">
+                                <span className="font-semibold">Palier obtenu : </span>
+                                {c.level.description}
                               </p>
                             ) : null}
                             {c.comment ? (
-                              <div className="text-muted-foreground">
+                              <div className="border-primary/60 border-l-4 pl-4 text-base leading-relaxed">
                                 <Markdown source={c.comment} headingLevel={4} />
                               </div>
                             ) : null}
