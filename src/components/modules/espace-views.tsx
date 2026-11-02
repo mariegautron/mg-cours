@@ -531,11 +531,37 @@ export function NotesView({ data }: { data: EspaceData }) {
       />
     );
   }
+  // Le plus récent en premier : seul celui-ci est déplié quand il y en a plusieurs.
+  const results = [...data.results].sort((a, b) =>
+    (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""),
+  );
   return (
     <div className="max-w-3xl">
       <h1 className="font-heading mb-4 text-3xl font-bold">Notes et corrigés</h1>
+      {results.length > 1 ? (
+        <nav aria-label="Vos résultats" className={`${card} mb-5`}>
+          <h2 className="font-heading mb-2 text-lg font-bold">Vue d’ensemble</h2>
+          <ul className="divide-y text-sm">
+            {results.map(({ sheet }, i) => (
+              <li key={i}>
+                <a
+                  href={`#resultat-${i}`}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2 underline-offset-2 hover:underline"
+                >
+                  <span className="font-medium">{sheet.title}</span>
+                  <span className="font-bold">
+                    {sheet.value !== null
+                      ? `${fmt(sheet.value)} / ${fmt(sheet.maxScore)}`
+                      : "Pas de note"}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
       <ul className="space-y-5">
-        {data.results.map(({ sheet, publishedAt }, i) => {
+        {results.map(({ sheet, publishedAt }, i) => {
           const feedback = [
             ["Ce qui est réussi", sheet.strengths],
             ["Pour progresser", sheet.progress],
@@ -543,90 +569,104 @@ export function NotesView({ data }: { data: EspaceData }) {
             ["Un mot pour vous", sheet.personalNote],
           ].filter(([, text]) => text?.trim());
           return (
-            <li key={i} className={card}>
-              <p className="text-muted-foreground text-sm">
-                {[
-                  sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null,
-                  sheet.isGroupGrade ? "Note de groupe" : "Note individuelle",
-                  publishedAt
-                    ? `publié le ${new Date(publishedAt).toLocaleDateString("fr-FR")}`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
-              <p className="mt-1 text-2xl font-bold">
-                {sheet.value !== null
-                  ? `${fmt(sheet.value)} / ${fmt(sheet.maxScore)}`
-                  : "Pas de note"}
-              </p>
-              {feedback.length ? (
-                <dl className="mt-3 space-y-2 text-sm">
-                  {feedback.map(([label, text]) => (
-                    <div key={label}>
-                      <dt className="font-medium">{label}</dt>
-                      <dd>
-                        <Markdown source={text ?? ""} headingLevel={4} />
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
-              {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
-                <div className="mt-4 space-y-2">
-                  <h3 className="font-medium">Détail par critère</h3>
-                  {sheet.axes.some((a) => a.comment) ? (
-                    <ul className="space-y-1 text-sm">
-                      {sheet.axes
-                        .filter((a) => a.comment)
-                        .map((a) => (
-                          <li key={a.label ?? "autres"}>
-                            <strong>{a.label ?? "Autres critères"}</strong> : {a.comment}
+            <li key={i} id={`resultat-${i}`} className={`${card} scroll-mt-4`}>
+              <details open={i === 0} className="group">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+                  <div>
+                    <p className="text-muted-foreground text-sm">
+                      {[
+                        sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null,
+                        sheet.isGroupGrade ? "Note de groupe" : "Note individuelle",
+                        publishedAt
+                          ? `publié le ${new Date(publishedAt).toLocaleDateString("fr-FR")}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
+                    <p className="mt-1 text-2xl font-bold">
+                      {sheet.value !== null
+                        ? `${fmt(sheet.value)} / ${fmt(sheet.maxScore)}`
+                        : "Pas de note"}
+                    </p>
+                  </div>
+                  <span className="text-muted-foreground text-sm">
+                    <span className="group-open:hidden">Voir le détail ▾</span>
+                    <span className="hidden group-open:inline">Masquer ▴</span>
+                  </span>
+                </summary>
+                <div className="mt-3">
+                  {feedback.length ? (
+                    <dl className="mt-3 space-y-2 text-sm">
+                      {feedback.map(([label, text]) => (
+                        <div key={label}>
+                          <dt className="font-medium">{label}</dt>
+                          <dd>
+                            <Markdown source={text ?? ""} headingLevel={4} />
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                  {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="font-medium">Détail par critère</h3>
+                      {sheet.axes.some((a) => a.comment) ? (
+                        <ul className="space-y-1 text-sm">
+                          {sheet.axes
+                            .filter((a) => a.comment)
+                            .map((a) => (
+                              <li key={a.label ?? "autres"}>
+                                <strong>{a.label ?? "Autres critères"}</strong> : {a.comment}
+                              </li>
+                            ))}
+                        </ul>
+                      ) : null}
+                      <ul className="divide-y border-y text-sm">
+                        {sheet.criteria.map((c, ci) => (
+                          <li key={c.label + ci} className="space-y-1 py-3">
+                            <p className="flex flex-wrap items-center justify-between gap-2">
+                              <strong>
+                                {c.axis ? `${c.axis} · ` : ""}
+                                {c.label}
+                              </strong>
+                              <span className="font-medium">
+                                {c.points === null
+                                  ? "Pas noté"
+                                  : `${fmt(c.points)} / ${fmt(c.max)}`}
+                                {c.isBonus ? " (bonus)" : ""}
+                              </span>
+                            </p>
+                            {c.levels?.length ? (
+                              <CriterionLevels levels={c.levels} />
+                            ) : c.level?.description ? (
+                              <p className="text-muted-foreground">
+                                Palier obtenu : {c.level.description}
+                              </p>
+                            ) : null}
+                            {c.comment ? (
+                              <div className="text-muted-foreground">
+                                <Markdown source={c.comment} headingLevel={4} />
+                              </div>
+                            ) : null}
                           </li>
                         ))}
-                    </ul>
+                      </ul>
+                    </div>
                   ) : null}
-                  <ul className="divide-y border-y text-sm">
-                    {sheet.criteria.map((c, ci) => (
-                      <li key={c.label + ci} className="space-y-1 py-3">
-                        <p className="flex flex-wrap items-center justify-between gap-2">
-                          <strong>
-                            {c.axis ? `${c.axis} · ` : ""}
-                            {c.label}
-                          </strong>
-                          <span className="font-medium">
-                            {c.points === null ? "Pas noté" : `${fmt(c.points)} / ${fmt(c.max)}`}
-                            {c.isBonus ? " (bonus)" : ""}
-                          </span>
-                        </p>
-                        {c.levels?.length ? (
-                          <CriterionLevels levels={c.levels} />
-                        ) : c.level?.description ? (
-                          <p className="text-muted-foreground">
-                            Palier obtenu : {c.level.description}
-                          </p>
-                        ) : null}
-                        {c.comment ? (
-                          <div className="text-muted-foreground">
-                            <Markdown source={c.comment} headingLevel={4} />
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
+                  {sheet.comments.length > 0 ? (
+                    <div className="mt-4">
+                      <h3 className="font-medium">Commentaires</h3>
+                      <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
+                        {sheet.comments.map((c, ci) => (
+                          <li key={ci}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-              {sheet.comments.length > 0 ? (
-                <div className="mt-4">
-                  <h3 className="font-medium">Commentaires</h3>
-                  <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
-                    {sheet.comments.map((c, ci) => (
-                      <li key={ci}>{c}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+              </details>
             </li>
           );
         })}
