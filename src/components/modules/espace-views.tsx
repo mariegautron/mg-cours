@@ -570,7 +570,7 @@ export function NotesView({ data }: { data: EspaceData }) {
           ].filter(([, text]) => text?.trim());
           return (
             <li key={i} id={`resultat-${i}`} className={`${card} scroll-mt-4`}>
-              <details open={i === 0} className="group">
+              <details open={i === 0} className="group/result">
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <div>
                     <p className="text-muted-foreground text-sm">
@@ -597,8 +597,8 @@ export function NotesView({ data }: { data: EspaceData }) {
                     )}
                   </div>
                   <span className="text-muted-foreground text-sm">
-                    <span className="group-open:hidden">Voir le détail ▾</span>
-                    <span className="hidden group-open:inline">Masquer ▴</span>
+                    <span className="group-open/result:hidden">Voir le détail ▾</span>
+                    <span className="hidden group-open/result:inline">Masquer ▴</span>
                   </span>
                 </summary>
                 <div className="mt-3">

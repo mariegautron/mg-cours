@@ -36,10 +36,10 @@ export function CriterionLevels({ levels }: { levels: Level[] }) {
           {obtained.description}
         </p>
       ) : null}
-      <details className="group">
+      <details className="group/levels">
         <summary className="text-foreground/80 cursor-pointer text-sm underline underline-offset-2">
-          <span className="group-open:hidden">Voir la description de tous les paliers</span>
-          <span className="hidden group-open:inline">Masquer les paliers</span>
+          <span className="group-open/levels:hidden">Voir la description de tous les paliers</span>
+          <span className="hidden group-open/levels:inline">Masquer les paliers</span>
         </summary>
         <ol className="mt-2 grid gap-2 sm:grid-cols-2">
           {levels.map((l) => (
