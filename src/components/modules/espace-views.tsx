@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Markdown, markdownOutline } from "@/components/markdown";
+import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
 import { formatMinutes } from "@/lib/modules/activity";
 import {
@@ -565,7 +566,9 @@ export function NotesView({ data }: { data: EspaceData }) {
                   {feedback.map(([label, text]) => (
                     <div key={label}>
                       <dt className="font-medium">{label}</dt>
-                      <dd className="whitespace-pre-wrap">{text}</dd>
+                      <dd>
+                        <Markdown source={text ?? ""} headingLevel={4} />
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -597,13 +600,17 @@ export function NotesView({ data }: { data: EspaceData }) {
                             {c.isBonus ? " (bonus)" : ""}
                           </span>
                         </p>
-                        {c.level?.description ? (
+                        {c.levels?.length ? (
+                          <CriterionLevels levels={c.levels} />
+                        ) : c.level?.description ? (
                           <p className="text-muted-foreground">
                             Palier obtenu : {c.level.description}
                           </p>
                         ) : null}
                         {c.comment ? (
-                          <p className="text-muted-foreground whitespace-pre-wrap">{c.comment}</p>
+                          <div className="text-muted-foreground">
+                            <Markdown source={c.comment} headingLevel={4} />
+                          </div>
                         ) : null}
                       </li>
                     ))}

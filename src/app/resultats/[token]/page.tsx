@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { Pill } from "@/components/dashboard/pill";
+import { Markdown } from "@/components/markdown";
+import { CriterionLevels } from "@/components/results/criterion-levels";
 import { callResult } from "@/lib/result-links/public";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -68,7 +70,7 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
         {sheet.personalNote ? (
           <div className={notice}>
             <h2 className="font-medium">Un mot pour vous</h2>
-            <p className="whitespace-pre-wrap">{sheet.personalNote}</p>
+            <Markdown source={sheet.personalNote} headingLevel={3} />
           </div>
         ) : null}
 
@@ -101,13 +103,17 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
                       {c.isBonus ? " (bonus)" : ""}
                     </Pill>
                   </p>
-                  {c.level?.description ? (
+                  {c.levels?.length ? (
+                    <CriterionLevels levels={c.levels} />
+                  ) : c.level?.description ? (
                     <p className="text-muted-foreground text-sm">
                       Palier obtenu : {c.level.description}
                     </p>
                   ) : null}
                   {c.comment ? (
-                    <p className="text-muted-foreground text-sm whitespace-pre-wrap">{c.comment}</p>
+                    <div className="text-muted-foreground text-sm">
+                      <Markdown source={c.comment} headingLevel={4} />
+                    </div>
                   ) : null}
                 </li>
               ))}
@@ -120,7 +126,9 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
             {feedback.map(([heading, text]) => (
               <div key={heading}>
                 <h2 className="font-semibold">{heading}</h2>
-                <p className="text-muted-foreground text-sm whitespace-pre-wrap">{text}</p>
+                <div className="text-muted-foreground text-sm">
+                  <Markdown source={text ?? ""} headingLevel={3} />
+                </div>
               </div>
             ))}
           </div>
