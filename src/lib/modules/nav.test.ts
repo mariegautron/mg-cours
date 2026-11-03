@@ -13,9 +13,10 @@ describe("navigation du module", () => {
       "/modules/m1/groups",
       "/modules/m1/documents",
       "/modules/m1/billing",
+      "/modules/m1/feedback",
     ]);
   });
-  it("six entrées dans l'ordre de la maquette", () => {
+  it("sept entrées dans l'ordre de la maquette", () => {
     expect(moduleNavItems("m1").map((i) => i.label)).toEqual([
       "Où j’en suis",
       "Séances",
@@ -23,6 +24,7 @@ describe("navigation du module", () => {
       "Étudiant·es",
       "Documents",
       "Facture",
+      "Retour étudiant·es",
     ]);
   });
   it("entrée courante déduite du chemin", () => {

@@ -1,9 +1,9 @@
 /**
- * Barre de navigation d'un module (E19 / US-115 suite, US-116) : six liens vers des écrans
+ * Barre de navigation d'un module (E19 / US-115 suite, US-116) : sept liens vers des écrans
  * existants. L'entrée courante se déduit du chemin.
  */
 export type ModuleNavKey =
-  "journey" | "sessions" | "assessments" | "students" | "documents" | "invoice";
+  "journey" | "sessions" | "assessments" | "students" | "documents" | "invoice" | "feedback";
 
 export interface ModuleNavItem {
   key: ModuleNavKey;
@@ -20,6 +20,7 @@ export function moduleNavItems(moduleId: string): ModuleNavItem[] {
     { key: "students", label: "Étudiant·es", href: `${base}/groups` },
     { key: "documents", label: "Documents", href: `${base}/documents` },
     { key: "invoice", label: "Facture", href: `${base}/billing` },
+    { key: "feedback", label: "Retour étudiant·es", href: `${base}/feedback` },
   ];
 }
 
@@ -41,6 +42,8 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   rattrapages: { key: "assessments", label: "Rattrapages" },
   appreciations: { key: "students", label: "Appréciations" },
   billing: { key: "invoice", label: "Facture" },
+  feedback: { key: "feedback", label: "Retour des étudiant·es" },
+  finish: { key: "journey", label: "Terminer le module" },
   edit: { key: null, label: "Modifier" },
 };
 
