@@ -81,6 +81,17 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
             le rouvrir.
           </p>
         </section>
+        <section aria-labelledby="fb" className={`${card} space-y-2`}>
+          <h2 id="fb" className="font-heading text-lg font-bold">
+            Retour des étudiant·es
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Un questionnaire anonyme à leur envoyer, pour savoir quoi améliorer la prochaine fois.
+          </p>
+          <Button asChild variant="outline" size="touch">
+            <Link href={`/modules/${mod.id}/feedback`}>Ouvrir le questionnaire</Link>
+          </Button>
+        </section>
         <section aria-labelledby="ar" className={`${card} space-y-1`}>
           <h2 id="ar" className="font-heading text-lg font-bold">
             Ce qui reste accessible

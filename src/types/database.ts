@@ -1474,6 +1474,72 @@ export type Database = {
           },
         ]
       }
+      module_feedback: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          link_id: string
+          module_id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          answers: Json
+          created_at?: string
+          id?: string
+          link_id: string
+          module_id: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          link_id?: string
+          module_id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      module_feedback_link: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          owner_id: string
+          revoked_at: string | null
+          sent_at: string | null
+          token: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          token: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          token?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       module_share_link: {
         Row: {
           created_at: string
@@ -3069,6 +3135,11 @@ export type Database = {
           p_link_hash: string
           p_new_token_hash: string
         }
+        Returns: Json
+      }
+      mg_feedback_form: { Args: { p_link_hash: string }; Returns: Json }
+      mg_feedback_submit: {
+        Args: { p_answers: Json; p_link_hash: string }
         Returns: Json
       }
       mg_quiz_class_names: { Args: { p_link_hash: string }; Returns: Json }
