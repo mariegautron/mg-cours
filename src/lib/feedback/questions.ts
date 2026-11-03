@@ -234,6 +234,57 @@ export function summarize(all: FeedbackAnswers[]): FeedbackSummary {
   };
 }
 
+export interface Highlights {
+  strengths: string[];
+  improvements: string[];
+}
+
+const pct = (n: number, total: number) => (total ? Math.round((n / total) * 100) : 0);
+const fr = (n: number) => String(n).replace(".", ",");
+
+/**
+ * Points forts et à améliorer lus dans les CHIFFRES (notes, choix) : règles simples et vérifiables,
+ * sans analyse automatique des textes (ceux-ci restent à lire, juste en dessous).
+ */
+export function highlights(summary: FeedbackSummary): Highlights {
+  const strengths: string[] = [];
+  const improvements: string[] = [];
+  const rated = summary.ratings
+    .flatMap((s) => s.items)
+    .filter((i): i is RatingSummary & { average: number } => i.average !== null);
+  for (const i of [...rated].sort((a, b) => b.average - a.average).slice(0, 2)) {
+    if (i.average >= 4) strengths.push(`« ${i.label} » : ${fr(i.average)} / ${RATING_MAX}`);
+  }
+  for (const i of [...rated].sort((a, b) => a.average - b.average).slice(0, 2)) {
+    if (i.average <= 3.5) improvements.push(`« ${i.label} » : ${fr(i.average)} / ${RATING_MAX}`);
+  }
+  const rec = summary.choices.find((c) => c.id === "recommend");
+  if (rec) {
+    const total = rec.options.reduce((n, o) => n + o.count, 0);
+    const yes = rec.options
+      .filter((o) => o.id === "yes" || o.id === "rather_yes")
+      .reduce((n, o) => n + o.count, 0);
+    if (total > 0) {
+      const share = pct(yes, total);
+      const line = `${share} % recommanderaient le module (${yes} sur ${total})`;
+      if (share >= 70) strengths.push(line);
+      else if (share < 50) improvements.push(line);
+    }
+  }
+  const bal = summary.choices.find((c) => c.id === "balance");
+  if (bal) {
+    const total = bal.options.reduce((n, o) => n + o.count, 0);
+    const top = [...bal.options].sort((a, b) => b.count - a.count)[0];
+    if (total > 0 && top && top.count / total > 0.5) {
+      const line = `${top.label} (${pct(top.count, total)} % des réponses)`;
+      if (top.id === "balanced")
+        strengths.push(`Équilibre théorie / pratique : ${line.toLowerCase()}`);
+      else improvements.push(line);
+    }
+  }
+  return { strengths, improvements };
+}
+
 export function feedbackUrl(baseUrl: string, token: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/retour/${token}`;
 }

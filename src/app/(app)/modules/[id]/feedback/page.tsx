@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 
 import QRCode from "qrcode";
 
+import { FeedbackResults } from "@/components/modules/feedback-results";
 import { FeedbackControls } from "@/components/modules/feedback-controls";
 import { Button } from "@/components/ui/button";
 import { clientEnv } from "@/lib/env";
-import { feedbackUrl, parseAnswers, RATING_MAX, summarize } from "@/lib/feedback/questions";
+import { feedbackUrl, parseAnswers, summarize } from "@/lib/feedback/questions";
 import { getModule } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,54 +88,7 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
                 Rien pour l’instant. Les réponses arrivent ici.
               </p>
             ) : (
-              <>
-                {summary.ratings.map((s) => (
-                  <div key={s.section} className="space-y-2">
-                    <h3 className="font-semibold">{s.section}</h3>
-                    <ul className="divide-y">
-                      {s.items.map((i) => (
-                        <li
-                          key={i.id}
-                          className="flex flex-wrap items-center justify-between gap-2 py-2"
-                        >
-                          <span className="min-w-0 flex-1">{i.label}</span>
-                          <span className="text-muted-foreground text-sm">
-                            {i.average === null
-                              ? "Pas de réponse"
-                              : `${String(i.average).replace(".", ",")} / ${RATING_MAX} · ${i.count} rép. · ${i.distribution.join(" / ")}`}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                <p className="text-muted-foreground text-xs">
-                  Répartition : nombre de réponses pour 1 / 2 / 3 / 4 / 5.
-                </p>
-                {summary.choices.map((c) => (
-                  <div key={c.id} className="space-y-1">
-                    <h3 className="font-semibold">{c.label}</h3>
-                    <p>{c.options.map((o) => `${o.label} : ${o.count}`).join(" · ")}</p>
-                  </div>
-                ))}
-                {summary.texts
-                  .filter((t) => t.entries.length > 0)
-                  .map((t) => (
-                    <div key={t.id} className="space-y-2">
-                      <h3 className="font-semibold">{t.label}</h3>
-                      <ul className="space-y-2">
-                        {t.entries.map((e, n) => (
-                          <li
-                            key={n}
-                            className="bg-muted/50 rounded-md p-3 text-sm whitespace-pre-wrap"
-                          >
-                            {e}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-              </>
+              <FeedbackResults summary={summary} />
             )}
           </section>
         </>
