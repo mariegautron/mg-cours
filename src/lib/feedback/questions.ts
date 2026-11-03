@@ -13,87 +13,113 @@ export interface RatingSection {
   title: string;
   questions: RatingQuestion[];
 }
+export interface ChoiceQuestion {
+  id: string;
+  label: string;
+  options: { id: string; label: string }[];
+}
 export interface TextQuestion {
   id: string;
   label: string;
-  required?: false;
+  /** Début de phrase affiché dans la zone de saisie : guide sans cadrer. */
+  starter: string;
 }
 
 export const RATING_MIN = 1;
 export const RATING_MAX = 5;
 export const RATING_LABELS = ["Pas du tout", "Plutôt non", "Moyen", "Plutôt oui", "Tout à fait"];
 
+/** Peu de notes : l'école a déjà son propre formulaire, on ne garde que ce qu'il ne couvre pas. */
 export const RATING_SECTIONS: RatingSection[] = [
   {
-    id: "global",
-    title: "Ton ressenti global",
+    id: "overview",
+    title: "En un coup d’œil",
     questions: [
       { id: "liked", label: "Dans l’ensemble, ce module t’a plu." },
       {
         id: "useful",
         label: "Tu as appris des choses que tu pourras réutiliser en stage ou en entreprise.",
       },
-      { id: "level", label: "Le niveau de difficulté était adapté." },
-      { id: "pace", label: "Le rythme (quantité de contenu par séance) était adapté." },
-    ],
-  },
-  {
-    id: "sessions",
-    title: "Les séances et les supports",
-    questions: [
-      { id: "clear", label: "Les explications étaient claires." },
-      { id: "supports", label: "Les fiches et les diapos t’ont aidé·e." },
-      {
-        id: "practice",
-        label: "Les mises en situation et les activités pratiques t’ont aidé·e à comprendre.",
-      },
-      { id: "group", label: "Le travail en groupe s’est bien passé." },
-    ],
-  },
-  {
-    id: "evaluation",
-    title: "L’évaluation",
-    questions: [
-      { id: "grid", label: "Les consignes et la grille étaient claires." },
       { id: "expectations", label: "Tu savais ce qu’on attendait de toi pour chaque rendu." },
-      { id: "load", label: "La charge de travail entre les séances était raisonnable." },
+    ],
+  },
+];
+
+/** Choix forcés : pas de « milieu » confortable, une réponse qui oriente une décision. */
+export const CHOICE_QUESTIONS: ChoiceQuestion[] = [
+  {
+    id: "balance",
+    label: "Pour la prochaine promo, il faudrait…",
+    options: [
+      { id: "more_theory", label: "Plus de théorie" },
+      { id: "balanced", label: "Garder l’équilibre actuel" },
+      { id: "more_practice", label: "Plus de pratique" },
+    ],
+  },
+  {
+    id: "recommend",
+    label: "Tu recommanderais ce module à une autre promo ?",
+    options: [
+      { id: "yes", label: "Oui" },
+      { id: "rather_yes", label: "Plutôt oui" },
+      { id: "rather_no", label: "Plutôt non" },
+      { id: "no", label: "Non" },
     ],
   },
 ];
 
 export const TEXT_QUESTIONS: TextQuestion[] = [
-  { id: "best", label: "Ce qui t’a le plus aidé·e à apprendre" },
-  { id: "missing", label: "Ce qui t’a le plus manqué ou posé problème" },
-  { id: "change", label: "Une chose que je devrais changer dès la prochaine fois" },
-  { id: "topic", label: "Un sujet que tu aurais aimé voir ou approfondir" },
+  {
+    id: "progress",
+    label: "Le moment qui t’a fait le plus progresser, et pourquoi",
+    starter: "Je pense à…",
+  },
+  {
+    id: "lost",
+    label: "Le moment où tu as décroché ou été perdu·e",
+    starter: "Je me suis senti·e perdu·e quand…",
+  },
+  {
+    id: "before_after",
+    label: "Ce que tu sais faire maintenant et que tu ne savais pas faire au début",
+    starter: "Maintenant, je sais…",
+  },
+  {
+    id: "friend",
+    label: "Si tu devais expliquer ce module à un·e ami·e en deux phrases",
+    starter: "C’est un module où…",
+  },
+  {
+    id: "change",
+    label: "Si tu étais à ma place, tu changerais quoi en premier ?",
+    starter: "Je changerais…",
+  },
+  {
+    id: "keep",
+    label: "Ce que je ne dois surtout pas changer",
+    starter: "Ne change surtout pas…",
+  },
 ];
-
-export const RECOMMEND_OPTIONS = [
-  { id: "yes", label: "Oui" },
-  { id: "rather_yes", label: "Plutôt oui" },
-  { id: "rather_no", label: "Plutôt non" },
-  { id: "no", label: "Non" },
-] as const;
-
-export const LAST_WORD = { id: "last", label: "Un dernier mot (facultatif)" };
 
 export const MAX_TEXT = 1500;
 
 export interface FeedbackAnswers {
   ratings: Record<string, number>;
+  choices: Record<string, string>;
   texts: Record<string, string>;
-  recommend?: string;
 }
 
 const RATING_IDS = new Set(RATING_SECTIONS.flatMap((s) => s.questions.map((q) => q.id)));
-const TEXT_IDS = new Set([...TEXT_QUESTIONS.map((q) => q.id), LAST_WORD.id]);
-const RECOMMEND_IDS = new Set<string>(RECOMMEND_OPTIONS.map((o) => o.id));
+const TEXT_IDS = new Set(TEXT_QUESTIONS.map((q) => q.id));
+const CHOICE_OPTIONS = new Map(
+  CHOICE_QUESTIONS.map((q) => [q.id, new Set(q.options.map((o) => o.id))]),
+);
 
 /** Lit une réponse de façon défensive : seules les clés connues, notes entières de 1 à 5, textes bornés. */
 export function parseAnswers(raw: unknown): FeedbackAnswers {
-  const out: FeedbackAnswers = { ratings: {}, texts: {} };
+  const out: FeedbackAnswers = { ratings: {}, choices: {}, texts: {} };
   if (!raw || typeof raw !== "object") return out;
-  const r = raw as { ratings?: unknown; texts?: unknown; recommend?: unknown };
+  const r = raw as { ratings?: unknown; choices?: unknown; texts?: unknown };
   if (r.ratings && typeof r.ratings === "object") {
     for (const [k, v] of Object.entries(r.ratings as Record<string, unknown>)) {
       if (
@@ -106,34 +132,47 @@ export function parseAnswers(raw: unknown): FeedbackAnswers {
       }
     }
   }
-  if (r.texts && typeof r.texts === "object") {
-    for (const [k, v] of Object.entries(r.texts as Record<string, unknown>)) {
-      if (TEXT_IDS.has(k) && typeof v === "string" && v.trim())
-        out.texts[k] = v.trim().slice(0, MAX_TEXT);
+  if (r.choices && typeof r.choices === "object") {
+    for (const [k, v] of Object.entries(r.choices as Record<string, unknown>)) {
+      if (typeof v === "string" && CHOICE_OPTIONS.get(k)?.has(v)) out.choices[k] = v;
     }
   }
-  if (typeof r.recommend === "string" && RECOMMEND_IDS.has(r.recommend))
-    out.recommend = r.recommend;
+  if (r.texts && typeof r.texts === "object") {
+    for (const [k, v] of Object.entries(r.texts as Record<string, unknown>)) {
+      if (TEXT_IDS.has(k) && typeof v === "string" && v.trim()) {
+        out.texts[k] = v.trim().slice(0, MAX_TEXT);
+      }
+    }
+  }
   return out;
 }
 
-/** Lit un formulaire envoyé par le navigateur (champs `rating_<id>`, `text_<id>`, `recommend`). */
+/** Lit un formulaire envoyé par le navigateur (champs `rating_<id>`, `choice_<id>`, `text_<id>`). */
 export function answersFromForm(form: FormData): FeedbackAnswers {
   const ratings: Record<string, number> = {};
+  const choices: Record<string, string> = {};
   const texts: Record<string, string> = {};
   for (const id of RATING_IDS) {
     const v = Number(form.get(`rating_${id}`));
     if (Number.isInteger(v)) ratings[id] = v;
   }
+  for (const id of CHOICE_OPTIONS.keys()) {
+    const v = form.get(`choice_${id}`);
+    if (typeof v === "string") choices[id] = v;
+  }
   for (const id of TEXT_IDS) {
     const v = form.get(`text_${id}`);
     if (typeof v === "string") texts[id] = v;
   }
-  return parseAnswers({ ratings, texts, recommend: form.get("recommend") });
+  return parseAnswers({ ratings, choices, texts });
 }
 
 export function isEmptyAnswers(a: FeedbackAnswers): boolean {
-  return Object.keys(a.ratings).length === 0 && Object.keys(a.texts).length === 0 && !a.recommend;
+  return (
+    Object.keys(a.ratings).length === 0 &&
+    Object.keys(a.choices).length === 0 &&
+    Object.keys(a.texts).length === 0
+  );
 }
 
 export interface RatingSummary {
@@ -148,11 +187,11 @@ export interface RatingSummary {
 export interface FeedbackSummary {
   total: number;
   ratings: { section: string; items: RatingSummary[] }[];
+  choices: { id: string; label: string; options: { id: string; label: string; count: number }[] }[];
   texts: { id: string; label: string; entries: string[] }[];
-  recommend: { id: string; label: string; count: number }[];
 }
 
-/** Synthèse de toutes les réponses : moyennes et répartition par question, textes les plus récents d'abord. */
+/** Synthèse de toutes les réponses : moyennes, répartition des choix, textes les plus récents d'abord. */
 export function summarize(all: FeedbackAnswers[]): FeedbackSummary {
   return {
     total: all.length,
@@ -178,15 +217,19 @@ export function summarize(all: FeedbackAnswers[]): FeedbackSummary {
         };
       }),
     })),
-    texts: [...TEXT_QUESTIONS, LAST_WORD].map((q) => ({
+    choices: CHOICE_QUESTIONS.map((q) => ({
+      id: q.id,
+      label: q.label,
+      options: q.options.map((o) => ({
+        id: o.id,
+        label: o.label,
+        count: all.filter((a) => a.choices[q.id] === o.id).length,
+      })),
+    })),
+    texts: TEXT_QUESTIONS.map((q) => ({
       id: q.id,
       label: q.label,
       entries: all.map((a) => a.texts[q.id]).filter((t): t is string => Boolean(t)),
-    })),
-    recommend: RECOMMEND_OPTIONS.map((o) => ({
-      id: o.id,
-      label: o.label,
-      count: all.filter((a) => a.recommend === o.id).length,
     })),
   };
 }

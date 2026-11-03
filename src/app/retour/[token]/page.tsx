@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { callFeedbackForm } from "@/lib/feedback/public";
 import {
-  LAST_WORD,
+  CHOICE_QUESTIONS,
   MAX_TEXT,
   RATING_LABELS,
   RATING_MAX,
   RATING_MIN,
   RATING_SECTIONS,
-  RECOMMEND_OPTIONS,
   TEXT_QUESTIONS,
 } from "@/lib/feedback/questions";
 
@@ -65,7 +64,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             </h1>
             <p className="text-muted-foreground">
               Le questionnaire est anonyme et n’a aucun lien avec ta note. Il prend environ 5
-              minutes. Réponds à ce que tu veux : plus tu écris, plus c’est utile.
+              minutes. Réponds à ce que tu veux : un exemple précis m’aide plus qu’un avis général.
             </p>
           </header>
           {problemText ? (
@@ -110,12 +109,37 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
               </section>
             ))}
 
+            <section aria-labelledby="s-choices" className="space-y-4">
+              <h2 id="s-choices" className="font-heading text-xl font-bold">
+                Deux choix à faire
+              </h2>
+              {CHOICE_QUESTIONS.map((q) => (
+                <fieldset key={q.id} className="space-y-2">
+                  <legend className="font-medium">{q.label}</legend>
+                  <div className="flex flex-wrap gap-x-5 gap-y-1">
+                    {q.options.map((o) => (
+                      <label key={o.id} className="flex min-h-11 items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`choice_${q.id}`}
+                          value={o.id}
+                          className="size-4"
+                        />
+                        {o.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+            </section>
+
             <section aria-labelledby="s-texts" className="space-y-4">
               <h2 id="s-texts" className="font-heading text-xl font-bold">
-                Ce que tu en retiens
+                Raconte-nous
               </h2>
               <p className="text-muted-foreground text-sm">
-                Écris librement, quelques mots suffisent. Tout est facultatif.
+                Pense à un moment précis plutôt qu’à une impression générale : c’est ce qui m’aide
+                le plus. Quelques mots suffisent, tout est facultatif.
               </p>
               {TEXT_QUESTIONS.map((q) => (
                 <div key={q.id} className="space-y-1">
@@ -127,39 +151,10 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
                     name={`text_${q.id}`}
                     rows={3}
                     maxLength={MAX_TEXT}
+                    placeholder={q.starter}
                   />
                 </div>
               ))}
-            </section>
-
-            <section aria-labelledby="s-end" className="space-y-4">
-              <h2 id="s-end" className="font-heading text-xl font-bold">
-                Pour finir
-              </h2>
-              <fieldset className="space-y-2">
-                <legend className="font-medium">
-                  Tu recommanderais ce module à une autre promo ?
-                </legend>
-                <div className="flex flex-wrap gap-4">
-                  {RECOMMEND_OPTIONS.map((o) => (
-                    <label key={o.id} className="flex min-h-11 items-center gap-2">
-                      <input type="radio" name="recommend" value={o.id} className="size-4" />
-                      {o.label}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="space-y-1">
-                <label htmlFor={`text_${LAST_WORD.id}`} className="font-medium">
-                  {LAST_WORD.label}
-                </label>
-                <Textarea
-                  id={`text_${LAST_WORD.id}`}
-                  name={`text_${LAST_WORD.id}`}
-                  rows={3}
-                  maxLength={MAX_TEXT}
-                />
-              </div>
             </section>
 
             <Button type="submit" size="touch">

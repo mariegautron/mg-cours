@@ -111,10 +111,12 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
                 <p className="text-muted-foreground text-xs">
                   Répartition : nombre de réponses pour 1 / 2 / 3 / 4 / 5.
                 </p>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Recommanderaient le module</h3>
-                  <p>{summary.recommend.map((r) => `${r.label} : ${r.count}`).join(" · ")}</p>
-                </div>
+                {summary.choices.map((c) => (
+                  <div key={c.id} className="space-y-1">
+                    <h3 className="font-semibold">{c.label}</h3>
+                    <p>{c.options.map((o) => `${o.label} : ${o.count}`).join(" · ")}</p>
+                  </div>
+                ))}
                 {summary.texts
                   .filter((t) => t.entries.length > 0)
                   .map((t) => (
