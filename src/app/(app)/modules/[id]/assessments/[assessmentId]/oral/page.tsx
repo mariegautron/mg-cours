@@ -94,7 +94,7 @@ export default async function OralPage({
   const orderedSlots = slots;
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="mx-auto max-w-[96rem] space-y-8">
       <div>
         <Link
           href={`/modules/${id}/assessments/${assessmentId}`}
