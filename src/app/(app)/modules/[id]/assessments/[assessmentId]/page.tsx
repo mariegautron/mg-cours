@@ -18,6 +18,7 @@ import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
 import { Submissions } from "@/components/assessments/submissions";
+import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { SubmissionItems } from "@/components/assessments/submission-items";
@@ -173,6 +174,14 @@ export default async function AssessmentPage({
     themes,
     submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
   });
+  const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
+  const quizSubmitted = quiz
+    ? new Set(
+        (await listAttempts(quiz.id))
+          .filter((a) => a.status === "submitted")
+          .map((a) => a.studentId),
+      )
+    : null;
   const overview = correctionOverview(
     sections.flatMap((section) =>
       section.items.map((item) => ({
@@ -182,9 +191,11 @@ export default async function AssessmentPage({
         context: assessment.is_group_grade ? item.theme : section.title,
         members: item.members?.map((m) => m.name),
         grade: item.grade ?? null,
-        // Rendus suivis seulement pour une évaluation individuelle dont les rendus sont lisibles.
-        received:
-          !assessment.is_group_grade && submissionData.available
+        // Rendus suivis seulement pour une évaluation individuelle : copie de QCM rendue, ou
+        // fichiers et liens déposés quand ils sont lisibles.
+        received: quizSubmitted
+          ? quizSubmitted.has(item.id)
+          : !assessment.is_group_grade && submissionData.available
             ? (item.submissions?.length ?? 0) > 0
             : undefined,
         attendance: item.grade?.attendance ?? null,

@@ -42,7 +42,7 @@ export default async function QuizResultsPage({
   });
   const stats = questionStats(statAttempts);
   const submitted = attempts.filter((a) => a.status === "submitted");
-  const scores = submitted.map((a) => a.score);
+  const scores = submitted.filter((a) => a.reviewComplete).map((a) => a.score);
   const average = averageScore(scores);
   const total = submitted[0]?.totalPoints ?? null;
   const card = "bg-card rounded-xl border p-5";
@@ -107,12 +107,24 @@ export default async function QuizResultsPage({
             <ul className="divide-y text-sm">
               {attempts.map((a) => (
                 <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                  <span>{a.name}</span>
+                  {a.status === "submitted" || a.status === "in_progress" ? (
+                    <Link
+                      href={`${back}/quiz/attempts/${a.id}`}
+                      className="font-medium underline underline-offset-2"
+                    >
+                      {a.name}
+                    </Link>
+                  ) : (
+                    <span>{a.name}</span>
+                  )}
                   {a.status === "submitted" ? (
-                    <strong>
-                      {a.score === null ? "à relire" : fmt(a.score)}
-                      {a.score !== null ? ` / ${fmt(a.totalPoints)}` : ""}
-                    </strong>
+                    a.reviewComplete && a.score !== null ? (
+                      <strong>
+                        {fmt(a.score)} / {fmt(a.totalPoints)}
+                      </strong>
+                    ) : (
+                      <Pill tone="warn">À corriger</Pill>
+                    )
                   ) : (
                     <Pill tone="warn">{a.status === "in_progress" ? "En cours" : "Pas passé"}</Pill>
                   )}
