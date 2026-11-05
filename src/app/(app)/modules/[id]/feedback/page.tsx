@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 
 import QRCode from "qrcode";
 
+import {
+  AGILE_FEEDBACK_MODULE_ID,
+  FeedbackAnalysisAgile,
+} from "@/components/modules/feedback-analysis-agile";
 import { FeedbackResults } from "@/components/modules/feedback-results";
 import { FeedbackControls } from "@/components/modules/feedback-controls";
 import { Button } from "@/components/ui/button";
@@ -40,7 +44,16 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
   const qr = url
     ? await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" })
     : null;
-  const summary = summarize((answersRes.data ?? []).map((r) => parseAnswers(r.answers)));
+  // Double clic sur « Envoyer » : deux réponses identiques (avec du texte) à moins d'une minute = une seule.
+  const rows = answersRes.data ?? [];
+  const unique = rows.filter((r, i) => {
+    const next = rows[i + 1];
+    if (!next || JSON.stringify(r.answers) !== JSON.stringify(next.answers)) return true;
+    const hasText = Object.keys(parseAnswers(r.answers).texts).length > 0;
+    const gap = Math.abs(new Date(r.created_at).getTime() - new Date(next.created_at).getTime());
+    return !(hasText && gap < 60_000);
+  });
+  const summary = summarize(unique.map((r) => parseAnswers(r.answers)));
   const card = "bg-card rounded-xl border p-5";
 
   return (
@@ -60,6 +73,8 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
         </p>
       ) : (
         <>
+          {id === AGILE_FEEDBACK_MODULE_ID && summary.total > 0 ? <FeedbackAnalysisAgile /> : null}
+
           <section aria-labelledby="fl" className={`${card} space-y-3`}>
             <h2 id="fl" className="font-heading text-xl font-bold">
               Donner accès au questionnaire
