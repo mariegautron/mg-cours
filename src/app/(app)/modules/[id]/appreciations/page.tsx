@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BackLink } from "@/components/ui/back-link";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -46,7 +47,6 @@ export default async function AppreciationsPage({
   return (
     <div className="max-w-6xl space-y-5">
       <div className="space-y-1">
-        <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
         <h1 className="text-3xl font-semibold">Appréciations — {mod.name}</h1>
         <p className="text-muted-foreground">
           Une appréciation par étudiant·e, écrite par toi, à coller dans Hyperplanning. {written}{" "}
@@ -148,9 +148,7 @@ export default async function AppreciationsPage({
               </h2>
               <AppreciationExport rows={rows} tooLong={tooLong} />
             </section>
-            <Button asChild variant="ghost" size="touch">
-              <Link href={`/modules/${id}/assessments`}>← Les évaluations</Link>
-            </Button>
+            <BackLink href={`/modules/${id}/assessments`}>← Retour</BackLink>
           </div>
         </div>
       )}

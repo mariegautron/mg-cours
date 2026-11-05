@@ -2,7 +2,15 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookMarked, CalendarDays, CircleHelp, GraduationCap, Library, Search } from "lucide-react";
+import {
+  BookMarked,
+  CalendarDays,
+  CircleHelp,
+  ClipboardCheck,
+  GraduationCap,
+  Library,
+  Search,
+} from "lucide-react";
 import { Dialog } from "radix-ui";
 
 import {
@@ -18,6 +26,7 @@ const ICONS: Record<SearchKind, typeof Search> = {
   student: GraduationCap,
   resource: Library,
   question: CircleHelp,
+  assessment: ClipboardCheck,
 };
 
 const DEBOUNCE_MS = 200;

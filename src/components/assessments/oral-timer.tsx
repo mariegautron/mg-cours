@@ -22,7 +22,13 @@ import { cn } from "@/lib/utils";
  * polies (5 minutes, temps écoulé) et l'alerte de la dernière minute passent par les zones dédiées.
  * Aucune animation hors `motion-safe`.
  */
-export function OralTimer({ durationMinutes }: { durationMinutes: number }) {
+export function OralTimer({
+  durationMinutes,
+  onStart,
+}: {
+  durationMinutes: number;
+  onStart?: () => void;
+}) {
   const durationSeconds = durationMinutes * 60;
   const announcements = useRef(timerAnnouncements(durationSeconds));
   const said = useRef(new Set<number>());
@@ -63,6 +69,7 @@ export function OralTimer({ durationMinutes }: { durationMinutes: number }) {
       setClock((c) => pauseClock(c, t));
       setPolite("Chronomètre en pause.");
     } else {
+      if (view.phase === "idle") onStart?.();
       setClock((c) => startClock(c, t));
       setPolite(
         view.phase === "idle"
@@ -88,7 +95,15 @@ export function OralTimer({ durationMinutes }: { durationMinutes: number }) {
         : "text-foreground";
 
   return (
-    <section aria-labelledby="oral-timer-title" className="space-y-3 rounded-lg border p-4">
+    <section
+      aria-labelledby="oral-timer-title"
+      className={cn(
+        // Collé en haut : le chrono reste visible pendant qu'on note ; dernière minute bien visible.
+        "bg-background/95 sticky top-0 z-20 space-y-2 rounded-lg border p-3 backdrop-blur",
+        view.phase === "warning" && "border-destructive bg-destructive/15 border-2",
+        view.phase === "over" && "border-destructive bg-destructive/25 border-2",
+      )}
+    >
       <h3 id="oral-timer-title" className="font-medium">
         Chronomètre — {durationMinutes} min
       </h3>
@@ -97,7 +112,7 @@ export function OralTimer({ durationMinutes }: { durationMinutes: number }) {
         aria-live="off"
         aria-label="Temps restant"
         className={cn(
-          "font-mono text-6xl font-semibold tabular-nums",
+          "font-mono text-5xl font-semibold tabular-nums",
           tone,
           view.phase === "warning" && "motion-safe:animate-pulse",
         )}

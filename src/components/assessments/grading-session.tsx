@@ -114,7 +114,13 @@ export function GradingSession({
   const onStatus = useCallback((id: string, next: CopyStatus) => {
     setStatus((prev) => {
       const current = prev[id];
-      if (current && current.corrected === next.corrected && current.dirty === next.dirty) {
+      if (
+        current &&
+        current.corrected === next.corrected &&
+        current.dirty === next.dirty &&
+        current.partial?.scored === next.partial?.scored &&
+        current.partial?.total === next.partial?.total
+      ) {
         return prev;
       }
       return { ...prev, [id]: next };
@@ -132,6 +138,11 @@ export function GradingSession({
     ),
   );
   useUnsavedChangesGuard(progress.dirty > 0);
+  // Copies commencées mais incomplètes : elles ne comptent ni « corrigées » ni dans les moyennes.
+  const incomplete = items.flatMap((i) => {
+    const partial = status[i.id]?.corrected ? null : status[i.id]?.partial;
+    return partial ? [{ item: i, ...partial }] : [];
+  });
   // Jalon : toutes les copies corrigées et enregistrées. On ne fête que le passage de « il en reste »
   // à « tout est corrigé » pendant cette visite, pas une évaluation déjà terminée à l'ouverture.
   const complete = progress.total > 0 && progress.done === progress.total && progress.dirty === 0;
@@ -173,10 +184,10 @@ export function GradingSession({
   const titleOf = (id: string | null) => items.find((i) => i.id === id)?.title ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section
         aria-labelledby={`${uid}-progress`}
-        className="bg-card space-y-3 rounded-xl border p-4"
+        className="bg-card space-y-2 rounded-xl border px-4 py-2.5"
       >
         <h2 id={`${uid}-progress`} className="sr-only">
           Avancement de la correction
@@ -184,6 +195,7 @@ export function GradingSession({
         <div className="flex flex-wrap items-center gap-3">
           <p role="status" className="font-medium">
             {progress.label}
+            {progress.inProgress > 0 ? ` · ${progress.inProgress} en cours` : ""}
           </p>
           <p className="text-muted-foreground text-sm">
             {progress.dirty > 0
@@ -194,6 +206,28 @@ export function GradingSession({
             Enregistrer tout
           </Button>
         </div>
+        {incomplete.length > 0 ? (
+          <p className="text-sun text-sm">
+            Copies incomplètes, pas encore comptées dans les moyennes :{" "}
+            {incomplete.map((c, k) => (
+              <span key={c.item.id}>
+                {k > 0 ? ", " : ""}
+                <a
+                  href={`#copy-${c.item.id}`}
+                  className="underline underline-offset-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    focusCopy(c.item.id);
+                  }}
+                >
+                  {c.item.title}
+                </a>{" "}
+                ({c.scored}/{c.total} critères)
+              </span>
+            ))}
+            .
+          </p>
+        ) : null}
         <div aria-live="polite">
           {celebrate ? (
             <Celebration>Tout est corrigé. Tu peux envoyer les résultats.</Celebration>
@@ -202,7 +236,7 @@ export function GradingSession({
 
         {canFocusCriterion ? (
           <div className="flex flex-wrap items-end gap-3">
-            <div role="group" aria-label="Mode de correction" className="flex flex-wrap gap-2">
+            <div role="group" aria-label="Vue" className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"
@@ -210,7 +244,7 @@ export function GradingSession({
                 aria-pressed={view === "copy"}
                 onClick={() => setView("copy")}
               >
-                Une copie à la fois
+                Vue : par copie
               </Button>
               <Button
                 type="button"
@@ -219,9 +253,14 @@ export function GradingSession({
                 aria-pressed={view === "criterion"}
                 onClick={() => setView("criterion")}
               >
-                Un critère pour toute la classe
+                Vue : par critère
               </Button>
             </div>
+            {overviewHref.startsWith("/") ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={`${overviewHref}/compare`}>Comparer un critère (touches 1 à 4)</a>
+              </Button>
+            ) : null}
             {view === "criterion" ? (
               <div className="flex flex-wrap items-end gap-2">
                 <div className="space-y-1">
@@ -277,30 +316,51 @@ export function GradingSession({
         ) : null}
 
         {items.length > 1 ? (
-          <nav aria-label="Copies">
-            <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
-              {items.map((i) => {
-                const done = status[i.id]?.corrected ?? (i.grade?.value ?? null) !== null;
-                return (
-                  <li key={i.id}>
-                    <a
-                      href={`#copy-${i.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        focusCopy(i.id);
-                      }}
-                      className="underline-offset-2 hover:underline"
-                    >
-                      {i.title}
-                    </a>
-                    <span className="text-muted-foreground">{done ? " (corrigée)" : ""}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <details>
+            <summary className="min-h-8 cursor-pointer text-sm font-medium">
+              Aller à une copie ({items.length})
+            </summary>
+            <nav aria-label="Copies" className="mt-1">
+              <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                {items.map((i) => {
+                  const done = status[i.id]?.corrected ?? (i.grade?.value ?? null) !== null;
+                  const partial = !done ? status[i.id]?.partial : null;
+                  return (
+                    <li key={i.id}>
+                      <a
+                        href={`#copy-${i.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          focusCopy(i.id);
+                        }}
+                        className="underline-offset-2 hover:underline"
+                      >
+                        {i.title}
+                      </a>
+                      <span className="text-muted-foreground">
+                        {done
+                          ? " (corrigée)"
+                          : partial
+                            ? ` (en cours ${partial.scored}/${partial.total})`
+                            : ""}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </details>
         ) : null}
       </section>
+
+      {focused && grid?.description?.trim() ? (
+        <details className="bg-muted/40 rounded-2xl border p-3">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Rappels pédagogiques de la grille
+          </summary>
+          <p className="text-sm whitespace-pre-wrap">{grid.description.trim()}</p>
+        </details>
+      ) : null}
 
       {sections.map((section) => (
         <section

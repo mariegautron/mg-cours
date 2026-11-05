@@ -17,6 +17,7 @@ import { TodayPrep } from "@/components/dashboard/today-prep";
 import { WeekCard } from "@/components/dashboard/week-card";
 import {
   listCourseProgress,
+  listToCorrect,
   loadCourseAssessments,
   loadFocusKpis,
   loadPreviousSession,
@@ -55,6 +56,7 @@ import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
+import { inFilter, moduleListState } from "@/lib/modules/list-state";
 import { getProfile } from "@/lib/settings/queries";
 import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/trame";
 
@@ -78,6 +80,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     coursesWeek,
     resumeCandidates,
     progress,
+    toCorrect,
   ] = await Promise.all([
     listModules(),
     listBillingOverview(),
@@ -87,6 +90,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listCoursesBetween(week.from, week.to),
     listResumeCandidates(),
     listCourseProgress(),
+    listToCorrect(),
   ]);
   const resume = pickResume(resumeCandidates);
   // Une séance clôturée passe en « faite » : la carte principale montre la prochaine à faire.
@@ -147,6 +151,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       : null,
   );
   const activeModules = modules.filter((m) => !m.archived_at && !m.finished_at);
+  // Même définition que le filtre « En cours » de la page Modules.
+  const runningModules = modules.filter((m) =>
+    inFilter(
+      moduleListState({
+        ...m,
+        courses: { done: progress.get(m.id)?.done ?? 0, total: progress.get(m.id)?.total ?? 0 },
+      }),
+      "running",
+    ),
+  );
 
   // Module « du moment » : celui de la séance du jour, sinon du prochain cours, sinon le premier actif.
   const focusFrom = sessions[0]?.module ?? upcoming?.module ?? activeModules[0] ?? null;
@@ -268,17 +282,48 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     return 2;
   };
 
+  const correctCard =
+    toCorrect.length > 0 ? (
+      <section aria-labelledby="corr" className="bg-card rounded-3xl border p-5 shadow-sm">
+        <h2 id="corr" className="font-heading mb-2 text-lg font-bold">
+          À corriger
+        </h2>
+        <ul className="space-y-3">
+          {toCorrect.map((c) => (
+            <li key={c.assessmentId} className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-semibold">{c.title}</p>
+                <p className="text-muted-foreground text-sm">
+                  {c.moduleName} · {c.remaining} copie{c.remaining > 1 ? "s" : ""} restante
+                  {c.remaining > 1 ? "s" : ""} sur {c.total}
+                  {c.date ? ` · épreuve du ${new Date(c.date).toLocaleDateString("fr-FR")}` : ""}
+                </p>
+              </div>
+              <Link
+                href={`/modules/${c.moduleId}/assessments/${c.assessmentId}/correct${
+                  c.nextCopyId ? `?copy=${c.nextCopyId}` : ""
+                }`}
+                className={BTN}
+              >
+                Corriger<span className="sr-only"> : {c.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
+
   const modulesCard = (
     <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
       <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
         Tes modules en cours
       </h2>
-      {activeModules.length === 0 ? (
-        <p className="text-muted-foreground mb-2 text-sm">Aucun module actif pour l’instant.</p>
+      {runningModules.length === 0 ? (
+        <p className="text-muted-foreground mb-2 text-sm">Aucun module en cours pour l’instant.</p>
       ) : (
         <ul className="mb-2 space-y-2">
           {/* Le module réellement en cours (séances commencées, pas finies) passe avant ceux « à préparer ». */}
-          {[...activeModules]
+          {[...runningModules]
             .sort((a, b) => rank(a.id) - rank(b.id))
             .slice(0, 3)
             .map((m) => {
@@ -442,6 +487,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
           <div className="min-w-0 space-y-4">{todoCard}</div>
           <div className="min-w-0 space-y-4">
+            {correctCard}
             {weekCard}
             {resumeCard}
             {modulesCard}
@@ -577,6 +623,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           {surprisesCard}
         </div>
         <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">
+          {correctCard}
           {weekCard}
           {resumeCard}
           {modulesCard}

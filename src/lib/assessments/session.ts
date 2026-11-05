@@ -2,8 +2,11 @@
 export const AUTOSAVE_DELAY_MS = 1500;
 
 export interface CopyStatus {
+  /** Tous les critères notés (ou absence posée) : la copie compte comme corrigée. */
   corrected: boolean;
   dirty: boolean;
+  /** Copie commencée mais incomplète : « en cours (x/9 critères) ». */
+  partial?: { scored: number; total: number } | null;
 }
 
 export interface CorrectionProgress {
@@ -13,6 +16,8 @@ export interface CorrectionProgress {
   label: string;
   /** Nombre de copies avec des modifications non enregistrées. */
   dirty: number;
+  /** Nombre de copies commencées mais incomplètes. */
+  inProgress: number;
 }
 
 /** Avancement de la correction : copies corrigées sur total, et copies à enregistrer. */
@@ -24,6 +29,7 @@ export function correctionProgress(statuses: readonly CopyStatus[]): CorrectionP
     total,
     label: `${done}/${total} ${done > 1 ? "corrigées" : "corrigée"}`,
     dirty: statuses.filter((s) => s.dirty).length,
+    inProgress: statuses.filter((s) => !s.corrected && s.partial).length,
   };
 }
 

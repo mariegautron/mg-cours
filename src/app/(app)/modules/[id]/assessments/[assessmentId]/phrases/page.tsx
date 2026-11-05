@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { filterPhrases, rankPhrases, type Phrase } from "@/lib/assessments/phrases";
 import { getAssessment, listComments } from "@/lib/assessments/queries";
 
-export const metadata: Metadata = { title: "Phrases de correction" };
+export const metadata: Metadata = { title: "Phrases" };
 
 const card = "bg-card space-y-2 rounded-xl border p-5";
 
@@ -45,7 +45,7 @@ export default async function PhrasesPage({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
-          <h1 className="text-3xl font-semibold">Phrases de correction : {assessment.title}</h1>
+          <h1 className="text-3xl font-semibold">Phrases : {assessment.title}</h1>
           <p className="text-muted-foreground">
             Rangées par critère de la grille, et proposées pendant la correction. Le nombre
             d’utilisations montre les erreurs fréquentes.

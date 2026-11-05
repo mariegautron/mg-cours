@@ -1,6 +1,7 @@
 import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { bonusLine, parseScale } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GradingSession } from "@/components/assessments/grading-session";
@@ -14,6 +15,7 @@ import {
   listComments,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
+import { getQuizByAssessment } from "@/lib/quiz/queries";
 import { getModule } from "@/lib/modules/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
 import { groupByOwner } from "@/lib/projects/submission-items";
@@ -67,20 +69,30 @@ export default async function CorrectPage({
     }
   }
   const back = `/modules/${id}/assessments/${assessmentId}`;
+  const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
-          <h1 className="text-3xl font-semibold">Corriger : {assessment.title}</h1>
-          <p className="text-muted-foreground">
-            Tout s’enregistre au fur et à mesure.{" "}
-            {assessment.is_group_grade ? "Note de groupe." : "Note individuelle."} Sur{" "}
-            {assessment.maxScore}.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h1 className="text-2xl font-semibold">Corriger : {assessment.title}</h1>
+        <p className="text-muted-foreground text-sm">
+          Tout s’enregistre au fur et à mesure.{" "}
+          {assessment.is_group_grade ? "Note de groupe." : "Note individuelle."} Sur{" "}
+          {assessment.maxScore}.
+        </p>
       </div>
+      {quiz ? (
+        <p className="bg-muted/50 rounded-2xl border p-3 text-sm">
+          Cette évaluation a un QCM en ligne : les réponses de chaque étudiant·e se relisent,
+          question par question, dans le suivi du QCM.{" "}
+          <Link
+            href={`${back}/quiz/links#follow`}
+            className="font-semibold underline underline-offset-2"
+          >
+            Relire les copies du QCM
+          </Link>
+        </p>
+      ) : null}
       {sections.flatMap((s) => s.items).length === 0 ? (
         <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
       ) : (

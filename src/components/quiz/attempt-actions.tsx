@@ -85,23 +85,28 @@ export function AttemptActions({
         />
       ) : null}
       {a.status === "submitted" && !quizClosed ? (
-        <form action={bind(reopenAttempt)} className="flex flex-wrap items-end gap-2">
-          <div className="space-y-1">
-            <Label htmlFor={`minutes-${a.id}`} className="text-xs">
-              Rouvrir pour (minutes)
-            </Label>
-            <Input
-              id={`minutes-${a.id}`}
-              name="minutes"
-              inputMode="numeric"
-              defaultValue="15"
-              className="h-8 w-20"
-            />
-          </div>
-          <Button type="submit" size="sm" variant="secondary">
-            Rouvrir la copie<span className="sr-only"> de {a.name}</span>
-          </Button>
-        </form>
+        <details className="mt-1 border-t pt-2">
+          <summary className="min-h-8 cursor-pointer text-xs font-medium">
+            Rouvrir cette copie à l’étudiant·e…
+          </summary>
+          <form action={bind(reopenAttempt)} className="mt-2 flex flex-wrap items-end gap-2">
+            <div className="space-y-1">
+              <Label htmlFor={`minutes-${a.id}`} className="text-xs">
+                Rouvrir pour (minutes)
+              </Label>
+              <Input
+                id={`minutes-${a.id}`}
+                name="minutes"
+                inputMode="numeric"
+                defaultValue="15"
+                className="h-8 w-20"
+              />
+            </div>
+            <Button type="submit" size="sm" variant="secondary">
+              Rouvrir la copie<span className="sr-only"> de {a.name}</span>
+            </Button>
+          </form>
+        </details>
       ) : null}
       {a.status !== "submitted" ? (
         <form action={bind(setTimeMultiplier)} className="flex flex-wrap items-end gap-2">

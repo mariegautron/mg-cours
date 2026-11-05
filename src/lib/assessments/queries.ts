@@ -322,6 +322,9 @@ export interface StudentAverage {
   average: ReturnType<typeof weightedAverage>;
   /** Points que la note bonus de certification ajoute à la moyenne (jamais négatif) ; `null` sans bonus. */
   bonusEffect: number | null;
+  /** Notes entrées / notes attendues (évaluations hors bonus et rattrapages qui visent cette personne). */
+  noted: number;
+  expected: number;
 }
 
 /** Moyenne pondérée YNOV sur 20 (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
@@ -419,10 +422,18 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
         perStudent.get(student.id) ?? [],
         bonusPerStudent.get(student.id) ?? [],
       );
+      const expected = assessments.filter(
+        (a) =>
+          !a.is_bonus &&
+          !a.makeup_of_id &&
+          a.groups.some((g) => (studentsByGroup.get(g.id) ?? []).some((m) => m.id === student.id)),
+      ).length;
       return {
         student,
         average: { points: result.points, weight: result.weight, average: result.average },
         bonusEffect: result.bonusEffect,
+        noted: Math.min(perStudent.get(student.id)?.length ?? 0, expected),
+        expected,
       };
     })
     .sort((a, b) => a.student.last_name.localeCompare(b.student.last_name, "fr"));

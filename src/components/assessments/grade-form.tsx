@@ -46,8 +46,9 @@ import {
   describeOverflow,
   formatNumber,
   groupByAxis,
-  hasScoredInput,
+  gradingProgress,
 } from "@/lib/assessments/scoring";
+import type { GradeContent } from "@/lib/assessments/merge";
 import {
   AUTOSAVE_DELAY_MS,
   formSnapshot,
@@ -163,6 +164,18 @@ export function GradeForm({
       ]),
     ),
   );
+  // Version de référence de cet onglet : sert à n'enregistrer que les champs réellement modifiés.
+  const [base, setBase] = useState<GradeContent>(() => ({
+    scores: Object.fromEntries(
+      Object.entries((grade?.scores ?? {}) as Record<string, unknown>).filter(
+        (e): e is [string, number] => typeof e[1] === "number",
+      ),
+    ),
+    comments: parseCriterionComments(grade?.criterion_comments),
+    strengths: grade?.strengths ?? null,
+    progress: grade?.progress ?? null,
+    feedback: grade?.feedback ?? null,
+  }));
   const [directValue, setDirectValue] = useState(String(grade?.value ?? ""));
   const [rawScore, setRawScore] = useState(
     grade?.raw_score === null || grade?.raw_score === undefined ? "" : String(grade.raw_score),
@@ -215,10 +228,12 @@ export function GradeForm({
     isBonus: c.is_bonus,
   }));
   const totals = computeTotals(scoringCriteria, numericScores, { autoValidatedIds, maxScore });
+  // Trois états : à corriger (rien), en cours (x/9 critères), corrigée (tous notés ou absence posée).
+  const gp = gradingProgress(scoringCriteria, numericScores, autoValidatedIds);
   const corrected =
     absent ||
     (grid
-      ? hasScoredInput(scoringCriteria, numericScores, autoValidatedIds)
+      ? gp.state === "complete"
       : bonusScale
         ? scaleResult?.status === "ok"
         : directValue.trim() !== "");
@@ -249,6 +264,7 @@ export function GradeForm({
   if (state !== lastState && !pending) {
     setLastState(state);
     if (state.saved) {
+      if (state.base) setBase(state.base);
       setSaved(submitted);
       setSavedAt(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
     }
@@ -264,14 +280,21 @@ export function GradeForm({
   }, [dirty]);
 
   useEffect(() => {
-    if (!shouldAutosave({ dirty, pending, ready, online })) return;
+    // Copie modifiée ailleurs : on n'insiste pas, l'enseignante choisit de recharger.
+    if (!shouldAutosave({ dirty, pending, ready: ready && !state.conflict, online })) return;
     const timer = setTimeout(() => formRef.current?.requestSubmit(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [snapshot, dirty, pending, ready, online]);
+  }, [snapshot, dirty, pending, ready, online, state.conflict]);
 
+  const partialScored = gp.state === "partial" && !corrected ? gp.scored : -1;
+  const partialTotal = gp.total;
   useEffect(() => {
-    onStatus?.(id, { corrected, dirty });
-  }, [id, corrected, dirty, onStatus]);
+    onStatus?.(id, {
+      corrected,
+      dirty,
+      partial: partialScored >= 0 ? { scored: partialScored, total: partialTotal } : null,
+    });
+  }, [id, corrected, dirty, partialScored, partialTotal, onStatus]);
 
   useEffect(() => {
     if (!register) return;
@@ -763,6 +786,23 @@ export function GradeForm({
       ))
     : null;
 
+  // Jamais de faux 0 : « — » tant que rien n'est posé ; « excusé·e » pour une absence excusée.
+  const totalEmpty =
+    !isGroup && attendance === "absent_excused"
+      ? "excusé·e : hors moyenne"
+      : !absent &&
+          (grid
+            ? gp.state === "none"
+            : bonusScale
+              ? scaleResult?.status !== "ok"
+              : directValue.trim() === "")
+        ? "pas encore notée"
+        : null;
+  const inProgressNote =
+    grid && !absent && gp.state === "partial"
+      ? `en cours (${gp.scored}/${gp.total} critères)`
+      : null;
+
   const totalLine = (
     <p className="text-muted-foreground text-sm" aria-live={compact ? "polite" : undefined}>
       Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
@@ -1148,11 +1188,24 @@ export function GradeForm({
         Total en direct
       </h2>
       <p className="font-heading text-4xl font-bold" aria-live="polite">
-        {formatNumber(totals.value)}{" "}
-        <span className="text-muted-foreground text-lg font-normal">
-          / {formatNumber(totals.maxScore)}
-        </span>
+        {totalEmpty ? (
+          <>
+            <span aria-hidden>—</span>
+            <span className="sr-only">Pas de note</span>{" "}
+            <span className="text-muted-foreground text-base font-normal">{totalEmpty}</span>
+          </>
+        ) : (
+          <>
+            {formatNumber(totals.value)}{" "}
+            <span className="text-muted-foreground text-lg font-normal">
+              / {formatNumber(totals.maxScore)}
+            </span>
+          </>
+        )}
       </p>
+      {inProgressNote ? (
+        <p className="text-sun text-[0.8rem] font-semibold">{inProgressNote}</p>
+      ) : null}
       <p className="text-muted-foreground text-[0.8rem]">
         {showAxes
           ? groups
@@ -1347,6 +1400,30 @@ export function GradeForm({
         setSubmitted(snapshot);
       }}
       onKeyDown={(e) => {
+        // Une flèche sur un groupe de paliers déplace le focus sans choisir : un palier n'est posé
+        // qu'après un geste explicite (clic, Espace, chiffre), jamais par une simple navigation.
+        const radio = e.target;
+        if (
+          radio instanceof HTMLInputElement &&
+          radio.type === "radio" &&
+          !e.defaultPrevented &&
+          !e.altKey &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.shiftKey &&
+          ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+        ) {
+          e.preventDefault();
+          const group = Array.from(
+            formRef.current?.querySelectorAll<HTMLInputElement>(
+              `input[type="radio"][name="${CSS.escape(radio.name)}"]`,
+            ) ?? [],
+          );
+          const step = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+          const next = group[(group.indexOf(radio) + step + group.length) % group.length];
+          next?.focus();
+          return;
+        }
         // Alt + ← / → : copie précédente / suivante, sans quitter le clavier.
         if (!onNavigate || !e.altKey || e.ctrlKey || e.metaKey) return;
         if (e.key === "ArrowLeft" && hasPrev) {
@@ -1360,15 +1437,13 @@ export function GradeForm({
       aria-labelledby={`copy-${id}-title`}
       className="space-y-4"
     >
+      <input type="hidden" name="base" value={JSON.stringify(base)} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-primary mb-1 text-[0.75rem] font-bold tracking-widest uppercase">
-            Évaluations
-          </p>
           <h3
             id={`copy-${id}-title`}
             tabIndex={-1}
-            className="font-heading text-2xl font-bold outline-none"
+            className="font-heading text-xl font-bold outline-none"
           >
             {title}
           </h3>
@@ -1411,7 +1486,7 @@ export function GradeForm({
         </div>
       </div>
 
-      {grid?.description?.trim() ? (
+      {grid?.description?.trim() && !focused ? (
         <details className="bg-muted/40 rounded-2xl border p-3">
           <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
             Rappels pédagogiques de la grille
@@ -1461,7 +1536,7 @@ export function GradeForm({
                   <div
                     className="flex flex-wrap items-center gap-2"
                     role="group"
-                    aria-label="Affichage des critères"
+                    aria-label="Grille"
                   >
                     <Button
                       type="button"
@@ -1469,7 +1544,7 @@ export function GradeForm({
                       aria-pressed={!compact}
                       onClick={() => setCompact(false)}
                     >
-                      Un critère à la fois
+                      Grille : critère par critère
                     </Button>
                     <Button
                       type="button"
@@ -1477,7 +1552,7 @@ export function GradeForm({
                       aria-pressed={compact}
                       onClick={() => setCompact(true)}
                     >
-                      Tous les critères d’un coup
+                      Grille : toute la grille
                     </Button>
                   </div>
                   {compact ? (
@@ -1615,14 +1690,45 @@ export function GradeForm({
         {announcement}
       </p>
 
-      {state.error ? <ActionError error={state.error} /> : null}
+      {state.conflict ? (
+        <div role="alert" className="border-sun/45 bg-sun/12 space-y-2 rounded-2xl border p-3">
+          <p className="text-sm font-semibold">Cette copie a été modifiée dans un autre onglet.</p>
+          <p className="text-sm">
+            Rien n’a été écrasé. Recharge la page pour voir la dernière version, puis refais ta
+            modification si besoin.
+          </p>
+          <Button type="button" variant="outline" onClick={() => window.location.reload()}>
+            Recharger la copie
+          </Button>
+        </div>
+      ) : state.error ? (
+        <ActionError error={state.error} />
+      ) : null}
+      {state.saved && state.elsewhere && !dirty ? (
+        <p role="status" className="text-muted-foreground text-sm">
+          D’autres champs ont changé dans un autre onglet ; ils sont conservés.{" "}
+          <button
+            type="button"
+            className="underline underline-offset-2"
+            onClick={() => window.location.reload()}
+          >
+            Recharger pour les voir
+          </button>
+        </p>
+      ) : null}
 
       <div className="bg-background/95 sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 border-t py-2.5 backdrop-blur">
         <p className="text-sm" aria-live="polite">
           <strong className="font-heading text-lg">
-            {formatNumber(totals.value)} / {formatNumber(totals.maxScore)}
+            {totalEmpty ? "—" : `${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`}
           </strong>
-          <span className="text-muted-foreground"> · total en direct</span>
+          <span className="text-muted-foreground">
+            {totalEmpty
+              ? ` · ${totalEmpty}`
+              : inProgressNote
+                ? ` · total en direct, ${inProgressNote}`
+                : " · total en direct"}
+          </span>
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {state.saved && !dirty ? (

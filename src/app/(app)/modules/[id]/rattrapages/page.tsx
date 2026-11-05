@@ -66,7 +66,6 @@ export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/r
   return (
     <div className="max-w-6xl space-y-5">
       <div className="space-y-1">
-        <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
         <h1 className="text-3xl font-semibold">Rattrapages — {mod.name}</h1>
         <p role="status" className="text-muted-foreground">
           {makeupSummary(groups)} Un rattrapage ne concerne que les évaluations individuelles : sa

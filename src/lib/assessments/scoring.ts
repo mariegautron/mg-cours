@@ -152,6 +152,32 @@ export function hasScoredInput(
   return scored.length > 0 && scored.every((c) => autoValidatedIds.includes(c.id));
 }
 
+/**
+ * Avancement de la saisie d'une copie : critères (hors bonus) notés sur le total à noter. Les critères
+ * validés d'office comptent comme notés. « complete » : tous notés, la copie peut entrer dans les moyennes.
+ */
+export function gradingProgress(
+  criteria: readonly ScoringCriterion[],
+  scores: Readonly<Record<string, number | null | undefined>>,
+  autoValidatedIds: readonly string[] = [],
+): { scored: number; total: number; state: "none" | "partial" | "complete" } {
+  const required = criteria.filter((c) => !c.isBonus);
+  const isScored = (id: string) =>
+    autoValidatedIds.includes(id) ||
+    (typeof scores[id] === "number" && Number.isFinite(scores[id]));
+  const scored = required.filter((c) => isScored(c.id)).length;
+  const bonusScored = criteria.some(
+    (c) => c.isBonus && typeof scores[c.id] === "number" && Number.isFinite(scores[c.id]),
+  );
+  const total = required.length;
+  if (total > 0 && scored === total) return { scored, total, state: "complete" };
+  // Seuls des validés d'office / bonus : rien n'a été saisi par l'enseignante.
+  const typed = required.filter(
+    (c) => !autoValidatedIds.includes(c.id) && typeof scores[c.id] === "number",
+  ).length;
+  return { scored, total, state: typed > 0 || bonusScored ? "partial" : "none" };
+}
+
 export interface AxisGroup<T, A> {
   /** `null` : critères sans axe (toujours après les axes). */
   axis: A | null;

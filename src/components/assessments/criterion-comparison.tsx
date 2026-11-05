@@ -23,6 +23,8 @@ export interface ComparisonCopy {
   points: number | null;
   comment: string;
   absent: boolean;
+  /** Même vocabulaire que la page de correction. */
+  absence?: "excused" | "unexcused" | null;
 }
 
 interface Draft {
@@ -278,7 +280,11 @@ export function CriterionComparison({
                   </th>
                   <td className="py-2 pr-3">
                     {r.absent ? (
-                      <span className="text-muted-foreground">Absent·e : pas de note</span>
+                      <span className="text-muted-foreground">
+                        {copies.find((c) => c.id === r.id)?.absence === "unexcused"
+                          ? "Non prévenu·e : 0"
+                          : "Excusé·e : hors moyenne"}
+                      </span>
                     ) : hasLevels ? (
                       <div
                         role="radiogroup"

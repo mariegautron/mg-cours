@@ -18,7 +18,8 @@ import {
   type Attendance,
 } from "@/lib/assessments/attendance";
 import { parseCriterionComments, readFeedback } from "@/lib/assessments/feedback";
-import { computeTotals, hasScoredInput, readScores } from "@/lib/assessments/scoring";
+import { computeTotals, gradingProgress, readScores } from "@/lib/assessments/scoring";
+import { mergeGradeContent, parseGradeBase, type GradeContent } from "@/lib/assessments/merge";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
 
 export interface AssessmentFormState {
@@ -309,6 +310,12 @@ export async function deleteAssessment(moduleId: string, assessmentId: string) {
 export interface GradeFormState {
   error?: string;
   saved?: boolean;
+  /** Copie modifiée dans un autre onglet sur les mêmes champs : rien n'a été écrasé. */
+  conflict?: boolean;
+  /** Des champs ont changé ailleurs (autre onglet) : conservés ; recharger pour les voir. */
+  elsewhere?: boolean;
+  /** Nouvelle version de référence de l'onglet après enregistrement. */
+  base?: GradeContent;
 }
 
 async function saveGrade(
@@ -349,6 +356,58 @@ async function saveGrade(
     [...new Set(criteria.flatMap((c) => (c.axisId ? [c.axisId] : [])))],
   );
 
+  const match = target.studentId
+    ? { assessment_id: assessmentId, student_id: target.studentId }
+    : { assessment_id: assessmentId, student_group_id: target.studentGroupId };
+  const { data: existing } = await supabase.from("grade").select("*").match(match).maybeSingle();
+
+  // Deux onglets sur la même copie : seuls les champs modifiés dans CET onglet sont écrits.
+  const base = parseGradeBase(formData.get("base"));
+  let returnedBase: GradeContent | undefined;
+  let elsewhere = false;
+  let mergedScores: Record<string, number> | null = null;
+  if (base && existing && criteria.length > 0) {
+    const mine: GradeContent = {
+      scores: readScores(formData.entries(), criteria),
+      comments: text.criterionComments,
+      strengths: text.strengths,
+      progress: text.progress,
+      feedback: text.feedback,
+    };
+    for (const id of assessment.auto_validated_criterion_ids) delete mine.scores[id];
+    const current: GradeContent = {
+      scores: Object.fromEntries(
+        Object.entries((existing.scores ?? {}) as Record<string, unknown>).filter(
+          (e): e is [string, number] => typeof e[1] === "number",
+        ),
+      ),
+      comments: parseCriterionComments(existing.criterion_comments),
+      strengths: existing.strengths,
+      progress: existing.progress,
+      feedback: existing.feedback,
+    };
+    const result = mergeGradeContent(base, mine, current);
+    if (result.conflicts.length > 0) {
+      return { error: "Cette copie a été modifiée dans un autre onglet.", conflict: true };
+    }
+    mergedScores = result.merged.scores;
+    text.criterionComments = result.merged.comments;
+    text.strengths = result.merged.strengths;
+    text.progress = result.merged.progress;
+    text.feedback = result.merged.feedback;
+    elsewhere = result.changedElsewhere.length > 0;
+    returnedBase = mergeGradeContent(base, mine, base).merged;
+  } else if (criteria.length > 0) {
+    returnedBase = {
+      scores: readScores(formData.entries(), criteria),
+      comments: text.criterionComments,
+      strengths: text.strengths,
+      progress: text.progress,
+      feedback: text.feedback,
+    };
+    for (const id of assessment.auto_validated_criterion_ids) delete returnedBase.scores[id];
+  }
+
   // Note bonus de certification : colonnes additives, lues à part (sans elles, rien ne change).
   const bonusBands = await readBonusScale(supabase, assessmentId);
   let rawScore: number | null | undefined;
@@ -357,12 +416,15 @@ async function saveGrade(
   if (criteria.length > 0) {
     // Total (bonus inclus) ramené au barème puis plafonné à ce barème (`computeTotals`).
     const autoValidatedIds = assessment.auto_validated_criterion_ids;
-    scores = readScores(formData.entries(), criteria);
+    scores = mergedScores ?? readScores(formData.entries(), criteria);
     for (const id of autoValidatedIds) delete scores[id];
-    // Copie sans aucun critère noté (ex. seulement des commentaires) : pas de note, jamais un faux 0.
-    value = hasScoredInput(criteria, scores, autoValidatedIds)
-      ? computeTotals(criteria, scores, { autoValidatedIds, maxScore: assessment.max_score }).value
-      : null;
+    // Copie sans aucun critère noté, ou seulement en partie : pas de note (« en cours »), jamais un
+    // faux 0 ni une note partielle dans les moyennes. Une absence posée a sa propre règle plus bas.
+    value =
+      gradingProgress(criteria, scores, autoValidatedIds).state === "complete"
+        ? computeTotals(criteria, scores, { autoValidatedIds, maxScore: assessment.max_score })
+            .value
+        : null;
   } else if (attendance !== "present") {
     value = null;
   } else if (bonusBands) {
@@ -399,12 +461,6 @@ async function saveGrade(
     memberOverrides = readMemberOverrides(formData, members);
     if ("error" in memberOverrides) return { error: memberOverrides.error };
   }
-
-  const match = target.studentId
-    ? { assessment_id: assessmentId, student_id: target.studentId }
-    : { assessment_id: assessmentId, student_group_id: target.studentGroupId };
-
-  const { data: existing } = await supabase.from("grade").select("id").match(match).maybeSingle();
 
   const row = {
     assessment_id: assessmentId,
@@ -450,7 +506,7 @@ async function saveGrade(
 
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}`);
-  return { saved: true };
+  return { saved: true, base: returnedBase, elsewhere };
 }
 
 /**

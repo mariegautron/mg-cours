@@ -61,7 +61,7 @@ export function ResultsActions({
           href={`/api/modules/${moduleId}/assessments/${assessmentId}/results`}
           doneLabel="Résultats téléchargés."
         >
-          Exporter les résultats (PDF)
+          PDF de toute la classe
         </DownloadButton>
         <AlertDialog>
           <AlertDialogTrigger asChild>

@@ -10,8 +10,11 @@ import { listAllAssessments } from "@/lib/assessments/queries";
 
 export const metadata: Metadata = { title: "Évaluations" };
 
-export default async function AssessmentsPage() {
-  const assessments = await listAllAssessments();
+export default async function AssessmentsPage({ searchParams }: PageProps<"/assessments">) {
+  const { filtre } = await searchParams;
+  const all = await listAllAssessments();
+  const toGrade = filtre === "a-noter";
+  const assessments = toGrade ? all.filter((a) => a.gradeCount === 0) : all;
 
   return (
     <div className="space-y-6">
@@ -30,10 +33,23 @@ export default async function AssessmentsPage() {
           <Button asChild variant="secondary">
             <Link href="/assessments/comments">
               <MessageSquareText aria-hidden />
-              Commentaires
+              Phrases
             </Link>
           </Button>
         </div>
+      </div>
+
+      <div role="group" aria-label="Filtre" className="flex flex-wrap gap-2">
+        <Button asChild size="sm" variant={toGrade ? "outline" : "default"}>
+          <Link href="/assessments" aria-current={toGrade ? undefined : "true"}>
+            Toutes ({all.length})
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant={toGrade ? "default" : "outline"}>
+          <Link href="/assessments?filtre=a-noter" aria-current={toGrade ? "true" : undefined}>
+            À noter ({all.filter((a) => a.gradeCount === 0).length})
+          </Link>
+        </Button>
       </div>
 
       {assessments.length === 0 ? (

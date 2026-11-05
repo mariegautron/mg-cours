@@ -16,7 +16,7 @@ describe("correctionProgress", () => {
       { corrected: true, dirty: true },
       { corrected: false, dirty: true },
     ]);
-    expect(p).toEqual({ done: 2, total: 3, label: "2/3 corrigées", dirty: 2 });
+    expect(p).toEqual({ done: 2, total: 3, label: "2/3 corrigées", dirty: 2, inProgress: 0 });
   });
 
   it("accorde au singulier jusqu'à une copie corrigée", () => {

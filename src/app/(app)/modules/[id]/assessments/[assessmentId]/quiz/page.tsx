@@ -249,8 +249,13 @@ export default async function QuizPage({
                 </form>
               </>
             ) : null}
-            <Button asChild size="touch">
-              <Link href={`${back}/quiz/links`}>Préparer les liens personnels</Link>
+            {submitted > 0 ? (
+              <Button asChild size="touch">
+                <Link href={`${back}/quiz/links#follow`}>Relire les copies ({submitted})</Link>
+              </Button>
+            ) : null}
+            <Button asChild size="touch" variant={submitted > 0 ? "secondary" : "default"}>
+              <Link href={`${back}/quiz/links`}>Donner accès : préparer les liens personnels</Link>
             </Button>
           </div>
         </section>

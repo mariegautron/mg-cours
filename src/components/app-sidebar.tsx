@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookMarked, GraduationCap, Library, Settings, Sun } from "lucide-react";
+import { BookMarked, ClipboardCheck, GraduationCap, Library, Settings, Sun } from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
 import { ModuleSideNav } from "@/components/modules/module-side-nav";
@@ -36,6 +36,7 @@ const LOOK: Record<MenuKey, { icon: typeof Sun; tone: keyof typeof CHIP }> = {
   modules: { icon: BookMarked, tone: "coral" },
   students: { icon: GraduationCap, tone: "sky" },
   library: { icon: Library, tone: "mint" },
+  assessments: { icon: ClipboardCheck, tone: "sun" },
   settings: { icon: Settings, tone: "violet" },
 };
 

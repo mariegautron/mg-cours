@@ -311,7 +311,7 @@ export function CorrectionOverview({
               </Button>
               {phrasesHref ? (
                 <Button asChild variant="ghost" size="touch" className="mt-2 w-full">
-                  <Link href={phrasesHref}>Phrases de correction</Link>
+                  <Link href={phrasesHref}>Phrases</Link>
                 </Button>
               ) : null}
             </section>

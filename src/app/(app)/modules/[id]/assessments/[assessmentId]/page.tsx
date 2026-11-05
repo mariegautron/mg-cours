@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileDown, ListChecks, Mic, Pencil, Presentation } from "lucide-react";
+import {
+  ClipboardCheck,
+  Download,
+  FileDown,
+  ListChecks,
+  Mic,
+  Pencil,
+  Presentation,
+} from "lucide-react";
 
 import {
   buildSessionSections,
@@ -316,13 +324,20 @@ export default async function AssessmentPage({
               </Link>
             </Button>
           ) : null}
+          {assessment.grading_grid || quiz ? (
+            <Button asChild>
+              <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
+                <ClipboardCheck aria-hidden />
+                {overview.done + overview.inProgress > 0 ? "Continuer la correction" : "Corriger"}
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild variant="secondary">
             <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
               <Pencil aria-hidden />
               Modifier
             </Link>
           </Button>
-          <DeleteAssessmentButton moduleId={id} assessmentId={assessmentId} />
           <Button asChild variant="ghost">
             <Link href={`/modules/${id}/assessments`}>← Les évaluations</Link>
           </Button>
@@ -532,7 +547,7 @@ export default async function AssessmentPage({
                   </strong>
                 </div>
                 <Button asChild variant="ghost">
-                  <Link href="/assessments/comments">Mes phrases pour cette grille</Link>
+                  <Link href="/assessments/comments">Phrases</Link>
                 </Button>
               </section>
 
@@ -774,7 +789,7 @@ export default async function AssessmentPage({
                   </Link>
                 </Button>
                 <Button asChild variant="ghost">
-                  <Link href="/assessments/comments">Mes phrases pour cette grille</Link>
+                  <Link href="/assessments/comments">Phrases</Link>
                 </Button>
               </div>
             </section>
@@ -907,6 +922,10 @@ export default async function AssessmentPage({
           />
         </>
       )}
+
+      <div className="border-t pt-4">
+        <DeleteAssessmentButton moduleId={id} assessmentId={assessmentId} />
+      </div>
     </div>
   );
 }

@@ -14,15 +14,15 @@ describe("menuFormForWidth", () => {
 });
 
 describe("entriesForForm", () => {
-  it("menu complet et rail : les cinq entrées", () => {
-    expect(entriesForForm("full").main).toHaveLength(5);
-    expect(entriesForForm("rail").main).toHaveLength(5);
+  it("menu complet et rail : les six entrées", () => {
+    expect(entriesForForm("full").main).toHaveLength(6);
+    expect(entriesForForm("rail").main).toHaveLength(6);
     expect(entriesForForm("rail").drawer).toEqual([]);
   });
   it("barre du bas : quatre entrées, le reste dans le tiroir, rien de perdu", () => {
     const { main, drawer } = entriesForForm("bottom");
     expect(main.map((e) => e.key)).toEqual(["dashboard", "modules", "students", "library"]);
-    expect(drawer.map((e) => e.key)).toEqual(["settings"]);
+    expect(drawer.map((e) => e.key)).toEqual(["assessments", "settings"]);
     expect([...main, ...drawer]).toEqual(MENU_ENTRIES);
   });
 });

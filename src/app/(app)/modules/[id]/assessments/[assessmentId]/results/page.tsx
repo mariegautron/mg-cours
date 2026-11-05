@@ -56,8 +56,25 @@ export default async function ResultsPage({
     ? targets.length
     : targets.reduce((n, t) => n + t.students.length, 0);
   const values = grades.filter((g) => g.value !== null).map((g) => g.value as number);
-  const done = values.length;
-  const allDone = total > 0 && done >= total;
+  // Excusé·e = traité (même règle que la page de correction) ; une copie commencée mais incomplète
+  // n'a pas de note et ne compte pas : elle bloque l'envoi.
+  const done = grades.filter((g) => g.value !== null || g.attendance === "absent_excused").length;
+  const names = new Map<string, string>(
+    assessment.groups.flatMap((g) => [
+      [g.id, g.name] as [string, string],
+      ...g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as [string, string]),
+    ]),
+  );
+  const incomplete = grades
+    .filter(
+      (g) =>
+        g.value === null &&
+        g.attendance === "present" &&
+        Object.keys((g.scores ?? {}) as Record<string, unknown>).length > 0,
+    )
+    .map((g) => names.get(g.student_group_id ?? g.student_id ?? "") ?? "Copie")
+    .sort((a, b) => a.localeCompare(b, "fr"));
+  const allDone = total > 0 && done >= total && incomplete.length === 0;
   const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
 
   const absences = [...grades.map((g) => g.attendance), ...overrides.map((o) => o.attendance)];
@@ -72,6 +89,15 @@ export default async function ResultsPage({
       ok: allDone,
       status: allDone ? "Prêt" : "À finir",
     },
+    ...(incomplete.length > 0
+      ? [
+          {
+            label: `Copies incomplètes, sans note : ${incomplete.join(", ")}`,
+            ok: false,
+            status: "À finir",
+          },
+        ]
+      : []),
     { label: `Mots personnels ajoutés (${words})`, ok: true, status: "Prêt" },
     {
       label: `Absent·e non prévenu·e : note 0 (${unexcused})`,
@@ -153,7 +179,15 @@ export default async function ResultsPage({
             <h2 id="pre" className="text-lg font-semibold">
               Comment envoyer ?
             </h2>
-            {hasGrades ? (
+            {incomplete.length > 0 ? (
+              <p role="alert" className="text-sm font-medium">
+                L’envoi est bloqué : {incomplete.length} copie
+                {incomplete.length > 1 ? "s sont" : " est"} incomplète
+                {incomplete.length > 1 ? "s" : ""} ({incomplete.join(", ")}). Termine la correction
+                pour pouvoir envoyer.
+              </p>
+            ) : null}
+            {hasGrades && incomplete.length === 0 ? (
               <PublishResults
                 moduleId={id}
                 assessmentId={assessmentId}
@@ -178,7 +212,7 @@ export default async function ResultsPage({
             <ResultsActions
               moduleId={id}
               assessmentId={assessmentId}
-              hasGrades={hasGrades}
+              hasGrades={hasGrades && incomplete.length === 0}
               recipients={recipients}
               sentAt={assessment.results_sent_at}
             />

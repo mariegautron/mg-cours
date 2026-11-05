@@ -53,6 +53,8 @@ export function OralStage({
   );
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  // Groupes dont le chronomètre a démarré : leur statut passe à « en cours ».
+  const [started, setStarted] = useState<Set<string>>(new Set());
 
   const index = Math.max(
     0,
@@ -96,7 +98,11 @@ export function OralStage({
           </h2>
           <div className="flex items-center gap-2">
             <Badge variant={active.status === "done" ? "default" : "outline"}>
-              {active.status === "done" ? "passé" : "à passer"}
+              {active.status === "done"
+                ? "passé"
+                : started.has(active.id)
+                  ? "en cours"
+                  : "à passer"}
             </Badge>
             {active.start && active.end ? (
               <span className="text-muted-foreground text-sm">
@@ -135,7 +141,11 @@ export function OralStage({
         </div>
       </section>
 
-      <OralTimer key={active.id} durationMinutes={active.effectiveMinutes} />
+      <OralTimer
+        key={active.id}
+        durationMinutes={active.effectiveMinutes}
+        onStart={() => setStarted((prev) => new Set(prev).add(active.id))}
+      />
 
       <section aria-labelledby="stage-grid" className="space-y-3">
         <h2 id="stage-grid" className="sr-only">

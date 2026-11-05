@@ -191,6 +191,108 @@ export default async function ModuleAssessmentsPage({
         />
       ) : (
         <>
+          <section aria-labelledby="assessments-list">
+            <h2 id="assessments-list" className="font-heading mb-3 text-xl font-bold">
+              Évaluations ({assessments.length})
+            </h2>
+            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {[...cards, ...makeups].map((a) => {
+                const frame = frameStatus({
+                  objective: a.objective,
+                  subject: a.subject,
+                  deliverableMd: a.deliverable_md,
+                  evaluatedMd: a.evaluated_md,
+                  isOral: a.project_role === "oral",
+                  date: a.date,
+                  oralStartTime: a.oral_start_time,
+                });
+                return (
+                  <li key={a.id} className={`${card} flex flex-col`}>
+                    <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+                      <h3 id={`ev-${a.id}`} className="font-heading min-w-0 text-lg font-bold">
+                        <Link
+                          href={`/modules/${id}/assessments/${a.id}`}
+                          className="focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                        >
+                          {a.title}
+                        </Link>
+                      </h3>
+                      <span className="flex flex-wrap gap-1.5">
+                        <Pill>{a.is_group_grade ? "Groupe ×1" : "Individuelle ×3"}</Pill>
+                        {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground mb-1 text-[0.8rem]">
+                      {a.makeup_of_id ? "Rattrapage · " : ""}
+                      {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
+                      {a.type ? `${a.type} · ` : ""}coefficient {a.coefficient} ·{" "}
+                      {a.groups.map((g) => g.name).join(", ") || "—"} · sur {a.maxScore}
+                      {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
+                      {dueSessions.has(a.id) ? "" : ""}
+                    </p>
+                    <StatusRow label="Cadre pour les étudiant·es" status={frame} />
+                    <StatusRow
+                      label="Grille de correction"
+                      status={gridStatus(a.grading_grid?.name ?? null)}
+                    />
+                    {evaluated.available ? (
+                      <StatusRow
+                        label="Attendus évalués"
+                        status={{
+                          tone: (evaluated.byAssessment.get(a.id)?.length ?? 0) > 0 ? "ok" : "warn",
+                          label: evaluatedLabel(
+                            evaluated.byAssessment.get(a.id)?.length ?? 0,
+                            expectationCount,
+                          ),
+                        }}
+                      />
+                    ) : null}
+                    <StatusRow
+                      label="Notes"
+                      status={
+                        a.gradeCount > 0
+                          ? { tone: "ok", label: "Notée" }
+                          : { tone: "warn", label: "À noter" }
+                      }
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        asChild
+                        variant={frame.tone === "ok" ? "default" : "outline"}
+                        className="min-w-0 flex-1"
+                      >
+                        <Link
+                          href={
+                            frame.tone === "ok"
+                              ? `/modules/${id}/assessments/${a.id}/correct`
+                              : `/modules/${id}/assessments/${a.id}`
+                          }
+                          aria-describedby={`ev-${a.id}`}
+                        >
+                          {frame.tone !== "ok"
+                            ? "Préparer"
+                            : a.gradeCount > 0
+                              ? "Continuer la correction"
+                              : "Corriger"}
+                        </Link>
+                      </Button>
+                      {a.gradeCount > 0 ? (
+                        <Button asChild variant="outline">
+                          <Link
+                            href={`/modules/${id}/assessments/${a.id}/results`}
+                            aria-describedby={`ev-${a.id}`}
+                          >
+                            Voir les résultats
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
           {courses.length > 0 ? (
             <section aria-labelledby="mxt" className={card}>
               <h2 id="mxt" className="font-heading mb-3 text-xl font-bold">
@@ -299,88 +401,6 @@ export default async function ModuleAssessmentsPage({
               </p>
             </section>
           ) : null}
-
-          <section aria-labelledby="assessments-list">
-            <h2 id="assessments-list" className="font-heading mb-3 text-xl font-bold">
-              Évaluations ({assessments.length})
-            </h2>
-            <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {[...cards, ...makeups].map((a) => {
-                const frame = frameStatus({
-                  objective: a.objective,
-                  subject: a.subject,
-                  deliverableMd: a.deliverable_md,
-                  evaluatedMd: a.evaluated_md,
-                  isOral: a.project_role === "oral",
-                  date: a.date,
-                  oralStartTime: a.oral_start_time,
-                });
-                return (
-                  <li key={a.id} className={`${card} flex flex-col`}>
-                    <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
-                      <h3 id={`ev-${a.id}`} className="font-heading min-w-0 text-lg font-bold">
-                        <Link
-                          href={`/modules/${id}/assessments/${a.id}`}
-                          className="focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
-                        >
-                          {a.title}
-                        </Link>
-                      </h3>
-                      <span className="flex flex-wrap gap-1.5">
-                        <Pill>{a.is_group_grade ? "Groupe ×1" : "Individuelle ×3"}</Pill>
-                        {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground mb-1 text-[0.8rem]">
-                      {a.makeup_of_id ? "Rattrapage · " : ""}
-                      {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
-                      {a.type ? `${a.type} · ` : ""}coefficient {a.coefficient} ·{" "}
-                      {a.groups.map((g) => g.name).join(", ") || "—"} · sur {a.maxScore}
-                      {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
-                      {dueSessions.has(a.id) ? "" : ""}
-                    </p>
-                    <StatusRow label="Cadre pour les étudiant·es" status={frame} />
-                    <StatusRow
-                      label="Grille de correction"
-                      status={gridStatus(a.grading_grid?.name ?? null)}
-                    />
-                    {evaluated.available ? (
-                      <StatusRow
-                        label="Attendus évalués"
-                        status={{
-                          tone: (evaluated.byAssessment.get(a.id)?.length ?? 0) > 0 ? "ok" : "warn",
-                          label: evaluatedLabel(
-                            evaluated.byAssessment.get(a.id)?.length ?? 0,
-                            expectationCount,
-                          ),
-                        }}
-                      />
-                    ) : null}
-                    <StatusRow
-                      label="Notes"
-                      status={
-                        a.gradeCount > 0
-                          ? { tone: "ok", label: "Notée" }
-                          : { tone: "warn", label: "À noter" }
-                      }
-                    />
-                    <Button
-                      asChild
-                      variant={frame.tone === "ok" ? "outline" : "default"}
-                      className="mt-3 w-full"
-                    >
-                      <Link
-                        href={`/modules/${id}/assessments/${a.id}`}
-                        aria-describedby={`ev-${a.id}`}
-                      >
-                        Préparer
-                      </Link>
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
         </>
       )}
 
@@ -388,6 +408,9 @@ export default async function ModuleAssessmentsPage({
         <section aria-labelledby="averages" className={card}>
           <h2 id="averages" className="font-heading mb-3 text-xl font-bold">
             Moyennes pondérées
+            {averages.some((a) => a.noted < a.expected) ? (
+              <span className="text-sun ml-2 text-base font-semibold">· provisoires</span>
+            ) : null}
           </h2>
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-sm">
@@ -402,7 +425,7 @@ export default async function ModuleAssessmentsPage({
                 </tr>
               </thead>
               <tbody>
-                {averages.map(({ student, average, bonusEffect }) => (
+                {averages.map(({ student, average, bonusEffect, noted, expected }) => (
                   <tr key={student.id} className="border-t">
                     <td className="p-2">
                       <Link
@@ -414,6 +437,11 @@ export default async function ModuleAssessmentsPage({
                     </td>
                     <td className="p-2">
                       {average.average !== null ? average.average.toFixed(2) : "—"}
+                      {noted < expected ? (
+                        <span className="text-sun block text-xs font-semibold">
+                          provisoire : {noted} note{noted > 1 ? "s" : ""} sur {expected}
+                        </span>
+                      ) : null}
                       {bonusEffect !== null && bonusEffect >= 0.005 ? (
                         <span className="text-muted-foreground block text-xs">
                           dont bonus certification +{bonusEffect.toFixed(2)}

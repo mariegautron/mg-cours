@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non connectée" }, { status: 401 });
 
-  const [students, modules, resources, questions, courses] = await Promise.all([
+  const [students, modules, resources, questions, courses, assessments] = await Promise.all([
     supabase.from("student").select("id, first_name, last_name, scholar_group"),
     supabase.from("module").select("id, name, ycode, year"),
     supabase.from("resource").select("id, title").is("archived_at", null),
@@ -37,6 +37,7 @@ export async function GET(req: Request) {
     supabase
       .from("course")
       .select("id, title, position, module_id, module:module_id(name, archived_at)"),
+    supabase.from("assessment").select("id, title, module_id, module:module_id(name, archived_at)"),
   ]);
 
   const candidates: SearchCandidate[] = [
@@ -65,6 +66,22 @@ export async function GET(req: Request) {
         detail: `${(c.module as { name: string } | null)?.name ?? ""} · Séance ${number}`,
         terms: [`séance ${number}`, `seance ${number}`],
         href: `/modules/${c.module_id}/courses/${c.id}/start`,
+      })),
+    // Évaluations : par titre ou module, ou « corriger » ; ouvertes directement sur la correction.
+    ...(assessments.data ?? [])
+      .filter((a) => !(a.module as { archived_at: string | null } | null)?.archived_at)
+      .map((a) => ({
+        kind: "assessment" as const,
+        id: a.id,
+        label: `Corriger ${a.title}`,
+        detail: (a.module as { name: string } | null)?.name ?? undefined,
+        terms: [
+          a.title,
+          "corriger",
+          "évaluation",
+          (a.module as { name: string } | null)?.name ?? "",
+        ],
+        href: `/modules/${a.module_id}/assessments/${a.id}/correct`,
       })),
     ...(questions.data ?? []).map((x) => ({ kind: "question" as const, id: x.id, label: x.name })),
   ];
