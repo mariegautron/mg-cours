@@ -261,6 +261,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     </section>
   ) : null;
 
+  const rank = (moduleId: string) => {
+    const p = progress.get(moduleId);
+    if (p && p.total && p.done > 0 && p.done < p.total) return 0;
+    if (moduleId === focusFrom?.id) return 1;
+    return 2;
+  };
+
   const modulesCard = (
     <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
       <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
@@ -270,22 +277,28 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <p className="text-muted-foreground mb-2 text-sm">Aucun module actif pour l’instant.</p>
       ) : (
         <ul className="mb-2 space-y-2">
-          {activeModules.slice(0, 3).map((m) => {
-            const p = progress.get(m.id);
-            return (
-              <li key={m.id}>
-                <Link
-                  href={`/modules/${m.id}`}
-                  className="font-semibold underline-offset-2 hover:underline"
-                >
-                  {m.name}
-                </Link>
-                {p && p.total ? (
-                  <p className="text-muted-foreground text-sm">{progressLabel(p.done, p.total)}</p>
-                ) : null}
-              </li>
-            );
-          })}
+          {/* Le module réellement en cours (séances commencées, pas finies) passe avant ceux « à préparer ». */}
+          {[...activeModules]
+            .sort((a, b) => rank(a.id) - rank(b.id))
+            .slice(0, 3)
+            .map((m) => {
+              const p = progress.get(m.id);
+              return (
+                <li key={m.id}>
+                  <Link
+                    href={`/modules/${m.id}`}
+                    className="font-semibold underline-offset-2 hover:underline"
+                  >
+                    {m.name}
+                  </Link>
+                  {p && p.total ? (
+                    <p className="text-muted-foreground text-sm">
+                      {progressLabel(p.done, p.total)}
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
         </ul>
       )}
       <Link href="/modules" className={BTN}>

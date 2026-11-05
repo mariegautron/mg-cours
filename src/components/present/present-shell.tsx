@@ -98,6 +98,8 @@ export function PresentShell({
   const [scaleIndex, setScaleIndex] = useState(2);
   const [index, setIndex] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
+  // Le texte s'adapte à la largeur de l'écran projeté : 1280 px = taille de référence.
+  const [fit, setFit] = useState(1);
   const rootRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const indexRef = useRef(0);
@@ -125,6 +127,13 @@ export function PresentShell({
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     // eslint-disable-next-line react-hooks/exhaustive-deps -- lu une seule fois, après hydratation
+  }, []);
+
+  useEffect(() => {
+    const update = () => setFit(Math.min(1.5, Math.max(1, window.innerWidth / 1280)));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
   // Vue présentatrice (US-64) : la fenêtre projetée annonce sa diapositive et obéit aux « go ».
@@ -222,7 +231,8 @@ export function PresentShell({
   }, [changeMode, changeScale, go, index, mode, toggleFullscreen, tocOpen, total]);
 
   const current = slides[index];
-  const scale = SCALES[scaleIndex];
+  const scale = SCALES[scaleIndex] * fit;
+  const shownScale = SCALES[scaleIndex];
   // Lecture continue : sans les diapos réservées au mode diapositives (mini-QCM).
   const docSlides = slides.filter((s) => !s.slidesOnly);
   const hasSlidesOnly = docSlides.length < slides.length;
@@ -234,7 +244,7 @@ export function PresentShell({
   }, []);
 
   return (
-    <div ref={rootRef} className="bg-background text-foreground flex min-h-dvh flex-col">
+    <div ref={rootRef} className="bg-background text-foreground flex h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
         <Button asChild variant="ghost" size="touch">
           <Link href={backHref}>
@@ -291,7 +301,9 @@ export function PresentShell({
           >
             <Minus aria-hidden />
           </Button>
-          <span className="w-12 text-center text-sm tabular-nums">{Math.round(scale * 100)} %</span>
+          <span className="w-12 text-center text-sm tabular-nums">
+            {Math.round(shownScale * 100)} %
+          </span>
           <Button
             type="button"
             size="icon-touch"

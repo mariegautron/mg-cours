@@ -77,11 +77,14 @@ export default async function CourseClosePage({
           <ul className="divide-y text-sm">
             {observations.map((o) => (
               <li key={o.id} className="flex flex-wrap justify-between gap-2 py-1.5">
-                <span>
+                <span className="min-w-0">
                   <strong>
                     {o.student ? `${o.student.first_name} ${o.student.last_name}` : "—"}
                   </strong>{" "}
                   · {OBSERVATION_TAG_LABELS[o.tag]}
+                  {o.note?.trim() ? (
+                    <span className="text-muted-foreground block">« {o.note.trim()} »</span>
+                  ) : null}
                 </span>
                 <span className="text-muted-foreground">{time(o.created_at)}</span>
               </li>

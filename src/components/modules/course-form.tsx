@@ -187,7 +187,7 @@ export function CourseForm({
 
       {state.error ? <ActionError error={state.error} /> : null}
 
-      <div className="flex gap-3">
+      <div className="bg-background/95 sticky bottom-0 z-10 -mx-4 flex gap-3 border-t px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           Enregistrer
         </PendingButton>

@@ -120,7 +120,7 @@ export default async function ClosedCoursePage({
           <div className="flex flex-col gap-2">
             {next ? (
               <Button asChild size="touch">
-                <Link href={`/modules/${id}/courses/${next.id}/edit`}>
+                <Link href={`/modules/${id}/courses/${next.id}/start`}>
                   Préparer la séance {position + 2}
                   <span className="sr-only"> : {next.title}</span>
                 </Link>
@@ -159,10 +159,27 @@ export default async function ClosedCoursePage({
           <h2 id="next-time" className="font-heading text-xl font-semibold">
             Pour la prochaine fois
           </h2>
-          <NextTimeForm
-            action={saveNextTime.bind(null, id, courseId)}
-            value={course.next_time ?? ""}
-          />
+          {course.next_time?.trim() ? (
+            // Déjà saisie à la clôture : on l'affiche, on ne la redemande pas.
+            <>
+              <p className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                {course.next_time.trim()}
+              </p>
+              <details className="text-sm">
+                <summary className="min-h-11 cursor-pointer py-2 font-medium underline underline-offset-2">
+                  Modifier la consigne
+                </summary>
+                <div className="pt-2">
+                  <NextTimeForm
+                    action={saveNextTime.bind(null, id, courseId)}
+                    value={course.next_time}
+                  />
+                </div>
+              </details>
+            </>
+          ) : (
+            <NextTimeForm action={saveNextTime.bind(null, id, courseId)} value="" />
+          )}
         </section>
       </div>
     </div>

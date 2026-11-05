@@ -109,7 +109,7 @@ export async function updateCourse(
   await syncResources(supabase, courseId, parsed.data.resourceIds);
 
   revalidatePath(`/modules/${moduleId}`, "layout");
-  redirect(`/modules/${moduleId}/courses/${courseId}`);
+  redirect(`/modules/${moduleId}/courses/${courseId}?saved=1`);
 }
 
 export async function deleteCourse(moduleId: string, courseId: string) {

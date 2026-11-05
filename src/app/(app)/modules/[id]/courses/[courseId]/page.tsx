@@ -47,8 +47,10 @@ const BTN =
 
 export default async function CoursePage({
   params,
+  searchParams,
 }: PageProps<"/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
+  const saved = (await searchParams).saved === "1";
   const [
     mod,
     courses,
@@ -147,6 +149,11 @@ export default async function CoursePage({
               <h1 id="ws" className="font-heading text-2xl font-bold">
                 {course.title}
               </h1>
+              {saved ? (
+                <p role="status" className="text-mint text-sm font-semibold">
+                  Enregistré.
+                </p>
+              ) : null}
               {course.completion ? (
                 <p className="mt-1">
                   <Pill tone={course.completion === "done" ? "ok" : "warn"}>

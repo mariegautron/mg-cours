@@ -30,15 +30,21 @@ export async function importCourses(
   ]);
   if (!target || !source) return { error: NOT_FOUND.module };
 
-  const [{ data: sourceCourses }, { data: existing }] = await Promise.all([
+  const [{ data: sourceCourses }, { data: existing }, plansResult] = await Promise.all([
     supabase
       .from("course")
       .select(
-        "id, title, type, position, learning_objectives, animation_notes, assessment_notes, material, course_resource(resource_id, role)",
+        "id, title, type, position, learning_objectives, animation_notes, assessment_notes, material, course_resource(resource_id, role, activity_type, duration_minutes, pedagogical_objective)",
       )
       .eq("module_id", sourceId),
     supabase.from("course").select("position").eq("module_id", moduleId),
+    // Ordre du déroulé et livrable de chaque séance (table absente : on importe sans).
+    supabase
+      .from("course_plan")
+      .select("course_id, deliverable, resource_order")
+      .in("course_id", courseIds),
   ]);
+  const plans = new Map((plansResult.data ?? []).map((p) => [p.course_id, p]));
 
   const rows = planCourseImport(
     (sourceCourses ?? []).map(({ course_resource, ...c }) => ({
@@ -50,7 +56,16 @@ export async function importCourses(
   );
   if (rows.length === 0) return { error: "Aucune des séances cochées n’a été trouvée." };
 
-  for (const { resourceLinks, ...row } of rows) {
+  // `planCourseImport` garde l'ordre du module source : la n-ième ligne est la n-ième séance cochée.
+  const picked = (sourceCourses ?? [])
+    .filter((c) => courseIds.includes(c.id))
+    .toSorted((a, b) => a.position - b.position);
+  const details = new Map(
+    picked.map((c) => [c.id, new Map(c.course_resource.map((l) => [l.resource_id, l]))]),
+  );
+
+  for (const [rowIndex, { resourceLinks, ...row }] of rows.entries()) {
+    const sourceCourseId = picked[rowIndex]?.id;
     const { data: created, error } = await supabase
       .from("course")
       .insert({ ...row, module_id: moduleId })
@@ -60,13 +75,29 @@ export async function importCourses(
 
     if (resourceLinks.length) {
       const { error: linkError } = await supabase.from("course_resource").insert(
-        resourceLinks.map((l) => ({
-          course_id: created.id,
-          resource_id: l.resource_id,
-          role: l.role,
-        })),
+        resourceLinks.map((l) => {
+          const d = sourceCourseId ? details.get(sourceCourseId)?.get(l.resource_id) : undefined;
+          return {
+            course_id: created.id,
+            resource_id: l.resource_id,
+            role: l.role,
+            activity_type: d?.activity_type ?? null,
+            duration_minutes: d?.duration_minutes ?? null,
+            pedagogical_objective: d?.pedagogical_objective ?? null,
+          };
+        }),
       );
       if (linkError) return { error: "Les ressources d’une séance n’ont pas pu être liées." };
+    }
+
+    // Conserve l'ordre du déroulé et le livrable de la séance source.
+    const plan = sourceCourseId ? plans.get(sourceCourseId) : undefined;
+    if (plan) {
+      await supabase.from("course_plan").insert({
+        course_id: created.id,
+        deliverable: plan.deliverable,
+        resource_order: plan.resource_order,
+      });
     }
   }
 
