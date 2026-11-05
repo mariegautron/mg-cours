@@ -222,6 +222,23 @@ export function parseMarkdown(source: string): Block[] {
       flushPara();
       continue;
     }
+    // Ligne indentée juste sous un point de liste : suite du même point (retour à la ligne dans le
+    // texte source), pas un paragraphe à part.
+    const prev = i > 0 ? lines[i - 1] : "";
+    if (
+      listStack.length &&
+      !para.length &&
+      /^\s+\S/.test(line) &&
+      prev.trim() !== "" &&
+      (LIST_ITEM.test(prev) || /^\s+\S/.test(prev))
+    ) {
+      const items = listStack[listStack.length - 1].list.items;
+      const last = items[items.length - 1];
+      if (last) {
+        last.runs = [...last.runs, ...parseInline(` ${line.trim()}`)];
+        continue;
+      }
+    }
     listStack = [];
     para.push(line.trim());
   }

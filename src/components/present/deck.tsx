@@ -87,11 +87,19 @@ export function markdownSlides(
   // en classe ; ils restent dans la fiche des étudiant·es, mais ne sont pas projetés.
   const specs = allSpecs.filter((s) => !RECAP_TITLE.test(slideTitle(s.blocks) ?? ""));
   const first = specs[0];
-  const repeatsCover =
+  const sameAsCover =
     !!coverTitle &&
-    first?.blocks.length === 1 &&
+    !!first &&
     slideTitle(first.blocks)?.toLowerCase() === coverTitle.trim().toLowerCase();
-  return (repeatsCover ? specs.slice(1) : specs).map(({ blocks, reminder, part, role }) => ({
+  // Titre identique à la couverture : seul, la diapo est omise ; avec du contenu, on retire juste
+  // le titre répété (le contenu reste).
+  const shown =
+    sameAsCover && first.blocks.length === 1
+      ? specs.slice(1)
+      : sameAsCover
+        ? [{ ...first, blocks: first.blocks.slice(1), role: null }, ...specs.slice(1)]
+        : specs;
+  return shown.map(({ blocks, reminder, part, role }) => ({
     section,
     label: slideTitle(blocks) ?? (reminder ? `${reminder} (suite)` : null),
     node: (
