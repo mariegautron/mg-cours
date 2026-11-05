@@ -73,6 +73,8 @@ const ROLE_FRAME: Record<SlideRole, string> = {
   schema: "",
 };
 
+const RECAP_TITLE = /^(points? cl[ée]s?|[àa] retenir|r[ée]sum[ée]|en bref|bilan)\s*$/i;
+
 export function markdownSlides(
   section: number,
   source: string,
@@ -80,7 +82,10 @@ export function markdownSlides(
   /** Titre déjà porté par l'intercalaire : une première diapo « titre seul » identique est omise. */
   coverTitle?: string,
 ): PresentSlide[] {
-  const specs = buildSlides(parseMarkdown(source));
+  const allSpecs = buildSlides(parseMarkdown(source));
+  // Résumés de fin de fiche (« Points clés », « À retenir ») : ils répètent ce qui vient d'être dit
+  // en classe ; ils restent dans la fiche des étudiant·es, mais ne sont pas projetés.
+  const specs = allSpecs.filter((s) => !RECAP_TITLE.test(slideTitle(s.blocks) ?? ""));
   const first = specs[0];
   const repeatsCover =
     !!coverTitle &&

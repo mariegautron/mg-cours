@@ -219,6 +219,13 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
       // Un titre seul n'est pas fermé par `---` : il reste avec son contenu (sinon diapo « un mot »).
       if (!headingOnly()) flush();
     } else if (block.type === "heading") {
+      // Un titre de section suivi aussitôt d'un sous-titre n'a pas de diapo à lui : le sous-titre
+      // porte déjà ce titre en rappel (sinon, une diapo d'un seul titre sans contenu).
+      const lead = current[0];
+      if (headingOnly() && lead.type === "heading" && lead.level < block.level) {
+        current = [];
+        used = 0;
+      }
       flush();
       if (block.level <= 2) section = runsText(block.runs).trim() || null;
       current = [block];
