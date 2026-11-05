@@ -16,7 +16,7 @@ import type { Block, InlineRun } from "@/lib/pdf/markdown";
  */
 
 /** Lignes de texte (estimées) qu'une diapo peut porter avant d'être coupée. */
-export const MAX_SLIDE_LINES = 11;
+export const MAX_SLIDE_LINES = 9;
 /**
  * Un reste de 1-2 lignes (« mais plutôt : ») rejoint la diapo courante, quitte à la dépasser de
  * 2 lignes, plutôt que d'ouvrir une diapo quasi vide.
@@ -27,12 +27,41 @@ export const CHARS_PER_LINE = 70;
 /** Taille visée d'une tranche de code. */
 export const CODE_SLICE_LINES = 12;
 
+/** Rôle pédagogique d'une diapo, lu dans son titre (« Exemple : … », « Exercice : … »). */
+export type SlideRole = "definition" | "exemple" | "exercice" | "attention" | "schema";
+
+const ROLE_PREFIXES: [RegExp, SlideRole][] = [
+  [/^d[ée]finition\s*[:—–-]/i, "definition"],
+  [/^exemple\s*[:—–-]/i, "exemple"],
+  [/^(exercice|[àa] toi|cas pratique|mise en situation)\s*[:—–-]/i, "exercice"],
+  [/^(attention|erreur courante|pi[èe]ge)\s*[:—–-]/i, "attention"],
+  [/^sch[ée]ma\s*[:—–-]/i, "schema"],
+];
+
+export const ROLE_LABELS: Record<SlideRole, string> = {
+  definition: "Définition",
+  exemple: "Exemple",
+  exercice: "À toi",
+  attention: "Attention",
+  schema: "Schéma",
+};
+
+/** Rôle d'une diapo : celui que son titre annonce (convention d'écriture), sinon aucun. */
+export function slideRole(blocks: Block[]): SlideRole | null {
+  const first = blocks[0];
+  if (first?.type !== "heading") return null;
+  const text = runsText(first.runs).trim();
+  return ROLE_PREFIXES.find(([re]) => re.test(text))?.[1] ?? null;
+}
+
 export interface SlideSpec {
   blocks: Block[];
   /** Titre de la section, en rappel discret, quand la diapo n'ouvre pas sa section. */
   reminder: string | null;
   /** Rang de la tranche quand un bloc de code est coupé (`index` à partir de 1). */
   part: { index: number; total: number } | null;
+  /** Rôle annoncé par le titre (mise en page propre : définition, exemple, exercice…). */
+  role: SlideRole | null;
 }
 
 const runsText = (runs: InlineRun[]): string =>
@@ -163,6 +192,7 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
         blocks: current,
         reminder: opensSection ? null : section,
         part,
+        role: slideRole(current),
       });
     }
     current = [];

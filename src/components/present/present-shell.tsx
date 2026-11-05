@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 
+import { LogoMark } from "@/components/mascot";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { clampIndex, parseSyncMessage } from "@/lib/present/sync";
 import { Button } from "@/components/ui/button";
@@ -196,6 +197,11 @@ export function PresentShell({
   const docSlides = slides.filter((s) => !s.slidesOnly);
   const hasSlidesOnly = docSlides.length < slides.length;
   const docSections = new Set(docSlides.map((s) => s.section));
+  // Frise : début de chaque section (hors la première), pour situer la diapo dans la séance.
+  const sectionStarts = slides.reduce<number[]>((acc, sl, i) => {
+    if (i > 0 && sl.section !== slides[i - 1].section) acc.push(i);
+    return acc;
+  }, []);
 
   return (
     <div ref={rootRef} className="bg-background text-foreground flex min-h-dvh flex-col">
@@ -367,13 +373,29 @@ export function PresentShell({
             Précédente
           </Button>
           <div className="flex flex-1 items-center gap-3">
-            <div aria-hidden className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
-              <div
-                className="bg-primary h-full rounded-full transition-[width]"
-                style={{ width: `${((index + 1) / total) * 100}%` }}
+            <div aria-hidden className="relative h-6 flex-1">
+              <div className="bg-muted absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 overflow-hidden rounded-full">
+                <div
+                  className="bg-primary h-full rounded-full transition-[width]"
+                  style={{ width: `${((index + 1) / total) * 100}%` }}
+                />
+              </div>
+              {sectionStarts.map((start) => (
+                <span
+                  key={start}
+                  className="bg-background absolute top-1/2 h-3 w-0.5 -translate-y-1/2"
+                  style={{ left: `${(start / total) * 100}%` }}
+                />
+              ))}
+              <LogoMark
+                className="absolute top-1/2 size-6 -translate-x-1/2 -translate-y-1/2 transition-[left] motion-reduce:transition-none"
+                style={{ left: `${((index + 0.5) / total) * 100}%` }}
               />
             </div>
             <p aria-live="polite" className="text-muted-foreground text-sm tabular-nums">
+              {sections.length > 1 && sections[current.section]
+                ? `${sections[current.section]} · `
+                : ""}
               Diapositive {index + 1} sur {total}
               {current.label ? <span className="sr-only"> : {current.label}</span> : null}
             </p>

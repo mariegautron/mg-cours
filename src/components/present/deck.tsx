@@ -5,7 +5,7 @@ import type { PresentSlide } from "@/components/present/present-shell";
 import type { CadreBlock } from "@/lib/assessments/cadre";
 import type { SubjectSection } from "@/lib/assessments/subject";
 import { parseMarkdown } from "@/lib/pdf/markdown";
-import { buildSlides, slideTitle } from "@/lib/present/slides";
+import { buildSlides, ROLE_LABELS, slideTitle, type SlideRole } from "@/lib/present/slides";
 import {
   isImageMime,
   parseResourceFiles,
@@ -64,6 +64,15 @@ export function listSlide(section: number, heading: string, items: string[]): Pr
   };
 }
 
+/** Mise en page propre à chaque rôle de diapo (titre « Exemple : … », « À toi : … »…). */
+const ROLE_FRAME: Record<SlideRole, string> = {
+  definition: "border-primary bg-primary/10 rounded-3xl border-4 p-8",
+  exemple: "border-primary/60 border-l-8 pl-8",
+  exercice: "border-primary bg-primary/15 rounded-3xl border-2 border-dashed p-8",
+  attention: "rounded-3xl border-4 border-amber-500 bg-amber-500/10 p-8",
+  schema: "",
+};
+
 export function markdownSlides(
   section: number,
   source: string,
@@ -77,11 +86,16 @@ export function markdownSlides(
     !!coverTitle &&
     first?.blocks.length === 1 &&
     slideTitle(first.blocks)?.toLowerCase() === coverTitle.trim().toLowerCase();
-  return (repeatsCover ? specs.slice(1) : specs).map(({ blocks, reminder, part }) => ({
+  return (repeatsCover ? specs.slice(1) : specs).map(({ blocks, reminder, part, role }) => ({
     section,
     label: slideTitle(blocks) ?? (reminder ? `${reminder} (suite)` : null),
     node: (
-      <div className="space-y-4">
+      <div className={`space-y-4 ${role ? ROLE_FRAME[role] : ""}`}>
+        {role ? (
+          <p className="text-primary text-2xl font-bold tracking-widest uppercase">
+            {ROLE_LABELS[role]}
+          </p>
+        ) : null}
         {reminder || (part && part.index > 1) ? (
           <p className="text-muted-foreground text-2xl">
             {reminder}

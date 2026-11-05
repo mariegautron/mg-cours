@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { resolveImageSrc } from "@/lib/resources/files";
-import { cleanPaste, insertAtSelection, slidePreviews } from "@/lib/resources/paste";
+import { cleanPaste, deckWarnings, insertAtSelection, slidePreviews } from "@/lib/resources/paste";
 import {
   AUDIENCE_LABELS,
   KIND_LABELS,
@@ -107,6 +107,9 @@ export function ResourceForm({
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const deferredContent = useDeferredValue(content);
   const slides = useMemo(() => slidePreviews(deferredContent), [deferredContent]);
+  const deckNotes = useMemo(() => deckWarnings(deferredContent), [deferredContent]);
+  const [board, setBoard] = useState(false);
+  const flagged = slides.filter((sl) => sl.warnings.length).length;
 
   useEffect(() => {
     try {
@@ -729,29 +732,74 @@ export function ResourceForm({
             </div>
           </section>
           <aside aria-labelledby="slides-title" className="bg-card space-y-2 rounded-xl border p-4">
-            <h2 id="slides-title" className="font-heading text-lg font-bold">
-              Diapositives ({slides.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="slides-title" className="font-heading text-lg font-bold">
+                Diapositives ({slides.length})
+              </h2>
+              {slides.length > 0 ? (
+                <Button
+                  type="button"
+                  size="touch"
+                  variant="ghost"
+                  aria-pressed={board}
+                  onClick={() => setBoard((b) => !b)}
+                >
+                  {board ? "Voir la liste" : "Voir la planche"}
+                </Button>
+              ) : null}
+            </div>
+            {slides.length > 0 ? (
+              <p role="status" className="text-muted-foreground text-sm">
+                {flagged
+                  ? `${flagged} diapo${flagged > 1 ? "s" : ""} à regarder.`
+                  : "Aucune diapo à regarder."}
+              </p>
+            ) : null}
+            {deckNotes.map((note) => (
+              <p key={note} className="rounded-md border border-amber-500/50 p-2 text-sm">
+                {note}
+              </p>
+            ))}
             {slides.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 Les diapositives apparaissent ici dès que tu écris.
               </p>
             ) : (
-              <ol className="max-h-[32rem] space-y-2 overflow-auto">
+              <ol
+                className={cn(
+                  "max-h-[32rem] overflow-auto",
+                  board ? "grid grid-cols-2 gap-2" : "space-y-2",
+                )}
+              >
                 {slides.map((sl) => (
-                  <li key={sl.number} className="bg-card rounded-md border p-3 text-sm">
+                  <li
+                    key={sl.number}
+                    className={cn(
+                      "bg-card rounded-md border p-3 text-sm",
+                      sl.warnings.length ? "border-amber-500/70" : "",
+                      board ? "aspect-video overflow-hidden" : "",
+                    )}
+                  >
                     <p className="font-medium">
                       <span className="text-muted-foreground">{sl.number}.</span>{" "}
+                      {sl.role ? <span className="text-primary">{sl.role} · </span> : null}
                       {sl.title ?? "Sans titre"}
                     </p>
-                    {sl.summary ? <p className="text-muted-foreground mt-1">{sl.summary}</p> : null}
-                    {sl.extras.length ? (
+                    {!board && sl.summary ? (
+                      <p className="text-muted-foreground mt-1">{sl.summary}</p>
+                    ) : null}
+                    {!board && sl.extras.length ? (
                       <p className="text-muted-foreground mt-1 text-xs">
                         {sl.extras
                           .map((x) => ({ image: "Image", table: "Tableau", code: "Code" })[x])
                           .join(" · ")}
                       </p>
                     ) : null}
+                    {sl.warnings.map((w) => (
+                      <p key={w} className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                        {w}
+                      </p>
+                    ))}
                   </li>
                 ))}
               </ol>

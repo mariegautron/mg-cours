@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diapos : audit et idées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Idée : un dossier de décision. Colonne de lecture centrée, une carte par sujet, le verdict de Marie en tête de carte. */
+:root {
+  --bg: #f7f6fb;
+  --surface: #ffffff;
+  --ink: #1d1b2e;
+  --muted: #5d5a73;
+  --line: #dedbea;
+  --accent: #5b3fd1;
+  --accent-soft: #ebe6fb;
+  --ok: #17794a;
+  --ok-soft: #dff3e8;
+  --warn: #8a5a00;
+  --warn-soft: #fbefd0;
+  --no: #a3273b;
+  --no-soft: #fae1e5;
+  --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14121f; --surface: #1d1a2d; --ink: #ece9fa; --muted: #a9a5c4; --line: #36324d;
+    --accent: #a995ff; --accent-soft: #2c2650;
+    --ok: #6fd6a0; --ok-soft: #173a29; --warn: #f0c36a; --warn-soft: #3b2e10; --no: #ff8fa1; --no-soft: #411b25;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14121f; --surface: #1d1a2d; --ink: #ece9fa; --muted: #a9a5c4; --line: #36324d;
+  --accent: #a995ff; --accent-soft: #2c2650;
+  --ok: #6fd6a0; --ok-soft: #173a29; --warn: #f0c36a; --warn-soft: #3b2e10; --no: #ff8fa1; --no-soft: #411b25;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 32px 16px 96px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: 2.2rem; }
+h2 { font-size: 1.5rem; margin: 48px 0 6px; }
+h3 { font-size: 1.15rem; }
+.lead { color: var(--muted); max-width: 65ch; margin: 10px 0 0; }
+.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin: 24px -16px 0; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { font: inherit; font-size: .9rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip b { font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.copy { font: inherit; font-size: .9rem; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 36px; font-weight: 600; }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 24px 0 0; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.stat b { display: block; font-family: var(--font-display); font-size: 1.8rem; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: .9rem; }
+.cards { display: grid; gap: 14px; margin-top: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.card[data-v="ok"] { border-left-color: var(--ok); }
+.card[data-v="talk"] { border-left-color: var(--warn); }
+.card[data-v="no"] { border-left-color: var(--no); }
+.head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.id { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .85rem; margin-right: 8px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: .78rem; border-radius: 6px; padding: 2px 8px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tag.done { background: var(--ok-soft); color: var(--ok); }
+.tag.part { background: var(--warn-soft); color: var(--warn); }
+.tag.todo { background: var(--no-soft); color: var(--no); }
+.card p { margin: 8px 0 0; max-width: 68ch; }
+.card .why { color: var(--muted); font-size: .95rem; }
+.sketch { margin: 10px 0 0; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 8px; font-size: .92rem; color: var(--muted); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.verdict button { font: inherit; font-size: .92rem; min-height: 40px; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="ok"] { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="talk"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); font-weight: 600; }
+.verdict button[aria-pressed="true"][data-v="no"] { background: var(--no-soft); border-color: var(--no); color: var(--no); font-weight: 600; }
+textarea { width: 100%; margin-top: 10px; min-height: 64px; font: inherit; font-size: .95rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; }
+label.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.table { overflow-x: auto; margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; }
+.note { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; margin-top: 18px; max-width: 70ch; }
+.status { font-size: .85rem; color: var(--muted); margin-left: 8px; }
+.empty { color: var(--muted); padding: 24px 0; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color .2s; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Diapos : audit et idées</h1>
+  <p class="lead">Ce qui ne va pas aujourd'hui dans les diapos projetées, puis toutes les pistes pour les améliorer. Sur chaque carte, choisis Valider, À discuter ou Refuser, et ajoute un commentaire si tu veux. Tes choix sont enregistrés tout seuls et je les relis ensuite.</p>
+
+  <div class="stats" aria-label="Chiffres de l'audit">
+    <div class="stat"><b>1 076</b><span>diapos lues sur 6 séances</span></div>
+    <div class="stat"><b>771</b><span>diapos générées (34 fiches)</span></div>
+    <div class="stat"><b>59</b><span>diapos « titre seul »</span></div>
+    <div class="stat"><b>154</b><span>diapos de mini-QCM, 87 % en défilement</span></div>
+  </div>
+
+  <div class="bar" role="toolbar" aria-label="Filtrer par décision">
+    <button class="chip" data-f="all" aria-pressed="true">Tout <b id="n-all">0</b></button>
+    <button class="chip" data-f="none" aria-pressed="false">Sans avis <b id="n-none">0</b></button>
+    <button class="chip" data-f="ok" aria-pressed="false">Validé <b id="n-ok">0</b></button>
+    <button class="chip" data-f="talk" aria-pressed="false">À discuter <b id="n-talk">0</b></button>
+    <button class="chip" data-f="no" aria-pressed="false">Refusé <b id="n-no">0</b></button>
+    <span class="spacer"></span>
+    <span class="status" id="save" role="status" aria-live="polite"></span>
+    <button class="copy" id="copy" type="button">Copier le résumé</button>
+  </div>
+
+  <h2>1. Ce qui ne va pas aujourd'hui</h2>
+  <p class="lead">Mesures faites sur le vrai code de découpage, puis recoupées par un test dans le navigateur. Étiquette « corrigé » : déjà réglé dans le code (US-171).</p>
+  <div class="cards" id="constats"></div>
+
+  <div class="table">
+    <table>
+      <caption class="sr" style="position:absolute;left:-9999px">Fiches les plus longues</caption>
+      <thead><tr><th>Fiche (séance)</th><th>Diapos</th><th>Mots, médiane</th><th>Diapos de plus de 60 mots</th></tr></thead>
+      <tbody>
+        <tr><td>Kanban, pour aller plus loin (S4)</td><td>81</td><td>16</td><td>5</td></tr>
+        <tr><td>Pratiquer Kanban (S4)</td><td>73</td><td>26</td><td>4</td></tr>
+        <tr><td>Métriques Agile (S5)</td><td>51</td><td>40</td><td>13</td></tr>
+        <tr><td>Estimation, pour aller plus loin (S3)</td><td>49</td><td>47</td><td>20</td></tr>
+        <tr><td>Les grandes méthodes (S1)</td><td>46</td><td>20</td><td>4</td></tr>
+        <tr><td>Focus sur SCRUM (S2)</td><td>46</td><td>44</td><td>10</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Limites : la fenêtre de test faisait 1300×593 px, donc le défilement est surestimé ; seulement 4 captures ont été prises, le reste vient de mesures du DOM. Je recommande un second passage à 1366×768 réel avant de refondre les mini-QCM.</p>
+
+  <h2>2. Idées d'amélioration</h2>
+  <p class="lead">Des plus concrètes aux plus ambitieuses. L'effort va de S (quelques heures) à L (un chantier avec maquettes). Rien n'est lancé sans ton accord.</p>
+  <div class="cards" id="idees"></div>
+</main>
+
+<script>
+const CONSTATS = [
+  { id: "C1", t: "Des diapos d'un seul mot", state: "done", sd: "Corrigé",
+    d: "59 diapos ne contiennent qu'un titre (« Comparer », « Quatre approches », « Le déroulé »). Un séparateur placé juste après le titre l'isolait de son schéma ou de son tableau, qui arrivait sur la diapo suivante.",
+    w: "Le titre garde maintenant le contenu qui suit." },
+  { id: "C2", t: "Le titre de la fiche est projeté deux fois", state: "done", sd: "Corrigé",
+    d: "26 fiches sur 34 commençaient par une diapo « titre seul » qui doublait la couverture de la fiche.",
+    w: "Cette diapo est omise quand elle répète la couverture." },
+  { id: "C3", t: "Les fiches « pour aller plus loin » et les corrigés sont projetés par défaut", state: "part", sd: "Corrigé en partie",
+    d: "152 diapos d'approfondissement et le corrigé de l'étude de cas arrivaient au sommaire sans que tu les aies choisis.",
+    w: "Ils sont « pour moi » d'office dans « Avant de commencer ». Un lien de projection ouvert sans passer par cet écran projette encore tout." },
+  { id: "C4", t: "Des fiches interminables", state: "todo", sd: "À traiter",
+    d: "Kanban (73 et 81 diapos) et Métriques (51). Le rythme monte à 3,4 diapos par minute en S4 contre 0,4 à 1,2 ailleurs. C'est aussi le cours cité comme celui où l'attention décroche.",
+    w: "Rien n'avertit à l'écriture qu'une fiche devient trop longue." },
+  { id: "C5", t: "Des diapos trop denses", state: "todo", sd: "À traiter",
+    d: "108 diapos font 10 lignes ou plus, et de 23 à 61 diapos par séance dépassent 60 mots. Beaucoup demandent de défiler pour tout lire." },
+  { id: "C6", t: "Les mini-QCM saturent l'écran", state: "part", sd: "Corrigé en partie",
+    d: "14 blocs de 11 diapos (introduction, 5 questions, 5 corrections). 87 % demandent du défilement et le texte tombe à 20-24 px.",
+    w: "L'en-tête tient sur une ligne et les marges sont réduites. À revérifier à 1366×768 réel." },
+  { id: "C7", t: "Le cadre d'une évaluation s'affiche en markdown brut", state: "done", sd: "Corrigé",
+    d: "Sur 3 diapos (S3 n°212, S6 n°15 et n°34), l'objectif complet de l'évaluation était mis dans le titre géant, avec les étoiles de la liste visibles.",
+    w: "Le titre prend la première ligne de l'objectif, sans balisage." },
+  { id: "C8", t: "Aucun fil conducteur dans une fiche", state: "todo", sd: "À traiter",
+    d: "Pas de plan au début d'une fiche, pas de bilan à la fin, pas de transition entre deux parties. Seul le mini-QCM joue ce rôle, en bloc à la fin. C'est ce que les étudiant·es appellent « l'enchaînement pas ouf »." },
+  { id: "C9", t: "Des titres qui ne disent rien", state: "todo", sd: "À traiter",
+    d: "« Le but », « Questions », « Notions clés », « 4.1 Définition », « 3. Le WIP » : des titres-sujets sans message, parfois répétés d'une fiche à l'autre. Une diapo ne dit pas ce qu'il faut retenir." },
+  { id: "C10", t: "Images : étiquettes et textes alternatifs", state: "part", sd: "Corrigé en partie",
+    d: "Des diapos-image étaient annoncées par un nom de fichier (« 36 sur 181 : retro-boucle.png »), avec le nom de fichier comme texte alternatif.",
+    w: "Le nom est maintenant lisible, sans extension. Un vrai texte alternatif par image reste à écrire." }
+];
+
+const IDEES = [
+  { id: "I1", t: "Plan et bilan automatiques par fiche", eff: "S", imp: "Fort",
+    d: "Le plan est calculé à partir des titres de la fiche et projeté en tête. Le bilan reprend les titres parcourus, avec une ligne « à retenir » quand la fiche en a une. Une petite mention « Partie 2 sur 4 » accompagne chaque transition.",
+    w: "Répond directement à « l'enchaînement pas ouf », sans réécrire les fiches." },
+  { id: "I2", t: "Aide à l'écriture : un contrôle de qualité des diapos", eff: "S", imp: "Fort",
+    d: "Dans l'éditeur de fiche, des avertissements non bloquants : titre seul, moins de 4 mots, plus de 60 mots, fiche de plus de 40 diapos, aucun bilan, image sans texte alternatif, rythme de plus de 2 diapos par minute.",
+    w: "Corrige à la source, la fiche, au lieu de rustiner à la projection." },
+  { id: "I3", t: "Découpage selon le sens, pas selon les lignes", eff: "M", imp: "Moyen",
+    d: "Une diapo trop vide fusionne avec la suivante. Une diapo trop pleine se scinde par sous-idée. Une liste longue se répartit en groupes équilibrés au lieu de « 11 lignes puis le reste ». Seuil de lignes abaissé de 11 à 9." },
+  { id: "I4", t: "Le fil rouge visible, avec Plume", eff: "M", imp: "Fort",
+    d: "Une frise discrète en bas de chaque diapo montre où on en est dans la séance. Plume avance d'étape en étape. À chaque changement de partie, une courte transition donne le lien : « pourquoi on passe à ça maintenant ? ».",
+    sk: "[ Notion ]──[ Exemple ]──[●Exercice]──[ Bilan ]      🦉 tu es ici" },
+  { id: "I5", t: "Un titre = une question ou une affirmation", eff: "M", imp: "Fort",
+    d: "« Pourquoi limiter le travail en cours ? » plutôt que « WIP limits ». La diapo suivante répond, et les étudiant·es suivent un raisonnement. Le générateur propose de reformuler un titre-sujet, tu valides.",
+    sk: "Avant : « 3. Le WIP »        Après : « Pourquoi limiter ce qu'on fait en même temps ? »" },
+  { id: "I6", t: "Des formes de diapo selon l'idée", eff: "L", imp: "Moyen",
+    d: "Une comparaison en deux colonnes qui se révèlent une à une, un processus en frise, une définition sur une grande carte (terme, exemple, contre-exemple), un chiffre clé plein écran, une liste de 3 éléments en cartes.",
+    w: "Demande une convention d'écriture dans les fiches et des maquettes validées avant le code." },
+  { id: "I7", t: "Un storyboard avant de projeter", eff: "L", imp: "Fort",
+    d: "Toutes les diapos d'une fiche en planche-contact, comme un scénario. Tu déplaces, fusionnes et supprimes à la souris. Le générateur signale les trous d'enchaînement et les diapos faibles.",
+    sk: "[1 Titre][2 Notion][3 ⚠ 4 mots][4 Exemple]\n[5 Schéma][6 ⚠ trop dense][7 Exercice][8 Bilan]" },
+  { id: "I8", t: "Deux couches : ce qu'on projette, ce qu'on dit", eff: "L", imp: "Moyen",
+    d: "Chaque diapo a une version légère pour l'écran (une accroche, un schéma) et un script dans ta vue privée. Les mots restent sur tes notes plutôt que sur l'écran, et le texte projeté se réduit.",
+    w: "S'appuie sur ta vue privée existante." },
+  { id: "I9", t: "Une interaction toutes les 10 minutes", eff: "M", imp: "Moyen",
+    d: "Le générateur repère les longues séquences sans question ni exercice et propose d'insérer une question flash. Le temps prévu par fiche sert à calculer les diapos par minute." },
+  { id: "I10", t: "Des diapos « à compléter ensemble »", eff: "M", imp: "Moyen",
+    d: "Une diapo volontairement incomplète, avec un trou à remplir en classe, et un mini-défi de 2 minutes en fin de partie avec la correction sur la diapo suivante." },
+  { id: "I11", t: "Rappel espacé en début de séance", eff: "M", imp: "Moyen",
+    d: "Deux diapos reprennent des idées de la séance précédente, tirées des bilans, puis une idée de S1 réapparaît en S3 sous une autre forme. S'ajoute à « Pour aujourd'hui, vous deviez… »." },
+  { id: "I12", t: "Vote en direct par QR code", eff: "L", imp: "Moyen",
+    d: "Une question flash : un QR ouvre un vote sur le téléphone des étudiant·es, et le résultat s'affiche en direct sur la diapo suivante. Ta vue privée propose « refaire un exemple » si la moitié se trompe.",
+    w: "Le plus lourd (temps réel). Tu n'utilises pas de téléphone, mais les étudiant·es peuvent voter avec le leur." },
+  { id: "I13", t: "Un test visuel automatique", eff: "M", imp: "Moyen",
+    d: "Un parcours Playwright à 1366×768 qui signale les diapos qui débordent ou défilent, avec captures. C'est ce que le test dans le navigateur a fait à la main, rejouable à chaque modification." },
+  { id: "I14", t: "Des rôles de diapo (notion, exemple, exercice, bilan)", eff: "L", imp: "Fort",
+    d: "Une convention d'écriture marque le rôle de chaque bloc, par exemple un titre « Exemple : … » ou un bloc dédié. Chaque rôle a sa mise en page, ce qui rend le cours cohérent visuellement et pédagogiquement.",
+    w: "Fonde I1, I5, I6 et I9 : à décider tôt si tu veux aller loin." }
+];
+
+const VERDICTS = [["ok", "Valider"], ["talk", "À discuter"], ["no", "Refuser"]];
+const state = {}; // id -> { v, c }
+let filter = "all";
+let db = null, col = null;
+const timers = {};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function card(x, kind) {
+  const tags = kind === "c"
+    ? `<span class="tag ${x.state}">${esc(x.sd)}</span>`
+    : `<span class="tag">Effort ${esc(x.eff)}</span><span class="tag">Impact ${esc(x.imp)}</span>`;
+  const sk = x.sk ? `<pre class="sketch">${esc(x.sk)}</pre>` : "";
+  const buttons = VERDICTS.map(([v, l]) =>
+    `<button type="button" data-id="${x.id}" data-v="${v}" aria-pressed="false">${l}</button>`).join("");
+  return `<article class="card" id="${x.id}" data-id="${x.id}">
+    <div class="head"><h3><span class="id">${x.id}</span>${esc(x.t)}</h3><div class="tags">${tags}</div></div>
+    <p>${esc(x.d)}</p>
+    ${x.w ? `<p class="why">${esc(x.w)}</p>` : ""}
+    ${sk}
+    <div class="verdict" role="group" aria-label="Décision pour ${esc(x.t)}">${buttons}</div>
+    <label class="sr" for="c-${x.id}">Commentaire pour ${esc(x.t)}</label>
+    <textarea id="c-${x.id}" data-id="${x.id}" placeholder="Ton commentaire (facultatif)"></textarea>
+  </article>`;
+}
+
+function render() {
+  $("#constats").innerHTML = CONSTATS.map((x) => card(x, "c")).join("");
+  $("#idees").innerHTML = IDEES.map((x) => card(x, "i")).join("");
+}
+
+function paint() {
+  const all = [...CONSTATS, ...IDEES];
+  const counts = { all: all.length, none: 0, ok: 0, talk: 0, no: 0 };
+  for (const x of all) {
+    const s = state[x.id] || {};
+    const el = document.getElementById(x.id);
+    const v = s.v || "";
+    counts[v || "none"]++;
+    el.dataset.v = v;
+    el.querySelectorAll(".verdict button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    const ta = el.querySelector("textarea");
+    if (document.activeElement !== ta) ta.value = s.c || "";
+    el.hidden = !(filter === "all" || (filter === "none" ? !v : v === filter));
+  }
+  for (const k of Object.keys(counts)) $("#n-" + k).textContent = counts[k];
+}
+
+function setSave(msg) { $("#save").textContent = msg; }
+
+async function persist(id) {
+  const s = state[id] || {};
+  try { localStorage.setItem("diapos-audit", JSON.stringify(state)); } catch (e) {}
+  if (!col) { setSave("Enregistré dans ce navigateur"); return; }
+  try {
+    await col.doc(id).set({ v: s.v || "", c: s.c || "", at: new Date().toISOString() });
+    setSave("Enregistré");
+  } catch (e) { setSave("Enregistrement impossible pour l'instant"); }
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".verdict button");
+  if (b) {
+    const id = b.dataset.id;
+    const cur = state[id] || {};
+    state[id] = { ...cur, v: cur.v === b.dataset.v ? "" : b.dataset.v };
+    paint(); persist(id); return;
+  }
+  const f = e.target.closest(".chip");
+  if (f) {
+    filter = f.dataset.f;
+    document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c === f)));
+    paint();
+  }
+});
+
+document.addEventListener("input", (e) => {
+  const ta = e.target.closest("textarea");
+  if (!ta) return;
+  const id = ta.dataset.id;
+  state[id] = { ...(state[id] || {}), c: ta.value };
+  clearTimeout(timers[id]);
+  setSave("…");
+  timers[id] = setTimeout(() => persist(id), 700);
+});
+
+$("#copy").addEventListener("click", async () => {
+  const lab = { ok: "Validé", talk: "À discuter", no: "Refusé" };
+  const lines = [...CONSTATS, ...IDEES].map((x) => {
+    const s = state[x.id] || {};
+    return `${x.id} ${x.t} : ${lab[s.v] || "sans avis"}${s.c ? " — " + s.c : ""}`;
+  });
+  try { await navigator.clipboard.writeText(lines.join("\n")); setSave("Résumé copié"); }
+  catch (e) { setSave("Copie refusée : sélectionne et copie à la main"); }
+});
+
+function fromSnapshot(snap) {
+  const docs = snap.docs || [];
+  docs.forEach((d) => {
+    const data = typeof d.data === "function" ? d.data() : d.data;
+    if (data && !timers[d.id]) state[d.id] = { v: data.v || "", c: data.c || "" };
+  });
+  paint();
+}
+
+render();
+try {
+  const saved = JSON.parse(localStorage.getItem("diapos-audit") || "{}");
+  Object.assign(state, saved);
+} catch (e) {}
+paint();
+
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    db = await window.claude.use("db");
+    if (!db) return;
+    col = db.collection("decisions");
+    col.onSnapshot(fromSnapshot, () => setSave("Lecture partagée indisponible"));
+  } catch (e) { col = null; }
+})();
+</script>
+</body>
+</html>

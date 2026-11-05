@@ -32,9 +32,25 @@ function Runs({ runs }: { runs: InlineRun[] }) {
         {r.text}
       </a>
     ) : (
-      r.text
+      <Gaps key={i} text={r.text} />
     );
   });
+}
+
+/** « ___ » dans un texte : un trou à compléter ensemble en classe (diapo « à compléter »). */
+function Gaps({ text }: { text: string }) {
+  const parts = text.split(/_{3,}/);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => (
+    <span key={i}>
+      {part}
+      {i < parts.length - 1 ? (
+        <span className="border-primary mx-1 inline-block min-w-[6ch] border-b-4 align-baseline">
+          <span className="sr-only">(à compléter)</span>
+        </span>
+      ) : null}
+    </span>
+  ));
 }
 
 function ListView({ block, headingLevel }: { block: ListBlock; headingLevel: 2 | 3 | 4 }) {

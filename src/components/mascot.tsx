@@ -118,9 +118,16 @@ export function Mascot({
 }
 
 /** Marque compacte pour la barre latérale. */
-export function LogoMark({ className }: { className?: string }) {
+export function LogoMark({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
+      style={style}
       viewBox="0 0 32 32"
       aria-hidden="true"
       focusable="false"

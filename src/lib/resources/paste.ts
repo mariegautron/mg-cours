@@ -1,6 +1,7 @@
 import type { Block, InlineRun } from "@/lib/pdf/markdown";
 import { parseMarkdown } from "@/lib/pdf/markdown";
-import { buildSlides, slideTitle } from "@/lib/present/slides";
+import { lintSlides } from "@/lib/present/lint";
+import { buildSlides, ROLE_LABELS, slideTitle } from "@/lib/present/slides";
 
 /**
  * US-152 : nettoyage d'un texte collé (Notion, Word, pages web) avant qu'il entre dans la
@@ -60,6 +61,16 @@ export interface SlidePreview {
   summary: string;
   /** Éléments non textuels présents (image, tableau, code). */
   extras: ("image" | "table" | "code")[];
+  /** Ce qui rendra mal en classe (contrôle de qualité), en phrases. */
+  warnings: string[];
+  /** Rôle annoncé par le titre (« Exemple », « À toi »…), sinon `null`. */
+  role: string | null;
+}
+
+/** Avertissements sur la fiche entière (trop longue…). */
+export function deckWarnings(source: string): string[] {
+  if (!source.trim()) return [];
+  return lintSlides(buildSlides(parseMarkdown(source))).deck;
 }
 
 const runsText = (runs: InlineRun[]) => runs.map((r) => ("text" in r ? r.text : " ")).join("");
@@ -80,7 +91,9 @@ function firstText(blocks: Block[]): string {
 /** Diapositives que produira ce Markdown en présentation (même découpage que la projection). */
 export function slidePreviews(source: string): SlidePreview[] {
   if (!source.trim()) return [];
-  return buildSlides(parseMarkdown(source)).map((spec, i) => {
+  const specs = buildSlides(parseMarkdown(source));
+  const lint = lintSlides(specs);
+  return specs.map((spec, i) => {
     const extras = new Set<SlidePreview["extras"][number]>();
     for (const b of spec.blocks) {
       if (b.type === "image" || b.type === "table" || b.type === "code") extras.add(b.type);
@@ -91,6 +104,8 @@ export function slidePreviews(source: string): SlidePreview[] {
       title: slideTitle(spec.blocks) ?? spec.reminder,
       summary: summary.length > 140 ? `${summary.slice(0, 137)}…` : summary,
       extras: [...extras],
+      warnings: lint.slides[i].map((w) => w.message),
+      role: spec.role ? ROLE_LABELS[spec.role] : null,
     };
   });
 }
