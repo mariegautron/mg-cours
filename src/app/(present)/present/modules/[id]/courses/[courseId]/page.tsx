@@ -7,7 +7,8 @@ import { loadCourseSubjects } from "@/lib/assessments/present-data";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { loadCourseQcm } from "@/lib/present/qcm-data";
 import { parseQcmLimit } from "@/lib/present/qcm";
-import { parseHidden, resourceKey } from "@/lib/present/plan";
+import { resolveHidden } from "@/lib/present/items";
+import { parseHiddenParam, resourceKey } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
@@ -28,7 +29,6 @@ export default async function PresentCoursePage({
 }: PageProps<"/present/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
   const query = await searchParams;
-  const hidden = parseHidden(query.hide);
   const [mod, courses, allResources, subjects] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -40,6 +40,8 @@ export default async function PresentCoursePage({
   const course = courses[position];
   const next = courses[position + 1];
   const resources = studentFacing(allResources);
+  // Les choix « Pour moi » voyagent avec la séance : tout lien d'ouverture les applique.
+  const hidden = resolveHidden(parseHiddenParam(query.hide), course.hidden_keys, resources);
   const qcm = await loadCourseQcm(
     resources.filter((r) => !hidden.has(resourceKey(r.id))),
     parseQcmLimit(query.qcm),
@@ -61,8 +63,8 @@ export default async function PresentCoursePage({
   return (
     <PresentShell
       title={`${mod.name} — Séance ${position + 1} : ${course.title}`}
-      backHref={`/modules/${mod.id}`}
-      backLabel="la fiche du module"
+      backHref={`/modules/${mod.id}/courses/${courseId}`}
+      backLabel="la séance"
       sections={sections}
       slides={slides}
       syncChannel={syncChannelName(courseId)}

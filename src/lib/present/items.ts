@@ -166,3 +166,25 @@ export function projectedCount(items: readonly PrepItem[], hidden: ReadonlySet<s
 /** Éléments cachés d'office : ceux de `defaultHidden`, tant que le choix n'a pas été fait. */
 export const defaultHiddenKeys = (items: readonly PrepItem[]): Set<string> =>
   new Set(items.filter((i) => i.mode === "toggle" && i.defaultHidden).map((i) => i.key));
+
+/** Clés des fiches projetables qu'on ne projette pas d'office (corrigés, « pour aller plus loin »). */
+export const optionalResourceKeys = (
+  resources: readonly { id: string; title: string }[],
+): Set<string> =>
+  new Set(resources.filter((r) => isOptionalDeckTitle(r.title)).map((r) => resourceKey(r.id)));
+
+/**
+ * Éléments « pour moi » appliqués à la projection, quel que soit le lien d'ouverture. Priorité :
+ * l'adresse (`?hide=`, si elle est là), puis le choix enregistré avec la séance, puis les valeurs
+ * par défaut : un corrigé ou une fiche « pour aller plus loin » n'est jamais projeté sans un geste
+ * explicite.
+ */
+export function resolveHidden(
+  fromQuery: ReadonlySet<string> | null,
+  stored: readonly string[] | null | undefined,
+  resources: readonly { id: string; title: string }[],
+): Set<string> {
+  if (fromQuery) return new Set(fromQuery);
+  if (stored) return new Set(stored);
+  return optionalResourceKeys(resources);
+}

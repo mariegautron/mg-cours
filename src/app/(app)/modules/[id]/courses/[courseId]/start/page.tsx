@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PreviousRecap } from "@/components/present/previous-recap";
 import { PrepPanel } from "@/components/present/prep-panel";
 import { Button } from "@/components/ui/button";
 import { listModuleAssessments } from "@/lib/assessments/queries";
@@ -107,10 +108,17 @@ export default async function StartCoursePage({
           </Button>
         </p>
       ) : null}
+      {position > 0 ? (
+        <PreviousRecap
+          nextTime={courses[position - 1].next_time}
+          notCovered={courses[position - 1].not_covered}
+        />
+      ) : null}
       <PrepPanel
         moduleId={id}
         courseId={courseId}
         items={items}
+        storedHidden={course.hidden_keys ?? null}
         seanceLabel={`séance ${position + 1}, ${course.title}`}
       />
     </div>

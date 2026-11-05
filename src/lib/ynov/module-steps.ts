@@ -28,6 +28,8 @@ export interface ModuleStepsContext {
   expectationsCount: number;
   coverage: CoverageSummary;
   courses: { total: number; ready: number; done: number };
+  /** Séance à faire maintenant (du jour, sinon la prochaine non clôturée) : « Avant de commencer ». */
+  teachCourseId?: string | null;
   /** Progression générée (date ISO) ou `null`. */
   outlineGeneratedAt: string | null;
   /** Progression envoyée (état iceberg) ou PDF déposé. */
@@ -203,7 +205,10 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       title: "Faire cours",
       state: inProgress(teachDone, courses.done > 0),
       summary: `${courses.done}/${courses.total} faites`,
-      action: { label: "Faire cours", href: `/present/modules/${ctx.moduleId}` },
+      action: {
+        label: "Faire cours",
+        href: ctx.teachCourseId ? `${base}/courses/${ctx.teachCourseId}/start` : `${base}/courses`,
+      },
       badge: "faire cours",
     },
     {

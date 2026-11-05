@@ -67,6 +67,15 @@ export function tagForKey(key: string): ObservationTag | null {
   return OBSERVATION_TAGS[Number(key) - 1]?.value ?? null;
 }
 
+/**
+ * Raccourci d'étiquette depuis un évènement clavier. Utilise la touche physique (`code`) quand
+ * elle est connue : sous Mac, Alt + chiffre produit un autre caractère (« ¡ », « ™ »…) dans `key`.
+ */
+export function tagForKeyEvent(e: { key: string; code?: string }): ObservationTag | null {
+  const fromCode = /^(?:Digit|Numpad)([1-9])$/.exec(e.code ?? "");
+  return tagForKey(fromCode ? fromCode[1] : e.key);
+}
+
 /** Confirmation annoncée après l'enregistrement. */
 export function observationAddedMessage(name: string, tag: ObservationTag): string {
   return `Observation ajoutée pour ${name} — ${OBSERVATION_TAG_LABELS[tag]}.`;

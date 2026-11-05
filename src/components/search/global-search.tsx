@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookMarked, CircleHelp, GraduationCap, Library, Search } from "lucide-react";
+import { BookMarked, CalendarDays, CircleHelp, GraduationCap, Library, Search } from "lucide-react";
 import { Dialog } from "radix-ui";
 
 import {
@@ -14,6 +14,7 @@ import {
 
 const ICONS: Record<SearchKind, typeof Search> = {
   module: BookMarked,
+  course: CalendarDays,
   student: GraduationCap,
   resource: Library,
   question: CircleHelp,

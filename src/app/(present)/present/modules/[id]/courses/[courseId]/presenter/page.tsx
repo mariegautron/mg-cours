@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import { PreviousRecap } from "@/components/present/previous-recap";
 import { ObservationPanel } from "@/components/notebook/observation-panel";
 import { notebookStudents } from "@/lib/notebook/notebook";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -16,7 +17,8 @@ import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { loadCourseQcm } from "@/lib/present/qcm-data";
 import { parseQcmLimit, withQcmLimit } from "@/lib/present/qcm";
-import { parseHidden, resourceKey, withHidden } from "@/lib/present/plan";
+import { resolveHidden } from "@/lib/present/items";
+import { parseHiddenParam, resourceKey, withHidden } from "@/lib/present/plan";
 import { previousNextTime } from "@/lib/present/reprise";
 import { syncChannelName } from "@/lib/present/sync";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
@@ -33,7 +35,6 @@ export default async function PresenterPage({
 }: PageProps<"/present/modules/[id]/courses/[courseId]/presenter">) {
   const { id, courseId } = await params;
   const query = await searchParams;
-  const hidden = parseHidden(query.hide);
   const [mod, courses, allResources, subjects, libraryRows, groups, activities] = await Promise.all(
     [
       getModule(id),
@@ -49,6 +50,7 @@ export default async function PresenterPage({
   if (!mod || position === -1) notFound();
   const course = courses[position];
   const projected = studentFacing(allResources);
+  const hidden = resolveHidden(parseHiddenParam(query.hide), course.hidden_keys, projected);
   const qcmLimit = parseQcmLimit(query.qcm);
   const qcm = await loadCourseQcm(
     projected.filter((r) => !hidden.has(resourceKey(r.id))),
@@ -109,7 +111,7 @@ export default async function PresenterPage({
   return (
     <PresenterView
       title={`${mod.name} — Séance ${position + 1} : ${course.title}`}
-      backHref={`/modules/${mod.id}/courses`}
+      backHref={`/modules/${mod.id}/courses/${courseId}`}
       slides={slides}
       syncChannel={syncChannelName(courseId)}
       projectedHref={withQcmLimit(
@@ -117,6 +119,14 @@ export default async function PresenterPage({
         qcmLimit,
       )}
       notes={notes}
+      recap={
+        position > 0 ? (
+          <PreviousRecap
+            nextTime={courses[position - 1].next_time}
+            notCovered={courses[position - 1].not_covered}
+          />
+        ) : null
+      }
       teacherResources={teacherResources}
       endTime={today ? course.end_time : null}
       sections={sections}

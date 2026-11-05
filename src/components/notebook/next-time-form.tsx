@@ -27,8 +27,8 @@ export function NextTimeForm({ action, value }: { action: Action; value: string 
           aria-describedby="nextTime-hint"
         />
         <p id="nextTime-hint" className="text-muted-foreground text-xs">
-          Elle sera projetée aux étudiant·es à l’ouverture de la séance suivante : écris-la pour
-          elles.
+          Elle sera projetée aux étudiant·es à l’ouverture de la séance suivante : écris-la pour les
+          étudiant·es.
         </p>
       </div>
       <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

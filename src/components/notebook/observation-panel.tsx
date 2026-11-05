@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { clampActive, findStudents, moveActive, tagForKey } from "@/lib/notebook/live";
+import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/notebook/live";
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,7 @@ export function ObservationPanel({
   // Étiquette pressée : seule elle affiche l'attente, les autres attendent la fin de l'envoi.
   const [pressedTag, setPressedTag] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<number | undefined>(undefined);
+  const [toastOn, setToastOn] = useState(false);
   const noteRef = useRef<HTMLInputElement>(null);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const filterId = useId();
@@ -79,9 +80,15 @@ export function ObservationPanel({
   // Après un enregistrement réussi : on referme et on rend le focus au nom de l'étudiant·e.
   if (state.savedAt && state.savedAt !== lastSaved) {
     setLastSaved(state.savedAt);
+    setToastOn(true);
     setOpenId(null);
     setSelectedTag(null);
   }
+  useEffect(() => {
+    if (!toastOn) return;
+    const timer = window.setTimeout(() => setToastOn(false), 4000);
+    return () => window.clearTimeout(timer);
+  }, [toastOn, lastSaved]);
   const closedAfterSave = useRef<string | null>(null);
   useEffect(() => {
     if (openId) {
@@ -134,9 +141,11 @@ export function ObservationPanel({
             return;
           }
           const typing = e.target instanceof HTMLInputElement;
-          const tag = tagForKey(e.key);
-          // 1 à 5 : l'étiquette ; dans le champ de saisie, avec Alt pour ne pas gêner la frappe.
-          if (tag && (!typing || e.altKey)) {
+          const tag = tagForKeyEvent(e);
+          // 1 à 5 : l'étiquette. Dans le champ de note, tant qu'il est vide (ou avec Alt) : on ne
+          // gêne pas la frappe d'un chiffre dans une note déjà commencée.
+          const emptyNote = typing && e.target instanceof HTMLInputElement && e.target.value === "";
+          if (tag && !e.ctrlKey && !e.metaKey && (!typing || e.altKey || emptyNote)) {
             e.preventDefault();
             setSelectedTag(tag);
           }
@@ -164,14 +173,14 @@ export function ObservationPanel({
           <p id={`${panelId}-keys`} className="text-muted-foreground text-xs">
             Entrée enregistre (étiquette «{" "}
             {OBSERVATION_TAGS.find((t) => t.value === (selectedTag ?? "other"))?.label} »), Échap
-            annule. 1 à 5, ou Alt + 1 à 5 ici, choisissent l’étiquette.
+            annule. 1 à 5 choisissent l’étiquette tant que la note est vide (ensuite Alt + 1 à 5).
           </p>
         </div>
         <fieldset>
           <legend className="mb-2 text-sm font-medium">
-            Étiquette — un appui enregistre l’observation pour {name}
+            Étiquette — un appui enregistre pour {name}
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
             {OBSERVATION_TAGS.map((t, i) => (
               <PendingButton
                 key={t.value}
@@ -321,7 +330,15 @@ export function ObservationPanel({
         {selectedName ? ` · sélection : ${selectedName} (Entrée pour noter, ↑ ↓ pour changer)` : ""}
       </p>
 
-      <p role="status" className="min-h-5 text-sm font-medium">
+      {/* Confirmation en surimpression : elle ne décale jamais la liste sous le curseur. */}
+      <p
+        role="status"
+        className={
+          state.message && toastOn
+            ? "bg-card fixed right-4 bottom-4 z-50 max-w-sm rounded-xl border px-4 py-3 text-sm font-medium shadow-lg"
+            : "sr-only"
+        }
+      >
         {state.message ?? ""}
       </p>
       {state.error ? <ActionError error={state.error} /> : null}

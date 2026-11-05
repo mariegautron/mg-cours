@@ -8,6 +8,7 @@ import type {
   ModuleWithSchool,
 } from "@/lib/modules/queries";
 import type { Tables } from "@/types/db";
+import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import { isOutlineSent } from "@/lib/ynov/iceberg";
 import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import { moduleSteps, type ModuleSteps } from "@/lib/ynov/module-steps";
@@ -32,6 +33,7 @@ export function buildJourney(d: JourneyData): ModuleSteps {
   const adminDocsDone = (d.mod.admin_docs as Record<string, boolean>) ?? {};
   return moduleSteps({
     moduleId: d.mod.id,
+    teachCourseId: sessionToTeach(d.courses, todayInParis())?.id ?? null,
     archived: !!d.mod.archived_at,
     hasFiche: d.documents.some((x) => x.kind === "school_expectations"),
     expectationsCount: d.expectations.length,

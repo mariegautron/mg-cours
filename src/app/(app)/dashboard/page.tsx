@@ -89,7 +89,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listCourseProgress(),
   ]);
   const resume = pickResume(resumeCandidates);
-  const sessions = remainingSessions(todaySessions(coursesToday, today), timeInParis());
+  // Une séance clôturée passe en « faite » : la carte principale montre la prochaine à faire.
+  const todayAll = todaySessions(coursesToday, today);
+  const doneToday = todayAll.filter((c) => c.completion);
+  const sessions = remainingSessions(
+    todayAll.filter((c) => !c.completion),
+    timeInParis(),
+  ).filter((c) => !c.completion);
   const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
   const alerts = outlineAlerts(modules);
   const summary = outlineAlertSummary(alerts);
@@ -135,7 +141,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const tiles = days.map((d) => dayTile(d, today, (c) => doneIds.has(c.id)));
   const hrefs = days.map((d) =>
     d.courses[0]?.module
-      ? `/modules/${d.courses[0].module.id}/courses/${d.courses[0].id}/edit`
+      ? `/modules/${d.courses[0].module.id}/courses/${d.courses[0].id}/${
+          d.courses[0].session_date === today ? "start" : "edit"
+        }`
       : null,
   );
   const activeModules = modules.filter((m) => !m.archived_at && !m.finished_at);
@@ -159,7 +167,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <h2 id="todo" className="font-heading text-xl font-bold">
         À faire
       </h2>
-      <p className="text-muted-foreground mb-1 text-sm">Trois choses, par urgence.</p>
+      <p className="text-muted-foreground mb-1 text-sm">
+        {todos.length > 1
+          ? `${todos.length === 2 ? "Deux" : "Trois"} choses, par urgence.`
+          : "Par urgence."}
+      </p>
       {todos.length === 0 ? (
         <EmptyState
           compact
@@ -363,6 +375,30 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         {surprisesCard}
 
+        {doneToday.length ? (
+          <section
+            aria-labelledby="done-today"
+            className="bg-card rounded-3xl border p-5 shadow-sm"
+          >
+            <h2 id="done-today" className="font-heading text-lg font-bold">
+              Faite{doneToday.length > 1 ? "s" : ""} aujourd’hui
+            </h2>
+            <ul>
+              {doneToday.map((c) => (
+                <li
+                  key={c.id}
+                  className="text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t py-3 first:border-t-0"
+                >
+                  <p>
+                    {c.title} · {c.module.name}
+                  </p>
+                  <Pill tone="ok">Faite</Pill>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         {sessions.length > 1 ? (
           <section aria-labelledby="after" className="bg-card rounded-3xl border p-5 shadow-sm">
             <h2 id="after" className="font-heading text-lg font-bold">
@@ -380,7 +416,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                       {range2 ? `${range2} · ` : ""}Séance {preps[i + 1].number} · {c.title} ·{" "}
                       {c.module.name}
                     </p>
-                    <Link href={`/modules/${c.module.id}/courses/${c.id}/edit`} className={BTN}>
+                    <Link href={`/modules/${c.module.id}/courses/${c.id}/start`} className={BTN}>
                       Ouvrir la séance<span className="sr-only"> : {c.title}</span>
                     </Link>
                   </li>

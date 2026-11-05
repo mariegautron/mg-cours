@@ -17,7 +17,13 @@ import {
 
 import { LogoMark } from "@/components/mascot";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { clampIndex, parseSyncMessage } from "@/lib/present/sync";
+import {
+  clampIndex,
+  parsePosition,
+  parseSyncMessage,
+  positionStorageKey,
+  serializePosition,
+} from "@/lib/present/sync";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +101,8 @@ export function PresentShell({
   const rootRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const indexRef = useRef(0);
+  // Position relue du stockage : tant qu'elle ne l'est pas, on n'annonce rien (sinon 0 écraserait).
+  const [hydrated, setHydrated] = useState(false);
   const total = slides.length;
 
   useEffect(() => {
@@ -102,10 +110,21 @@ export function PresentShell({
     const storedScale = Number(readStorage(STORAGE_SCALE));
     /* eslint-disable react-hooks/set-state-in-effect -- préférences locales lues après hydratation */
     if (storedMode === "slides" || storedMode === "document") setMode(storedMode);
+    // Rouverte ou actualisée : on rejoint la position de la séance au lieu de repartir du début.
+    const saved = syncChannel
+      ? parsePosition(readStorage(positionStorageKey(syncChannel)), slides.length)
+      : null;
+    if (saved) {
+      setMode(saved.mode);
+      setIndex(saved.index);
+      indexRef.current = saved.index;
+    }
+    setHydrated(true);
     if (Number.isInteger(storedScale) && storedScale >= 0 && storedScale < SCALES.length) {
       setScaleIndex(storedScale);
     }
     /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- lu une seule fois, après hydratation
   }, []);
 
   // Vue présentatrice (US-64) : la fenêtre projetée annonce sa diapositive et obéit aux « go ».
@@ -119,6 +138,7 @@ export function PresentShell({
       if (message.type === "go") {
         setMode("slides");
         setIndex(clampIndex(message.index, total));
+        indexRef.current = clampIndex(message.index, total);
       } else if (message.type === "hello") {
         channel.postMessage({ type: "state", index: indexRef.current, total });
       }
@@ -131,9 +151,16 @@ export function PresentShell({
   }, [syncChannel, total]);
 
   useEffect(() => {
+    if (!hydrated) return;
     indexRef.current = index;
     channelRef.current?.postMessage({ type: "state", index, total });
-  }, [index, total]);
+  }, [hydrated, index, total]);
+
+  // La position (diapositive + mode) est retenue pour la séance, côté projeté comme côté privé.
+  useEffect(() => {
+    if (!hydrated || !syncChannel || total === 0) return;
+    writeStorage(positionStorageKey(syncChannel), serializePosition({ index, mode }));
+  }, [hydrated, index, mode, syncChannel, total]);
 
   const changeMode = useCallback((next: Mode) => {
     setMode(next);
@@ -174,7 +201,10 @@ export function PresentShell({
     function onKey(e: KeyboardEvent) {
       if (e.altKey || e.ctrlKey || e.metaKey || isTypingTarget(e.target)) return;
       const key = e.key.toLowerCase();
-      if (key === "f") toggleFullscreen();
+      if (key === "escape") {
+        if (!tocOpen) return;
+        setTocOpen(false);
+      } else if (key === "f") toggleFullscreen();
       else if (key === "s") setTocOpen((o) => !o);
       else if (key === "d") changeMode(mode === "slides" ? "document" : "slides");
       else if (key === "+" || key === "=") changeScale(1);
@@ -189,7 +219,7 @@ export function PresentShell({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [changeMode, changeScale, go, index, mode, toggleFullscreen, total]);
+  }, [changeMode, changeScale, go, index, mode, toggleFullscreen, tocOpen, total]);
 
   const current = slides[index];
   const scale = SCALES[scaleIndex];

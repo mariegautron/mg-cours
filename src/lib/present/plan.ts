@@ -20,6 +20,12 @@ export const gridKey = (title: string) => `grid:${title}`;
  * des deux côtés ; un élément caché disparaît de la projection.
  */
 export function parseHidden(param: string | string[] | undefined): Set<string> {
+  return parseHiddenParam(param) ?? new Set();
+}
+
+/** Comme `parseHidden`, mais `null` quand l'adresse ne porte pas de `hide` (pas de choix dans le lien). */
+export function parseHiddenParam(param: string | string[] | undefined): Set<string> | null {
+  if (param === undefined) return null;
   const raw = Array.isArray(param) ? param.join(",") : (param ?? "");
   return new Set(
     raw

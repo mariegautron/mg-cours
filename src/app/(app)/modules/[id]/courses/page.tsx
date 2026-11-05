@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
 import { pickCourse } from "@/lib/modules/workspace";
-import { todayInParis } from "@/lib/modules/next-session";
+import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import { RetainedResources } from "@/components/modules/retained-resources";
 import { getModule, getModuleCourses, getRetainedResources } from "@/lib/modules/queries";
 
@@ -19,7 +19,8 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
     getRetainedResources(id),
   ]);
   if (!mod) notFound();
-  const target = pickCourse(courses, todayInParis());
+  const today = todayInParis();
+  const target = sessionToTeach(courses, today) ?? pickCourse(courses, today);
   if (target) redirect(`/modules/${id}/courses/${target.id}`);
 
   return (

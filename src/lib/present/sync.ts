@@ -31,6 +31,35 @@ export function parseSyncMessage(data: unknown): SyncMessage | null {
   return null;
 }
 
+/**
+ * Position mémorisée d'une séance (diapositive et mode), partagée par les deux fenêtres via
+ * `localStorage` (même origine, même navigateur). Une fenêtre qui s'ouvre ou s'actualise la relit
+ * et rejoint l'autre ; elle ne la ramène jamais en arrière.
+ */
+export interface SavedPosition {
+  index: number;
+  mode: "document" | "slides";
+}
+
+export const positionStorageKey = (channel: string): string => `mg-pos:${channel}`;
+
+export function serializePosition(position: SavedPosition): string {
+  return JSON.stringify(position);
+}
+
+/** Relit une position enregistrée ; tout ce qui n'a pas la forme attendue est ignoré. */
+export function parsePosition(raw: string | null, total: number): SavedPosition | null {
+  if (!raw || total <= 0) return null;
+  try {
+    const v = JSON.parse(raw) as Record<string, unknown>;
+    if (!isIndex(v.index)) return null;
+    if (v.mode !== "document" && v.mode !== "slides") return null;
+    return { index: clampIndex(v.index, total), mode: v.mode };
+  } catch {
+    return null;
+  }
+}
+
 /** Ramène un index reçu dans les bornes du diaporama. */
 export function clampIndex(index: number, total: number): number {
   return Math.min(Math.max(total - 1, 0), Math.max(0, index));

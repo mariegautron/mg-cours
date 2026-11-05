@@ -14,7 +14,7 @@ export async function listCoursesOn(date: string): Promise<TodayCourse[]> {
   const { data } = await supabase
     .from("course")
     .select(
-      "id, title, position, session_date, start_time, end_time, prep_status, module:module_id(id, name, archived_at)",
+      "id, title, position, session_date, start_time, end_time, prep_status, completion, module:module_id(id, name, archived_at)",
     )
     .eq("session_date", date);
   return (data ?? []) as unknown as TodayCourse[];
@@ -26,7 +26,7 @@ export async function listCoursesAfter(date: string, limit = 20): Promise<TodayC
   const { data } = await supabase
     .from("course")
     .select(
-      "id, title, position, session_date, start_time, end_time, prep_status, module:module_id(id, name, archived_at)",
+      "id, title, position, session_date, start_time, end_time, prep_status, completion, module:module_id(id, name, archived_at)",
     )
     .gt("session_date", date)
     .order("session_date")
@@ -41,7 +41,7 @@ export async function listCoursesBetween(from: string, to: string): Promise<Toda
   const { data } = await supabase
     .from("course")
     .select(
-      "id, title, position, session_date, start_time, end_time, prep_status, module:module_id(id, name, archived_at)",
+      "id, title, position, session_date, start_time, end_time, prep_status, completion, module:module_id(id, name, archived_at)",
     )
     .gte("session_date", from)
     .lte("session_date", to)

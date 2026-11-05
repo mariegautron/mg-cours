@@ -6,6 +6,8 @@ export interface TodayCourse {
   start_time: string | null;
   end_time: string | null;
   prep_status?: string;
+  /** Renseigné à la clôture de la séance : la séance est « faite ». */
+  completion?: string | null;
   module: { id: string; name: string; archived_at: string | null } | null;
 }
 

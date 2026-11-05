@@ -451,6 +451,7 @@ export type Database = {
           content_last_updated_at: string
           created_at: string
           end_time: string | null
+          hidden_keys: string[] | null
           id: string
           learning_objectives: string[]
           material: string | null
@@ -476,6 +477,7 @@ export type Database = {
           content_last_updated_at?: string
           created_at?: string
           end_time?: string | null
+          hidden_keys?: string[] | null
           id?: string
           learning_objectives?: string[]
           material?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           content_last_updated_at?: string
           created_at?: string
           end_time?: string | null
+          hidden_keys?: string[] | null
           id?: string
           learning_objectives?: string[]
           material?: string | null

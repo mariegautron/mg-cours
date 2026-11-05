@@ -2,7 +2,7 @@
  * E19 / US-117 : recherche globale (Ctrl K). Fonctions pures : normalisation (casse, accents),
  * classement (préfixe avant sous-chaîne, puis ordre alphabétique), groupement et limite.
  */
-export type SearchKind = "module" | "student" | "resource" | "question";
+export type SearchKind = "module" | "course" | "student" | "resource" | "question";
 
 export interface SearchCandidate {
   kind: SearchKind;
@@ -13,6 +13,8 @@ export interface SearchCandidate {
   detail?: string;
   /** Textes dans lesquels chercher (le libellé est toujours inclus). */
   terms?: string[];
+  /** Adresse propre (séance : /modules/{module}/courses/{id}) ; sinon `base/id`. */
+  href?: string;
 }
 
 export interface SearchResult {
@@ -34,6 +36,7 @@ export const GROUP_LIMIT = 5;
 
 export const GROUP_ORDER: { kind: SearchKind; title: string; base: string }[] = [
   { kind: "module", title: "Modules", base: "/modules" },
+  { kind: "course", title: "Séances", base: "/modules" },
   { kind: "student", title: "Étudiant·es", base: "/students" },
   { kind: "resource", title: "Bibliothèque", base: "/resources" },
   { kind: "question", title: "Questions", base: "/questions" },
@@ -90,7 +93,7 @@ export function groupResults(
           id: c.id,
           label: c.label,
           detail: c.detail,
-          href: `${base}/${c.id}`,
+          href: c.href ?? `${base}/${c.id}`,
         })),
       });
     }

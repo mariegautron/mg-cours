@@ -21,3 +21,19 @@ export function highlightedSession<T extends { session_date: string | null }>(
   const course = courses[best];
   return { course, number: best + 1, isToday: course.session_date === today };
 }
+
+/**
+ * Séance à faire maintenant : celle du jour non clôturée, sinon la prochaine datée non clôturée,
+ * sinon la première non clôturée. Une séance clôturée (`completion` renseigné) passe en « faite ».
+ */
+export function sessionToTeach<
+  T extends { session_date: string | null; completion: string | null },
+>(courses: T[], today: string): T | null {
+  const open = courses.filter((c) => !c.completion);
+  return (
+    open.find((c) => c.session_date === today) ??
+    highlightedSession(open, today)?.course ??
+    open[0] ??
+    null
+  );
+}

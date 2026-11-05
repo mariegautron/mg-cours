@@ -29,7 +29,10 @@ export default async function PresentModulePage({ params }: PageProps<"/present/
     getModuleResourcesFull(id),
   ]);
   if (!mod) notFound();
-  const resources = studentFacing(allResources);
+  // Un corrigé n'est jamais listé sans geste explicite : ni par type, ni par son titre.
+  const resources = studentFacing(allResources).filter(
+    (r) => r.kind !== "answer_key" && !/^\s*corrig[ée]/i.test(r.title),
+  );
 
   const sections: string[] = [];
   const slides: PresentSlide[] = [];
