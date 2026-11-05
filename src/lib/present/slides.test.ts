@@ -36,6 +36,17 @@ describe("splitSlides : titres", () => {
     expect(forced).toHaveLength(2);
   });
 
+  it("un --- juste après un titre ne le laisse pas seul : le contenu suivant le rejoint", () => {
+    const out = specs("## Comparer\n\n---\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n---\n\nSuite");
+    expect(out.map((s) => types(s.blocks))).toEqual([["heading", "table"], ["paragraph"]]);
+  });
+
+  it("un reste de deux lignes rejoint la diapo pleine au lieu d'en ouvrir une quasi vide", () => {
+    const items = Array.from({ length: MAX_SLIDE_LINES }, (_, i) => `- point ${i}`).join("\n");
+    const out = slides(`## Liste\n\n${items}\n\nmais plutôt :`);
+    expect(out).toHaveLength(1);
+  });
+
   it("garde le texte d'avant le premier titre comme diapo sans titre", () => {
     const out = slides("Préambule\n\n## Suite\n\nTexte");
     expect(out.map(slideTitle)).toEqual([null, "Suite"]);

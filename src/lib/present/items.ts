@@ -47,7 +47,16 @@ export interface PrepItem {
   lockLabel: string | null;
   /** Page qui montre ce que cet élément projette (cadre, grille). */
   previewKey: "cadre" | "grid" | null;
+  /** « Pour moi » d'office tant qu'aucun choix n'a été fait pour cette séance. */
+  defaultHidden: boolean;
 }
+
+/**
+ * Fiches qu'on ne projette pas d'office : « … pour aller plus loin » (approfondissement hors séance)
+ * et les corrigés (montrés exprès, après l'exercice). Elles restent cochables dans « Avant de commencer ».
+ */
+export const isOptionalDeckTitle = (title: string): boolean =>
+  /pour aller plus loin/i.test(title) || /^\s*corrig[ée]/i.test(title);
 
 export function prepItems(input: {
   hasResume: boolean;
@@ -63,7 +72,7 @@ export function prepItems(input: {
   const toggle = (
     key: string,
     label: string,
-    extra: Partial<Pick<PrepItem, "detail" | "badge" | "previewKey">> = {},
+    extra: Partial<Pick<PrepItem, "detail" | "badge" | "previewKey" | "defaultHidden">> = {},
   ) =>
     items.push({
       key,
@@ -73,6 +82,7 @@ export function prepItems(input: {
       mode: "toggle",
       lockLabel: null,
       previewKey: extra.previewKey ?? null,
+      defaultHidden: extra.defaultHidden ?? false,
     });
   const locked = (
     key: string,
@@ -88,6 +98,7 @@ export function prepItems(input: {
       mode: "locked",
       lockLabel,
       previewKey: null,
+      defaultHidden: false,
     });
 
   if (input.hasResume) {
@@ -100,6 +111,7 @@ export function prepItems(input: {
   );
   for (const r of studentReady) {
     toggle(resourceKey(r.id), r.title, {
+      defaultHidden: isOptionalDeckTitle(r.title),
       badge: r.linkOnly ? { label: "Lien", tone: "plain" } : { label: "Prête", tone: "ok" },
       detail: r.linkOnly
         ? "Garde le lien de la ressource : il s’ouvre dans un nouvel onglet quand tu le décides."
@@ -150,3 +162,7 @@ export function prepItems(input: {
 export function projectedCount(items: readonly PrepItem[], hidden: ReadonlySet<string>): number {
   return items.filter((i) => i.mode === "toggle" && !hidden.has(i.key)).length;
 }
+
+/** Éléments cachés d'office : ceux de `defaultHidden`, tant que le choix n'a pas été fait. */
+export const defaultHiddenKeys = (items: readonly PrepItem[]): Set<string> =>
+  new Set(items.filter((i) => i.mode === "toggle" && i.defaultHidden).map((i) => i.key));

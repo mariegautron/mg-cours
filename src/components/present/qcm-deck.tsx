@@ -59,11 +59,12 @@ function Header({
   counter: string;
   question: QcmQuestion;
 }) {
+  // Une seule ligne (au lieu de trois) : le gain de hauteur évite le défilement sur 1366×768.
   return (
-    <div className="space-y-1">
-      <p className="text-primary text-2xl font-bold tracking-widest uppercase">{eyebrow}</p>
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <h2 className="font-heading text-4xl font-semibold">{counter}</h2>
-      <p className="text-muted-foreground text-2xl">{questionTypeLabel(question)}</p>
+      <p className="text-primary text-xl font-bold tracking-widest uppercase">{eyebrow}</p>
+      <p className="text-muted-foreground text-xl">· {questionTypeLabel(question)}</p>
     </div>
   );
 }
@@ -78,17 +79,17 @@ function QuestionView({
   question: QcmQuestion;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <Header eyebrow={`Mini-QCM · ${title}`} counter={counter} question={question} />
       <Markdown source={question.statement} headingLevel={3} size="present" />
       {question.type === "numerical" ? (
         <p className="text-muted-foreground text-3xl">Note ta réponse : un nombre.</p>
       ) : (
-        <ol className="space-y-3" aria-label="Réponses possibles">
+        <ol className="space-y-2" aria-label="Réponses possibles">
           {question.choices.map((choice, i) => (
             <li
               key={choice.id}
-              className="bg-card flex items-baseline gap-5 rounded-3xl border-2 px-6 py-4"
+              className="bg-card flex items-baseline gap-5 rounded-3xl border-2 px-6 py-3"
             >
               <span
                 aria-label={`Réponse ${choiceLetter(i)}`}
@@ -116,9 +117,9 @@ function CorrectionView({
 }) {
   const numeric = question.type === "numerical";
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Header eyebrow={`Correction · ${title}`} counter={counter} question={question} />
-      <div className="text-muted-foreground max-h-40 overflow-hidden text-xl">
+      <div className="text-muted-foreground max-h-24 overflow-hidden text-xl">
         <Markdown source={question.statement} headingLevel={3} />
       </div>
       {numeric ? (
@@ -128,13 +129,13 @@ function CorrectionView({
           {numericAnswerLabel(question.numericValue ?? 0, question.numericTolerance)}
         </p>
       ) : (
-        <ol className="space-y-3" aria-label="Correction des réponses">
+        <ol className="space-y-2" aria-label="Correction des réponses">
           {question.choices.map((choice, i) => {
             const correct = choiceVerdict(choice) === "correct";
             return (
               <li
                 key={choice.id}
-                className={`rounded-3xl border-2 px-6 py-3 ${correct ? "border-primary bg-primary/15" : "bg-card"}`}
+                className={`rounded-3xl border-2 px-6 py-2 ${correct ? "border-primary bg-primary/15" : "bg-card"}`}
               >
                 <div className="flex items-baseline gap-5">
                   <span className="font-heading text-primary text-3xl font-bold">

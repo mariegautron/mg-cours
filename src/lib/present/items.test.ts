@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseHidden, plannedSections, serializeHidden, withHidden } from "./plan";
-import { prepItems, projectedCount } from "./items";
+import { defaultHiddenKeys, prepItems, projectedCount } from "./items";
 
 describe("éléments cachés dans l'adresse", () => {
   it("aller-retour, valeurs étranges ignorées", () => {
@@ -61,5 +61,29 @@ describe("prepItems", () => {
   it("compte ce qui sera projeté", () => {
     expect(projectedCount(items, new Set())).toBe(7);
     expect(projectedCount(items, new Set(["cadre:Jalon 1", "opening:resume"]))).toBe(5);
+  });
+});
+
+describe("fiches non projetées d'office", () => {
+  it("« pour aller plus loin » et corrigés sont « pour moi » par défaut", () => {
+    const res = (id: string, title: string) => ({
+      id,
+      title,
+      audience: "students",
+      status: "ready",
+      linkOnly: false,
+    });
+    const items = prepItems({
+      hasResume: false,
+      objectives: 0,
+      resources: [
+        res("a", "Estimation des tâches"),
+        res("b", "Estimation — pour aller plus loin"),
+        res("c", "Corrigé : étude de cas blanche"),
+      ],
+      subjects: [],
+      unpreparedSubjects: [],
+    });
+    expect(defaultHiddenKeys(items)).toEqual(new Set(["resource:b", "resource:c"]));
   });
 });

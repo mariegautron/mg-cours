@@ -1,4 +1,5 @@
 import type { SubjectDeckInput } from "@/components/present/deck";
+import { firstLine } from "@/lib/modules/frise";
 import { getAssessment, listModuleAssessments } from "@/lib/assessments/queries";
 import { cadreBlocks } from "@/lib/assessments/cadre";
 import { groupByAxis } from "@/lib/assessments/scoring";
@@ -37,7 +38,8 @@ export async function loadSubjectDeck(assessmentId: string): Promise<SubjectDeck
     criteria: evaluatedCriteria(grid?.criteria ?? []),
     cadre: {
       eyebrow: `${assessment.title} · Ce que vous devez faire`,
-      heading: assessment.objective?.trim() || assessment.title,
+      // Première ligne sans balisage : l'objectif complet est du Markdown (listes, gras).
+      heading: firstLine(assessment.objective) || assessment.title,
       blocks: cadreBlocks({
         title: assessment.title,
         objective: assessment.objective,

@@ -3,7 +3,8 @@ import type { Block, InlineRun } from "@/lib/pdf/markdown";
 /**
  * Découpage automatique d'un contenu Markdown (déjà parsé) en diapositives de projection (US-133).
  *
- * - `---` ferme toujours la diapo courante (prioritaire) ; `#` et `##` ouvrent une section ;
+ * - `---` ferme la diapo courante (prioritaire), sauf si elle ne contient qu'un titre : le titre
+ *   garde alors le contenu qui suit ; `#` et `##` ouvrent une section ;
  *   chaque sous-titre (`###` et suivants) ouvre aussi sa diapo.
  * - Une image, un tableau ou un bloc de code a sa propre diapo (avec le titre de la section en
  *   rappel) ; si un titre vient juste avant, il l'accompagne.
@@ -16,6 +17,11 @@ import type { Block, InlineRun } from "@/lib/pdf/markdown";
 
 /** Lignes de texte (estimées) qu'une diapo peut porter avant d'être coupée. */
 export const MAX_SLIDE_LINES = 11;
+/**
+ * Un reste de 1-2 lignes (« mais plutôt : ») rejoint la diapo courante, quitte à la dépasser de
+ * 2 lignes, plutôt que d'ouvrir une diapo quasi vide.
+ */
+export const ORPHAN_LINES = 2;
 /** Caractères par ligne de texte projeté (estimation grossière, sert au seuil). */
 export const CHARS_PER_LINE = 70;
 /** Taille visée d'une tranche de code. */
@@ -180,7 +186,8 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
 
   for (const block of blocks) {
     if (block.type === "hr") {
-      flush();
+      // Un titre seul n'est pas fermé par `---` : il reste avec son contenu (sinon diapo « un mot »).
+      if (!headingOnly()) flush();
     } else if (block.type === "heading") {
       flush();
       if (block.level <= 2) section = runsText(block.runs).trim() || null;
@@ -197,7 +204,8 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
             : [block];
       for (const piece of pieces) {
         const w = blockLines(piece);
-        if (current.length && !headingOnly() && used + w > MAX_SLIDE_LINES) flush();
+        const room = w <= ORPHAN_LINES ? MAX_SLIDE_LINES + ORPHAN_LINES : MAX_SLIDE_LINES;
+        if (current.length && !headingOnly() && used + w > room) flush();
         current.push(piece);
         used += w;
       }

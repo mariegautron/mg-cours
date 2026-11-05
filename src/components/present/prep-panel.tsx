@@ -7,7 +7,7 @@ import { ExternalLink } from "lucide-react";
 import { recordKeptForMe } from "@/app/(app)/modules/[id]/courses/[courseId]/start/actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
-import { projectedCount, type PrepItem } from "@/lib/present/items";
+import { defaultHiddenKeys, projectedCount, type PrepItem } from "@/lib/present/items";
 import { withHidden } from "@/lib/present/plan";
 import {
   QCM_DEFAULT_LIMIT,
@@ -20,15 +20,16 @@ import {
 const card = "bg-card rounded-3xl border p-5 shadow-sm";
 const EDUSIGN = "https://edusign.app/professor/home";
 
-function readHidden(courseId: string): Set<string> {
+function readHidden(courseId: string, fallback: Set<string>): Set<string> {
   try {
     const raw = window.localStorage.getItem(`mg-hidden-${courseId}`);
+    if (raw === null) return fallback;
     const list = raw ? (JSON.parse(raw) as unknown) : [];
     return new Set(
       Array.isArray(list) ? list.filter((k): k is string => typeof k === "string") : [],
     );
   } catch {
-    return new Set();
+    return fallback;
   }
 }
 
@@ -65,7 +66,7 @@ export function PrepPanel({
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- préférences locales lues après hydratation */
-    setHidden(readHidden(courseId));
+    setHidden(readHidden(courseId, defaultHiddenKeys(items)));
     try {
       setCalledDone(window.localStorage.getItem(`mg-appel-${courseId}`) === "1");
     } catch {
@@ -74,6 +75,7 @@ export function PrepPanel({
     setQcmLimit(readQcmLimit());
     setReady(true);
     /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- lu une fois par séance, après hydratation
   }, [courseId]);
 
   function persistHidden(next: Set<string>) {
@@ -219,8 +221,9 @@ export function PrepPanel({
           </fieldset>
         ) : null}
         <p className="text-muted-foreground mt-3 text-[0.8rem]">
-          Un élément « Pour moi » reste dans ta vue privée. Les corrigés et ce qui est « à
-          construire » ne peuvent pas être projetés.
+          Un élément « Pour moi » reste dans ta vue privée. Les fiches « pour aller plus loin »
+          et les corrigés sont « Pour moi » tant que tu n’as pas choisi ; ce qui est « à construire »
+          ne peut pas être projeté.
         </p>
       </section>
 

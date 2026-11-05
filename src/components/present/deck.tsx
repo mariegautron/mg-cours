@@ -68,8 +68,16 @@ export function markdownSlides(
   section: number,
   source: string,
   resolveSrc?: (src: string) => string,
+  /** Titre déjà porté par l'intercalaire : une première diapo « titre seul » identique est omise. */
+  coverTitle?: string,
 ): PresentSlide[] {
-  return buildSlides(parseMarkdown(source)).map(({ blocks, reminder, part }) => ({
+  const specs = buildSlides(parseMarkdown(source));
+  const first = specs[0];
+  const repeatsCover =
+    !!coverTitle &&
+    first?.blocks.length === 1 &&
+    slideTitle(first.blocks)?.toLowerCase() === coverTitle.trim().toLowerCase();
+  return (repeatsCover ? specs.slice(1) : specs).map(({ blocks, reminder, part }) => ({
     section,
     label: slideTitle(blocks) ?? (reminder ? `${reminder} (suite)` : null),
     node: (
@@ -96,6 +104,10 @@ export function markdownSlides(
   }));
 }
 
+/** « retro-boucle.png » → « retro boucle » : un nom de fichier n'est ni un titre ni un alt. */
+const readableFileName = (name: string) =>
+  name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ").trim() || name;
+
 /** Intercalaire + contenu + lien + fichiers joints d'une ressource. */
 export function resourceSlides(section: number, resource: Tables<"resource">): PresentSlide[] {
   const slides: PresentSlide[] = [
@@ -108,7 +120,12 @@ export function resourceSlides(section: number, resource: Tables<"resource">): P
 
   if (resource.content) {
     slides.push(
-      ...markdownSlides(section, resource.content, (src) => resolveImageSrc(resource.id, src)),
+      ...markdownSlides(
+        section,
+        resource.content,
+        (src) => resolveImageSrc(resource.id, src),
+        resource.title,
+      ),
     );
   }
 
@@ -139,12 +156,13 @@ export function resourceSlides(section: number, resource: Tables<"resource">): P
   for (const file of files) {
     const url = resourceFileUrl(resource.id, file.name);
     if (isImageMime(file.mime)) {
+      const readable = readableFileName(file.name);
       slides.push({
         section,
-        label: file.name,
+        label: readable,
         node: (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={file.name} className="mx-auto max-h-[75vh] max-w-full rounded-md" />
+          <img src={url} alt={readable} className="mx-auto max-h-[75vh] max-w-full rounded-md" />
         ),
       });
     } else if (file.mime === "application/pdf") {
