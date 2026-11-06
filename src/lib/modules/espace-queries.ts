@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isImageMime, parseResourceFiles } from "@/lib/resources/files";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
 
-const COURSE_KINDS = new Set(["course", "workshop", "project"]);
+const COURSE_KINDS = new Set(["course", "workshop", "project", "template"]);
 
 /**
  * Contenu de l'espace étudiant·e à publier. Chaque sortie passe par `studentFacing()` (ressources) ou
