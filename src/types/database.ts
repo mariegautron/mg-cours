@@ -443,6 +443,116 @@ export type Database = {
           },
         ]
       }
+      checkpoint: {
+        Row: {
+          code: string
+          created_at: string
+          due_date: string | null
+          expected_md: string
+          id: string
+          module_id: string
+          owner_id: string
+          position: number
+          response_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          due_date?: string | null
+          expected_md?: string
+          id?: string
+          module_id: string
+          owner_id?: string
+          position: number
+          response_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          due_date?: string | null
+          expected_md?: string
+          id?: string
+          module_id?: string
+          owner_id?: string
+          position?: number
+          response_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoint_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkpoint_result: {
+        Row: {
+          checkpoint_id: string
+          created_at: string
+          decided_at: string | null
+          feedback_md: string
+          files: Json
+          id: string
+          owner_id: string
+          private_note: string
+          status: string
+          student_id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          checkpoint_id: string
+          created_at?: string
+          decided_at?: string | null
+          feedback_md?: string
+          files?: Json
+          id?: string
+          owner_id?: string
+          private_note?: string
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checkpoint_id?: string
+          created_at?: string
+          decided_at?: string | null
+          feedback_md?: string
+          files?: Json
+          id?: string
+          owner_id?: string
+          private_note?: string
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkpoint_result_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "checkpoint"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkpoint_result_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course: {
         Row: {
           animation_notes: string | null
