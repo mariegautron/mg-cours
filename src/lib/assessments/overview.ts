@@ -97,7 +97,9 @@ export function correctionOverview(
   autoValidatedIds: readonly string[] = [],
 ): Overview {
   const rows = items.map((item): OverviewRow => {
-    const state = copyState(item.grade, criteriaIds);
+    // Absence excusée : rien à noter, la copie compte comme traitée (même règle que la correction).
+    const state: CopyState =
+      item.attendance === "absent_excused" ? "done" : copyState(item.grade, criteriaIds);
     const hasGrid = criteriaIds.length > 0;
     return {
       ...item,

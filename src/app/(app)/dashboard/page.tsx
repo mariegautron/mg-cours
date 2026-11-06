@@ -316,7 +316,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const modulesCard = (
     <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
       <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
-        Tes modules en cours
+        Tes modules en cours{runningModules.length > 0 ? ` (${runningModules.length})` : ""}
       </h2>
       {runningModules.length === 0 ? (
         <p className="text-muted-foreground mb-2 text-sm">Aucun module en cours pour l’instant.</p>
@@ -346,6 +346,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             })}
         </ul>
       )}
+      {runningModules.length > 3 ? (
+        <p className="text-muted-foreground mb-2 text-sm">
+          + {runningModules.length - 3} autre{runningModules.length - 3 > 1 ? "s" : ""} en cours
+        </p>
+      ) : null}
       <Link href="/modules" className={BTN}>
         Voir tous les modules
       </Link>
