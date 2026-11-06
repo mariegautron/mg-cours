@@ -5,6 +5,7 @@ import { coverSlide, formatLongDate, listSlide, markdownSlides } from "@/compone
 import { PresentShell, type PresentSlide } from "@/components/present/present-shell";
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses, getModuleResourcesFull } from "@/lib/modules/queries";
+import { isOptionalDeckTitle } from "@/lib/present/items";
 import { groupByKind, studentFacing } from "@/lib/resources/kind";
 import { requiredNotes } from "@/lib/ynov/notation";
 
@@ -29,9 +30,9 @@ export default async function PresentModulePage({ params }: PageProps<"/present/
     getModuleResourcesFull(id),
   ]);
   if (!mod) notFound();
-  // Un corrigé n'est jamais listé sans geste explicite : ni par type, ni par son titre.
+  // Ni corrigé ni fiche « pour aller plus loin » sans geste explicite : ils ne sont pas listés.
   const resources = studentFacing(allResources).filter(
-    (r) => r.kind !== "answer_key" && !/^\s*corrig[ée]/i.test(r.title),
+    (r) => r.kind !== "answer_key" && !isOptionalDeckTitle(r.title),
   );
 
   const sections: string[] = [];
