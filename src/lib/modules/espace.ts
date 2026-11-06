@@ -54,6 +54,50 @@ export interface EspaceImage {
   mime: string;
 }
 
+/** Fichier joint non image d'une fiche (pdf, Word, diaporama…), proposé en téléchargement. */
+export interface EspaceDocument {
+  name: string;
+  /** Chemin dans le bucket privé ; sert uniquement à la route de téléchargement, jamais affiché. */
+  path: string;
+  mime: string;
+  size: number;
+}
+
+const DOCUMENT_EXTENSIONS = /\.(pdf|docx?|odt|pptx?|odp|key)$/i;
+
+/** Fichiers joints à proposer en téléchargement : tout sauf les images (affichées dans la fiche). */
+export function selectDocuments(
+  files: { name: string; path: string; mime: string; size: number }[],
+): EspaceDocument[] {
+  return files
+    .filter((f) => !/^image\//i.test(f.mime) && DOCUMENT_EXTENSIONS.test(f.name))
+    .map((f) => ({ name: f.name, path: f.path, mime: f.mime, size: f.size }));
+}
+
+/** Nom de fichier sûr pour l'en-tête Content-Disposition (ASCII, sans séparateur ni guillemet). */
+export function safeDownloadName(name: string): string {
+  const base = name.split(/[\\/]/).pop() ?? "";
+  const clean = base
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^[.-]+/, "")
+    .slice(-120);
+  return clean || "document";
+}
+
+/** Type de document en clair, pour le libellé du lien. */
+export function documentKind(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "pdf") return "PDF";
+  if (ext === "doc" || ext === "docx") return "Word";
+  if (ext === "ppt" || ext === "pptx") return "PowerPoint";
+  if (ext === "odt") return "texte OpenDocument";
+  if (ext === "odp") return "présentation OpenDocument";
+  if (ext === "key") return "Keynote";
+  return "fichier";
+}
+
 export interface EspaceResource {
   title: string;
   kindLabel: string | null;
@@ -62,6 +106,8 @@ export interface EspaceResource {
   /** Durée prévue au déroulé de la séance, en minutes ; null si non renseignée. */
   minutes: number | null;
   images: EspaceImage[];
+  /** Fichiers à télécharger ; absent des anciens instantanés (alors vide). */
+  documents: EspaceDocument[];
 }
 
 export interface EspaceCourse {
@@ -191,6 +237,16 @@ export function parseEspace(payload: unknown): Espace | null {
                   const mime = str(f.mime);
                   return name && path && mime && /^image\/(png|jpeg|gif|webp)$/.test(mime)
                     ? [{ name, path, mime }]
+                    : [];
+                }),
+                documents: arr(k.documents).flatMap((d) => {
+                  const f = obj(d);
+                  const name = str(f.name);
+                  const path = str(f.path);
+                  const mime = str(f.mime);
+                  const size = num(f.size);
+                  return name && path && mime && !/^image\//i.test(mime)
+                    ? [{ name, path, mime, size: size !== null && size >= 0 ? size : 0 }]
                     : [];
                 }),
               },

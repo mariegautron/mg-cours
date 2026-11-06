@@ -4,6 +4,8 @@ import { Markdown, markdownOutline } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
 import { formatMinutes } from "@/lib/modules/activity";
+import { documentKind } from "@/lib/modules/espace";
+import { formatSize } from "@/lib/storage/files";
 import {
   dueLabel,
   flatFiches,
@@ -476,6 +478,26 @@ export function CoursFicheView({
               Ouvrir le lien<span className="sr-only"> (nouvel onglet)</span>
             </a>
           </p>
+        ) : null}
+        {resource.documents.length > 0 ? (
+          <section aria-labelledby="fiche-documents" className="mt-8">
+            <h2 id="fiche-documents" className="font-heading text-xl font-bold">
+              Documents à télécharger
+            </h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {resource.documents.map((d) => (
+                <li key={d.name}>
+                  <a
+                    href={`${data.base}/document/${session}/${index - 1}/${encodeURIComponent(d.name)}`}
+                    className="underline underline-offset-2"
+                  >
+                    Télécharger {d.name.replace(/\.[^.]+$/, "")} ({documentKind(d.name)},{" "}
+                    {formatSize(d.size)})
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
         <nav
           aria-label="Fiches voisines"

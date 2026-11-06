@@ -6,6 +6,7 @@ import { canPresent, subjectSections } from "@/lib/assessments/subject";
 import {
   DEFAULT_ESPACE_OPTIONS,
   parseEspace,
+  selectDocuments,
   type Espace,
   type EspaceEvaluation,
   type EspaceOptions,
@@ -100,6 +101,7 @@ export async function loadEspace(
           images: parseResourceFiles(r.files)
             .filter((f) => isImageMime(f.mime))
             .map((f) => ({ name: f.name, path: f.path, mime: f.mime })),
+          documents: selectDocuments(parseResourceFiles(r.files)),
         })),
       });
     }
