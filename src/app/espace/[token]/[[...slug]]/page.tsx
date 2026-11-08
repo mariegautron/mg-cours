@@ -56,7 +56,19 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     espace: res.content.espace,
     results: res.results,
     publishedAt: res.content.publishedAt,
+    deposits: undefined,
   };
+  // État des dépôts (heure serveur) pour les évaluations rendues dans MG COURS.
+  if (data.espace && ["accueil", "evaluation"].includes(section ?? "accueil")) {
+    const deposits: NonNullable<EspaceData["deposits"]> = {};
+    for (const ev of data.espace.evaluations) {
+      if (ev.id && ev.submit.mode === "app") {
+        const st = await getDeposit(token, ev.id);
+        if (st.submittedAt) deposits[ev.id] = { at: st.submittedAt, late: st.lateMinutes };
+      }
+    }
+    data.deposits = deposits;
+  }
   const number = Number(arg);
 
   let current: EspaceSection;

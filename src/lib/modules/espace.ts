@@ -343,6 +343,8 @@ export function nextEvaluationIndex(
   espace: Espace | null,
   frise: Frise,
   today: string,
+  /** Évaluations déjà déposées par la personne : elles sortent de « Prochain rendu ». */
+  deposited: ReadonlySet<string> = new Set(),
 ): number | null {
   if (!espace || espace.evaluations.length === 0) return null;
   const dateOf = new Map(frise.sessions.map((s) => [s.number, s.date]));
@@ -350,7 +352,7 @@ export function nextEvaluationIndex(
     e.date ?? (e.sessionNumber !== null ? (dateOf.get(e.sessionNumber) ?? null) : null);
   const upcoming = espace.evaluations
     .map((e, index) => ({ e, index, due: dueOf(e) }))
-    .filter((x) => !x.e.graded && (!x.due || x.due >= today))
+    .filter((x) => !x.e.graded && !deposited.has(x.e.id) && (!x.due || x.due >= today))
     .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.index - b.index);
   return upcoming[0]?.index ?? null;
 }

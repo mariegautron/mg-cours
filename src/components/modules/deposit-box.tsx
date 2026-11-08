@@ -53,6 +53,8 @@ export function DepositBox({
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [sent, setSent] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [pending, start] = useTransition();
   const input = useRef<HTMLInputElement>(null);
 
@@ -78,15 +80,28 @@ export function DepositBox({
         return;
       }
       const storage = createClient().storage.from(ASSESSMENT_FILES_BUCKET);
+      setSent(0);
       for (const [i, file] of files.entries()) {
-        setProgress(`Envoi du fichier ${i + 1} sur ${files.length}…`);
+        setProgress(`Envoi de ${file.name} (${i + 1} sur ${files.length})…`);
         const up = prep.uploads[i];
-        const { error: upError } = await storage.uploadToSignedUrl(up.path, up.token, file);
-        if (upError) {
+        // Coupure : trois essais automatiques, avec une pause croissante.
+        let failed = true;
+        for (let attempt = 1; attempt <= 3 && failed; attempt++) {
+          const { error: upError } = await storage.uploadToSignedUrl(up.path, up.token, file);
+          failed = !!upError;
+          if (failed && attempt < 3) {
+            setProgress(`Pas de connexion… nouvel essai automatique (${attempt}/2).`);
+            await new Promise((r) => setTimeout(r, attempt * 2500));
+          }
+        }
+        if (failed) {
           setProgress("");
-          setError("L’envoi a été interrompu (connexion ?). Rien n’est déposé : réessaie.");
+          setError(
+            "L’envoi a été interrompu (connexion ?). Rien n’est déposé, tes fichiers restent sélectionnés : réessaie.",
+          );
           return;
         }
+        setSent(i + 1);
       }
       setProgress("Enregistrement…");
       const res = await commitDeposit(token, assessmentId, prep.batchId, meta, link.trim() || null);
@@ -156,6 +171,21 @@ export function DepositBox({
             <label htmlFor="depot-fichiers" className="text-sm font-medium">
               Fichiers (50 Mo maximum chacun)
             </label>
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                setFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+              }}
+              className={`mt-1 rounded-md border-2 border-dashed p-3 text-center text-sm ${dragging ? "bg-accent" : ""}`}
+            >
+              Glisse tes fichiers ici, ou choisis-les ci-dessous.
+            </div>
             <input
               id="depot-fichiers"
               ref={input}
@@ -195,6 +225,23 @@ export function DepositBox({
             Actualiser
           </Button>
         </div>
+        {pending && files.length > 0 ? (
+          <progress
+            className="w-full"
+            max={files.length}
+            value={sent}
+            aria-label="Progression de l’envoi"
+          />
+        ) : null}
+        {files.length > 0 ? (
+          <ul className="text-sm">
+            {files.map((f, i) => (
+              <li key={`${f.name}-${i}`}>
+                {f.name} ({size(f.size)})
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <p role="status" aria-live="polite" className="min-h-5 text-sm">
           {progress}
           {done ? " Dépôt enregistré." : ""}

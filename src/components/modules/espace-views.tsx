@@ -14,6 +14,7 @@ import {
   type Espace,
   type EspaceEvaluation,
 } from "@/lib/modules/espace";
+import { lateLabel } from "@/lib/deposits/rules";
 import { sessionHeading, type Frise } from "@/lib/modules/frise";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -30,6 +31,8 @@ export interface EspaceData {
   espace: Espace | null;
   results: { sheet: PublicSheet; publishedAt: string | null }[];
   publishedAt: string | null;
+  /** Dépôts de cette personne (ou de son groupe), par évaluation : heure serveur et retard en minutes. */
+  deposits?: Record<string, { at: string; late: number }>;
 }
 
 export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
@@ -119,6 +122,40 @@ export function EspaceLayout({
   );
 }
 
+/** État du rendu en une phrase, au tutoiement : rendu, rendu en retard, à rendre, ou pas encore rendu. */
+function depositStatus(
+  e: EspaceEvaluation,
+  due: string | null,
+  deposit: { at: string; late: number } | undefined,
+  today: string,
+): string | null {
+  if (e.submit.mode !== "app") return null;
+  if (deposit) {
+    const when = new Date(deposit.at).toLocaleString("fr-FR", {
+      timeZone: "Europe/Paris",
+      day: "numeric",
+      month: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return deposit.late > 0 ? `Rendu en retard (${lateLabel(deposit.late)})` : `Rendu le ${when}`;
+  }
+  if (due && due < today) {
+    return "Pas encore rendu. Tu peux encore déposer, ce sera signalé en retard.";
+  }
+  return null;
+}
+
+/** « Il te reste 2 jours » à 3 jours ou moins de la date limite ; sinon `null`. */
+function reminder(due: string | null, today: string): string | null {
+  if (!due || due < today) return null;
+  const days = Math.round(
+    (new Date(`${due}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86400000,
+  );
+  if (days > 3) return null;
+  return days === 0 ? "C’est aujourd’hui." : `Il te reste ${days} jour${days > 1 ? "s" : ""}.`;
+}
+
 function dateOfEvaluation(e: EspaceEvaluation, frise: Frise) {
   return (
     e.date ??
@@ -131,7 +168,12 @@ function dateOfEvaluation(e: EspaceEvaluation, frise: Frise) {
 export function AccueilView({ data }: { data: EspaceData }) {
   const { base, espace, frise, results, firstName } = data;
   const today = new Date().toISOString().slice(0, 10);
-  const nextIndex = nextEvaluationIndex(espace, frise, today);
+  const nextIndex = nextEvaluationIndex(
+    espace,
+    frise,
+    today,
+    new Set(Object.keys(data.deposits ?? {})),
+  );
   const next = nextIndex !== null ? espace!.evaluations[nextIndex] : null;
   const quizOpen = quizIsOpen(espace?.quiz ?? null);
 
@@ -184,6 +226,9 @@ export function AccueilView({ data }: { data: EspaceData }) {
             À rendre : <strong>{dueLabel(dateOfEvaluation(next, frise), next.time)}</strong>
             {next.whereToSubmit ? ` · ${next.whereToSubmit}` : ""}
           </p>
+          {reminder(dateOfEvaluation(next, frise), today) ? (
+            <p className="font-semibold">{reminder(dateOfEvaluation(next, frise), today)}</p>
+          ) : null}
           <p className="mt-4 flex flex-wrap gap-2">
             <Link
               href={`${base}/evaluation/${nextIndex + 1}`}
@@ -338,6 +383,21 @@ export function EvaluationView({
         </nav>
       ) : null}
       {e.type ? <p className="text-muted-foreground mt-1">{e.type}</p> : null}
+      {depositStatus(
+        e,
+        dateOfEvaluation(e, frise),
+        data.deposits?.[e.id],
+        new Date().toISOString().slice(0, 10),
+      ) ? (
+        <p role="status" className="bg-muted mt-3 rounded-xl border p-3 text-sm font-medium">
+          {depositStatus(
+            e,
+            dateOfEvaluation(e, frise),
+            data.deposits?.[e.id],
+            new Date().toISOString().slice(0, 10),
+          )}
+        </p>
+      ) : null}
       <dl className={`${card} mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
         {facts.map(([label, value]) => (
           <div key={label}>
@@ -845,7 +905,20 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
       <ul className="space-y-3">
         {espace.evaluations.map((e, i) => {
           const due = dateOfEvaluation(e, frise);
-          const status = e.graded ? "noté" : due && due < today ? "rendu" : "à rendre";
+          const dep = data.deposits?.[e.id];
+          const status = e.graded
+            ? "noté"
+            : dep
+              ? dep.late > 0
+                ? "rendu en retard"
+                : "rendu"
+              : e.submit.mode === "app"
+                ? due && due < today
+                  ? "pas encore rendu"
+                  : "à rendre"
+                : due && due < today
+                  ? "rendu"
+                  : "à rendre";
           return (
             <li key={i}>
               <Link href={`${base}/evaluation/${i + 1}`} className={tile}>
