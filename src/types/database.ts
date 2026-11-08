@@ -1823,6 +1823,71 @@ export type Database = {
           },
         ]
       }
+      oral_space: {
+        Row: {
+          absence_rule: string
+          assessment_id: string
+          attendance: Json
+          created_at: string
+          criterion_notes: Json
+          field_versions: Json
+          from_existing: boolean
+          id: string
+          letters: Json
+          owner_id: string
+          pad: string
+          person_notes: Json
+          subject_id: string
+          updated_at: string
+          written: Json | null
+          written_at: string | null
+        }
+        Insert: {
+          absence_rule?: string
+          assessment_id: string
+          attendance?: Json
+          created_at?: string
+          criterion_notes?: Json
+          field_versions?: Json
+          from_existing?: boolean
+          id?: string
+          letters?: Json
+          owner_id?: string
+          pad?: string
+          person_notes?: Json
+          subject_id: string
+          updated_at?: string
+          written?: Json | null
+          written_at?: string | null
+        }
+        Update: {
+          absence_rule?: string
+          assessment_id?: string
+          attendance?: Json
+          created_at?: string
+          criterion_notes?: Json
+          field_versions?: Json
+          from_existing?: boolean
+          id?: string
+          letters?: Json
+          owner_id?: string
+          pad?: string
+          person_notes?: Json
+          subject_id?: string
+          updated_at?: string
+          written?: Json | null
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oral_space_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedagogical_outline: {
         Row: {
           content: Json
