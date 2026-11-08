@@ -169,7 +169,7 @@ export function PrepareLinks({
           }}
         >
           <Mail aria-hidden />
-          Envoyer aux {missing} personne{missing > 1 ? "s" : ""} par e-mail
+          Envoyer à {missing} personne{missing > 1 ? "s" : ""} par e-mail
         </Button>
       </form>
       <LinksResult state={state} />

@@ -7,6 +7,7 @@ import { DownloadButton } from "@/components/download-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PAGE_SIZE, paginate, questionFlags } from "@/lib/questions/flags";
 import { filterQuestions, readQuestionFilters } from "@/lib/questions/filter";
 import { questionOrigins } from "@/lib/questions/link-queries";
 import { originLabel } from "@/lib/questions/links";
@@ -20,7 +21,28 @@ const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 tex
 export default async function QuestionsPage({ searchParams }: PageProps<"/questions">) {
   const filters = readQuestionFilters(await searchParams);
   const [all, origins] = await Promise.all([listQuestions(), questionOrigins()]);
+  const rawParams = await searchParams;
+  const requestedPage = Number(Array.isArray(rawParams.page) ? rawParams.page[0] : rawParams.page);
   const shown = filterQuestions(all, filters);
+  const flags = questionFlags(all);
+  const paged = paginate(shown, requestedPage);
+  const toDefine = all.filter((q) => flags.get(q.id)?.undefinedAnswer).length;
+  const duplicates = all.filter((q) => (flags.get(q.id)?.duplicateOf ?? 0) > 0).length;
+  const pageHref = (n: number) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries({
+      q: filters.q,
+      type: filters.type,
+      tag: filters.tag,
+      category: filters.category,
+      archived: filters.archived ? "1" : "",
+    })) {
+      if (v) params.set(k, v);
+    }
+    if (n > 1) params.set("page", String(n));
+    const qs = params.toString();
+    return qs ? `/questions?${qs}` : "/questions";
+  };
   const active = all.filter((q) => !q.archived_at);
   const categories = [...new Set(active.map((q) => q.category))].sort((a, b) =>
     a.localeCompare(b, "fr"),
@@ -61,13 +83,31 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
             Chaque QCM en tire un nombre au hasard pour chaque étudiant·e, dans un ordre différent.
           </p>
         </div>
-        <Button asChild size="touch">
-          <Link href="/questions/new">
-            <Plus aria-hidden />
-            Ajouter une question
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="touch" variant="secondary">
+            <Link href="/resources?family=quizzes">Préparer un QCM avec cette banque</Link>
+          </Button>
+          <Button asChild size="touch">
+            <Link href="/questions/new">
+              <Plus aria-hidden />
+              Ajouter une question
+            </Link>
+          </Button>
+        </div>
       </div>
+      {toDefine > 0 || duplicates > 0 ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
+        >
+          {toDefine > 0
+            ? `${toDefine} question${toDefine > 1 ? "s" : ""} sans réponse définie (jamais tirée${toDefine > 1 ? "s" : ""}). `
+            : ""}
+          {duplicates > 0
+            ? `${duplicates} question${duplicates > 1 ? "s" : ""} en double (même énoncé).`
+            : ""}
+        </p>
+      ) : null}
       <Link
         href="/resources?family=quizzes"
         className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
@@ -178,7 +218,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
       ) : (
         <section aria-label="Questions" className="bg-card rounded-xl border p-5">
           <ul className="divide-y">
-            {shown.map((q) => (
+            {paged.items.map((q) => (
               <li key={q.id} className="flex flex-wrap items-center gap-3 py-3">
                 <Link
                   href={`/questions/${q.id}`}
@@ -193,6 +233,8 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
                     {Number(q.default_points)} pt{Number(q.default_points) > 1 ? "s" : ""}
                     {q.tags.length ? ` · ${q.tags.join(", ")}` : ""}
                     {q.archived_at ? " · archivée" : ""}
+                    {flags.get(q.id)?.undefinedAnswer ? " · réponses à définir" : ""}
+                    {(flags.get(q.id)?.duplicateOf ?? 0) > 0 ? " · en double" : ""}
                     {origins.get(q.id)?.length
                       ? ` · ${originLabel((origins.get(q.id) ?? []).map((r) => r.title))}`
                       : ""}
@@ -204,6 +246,27 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
               </li>
             ))}
           </ul>
+          {paged.pages > 1 ? (
+            <nav aria-label="Pagination" className="mt-3 flex items-center justify-between gap-2">
+              {paged.page > 1 ? (
+                <Button asChild variant="outline" size="touch">
+                  <Link href={pageHref(paged.page - 1)}>← Précédentes</Link>
+                </Button>
+              ) : (
+                <span />
+              )}
+              <span className="text-sm">
+                Page {paged.page} sur {paged.pages} ({PAGE_SIZE} par page)
+              </span>
+              {paged.page < paged.pages ? (
+                <Button asChild variant="outline" size="touch">
+                  <Link href={pageHref(paged.page + 1)}>Suivantes →</Link>
+                </Button>
+              ) : (
+                <span />
+              )}
+            </nav>
+          ) : null}
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p role="status" className="text-muted-foreground text-sm">
               {shown.length} question{shown.length > 1 ? "s" : ""} affichée

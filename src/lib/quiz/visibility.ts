@@ -13,7 +13,7 @@ export function familyClosedReason(input: {
 }): string | null {
   const open = input.statuses.filter((s) => s !== "closed").length;
   if (open > 0)
-    return `${open} QCM (dont les rattrapages) ne sont pas encore clôturés : le corrigé reste caché pour que rien ne fuite vers celles et ceux qui passent plus tard.`;
+    return `${open} QCM (rattrapages compris) ${open > 1 ? "ne sont pas encore clôturés" : "n’est pas encore clôturé"} : le corrigé reste caché pour que rien ne fuite vers celles et ceux qui passent plus tard.`;
   if (input.excusedCount > 0 && !input.hasMakeupQuiz)
     return `${input.excusedCount} absent·e${input.excusedCount > 1 ? "s" : ""} excusé·e${input.excusedCount > 1 ? "s" : ""} n’ont pas encore de rattrapage : le corrigé reste caché.`;
   return null;
