@@ -69,6 +69,7 @@ export async function loadEspace(
         time: a.oral_start_time ? a.oral_start_time.slice(0, 5) : null,
         durationMinutes: a.duration_minutes,
         whereToSubmit: a.where_to_submit?.trim() || null,
+        graded: a.gradeCount > 0,
         sections: subjectSections(a).map((s) => ({ heading: s.heading, text: s.text })),
         grid: deck.grid
           ? {

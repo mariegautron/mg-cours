@@ -69,6 +69,7 @@ export function ShareLinkPanel({
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
   const router = useRouter();
   const [showUrl, setShowUrl] = useState(false);
+  const [madeReady, setMadeReady] = useState<string[]>([]);
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -153,6 +154,7 @@ export function ShareLinkPanel({
                         onClick={() =>
                           start(async () => {
                             await markAssessmentReady(moduleId, e.id);
+                            setMadeReady((l) => [...l, e.title]);
                             router.refresh();
                           })
                         }
@@ -167,6 +169,25 @@ export function ShareLinkPanel({
                   </li>
                 ))}
               </ul>
+            ) : null}
+            {madeReady.length > 0 ? (
+              <p role="status" className="ml-8 text-sm">
+                {madeReady.join(", ")} {madeReady.length > 1 ? "seront visibles" : "sera visible"}{" "}
+                après la mise à jour.{" "}
+                {active ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={pending}
+                    onClick={() => {
+                      run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null));
+                      setMadeReady([]);
+                    }}
+                  >
+                    Mettre à jour maintenant
+                  </Button>
+                ) : null}
+              </p>
             ) : null}
           </fieldset>
           <div className="space-y-1">

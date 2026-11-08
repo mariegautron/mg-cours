@@ -165,6 +165,10 @@ export function AccueilView({ data }: { data: EspaceData }) {
         </section>
       ) : null}
 
+      {!next && espace?.evaluations.length ? (
+        <p className="text-muted-foreground">Aucun rendu à venir.</p>
+      ) : null}
+
       {next && nextIndex !== null ? (
         <section aria-labelledby="prochain" className="bg-card rounded-2xl border-2 p-6 shadow-sm">
           <p className="text-primary text-xs font-bold tracking-widest uppercase">Prochain rendu</p>

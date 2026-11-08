@@ -42,6 +42,8 @@ export interface EspaceEvaluation {
   time: string | null;
   durationMinutes: number | null;
   whereToSubmit: string | null;
+  /** Déjà notée par Marie (aucune note n'est exposée) : ne compte plus comme « prochain rendu ». */
+  graded: boolean;
   /** Objectif, consigne, rendu attendu, ce qui est évalué : Markdown, dans l'ordre de lecture. */
   sections: { heading: string; text: string }[];
   grid: EspaceGrid | null;
@@ -253,6 +255,7 @@ export function parseEspace(payload: unknown): Espace | null {
           time: str(o.time),
           durationMinutes: num(o.durationMinutes),
           whereToSubmit: str(o.whereToSubmit),
+          graded: o.graded === true,
           sections: arr(o.sections).flatMap((s) => {
             const heading = str(obj(s).heading);
             const text = str(obj(s).text);
@@ -323,7 +326,7 @@ export function nextEvaluationIndex(
     e.date ?? (e.sessionNumber !== null ? (dateOf.get(e.sessionNumber) ?? null) : null);
   const upcoming = espace.evaluations
     .map((e, index) => ({ e, index, due: dueOf(e) }))
-    .filter((x) => !x.due || x.due >= today)
+    .filter((x) => !x.e.graded && (!x.due || x.due >= today))
     .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.index - b.index);
   return upcoming[0]?.index ?? null;
 }
