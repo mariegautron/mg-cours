@@ -5,10 +5,16 @@ import { updateAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { AssessmentFiles } from "@/components/assessments/assessment-files";
 import { getAssessment, listGrids } from "@/lib/assessments/queries";
+import { rulesForSchool } from "@/lib/schools/rules";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { listModuleGroups } from "@/lib/students/queries";
+
+function schoolCoefficients(mod: Awaited<ReturnType<typeof getModule>>) {
+  const { rules } = rulesForSchool(mod?.school?.name);
+  return { group: rules.groupCoefficient, individual: rules.individualCoefficient };
+}
 
 export const metadata: Metadata = { title: "Modifier l’évaluation" };
 
@@ -33,6 +39,7 @@ export default async function EditAssessmentPage({
         groups={groups}
         grids={grids}
         courses={courses}
+        coefficients={schoolCoefficients(await getModule(id))}
         hasProject={!!(await getModuleProject(id))}
         assessment={assessment}
       >

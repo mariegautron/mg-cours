@@ -1,7 +1,7 @@
 "use client";
 
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
-import { coefficientFor } from "@/lib/ynov/notation";
+import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { useActionState, useState, type ReactNode } from "react";
 import Link from "next/link";
 
@@ -45,6 +45,7 @@ export function AssessmentForm({
   initialGridId = "",
   hasProject = false,
   initialMilestone = false,
+  coefficients = { group: GROUP_COEFFICIENT, individual: INDIVIDUAL_COEFFICIENT },
   children,
 }: {
   action: Action;
@@ -59,6 +60,8 @@ export function AssessmentForm({
   /** Le module a un projet fil rouge : la case « Jalon » est proposée. */
   hasProject?: boolean;
   initialMilestone?: boolean;
+  /** Coefficients de l'école du module (YNOV par défaut). */
+  coefficients?: { group: number; individual: number };
   /** Sections annexes (fichiers joints…), placées au-dessus du bouton Enregistrer. */
   children?: ReactNode;
 }) {
@@ -71,6 +74,8 @@ export function AssessmentForm({
   const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
   const [courseId, setCourseId] = useState(assessment?.course_id ?? "");
   const [groupGrade, setGroupGrade] = useState(assessment?.is_group_grade ?? false);
+  const coefficientFor = (isGroup: boolean) =>
+    isGroup ? coefficients.group : coefficients.individual;
   const ruleCoefficient = coefficientFor(groupGrade);
   const [coefficientText, setCoefficientText] = useState(
     String(assessment?.coefficient ?? coefficientFor(assessment?.is_group_grade ?? false)),

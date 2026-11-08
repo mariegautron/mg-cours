@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { listModuleGroups } from "@/lib/students/queries";
+import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { DayJBlock } from "@/components/assessments/day-j-block";
 import { dayJReadiness } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
@@ -93,6 +94,7 @@ export default async function ModuleAssessmentsPage({
   const expectationCount = expectations.length;
 
   const regular = assessments.filter((a) => !a.makeup_of_id);
+  const resolvedRules = rulesForSchool(mod.school?.name);
   const planned = plannedProgress(progress.requirement, assessments);
   const makeups = assessments.filter((a) => a.makeup_of_id);
   const timeline = buildTimeline(
@@ -551,8 +553,12 @@ export default async function ModuleAssessmentsPage({
             </table>
           </div>
           <p className="text-muted-foreground mt-2 text-sm">
-            Pondération YNOV : note de groupe ×1, note individuelle ×3. Chaque note est ramenée sur
-            20 avant le calcul.
+            {weightingSentence(resolvedRules)} Chaque note est ramenée sur 20 avant le calcul.{" "}
+            {resolvedRules.isDefault ? (
+              <Link href={`/modules/${id}/edit`} className="underline underline-offset-2">
+                Choisir l’école
+              </Link>
+            ) : null}
           </p>
         </section>
       ) : null}
