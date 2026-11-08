@@ -35,6 +35,7 @@ import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { SubmitSettings } from "@/components/assessments/submit-settings";
+import { deadlineOf } from "@/lib/deposits/rules";
 import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
@@ -962,8 +963,35 @@ export default async function AssessmentPage({
           <SubmissionItems
             moduleId={id}
             assessmentId={assessmentId}
+            deadline={
+              deadlineOf(
+                assessment.date ?? course?.session_date ?? null,
+                (
+                  assessment as unknown as { oral_start_time?: string | null }
+                ).oral_start_time?.slice(0, 5) ?? null,
+              )?.toISOString() ?? null
+            }
             rows={(() => {
-              const byOwner = groupByOwner(submissionData.items);
+              const nameOf = new Map(
+                targets.flatMap(({ students }) =>
+                  students.map((st) => [st.id, `${st.first_name} ${st.last_name}`] as const),
+                ),
+              );
+              const byOwner = groupByOwner(
+                submissionData.items.map((it) => {
+                  const x = it as unknown as {
+                    submitted_at?: string | null;
+                    submitted_by_student_id?: string | null;
+                  };
+                  return {
+                    ...it,
+                    submitted_at: x.submitted_at ?? null,
+                    submitted_by_name: x.submitted_by_student_id
+                      ? (nameOf.get(x.submitted_by_student_id) ?? null)
+                      : null,
+                  };
+                }),
+              );
               return assessment.is_group_grade
                 ? targets.map(({ group }) => ({
                     owner: { kind: "group" as const, id: group.id },

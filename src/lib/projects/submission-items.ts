@@ -14,6 +14,12 @@ export interface SubmissionItemLike {
   file_name: string | null;
   size_bytes: number | null;
   created_at: string;
+  /** « student » : déposé par l'étudiant·e depuis son espace ; sinon ajouté à la main par Marie. */
+  added_by?: string;
+  /** Heure de dépôt (serveur) d'un dépôt étudiant·e. */
+  submitted_at?: string | null;
+  /** Prénom et nom de la personne qui a déposé (rendu de groupe). */
+  submitted_by_name?: string | null;
 }
 
 export const LINK_MAX_LENGTH = 2000;
