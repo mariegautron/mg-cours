@@ -1,4 +1,5 @@
 import { listModuleAssessments } from "@/lib/assessments/queries";
+import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { displayTeacherName } from "@/lib/ynov/teacher-name";
@@ -30,5 +31,16 @@ export async function buildCurrentOutline(moduleId: string): Promise<OutlineCont
     listModuleAssessments(moduleId),
   ]);
   if (!mod) return null;
-  return buildOutlineContent({ teacherName, module: mod, courses, assessments });
+  const { rows } = await getExpectationCoverageView(moduleId);
+  return buildOutlineContent({
+    teacherName,
+    module: mod,
+    courses,
+    assessments,
+    expectationCoverage: rows.map((r) => ({
+      label: r.label,
+      courseIds: r.courses.map((c) => c.id),
+      assessmentTitles: r.assessments.map((a) => a.title),
+    })),
+  });
 }

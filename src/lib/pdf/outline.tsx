@@ -144,6 +144,26 @@ export function OutlineDocument({ content }: { content: OutlineContent }) {
         );
       })}
 
+      {content.expectationCoverage?.length ? (
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.title}>COUVERTURE DES ATTENDUS</Text>
+          {content.expectationCoverage.map((e, i) => (
+            <View key={i} style={{ marginBottom: 6 }} wrap={false}>
+              <Text style={styles.h}>{e.label}</Text>
+              <Text style={styles.muted}>
+                Cours :{" "}
+                {e.sessions.length ? e.sessions.map((n) => `séance ${n}`).join(", ") : "aucun"}
+                {" · "}Évaluations : {e.assessments.length ? e.assessments.join(", ") : "aucune"}
+              </Text>
+            </View>
+          ))}
+          <View style={styles.footer} fixed>
+            <Text>Mise à jour le {fmt(content.generatedAt)}</Text>
+            <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} sur ${totalPages}`} />
+          </View>
+        </Page>
+      ) : null}
+
       {/* Une page de départ par séance : le moteur PDF se dérègle quand une seule page s'étale trop. */}
     </Document>
   );

@@ -50,6 +50,8 @@ export interface OutlineContent {
   /** Date de dernière MAJ de la trame (= date de génération). */
   generatedAt: string;
   sessions: OutlineSession[];
+  /** Attendus de l'école et ce qui les couvre (séances, évaluations) ; absent des anciennes progressions. */
+  expectationCoverage?: { label: string; sessions: number[]; assessments: string[] }[];
 }
 
 export interface OutlineAssessmentInput {
@@ -92,6 +94,8 @@ export interface OutlineInput {
   }[];
   /** Évaluations du module : celles rattachées à une séance alimentent « Modalités d'évaluation ». */
   assessments?: OutlineAssessmentInput[];
+  /** Couverture des attendus : séances (positions triées) et titres d'évaluations par attendu. */
+  expectationCoverage?: { label: string; courseIds: string[]; assessmentTitles: string[] }[];
   now?: Date;
 }
 
@@ -171,5 +175,16 @@ export function buildOutlineContent(input: OutlineInput): OutlineContent {
     hoursTp: m.hours_tp,
     generatedAt: (input.now ?? new Date()).toISOString(),
     sessions,
+    ...(input.expectationCoverage?.length
+      ? {
+          expectationCoverage: input.expectationCoverage.map((e) => ({
+            label: e.label,
+            sessions: ordered
+              .map((c, i) => (c.id && e.courseIds.includes(c.id) ? i + 1 : null))
+              .filter((n): n is number => n !== null),
+            assessments: e.assessmentTitles,
+          })),
+        }
+      : {}),
   };
 }
