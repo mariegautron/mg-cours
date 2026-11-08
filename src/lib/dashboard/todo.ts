@@ -9,6 +9,7 @@ export type TodoKind =
   | "outline_urgent"
   | "session_prep"
   | "assessment_prep"
+  | "appreciations"
   | "outline_soon"
   | "invoice_send"
   | "invoice_ready"
@@ -20,6 +21,7 @@ const KIND_ORDER: TodoKind[] = [
   "outline_urgent",
   "session_prep",
   "assessment_prep",
+  "appreciations",
   "outline_soon",
   "invoice_send",
   "invoice_ready",
