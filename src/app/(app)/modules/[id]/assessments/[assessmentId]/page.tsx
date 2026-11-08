@@ -713,6 +713,8 @@ export default async function AssessmentPage({
                 assessmentId={assessmentId}
                 available={"exam_kind" in assessment}
                 quizHref={`/modules/${id}/assessments/${assessmentId}/quiz`}
+                typeLabel={assessment.type ?? ""}
+                editHref={`/modules/${id}/assessments/${assessmentId}/edit`}
                 initial={{
                   kind: examKindOf(assessment),
                   versions: parseSubjectVersions(assessment.subject_versions),
@@ -1012,7 +1014,7 @@ export default async function AssessmentPage({
         </section>
       ) : null}
 
-      {submissionData.available && targets.length > 0 ? (
+      {submissionData.available && targets.length > 0 && examKindOf(assessment) !== "qcm" ? (
         <section aria-labelledby="rendus" className="space-y-3">
           <h2 id="rendus" className="text-lg font-medium">
             Rendus déposés

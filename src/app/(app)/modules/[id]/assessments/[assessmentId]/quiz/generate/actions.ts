@@ -57,9 +57,11 @@ export async function generateQuiz(
     };
   }
   if (!quiz) {
-    const { error } = await supabase
-      .from("quiz")
-      .insert({ assessment_id: assessmentId, title: assessment.title });
+    const { error } = await supabase.from("quiz").insert({
+      assessment_id: assessmentId,
+      title: assessment.title,
+      duration_minutes: assessment.duration_minutes,
+    });
     if (error) return { error: failure("créer le QCM") };
     if (!assessment.type)
       await supabase.from("assessment").update({ type: "QCM" }).eq("id", assessmentId);

@@ -70,6 +70,8 @@ export function ExamKindForm({
   initial,
   available,
   quizHref,
+  typeLabel = "",
+  editHref,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -82,6 +84,8 @@ export function ExamKindForm({
   /** Les colonnes existent en base (migration appliquée). */
   available: boolean;
   quizHref: string;
+  typeLabel?: string;
+  editHref: string;
 }) {
   const [state, setState] = useState(initial);
   const [pending, start] = useTransition();
@@ -104,24 +108,28 @@ export function ExamKindForm({
 
   return (
     <div className="space-y-3">
-      <Choice
-        name="exam-kind"
-        legend="Type d’épreuve"
-        options={EXAM_KINDS}
-        value={state.kind}
-        disabled={pending}
-        onChange={(kind) => save({ ...state, kind }, { examKind: kind })}
-      />
-      <p className="text-muted-foreground text-sm">
-        Un rendu peut comporter un ou plusieurs fichiers. Un QCM tire ses questions de ta banque :{" "}
+      <p className="text-sm">
+        <span className="text-muted-foreground">Type : </span>
+        <strong>{typeLabel || EXAM_KINDS.find((k) => k.value === state.kind)?.label}</strong>{" "}
         <Link
-          href={quizHref}
+          href={editHref}
           className="text-primary font-semibold underline-offset-2 hover:underline"
         >
-          préparer le QCM
+          Changer le type
         </Link>
-        .
       </p>
+      {state.kind === "qcm" ? (
+        <p className="text-muted-foreground text-sm">
+          Les questions se tirent de ta banque :{" "}
+          <Link
+            href={quizHref}
+            className="text-primary font-semibold underline-offset-2 hover:underline"
+          >
+            préparer le QCM
+          </Link>
+          .
+        </p>
+      ) : null}
       <Choice
         name="subject-versions"
         legend="Sujet"

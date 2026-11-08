@@ -3,18 +3,41 @@
  * liens, QCM, en classe, oral), cadre attendu selon le type, points à vérifier avant de la fournir.
  * Le type reste un texte libre (champ existant) : les propositions ne remplacent rien.
  */
-export type IndividualKind = "delivery" | "quiz" | "in_class" | "oral" | "other";
+export type IndividualKind =
+  "delivery" | "quiz" | "open_questions" | "in_class" | "oral" | "checkpoint" | "other";
 
+/** Les cinq types d'épreuve : liste fermée. */
 export const TYPE_PRESETS = [
   "Rendu de fichiers ou de liens",
+  "Questions ouvertes tirées au sort",
   "QCM",
-  "En classe (écrit)",
-  "Oral individuel",
+  "Oral (groupe ou individuel)",
+  "Point d’étape (non noté, hors moyenne)",
 ] as const;
+
+/** Type d'épreuve (`exam_kind`) déduit du type choisi : un seul choix pour Marie. */
+export function examKindForType(type: string | null | undefined): string | null {
+  switch (kindOf(type)) {
+    case "delivery":
+    case "checkpoint":
+      return "files";
+    case "quiz":
+    case "open_questions":
+      return "qcm";
+    case "oral":
+      return "oral";
+    case "in_class":
+      return "in_class";
+    default:
+      return null;
+  }
+}
 
 /** Famille d'un type saisi, d'après son texte (accents et casse ignorés). */
 export function kindOf(type: string | null | undefined): IndividualKind {
   const t = (type ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  if (/\b(point d etape|point d'etape|etape)\b/.test(t.replace(/[’]/g, "'"))) return "checkpoint";
+  if (/questions? ouvertes?/.test(t)) return "open_questions";
   if (/\b(qcm|quiz)\b/.test(t)) return "quiz";
   if (/\boral\b/.test(t)) return "oral";
   if (/\b(en classe|sur table|ecrit)\b/.test(t)) return "in_class";
@@ -40,6 +63,16 @@ const FRAMES: Record<IndividualKind, Frame> = {
     dateLabel: "Date de passation",
     needsDuration: true,
     hint: "Le QCM se prépare dans « QCM en ligne » une fois l'évaluation créée : durée et ouverture s'y règlent.",
+  },
+  open_questions: {
+    dateLabel: "Date de passation",
+    needsDuration: true,
+    hint: "Questions ouvertes tirées au sort : elles se préparent dans « QCM en ligne » une fois l'évaluation créée.",
+  },
+  checkpoint: {
+    dateLabel: "Date",
+    needsDuration: false,
+    hint: "Point d'étape : non noté, hors moyenne.",
   },
   in_class: {
     dateLabel: "Date de l'épreuve",

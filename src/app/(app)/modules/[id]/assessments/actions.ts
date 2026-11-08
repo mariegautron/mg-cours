@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
+import { examKindForType } from "@/lib/assessments/individual";
 import { makeupInvariants } from "@/lib/assessments/makeup";
 import { parseScale, scaleToPoints } from "@/lib/assessments/score-scale";
 import { readAssessmentForm } from "@/lib/assessments/schema";
@@ -159,6 +160,7 @@ export async function createAssessment(
       title: parsed.data.title,
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,
+      exam_kind: examKindForType(parsed.data.type),
       coefficient: parsed.data.coefficient,
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,
@@ -239,6 +241,7 @@ export async function updateAssessment(
       title: parsed.data.title,
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,
+      exam_kind: examKindForType(parsed.data.type),
       coefficient: parsed.data.coefficient,
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,

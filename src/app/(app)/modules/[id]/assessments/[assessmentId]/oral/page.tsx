@@ -181,6 +181,8 @@ export default async function OralPage({
           writtenAt: row?.written_at ?? null,
           before,
           hasNote: !!grade && grade.value !== null,
+          noteAt: row?.written_at ?? (grade && grade.value !== null ? grade.updated_at : null),
+          resultsHref: `/modules/${id}/assessments/${assessmentId}/results`,
         },
       };
     }
@@ -198,8 +200,8 @@ export default async function OralPage({
         <h1 className="text-xl font-semibold">Faire passer l’oral</h1>
       </div>
 
-      <details open={orderedSlots.length === 0} className="rounded-lg border p-3">
-        <summary className="cursor-pointer text-lg font-medium">
+      <details open={orderedSlots.length === 0} className="rounded-lg border px-3 py-1.5">
+        <summary className="cursor-pointer text-base font-medium">
           Ordre de passage et créneaux
           {orderedSlots.length > 0 ? (
             <span className="text-muted-foreground text-base font-normal">

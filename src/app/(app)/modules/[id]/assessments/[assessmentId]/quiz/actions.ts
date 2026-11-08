@@ -60,9 +60,11 @@ export async function createQuiz(moduleId: string, assessmentId: string): Promis
     .eq("assessment_id", assessmentId)
     .maybeSingle();
   if (!existing) {
-    const { error } = await supabase
-      .from("quiz")
-      .insert({ assessment_id: assessmentId, title: assessment.title });
+    const { error } = await supabase.from("quiz").insert({
+      assessment_id: assessmentId,
+      title: assessment.title,
+      duration_minutes: assessment.duration_minutes,
+    });
     if (error)
       redirect(
         `${path(moduleId, assessmentId)}?error=${encodeURIComponent(`Le QCM n’a pas pu être créé (${error.message}).`)}`,

@@ -280,19 +280,23 @@ export function AssessmentForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="type">Type</Label>
-            <Input
+            <select
               id="type"
               name="type"
-              list="assessment-types"
-              placeholder="Rendu de fichiers ou de liens, QCM, oral…"
               value={typeText}
               onChange={(e) => setTypeText(e.target.value)}
-            />
-            <datalist id="assessment-types">
+              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+            >
+              <option value="">Choisis un type…</option>
+              {typeText && !(TYPE_PRESETS as readonly string[]).includes(typeText) ? (
+                <option value={typeText}>{typeText} (ancien type)</option>
+              ) : null}
               {TYPE_PRESETS.map((t) => (
-                <option key={t} value={t} />
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
-            </datalist>
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="date">{frame.dateLabel}</Label>
