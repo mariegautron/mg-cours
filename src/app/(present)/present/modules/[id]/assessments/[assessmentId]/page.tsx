@@ -21,8 +21,10 @@ export async function generateMetadata({
 /** Sujet d'une évaluation projeté (contenu étudiant·es seulement : jamais notes, carnet ni fichiers). */
 export default async function PresentAssessmentPage({
   params,
+  searchParams,
 }: PageProps<"/present/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
+  const ownWindow = (await searchParams).fenetre === "1";
   const [mod, assessment] = await Promise.all([getModule(id), getAssessment(assessmentId)]);
   if (!mod || !assessment || assessment.module_id !== id) notFound();
 
@@ -60,6 +62,8 @@ export default async function PresentAssessmentPage({
       backLabel="à l’évaluation"
       sections={["Sujet"]}
       slides={slides}
+      startInSlides={ownWindow}
+      closeWindowOnQuit={ownWindow}
     />
   );
 }

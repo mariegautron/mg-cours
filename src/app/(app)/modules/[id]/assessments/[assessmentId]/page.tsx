@@ -41,6 +41,7 @@ import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { Pill } from "@/components/dashboard/pill";
+import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -601,12 +602,9 @@ export default async function AssessmentPage({
                     </Link>
                   </Button>
                   {canPresent(assessment.prep_status) ? (
-                    <Button asChild variant="ghost">
-                      <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
-                        <Presentation aria-hidden />
-                        Présenter le sujet
-                      </Link>
-                    </Button>
+                    <OpenInWindowButton href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                      Présenter le sujet
+                    </OpenInWindowButton>
                   ) : (
                     <Button
                       type="button"
@@ -776,12 +774,9 @@ export default async function AssessmentPage({
                   </Link>
                 </Button>
                 {canPresent(assessment.prep_status) ? (
-                  <Button asChild variant="ghost">
-                    <Link href={`/present/modules/${id}/assessments/${assessmentId}`}>
-                      <Presentation aria-hidden />
-                      Présenter le sujet
-                    </Link>
-                  </Button>
+                  <OpenInWindowButton href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                    Présenter le sujet
+                  </OpenInWindowButton>
                 ) : (
                   <>
                     <Button

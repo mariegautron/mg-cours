@@ -81,6 +81,8 @@ export function PresentShell({
   syncChannel,
   presenterHref,
   footerNote,
+  startInSlides = false,
+  closeWindowOnQuit = false,
 }: {
   title: string;
   backHref: string;
@@ -93,6 +95,10 @@ export function PresentShell({
   presenterHref?: string;
   /** Rappel discret en pied de diapositive, à droite (« Module · Séance 3 »). */
   footerNote?: string;
+  /** Démarre directement en Diapositives (sujet projeté dans sa propre fenêtre). */
+  startInSlides?: boolean;
+  /** « Quitter » ferme la fenêtre de projection au lieu de naviguer. */
+  closeWindowOnQuit?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>("document");
   const [scaleIndex, setScaleIndex] = useState(2);
@@ -125,6 +131,8 @@ export function PresentShell({
       setMode(saved.mode);
       setIndex(saved.index);
       indexRef.current = saved.index;
+    } else if (startInSlides) {
+      setMode("slides");
     } else if (syncChannel) {
       // Séance projetée avec une vue privée : on démarre en Diapositives, comme la vue privée.
       setMode("slides");
@@ -275,12 +283,30 @@ export function PresentShell({
   return (
     <div ref={rootRef} className="bg-background text-foreground flex h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b px-4 py-2">
-        <Button asChild variant="ghost" size="touch">
-          <Link href={backHref}>
+        {closeWindowOnQuit ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="touch"
+            onClick={() => {
+              window.close();
+              // Fenêtre ouverte à la main (non fermable par le script) : retour classique.
+              window.setTimeout(() => {
+                if (!window.closed) window.location.assign(backHref);
+              }, 200);
+            }}
+          >
             <X aria-hidden />
-            Quitter<span className="sr-only"> la présentation, retour {backLabel}</span>
-          </Link>
-        </Button>
+            Quitter<span className="sr-only"> la présentation, ferme cette fenêtre</span>
+          </Button>
+        ) : (
+          <Button asChild variant="ghost" size="touch">
+            <Link href={backHref}>
+              <X aria-hidden />
+              Quitter<span className="sr-only"> la présentation, retour {backLabel}</span>
+            </Link>
+          </Button>
+        )}
         <h1 className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium">
           {title}
         </h1>
