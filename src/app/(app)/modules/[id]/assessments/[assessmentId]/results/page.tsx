@@ -74,6 +74,14 @@ export default async function ResultsPage({
   const unexcused = absences.filter((a) => a === "absent_unexcused").length;
   const excused = absences.filter((a) => a === "absent_excused").length;
   const words = overrides.filter((o) => o.justification?.trim()).length;
+  const previewPeople = Array.from(
+    new Map(
+      sheets
+        .flatMap((sheet) => sheet.recipients)
+        .filter((r) => r.id)
+        .map((r) => [r.id as string, r.name] as [string, string]),
+    ),
+  ).sort((a, b) => a[1].localeCompare(b[1], "fr"));
   const people = new Set(sheets.flatMap((s) => s.recipients.map((r) => r.name))).size;
 
   const checks: { label: string; ok: boolean; status: string }[] = [
@@ -219,6 +227,39 @@ export default async function ResultsPage({
               seulement sa note.
             </p>
           </section>
+
+          {hasGrades && previewPeople.length > 0 ? (
+            <section aria-labelledby="apercu" className={card}>
+              <h2 id="apercu" className="font-semibold">
+                Voir comme l’étudiant·e
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Ouvre le résultat tel que la personne le recevra, avant d’envoyer quoi que ce soit.
+              </p>
+              <form
+                action={`/modules/${id}/assessments/${assessmentId}/results/preview`}
+                method="get"
+                className="flex flex-wrap items-end gap-2"
+              >
+                <label className="space-y-1 text-sm">
+                  <span className="block font-medium">Personne</span>
+                  <select
+                    name="student"
+                    className="border-input bg-background min-h-11 rounded-md border px-3"
+                  >
+                    {previewPeople.map(([studentId, name]) => (
+                      <option key={studentId} value={studentId}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button type="submit" variant="secondary" size="touch">
+                  Voir l’aperçu
+                </Button>
+              </form>
+            </section>
+          ) : null}
 
           {sheets.length > 0 ? (
             <section aria-labelledby="sui" className={card}>
