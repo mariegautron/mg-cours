@@ -92,7 +92,7 @@ export function MarkdownField({
           >
             <Icon aria-hidden className="size-4" />
             {text}
-            <span className="sr-only"> : mettre en forme le texte</span>
+            <span className="sr-only"> : mettre en forme « {label} »</span>
           </button>
         ))}
       </div>

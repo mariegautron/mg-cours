@@ -63,7 +63,7 @@ export function ThemeAssignment({
   if (groups.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        Aucun groupe de projet dans ce module : crée-les dans l’onglet Groupes.
+        Aucun groupe de projet dans ce module : crée-les dans l’onglet Étudiant·es.
       </p>
     );
   }

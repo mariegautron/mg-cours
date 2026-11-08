@@ -544,7 +544,7 @@ export default async function AssessmentPage({
                             <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                               {c.levels.map((l) => (
                                 <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
-                                  <strong>{formatNumber(l.points)} pts</strong>
+                                  <strong>{formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}</strong>
                                   <span className="text-muted-foreground block text-[0.8rem]">
                                     {l.description}
                                   </span>
@@ -875,7 +875,7 @@ export default async function AssessmentPage({
                               <ul className="text-muted-foreground mt-1">
                                 {c.levels.map((l) => (
                                   <li key={l.id}>
-                                    {formatNumber(l.points)} pts : {l.description}
+                                    {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""} : {l.description}
                                   </li>
                                 ))}
                               </ul>

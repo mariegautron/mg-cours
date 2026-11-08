@@ -36,7 +36,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
         <Button asChild>
           <Link href="/assessments/comments/new">
             <Plus aria-hidden />
-            Nouveau commentaire
+            Nouvelle phrase
           </Link>
         </Button>
       </div>
@@ -87,7 +87,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
         <EmptyState
           title="Aucun commentaire"
           description="Crée-en pour gagner du temps lors des corrections."
-          actions={[{ label: "Nouveau commentaire", href: "/assessments/comments/new" }]}
+          actions={[{ label: "Nouvelle phrase", href: "/assessments/comments/new" }]}
         />
       ) : (
         <ul className="space-y-2">
@@ -112,9 +112,11 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button asChild variant="ghost" size="icon">
-                  <Link href={`/assessments/comments/${c.id}/edit`} aria-label="Modifier">
+                <Button asChild variant="ghost">
+                  <Link href={`/assessments/comments/${c.id}/edit`}>
                     <Pencil aria-hidden />
+                    Modifier
+                    <span className="sr-only"> la phrase</span>
                   </Link>
                 </Button>
                 <DeleteCommentButton id={c.id} />
