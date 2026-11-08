@@ -11,7 +11,7 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | --- | ------------------------------------------- | -------- | -- |
 | P1  | Se connecter et régler son espace           | Marie    | ⬜ |
 | P2  | Alimenter la bibliothèque de ressources     | Marie    | ⬜ |
-| P3  | Préparer un module (10 étapes)              | Marie    | ⬜ |
+| P3  | Préparer un module et obtenir une progression pédagogique correcte (inclut l'ancien P11) | Marie | 📝 |
 | P4  | Accueillir les étudiant·es et former les groupes | Marie | ⬜ |
 | P5  | Faire cours (séance)                        | Marie    | 🔧 refactoré, reste le test en conditions réelles |
 | P6  | ~~Piloter le projet fil rouge~~ → fusionné dans P7 | —  | — |
@@ -19,7 +19,7 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | P8  | Corriger et noter                           | Marie    | 🚧 |
 | P9  | QCM en ligne : passation et résultats (la préparation est dans P7) | Marie + étudiant·es | ⬜ |
 | P10 | Espace et liens étudiant·es                 | Étudiant·es | 🚧 |
-| P11 | Progression pédagogique et envoi à l'école  | Marie    | ⬜ |
+| P11 | ~~Progression pédagogique et envoi à l'école~~ → fusionné dans P3 | — | — |
 | P12 | Clôturer le module, rendre les résultats, facturer | Marie | ⬜ |
 | P13 | Piloter au quotidien (tableau de bord, recherche, planning) | Marie | ⬜ |
 | P14 | Suivre les étudiant·es et écrire les appréciations | Marie | 📝 |
@@ -56,9 +56,15 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - …
 
-## P3 · Préparer un module (10 étapes)
+## P3 · Préparer un module et obtenir une progression pédagogique correcte (inclut l'ancien P11)
 
-- **But** : de la fiche module et des attendus jusqu'à la progression envoyée à l'école.
+- **But** : de la fiche module et des attendus jusqu'à la progression envoyée à l'école. **Priorité de
+  Marie** : savoir quoi remplir pour que le PDF de progression soit correct et propre. La QA juge donc
+  aussi le **document généré** (module complet vs module incomplet : champs vides, texte brut,
+  dates, cohérence écran ↔ PDF, mise en page), pas seulement les écrans.
+- **Ancien P11 fusionné ici** : génération, téléchargement, dépôt d'un PDF, « Marquer comme envoyée /
+  validée », cohabitation avec une progression déposée ; écrans `modules/[id]/outline`, `documents`,
+  `planning`, `build` ; e2e `outline`, `outline-deposited`, `documents`.
 - **Écrans** : `/modules`, `/modules/new`, `/modules/[id]` (Où j'en suis), `expectations`, `matching`,
   `schedule`, `import-courses`, `courses/new`, `assessments`, `project`, `outline`, `documents`.
 - **Doc** : `docs/AUDIT-PARCOURS.md` (déjà audité le 4 oct. 2026), maquettes et spec Notion des 8 écrans.
@@ -157,7 +163,7 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - …
 
-## P11 · Progression pédagogique et envoi à l'école
+## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
 
 - **But** : générer la progression, la télécharger, la déposer, confirmer l'envoi, gérer une progression déjà déposée en PDF.
 - **Écrans** : `modules/[id]/outline`, `documents`, `planning`, `build`.
