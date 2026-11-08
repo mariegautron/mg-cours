@@ -1,7 +1,7 @@
 # Proposition — « Proposer un brouillon » d'appréciation (lot 3)
 
 **Décision (08/11/2026) : gabarit gratuit sans service externe, pour le moment.** Implémenté dans
-`src/lib/appreciations/draft.ts` : rien ne sort de l'appli, aucun coût. Les sections « Confidentialité » et
+`src/lib/appreciations/draft.ts` (gabarit à trous, formulations de Marie dans Réglages) : rien ne sort de l'appli, aucun coût. Les sections « Confidentialité » et
 « Coût » ci-dessous décrivent l'option API Claude, écartée pour l'instant et gardée pour plus tard.
 Limite connue du gabarit : chaque thème a 6 variantes par phrase, donc dans une grosse classe une même
 phrase peut revenir chez deux personnes (les textes complets, eux, restent distincts) ; Marie relit et modifie toujours.

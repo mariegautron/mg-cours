@@ -2,7 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 
-import { draftAppreciation, type Draft, type DraftBasis } from "@/lib/appreciations/draft";
+import {
+  buildTemplate,
+  otherPhrase,
+  phrasePool,
+  type CustomPhrases,
+  type DraftBasis,
+  type Part,
+  type Sentences,
+  type TemplateInput,
+} from "@/lib/appreciations/draft";
+import { listPhrases } from "@/lib/appreciations/queries";
 import { getAppreciationBasis } from "@/lib/appreciations/basis-queries";
 import { cleanAppreciation } from "@/lib/appreciations/appreciation";
 import { failure } from "@/lib/messages";
@@ -22,7 +32,6 @@ export async function saveAppreciation(
   moduleId: string,
   studentId: string,
   text: string,
-  proposal = false,
 ): Promise<AppreciationState> {
   const cleaned = cleanAppreciation(text);
 
@@ -43,12 +52,6 @@ export async function saveAppreciation(
       );
     if (error) return { error: failure("enregistrer", { kept: true }) };
   }
-  // « Proposé, à relire » : au mieux, sans bloquer si la colonne n'existe pas encore.
-  await supabase
-    .from("appreciation")
-    .update({ is_proposal: proposal && cleaned !== "" })
-    .eq("module_id", moduleId)
-    .eq("student_id", studentId);
   return {
     savedAt: new Date().toLocaleTimeString("fr-FR", {
       hour: "2-digit",
@@ -82,82 +85,57 @@ export async function setReported(
   return {};
 }
 
-export interface DraftResult extends AppreciationState {
+export interface TemplateResult extends AppreciationState {
   text?: string;
+  sentences?: Sentences;
   basis?: DraftBasis;
 }
 
-async function buildDraft(
-  moduleId: string,
-  studentId: string,
-  max: number,
-  used: Set<string>,
-): Promise<Draft> {
-  const basis = await getAppreciationBasis(moduleId, studentId);
-  return draftAppreciation(
-    {
-      seed: studentId,
-      ownTags: basis.observations.map((o) => o.tag),
-      groupTags: (basis.group?.observations ?? []).map((o) => o.tag),
-      hasStrengthsComment: basis.comments.some((c) => c.strengths),
-      hasProgressComment: basis.comments.some((c) => c.progress),
-      max,
-    },
-    used,
-  );
-}
-
-/** Propose un brouillon pour une personne (gabarit, rien ne sort de l'appli). Ne l'enregistre pas. */
-export async function proposeDraft(moduleId: string, studentId: string): Promise<DraftResult> {
-  const { appreciationMax } = await getSchoolRulesForModule(moduleId);
-  const draft = await buildDraft(moduleId, studentId, appreciationMax, new Set());
-  return { text: draft.text, basis: draft.basis };
-}
-
-/** Propose un brouillon pour chaque personne « À écrire » (jamais une appréciation déjà écrite), sans phrase en double. */
-export async function proposeAllDrafts(
-  moduleId: string,
-): Promise<{ count: number; error?: string }> {
+async function templateContext(moduleId: string, studentId: string) {
   const supabase = await createClient();
-  const { appreciationMax } = await getSchoolRulesForModule(moduleId);
-  const [{ data: members }, { data: rows }] = await Promise.all([
-    supabase
-      .from("group_member")
-      .select("student_id, student_group!inner(module_id)")
-      .eq("student_group.module_id", moduleId),
+  const [{ appreciationMax }, basis, phrases, { data: rows }] = await Promise.all([
+    getSchoolRulesForModule(moduleId),
+    getAppreciationBasis(moduleId, studentId),
+    listPhrases(),
     supabase.from("appreciation").select("student_id, text").eq("module_id", moduleId),
   ]);
-  const written = new Set(
-    (rows ?? []).filter((r) => r.text.trim() !== "").map((r) => r.student_id),
-  );
-  const todo = [...new Set((members ?? []).map((m) => m.student_id))].filter(
-    (id) => !written.has(id),
-  );
-  // `used` mémorise les phrases employées dans ce lot : pas de phrase en double d'une personne à l'autre.
-  const used = new Set<string>();
-  let count = 0;
-  for (const studentId of todo) {
-    const draft = await buildDraft(moduleId, studentId, appreciationMax, used);
-    const result = await saveAppreciation(moduleId, studentId, draft.text, true);
-    if (result.error) return { count, error: result.error };
-    count++;
-  }
-  revalidatePath(`/modules/${moduleId}/appreciations`);
-  return { count };
+  const input: TemplateInput = {
+    seed: studentId,
+    ownTags: basis.observations.map((o) => o.tag),
+    groupTags: (basis.group?.observations ?? []).map((o) => o.tag),
+    hasStrengthsComment: basis.comments.some((c) => c.strengths),
+    hasProgressComment: basis.comments.some((c) => c.progress),
+    max: appreciationMax,
+  };
+  const custom: CustomPhrases = {
+    strength: phrases.strength.map((p) => p.text),
+    axis: phrases.axis.map((p) => p.text),
+    encouragement: phrases.encouragement.map((p) => p.text),
+  };
+  // Les appréciations des autres : aucune formulation ne doit être reprise telle quelle.
+  const others = (rows ?? []).filter((r) => r.student_id !== studentId).map((r) => r.text);
+  return { input, custom, others };
 }
 
-/** « Valider » : le brouillon relu devient une appréciation écrite. */
-export async function validateProposal(
+/** « Partir d'un gabarit » : trame en trois parties avec des trous à compléter. Ne l'enregistre pas. */
+export async function startFromTemplate(
   moduleId: string,
   studentId: string,
-): Promise<AppreciationState> {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("appreciation")
-    .update({ is_proposal: false })
-    .eq("module_id", moduleId)
-    .eq("student_id", studentId);
-  if (error) return { error: failure("enregistrer", { kept: true }) };
-  revalidatePath(`/modules/${moduleId}/appreciations`);
-  return {};
+): Promise<TemplateResult> {
+  const { input, custom, others } = await templateContext(moduleId, studentId);
+  const t = buildTemplate(input, others, custom);
+  return { text: t.text, sentences: t.sentences, basis: t.basis };
+}
+
+/** « Autre formulation » pour une partie : une phrase qu'aucune autre appréciation n'emploie. */
+export async function otherFormulation(
+  moduleId: string,
+  studentId: string,
+  part: Part,
+  current: string,
+): Promise<{ phrase?: string; fresh?: boolean; error?: string }> {
+  const { input, custom, others } = await templateContext(moduleId, studentId);
+  const pool = phrasePool(part, input, custom);
+  if (pool.length === 0) return { error: "Aucune autre formulation disponible." };
+  return otherPhrase(pool, current, others);
 }

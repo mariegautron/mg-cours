@@ -17,7 +17,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { ObservationItem } from "@/components/notebook/observation-item";
 import { GroupObservationPanel } from "@/components/notebook/group-observation-panel";
 import type { CourseObservation, GroupObservationRow } from "@/lib/notebook/queries";
-import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/notebook/live";
+import {
+  clampActive,
+  findStudents,
+  moveActive,
+  observationAddedMessage,
+  tagForKeyEvent,
+} from "@/lib/notebook/live";
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
 
@@ -72,11 +78,18 @@ export function ObservationPanel({
   const [active, setActive] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<ObservationTag | null>(null);
-  // Étiquette pressée : seule elle affiche l'attente, les autres attendent la fin de l'envoi.
-  const [pressedTag, setPressedTag] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<number | undefined>(undefined);
   const [toastOn, setToastOn] = useState(false);
   const [undone, setUndone] = useState<string | null>(null);
+  // Retour immédiat : le message s'affiche au clic, sans attendre le serveur.
+  const [optimistic, setOptimistic] = useState<{
+    studentId: string;
+    name: string;
+    tag: ObservationTag;
+    note: string;
+  } | null>(null);
+  const [retry, setRetry] = useState<{ studentId: string; note: string } | null>(null);
+  const [seenState, setSeenState] = useState(state);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const [noteLength, setNoteLength] = useState(0);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -99,9 +112,21 @@ export function ObservationPanel({
   // Après un enregistrement réussi : on referme et on rend le focus au nom de l'étudiant·e.
   if (state.savedAt && state.savedAt !== lastSaved) {
     setLastSaved(state.savedAt);
+    setOptimistic(null);
+    setRetry(null);
     setToastOn(true);
     setOpenId(null);
     setSelectedTag(null);
+  }
+  // Échec : on le dit, on retire le message « Notée… » et on rouvre la saisie avec le texte gardé.
+  if (seenState !== state) {
+    setSeenState(state);
+    if (state.error && optimistic) {
+      setRetry({ studentId: optimistic.studentId, note: optimistic.note });
+      setOpenId(optimistic.studentId);
+      setOptimistic(null);
+      setToastOn(false);
+    }
   }
   useEffect(() => {
     if (!toastOn) return;
@@ -197,7 +222,8 @@ export function ObservationPanel({
             ref={noteRef}
             name="note"
             maxLength={1000}
-            rows={3}
+            rows={2}
+            defaultValue={retry?.studentId === s.id ? retry.note : undefined}
             autoComplete="off"
             aria-describedby={`${panelId}-keys`}
             onChange={(e) => {
@@ -205,12 +231,6 @@ export function ObservationPanel({
               // Le champ s'agrandit avec le texte (remarques longues « Faits / Mon avis / À challenger »).
               e.currentTarget.style.height = "auto";
               e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 320)}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
             }}
             className="resize-y"
           />
@@ -235,10 +255,20 @@ export function ObservationPanel({
                   value={t.value}
                   variant={selectedTag === t.value ? "default" : "secondary"}
                   aria-pressed={selectedTag === t.value}
-                  pending={pending && pressedTag === t.value}
-                  pendingLabel="Enregistrement…"
-                  disabled={pending && pressedTag !== t.value}
-                  onClick={() => setPressedTag(t.value)}
+                  pendingLabel="Notée"
+                  disabled={pending}
+                  onClick={() => {
+                    setUndone(null);
+                    setOptimistic({
+                      studentId: s.id,
+                      name,
+                      tag: t.value,
+                      note: noteRef.current?.value ?? "",
+                    });
+                    setToastOn(true);
+                    // On referme tout de suite, après le départ du formulaire.
+                    window.setTimeout(() => setOpenId(null), 50);
+                  }}
                   size="touch"
                   title={t.label}
                   aria-label={t.label}
@@ -389,24 +419,30 @@ export function ObservationPanel({
       {/* Confirmation en surimpression : elle ne décale jamais la liste sous le curseur. */}
       <div
         className={
-          state.message && toastOn
+          toastOn && (optimistic || state.message)
             ? "bg-card fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg"
             : "sr-only"
         }
       >
         <p role="status">
-          {undone === state.observationId ? "Observation annulée." : (state.message ?? "")}
+          {optimistic
+            ? observationAddedMessage(optimistic.name, optimistic.tag)
+            : undone && undone === state.observationId
+              ? "Observation annulée."
+              : (state.message ?? "")}
         </p>
-        {state.message && toastOn && state.observationId && undone !== state.observationId ? (
+        {toastOn && (optimistic || (state.observationId && undone !== state.observationId)) ? (
           <Button
             type="button"
             size="touch"
             variant="outline"
+            disabled={!!optimistic && pending}
             onClick={async () => {
               const id = state.observationId;
               if (!id) return;
               await deleteObservationById(id);
               setUndone(id);
+              setOptimistic(null);
             }}
           >
             Annuler

@@ -11,7 +11,11 @@ import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
-import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
+import {
+  listModuleAssessments,
+  moduleNoteProgress,
+  moduleStudentAverages,
+} from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
@@ -19,17 +23,20 @@ export const metadata: Metadata = { title: "Étudiant·es du module" };
 
 export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[id]/groups">) {
   const { id } = await params;
-  const [mod, groups, assessments, observations, appreciations, rules] = await Promise.all([
-    getModule(id),
-    listModuleGroups(id),
-    listModuleAssessments(id),
-    listModuleObservations(id),
-    listAppreciations(id),
-    getSchoolRulesForModule(id),
-  ]);
+  const [mod, groups, assessments, observations, appreciations, rules, averages] =
+    await Promise.all([
+      getModule(id),
+      listModuleGroups(id),
+      listModuleAssessments(id),
+      listModuleObservations(id),
+      listAppreciations(id),
+      getSchoolRulesForModule(id),
+      moduleStudentAverages(id),
+    ]);
   if (!mod) notFound();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const people = [...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values()];
+  const averageOf = new Map(averages.map((a) => [a.student.id, a.average.average]));
   const overview: OverviewRow[] = people.map((m) => {
     const mine = observations.filter((o) => o.student_id === m.id);
     const count = (...tags: string[]) => mine.filter((o) => tags.includes(o.tag)).length;
@@ -46,10 +53,8 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       difficulty: count("difficulty"),
       other: count("other", "absent_late"),
       total: mine.length,
-      appreciation:
-        appreciations.proposals.has(m.id) && status !== "todo"
-          ? "Proposé, à relire"
-          : STATUS_LABELS[status],
+      average: averageOf.get(m.id) ?? null,
+      appreciation: STATUS_LABELS[status],
       appreciationTone: status === "written" ? "ok" : status === "too_long" ? "lock" : "warn",
     };
   });

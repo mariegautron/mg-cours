@@ -90,3 +90,28 @@ export async function getAppreciationProgress(moduleId: string): Promise<Appreci
     return { written: 0, total: 0, allGraded: false };
   }
 }
+
+/** Formulations de Marie par partie du gabarit. Protégé : table absente → listes vides. */
+export async function listPhrases(): Promise<
+  Record<"strength" | "axis" | "encouragement", { id: string; text: string }[]>
+> {
+  const out = { strength: [], axis: [], encouragement: [] } as Record<
+    "strength" | "axis" | "encouragement",
+    { id: string; text: string }[]
+  >;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("appreciation_phrase")
+      .select("id, part, text")
+      .order("created_at", { ascending: true });
+    if (error) return out;
+    for (const r of data ?? []) {
+      if (r.part === "strength" || r.part === "axis" || r.part === "encouragement")
+        out[r.part].push({ id: r.id, text: r.text });
+    }
+  } catch {
+    // table absente : on garde les formulations de l'appli
+  }
+  return out;
+}

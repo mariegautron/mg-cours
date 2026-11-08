@@ -49,7 +49,7 @@ export async function listStudents(filters: StudentListFilters = {}): Promise<St
       a.last_name.localeCompare(b.last_name, "fr"),
     );
   } else {
-    let query = supabase.from("student").select("*").order("last_name").order("first_name");
+    const query = supabase.from("student").select("*").order("last_name").order("first_name");
     const { data } = await query;
     students = data ?? [];
   }

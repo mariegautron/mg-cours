@@ -176,6 +176,33 @@ export type Database = {
           },
         ]
       }
+      appreciation_phrase: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          part: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          part: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          part?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assessment: {
         Row: {
           auto_validated_criterion_ids: string[]

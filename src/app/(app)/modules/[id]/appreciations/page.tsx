@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { AppreciationList } from "@/components/appreciations/appreciation-list";
 import { AppreciationExport } from "@/components/appreciations/appreciation-export";
-import { appreciationStatus, sortRows } from "@/lib/appreciations/appreciation";
+import { appreciationStatus, hasHole, sortRows } from "@/lib/appreciations/appreciation";
 import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { listAppreciations } from "@/lib/appreciations/queries";
 import { getModule } from "@/lib/modules/queries";
@@ -36,8 +36,10 @@ export default async function AppreciationsPage({
   const rows = students.map((s) => ({
     firstName: s.first_name,
     lastName: s.last_name,
-    // Un brouillon proposé et non relu n'est jamais exporté.
-    text: appreciations.proposals.has(s.id) ? "" : (appreciations.byStudent.get(s.id) ?? ""),
+    // Un gabarit avec un trou à compléter n'est jamais exporté.
+    text: hasHole(appreciations.byStudent.get(s.id) ?? "")
+      ? ""
+      : (appreciations.byStudent.get(s.id) ?? ""),
   }));
   const tooLong = rows.filter(
     (r) => appreciationStatus(r.text, rules.appreciationMax) === "too_long",
@@ -84,7 +86,6 @@ export default async function AppreciationsPage({
                   lastName: s.last_name,
                   text: appreciations.byStudent.get(s.id) ?? "",
                   reportedText: appreciations.reported.get(s.id) ?? null,
-                  proposal: appreciations.proposals.has(s.id),
                   average: averageOf.get(s.id) ?? null,
                 })),
               )}
@@ -100,27 +101,25 @@ export default async function AppreciationsPage({
                 {mod.school ? (
                   <>Longueur maximale pour {mod.school.name} (celle du champ d’Hyperplanning) : </>
                 ) : (
-                  <>
-                    Ce module n’a pas d’école : la limite par défaut s’applique, celle du champ
-                    d’Hyperplanning :{" "}
-                  </>
+                  <>Limite par défaut : </>
                 )}
                 <strong className="text-foreground">{rules.appreciationMax} caractères</strong>.{" "}
-                <Link
-                  href={`/settings?retour=${encodeURIComponent(`/modules/${id}/appreciations`)}#${mod.school ? `rules-${mod.school.id}` : "school-rules"}`}
-                  className="underline underline-offset-2"
-                >
-                  Changer cette limite
-                  {mod.school ? ` pour ${mod.school.name}` : ""}
-                </Link>
+                {mod.school ? (
+                  <Link
+                    href={`/settings?retour=${encodeURIComponent(`/modules/${id}/appreciations`)}#rules-${mod.school.id}`}
+                    className="underline underline-offset-2"
+                  >
+                    Changer cette limite pour {mod.school.name}
+                  </Link>
+                ) : (
+                  <Link href={`/modules/${id}/edit`} className="underline underline-offset-2">
+                    Choisir l’école du module
+                  </Link>
+                )}
               </p>
-              <p className="text-muted-foreground text-sm">Pour chaque personne, vise :</p>
-              <ul className="text-muted-foreground list-disc pl-5 text-sm">
-                <li>un point fort ;</li>
-                <li>un axe de progrès concret ;</li>
-                <li>un encouragement ;</li>
-                <li>le tout au « tu », centré sur le comportement.</li>
-              </ul>
+              <p className="text-muted-foreground text-sm">
+                Un point fort, un axe de progrès, un encouragement. Au « tu ».
+              </p>
             </section>
             <section aria-labelledby="ex" className="bg-primary/10 space-y-2 rounded-xl border p-5">
               <h2 id="ex" className="text-lg font-semibold">

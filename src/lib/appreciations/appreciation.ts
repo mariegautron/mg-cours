@@ -21,18 +21,28 @@ export function countText(text: string): TextCount {
   };
 }
 
-export type AppreciationStatus = "todo" | "written" | "too_long";
+export type AppreciationStatus = "todo" | "to_complete" | "written" | "too_long";
 
 export const STATUS_LABELS: Record<AppreciationStatus, string> = {
   todo: "À écrire",
+  to_complete: "À compléter",
   written: "Écrite",
   too_long: "Trop longue",
 };
+
+/** Trou laissé par le gabarit : « [à compléter : un exemple précis] ». */
+export const HOLE_PATTERN = /\[à compléter[^\]]*\]/;
+
+/** Reste-t-il un trou à compléter ? Tant que oui, la copie vers Hyperplanning est bloquée. */
+export function hasHole(text: string): boolean {
+  return HOLE_PATTERN.test(text);
+}
 
 /** À écrire (vide), écrite, ou trop longue pour le champ d'Hyperplanning. */
 export function appreciationStatus(text: string, max: number): AppreciationStatus {
   const t = text.trim();
   if (!t) return "todo";
+  if (hasHole(t)) return "to_complete";
   return countText(t).chars > max ? "too_long" : "written";
 }
 
@@ -92,11 +102,12 @@ export function modifiedSinceReport(text: string, reportedText: string | null): 
   return reportedText !== null && oneLine(text) !== oneLine(reportedText);
 }
 
-export type ListFilter = "all" | "todo" | "too_long" | "not_reported";
+export type ListFilter = "all" | "todo" | "to_complete" | "too_long" | "not_reported";
 
 export const LIST_FILTER_LABELS: Record<ListFilter, string> = {
   all: "Toutes",
   todo: "À écrire",
+  to_complete: "À compléter",
   too_long: "Trop longues",
   not_reported: "Non reportées",
 };
@@ -114,6 +125,8 @@ export function matchesFilter(
       return true;
     case "todo":
       return status === "todo";
+    case "to_complete":
+      return status === "to_complete";
     case "too_long":
       return status === "too_long";
     case "not_reported":

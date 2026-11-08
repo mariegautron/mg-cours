@@ -196,11 +196,13 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                     </h2>
                     <span className="text-muted-foreground text-sm">{promo?.group ?? ""}</span>
                     <span className="text-muted-foreground text-sm">
-                      {note ? `${note.count} note${note.count > 1 ? "s" : ""}` : "aucune note"}
+                      {note
+                        ? `${note.count} observation${note.count > 1 ? "s" : ""}`
+                        : "aucune observation"}
                     </span>
                     {note ? (
                       <span className="text-muted-foreground text-sm">
-                        Dernière note : {OBSERVATION_TAG_LABELS[note.lastTag].toLowerCase()}
+                        Dernière : {OBSERVATION_TAG_LABELS[note.lastTag].toLowerCase()}
                       </span>
                     ) : null}
                     <IndicatorBadges items={indicators.get(s.id) ?? []} />

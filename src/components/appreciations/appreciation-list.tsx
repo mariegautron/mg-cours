@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Copy, Wand2 } from "lucide-react";
+import { Copy } from "lucide-react";
 
-import { proposeAllDrafts, setReported } from "@/app/(app)/modules/[id]/appreciations/actions";
+import { setReported } from "@/app/(app)/modules/[id]/appreciations/actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +25,6 @@ export interface ListRow {
   text: string;
   /** Texte au moment du report ; `null` = pas reportée. */
   reportedText: string | null;
-  proposal: boolean;
   average: number | null;
 }
 
@@ -44,23 +42,7 @@ export function AppreciationList({
   const [reported, setReportedState] = useState(
     () => new Map(rows.map((r) => [r.studentId, r.reportedText])),
   );
-  const router = useRouter();
   const [message, setMessage] = useState("");
-  const [proposing, setProposing] = useState(false);
-  const todoCount = rows.filter((r) => r.text.trim() === "").length;
-
-  async function proposeAll() {
-    setProposing(true);
-    setMessage("Brouillons en préparation…");
-    const r = await proposeAllDrafts(moduleId);
-    setProposing(false);
-    setMessage(
-      r.error
-        ? r.error
-        : `${r.count} brouillon${r.count > 1 ? "s proposés" : " proposé"} : relis-les un par un, rien n’est copié sans toi.`,
-    );
-    router.refresh();
-  }
   const [, startTransition] = useTransition();
 
   const toggle = (row: ListRow, value: boolean) => {
@@ -108,21 +90,6 @@ export function AppreciationList({
           </Button>
         ))}
       </div>
-      {todoCount > 0 ? (
-        <Button
-          type="button"
-          variant="secondary"
-          size="touch"
-          disabled={proposing}
-          onClick={() => void proposeAll()}
-        >
-          <Wand2 aria-hidden />
-          {proposing
-            ? "Brouillons en préparation…"
-            : "Proposer pour toutes les appréciations à écrire"}
-          <span className="sr-only"> ({todoCount})</span>
-        </Button>
-      ) : null}
       <p role="status" className="min-h-5 text-sm font-medium">
         {message}
       </p>
@@ -159,7 +126,7 @@ export function AppreciationList({
                   <Pill
                     tone={status === "written" ? "ok" : status === "too_long" ? "lock" : "warn"}
                   >
-                    {r.proposal && status !== "todo" ? "Proposé, à relire" : STATUS_LABELS[status]}
+                    {STATUS_LABELS[status]}
                   </Pill>
                   {modified ? <Pill tone="warn">Modifiée depuis le report</Pill> : null}
                   <span className="text-muted-foreground text-sm">
@@ -182,7 +149,7 @@ export function AppreciationList({
                         type="button"
                         variant="secondary"
                         size="touch"
-                        disabled={status === "too_long" || r.proposal}
+                        disabled={status === "too_long" || status === "to_complete"}
                         onClick={() => void copy(r)}
                       >
                         <Copy aria-hidden />

@@ -15,12 +15,14 @@ export interface OverviewRow {
   difficulty: number;
   other: number;
   total: number;
+  /** Moyenne du module sur 20, ou `null` sans note. */
+  average: number | null;
   /** « À écrire », « Écrite », « Trop longue » (ou « Proposé, à relire »). */
   appreciation: string;
   appreciationTone: "ok" | "warn" | "lock";
 }
 
-type SortKey = "name" | "participation" | "question" | "difficulty" | "other" | "total";
+type SortKey = "name" | "participation" | "question" | "difficulty" | "other" | "total" | "average";
 
 const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "participation", label: "Participation" },
@@ -28,6 +30,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: "difficulty", label: "Difficultés" },
   { key: "other", label: "Autres" },
   { key: "total", label: "Observations" },
+  { key: "average", label: "Moyenne" },
 ];
 
 /** Vue de classe : une ligne par personne, une colonne par étiquette, tri au clic. Privée, jamais projetée. */
@@ -39,7 +42,10 @@ export function ClassOverview({ moduleId, rows }: { moduleId: string; rows: Over
         sort.dir *
         (a.lastName.localeCompare(b.lastName, "fr") || a.firstName.localeCompare(b.firstName, "fr"))
       );
-    return sort.dir * (a[sort.key] - b[sort.key]) || a.lastName.localeCompare(b.lastName, "fr");
+    return (
+      sort.dir * ((a[sort.key] ?? -1) - (b[sort.key] ?? -1)) ||
+      a.lastName.localeCompare(b.lastName, "fr")
+    );
   });
   const toggle = (key: SortKey) =>
     setSort((s) =>
@@ -82,13 +88,20 @@ export function ClassOverview({ moduleId, rows }: { moduleId: string; rows: Over
           {sorted.map((r) => (
             <tr key={r.id}>
               <th scope="row" className="py-2 pr-2 text-left font-medium">
-                <Link href={`/students/${r.id}`} className="underline underline-offset-2">
+                <Link
+                  href={`/students/${r.id}#observations`}
+                  className="underline underline-offset-2"
+                >
                   {r.lastName.toLocaleUpperCase("fr-FR")} {r.firstName}
                 </Link>
               </th>
               {COLUMNS.map((c) => (
                 <td key={c.key} className="px-3 py-2 text-right tabular-nums">
-                  {r[c.key as Exclude<SortKey, "name">]}
+                  {c.key === "average"
+                    ? r.average === null
+                      ? "—"
+                      : r.average.toLocaleString("fr-FR", { maximumFractionDigits: 1 })
+                    : r[c.key as Exclude<SortKey, "name" | "average">]}
                 </td>
               ))}
               <td className="px-2 py-2">

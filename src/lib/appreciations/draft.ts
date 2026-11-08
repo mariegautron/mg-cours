@@ -1,16 +1,39 @@
 /**
- * Brouillon d'appréciation par gabarit (aucun service externe, rien ne sort de l'appli) : un point
- * fort, un axe de progrès concret, un encouragement, au « tu », centré sur le comportement.
- * Fonction pure : les phrases sont choisies parmi plusieurs variantes selon l'étiquette dominante
- * des observations, et deux personnes n'ont jamais la même phrase dans un même lot (`used`).
+ * Gabarit d'appréciation (aucun service externe, rien ne sort de l'appli) : trame en trois parties,
+ * au « tu » — un point fort, un axe de progrès, un encouragement — avec des trous
+ * « [à compléter : …] » que Marie remplit. Fonctions pures.
+ *
+ * Les formulations sont composées (ouverture × corps) pour offrir assez de variantes : on choisit,
+ * pour chaque partie, une phrase qu'aucune autre appréciation du module n'emploie déjà. Les
+ * formulations de Marie passent avant celles de l'appli. Le texte brut des observations n'entre
+ * jamais dans le gabarit : seules les étiquettes servent à choisir le thème.
  */
 import type { ObservationTag } from "@/lib/notebook/notebook";
-import { truncateAppreciation } from "./appreciation";
+import { HOLE_PATTERN } from "./appreciation";
 
-export interface DraftInput {
-  /** Sert à varier les phrases de façon stable d'une personne à l'autre. */
+export type Part = "strength" | "axis" | "encouragement";
+
+export const PARTS: Part[] = ["strength", "axis", "encouragement"];
+
+export const PART_LABELS: Record<Part, string> = {
+  strength: "Point fort",
+  axis: "Axe de progrès",
+  encouragement: "Encouragement",
+};
+
+export type DraftBasis = "personal" | "group" | "corrections" | "none";
+
+export const BASIS_LABELS: Record<DraftBasis, string> = {
+  personal: "Gabarit basé sur tes observations.",
+  group: "Gabarit basé sur les infos du groupe : rien de précis sur cette personne.",
+  corrections: "Gabarit basé sur tes commentaires de correction : aucune observation.",
+  none: "Gabarit générique : aucune info sur cette personne.",
+};
+
+export interface TemplateInput {
+  /** Fait varier de façon stable le point de départ dans les formulations. */
   seed: string;
-  /** Étiquettes des observations de la personne (l'absence ou le retard est ignoré : c'est Edusign). */
+  /** Étiquettes des observations de la personne (l'absence ou le retard relève d'Edusign : ignoré). */
   ownTags: ObservationTag[];
   /** Étiquettes des observations faites sur son groupe. */
   groupTags: ObservationTag[];
@@ -20,105 +43,133 @@ export interface DraftInput {
   max: number;
 }
 
-export type DraftBasis = "personal" | "group" | "corrections" | "none";
+export type Sentences = Record<Part, string>;
 
-export interface Draft {
+export interface Template {
   text: string;
+  sentences: Sentences;
   basis: DraftBasis;
 }
 
-export const BASIS_LABELS: Record<DraftBasis, string> = {
-  personal: "Basé sur tes observations.",
-  group: "Basé sur les infos du groupe : rien de précis sur cette personne.",
-  corrections: "Basé sur tes commentaires de correction : aucune observation sur cette personne.",
-  none: "Aucune info : brouillon générique, à personnaliser.",
+/** Formulations de Marie, par partie : elles passent avant celles de l'appli. */
+export type CustomPhrases = Partial<Record<Part, string[]>>;
+
+const compose = (openers: string[], cores: string[], join: (o: string, c: string) => string) =>
+  openers.flatMap((o) => cores.map((c) => join(o, c)));
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const HOLE_EXAMPLE = "[à compléter : un exemple précis]";
+
+const STRENGTH_OPENERS = [
+  "",
+  "Ce module,",
+  "Pendant les séances,",
+  "Tout au long du module,",
+  "En cours,",
+  "Sur ces séances,",
+  "Cette fois,",
+  "Au fil des cours,",
+];
+
+const strength = (cores: string[]) =>
+  compose(
+    STRENGTH_OPENERS,
+    cores,
+    (o, c) => `${o ? `${o} ` : ""}${o ? c : cap(c)} : ${HOLE_EXAMPLE}.`,
+  );
+
+const STRENGTH: Record<
+  "participation" | "question" | "group" | "corrections" | "generic",
+  string[]
+> = {
+  participation: strength([
+    "tu participes avec régularité et tes interventions font avancer le groupe",
+    "tu prends la parole avec spontanéité et tu nourris les échanges",
+    "tu t’impliques à l’oral et cela se remarque",
+    "ta participation active est un vrai atout pour la classe",
+    "tu apportes des idées utiles dans les discussions",
+  ]),
+  question: strength([
+    "tes questions pertinentes font avancer le groupe",
+    "tu cherches à comprendre en profondeur et cela se voit dans tes questions",
+    "ta curiosité est un moteur pour toi comme pour les autres",
+    "tu sais poser la bonne question au bon moment",
+    "tes questions montrent que tu réfléchis vraiment",
+  ]),
+  group: strength([
+    "tu as trouvé ta place dans ton groupe et contribué à une bonne dynamique",
+    "tu as travaillé dans un esprit d’équipe qui a servi le projet",
+    "tu as montré un vrai sens de la collaboration",
+    "tu t’es investi·e dans le travail collectif avec sérieux",
+    "tu as su travailler avec les autres de façon constructive",
+  ]),
+  corrections: strength([
+    "ton travail est sérieux et ses points forts sont bien visibles",
+    "tes rendus montrent de vraies compétences",
+    "tu as livré un travail soigné et réfléchi",
+    "tes productions témoignent d’un investissement réel",
+    "tu as fourni un travail solide dont tu peux être fier·ère",
+  ]),
+  generic: strength([
+    "tu t’es investi·e dans le module avec sérieux",
+    "ton attitude a été positive et agréable",
+    "tu as suivi le module avec application",
+    "tu as fait preuve de motivation",
+    "ton comportement en classe a été respectueux et constructif",
+  ]),
 };
 
-const STRENGTH = {
-  participation: [
-    "Tu t’impliques à l’oral et ta participation fait avancer la classe.",
-    "Tu prends la parole avec spontanéité et tes interventions nourrissent les échanges.",
-    "Ta participation active pendant les séances est un vrai atout.",
-    "Tu t’investis dans les échanges et tu donnes envie aux autres de s’exprimer.",
-    "Tu es présent·e dans les discussions et tu apportes des idées utiles.",
-    "Ton engagement en cours se remarque : tu participes avec sérieux et bonne humeur.",
-  ],
-  question: [
-    "Tu poses des questions pertinentes qui montrent que tu réfléchis vraiment.",
-    "Tes questions font avancer le cours et profitent à tout le monde.",
-    "Tu cherches à comprendre en profondeur, et cela se voit dans tes questions.",
-    "Ta curiosité est un moteur : tes questions sont toujours bien trouvées.",
-    "Tu sais poser la bonne question au bon moment, c’est une vraie qualité.",
-    "Tu questionnes avec justesse et cela t’aide à progresser.",
-  ],
-  group: [
-    "Tu as trouvé ta place dans ton groupe et tu as contribué à une bonne dynamique.",
-    "Tu as travaillé dans un esprit d’équipe qui a servi le projet.",
-    "Au sein de ton groupe, tu as montré un vrai sens de la collaboration.",
-    "Ton groupe a bien avancé et tu y as pris toute ta part.",
-    "Tu as su travailler avec les autres de façon constructive.",
-    "Tu t’es investi·e dans le travail collectif avec sérieux.",
-  ],
-  corrections: [
-    "Tes rendus montrent de vrais points forts et un travail soigné.",
-    "Tu as livré un travail de qualité dont les points forts sont bien visibles.",
-    "Ton travail est sérieux et on y voit de vraies compétences.",
-    "Tes productions témoignent d’un investissement réel.",
-    "Tu as fourni un travail solide, avec des réussites à valoriser.",
-    "Tes rendus sont appliqués et montrent ce que tu sais faire.",
-  ],
-  generic: [
-    "Tu as montré de l’investissement tout au long du module.",
-    "Tu t’es engagé·e dans le module avec sérieux.",
-    "Ton attitude a été positive et agréable pendant les séances.",
-    "Tu as suivi le module avec application.",
-    "Tu as fait preuve de motivation pendant le module.",
-    "Ton comportement en classe a été respectueux et constructif.",
-  ],
-};
+const AXIS_OPENERS = [
+  "Pour progresser,",
+  "Un axe de progrès :",
+  "Pour aller plus loin,",
+  "Ton prochain pas :",
+  "Pour la suite,",
+  "Mon conseil :",
+  "Pour consolider,",
+  "Pour franchir une étape,",
+];
 
-const AXIS = {
-  difficulty: [
-    "Pour progresser, n’hésite pas à demander de l’aide dès qu’un point te bloque.",
-    "Quand une notion t’échappe, ose le dire tout de suite : on avancera ensemble.",
-    "Prends l’habitude de solliciter de l’aide plus tôt, cela t’évitera de te décourager.",
-    "Un axe de progrès : revenir sur les notions difficiles sans attendre la fin.",
-    "Ose poser tes questions dès qu’une difficulté apparaît, elles sont légitimes.",
-    "Pour consolider, reprends régulièrement les points qui t’ont posé problème.",
-  ],
-  voice: [
-    "Pour aller plus loin, ose prendre davantage la parole et partager tes idées.",
-    "Tu peux gagner en confiance en intervenant plus souvent à l’oral.",
-    "Un axe de progrès : t’exprimer plus spontanément devant la classe.",
-    "N’hésite pas à proposer tes idées, elles ont leur place dans les échanges.",
-    "Essaie de te lancer plus souvent : tes remarques seraient précieuses.",
-    "Ose sortir de ta zone de confort en intervenant davantage.",
-  ],
-  progress: [
-    "Poursuis tes efforts sur les points signalés dans tes corrections.",
-    "Pour progresser, reprends les remarques de tes corrections et applique-les.",
-    "Un axe de progrès : t’appuyer sur les retours reçus pour affiner ton travail.",
-    "Continue à travailler les points relevés lors des corrections.",
-    "Tes corrections indiquent des pistes concrètes : saisis-les.",
-    "Prends le temps de relire les retours pour passer un cap.",
-  ],
-  generic: [
-    "Pour aller plus loin, essaie d’être plus régulier·e dans ton investissement.",
-    "Un axe de progrès : préparer davantage tes interventions et tes rendus.",
-    "Tu peux encore progresser en prenant plus d’initiatives.",
-    "Pour consolider, pense à approfondir par toi-même les sujets abordés.",
-    "Essaie de gagner en autonomie sur les points que tu maîtrises moins.",
-    "Un effort de régularité t’aiderait à franchir une nouvelle étape.",
-  ],
+const axis = (cores: string[]) => compose(AXIS_OPENERS, cores, (o, c) => `${o} ${c}.`);
+
+const AXIS: Record<"difficulty" | "voice" | "progress" | "generic", string[]> = {
+  difficulty: axis([
+    "demande de l’aide dès qu’un point te bloque, par exemple [à compléter : le point en question]",
+    "ne laisse pas une difficulté s’installer, parle-m’en vite ([à compléter : sur quel sujet])",
+    "reprends les notions qui te résistent, en commençant par [à compléter : la première à revoir]",
+    "pose tes questions dès qu’une difficulté apparaît, notamment sur [à compléter : un point concret]",
+  ]),
+  voice: axis([
+    "ose prendre la parole plus souvent, par exemple [à compléter : dans quelle situation]",
+    "lance-toi pour partager tes idées, en commençant par [à compléter : un moment précis]",
+    "gagne en confiance à l’oral en intervenant sur [à compléter : un sujet que tu maîtrises]",
+    "n’hésite pas à proposer tes idées au groupe ([à compléter : lesquelles])",
+  ]),
+  progress: axis([
+    "reprends les remarques de tes corrections, en particulier [à compléter : la remarque à travailler]",
+    "appuie-toi sur les retours reçus pour [à compléter : un axe concret]",
+    "travaille les points relevés à la correction, d’abord [à compléter : un point précis]",
+    "applique les conseils de tes corrections sur [à compléter : un point concret]",
+  ]),
+  generic: axis([
+    "prépare davantage tes interventions et tes rendus ([à compléter : un axe concret])",
+    "gagne en régularité, par exemple en [à compléter : une habitude à prendre]",
+    "prends plus d’initiatives sur [à compléter : un sujet concret]",
+    "approfondis par toi-même les sujets abordés, comme [à compléter : un sujet]",
+  ]),
 };
 
 const ENCOURAGEMENT = [
   "Continue ainsi, tu as de belles ressources.",
-  "Je suis confiante pour la suite, bravo pour le chemin parcouru.",
-  "Tu peux être fier·ère de ton parcours, poursuis dans cette voie.",
+  "Je suis confiante pour la suite.",
+  "Tu peux être fier·ère du chemin parcouru, poursuis.",
   "Garde cette énergie, elle te mènera loin.",
-  "Tu as tout ce qu’il faut pour réussir, continue.",
-  "Bonne continuation, je crois en ton potentiel.",
+  "Tu as tout ce qu’il faut pour réussir.",
+  "Bonne continuation, je crois en toi.",
+  "Poursuis sur cette voie, elle te réussit.",
+  "Courage, tu es sur la bonne route.",
+  "Bravo pour ton investissement, continue.",
+  "Je suis curieuse de voir la suite de ton parcours.",
 ];
 
 function hash(s: string): number {
@@ -127,20 +178,21 @@ function hash(s: string): number {
   return h;
 }
 
-/** Première variante pas encore utilisée dans le lot, à partir d'un point de départ propre à la personne. */
-function pick(pool: readonly string[], seed: string, salt: string, used: Set<string>): string {
-  const start = hash(`${seed}:${salt}`) % pool.length;
-  for (let i = 0; i < pool.length; i++) {
-    const phrase = pool[(start + i) % pool.length];
-    if (!used.has(phrase)) return phrase;
-  }
-  return pool[start];
+/** Début de la phrase avant son premier trou : sert à repérer une formulation déjà employée. */
+export function phraseKey(phrase: string): string {
+  const cut = phrase.search(HOLE_PATTERN);
+  return (cut === -1 ? phrase : phrase.slice(0, cut)).trim();
 }
 
-const count = (tags: ObservationTag[], tag: ObservationTag) => tags.filter((t) => t === tag).length;
+const normalizeSpaces = (s: string) => s.replace(/\s+/g, " ");
 
-/** Propose un brouillon ; `used` (modifié) mémorise les phrases déjà employées dans le lot. */
-export function draftAppreciation(input: DraftInput, used: Set<string> = new Set()): Draft {
+function isUsed(phrase: string, others: readonly string[]): boolean {
+  const key = normalizeSpaces(phraseKey(phrase));
+  return key.length >= 8 && others.some((t) => normalizeSpaces(t).includes(key));
+}
+
+/** Thèmes choisis d'après les étiquettes (jamais le texte des observations). */
+function themes(input: TemplateInput) {
   const own = input.ownTags.filter((t) => t !== "absent_late");
   const group = input.groupTags.filter((t) => t !== "absent_late");
   const basis: DraftBasis =
@@ -152,46 +204,87 @@ export function draftAppreciation(input: DraftInput, used: Set<string> = new Set
           ? "corrections"
           : "none";
   const tags = basis === "personal" ? own : basis === "group" ? group : [];
-
-  const participation = count(tags, "participation");
-  const question = count(tags, "relevant_question");
-  const difficulty = count(tags, "difficulty");
-
-  const strengthPool =
+  const n = (t: ObservationTag) => tags.filter((x) => x === t).length;
+  const participation = n("participation");
+  const question = n("relevant_question");
+  const strengthTheme: keyof typeof STRENGTH =
     basis === "group"
-      ? STRENGTH.group
+      ? "group"
       : participation === 0 && question === 0
         ? input.hasStrengthsComment
-          ? STRENGTH.corrections
-          : STRENGTH.generic
+          ? "corrections"
+          : "generic"
         : question > participation
-          ? STRENGTH.question
-          : STRENGTH.participation;
-  const axisPool =
-    difficulty > 0
-      ? AXIS.difficulty
-      : participation === 0 && basis !== "none" && basis !== "corrections"
-        ? AXIS.voice
+          ? "question"
+          : "participation";
+  const axisTheme: keyof typeof AXIS =
+    n("difficulty") > 0
+      ? "difficulty"
+      : participation === 0 && (basis === "personal" || basis === "group")
+        ? "voice"
         : input.hasProgressComment
-          ? AXIS.progress
-          : AXIS.generic;
+          ? "progress"
+          : "generic";
+  return { basis, strengthTheme, axisTheme };
+}
 
-  const strength = pick(strengthPool, input.seed, "s", used);
-  const axis = pick(axisPool, input.seed, "a", used);
-  const encouragement = pick(ENCOURAGEMENT, input.seed, "e", used);
+/** Toutes les formulations d'une partie pour cette personne : celles de Marie d'abord, puis celles de l'appli. */
+export function phrasePool(part: Part, input: TemplateInput, custom: CustomPhrases = {}): string[] {
+  const t = themes(input);
+  const app =
+    part === "strength"
+      ? STRENGTH[t.strengthTheme]
+      : part === "axis"
+        ? AXIS[t.axisTheme]
+        : ENCOURAGEMENT;
+  const start = hash(`${input.seed}:${part}`) % app.length;
+  const rotated = [...app.slice(start), ...app.slice(0, start)];
+  return [...(custom[part] ?? []), ...rotated];
+}
 
-  const join = (parts: string[]) => parts.join(" ");
-  let closing = encouragement;
-  // Deux personnes n'ont jamais exactement le même texte : on change la conclusion au besoin.
-  for (const alt of ENCOURAGEMENT) {
-    if (!used.has(`T:${join([strength, axis, closing])}`)) break;
-    closing = alt;
+/** Première formulation du pool qu'aucune autre appréciation n'emploie ; à défaut, la première. */
+export function choosePhrase(pool: readonly string[], others: readonly string[]): string {
+  return pool.find((p) => !isUsed(p, others)) ?? pool[0];
+}
+
+/** « Autre formulation » : la suivante du pool après `current`, en évitant celles déjà employées. */
+export function otherPhrase(
+  pool: readonly string[],
+  current: string,
+  others: readonly string[],
+): { phrase: string; fresh: boolean } {
+  const at = pool.findIndex((p) => phraseKey(p) === phraseKey(current));
+  for (let i = 1; i <= pool.length; i++) {
+    const p = pool[(at + i) % pool.length];
+    if (phraseKey(p) !== phraseKey(current) && !isUsed(p, others))
+      return { phrase: p, fresh: true };
   }
-  let text = join([strength, axis, closing]);
-  if (text.length > input.max) text = join([strength, axis]);
-  if (text.length > input.max) text = truncateAppreciation(join([strength, axis]), input.max);
-  // Les phrases réellement gardées sont mémorisées pour les autres personnes du lot.
-  for (const p of [strength, axis, closing]) if (text.includes(p)) used.add(p);
-  used.add(`T:${text}`);
-  return { text, basis };
+  const p = pool[(at + 1) % pool.length];
+  return { phrase: p, fresh: false };
+}
+
+/** Gabarit complet pour une personne, dans la limite de l'école (la conclusion saute en dernier recours). */
+export function buildTemplate(
+  input: TemplateInput,
+  others: readonly string[],
+  custom: CustomPhrases = {},
+): Template {
+  const { basis } = themes(input);
+  const pick = (part: Part) => choosePhrase(phrasePool(part, input, custom), others);
+  const sentences: Sentences = {
+    strength: pick("strength"),
+    axis: pick("axis"),
+    encouragement: pick("encouragement"),
+  };
+  let text = PARTS.map((p) => sentences[p]).join(" ");
+  if (text.length > input.max) text = `${sentences.strength} ${sentences.axis}`;
+  if (text.length > input.max) {
+    // Dernier recours : les formulations les plus courtes de chaque partie.
+    const shortest = (part: Part) =>
+      [...phrasePool(part, input, custom)].sort((a, b) => a.length - b.length)[0];
+    sentences.strength = shortest("strength");
+    sentences.axis = shortest("axis");
+    text = `${sentences.strength} ${sentences.axis}`;
+  }
+  return { text, sentences, basis };
 }

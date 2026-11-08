@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
+import { PhraseManager } from "@/components/settings/phrase-manager";
+import { listPhrases } from "@/lib/appreciations/queries";
 import { SchoolRulesForm } from "@/components/settings/school-rules-form";
 import { AccountSection } from "@/components/settings/account-section";
 import { AppearanceForm } from "@/components/settings/appearance-form";
@@ -23,10 +25,11 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
     typeof retour === "string" && /^\/modules\/[0-9a-f-]{36}\/appreciations$/.test(retour)
       ? retour
       : null;
-  const [profile, schools, rules] = await Promise.all([
+  const [profile, schools, rules, phrases] = await Promise.all([
     getProfile(),
     listAllSchools(),
     listSchoolRules(),
+    listPhrases(),
   ]);
 
   const textSize = readTextSize((await cookies()).get(TEXT_SIZE_COOKIE)?.value);
@@ -36,7 +39,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <div>
         {backTo ? (
           <Link href={backTo} className="text-sm underline underline-offset-2">
-            ← Retour aux appréciations
+            ← Revenir aux appréciations
           </Link>
         ) : null}
         <h1 className="text-2xl font-semibold">Réglages</h1>
@@ -162,6 +165,22 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
                 ))}
               </div>
             )}
+          </section>
+
+          <section
+            aria-labelledby="appreciation-phrases"
+            id="appreciation-phrases"
+            className="scroll-mt-20 space-y-3"
+          >
+            <div>
+              <h2 id="appreciation-phrases" className="text-lg font-medium">
+                Mes formulations d’appréciation
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Tes phrases pour le gabarit, par partie. Elles passent avant celles de l’appli.
+              </p>
+            </div>
+            <PhraseManager phrases={phrases} />
           </section>
         </div>
         <div className="min-w-0 flex-[2_1_0] space-y-10">
