@@ -25,7 +25,15 @@ export function quizTotalPoints(rules: readonly Pick<DrawRule, "count" | "points
   return Math.round(rules.reduce((s, r) => s + r.count * r.pointsEach, 0) * 100) / 100;
 }
 
+/** Une question corrigée automatiquement sans réponse définie ne peut pas être tirée. */
+export function hasDefinedAnswer(q: BankQuestion): boolean {
+  if (q.type === "open") return true;
+  if (q.type === "numerical") return q.numericValue !== null;
+  return q.choices.some((c) => c.fraction > 0);
+}
+
 export function matchesRule(q: BankQuestion, rule: DrawRule): boolean {
+  if (!hasDefinedAnswer(q)) return false;
   if (rule.category && q.category !== rule.category) return false;
   if (rule.types.length && !rule.types.includes(q.type)) return false;
   const tags = new Set(q.tags.map((t) => t.toLowerCase()));

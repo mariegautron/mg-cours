@@ -107,6 +107,10 @@ export async function saveQuizConfig(
   if (!quiz) return { errors: ["Ce QCM n’existe plus."] };
   const supabase = await createClient();
   const draft = quiz.status === "draft";
+  if (draft) {
+    const lacking = shortages(await loadBank(quiz.id), config.rules);
+    if (lacking.length) return { errors: lacking };
+  }
 
   const { error } = await supabase
     .from("quiz")

@@ -284,10 +284,31 @@ export function QuizConfigForm({
                       onChange={(e) => update(r.key, { pointsEach: e.target.value })}
                     />
                   </div>
-                  <p className="text-muted-foreground pb-2 text-sm">
+                  <p
+                    role={Number(r.count) > available[i] ? "alert" : undefined}
+                    className={
+                      Number(r.count) > available[i]
+                        ? "text-destructive pb-2 text-sm font-medium"
+                        : "text-muted-foreground pb-2 text-sm"
+                    }
+                  >
                     {available[i]} question{available[i] > 1 ? "s" : ""} disponible
                     {available[i] > 1 ? "s" : ""} dans la banque
-                    {Number(r.count) > available[i] ? " — pas assez pour cette règle" : ""}.
+                    {Number(r.count) > available[i]
+                      ? ` : règle ${i + 1} impossible, il en faut ${Number(r.count)}. L’enregistrement sera refusé.`
+                      : "."}
+                    {Number(r.count) > available[i] && available[i] > 0 ? (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          className="underline underline-offset-2"
+                          onClick={() => update(r.key, { count: String(available[i]) })}
+                        >
+                          Ramener à {available[i]}
+                        </button>
+                      </>
+                    ) : null}
                   </p>
                   {rules.length > 1 ? (
                     <Button
