@@ -7,6 +7,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
+import { DayJBlock } from "@/components/assessments/day-j-block";
+import { dayJReadiness } from "@/lib/assessments/day-j";
+import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Pill } from "@/components/dashboard/pill";
 import { EmptyState } from "@/components/empty-state";
@@ -112,6 +115,35 @@ export default async function ModuleAssessmentsPage({
   const dueSessions = new Set(timeline.filter((r) => r.dueSession).map((r) => r.assessmentId));
   const unplaced = regular.filter((a) => !timeline.some((r) => r.assessmentId === a.id));
   const cards = [...ordered, ...unplaced];
+  const extras = await loadDayJExtras(
+    id,
+    regular.map((a) => a.id),
+  );
+  const courseDate = new Map(courses.map((c) => [c.id, c.session_date]));
+  const dayJOf = (a: (typeof regular)[number]) =>
+    dayJReadiness({
+      moduleId: id,
+      id: a.id,
+      title: a.title,
+      date: a.date,
+      courseId: a.course_id,
+      courseDate: a.course_id ? (courseDate.get(a.course_id) ?? null) : null,
+      prepStatus: a.prep_status,
+      objective: a.objective,
+      subject: a.subject,
+      deliverableMd: a.deliverable_md,
+      evaluatedMd: a.evaluated_md,
+      gradingGridId: a.grading_grid_id,
+      groupCount: a.groups.length,
+      isGroupGrade: a.is_group_grade,
+      examKind: a.exam_kind,
+      type: a.type,
+      whereToSubmit: a.where_to_submit,
+      files: a.files,
+      isOral: a.project_role === "oral",
+      published: extras.publishedIds ? extras.publishedIds.has(a.id) : undefined,
+      qcm: extras.qcm.get(a.id),
+    });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
 
   return (
@@ -275,6 +307,9 @@ export default async function ModuleAssessmentsPage({
                             : { tone: "warn", label: "À noter" }
                       }
                     />
+                    {!a.makeup_of_id ? (
+                      <DayJBlock dayJ={dayJOf(a)} titleId={`dayj-${a.id}`} />
+                    ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         asChild

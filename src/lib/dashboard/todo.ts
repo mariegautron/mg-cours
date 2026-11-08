@@ -8,6 +8,7 @@ export type TodoKind =
   | "outline_overdue"
   | "outline_urgent"
   | "session_prep"
+  | "assessment_prep"
   | "outline_soon"
   | "invoice_send"
   | "invoice_ready"
@@ -18,6 +19,7 @@ const KIND_ORDER: TodoKind[] = [
   "outline_overdue",
   "outline_urgent",
   "session_prep",
+  "assessment_prep",
   "outline_soon",
   "invoice_send",
   "invoice_ready",
@@ -75,6 +77,15 @@ export interface TodoSources {
     prep_status: string;
     module: { id: string; name: string };
   }[];
+  /** Évaluations à venir qui ont encore un manque (rappel à J-7 et J-1). */
+  assessments?: {
+    id: string;
+    title: string;
+    date: string;
+    moduleId: string;
+    moduleName: string;
+    missingCount: number;
+  }[];
   billing: { module: { id: string; name: string }; kind: "ready" | "toSend" | "toCollect" }[];
   /** Horizon des séances à préparer, en jours. */
   prepHorizonDays?: number;
@@ -110,6 +121,18 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       detail: `${c.module.name} · ${c.title} · ${inDays(d)}`,
       href: `/modules/${c.module.id}/courses/${c.id}/edit`,
       urgency: d,
+    });
+  }
+  for (const a of src.assessments ?? []) {
+    const d = daysBetween(src.today, a.date.slice(0, 10));
+    if (d < 0 || d > 7 || a.missingCount === 0) continue;
+    out.push({
+      key: `assessment-${a.id}`,
+      kind: "assessment_prep",
+      title: `Préparer l’évaluation « ${a.title} »`,
+      detail: `${a.moduleName} · ${inDays(d)} · ${a.missingCount} point${a.missingCount > 1 ? "s" : ""} à compléter`,
+      href: `/modules/${a.moduleId}/assessments`,
+      urgency: d <= 1 ? d - 2 : d,
     });
   }
   for (const b of src.billing) {

@@ -43,6 +43,8 @@ import {
   listResumeCandidates,
 } from "@/lib/dashboard/queries";
 import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
+import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
+import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
 import {
   formatSessionDay,
@@ -105,6 +107,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
 
+  const upcomingEvals = await listUpcomingAssessments(today, 14);
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
   // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.
   const todayIds = new Set(sessions.map((c) => c.id));
@@ -123,6 +126,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           session_date: c.session_date,
           prep_status: c.prep_status ?? "draft",
           module: { id: c.module!.id, name: c.module!.name },
+        })),
+      assessments: upcomingEvals
+        .filter((a) => a.missing.length > 0)
+        .map((a) => ({
+          id: a.id,
+          title: a.title,
+          date: a.date,
+          moduleId: a.moduleId,
+          moduleName: a.moduleName,
+          missingCount: a.missing.length,
         })),
       billing: billing.flatMap<TodoSources["billing"][number]>((b) =>
         b.kind === "ready"
@@ -335,6 +348,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       </section>
     ) : null;
 
+  const upcomingEvalsCard = <UpcomingAssessmentsCard items={upcomingEvals} />;
+
   const modulesCard = (
     <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
       <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
@@ -493,6 +508,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <div className="min-w-0 space-y-4">{todoCard}</div>
           <div className="min-w-0 space-y-4">
             {correctCard}
+            {upcomingEvalsCard}
             {weekCard}
             {resumeCard}
             {modulesCard}
@@ -632,6 +648,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </div>
         <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">
           {correctCard}
+          {upcomingEvalsCard}
           {weekCard}
           {resumeCard}
           {modulesCard}

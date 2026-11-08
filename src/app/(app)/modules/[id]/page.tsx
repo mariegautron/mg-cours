@@ -9,6 +9,8 @@ import { ArchiveModuleButton } from "@/components/modules/archive-module-button"
 import { FinishModuleButton } from "@/components/modules/finish-module-button";
 import { JourneyHero } from "@/components/modules/journey-hero";
 import { JourneySteps } from "@/components/modules/journey-steps";
+import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
+import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { loadModuleMean } from "@/lib/dashboard/overview-queries";
 import { daysBetween } from "@/lib/dashboard/todo";
 import { formatSessionDay } from "@/lib/dashboard/today";
@@ -166,6 +168,7 @@ export default async function ModulePage({
   const askNote = hero?.offerFinish ? await retrospectiveAvailable() : false;
   const finishedView = hero?.kind === "finished";
   const upcoming = closed ? null : highlightedSession(courses, today);
+  const upcomingEvals = await listUpcomingAssessments(today, 14, id);
   const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
@@ -294,6 +297,13 @@ export default async function ModulePage({
             </>
           ) : (
             <>
+              {upcomingEvals.length > 0 ? (
+                <UpcomingAssessmentsCard
+                  items={upcomingEvals}
+                  showModule={false}
+                  headingLevel={3}
+                />
+              ) : null}
               <Card id="avenir" title="À venir">
                 {upcoming ? (
                   <>
