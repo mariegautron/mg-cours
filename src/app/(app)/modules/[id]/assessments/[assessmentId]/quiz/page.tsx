@@ -15,7 +15,7 @@ import { QuizConfigForm } from "@/components/quiz/quiz-config-form";
 import { Button } from "@/components/ui/button";
 import { getAssessment } from "@/lib/assessments/queries";
 import { getQuizByAssessment, getQuizPool, listAttempts, loadBank } from "@/lib/quiz/queries";
-import { quizTotalPoints } from "@/lib/quiz/draw";
+import { quizTotalPoints, shortages } from "@/lib/quiz/draw";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -117,6 +117,8 @@ export default async function QuizPage({
     a.localeCompare(b, "fr"),
   );
 
+  const rulesProblems = shortages(bank, quiz.rules);
+  const validRules = quiz.rules.length > 0 && rulesProblems.length === 0;
   const total = quizTotalPoints(quiz.rules);
   const perStudent = quiz.rules.reduce((n, r) => n + r.count, 0);
   const card = "bg-card rounded-xl border p-5";
@@ -152,6 +154,11 @@ export default async function QuizPage({
             {STATUS_LABEL[quiz.status]}
           </Pill>
           {assessment.makeup_of_id ? <Pill>Rattrapage</Pill> : null}
+          {attempts.length > 0 ? (
+            <Pill tone="ok">
+              Liens préparés pour {attempts.length} personne{attempts.length > 1 ? "s" : ""}
+            </Pill>
+          ) : null}
         </div>
         <dl className="divide-y text-sm">
           <div className="flex justify-between gap-3 py-2">
@@ -236,11 +243,37 @@ export default async function QuizPage({
           </p>
           <div className="flex flex-col gap-2">
             {quiz.status === "draft" ? (
-              <form action={publishQuiz.bind(null, id, assessmentId)}>
-                <Button type="submit" size="touch" variant="secondary" className="w-full">
-                  Publier le QCM
-                </Button>
-              </form>
+              validRules ? (
+                <form action={publishQuiz.bind(null, id, assessmentId)}>
+                  <Button type="submit" size="touch" className="w-full">
+                    Publier le QCM
+                  </Button>
+                </form>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    size="touch"
+                    variant="secondary"
+                    disabled
+                    className="w-full"
+                    aria-describedby="publish-hint"
+                  >
+                    Publier le QCM
+                  </Button>
+                  <p id="publish-hint" role="status" className="text-sm">
+                    Corrige d’abord les règles de tirage :{" "}
+                    {rulesProblems[0] ?? "aucune règle valide."}
+                  </p>
+                </>
+              )
+            ) : null}
+            {quiz.rules.length > 0 ? (
+              <Button asChild size="touch" variant="outline">
+                <Link href={`${back}/quiz/essai`} target="_blank" rel="noopener">
+                  Essayer comme un·e étudiant·e
+                </Link>
+              </Button>
             ) : null}
             {quiz.status === "published" ? (
               <>

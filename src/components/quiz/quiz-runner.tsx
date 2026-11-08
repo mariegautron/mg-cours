@@ -33,6 +33,8 @@ export function QuizRunner({
   serverNow,
   questions,
   initialAnswers,
+  dryRun = false,
+  exitHref,
 }: {
   token: string;
   title: string;
@@ -41,7 +43,11 @@ export function QuizRunner({
   serverNow: string;
   questions: PublicQuestion[];
   initialAnswers: Record<string, StoredAnswer>;
+  /** Essai à blanc : rien n'est envoyé ni enregistré. */
+  dryRun?: boolean;
+  exitHref?: string;
 }) {
+  const [dryDone, setDryDone] = useState(false);
   const router = useRouter();
   const [answers, setAnswers] = useState(initialAnswers);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -68,6 +74,11 @@ export function QuizRunner({
   const confirmRef = useRef<HTMLHeadingElement>(null);
 
   const flush = useCallback(async () => {
+    if (dryRun) {
+      dirty.current = false;
+      setSaveState("saved");
+      return;
+    }
     if (inFlight.current || submitted.current) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       dirty.current = true;
@@ -110,7 +121,7 @@ export function QuizRunner({
     } finally {
       inFlight.current = false;
     }
-  }, [token, router]);
+  }, [token, router, dryRun]);
 
   // Enregistrement automatique : peu après la dernière frappe, et réessais tant que ça échoue.
   useEffect(() => {
@@ -156,11 +167,12 @@ export function QuizRunner({
   // Un enregistrement en attente n'est jamais abandonné en silence.
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {
+      if (dryRun) return;
       if (dirty.current || saveState === "saving") e.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [saveState]);
+  }, [saveState, dryRun]);
 
   const onAnswer = (position: number, answer: StoredAnswer) => {
     const next = { ...latest.current, [String(position)]: answer };
@@ -172,6 +184,11 @@ export function QuizRunner({
 
   const submit = useCallback(async () => {
     if (submitted.current) return;
+    if (dryRun) {
+      setConfirming(false);
+      setDryDone(true);
+      return;
+    }
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setSubmitError(
         "Vous êtes hors connexion : vos réponses sont gardées sur votre téléphone. Rendez votre copie dès que le réseau revient.",
@@ -198,7 +215,7 @@ export function QuizRunner({
     } finally {
       setSubmitting(false);
     }
-  }, [token, router]);
+  }, [token, router, dryRun]);
 
   // Chrono : suit l'heure du serveur ; annonces polies à 5 min et 1 min ; remise automatique à 0.
   useEffect(() => {
@@ -246,8 +263,34 @@ export function QuizRunner({
     return a.number.trim() !== "";
   };
 
+  if (dryDone) {
+    return (
+      <div className="space-y-3">
+        <h1 className="font-heading text-xl font-bold">Essai terminé</h1>
+        <p role="status">
+          Voilà ce que verront les étudiant·es à la fin. Rien n’a été enregistré : aucune copie
+          n’est comptée.
+        </p>
+        {exitHref ? (
+          <a href={exitHref} className="underline underline-offset-2">
+            Retour au QCM
+          </a>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      {dryRun ? (
+        <p
+          role="note"
+          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
+        >
+          <strong>Essai à blanc.</strong> Tu passes le QCM comme un·e étudiant·e ; rien n’est publié
+          ni enregistré.
+        </p>
+      ) : null}
       <header className="bg-background sticky top-0 z-10 space-y-2 border-b py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="font-heading text-xl font-bold">QCM · {title}</h1>

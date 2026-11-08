@@ -127,6 +127,13 @@ export function ExamKindForm({
           >
             préparer le QCM
           </Link>
+          {" · "}
+          <Link
+            href="/questions"
+            className="text-primary font-semibold underline-offset-2 hover:underline"
+          >
+            Banque de questions
+          </Link>
           .
         </p>
       ) : null}
