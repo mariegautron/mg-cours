@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { TEACHER_KINDS } from "@/lib/resources/kind";
 import { Constants } from "@/types/db";
 
 /** Transforme "a, b ,c" → ["a","b","c"] (sans doublons ni vides). */
@@ -40,7 +41,12 @@ export function readResourceForm(formData: FormData) {
     content: formData.get("content") ?? "",
     url: formData.get("url") ?? "",
     kind: formData.get("kind") || undefined,
-    audience: formData.get("audience") || undefined,
+    // Un corrigé, une banque de questions ou des notes sont « Toi seule » tant que rien n'est choisi.
+    audience:
+      formData.get("audience") ||
+      ((TEACHER_KINDS as readonly string[]).includes(String(formData.get("kind") ?? ""))
+        ? "teacher"
+        : undefined),
     category: formData.get("category") ?? "",
     tags: parseTags(String(formData.get("tags") ?? "")),
     status: (formData.get("status") as string) || undefined,
