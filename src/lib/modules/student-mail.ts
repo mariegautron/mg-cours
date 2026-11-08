@@ -31,3 +31,24 @@ export function studentLinkEmail(input: {
 export function tokenFromSpaceUrl(url: string): string | null {
   return /\/espace\/([A-Za-z0-9_-]{20,})\/?$/.exec(url.trim())?.[1] ?? null;
 }
+
+/** Message prêt à coller dans Teams : vouvoiement, prénom, lien personnel. Fonction pure. */
+export function studentLinkMessage(input: {
+  firstName: string;
+  moduleName: string;
+  url: string;
+  teacherName: string;
+}): string {
+  const greeting = input.firstName.trim() ? `Bonjour ${input.firstName.trim()},` : "Bonjour,";
+  return [
+    greeting,
+    "",
+    `Voici votre espace personnel pour le module « ${input.moduleName} » : cours, évaluations avec leur grille, projet et, une fois publiés, vos résultats.`,
+    "",
+    input.url,
+    "",
+    "Ce lien est personnel : merci de ne pas le partager.",
+    "",
+    input.teacherName.trim() || "Votre enseignante",
+  ].join("\n");
+}

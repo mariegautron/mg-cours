@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 
 import { clientEnv, serverEnv } from "@/lib/env";
-import { studentLinkEmail, tokenFromSpaceUrl } from "@/lib/modules/student-mail";
+import {
+  studentLinkEmail,
+  studentLinkMessage,
+  tokenFromSpaceUrl,
+} from "@/lib/modules/student-mail";
 import { getTeacherName } from "@/lib/outline/queries";
 import { studentSpaceUrl } from "@/lib/modules/espace";
 import { EMAIL_NOT_ENABLED, failure, NOT_FOUND } from "@/lib/messages";
@@ -17,7 +21,7 @@ import { listModuleGroups } from "@/lib/students/queries";
 export interface StudentLinksState {
   error?: string;
   /** Liens créés : les jetons ne sont jamais relisibles ensuite (seul le haché est gardé). */
-  links?: { studentId: string; name: string; url: string }[];
+  links?: { studentId: string; name: string; url: string; message: string }[];
 }
 
 /**
@@ -67,6 +71,10 @@ export async function createStudentLinks(
   if (revoke.error) return { error: failure("créer les liens") };
 
   const created = targets.map((s) => ({ student: s, token: generateToken() }));
+  const [{ data: mod }, teacherName] = await Promise.all([
+    supabase.from("module").select("name").eq("id", moduleId).maybeSingle(),
+    getTeacherName(),
+  ]);
   const { error } = await supabase.from("module_student_link").insert(
     created.map(({ student, token }) => ({
       module_id: moduleId,
@@ -81,8 +89,31 @@ export async function createStudentLinks(
       studentId: student.id,
       name: `${student.first_name} ${student.last_name}`,
       url: studentSpaceUrl(clientEnv.NEXT_PUBLIC_APP_URL, token),
+      message: studentLinkMessage({
+        firstName: student.first_name,
+        moduleName: mod?.name ?? "",
+        url: studentSpaceUrl(clientEnv.NEXT_PUBLIC_APP_URL, token),
+        teacherName,
+      }),
     })),
   };
+}
+
+/** Retire l'accès d'UNE personne : son lien cesse de fonctionner, les autres restent valables. */
+export async function revokeStudentLink(
+  moduleId: string,
+  studentId: string,
+): Promise<StudentLinksState> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("module_student_link")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("module_id", moduleId)
+    .eq("student_id", studentId)
+    .is("revoked_at", null);
+  if (error) return { error: failure("retirer l’accès") };
+  revalidatePath(`/modules/${moduleId}/frise`);
+  return { links: [] };
 }
 
 /** Révoque tous les liens personnels du module. */

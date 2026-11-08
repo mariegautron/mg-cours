@@ -107,6 +107,9 @@ export interface StudentLinkRow {
   /** Date d'envoi de l'e-mail du lien (ISO) ; null s'il n'est pas parti. */
   sentAt: string | null;
   sendError: string | null;
+  /** Première ouverture du lien (ISO) ; null s'il n'a jamais été ouvert. */
+  firstViewedAt: string | null;
+  viewCount: number;
 }
 
 /** Liens personnels : une ligne par étudiant·e (lien actif ou non, envoyé le …, cause d'un échec). */
@@ -124,13 +127,15 @@ export async function getStudentLinkInfo(
       hasLink: false,
       sentAt: null,
       sendError: null,
+      firstViewedAt: null,
+      viewCount: 0,
     })),
   });
   try {
     const supabase = await createClient();
     const base = supabase
       .from("module_student_link")
-      .select("student_id, sent_at, send_error")
+      .select("student_id, sent_at, send_error, first_viewed_at, view_count")
       .eq("module_id", moduleId)
       .is("revoked_at", null);
     const first = await base;
@@ -143,7 +148,13 @@ export async function getStudentLinkInfo(
         .eq("module_id", moduleId)
         .is("revoked_at", null);
       if (fallback.error) return empty(false);
-      data = (fallback.data ?? []).map((l) => ({ ...l, sent_at: null, send_error: null }));
+      data = (fallback.data ?? []).map((l) => ({
+        ...l,
+        sent_at: null,
+        send_error: null,
+        first_viewed_at: null,
+        view_count: 0,
+      }));
     }
     const byStudent = new Map((data ?? []).map((l) => [l.student_id, l]));
     return {
@@ -158,6 +169,8 @@ export async function getStudentLinkInfo(
           hasLink: !!link,
           sentAt: link?.sent_at ?? null,
           sendError: link?.send_error ?? null,
+          firstViewedAt: link?.first_viewed_at ?? null,
+          viewCount: link?.view_count ?? 0,
         };
       }),
     };

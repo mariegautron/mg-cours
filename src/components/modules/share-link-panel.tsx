@@ -8,13 +8,7 @@ import {
   updateModuleLink,
   type ShareState,
 } from "@/app/(app)/modules/[id]/frise/actions";
-import {
-  createStudentLinks,
-  revokeStudentLinks,
-  sendStudentLinksEmail,
-  type SendLinksState,
-  type StudentLinksState,
-} from "@/app/(app)/modules/[id]/frise/student-links";
+import { StudentLinksPanel } from "@/components/modules/student-links-panel";
 import type { StudentLinkRow } from "@/lib/modules/frise-queries";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
 import { ActionError } from "@/components/action-error";
@@ -59,11 +53,6 @@ export function ShareLinkPanel({
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
-  const [personal, setPersonal] = useState<StudentLinksState>({});
-  const [confirmSend, setConfirmSend] = useState(false);
-  const [sending, setSending] = useState<SendLinksState>({});
-  const [one, setOne] = useState<{ studentId: string; name: string; url: string } | null>(null);
-  const [oneError, setOneError] = useState("");
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -155,10 +144,20 @@ export function ShareLinkPanel({
             <p role="status" className="bg-muted rounded-xl border p-3 text-sm">
               <strong>Le lien n’est plus à jour.</strong> Des séances, évaluations ou fiches ont
               changé depuis le {new Date(active.publishedAt).toLocaleDateString("fr-FR")} : mets le
-              lien à jour pour que les étudiant·es voient la dernière version.
+              lien à jour pour que les étudiant·es voient la dernière version.{" "}
+              <Button
+                type="button"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
+                }
+              >
+                Mettre à jour
+              </Button>
             </p>
           ) : null}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 border-t pt-4">
             {active ? (
               <Button
                 type="button"
@@ -179,7 +178,7 @@ export function ShareLinkPanel({
                   run(() => publishModuleLink(moduleId, options, quizUrl.trim() || null))
                 }
               >
-                Créer le lien
+                Publier et créer le lien de la classe
               </Button>
             )}
             {active ? (
@@ -240,223 +239,13 @@ export function ShareLinkPanel({
           </div>
         </div>
       ) : null}
-      {studentLinks.available ? (
-        <div className="space-y-2 border-t pt-4">
-          <h3 className="font-heading text-lg font-bold">Liens personnels</h3>
-          <p className="text-muted-foreground text-sm">
-            Un lien par étudiant·e : prénom, notes et corrigés publiés pour elle ou lui, et le même
-            contenu que ci-dessus (publie-le d’abord). {studentLinks.active} lien
-            {studentLinks.active > 1 ? "s" : ""} actif{studentLinks.active > 1 ? "s" : ""} sur{" "}
-            {studentLinks.students} étudiant·e{studentLinks.students > 1 ? "s" : ""}.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              disabled={pending || studentLinks.students === 0}
-              onClick={() =>
-                start(async () => setPersonal(await createStudentLinks(moduleId, true)))
-              }
-            >
-              Créer les liens manquants
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={pending || studentLinks.students === 0}
-              onClick={() =>
-                start(async () => setPersonal(await createStudentLinks(moduleId, false)))
-              }
-            >
-              Tout renouveler
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              disabled={pending || studentLinks.active === 0}
-              onClick={() => start(async () => setPersonal(await revokeStudentLinks(moduleId)))}
-            >
-              Tout dépublier
-            </Button>
-          </div>
-          {personal.links?.length ? (
-            <div className="space-y-2">
-              <label htmlFor="personal-links" className="text-sm font-medium">
-                Liens à donner (visibles une seule fois)
-              </label>
-              <textarea
-                id="personal-links"
-                readOnly
-                rows={Math.min(12, personal.links.length + 1)}
-                value={personal.links.map((l) => `${l.name} : ${l.url}`).join("\n")}
-                className="bg-background w-full rounded-md border px-2 py-1 font-mono text-xs"
-                onFocus={(e) => e.currentTarget.select()}
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  void copy(personal.links!.map((l) => `${l.name} : ${l.url}`).join("\n"))
-                }
-              >
-                Tout copier
-              </Button>
-              {!confirmSend ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  className="ml-2"
-                  disabled={pending}
-                  onClick={() => {
-                    setSending({});
-                    setConfirmSend(true);
-                  }}
-                >
-                  Envoyer par e-mail
-                </Button>
-              ) : (
-                <div
-                  role="alertdialog"
-                  aria-labelledby="send-title"
-                  className="bg-muted mt-2 space-y-2 rounded-xl border p-3"
-                >
-                  <p id="send-title" className="text-sm font-medium">
-                    Envoyer son lien à {personal.links.length} étudiant·e
-                    {personal.links.length > 1 ? "s" : ""} ? Chacun·e reçoit un e-mail à son
-                    adresse.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={pending}
-                      onClick={() =>
-                        start(async () => {
-                          setConfirmSend(false);
-                          setSending(
-                            await sendStudentLinksEmail(
-                              moduleId,
-                              personal.links!.map((l) => ({ studentId: l.studentId, url: l.url })),
-                            ),
-                          );
-                        })
-                      }
-                    >
-                      Confirmer l’envoi
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setConfirmSend(false)}
-                    >
-                      Annuler
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {sending.error ? <ActionError error={sending.error} /> : null}
-              {sending.results ? (
-                <div role="status" className="mt-2 space-y-1 text-sm">
-                  <p className="font-medium">
-                    {sending.results.filter((r) => r.status === "sent").length} e-mail
-                    {sending.results.filter((r) => r.status === "sent").length > 1 ? "s" : ""}{" "}
-                    envoyé
-                    {sending.results.filter((r) => r.status === "sent").length > 1 ? "s" : ""}
-                    {sending.results.some((r) => r.status !== "sent")
-                      ? ", certains ont échoué :"
-                      : "."}
-                  </p>
-                  <ul className="list-disc pl-5">
-                    {sending.results
-                      .filter((r) => r.status !== "sent")
-                      .map((r) => (
-                        <li key={r.studentId}>
-                          {r.name} : {r.message ?? "échec"}
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          ) : personal.links ? (
-            <p className="text-sm">Rien à créer ou à retirer.</p>
-          ) : null}
-          {studentLinks.rows.length ? (
-            <ul className="divide-y rounded-xl border text-sm">
-              {studentLinks.rows.map((r) => (
-                <li
-                  key={r.studentId}
-                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                >
-                  <span>{r.name}</span>
-                  <span className="text-muted-foreground">
-                    {!r.hasLink
-                      ? "Pas de lien"
-                      : r.sentAt
-                        ? `Lien envoyé le ${new Date(r.sentAt).toLocaleDateString("fr-FR")}`
-                        : r.sendError
-                          ? `Envoi échoué : ${r.sendError}`
-                          : "Lien créé, pas encore envoyé"}
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={pending}
-                    onClick={() =>
-                      start(async () => {
-                        setOne(null);
-                        setOneError("");
-                        const res = await createStudentLinks(moduleId, false, r.studentId);
-                        if (res.error) setOneError(res.error);
-                        else if (res.links?.[0]) setOne(res.links[0]);
-                      })
-                    }
-                  >
-                    Nouveau lien<span className="sr-only"> pour {r.name}</span>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {studentLinks.rows.length ? (
-            <p className="text-muted-foreground text-xs">
-              Un lien déjà créé ne peut pas être relu (seule son empreinte est gardée). Si quelqu’un
-              l’a perdu, « Nouveau lien » en crée un pour cette personne seulement : les autres
-              restent valables.
-            </p>
-          ) : null}
-          {oneError ? <ActionError error={oneError} /> : null}
-          {one ? (
-            <div className="space-y-2">
-              <label htmlFor="one-link" className="text-sm font-medium">
-                Nouveau lien de {one.name} (visible une seule fois)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="one-link"
-                  readOnly
-                  value={one.url}
-                  className="bg-background min-w-0 flex-1 rounded-md border px-2 py-1 text-sm"
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-                <Button type="button" size="sm" variant="secondary" onClick={() => void copy(one.url)}>
-                  Copier
-                </Button>
-              </div>
-            </div>
-          ) : null}
-          {personal.error ? <ActionError error={personal.error} /> : null}
-        </div>
-      ) : (
-        <p className="text-muted-foreground border-t pt-4 text-sm">
-          Les liens personnels seront disponibles après la mise à jour de la base de données.
-        </p>
-      )}
+      <StudentLinksPanel
+        moduleId={moduleId}
+        available={studentLinks.available}
+        students={studentLinks.students}
+        active={studentLinks.active}
+        rows={studentLinks.rows}
+      />
       {state.revoked ? <p className="text-sm">Lien dépublié : il n’affiche plus rien.</p> : null}
       {state.updated ? <p className="text-sm">Lien mis à jour.</p> : null}
       <p role="status" aria-live="polite" className="text-muted-foreground min-h-5 text-sm">
