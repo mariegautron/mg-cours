@@ -43,6 +43,9 @@ import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { Pill } from "@/components/dashboard/pill";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
+import { DayJBlock } from "@/components/assessments/day-j-block";
+import { dayJReadiness } from "@/lib/assessments/day-j";
+import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -269,6 +272,30 @@ export default async function AssessmentPage({
       .eq("grading_grid_id", grid.id);
     gridModules = new Set((using ?? []).map((u) => u.module_id)).size;
   }
+  const dayJExtras = await loadDayJExtras(id, [assessmentId]);
+  const dayJTop = dayJReadiness({
+    moduleId: id,
+    id: assessmentId,
+    title: assessment.title,
+    date: assessment.date,
+    courseId: assessment.course_id,
+    courseDate: course?.session_date ?? null,
+    prepStatus: assessment.prep_status,
+    objective: assessment.objective,
+    subject: assessment.subject,
+    deliverableMd: assessment.deliverable_md,
+    evaluatedMd: assessment.evaluated_md,
+    gradingGridId: assessment.grading_grid_id,
+    groupCount: assessment.groups.length,
+    isGroupGrade: assessment.is_group_grade,
+    examKind: assessment.exam_kind,
+    type: assessment.type,
+    whereToSubmit: assessment.where_to_submit,
+    files: assessment.files,
+    isOral: assessment.project_role === "oral",
+    published: dayJExtras.publishedIds ? dayJExtras.publishedIds.has(assessmentId) : undefined,
+    qcm: dayJExtras.qcm.get(assessmentId),
+  });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
   const toneOf = { ok: "ok", warn: "warn", build: "warn" } as const;
 
@@ -398,6 +425,20 @@ export default async function AssessmentPage({
         </div>
       </div>
 
+      {!assessment.makeup_of_id ? (
+        <section aria-label="Avant le jour J" className={`${card} space-y-2`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <SubjectStatusBadge
+              moduleId={id}
+              assessmentId={assessmentId}
+              title={assessment.title}
+              status={assessment.prep_status}
+            />
+          </div>
+          <DayJBlock dayJ={dayJTop} titleId="dayj-top" />
+        </section>
+      ) : null}
+
       <RepublishNotice
         moduleId={id}
         assessmentId={assessmentId}
@@ -514,52 +555,61 @@ export default async function AssessmentPage({
                       </>
                     )}
                   </div>
-                  {gridGroups.map((g, gi) => (
-                    <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
-                      {g.axis ? (
-                        <div className="flex items-center justify-between gap-3 pt-1">
-                          <strong>Axe · {g.axis.label}</strong>
-                          <span className="text-muted-foreground text-sm">
-                            {formatNumber(
-                              g.criteria
-                                .filter((c) => !c.is_bonus)
-                                .reduce((n, c) => n + c.weight, 0),
-                            )}{" "}
-                            points
-                          </span>
-                        </div>
-                      ) : null}
-                      {g.criteria.map((c) => (
-                        <div key={c.id} className="rounded-2xl border p-3">
-                          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                            <strong>
-                              {c.label}
-                              {c.is_bonus ? " (bonus)" : ""}
-                            </strong>
-                            <span className="text-muted-foreground text-sm">
-                              {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
-                            </span>
-                          </div>
-                          {c.levels.length > 0 ? (
-                            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                              {c.levels.map((l) => (
-                                <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
-                                  <strong>{formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}</strong>
-                                  <span className="text-muted-foreground block text-[0.8rem]">
-                                    {l.description}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              Saisie libre des points, de 0 à {formatNumber(c.weight)}.
-                            </p>
-                          )}
+                  <details>
+                    <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+                      Voir la grille détaillée (critères et paliers)
+                    </summary>
+                    <div className="space-y-2 pt-2">
+                      {gridGroups.map((g, gi) => (
+                        <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
+                          {g.axis ? (
+                            <div className="flex items-center justify-between gap-3 pt-1">
+                              <strong>Axe · {g.axis.label}</strong>
+                              <span className="text-muted-foreground text-sm">
+                                {formatNumber(
+                                  g.criteria
+                                    .filter((c) => !c.is_bonus)
+                                    .reduce((n, c) => n + c.weight, 0),
+                                )}{" "}
+                                points
+                              </span>
+                            </div>
+                          ) : null}
+                          {g.criteria.map((c) => (
+                            <div key={c.id} className="rounded-2xl border p-3">
+                              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                                <strong>
+                                  {c.label}
+                                  {c.is_bonus ? " (bonus)" : ""}
+                                </strong>
+                                <span className="text-muted-foreground text-sm">
+                                  {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
+                                </span>
+                              </div>
+                              {c.levels.length > 0 ? (
+                                <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                  {c.levels.map((l) => (
+                                    <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
+                                      <strong>
+                                        {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}
+                                      </strong>
+                                      <span className="text-muted-foreground block text-[0.8rem]">
+                                        {l.description}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-muted-foreground text-sm">
+                                  Saisie libre des points, de 0 à {formatNumber(c.weight)}.
+                                </p>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </div>
-                  ))}
+                  </details>
                   <div className="flex flex-wrap items-center gap-3 border-t pt-3">
                     <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
                       <span role="status">
@@ -875,7 +925,8 @@ export default async function AssessmentPage({
                               <ul className="text-muted-foreground mt-1">
                                 {c.levels.map((l) => (
                                   <li key={l.id}>
-                                    {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""} : {l.description}
+                                    {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""} :{" "}
+                                    {l.description}
                                   </li>
                                 ))}
                               </ul>
