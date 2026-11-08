@@ -130,8 +130,10 @@ export async function generateMetadata({
 
 export default async function AssessmentPage({
   params,
+  searchParams,
 }: PageProps<"/modules/[id]/assessments/[assessmentId]">) {
   const { id, assessmentId } = await params;
+  const justSaved = (await searchParams).enregistre === "1";
   const [
     assessment,
     grades,
@@ -297,6 +299,14 @@ export default async function AssessmentPage({
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
+      {justSaved ? (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-600/40 bg-emerald-50 p-3 text-sm font-medium dark:bg-emerald-950/30"
+        >
+          Évaluation enregistrée.
+        </p>
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold tracking-tight">{assessment.title}</h1>

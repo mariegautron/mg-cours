@@ -167,7 +167,7 @@ export async function createGrid(_prev: GridFormState, formData: FormData): Prom
   if (!(await replaceLevels(supabase, levels))) return { error: failure("enregistrer") };
 
   revalidatePath("/assessments/grids");
-  redirect("/assessments/grids");
+  redirect(`/assessments/grids?enregistre=1#grille-${data.id}`);
 }
 
 /** Critères supprimés qui sont notés dans au moins une évaluation utilisant cette grille. */
@@ -335,7 +335,7 @@ export async function updateGrid(
   await deleteAxes(supabase, id, new Set(axisIds.values()));
 
   revalidatePath("/assessments/grids");
-  redirect("/assessments/grids");
+  redirect(`/assessments/grids?enregistre=1#grille-${id}`);
 }
 
 export async function deleteGrid(id: string) {

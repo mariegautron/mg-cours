@@ -12,7 +12,8 @@ import { criteriaTotal } from "@/lib/ynov/notation";
 
 export const metadata: Metadata = { title: "Grilles de correction" };
 
-export default async function GridsPage() {
+export default async function GridsPage({ searchParams }: PageProps<"/assessments/grids">) {
+  const saved = (await searchParams).enregistre === "1";
   const grids = await listGrids();
 
   return (
@@ -30,6 +31,15 @@ export default async function GridsPage() {
         </Button>
       </div>
 
+      {saved ? (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-600/40 bg-emerald-50 p-3 text-sm font-medium dark:bg-emerald-950/30"
+        >
+          Grille enregistrée.
+        </p>
+      ) : null}
+
       {grids.length === 0 ? (
         <EmptyState
           title="Aucune grille"
@@ -39,7 +49,7 @@ export default async function GridsPage() {
       ) : (
         <ul className="space-y-3">
           {grids.map((g) => (
-            <li key={g.id} className="rounded-lg border p-4">
+            <li key={g.id} id={`grille-${g.id}`} className="scroll-mt-20 rounded-lg border p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="font-medium">{g.name}</h2>

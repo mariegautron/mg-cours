@@ -187,7 +187,7 @@ export async function createAssessment(
   }
 
   revalidatePath(`/modules/${moduleId}/assessments`);
-  redirect(`/modules/${moduleId}/assessments/${data.id}`);
+  redirect(`/modules/${moduleId}/assessments/${data.id}?enregistre=1`);
 }
 
 export async function updateAssessment(
@@ -288,7 +288,7 @@ export async function updateAssessment(
 
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
-  redirect(`/modules/${moduleId}/assessments/${assessmentId}`);
+  redirect(`/modules/${moduleId}/assessments/${assessmentId}?enregistre=1`);
 }
 
 export async function deleteAssessment(moduleId: string, assessmentId: string) {
