@@ -6,6 +6,8 @@ import { Presentation } from "lucide-react";
 import { FriseProjected, FriseStudent } from "@/components/modules/frise-view";
 import { ShareLinkPanel } from "@/components/modules/share-link-panel";
 import { Button } from "@/components/ui/button";
+import { listModuleAssessments } from "@/lib/assessments/queries";
+import { canPresent } from "@/lib/assessments/subject";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -15,11 +17,12 @@ export const metadata: Metadata = { title: "Frise du module" };
 
 export default async function FrisePage({ params }: PageProps<"/modules/[id]/frise">) {
   const { id } = await params;
-  const [frise, share, espace, groups] = await Promise.all([
+  const [frise, share, espace, groups, assessments] = await Promise.all([
     loadFrise(id),
     getShareLinkInfo(id),
     loadEspace(id),
     listModuleGroups(id),
+    listModuleAssessments(id),
   ]);
   const studentLinks = await getStudentLinkInfo(id, notebookStudents(groups));
   if (!frise) notFound();
@@ -66,6 +69,19 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
             available={share.available}
             active={share.active}
             studentLinks={studentLinks}
+            evaluationList={assessments
+              .filter((a) => !a.makeup_of_id)
+              .map((a) => ({
+                id: a.id,
+                title: a.title,
+                included: canPresent(a.prep_status),
+                reason: !canPresent(a.prep_status)
+                  ? "sujet à rédiger"
+                  : !a.date && !a.course_id
+                    ? "date à renseigner (visible quand même)"
+                    : null,
+                href: `/modules/${id}/assessments/${a.id}`,
+              }))}
             counts={{
               brief: !!espace.brief,
               evaluations: espace.evaluations.length,

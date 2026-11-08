@@ -30,6 +30,7 @@ export function ShareLinkPanel({
   active,
   counts,
   studentLinks,
+  evaluationList = [],
 }: {
   moduleId: string;
   available: boolean;
@@ -48,6 +49,14 @@ export function ShareLinkPanel({
   };
   /** Ce que contiendrait chaque partie si elle était publiée : sert à l'aperçu. */
   counts: EspaceCounts;
+  /** Évaluations du module : lesquelles partiront, lesquelles restent privées et pourquoi. */
+  evaluationList?: {
+    id: string;
+    title: string;
+    included: boolean;
+    reason: string | null;
+    href: string;
+  }[];
 }) {
   const [state, setState] = useState<ShareState>({});
   const [note, setNote] = useState("");
@@ -122,6 +131,21 @@ export function ShareLinkPanel({
                 </span>
               </label>
             ))}
+            {evaluationList.length ? (
+              <ul className="ml-8 space-y-1 text-sm" aria-label="Évaluations du module">
+                {evaluationList.map((e) => (
+                  <li key={e.id}>
+                    <strong>{e.title}</strong> : {e.included ? "partira" : "ne partira pas"}
+                    {e.reason ? ` (${e.reason})` : ""}.{" "}
+                    {e.reason ? (
+                      <a href={e.href} className="underline underline-offset-2">
+                        Corriger<span className="sr-only"> {e.title}</span>
+                      </a>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </fieldset>
           <div className="space-y-1">
             <label htmlFor="quiz-url" className="text-sm font-medium">
