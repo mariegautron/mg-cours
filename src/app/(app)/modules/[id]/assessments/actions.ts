@@ -84,6 +84,7 @@ const subjectColumns = (d: {
   deliverableMd: string | null;
   evaluatedMd: string | null;
   experienceNote: string | null;
+  whereToSubmit: string | null;
   courseId: string | null;
   prepStatus: string;
 }) => ({
@@ -91,6 +92,7 @@ const subjectColumns = (d: {
   deliverable_md: d.deliverableMd,
   evaluated_md: d.evaluatedMd,
   experience_note: d.experienceNote,
+  where_to_submit: d.whereToSubmit,
   course_id: d.courseId,
   prep_status: d.prepStatus as "to_build" | "ready" | "provided",
 });

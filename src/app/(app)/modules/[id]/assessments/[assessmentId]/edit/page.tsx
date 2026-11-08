@@ -33,17 +33,21 @@ export default async function EditAssessmentPage({
         grids={grids}
         courses={courses}
         assessment={assessment}
-      />
-      <section aria-labelledby="files-heading" className="max-w-xl space-y-3">
-        <h2 id="files-heading" className="text-lg font-medium">
-          Fichiers joints au sujet
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Téléchargés par les étudiant·es (extrait de code, questions…), jamais affichés ni
-          projetés.
-        </p>
-        <AssessmentFiles assessmentId={assessmentId} files={parseResourceFiles(assessment.files)} />
-      </section>
+      >
+        <section aria-labelledby="files-heading" className="max-w-xl space-y-3">
+          <h2 id="files-heading" className="text-lg font-medium">
+            Fichiers joints au sujet
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Téléchargés par les étudiant·es (extrait de code, questions…), jamais affichés ni
+            projetés.
+          </p>
+          <AssessmentFiles
+            assessmentId={assessmentId}
+            files={parseResourceFiles(assessment.files)}
+          />
+        </section>
+      </AssessmentForm>
     </div>
   );
 }

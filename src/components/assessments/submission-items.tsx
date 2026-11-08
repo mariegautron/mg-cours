@@ -172,10 +172,14 @@ export function SubmissionItems({
     setBusy(file.name);
     setError(null);
     const supabase = createClient();
-    const { data: auth } = await supabase.auth.getUser();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
     if (!auth.user) {
       setBusy(null);
-      return setError(SESSION_EXPIRED);
+      return setError(
+        authError && !authError.message.toLowerCase().includes("session")
+          ? "Le fichier n’a pas pu être envoyé, réessaie."
+          : SESSION_EXPIRED,
+      );
     }
     const mime = mimeOf(file);
     const path = `${auth.user.id}/${assessmentId}/submissions/${crypto.randomUUID()}-${safeName(file.name)}`;

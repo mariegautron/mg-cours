@@ -139,6 +139,14 @@ export const assessmentSchema = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => v || null),
+  /** Où rendre (texte court projeté dans le cadre). */
+  whereToSubmit: z
+    .string()
+    .trim()
+    .max(200, "Où rendre : 200 caractères au plus.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
   courseId: z
     .string()
     .uuid()
@@ -169,6 +177,7 @@ export function readAssessmentForm(formData: FormData) {
     deliverableMd: formData.get("deliverableMd") ?? "",
     evaluatedMd: formData.get("evaluatedMd") ?? "",
     experienceNote: formData.get("experienceNote") ?? "",
+    whereToSubmit: formData.get("whereToSubmit") ?? "",
     courseId: formData.get("courseId") ?? "",
     prepStatus: formData.get("prepStatus") ?? "to_build",
     autoValidatedCriterionIds: formData.getAll("autoValidatedCriterionIds").map(String),

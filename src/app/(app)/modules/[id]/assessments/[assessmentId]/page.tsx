@@ -249,7 +249,11 @@ export default async function AssessmentPage({
     ["Quoi", !blank(assessment.objective) || !blank(assessment.subject)],
     ["Quand", !!assessment.date || !!course],
     ["Avec qui", assessment.groups.length > 0],
-    ["À rendre", !blank(assessment.deliverable_md)],
+    [
+      "À rendre",
+      !blank(assessment.deliverable_md) &&
+        (examKindOf(assessment) !== "files" || !blank(assessment.where_to_submit)),
+    ],
     ["Comment c’est noté", !blank(assessment.evaluated_md) || !!grid],
   ];
   // Combien de modules utilisent cette grille (la modifier les touche tous).

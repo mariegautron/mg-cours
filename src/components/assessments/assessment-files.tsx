@@ -50,10 +50,15 @@ export function AssessmentFiles({
     setUploading(file.name);
     setState({});
     const supabase = createClient();
-    const { data: auth } = await supabase.auth.getUser();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
     if (!auth.user) {
       setUploading(null);
-      return setState({ error: SESSION_EXPIRED });
+      return setState({
+        error:
+          authError && !authError.message.toLowerCase().includes("session")
+            ? "Le fichier n’a pas pu être envoyé, réessaie."
+            : SESSION_EXPIRED,
+      });
     }
     const mime = mimeOf(file);
     const path = `${auth.user.id}/${assessmentId}/${crypto.randomUUID()}-${safeName(file.name)}`;
