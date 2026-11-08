@@ -3,7 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, Circle, CornerDownRight, TriangleAlert } from "lucide-react";
 
-import { saveNextTime } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import {
+  saveNextTime,
+  undoCarryOverAction,
+} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { DownloadButton } from "@/components/download-button";
 import { NextTimeForm } from "@/components/notebook/next-time-form";
 import { Button } from "@/components/ui/button";
@@ -12,6 +15,7 @@ import { ProjectionStatus } from "@/components/notebook/projection-status";
 import { getCourseResourcesFull, getModule, getModuleCourses } from "@/lib/modules/queries";
 import { projectionRecap } from "@/lib/notebook/projection";
 import { listProjectionEvents } from "@/lib/notebook/projection-queries";
+import { carryLabel, parseCarryOver } from "@/lib/present/carry-over";
 import { keptForMeKeys, plannedSections } from "@/lib/present/plan";
 import { studentFacing } from "@/lib/resources/kind";
 import { listCourseObservations } from "@/lib/notebook/queries";
@@ -62,6 +66,8 @@ export default async function ClosedCoursePage({
     hasRetro: !!course.retro_note?.trim(),
     nextNumber: next ? position + 2 : null,
   });
+  const carryState = parseCarryOver((course as { carried_over?: unknown }).carried_over);
+  const moved = carryLabel(carryState.carried, (cid) => courses.findIndex((c) => c.id === cid) + 1);
   const when = course.session_date
     ? new Date(`${course.session_date}T00:00:00`).toLocaleDateString("fr-FR", {
         weekday: "long",
@@ -107,6 +113,39 @@ export default async function ClosedCoursePage({
           })}
         </ul>
         {projection.status !== "none" ? <ProjectionStatus recap={projection} /> : null}
+        {moved.length || carryState.skipped.length ? (
+          <section aria-labelledby="carried" className="space-y-2 rounded-xl border p-4">
+            <h2 id="carried" className="font-medium">
+              Reporté à la séance suivante
+            </h2>
+            <ul className="space-y-1 text-sm">
+              {moved.map((m) => (
+                <li key={m.title}>
+                  <strong>{m.title}</strong>{" "}
+                  <span className="text-muted-foreground">
+                    {m.pending
+                      ? "· en attente : il n’y a pas encore de séance suivante"
+                      : m.alreadyThere
+                        ? `· déjà dans la séance ${m.toNumber}`
+                        : `· déplacé vers la séance ${m.toNumber}`}
+                  </span>
+                </li>
+              ))}
+              {carryState.skipped.map((x) => (
+                <li key={x.key} className="text-muted-foreground">
+                  {x.title} · pas fait volontairement, non reporté
+                </li>
+              ))}
+            </ul>
+            {moved.length ? (
+              <form action={undoCarryOverAction.bind(null, id, courseId)}>
+                <Button type="submit" variant="outline" size="touch">
+                  Annuler le report
+                </Button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
         <Button asChild variant="secondary" size="touch">
           <Link href={`/modules/${id}/courses/${courseId}/close`}>Modifier la clôture</Link>
         </Button>

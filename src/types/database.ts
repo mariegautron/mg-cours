@@ -557,6 +557,7 @@ export type Database = {
         Row: {
           animation_notes: string | null
           assessment_notes: string | null
+          carried_over: Json | null
           completion: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at: string
           created_at: string
@@ -583,6 +584,7 @@ export type Database = {
         Insert: {
           animation_notes?: string | null
           assessment_notes?: string | null
+          carried_over?: Json | null
           completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string
@@ -609,6 +611,7 @@ export type Database = {
         Update: {
           animation_notes?: string | null
           assessment_notes?: string | null
+          carried_over?: Json | null
           completion?: Database["public"]["Enums"]["course_completion"] | null
           content_last_updated_at?: string
           created_at?: string

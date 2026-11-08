@@ -29,7 +29,7 @@ export function ClosureForm({
   recap,
   aside,
   backHref,
-  suggestedNotCovered = "",
+  items = [],
 }: {
   action: Action;
   number: number;
@@ -38,8 +38,8 @@ export function ClosureForm({
   aside: ReactNode;
   /** Retour à la vue privée de la séance. */
   backHref: string;
-  /** Proposition tirée du journal de projection, utilisée si rien n'a encore été noté (US-136). */
-  suggestedNotCovered?: string;
+  /** Éléments prévus mais pas projetés (ou déjà reportés à une clôture précédente). */
+  items?: { key: string; title: string; initial: "carry" | "skip" }[];
   course: {
     completion: CourseCompletion | null;
     not_covered: string | null;
@@ -48,18 +48,25 @@ export function ClosureForm({
   };
 }) {
   const [state, formAction, pending] = useActionState(action, {});
-  // Éléments prévus mais non projetés : chacun est « à reporter » (rappelé à la séance suivante)
-  // ou « pas fait volontairement » (retiré de la liste, non rappelé).
-  const suggestedItems = course.not_covered
-    ? []
-    : suggestedNotCovered
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
-  const [skipped, setSkipped] = useState<Set<string>>(new Set());
-  const [extra, setExtra] = useState(course.not_covered ?? "");
-  const carried = suggestedItems.filter((t) => !skipped.has(t));
-  const notCoveredValue = [...carried, ...(extra.trim() ? [extra.trim()] : [])].join("\n");
+  // Chaque élément est « à reporter » (il passe dans la séance suivante) ou « pas fait
+  // volontairement » (ni reporté ni rappelé).
+  const [skipped, setSkipped] = useState<Set<string>>(
+    new Set(items.filter((i) => i.initial === "skip").map((i) => i.key)),
+  );
+  const titles = new Set(items.map((i) => i.title));
+  const [extra, setExtra] = useState(
+    (course.not_covered ?? "")
+      .split("\n")
+      .filter((l) => l.trim() && !titles.has(l.trim()))
+      .join("\n"),
+  );
+  const carryKeys = items.filter((i) => !skipped.has(i.key)).map((i) => i.key);
+  const skipKeys = items.filter((i) => skipped.has(i.key)).map((i) => i.key);
+  // Une fiche reportée quitte le déroulé ; les autres éléments (sujet, QCM…) restent un rappel écrit.
+  const reminders = items
+    .filter((i) => !skipped.has(i.key) && !i.key.startsWith("resource:"))
+    .map((i) => i.title);
+  const notCoveredValue = [...reminders, ...(extra.trim() ? [extra.trim()] : [])].join("\n");
 
   return (
     <form onSubmit={keepFormValues(formAction)}>
@@ -102,23 +109,23 @@ export function ClosureForm({
             {recap}
             <div className="space-y-1">
               <Label htmlFor="notCovered">Points non traités, à reporter</Label>
-              {suggestedItems.length ? (
+              {items.length ? (
                 <fieldset className="space-y-2 rounded-lg border p-3">
                   <legend className="px-1 text-sm font-medium">
                     Prévu mais pas projeté : à reporter ou pas fait volontairement ?
                   </legend>
                   <ul className="space-y-2">
-                    {suggestedItems.map((item) => {
-                      const isSkipped = skipped.has(item);
+                    {items.map((item) => {
+                      const isSkipped = skipped.has(item.key);
                       return (
                         <li
-                          key={item}
+                          key={item.key}
                           className="flex flex-wrap items-center justify-between gap-2 text-sm"
                         >
-                          <span className="min-w-0 flex-1 font-medium">{item}</span>
+                          <span className="min-w-0 flex-1 font-medium">{item.title}</span>
                           <span
                             role="group"
-                            aria-label={item}
+                            aria-label={item.title}
                             className="grid grid-cols-2 overflow-hidden rounded-lg border"
                           >
                             {(
@@ -134,8 +141,8 @@ export function ClosureForm({
                                 onClick={() =>
                                   setSkipped((prev) => {
                                     const next = new Set(prev);
-                                    if (value) next.add(item);
-                                    else next.delete(item);
+                                    if (value) next.add(item.key);
+                                    else next.delete(item.key);
                                     return next;
                                   })
                                 }
@@ -154,7 +161,9 @@ export function ClosureForm({
                     })}
                   </ul>
                   <p className="text-muted-foreground text-xs">
-                    Seuls les éléments « à reporter » sont rappelés au début de la séance suivante.
+                    Une fiche « à reporter » passe dans le déroulé de la séance suivante et quitte
+                    celui-ci. « Pas fait volontairement » : elle reste ici, sans être reportée ni
+                    rappelée.
                   </p>
                 </fieldset>
               ) : null}
@@ -164,10 +173,17 @@ export function ClosureForm({
                 onChange={(e) => setExtra(e.target.value)}
                 aria-describedby="notCovered-hint"
                 placeholder={
-                  suggestedItems.length ? "Autre point à reporter (facultatif)" : undefined
+                  items.length ? "Autre point à reporter (facultatif)" : undefined
                 }
               />
               <input type="hidden" name="notCovered" value={notCoveredValue} />
+              <input type="hidden" name="carryKeys" value={JSON.stringify(carryKeys)} />
+              <input type="hidden" name="skipKeys" value={JSON.stringify(skipKeys)} />
+              <input
+                type="hidden"
+                name="itemTitles"
+                value={JSON.stringify(Object.fromEntries(items.map((i) => [i.key, i.title])))}
+              />
               <p id="notCovered-hint" className="text-muted-foreground text-xs">
                 Rien de noté n’est perdu : les points à reporter sont rappelés au début de la séance
                 suivante.

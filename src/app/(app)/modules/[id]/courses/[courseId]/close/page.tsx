@@ -14,6 +14,7 @@ import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
 import { endedEarly, projectionRecap } from "@/lib/notebook/projection";
 import { listProjectionEvents } from "@/lib/notebook/projection-queries";
 import { listCourseObservations } from "@/lib/notebook/queries";
+import { parseCarryOver } from "@/lib/present/carry-over";
 import { keptForMeKeys, plannedSections } from "@/lib/present/plan";
 import { minutesInParis } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
@@ -54,6 +55,22 @@ export default async function CourseClosePage({
     endedEarly:
       course.session_date === todayInParis() && endedEarly(minutesInParis(), course.end_time),
   });
+  // Éléments à trier : déjà reportés ou écartés à une clôture précédente, puis prévus mais pas projetés.
+  const carryState = parseCarryOver((course as { carried_over?: unknown }).carried_over);
+  const skippedKeys = new Set(carryState.skipped.map((x) => x.key));
+  const formItems = new Map<string, { key: string; title: string; initial: "carry" | "skip" }>();
+  for (const e of carryState.carried) {
+    formItems.set(e.key, { key: e.key, title: e.title, initial: "carry" });
+  }
+  for (const m of recap.status === "late" ? recap.missing : []) {
+    if (!formItems.has(m.key)) {
+      formItems.set(m.key, {
+        key: m.key,
+        title: m.title,
+        initial: skippedKeys.has(m.key) ? "skip" : "carry",
+      });
+    }
+  }
   const date = course.session_date
     ? new Date(`${course.session_date}T00:00:00`).toLocaleDateString("fr-FR", {
         weekday: "long",
@@ -138,9 +155,7 @@ export default async function CourseClosePage({
       <ClosureForm
         action={saveCourseClosure.bind(null, id, courseId)}
         number={position + 1}
-        suggestedNotCovered={
-          recap.status === "late" && !course.completion ? recap.suggestedCarryOver : ""
-        }
+        items={[...formItems.values()]}
         recap={<ProjectionStatus recap={recap} />}
         aside={aside}
         backHref={`/present/modules/${id}/courses/${courseId}/presenter`}

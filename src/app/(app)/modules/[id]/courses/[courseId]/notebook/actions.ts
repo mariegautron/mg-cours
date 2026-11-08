@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 
 import { observationAddedMessage } from "@/lib/notebook/live";
 import { readClosureForm, readObservationForm } from "@/lib/notebook/notebook";
+import { applyCarryOver, undoCarryOver } from "@/lib/present/carry-over-server";
+import { parseKeyList } from "@/lib/present/carry-over";
 import { appendDatedNote } from "@/lib/present/presenter";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
@@ -91,6 +93,29 @@ export async function deleteObservation(moduleId: string, courseId: string, id: 
   if (data) revalidatePath(`/students/${data.student_id}`);
 }
 
+/** Titres des éléments de la clôture (clé → titre), pour les garder avec le report. */
+function parseTitles(raw: FormDataEntryValue | null): Map<string, string> {
+  try {
+    const v = JSON.parse(String(raw ?? "{}")) as Record<string, unknown>;
+    return new Map(
+      Object.entries(v).flatMap(([k, t]) =>
+        typeof t === "string" ? [[k, t.slice(0, 300)] as [string, string]] : [],
+      ),
+    );
+  } catch {
+    return new Map();
+  }
+}
+
+/** Annule le report d'une séance clôturée (bouton de l'écran de fin de séance). */
+export async function undoCarryOverAction(moduleId: string, courseId: string): Promise<void> {
+  if (!(await courseBelongsToModule(moduleId, courseId))) return;
+  const supabase = await createClient();
+  await undoCarryOver(supabase, courseId);
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  redirect(`/modules/${moduleId}/courses/${courseId}/closed`);
+}
+
 /** Clôture de séance : statut, points non traités, consignes, retour d'expérience privé. */
 export async function saveCourseClosure(
   moduleId: string,
@@ -118,7 +143,19 @@ export async function saveCourseClosure(
   if (error) return { error: failure("enregistrer", { kept: true }) };
   if (!data) return { error: NOT_FOUND.course };
 
+  // Report : chaque fiche « à reporter » passe dans la séance suivante (au mieux, sans bloquer).
+  const titles = parseTitles(formData.get("itemTitles"));
+  const pick = (keys: string[]) => keys.map((key) => ({ key, title: titles.get(key) ?? key }));
+  await applyCarryOver(
+    supabase,
+    moduleId,
+    courseId,
+    pick(parseKeyList(formData.get("carryKeys"))),
+    pick(parseKeyList(formData.get("skipKeys"))),
+  );
+
   refresh(moduleId, courseId);
+  revalidatePath(`/modules/${moduleId}/courses`, "layout");
   // Écran de fin de séance (US-137) : récapitulatif, PDF du cours, consigne pour la prochaine fois.
   redirect(`/modules/${moduleId}/courses/${courseId}/closed`);
 }

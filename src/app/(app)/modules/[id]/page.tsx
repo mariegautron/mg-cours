@@ -19,6 +19,7 @@ import { ficheNotice } from "@/lib/modules/fiche-import";
 import { buildHero } from "@/lib/modules/hero";
 import { isModuleShared } from "@/lib/modules/frise-queries";
 import { buildJourney } from "@/lib/modules/journey";
+import { parseCarryOver } from "@/lib/present/carry-over";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import {
   getModule,
@@ -142,6 +143,12 @@ export default async function ModulePage({
     shared,
   });
 
+  // Fiches « à reporter » d'une clôture sans séance suivante : à signaler jusqu'à ce qu'elles aient une place.
+  const pendingCarry = courses.flatMap((c) =>
+    parseCarryOver((c as { carried_over?: unknown }).carried_over)
+      .carried.filter((e) => e.pending)
+      .map((e) => e.title),
+  );
   const closed = !!(mod.archived_at || mod.finished_at);
   const doneCourses = courses.filter(
     (c) => c.completion === "done" || c.completion === "partial",
@@ -219,6 +226,17 @@ export default async function ModulePage({
               Ouvrir les attendus
             </Link>
           ) : null}
+        </p>
+      ) : null}
+
+      {pendingCarry.length ? (
+        <p role="status" className="rounded-2xl border border-dashed p-3 text-sm">
+          <strong>À reporter, en attente :</strong> {pendingCarry.join(", ")}. Il n’y a pas de
+          séance suivante pour les accueillir.{" "}
+          <Link href={`/modules/${mod.id}/courses/new`} className="underline underline-offset-2">
+            Ajouter une séance
+          </Link>
+          , puis « Modifier la clôture » de la séance pour les y placer.
         </p>
       ) : null}
 
