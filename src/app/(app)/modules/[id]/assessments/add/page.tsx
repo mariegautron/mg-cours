@@ -13,7 +13,13 @@ import {
   requirementLabel,
 } from "@/lib/assessments/module-notes";
 import { buildTimeline } from "@/lib/assessments/module-overview";
-import { listGrids, listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
+import { reuseAssessment } from "@/app/(app)/modules/[id]/assessments/reuse-action";
+import {
+  listAllAssessments,
+  listGrids,
+  listModuleAssessments,
+  moduleNoteProgress,
+} from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { PROJECT_ROLE_LABELS } from "@/lib/ynov/project-skeleton";
 
@@ -40,6 +46,9 @@ export default async function AddAssessmentPage({
     getModuleCourses(id),
   ]);
 
+  const otherAssessments = (await listAllAssessments()).filter(
+    (a) => a.module_id !== id && !a.makeup_of_id,
+  );
   const regular = assessments.filter((a) => !a.makeup_of_id);
   const planned = plannedProgress(progress.requirement, assessments);
   const dueSession = new Map(
@@ -140,6 +149,38 @@ export default async function AddAssessmentPage({
               Ajouter une évaluation
             </h2>
             <div className="flex flex-col gap-2.5">
+              {otherAssessments.length > 0 ? (
+                <section
+                  aria-labelledby="from-module"
+                  className="bg-muted/40 rounded-2xl border p-4"
+                >
+                  <h3 id="from-module" className="text-lg font-bold">
+                    Reprendre une évaluation d’un autre module
+                  </h3>
+                  <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
+                    Sujet, grille, type, coefficient et fichiers joints sont copiés. Pas les notes,
+                    ni les copies, ni ton retour d’expérience : tu choisis la date et la séance
+                    ensuite.
+                  </p>
+                  <form action={reuseAssessment.bind(null, id)} className="flex flex-wrap gap-2">
+                    <label htmlFor="reuse-source" className="sr-only">
+                      Évaluation à reprendre
+                    </label>
+                    <select
+                      id="reuse-source"
+                      name="sourceId"
+                      className="border-input min-h-11 min-w-0 flex-1 rounded-xl border bg-transparent px-3 text-sm"
+                    >
+                      {otherAssessments.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.title} — {o.module?.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button type="submit">Reprendre</Button>
+                  </form>
+                </section>
+              ) : null}
               <section
                 aria-labelledby="from-library"
                 className="bg-muted/40 rounded-2xl border p-4"
