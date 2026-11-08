@@ -3,6 +3,14 @@ import type { Metadata } from "next";
 import { Pill } from "@/components/dashboard/pill";
 import { Markdown } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
+import {
+  INVALID_LINK_TEXT,
+  INVALID_LINK_TITLE,
+  THROTTLED_TEXT,
+  THROTTLED_TITLE,
+  UNAVAILABLE_TEXT,
+  UNAVAILABLE_TITLE,
+} from "@/lib/student-messages";
 import { callResult } from "@/lib/result-links/public";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -218,17 +226,13 @@ export default async function PublicResultPage({ params }: PageProps<"/resultats
       {result.status === "ok" ? (
         <Result sheet={result.sheet} token={token} />
       ) : result.status === "throttled" ? (
-        <Message title="Trop d’essais">
-          Trop de liens invalides ont été essayés depuis ta connexion. Réessaie dans quelques
-          minutes.
+        <Message title={THROTTLED_TITLE}>
+          Trop de liens invalides ont été essayés depuis votre connexion. {THROTTLED_TEXT}
         </Message>
       ) : result.status === "unavailable" ? (
-        <Message title="Page momentanément indisponible">Réessaie dans un instant.</Message>
+        <Message title={UNAVAILABLE_TITLE}>{UNAVAILABLE_TEXT}</Message>
       ) : (
-        <Message title="Lien invalide ou expiré">
-          Vérifie que tu as copié le lien en entier. S’il ne marche toujours pas, demande-en un
-          nouveau à ton enseignante.
-        </Message>
+<Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
       )}
     </main>
   );

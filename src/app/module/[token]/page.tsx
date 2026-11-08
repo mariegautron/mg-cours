@@ -37,7 +37,7 @@ export default async function SharedFrisePage({ params }: PageProps<"/module/[to
       {espace && (espace.brief || espace.evaluations.length || espace.courses.length) ? (
         <section aria-labelledby="acces" className="mt-8 space-y-3">
           <h2 id="acces" className="font-heading text-xl font-bold">
-            Tout ce qu’il te faut
+            Tout ce qu’il vous faut
           </h2>
           <ul className="space-y-3">
             {espace.brief ? (

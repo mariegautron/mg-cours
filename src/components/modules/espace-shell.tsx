@@ -1,6 +1,14 @@
 import Link from "next/link";
 
 import type { Espace } from "@/lib/modules/espace";
+import {
+  INVALID_LINK_TEXT,
+  INVALID_LINK_TITLE,
+  THROTTLED_TEXT,
+  THROTTLED_TITLE,
+  UNAVAILABLE_TEXT,
+  UNAVAILABLE_TITLE,
+} from "@/lib/student-messages";
 import { callModuleFrise, type PublicFrise } from "@/lib/modules/frise-public";
 
 /** Enveloppe des pages de l'espace étudiant·e : titre, navigation, pied de page. Mobile d'abord. */
@@ -66,10 +74,10 @@ export function EspaceShell({
 export function EspaceError({ status }: { status: Exclude<PublicFrise["status"], "ok"> }) {
   const text =
     status === "throttled"
-      ? ["Trop d’essais", "Réessaie dans quelques minutes."]
+      ? [THROTTLED_TITLE, THROTTLED_TEXT]
       : status === "unavailable"
-        ? ["Page momentanément indisponible", "Réessaie dans un instant."]
-        : ["Lien invalide", "Ce lien n’est plus valable. Demande-en un nouveau à ton enseignante."];
+        ? [UNAVAILABLE_TITLE, UNAVAILABLE_TEXT]
+        : [INVALID_LINK_TITLE, INVALID_LINK_TEXT];
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
       <p className="font-heading border-b px-4 py-4 text-base font-bold">Espace étudiant·e</p>

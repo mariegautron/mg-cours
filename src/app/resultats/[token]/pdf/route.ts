@@ -12,7 +12,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/resultats/[token]/p
   // Le téléchargement n'est pas une « vue » de la page : il ne compte pas dans le suivi.
   const result = await callResult(token, false);
   if (result.status !== "ok") {
-    return new Response("Lien invalide ou expiré", {
+    return new Response("Ce lien ne fonctionne pas", {
       status: result.status === "throttled" ? 429 : 404,
       headers: { "Cache-Control": "no-store" },
     });
