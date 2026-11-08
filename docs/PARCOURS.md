@@ -5,7 +5,7 @@ bout. Pour chaque parcours : écrans, e2e existants, et un espace pour noter les
 trouvées en QA.
 
 Sources : routes `src/app`, `docs/SPEC.md`, `docs/AUDIT-PARCOURS.md`, `e2e/`.
-Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
+Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 corrigé, à tester en conditions réelles · ✅ fait.
 
 | #   | Parcours                                    | Qui      | QA |
 | --- | ------------------------------------------- | -------- | -- |
@@ -13,15 +13,27 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 | P2  | Alimenter la bibliothèque de ressources     | Marie    | ⬜ |
 | P3  | Préparer un module (10 étapes)              | Marie    | ⬜ |
 | P4  | Accueillir les étudiant·es et former les groupes | Marie | ⬜ |
-| P5  | Faire cours (séance)                        | Marie    | ⬜ |
-| P6  | Piloter le projet fil rouge                 | Marie    | ⬜ |
-| P7  | Préparer une évaluation                     | Marie    | ⬜ |
-| P8  | Corriger et noter                           | Marie    | ⬜ |
-| P9  | QCM en ligne (banque, passation, résultats) | Marie + étudiant·es | ⬜ |
-| P10 | Espace et liens étudiant·es                 | Étudiant·es | ⬜ |
+| P5  | Faire cours (séance)                        | Marie    | 🔧 refactoré, reste le test en conditions réelles |
+| P6  | ~~Piloter le projet fil rouge~~ → fusionné dans P7 | —  | — |
+| P7  | Préparer les évaluations (fil rouge, individuelle, préparation du QCM, oral) | Marie | 📝 |
+| P8  | Corriger et noter                           | Marie    | 🚧 |
+| P9  | QCM en ligne : passation et résultats (la préparation est dans P7) | Marie + étudiant·es | ⬜ |
+| P10 | Espace et liens étudiant·es                 | Étudiant·es | 🚧 |
 | P11 | Progression pédagogique et envoi à l'école  | Marie    | ⬜ |
 | P12 | Clôturer le module, rendre les résultats, facturer | Marie | ⬜ |
 | P13 | Piloter au quotidien (tableau de bord, recherche, planning) | Marie | ⬜ |
+| P14 | Suivre les étudiant·es et écrire les appréciations | Marie | 📝 |
+
+Les numéros restent stables (les prompts de test y font référence). P6 n'a plus de section propre.
+
+## Règle de QA : on teste le chemin
+
+Chaque test part d'un point d'entrée réel (connexion, tableau de bord, menu) et formule des
+**objectifs de Marie** (« je veux projeter la séance de demain »), pas des adresses d'écran. Ce qu'on
+audite : comment on arrive à l'écran, combien de clics, libellés trompeurs, boutons introuvables,
+retours qui ne ramènent pas où l'on était. Chaque test est refait sur portable (1366 × 768
+d'abord, aussi 1280 × 720 et zoom 125 %) pour voir ce qui est sous le pli. Les seules adresses
+directes : les liens reçus par les étudiant·es.
 
 ---
 
@@ -80,7 +92,7 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 - **Améliorations notées** :
   - …
 
-## P6 · Piloter le projet fil rouge
+## P6 · (fusionné dans P7) Piloter le projet fil rouge
 
 - **But** : définir le projet, ses phases et thèmes, suivre les groupes, réutiliser d'un module à l'autre.
 - **Écrans** : `modules/[id]/project` (+ `reuse`), `frise`, `/present/modules/[id]/frise`.
@@ -90,9 +102,14 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 - **Améliorations notées** :
   - …
 
-## P7 · Préparer une évaluation
+## P7 · Préparer les évaluations (inclut l'ancien P6 « projet fil rouge »)
 
-- **But** : définir l'évaluation, son sujet, sa grille, les consignes montrées **avant** le jour J.
+- **But** : définir le projet fil rouge, les évaluations de groupe et individuelles, leurs sujets et
+  grilles, la préparation du QCM de l'évaluation individuelle et de l'oral, et les consignes
+  présentées **avant** le jour J. Ancien P6 fusionné ici : `modules/[id]/project` (+ `reuse`), `frise`,
+  `/present/modules/[id]/frise` ; e2e `project`, `project-phases`, `project-themes`, `project-reuse`,
+  `fil-rouge-ecrans`, `frise-etudiants`, `quiz-generate`, `question-links`, `questions`.
+- **Limite** : la passation du QCM côté étudiant·e est dans P10 ; la passation de l'oral dans P8.
 - **Écrans** : `/assessments/grids` (+ `new`, `[gridId]/edit`), `/assessments/comments`,
   `modules/[id]/assessments` (+ `new`, `add`, `[assessmentId]/edit`), sujet, grille remise aux étudiant·es,
   suivi des rendus.
@@ -105,7 +122,8 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 
 ## P8 · Corriger et noter
 
-- **But** : saisir les notes, comparer les copies, corriger l'oral, rédiger les retours et appréciations.
+- **But** : saisir les notes, comparer les copies, corriger l'oral, rédiger les retours. Les
+  appréciations de fin de module et les observations d'étudiant·es sont dans P14.
 - **Écrans** : `assessments/[assessmentId]` (saisie), `/correct`, `/compare`, `/results`, `/oral`,
   `/phrases`, `/assessments/comments`, `modules/[id]/appreciations(/[studentId])`, `rattrapages`.
 - **e2e** : `grading-session`, `grade-compact`, `grade-compare`, `grade-levels`, `grade-similar`,
@@ -114,9 +132,11 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 - **Améliorations notées** :
   - …
 
-## P9 · QCM en ligne (banque, passation, résultats)
+## P9 · QCM en ligne : passation et résultats
 
-- **But** : constituer la banque, générer les tirages, faire passer le QCM, corriger les réponses libres.
+- **But** : faire passer le QCM (QR de classe, liens personnels), relire les réponses libres, rendre
+  les copies. La banque et les tirages sont préparés dans P7 ; ce que voit l'étudiant·e est aussi
+  testé dans P10.
 - **Écrans** : `/questions` (+ `new`, `import`, `[id]`, `edit`), `assessments/[assessmentId]/quiz`
   (+ `generate`, `links`, `qr`, `results`, `attempts/[attemptId]`), `/present/.../quiz`,
   côté étudiant·e `/q/[token]`, `/q/classe/[token]`.
@@ -164,11 +184,26 @@ Statut QA : ⬜ à faire · 🚧 en cours · ✅ fait.
 - **Améliorations notées** :
   - …
 
+## P14 · Suivre les étudiant·es et écrire les appréciations
+
+- **But** : noter des observations en classe (participation, difficulté, absence), les retrouver
+  pendant la correction, écrire les appréciations de fin de module (limite d'école, 250 caractères
+  par défaut) et les reporter dans Hyperplanning. Observations privées, jamais exportées.
+- **Écrans** : carnet de séance `courses/[courseId]/notebook`, `/students/[id]` (journal
+  d'observations, absences, notes, rendus), `/students` (liste, tuiles), copie en correction
+  (« Observations de cours »), `modules/[id]/appreciations(/[studentId])`, `/settings` (limite par école).
+- **e2e** : `notebook`, `appreciations`, `attendance`, `students`, `students-views`.
+- **À regarder en QA** : vitesse de saisie en classe dans une fenêtre privée étroite, retrouver les
+  observations d'une étudiante, voir la base d'une appréciation à côté du champ, limite de
+  caractères, enregistrement automatique, navigation entre étudiant·es, report vers Hyperplanning.
+- **Améliorations notées** :
+  - …
+
 ---
 
 ## Méthode QA proposée
 
-1. Un parcours à la fois, dans l'ordre de ta semaine réelle (P3 → P5 → P7/P8 → P12).
+1. Un parcours à la fois, dans l'ordre de ta semaine réelle (P3 → P5 → P7/P8 → P14 → P12).
 2. Rejouer à la main sur staging avec des données réalistes, sur ton portable et au téléphone si utile.
 3. Noter dans « Améliorations notées » : écran, ce qui gêne, ce que tu attendais.
 4. On trie ensuite ensemble (bloquant / confort / idée pour plus tard → boîte à idées Notion).
