@@ -175,6 +175,12 @@ export default async function ModuleAssessmentsPage({
         </Button>
       </div>
 
+      <p className="text-sm">
+        <Link href={`/modules/${id}/couverture`} className="underline underline-offset-2">
+          Couverture des attendus (cours et évaluations)
+        </Link>
+      </p>
+
       {regular.length > 0 && unevaluatedGroups.length > 0 ? (
         <div
           role="alert"

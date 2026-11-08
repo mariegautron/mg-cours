@@ -21,6 +21,7 @@ import {
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { CorrectionOverview } from "@/components/assessments/correction-overview";
+import { expectationsCitedByCriteria } from "@/lib/modules/expectation-coverage";
 import { AssessmentExpectations } from "@/components/assessments/assessment-expectations";
 import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
 import { BonusSettings } from "@/components/assessments/bonus-settings";
@@ -922,6 +923,10 @@ export default async function AssessmentPage({
                 expectations={moduleExpectations.map((e) => ({ id: e.id, label: e.label }))}
                 initialIds={evaluatedExpectations.byAssessment.get(assessmentId) ?? []}
                 available={evaluatedExpectations.available}
+                suggestedIds={expectationsCitedByCriteria(
+                  (assessment.grading_grid?.criteria ?? []).map((c) => c.reference),
+                  moduleExpectations.map((e) => ({ id: e.id, label: e.label })),
+                )}
               />
             </section>
 

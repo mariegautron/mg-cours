@@ -19,12 +19,15 @@ export function AssessmentExpectations({
   expectations,
   initialIds,
   available,
+  suggestedIds = [],
 }: {
   moduleId: string;
   assessmentId: string;
   expectations: { id: string; label: string }[];
   initialIds: string[];
   available: boolean;
+  /** Attendus cités par les critères de la grille de l'évaluation. */
+  suggestedIds?: string[];
 }) {
   const [saved, setSaved] = useState(new Set(initialIds));
   const [chosen, setChosen] = useState(new Set(initialIds));
@@ -32,6 +35,8 @@ export function AssessmentExpectations({
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
   const dirty = chosen.size !== saved.size || [...chosen].some((id) => !saved.has(id));
+
+  const missingSuggested = suggestedIds.filter((id) => !chosen.has(id));
 
   if (expectations.length === 0) {
     return (
@@ -57,6 +62,28 @@ export function AssessmentExpectations({
         </p>
       ) : (
         <>
+          {missingSuggested.length > 0 ? (
+            <div role="note" className="bg-muted/50 rounded-xl border p-3 text-sm">
+              <p>
+                La grille cite {missingSuggested.length} attendu
+                {missingSuggested.length > 1 ? "s" : ""} non coché
+                {missingSuggested.length > 1 ? "s" : ""} :{" "}
+                {missingSuggested
+                  .map((id) => expectations.find((e) => e.id === id)?.label)
+                  .filter(Boolean)
+                  .join(" ; ")}
+                .
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setChosen((prev) => new Set([...prev, ...suggestedIds]))}
+              >
+                Cocher ceux de la grille
+              </Button>
+            </div>
+          ) : null}
           <fieldset className="space-y-1">
             <legend className="sr-only">Attendus vérifiés par cette évaluation</legend>
             {expectations.map((e) => (

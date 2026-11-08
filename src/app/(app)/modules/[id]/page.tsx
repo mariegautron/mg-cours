@@ -17,6 +17,7 @@ import { daysBetween } from "@/lib/dashboard/todo";
 import { formatSessionDay } from "@/lib/dashboard/today";
 import { meanLabel } from "@/lib/dashboard/overview";
 import { formatTimeRange } from "@/lib/modules/course-duration";
+import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
 import { ficheNotice } from "@/lib/modules/fiche-import";
 import { buildHero } from "@/lib/modules/hero";
@@ -130,6 +131,7 @@ export default async function ModulePage({
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const coverage = await getModuleCoverage(id, expectations, retained);
+  const expCoverage = await getExpectationCoverageView(id);
   const shared = await isModuleShared(id);
   const appreciations = await getAppreciationProgress(id);
   const journey = buildJourney({
@@ -355,6 +357,17 @@ export default async function ModulePage({
                     <strong>
                       {coverage.covered} / {coverage.total}
                     </strong>
+                    <span className="text-muted-foreground block text-xs">
+                      {expCoverage.summary.byCourse} par un cours ·{" "}
+                      {expCoverage.summary.byAssessment} par une évaluation ·{" "}
+                      {expCoverage.summary.byNone} par aucun
+                    </span>
+                    <Link
+                      href={`/modules/${id}/couverture`}
+                      className="text-primary text-xs underline underline-offset-2"
+                    >
+                      Voir la couverture
+                    </Link>
                   </dd>
                   <dt className="text-muted-foreground">Ressources retenues</dt>
                   <dd>
