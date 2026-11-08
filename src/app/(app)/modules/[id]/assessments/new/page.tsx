@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { listGrids } from "@/lib/assessments/queries";
+import { getModuleProject } from "@/lib/projects/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
@@ -14,7 +15,8 @@ export default async function NewAssessmentPage({
   searchParams,
 }: PageProps<"/modules/[id]/assessments/new">) {
   const { id } = await params;
-  const { grille } = await searchParams;
+  const { grille, jalon } = await searchParams;
+  const project = await getModuleProject(id);
   const [mod, groups, grids, courses] = await Promise.all([
     getModule(id),
     listModuleGroups(id),
@@ -38,6 +40,8 @@ export default async function NewAssessmentPage({
         groups={groups}
         grids={grids}
         courses={courses}
+        hasProject={!!project}
+        initialMilestone={jalon === "1"}
         initialGridId={
           typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
         }

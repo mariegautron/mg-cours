@@ -211,7 +211,7 @@ export default async function ModuleAssessmentsPage({
               </Link>
             </Button>
             <Button asChild>
-              <Link href={`/modules/${id}/assessments/add`}>
+              <Link href={`/modules/${id}/assessments/add${project ? "?jalon=1" : ""}`}>
                 <Plus aria-hidden />
                 Ajouter une évaluation
               </Link>

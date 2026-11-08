@@ -5,6 +5,7 @@ import { updateAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { AssessmentFiles } from "@/components/assessments/assessment-files";
 import { getAssessment, listGrids } from "@/lib/assessments/queries";
+import { getModuleProject } from "@/lib/projects/queries";
 import { getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -32,6 +33,7 @@ export default async function EditAssessmentPage({
         groups={groups}
         grids={grids}
         courses={courses}
+        hasProject={!!(await getModuleProject(id))}
         assessment={assessment}
       >
         <section aria-labelledby="files-heading" className="max-w-xl space-y-3">

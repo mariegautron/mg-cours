@@ -43,6 +43,8 @@ export function AssessmentForm({
   courses = [],
   assessment,
   initialGridId = "",
+  hasProject = false,
+  initialMilestone = false,
   children,
 }: {
   action: Action;
@@ -54,6 +56,9 @@ export function AssessmentForm({
   assessment?: AssessmentDetail;
   /** Grille choisie depuis la bibliothèque (US-126). */
   initialGridId?: string;
+  /** Le module a un projet fil rouge : la case « Jalon » est proposée. */
+  hasProject?: boolean;
+  initialMilestone?: boolean;
   /** Sections annexes (fichiers joints…), placées au-dessus du bouton Enregistrer. */
   children?: ReactNode;
 }) {

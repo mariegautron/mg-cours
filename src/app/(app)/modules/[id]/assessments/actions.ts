@@ -80,6 +80,46 @@ async function courseBelongsToModule(
   return count === 1;
 }
 
+/**
+ * Case « Jalon du projet fil rouge » : rattache l'évaluation au projet du module (ou l'en détache).
+ * `null` : la case n'était pas dans le formulaire, rien ne change.
+ */
+async function milestoneColumns(
+  supabase: Supabase,
+  moduleId: string,
+  formData: FormData,
+  assessmentId: string | null,
+) {
+  if (formData.get("milestoneField") !== "1") return null;
+  const { data: project } = await supabase
+    .from("module_project")
+    .select("id")
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!project) return null;
+  const on = formData.get("isMilestone") === "on";
+  if (!on) {
+    return assessmentId ? { project_id: null, project_role: null, project_position: null } : null;
+  }
+  if (assessmentId) {
+    const { data: current } = await supabase
+      .from("assessment")
+      .select("project_id")
+      .eq("id", assessmentId)
+      .maybeSingle();
+    if (current?.project_id === project.id) return null;
+  }
+  const { count } = await supabase
+    .from("assessment")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", project.id);
+  return {
+    project_id: project.id,
+    project_role: "milestone" as const,
+    project_position: (count ?? 0) + 1,
+  };
+}
+
 const subjectColumns = (d: {
   objective: string | null;
   deliverableMd: string | null;
@@ -153,9 +193,11 @@ export async function createAssessment(
     parsed.data.autoValidatedCriterionIds,
   );
 
+  const milestone = await milestoneColumns(supabase, moduleId, formData, null);
   const { data, error } = await supabase
     .from("assessment")
     .insert({
+      ...(milestone ?? {}),
       module_id: moduleId,
       title: parsed.data.title,
       subject: parsed.data.subject || null,
@@ -235,9 +277,11 @@ export async function updateAssessment(
         .maybeSingle()
     : { data: null };
 
+  const milestone = await milestoneColumns(supabase, moduleId, formData, assessmentId);
   const { error } = await supabase
     .from("assessment")
     .update({
+      ...(milestone ?? {}),
       title: parsed.data.title,
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,
