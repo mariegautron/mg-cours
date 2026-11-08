@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { ChevronRight, Flag } from "lucide-react";
 
 import {
@@ -46,6 +47,9 @@ export interface OralSpaceInit {
   /** Note actuellement enregistrée par personne (règle d'origine), pour l'ancienne note du récapitulatif. */
   before: Record<string, number | null>;
   hasNote: boolean;
+  /** Date de la note écrite (écrite par l'espace, sinon dernière modification de la note existante). */
+  noteAt: string | null;
+  resultsHref: string;
 }
 
 const fmt = (n: number | null) => (n === null ? "—" : formatNumber(n));
@@ -94,7 +98,7 @@ export function OralSpace({
     }
     for (const m of members) {
       values[`person:${m.id}`] = init.personNotes[m.id] ?? "";
-      values[`presence:${m.id}`] = init.attendance[m.id] ?? "";
+      values[`presence:${m.id}`] = init.attendance[m.id] ?? (init.fromExisting ? "present" : "");
     }
     values.rule = init.absenceRule;
     return { values, versions: init.versions };
@@ -106,6 +110,11 @@ export function OralSpace({
     criteria.find((c) => !c.isBonus)?.id ?? criteria[0]?.id,
   );
   const [showRecap, setShowRecap] = useState(false);
+  // Un oral dont la note est écrite s'ouvre en lecture : « Modifier » ouvre un brouillon.
+  const [editing, setEditing] = useState(!init.hasNote);
+  const [noteAt, setNoteAt] = useState<string | null>(init.noteAt);
+  const readOnly = !editing;
+  const recapRef = useRef<HTMLHeadingElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [writeState, setWriteState] = useState<{ error?: string; written?: boolean; at?: string }>(
     {},
@@ -140,12 +149,13 @@ export function OralSpace({
   const replaces = init.hasNote;
 
   function pick(letter: string) {
-    if (!current) return;
+    if (!current || readOnly) return;
     f.set(`letter:${current.id}`, f.values[`letter:${current.id}`] === letter ? "" : letter, true);
   }
 
   function onCardsKey(e: React.KeyboardEvent) {
     const target = e.target as HTMLElement;
+    if (readOnly && /^[a-d]$/i.test(e.key)) return;
     if (target.tagName === "TEXTAREA" || target.tagName === "INPUT" || target.tagName === "SELECT")
       return;
     const key = e.key.toUpperCase();
@@ -197,14 +207,18 @@ export function OralSpace({
           per_student: after,
         });
         setConfirm(false);
+        setNoteAt(new Date().toISOString());
+        setEditing(false);
       }
     });
   }
 
   const writeLabel = isGroup ? "Écrire la note de groupe" : "Écrire les notes";
-  const blocked = missing.length > 0 || f.dirty || f.hasConflict || (replaces && !confirm);
-  const blockedReason =
-    missing.length > 0
+  const blocked =
+    readOnly || missing.length > 0 || f.dirty || f.hasConflict || (replaces && !confirm);
+  const blockedReason = readOnly
+    ? "Clique sur « Modifier » pour ouvrir un brouillon avant d’écrire la note."
+    : missing.length > 0
       ? missing.join(" ")
       : f.hasConflict
         ? "Résous d’abord le conflit d’enregistrement."
@@ -251,6 +265,27 @@ export function OralSpace({
         >
           {status}
         </p>
+        {noteAt ? (
+          <p className="text-sm">
+            Note écrite le{" "}
+            {new Date(noteAt).toLocaleDateString("fr-FR", { day: "numeric", month: "numeric" })} à{" "}
+            {new Date(noteAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            {" · "}
+            <Link href={init.resultsHref} className="font-semibold underline underline-offset-2">
+              Voir les résultats
+            </Link>
+          </p>
+        ) : null}
+        {readOnly && (init.hasNote || written) ? (
+          <Button type="button" size="sm" variant="secondary" onClick={() => setEditing(true)}>
+            Modifier
+          </Button>
+        ) : null}
+        {!readOnly && init.hasNote ? (
+          <span className="border-sky/60 text-sky rounded-full border px-2.5 text-xs font-bold">
+            Brouillon : rien ne change avant « Écrire la note »
+          </span>
+        ) : null}
         {written ? (
           <span
             className={cn(
@@ -272,6 +307,7 @@ export function OralSpace({
             <span>{m.name}</span>
             <select
               value={f.values[`presence:${m.id}`] ?? ""}
+              disabled={readOnly}
               onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
               className="border-input bg-background min-h-9 rounded-md border px-1.5"
             >
@@ -333,7 +369,7 @@ export function OralSpace({
               ref={cardsRef}
               role="group"
               aria-label={`Paliers de ${current.label}`}
-              className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
+              className="grid grid-cols-4 gap-1.5"
             >
               {current.levels.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
@@ -349,9 +385,10 @@ export function OralSpace({
                       type="button"
                       data-palier
                       aria-pressed={on}
+                      disabled={readOnly}
                       onClick={() => pick(letter)}
                       className={cn(
-                        "focus-visible:ring-ring flex min-h-20 flex-col gap-1 rounded-xl border-[1.5px] p-2.5 text-left text-sm focus-visible:ring-2 focus-visible:outline-none",
+                        "focus-visible:ring-ring flex min-h-20 flex-col gap-1 rounded-xl border-[1.5px] p-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none disabled:opacity-70",
                         on ? "border-primary bg-primary/10" : "hover:bg-accent",
                       )}
                     >
@@ -362,7 +399,9 @@ export function OralSpace({
                           : palier {i + 1} sur {current.levels.length}
                         </span>
                       </span>
-                      <span className="leading-snug">{level.description}</span>
+                      <span className="line-clamp-3 text-xs leading-snug" title={level.description}>
+                        {level.description}
+                      </span>
                     </button>
                   );
                 })
@@ -378,6 +417,7 @@ export function OralSpace({
               <Textarea
                 id={`note-${subjectId}-${current.id}`}
                 rows={3}
+                disabled={readOnly}
                 value={f.values[`note:${current.id}`] ?? ""}
                 onChange={(e) => f.set(`note:${current.id}`, e.target.value)}
               />
@@ -397,6 +437,7 @@ export function OralSpace({
             <Textarea
               id={`pad-${subjectId}`}
               rows={5}
+              disabled={readOnly}
               value={f.values.pad ?? ""}
               onChange={(e) => f.set("pad", e.target.value)}
             />
@@ -411,6 +452,7 @@ export function OralSpace({
                   <Textarea
                     id={`person-${subjectId}-${m.id}`}
                     rows={2}
+                    disabled={readOnly}
                     value={f.values[`person:${m.id}`] ?? ""}
                     onChange={(e) => f.set(`person:${m.id}`, e.target.value)}
                   />
@@ -426,7 +468,24 @@ export function OralSpace({
         <p className="text-sm font-semibold">
           {progress.scored}/{progress.total} critères
         </p>
-        <Button type="button" size="sm" variant="outline" onClick={() => setShowRecap((v) => !v)}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const open = !showRecap;
+            setShowRecap(open);
+            if (open)
+              setTimeout(() => {
+                const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                recapRef.current?.scrollIntoView({
+                  behavior: reduce ? "auto" : "smooth",
+                  block: "start",
+                });
+                recapRef.current?.focus();
+              }, 0);
+          }}
+        >
           {showRecap ? "Masquer le récapitulatif" : "Récapitulatif et note"}
         </Button>
         {onNext ? (
@@ -448,7 +507,12 @@ export function OralSpace({
           aria-labelledby={`recap-${subjectId}`}
           className="bg-card space-y-3 rounded-2xl border p-4"
         >
-          <h4 id={`recap-${subjectId}`} className="font-heading text-lg font-bold">
+          <h4
+            id={`recap-${subjectId}`}
+            ref={recapRef}
+            tabIndex={-1}
+            className="font-heading text-lg font-bold outline-none"
+          >
             Récapitulatif
           </h4>
           <table className="w-full text-sm">
@@ -551,6 +615,7 @@ export function OralSpace({
             <Button
               type="button"
               variant="outline"
+              hidden={readOnly}
               disabled={pendingDiscard}
               onClick={() => {
                 if (
