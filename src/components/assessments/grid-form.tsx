@@ -180,7 +180,8 @@ export function GridForm({
   }
 
   function addRow() {
-    const row = emptyRow();
+    // Le dernier axe créé est proposé d'office au nouveau critère.
+    const row = { ...emptyRow(), axisKey: axes.length ? axes[axes.length - 1].key : "" };
     focusKeyRef.current = row.key;
     setRows((rs) => [...rs, row]);
     setAnnouncement("Critère ajouté.");
@@ -384,7 +385,7 @@ export function GridForm({
       </fieldset>
 
       {state.error && !state.confirmRequired ? <ActionError error={state.error} /> : null}
-      <div className="flex flex-wrap gap-3">
+      <div className="bg-background sticky bottom-0 z-10 flex flex-wrap gap-3 border-t py-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           {inUse ? "Modifier pour toutes" : "Enregistrer"}
         </PendingButton>

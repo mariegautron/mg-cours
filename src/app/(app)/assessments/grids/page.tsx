@@ -76,35 +76,43 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
                   <DeleteGridButton id={g.id} />
                 </div>
               </div>
-              <div className="text-muted-foreground mt-2 space-y-3 text-sm">
-                {groupByAxis(g.criteria, g.axes).map((group) => (
-                  <section key={group.axis?.id ?? "none"}>
-                    {group.axis ? (
-                      <h3 className="text-foreground font-medium">{group.axis.label}</h3>
-                    ) : g.axes.length > 0 ? (
-                      <h3 className="text-foreground font-medium">Autres critères</h3>
-                    ) : null}
-                    <ul className="space-y-2">
-                      {group.criteria.map((c) => (
-                        <li key={c.id}>
-                          {c.label} ({c.weight}){c.is_bonus ? " · bonus hors barème" : ""}
-                          {c.reference ? ` · ${c.reference}` : ""}
-                          {c.levels.length ? (
-                            <ul className="mt-1 ml-4 list-disc space-y-0.5">
-                              {c.levels.map((l) => (
-                                <li key={l.id}>
-                                  <span className="text-foreground font-medium">{l.points} pt</span>
-                                  {l.description ? ` — ${l.description}` : ""}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-              </div>
+              <details className="mt-2">
+                <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+                  Voir les critères et les paliers
+                  <span className="sr-only"> de la grille {g.name}</span>
+                </summary>
+                <div className="text-muted-foreground mt-2 space-y-3 text-sm">
+                  {groupByAxis(g.criteria, g.axes).map((group) => (
+                    <section key={group.axis?.id ?? "none"}>
+                      {group.axis ? (
+                        <h3 className="text-foreground font-medium">{group.axis.label}</h3>
+                      ) : g.axes.length > 0 ? (
+                        <h3 className="text-foreground font-medium">Autres critères</h3>
+                      ) : null}
+                      <ul className="space-y-2">
+                        {group.criteria.map((c) => (
+                          <li key={c.id}>
+                            {c.label} ({c.weight}){c.is_bonus ? " · bonus hors barème" : ""}
+                            {c.reference ? ` · ${c.reference}` : ""}
+                            {c.levels.length ? (
+                              <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                                {c.levels.map((l) => (
+                                  <li key={l.id}>
+                                    <span className="text-foreground font-medium">
+                                      {l.points} pt
+                                    </span>
+                                    {l.description ? ` — ${l.description}` : ""}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              </details>
             </li>
           ))}
         </ul>
