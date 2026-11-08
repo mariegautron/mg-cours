@@ -12,9 +12,11 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   jalonsCount,
-  notesMessage,
+  enteredLabel,
+  plannedLabel,
+  plannedMessage,
+  plannedProgress,
   requirementLabel,
-  totalCoefficient,
 } from "@/lib/assessments/module-notes";
 import {
   buildTimeline,
@@ -86,6 +88,7 @@ export default async function ModuleAssessmentsPage({
   const expectationCount = expectations.length;
 
   const regular = assessments.filter((a) => !a.makeup_of_id);
+  const planned = plannedProgress(progress.requirement, assessments);
   const makeups = assessments.filter((a) => a.makeup_of_id);
   const timeline = buildTimeline(
     courses.map((c) => ({
@@ -121,10 +124,10 @@ export default async function ModuleAssessmentsPage({
             Évaluations — {mod.name}
           </h1>
           <p role="status" className="text-muted-foreground mt-1">
-            {requirementLabel(mod.total_hours, progress)}. {notesMessage(progress)} Jalons du projet
-            : {jalonsCount(assessments)} · coefficients cumulés : {totalCoefficient(assessments)}.
-            Le projet fil rouge porte le brief et le contexte ; chaque jalon porte ses attendus et
-            sa grille. Clique une évaluation pour la préparer.
+            {requirementLabel(mod.total_hours, progress)}. {plannedLabel(planned)}.{" "}
+            {enteredLabel(progress)}. {plannedMessage(planned)} Jalons du projet :{" "}
+            {jalonsCount(assessments)}. Le projet fil rouge porte le brief et le contexte ; chaque
+            jalon porte ses attendus et sa grille. Clique une évaluation pour la préparer.
           </p>
         </div>
         <Button asChild variant="ghost">
@@ -146,17 +149,10 @@ export default async function ModuleAssessmentsPage({
                 : "Commence par le projet : il organise les jalons. Tu peux aussi créer directement une évaluation."}
             </p>
           </div>
-          <Pill tone={progress.satisfied ? "ok" : "warn"}>
-            {progress.enteredTotal}/{progress.requirement.total} note
-            {progress.requirement.total > 1 ? "s" : ""} requise
-            {progress.requirement.total > 1 ? "s" : ""}
+          <Pill tone={planned.missingGroup + planned.missingIndividual === 0 ? "ok" : "warn"}>
+            {plannedLabel(planned)}
           </Pill>
-          {!progress.satisfied ? (
-            <span className="text-muted-foreground text-sm">
-              manque {progress.missingGroup} groupe{progress.missingGroup > 1 ? "s" : ""} +{" "}
-              {progress.missingIndividual} individuelle{progress.missingIndividual > 1 ? "s" : ""}
-            </span>
-          ) : null}
+          <Pill tone={progress.satisfied ? "ok" : "plain"}>{enteredLabel(progress)}</Pill>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild variant="ghost">
               <Link href={`/modules/${id}/project`}>

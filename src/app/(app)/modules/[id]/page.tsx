@@ -194,7 +194,8 @@ export default async function ModulePage({
         <div className="flex flex-wrap items-center gap-2.5">
           <Pill>{mod.total_hours} h</Pill>
           <Pill tone={notes.satisfied ? "ok" : "plain"}>
-            {notes.enteredTotal} / {notes.requirement.total} notes
+            Prévues {planned.length} / {notes.requirement.total} · Notées {notes.enteredTotal} /{" "}
+            {notes.requirement.total}
           </Pill>
           <Link href={`/present/modules/${mod.id}`} className={BTN}>
             <Presentation aria-hidden className="mr-2 size-4" />

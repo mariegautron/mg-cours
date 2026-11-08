@@ -24,6 +24,64 @@ export function notesMessage(p: NotesProgressLike): string {
   return `Il te manque ${plural(missing, "note")} (${parts.join(", ")}).`;
 }
 
+export interface PlannedLike {
+  is_group_grade: boolean;
+  is_bonus?: boolean | null;
+  makeup_of_id?: string | null;
+}
+
+export interface PlannedProgress {
+  required: number;
+  requiredGroup: number;
+  requiredIndividual: number;
+  planned: number;
+  plannedGroup: number;
+  plannedIndividual: number;
+  missingGroup: number;
+  missingIndividual: number;
+}
+
+/** Évaluations prévues (hors rattrapages et bonus), comparées aux notes exigées. */
+export function plannedProgress(
+  requirement: NotesProgressLike["requirement"],
+  assessments: readonly PlannedLike[],
+): PlannedProgress {
+  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
+  const plannedGroup = counted.filter((a) => a.is_group_grade).length;
+  const plannedIndividual = counted.length - plannedGroup;
+  return {
+    required: requirement.total,
+    requiredGroup: requirement.group,
+    requiredIndividual: requirement.individual,
+    planned: counted.length,
+    plannedGroup,
+    plannedIndividual,
+    missingGroup: Math.max(0, requirement.group - plannedGroup),
+    missingIndividual: Math.max(0, requirement.individual - plannedIndividual),
+  };
+}
+
+/** « Prévues : 4 / 2 (2 de groupe, 2 individuelles) » : même formule partout. */
+export function plannedLabel(p: PlannedProgress): string {
+  return `Prévues : ${p.planned} / ${p.required} (${p.plannedGroup} de groupe, ${plural(p.plannedIndividual, "individuelle")})`;
+}
+
+/** « Notées : 1 / 2 » : évaluations ayant au moins une note saisie. */
+export function enteredLabel(n: NotesProgressLike): string {
+  return `Notées : ${n.enteredTotal} / ${n.requirement.total}`;
+}
+
+/** Ce qu'il manque, côté évaluations prévues seulement. */
+export function plannedMessage(p: PlannedProgress): string {
+  if (p.required === 0) return "Renseigne les heures du module pour connaître les notes exigées.";
+  const missing = p.missingGroup + p.missingIndividual;
+  if (missing === 0) return "C’est complet : toutes les évaluations exigées sont prévues.";
+  const parts: string[] = [];
+  if (p.missingGroup) parts.push(`${p.missingGroup} de groupe`);
+  if (p.missingIndividual) parts.push(plural(p.missingIndividual, "individuelle"));
+  return `Il te manque ${plural(missing, "évaluation prévue", "évaluations prévues")} (${parts.join(", ")}).`;
+}
+
 /** « 21 h : 3 notes exigées » ; précise quand le volume est hors palier. */
 export function requirementLabel(totalHours: number, p: NotesProgressLike): string {
   const base = `${totalHours} h : ${plural(p.requirement.total, "note")} exigée${p.requirement.total > 1 ? "s" : ""}`;
@@ -37,7 +95,7 @@ export function jalonsCount(
   return assessments.filter((a) => a.project_id && a.project_role === "milestone").length;
 }
 
-/** Somme des coefficients (barème ×1 groupe, ×3 individuel inclus dans le coefficient saisi). */
+/** Somme des coefficients saisis (hors rattrapages). */
 export function totalCoefficient(assessments: readonly { coefficient: number }[]): number {
   return (
     Math.round(

@@ -5,7 +5,13 @@ import { notFound } from "next/navigation";
 import { Pill } from "@/components/dashboard/pill";
 import { SchoolGradeForm } from "@/components/assessments/school-grade-form";
 import { Button } from "@/components/ui/button";
-import { notesMessage, requirementLabel } from "@/lib/assessments/module-notes";
+import {
+  enteredLabel,
+  plannedLabel,
+  plannedMessage,
+  plannedProgress,
+  requirementLabel,
+} from "@/lib/assessments/module-notes";
 import { buildTimeline } from "@/lib/assessments/module-overview";
 import { listGrids, listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
@@ -33,6 +39,7 @@ export default async function AddAssessmentPage({
   ]);
 
   const regular = assessments.filter((a) => !a.makeup_of_id);
+  const planned = plannedProgress(progress.requirement, assessments);
   const dueSession = new Map(
     buildTimeline(
       courses.map((c) => ({ id: c.id, title: c.title, date: c.session_date, toBuild: false })),
@@ -74,16 +81,14 @@ export default async function AddAssessmentPage({
           <div className="bg-accent/40 border-primary/40 mb-2 rounded-2xl border p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <strong>Notes exigées par l’école : {progress.requirement.total}</strong>
-              <Pill tone={progress.satisfied ? "ok" : "warn"}>
-                <span role="status">
-                  {progress.enteredTotal} prévue{progress.enteredTotal > 1 ? "s" : ""} sur{" "}
-                  {progress.requirement.total}
-                </span>
+              <Pill tone={planned.missingGroup + planned.missingIndividual === 0 ? "ok" : "warn"}>
+                <span role="status">{plannedLabel(planned)}</span>
               </Pill>
             </div>
             <p className="text-muted-foreground mt-0.5 text-[0.8rem]">
-              {requirementLabel(mod.total_hours, progress)}. {notesMessage(progress)} Tu peux en
-              prévoir plus ; chaque évaluation ajoutée compte comme une note de plus.
+              {requirementLabel(mod.total_hours, progress)}. {enteredLabel(progress)}.{" "}
+              {plannedMessage(planned)} Tu peux en prévoir plus ; chaque évaluation ajoutée compte
+              comme une note de plus.
             </p>
           </div>
 
