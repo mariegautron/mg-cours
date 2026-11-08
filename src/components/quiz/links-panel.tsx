@@ -144,22 +144,33 @@ export function PrepareLinks({
             <Link2 aria-hidden />
             {pending ? "Préparation…" : "Préparer les tirages et les liens"}
           </Button>
-          <Button
-            type="submit"
-            name="send"
-            value="on"
-            size="touch"
-            variant="secondary"
-            disabled={pending || missing === 0}
-          >
-            <Mail aria-hidden />
-            Envoyer aux {missing} personne{missing > 1 ? "s" : ""} par e-mail
-          </Button>
         </div>
+      </form>
+      <form action={action} className="space-y-1 border-t pt-3">
+        <p className="text-sm font-medium">Envoyer par e-mail</p>
         <p className="text-muted-foreground text-xs">
-          L’e-mail part à celles et ceux qui ont une adresse ; les autres gardent leur lien dans le
-          CSV.
+          Prépare aussi les tirages de celles et ceux qui n’en ont pas, puis envoie le lien.
+          L’e-mail part à ceux qui ont une adresse ; les autres gardent leur lien dans le CSV.
         </p>
+        <Button
+          type="submit"
+          name="send"
+          value="on"
+          size="touch"
+          variant="secondary"
+          disabled={pending || missing === 0}
+          onClick={(e) => {
+            if (
+              !window.confirm(
+                `Envoyer un e-mail à ${missing} personne${missing > 1 ? "s" : ""} ? Les tirages sont figés et les liens partent maintenant.`,
+              )
+            )
+              e.preventDefault();
+          }}
+        >
+          <Mail aria-hidden />
+          Envoyer aux {missing} personne{missing > 1 ? "s" : ""} par e-mail
+        </Button>
       </form>
       <LinksResult state={state} />
     </div>

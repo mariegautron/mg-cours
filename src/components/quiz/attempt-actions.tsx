@@ -45,6 +45,15 @@ export function AttemptActions({
             </Link>
           </Button>
         ) : null}
+        {a.status !== "submitted" ? (
+          <Button asChild size="sm" variant="ghost">
+            <Link
+              href={`/modules/${moduleId}/assessments/${assessmentId}/quiz/attempts/${a.id}/tirage`}
+            >
+              Voir le tirage<span className="sr-only"> de {a.name}</span>
+            </Link>
+          </Button>
+        ) : null}
         {a.status === "in_progress" ? (
           <form action={bind(forceSubmit)}>
             <Button type="submit" size="sm" variant="secondary">

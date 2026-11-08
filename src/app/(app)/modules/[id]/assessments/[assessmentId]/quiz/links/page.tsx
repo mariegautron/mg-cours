@@ -81,13 +81,12 @@ export default async function QuizLinksPage({
               Donner accès (QR et liens personnels)
             </summary>
             <div className="pt-3">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2 md:[&>section:first-child]:order-2">
                 <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 id="ma" className="font-heading text-lg font-bold">
                       En classe : code et QR
                     </h2>
-                    <Pill tone="ok">Recommandé</Pill>
                   </div>
                   <p className="text-muted-foreground text-sm">
                     Tu projettes un QR code. Chacun·e le scanne avec son téléphone et choisit son
@@ -169,13 +168,12 @@ export default async function QuizLinksPage({
           </details>
         ) : (
           <div className="order-1">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 md:[&>section:first-child]:order-2">
               <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 id="ma" className="font-heading text-lg font-bold">
                     En classe : code et QR
                   </h2>
-                  <Pill tone="ok">Recommandé</Pill>
                 </div>
                 <p className="text-muted-foreground text-sm">
                   Tu projettes un QR code. Chacun·e le scanne avec son téléphone et choisit son nom

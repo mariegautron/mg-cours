@@ -7,7 +7,7 @@ import { AssessmentFiles } from "@/components/assessments/assessment-files";
 import { getAssessment, listGrids } from "@/lib/assessments/queries";
 import { rulesForSchool } from "@/lib/schools/rules";
 import { getModuleProject } from "@/lib/projects/queries";
-import { getModuleCourses } from "@/lib/modules/queries";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { listModuleGroups } from "@/lib/students/queries";
 
