@@ -1959,8 +1959,11 @@ export type Database = {
           letters: Json
           owner_id: string
           pad: string
+          person_comments: Json
           person_notes: Json
+          routed: Json
           subject_id: string
+          texts: Json
           updated_at: string
           written: Json | null
           written_at: string | null
@@ -1977,8 +1980,11 @@ export type Database = {
           letters?: Json
           owner_id?: string
           pad?: string
+          person_comments?: Json
           person_notes?: Json
+          routed?: Json
           subject_id: string
+          texts?: Json
           updated_at?: string
           written?: Json | null
           written_at?: string | null
@@ -1995,8 +2001,11 @@ export type Database = {
           letters?: Json
           owner_id?: string
           pad?: string
+          person_comments?: Json
           person_notes?: Json
+          routed?: Json
           subject_id?: string
+          texts?: Json
           updated_at?: string
           written?: Json | null
           written_at?: string | null
