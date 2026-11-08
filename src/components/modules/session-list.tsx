@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Pill } from "@/components/dashboard/pill";
 import type { CourseWithResources } from "@/lib/modules/queries";
+import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import {
   hoursLabel,
   listDateLine,
@@ -31,6 +32,9 @@ export function SessionList({
 }) {
   const minutes = courses.reduce((n, c) => n + (minutesBetween(c.start_time, c.end_time) ?? 0), 0);
   const ready = courses.filter((c) => c.prep_status === "ready").length;
+  // Repère de la séance à faire (du jour ou prochaine), pour la retrouver en consultant une autre.
+  const today = todayInParis();
+  const focus = sessionToTeach(courses, today);
   const BTN =
     "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
   return (
@@ -69,12 +73,19 @@ export function SessionList({
                     {listDateLine(c.session_date, c.start_time, c.end_time)}
                   </span>
                 </span>
-                <Pill
-                  tone={STATUS_TONES[c.prep_status] ?? "plain"}
-                  className="min-h-[22px] px-2 text-[0.75rem]"
-                >
-                  {statusLabel(c.prep_status)}
-                </Pill>
+                <span className="flex flex-col items-end gap-1">
+                  {c.id === focus?.id ? (
+                    <Pill tone="key" className="min-h-[22px] px-2 text-[0.75rem]">
+                      {c.session_date === today ? "Aujourd’hui" : "Prochaine"}
+                    </Pill>
+                  ) : null}
+                  <Pill
+                    tone={c.completion ? "ok" : (STATUS_TONES[c.prep_status] ?? "plain")}
+                    className="min-h-[22px] px-2 text-[0.75rem]"
+                  >
+                    {c.completion ? "Faite" : statusLabel(c.prep_status)}
+                  </Pill>
+                </span>
               </Link>
             </li>
           );
