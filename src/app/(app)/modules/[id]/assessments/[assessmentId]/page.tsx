@@ -604,6 +604,20 @@ export default async function AssessmentPage({
                   assessmentId={assessmentId}
                   initial={assessment.where_to_submit ?? ""}
                 />
+                <SubmitSettings
+                  moduleId={id}
+                  assessmentId={assessmentId}
+                  mode={
+                    (assessment as unknown as { submit_mode?: string }).submit_mode === "app"
+                      ? "app"
+                      : "elsewhere"
+                  }
+                  accepts={(() => {
+                    const v = (assessment as unknown as { submit_accepts?: string }).submit_accepts;
+                    return v === "file" || v === "link" ? v : "both";
+                  })()}
+                  hasDeadline={!!assessment.date || !!course?.session_date}
+                />
               </section>
 
               <section aria-labelledby="ae" className={card}>
