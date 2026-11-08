@@ -100,6 +100,7 @@ export default async function AppreciationPage({
           firstName={student.first_name}
           lastName={student.last_name}
           initial={appreciations.byStudent.get(studentId) ?? ""}
+          initialProposal={appreciations.proposals.has(studentId)}
           max={rules.appreciationMax}
           backHref={`/modules/${id}/appreciations`}
           prev={neighbour(-1)}

@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, Wand2 } from "lucide-react";
 
-import { saveAppreciation, setReported } from "@/app/(app)/modules/[id]/appreciations/actions";
+import {
+  proposeDraft,
+  saveAppreciation,
+  setReported,
+  validateProposal,
+} from "@/app/(app)/modules/[id]/appreciations/actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,6 +21,7 @@ import {
   textOnly,
   STATUS_LABELS,
 } from "@/lib/appreciations/appreciation";
+import { BASIS_LABELS } from "@/lib/appreciations/draft";
 
 const AUTOSAVE_MS = 1200;
 
@@ -29,6 +35,7 @@ export function AppreciationEditor({
   firstName,
   lastName,
   initial,
+  initialProposal = false,
   max,
   backHref,
   prev,
@@ -39,6 +46,8 @@ export function AppreciationEditor({
   firstName: string;
   lastName: string;
   initial: string;
+  /** Le texte est un brouillon proposé, pas encore relu. */
+  initialProposal?: boolean;
   max: number;
   backHref: string;
   /** Personne précédente / suivante, dans l'ordre alphabétique de la liste. */
@@ -50,6 +59,8 @@ export function AppreciationEditor({
   const [text, setText] = useState(initial);
   const [saved, setSaved] = useState(initial);
   const [message, setMessage] = useState("");
+  const [proposal, setProposal] = useState(initialProposal);
+  const [basisNote, setBasisNote] = useState("");
   const [error, setError] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const status = appreciationStatus(text, max);
@@ -67,11 +78,11 @@ export function AppreciationEditor({
     return () => window.removeEventListener("beforeunload", warn);
   }, [pending]);
 
-  async function save(value: string) {
+  async function save(value: string, asProposal = proposal) {
     setSaving(true);
     let result: Awaited<ReturnType<typeof saveAppreciation>>;
     try {
-      result = await saveAppreciation(moduleId, studentId, value);
+      result = await saveAppreciation(moduleId, studentId, value, asProposal);
     } catch {
       setSaving(false);
       setError("L’enregistrement a échoué : ton texte est encore là, réessaie.");
@@ -87,18 +98,48 @@ export function AppreciationEditor({
     setMessage(`Appréciation de ${name} enregistrée à ${result.savedAt}.`);
   }
 
+  async function propose() {
+    if (
+      text.trim() &&
+      !proposal &&
+      !window.confirm("Remplacer ce que tu as écrit par un brouillon ?")
+    )
+      return;
+    setMessage("Brouillon en préparation…");
+    const r = await proposeDraft(moduleId, studentId);
+    if (r.error || !r.text) {
+      setError(r.error ?? "Impossible de proposer un brouillon.");
+      return;
+    }
+    setText(r.text);
+    setProposal(true);
+    setBasisNote(BASIS_LABELS[r.basis ?? "none"]);
+    await save(r.text, true);
+    setMessage(`Brouillon proposé pour ${name} : à relire avant de le garder.`);
+  }
+
+  async function validate() {
+    const r = await validateProposal(moduleId, studentId);
+    if (r.error) {
+      setError(r.error);
+      return;
+    }
+    setProposal(false);
+    setMessage(`Appréciation de ${name} validée.`);
+  }
+
   /** Enregistre ce qui est en attente puis change de personne. */
   async function go(e: React.MouseEvent, href: string) {
     e.preventDefault();
     if (timer.current) clearTimeout(timer.current);
-    if (text.trim() !== saved) await save(text);
+    if (text.trim() !== saved) await save(text, proposal);
     router.push(href);
   }
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(textOnly(text));
-      await save(text);
+      await save(text, false);
       await setReported(moduleId, studentId, true);
       setMessage(`Appréciation de ${name} copiée (texte seul), marquée reportée.`);
     } catch {
@@ -114,10 +155,24 @@ export function AppreciationEditor({
             L’appréciation de {name}
           </h1>
           <Pill tone={status === "written" ? "ok" : status === "too_long" ? "lock" : "warn"}>
-            {STATUS_LABELS[status]}
+            {proposal && status !== "todo" ? "Proposé, à relire" : STATUS_LABELS[status]}
             {saved !== text.trim() && status !== "todo" ? " · à enregistrer" : ""}
           </Pill>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="secondary" size="touch" onClick={() => void propose()}>
+            <Wand2 aria-hidden />
+            Proposer un brouillon
+          </Button>
+          {proposal ? (
+            <Button type="button" size="touch" onClick={() => void validate()}>
+              Valider cette appréciation
+            </Button>
+          ) : null}
+        </div>
+        {proposal && basisNote ? (
+          <p className="text-muted-foreground text-sm">{basisNote}</p>
+        ) : null}
         <Label htmlFor="appreciation-text">Appréciation de {name}</Label>
         <Textarea
           id="appreciation-text"
@@ -127,13 +182,15 @@ export function AppreciationEditor({
           aria-invalid={status === "too_long" ? true : undefined}
           onChange={(e) => {
             setText(e.target.value);
+            // Une modification de ta part : ce n'est plus un brouillon à relire.
+            setProposal(false);
             if (timer.current) clearTimeout(timer.current);
             const value = e.target.value;
-            timer.current = setTimeout(() => void save(value), AUTOSAVE_MS);
+            timer.current = setTimeout(() => void save(value, false), AUTOSAVE_MS);
           }}
           onBlur={() => {
             if (timer.current) clearTimeout(timer.current);
-            if (text.trim() !== saved) void save(text);
+            if (text.trim() !== saved) void save(text, proposal);
           }}
         />
         <p
@@ -162,13 +219,18 @@ export function AppreciationEditor({
           <Button
             type="button"
             size="touch"
-            disabled={text.trim() === "" || status === "too_long"}
+            disabled={text.trim() === "" || status === "too_long" || proposal}
             onClick={() => void copy()}
           >
             <Copy aria-hidden />
             Copier pour Hyperplanning
             <span className="sr-only"> : l’appréciation de {name}</span>
           </Button>
+          {proposal ? (
+            <p role="status" className="text-muted-foreground self-center text-sm">
+              Relis ce brouillon, modifie-le ou valide-le avant de le copier.
+            </p>
+          ) : null}
           {status === "too_long" ? (
             <p role="status" className="text-destructive self-center text-sm">
               Trop longue pour Hyperplanning : raccourcis avant de copier. Le brouillon est gardé.

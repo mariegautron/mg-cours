@@ -1,6 +1,12 @@
 # Proposition — « Proposer un brouillon » d'appréciation (lot 3)
 
-**Statut : à valider par Marie avant tout code.** Rien de ce document n'est implémenté.
+**Décision (08/11/2026) : gabarit gratuit sans service externe, pour le moment.** Implémenté dans
+`src/lib/appreciations/draft.ts` : rien ne sort de l'appli, aucun coût. Les sections « Confidentialité » et
+« Coût » ci-dessous décrivent l'option API Claude, écartée pour l'instant et gardée pour plus tard.
+Limite connue du gabarit : chaque thème a 6 variantes par phrase, donc dans une grosse classe une même
+phrase peut revenir chez deux personnes (les textes complets, eux, restent distincts) ; Marie relit et modifie toujours.
+
+Statut initial du document : proposition à valider avant code.
 Les lots 1, 2, 4 et 5 sont livrés ; la migration `20261120000000` ajoute déjà la colonne
 `appreciation.is_proposal` (« Proposé, à relire ») et le badge existe dans la liste.
 

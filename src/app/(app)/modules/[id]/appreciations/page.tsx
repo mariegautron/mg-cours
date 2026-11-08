@@ -36,7 +36,8 @@ export default async function AppreciationsPage({
   const rows = students.map((s) => ({
     firstName: s.first_name,
     lastName: s.last_name,
-    text: appreciations.byStudent.get(s.id) ?? "",
+    // Un brouillon proposé et non relu n'est jamais exporté.
+    text: appreciations.proposals.has(s.id) ? "" : (appreciations.byStudent.get(s.id) ?? ""),
   }));
   const tooLong = rows.filter(
     (r) => appreciationStatus(r.text, rules.appreciationMax) === "too_long",
