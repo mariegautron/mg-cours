@@ -38,6 +38,8 @@ export interface SessionItem {
   submissions?: SubmissionLine[];
   /** « Bonus certification : +x point(s) sur la moyenne » (note bonus, effet réel enregistré). */
   bonusLine?: string | null;
+  /** Réponses au QCM de la personne (lecture seule), à la place de « Aucun rendu ». */
+  qcm?: React.ReactNode;
 }
 
 export interface SessionSection {
@@ -388,6 +390,7 @@ export function GradingSession({
             const received = item.submissions?.length;
             return (
               <div key={item.id} hidden={shownId !== null && item.id !== shownId}>
+                {item.qcm ?? null}
                 <GradeForm
                   id={item.id}
                   action={item.action}
@@ -412,7 +415,7 @@ export function GradingSession({
                             : ` · ${received === 0 ? "rien reçu" : `${received} élément${received > 1 ? "s" : ""} reçu${received > 1 ? "s" : ""}`}`
                         }`
                   }
-                  submissions={item.submissions}
+                  submissions={item.qcm ? undefined : item.submissions}
                   others={others}
                   absenceRule={absenceRule}
                   bonusScale={bonusScale}

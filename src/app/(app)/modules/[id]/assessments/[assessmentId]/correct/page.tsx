@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
+import type { DrawnQuestion } from "@/lib/quiz/types";
+import { createClient } from "@/lib/supabase/server";
 import { GradingSession } from "@/components/assessments/grading-session";
 import {
   buildSessionSections,
@@ -70,6 +73,29 @@ export default async function CorrectPage({
   }
   const back = `/modules/${id}/assessments/${assessmentId}`;
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
+  if (quiz) {
+    // Réponses du QCM affichées dans la copie, en lecture seule (la relecture reste dans le suivi).
+    const supabase = await createClient();
+    const { data: attempts } = await supabase
+      .from("quiz_attempt")
+      .select("id, student_id, drawn, answers, manual_scores")
+      .eq("quiz_id", quiz.id)
+      .eq("status", "submitted");
+    const byStudent = new Map((attempts ?? []).map((a) => [a.student_id, a]));
+    for (const item of sections.flatMap((s) => s.items)) {
+      const a = byStudent.get(item.id);
+      if (!a) continue;
+      item.qcm = (
+        <QcmAnswersPanel
+          name={item.title}
+          drawn={a.drawn as unknown as DrawnQuestion[]}
+          answers={(a.answers ?? {}) as Record<string, unknown>}
+          manual={(a.manual_scores ?? {}) as Record<string, unknown>}
+          reviewHref={`${back}/quiz/attempts/${a.id}`}
+        />
+      );
+    }
+  }
 
   return (
     <div className="space-y-4">
