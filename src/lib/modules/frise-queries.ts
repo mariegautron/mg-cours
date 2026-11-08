@@ -203,3 +203,18 @@ export async function getStudentSpaces(
   }
   return out;
 }
+
+/** Étudiant·es du module qui ont un espace personnel actif (lien non révoqué). */
+export async function activeSpaceStudentIds(moduleId: string): Promise<Set<string>> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("module_student_link")
+      .select("student_id")
+      .eq("module_id", moduleId)
+      .is("revoked_at", null);
+    return new Set((data ?? []).map((l) => l.student_id));
+  } catch {
+    return new Set();
+  }
+}

@@ -258,6 +258,9 @@ export default async function AssessmentPage({
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
   const toneOf = { ok: "ok", warn: "warn", build: "warn" } as const;
 
+  // Toutes les copies commencées ont une note : l'envoi des résultats passe en haut de la page.
+  const readyToSend = hasGrades && incompleteCopies(grades, assessment.groups).length === 0;
+
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -356,6 +359,27 @@ export default async function AssessmentPage({
       {assessment.is_group_grade ? (
         <>
           <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+            {readyToSend ? (
+              <section
+                aria-labelledby="send-top"
+                className="bg-primary/10 border-primary/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5"
+              >
+                <div>
+                  <h2 id="send-top" className="text-lg font-semibold">
+                    Tout est corrigé : envoyer les résultats
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    Vérifie, puis publie : rien ne part sans ta confirmation.
+                  </p>
+                </div>
+                <Button asChild size="touch">
+                  <Link href={`/modules/${id}/assessments/${assessmentId}/results`}>
+                    Envoyer les résultats
+                  </Link>
+                </Button>
+              </section>
+            ) : null}
+
             <section
               aria-labelledby="gr"
               className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
@@ -892,7 +916,7 @@ export default async function AssessmentPage({
 
       {makeupPanel}
 
-      {hasGrades ? (
+      {hasGrades && !readyToSend ? (
         <section aria-labelledby="send" className="bg-card space-y-2 rounded-xl border p-5">
           <h2 id="send" className="text-lg font-semibold">
             Envoyer les résultats

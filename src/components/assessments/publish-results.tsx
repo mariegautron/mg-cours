@@ -46,11 +46,14 @@ export function PublishResults({
   assessmentId,
   students,
   available,
+  spaceStudentIds = [],
 }: {
   moduleId: string;
   assessmentId: string;
   students: PublishStudent[];
   available: boolean;
+  /** Étudiant·es qui ont un espace personnel actif : leurs notes y arrivent sans lien de résultats. */
+  spaceStudentIds?: string[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -86,6 +89,8 @@ export function PublishResults({
   const lines = students.flatMap((s) => (urls[s.id] ? [{ name: s.name, url: urls[s.id] }] : []));
   const published = students.filter((s) => s.link).length;
   const viewed = students.filter((s) => s.link?.first_viewed_at).length;
+  const withSpace = students.filter((s) => spaceStudentIds.includes(s.id)).length;
+  const allHaveSpace = students.length > 0 && withSpace === students.length;
 
   if (!available) {
     return (
@@ -109,7 +114,11 @@ export function PublishResults({
             Publier les résultats
           </h2>
           <p className="text-muted-foreground text-sm">
-            Chaque étudiant·e reçoit un lien personnel et ne voit que son propre résultat.{" "}
+            {allHaveSpace
+              ? "Les notes sont visibles dans l’espace de chacun·e : rien à renvoyer. Le lien de résultats ci-dessous est une option, pour les étudiant·es sans espace."
+              : withSpace > 0
+                ? `${withSpace} étudiant·e${withSpace > 1 ? "s ont" : " a"} un espace : leur note y est visible, rien à leur renvoyer. Le lien de résultats sert aux autres.`
+                : "Chaque étudiant·e reçoit un lien personnel et ne voit que son propre résultat."}{" "}
             {published} lien{published > 1 ? "s" : ""} publié{published > 1 ? "s" : ""} sur{" "}
             {students.length}
             {published > 0

@@ -20,6 +20,7 @@ import { gradingTargets } from "@/lib/assessments/targets";
 import { formatNumber } from "@/lib/assessments/scoring";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
+import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
 import { listResultLinks } from "@/lib/result-links/queries";
 
 export const metadata: Metadata = { title: "Envoyer les résultats" };
@@ -42,12 +43,13 @@ export default async function ResultsPage({
 
   const back = `/modules/${id}/assessments/${assessmentId}`;
   const hasGrades = grades.some((g) => g.value !== null);
-  const [overrides, loadedSheets, resultLinks] = await Promise.all([
+  const [overrides, loadedSheets, resultLinks, spaceIds] = await Promise.all([
     listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
     hasGrades || grades.some((g) => g.attendance === "absent_excused")
       ? loadResultSheets(id, assessmentId)
       : null,
     listResultLinks(assessmentId),
+    activeSpaceStudentIds(id),
   ]);
   const sheets = loadedSheets ?? [];
   const recipients = hasGrades ? resultsRecipients(sheets) : { emails: 0, withoutEmail: [] };
@@ -84,7 +86,7 @@ export default async function ResultsPage({
   ).sort((a, b) => a[1].localeCompare(b[1], "fr"));
   const people = new Set(sheets.flatMap((s) => s.recipients.map((r) => r.name))).size;
 
-  const checks: { label: string; ok: boolean; status: string }[] = [
+  const checks: { label: string; ok: boolean; status: string; href?: string }[] = [
     {
       label: `${done} ${noun === "groupe" ? (done > 1 ? "groupes" : "groupe") : done > 1 ? "étudiant·es" : "étudiant·e"} corrigé${done > 1 ? "s" : ""} sur ${total}`,
       ok: allDone,
@@ -93,9 +95,10 @@ export default async function ResultsPage({
     ...(incomplete.length > 0
       ? [
           {
-            label: `Copies incomplètes, sans note : ${incomplete.join(", ")}`,
+            label: `Critères non notés : ${incomplete.join(", ")}`,
             ok: false,
             status: "À finir",
+            href: `${back}/correct`,
           },
         ]
       : []),
@@ -155,7 +158,17 @@ export default async function ResultsPage({
                 key={c.label}
                 className="flex flex-wrap items-center justify-between gap-2 py-2.5"
               >
-                <span>{c.label}</span>
+                <span role={c.ok ? undefined : "alert"}>
+                  {c.label}
+                  {c.href ? (
+                    <>
+                      {" "}
+                      <Link href={c.href} className="font-medium underline underline-offset-2">
+                        Terminer la correction
+                      </Link>
+                    </>
+                  ) : null}
+                </span>
                 <Pill tone={c.ok ? "ok" : "warn"}>{c.status}</Pill>
               </li>
             ))}
@@ -198,6 +211,7 @@ export default async function ResultsPage({
                 moduleId={id}
                 assessmentId={assessmentId}
                 available={resultLinks.available}
+                spaceStudentIds={[...spaceIds]}
                 students={Array.from(
                   new Map(
                     sheets
@@ -267,8 +281,8 @@ export default async function ResultsPage({
                 Ensuite
               </h2>
               <p className="text-muted-foreground text-sm">
-                Reporter les notes dans Hyperplanning, puis donner le lien personnel aux
-                étudiant·es.
+                Reporter les notes dans Hyperplanning. Les étudiant·es qui ont un espace y voient
+                leur note : rien à leur renvoyer.
               </p>
               <HyperplanningTable
                 moduleId={id}
