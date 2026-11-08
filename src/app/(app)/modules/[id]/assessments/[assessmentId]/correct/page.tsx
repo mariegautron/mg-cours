@@ -98,9 +98,9 @@ export default async function CorrectPage({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h1 className="text-2xl font-semibold">Corriger : {assessment.title}</h1>
+        <h1 className="text-xl font-semibold">Corriger : {assessment.title}</h1>
         <p className="text-muted-foreground text-sm">
           Tout s’enregistre au fur et à mesure.{" "}
           {assessment.is_group_grade ? "Note de groupe." : "Note individuelle."} Sur{" "}

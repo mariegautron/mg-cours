@@ -186,10 +186,10 @@ export function GradingSession({
   const titleOf = (id: string | null) => items.find((i) => i.id === id)?.title ?? null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <section
         aria-labelledby={`${uid}-progress`}
-        className="bg-card space-y-2 rounded-xl border px-4 py-2.5"
+        className="bg-card space-y-1.5 rounded-xl border px-4 py-2"
       >
         <h2 id={`${uid}-progress`} className="sr-only">
           Avancement de la correction
@@ -363,8 +363,8 @@ export function GradingSession({
       </section>
 
       {focused && grid?.description?.trim() ? (
-        <details className="bg-muted/40 rounded-2xl border p-3">
-          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
+        <details className="bg-muted/40 rounded-2xl border px-3 py-1">
+          <summary className="min-h-8 cursor-pointer py-1 text-sm font-semibold">
             Rappels pédagogiques de la grille
           </summary>
           <p className="text-sm whitespace-pre-wrap">{grid.description.trim()}</p>

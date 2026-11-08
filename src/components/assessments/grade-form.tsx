@@ -1207,7 +1207,8 @@ export function GradeForm({
       {inProgressNote ? (
         <p className="text-sun text-[0.8rem] font-semibold">{inProgressNote}</p>
       ) : null}
-      <p className="text-muted-foreground text-[0.8rem]">
+      {/* Rien à détailler (ni « 0 / 20 ») tant qu'aucun critère n'est noté. */}
+      <p className="text-muted-foreground text-[0.8rem]" hidden={!!totalEmpty}>
         {showAxes
           ? groups
               .map((g) => `${g.axis?.label ?? "Autres"} ${subtotal(g.axis?.id ?? null)}`)
@@ -1446,7 +1447,7 @@ export function GradeForm({
         }
       }}
       aria-labelledby={`copy-${id}-title`}
-      className="space-y-4"
+      className="space-y-3"
     >
       <input type="hidden" name="base" value={JSON.stringify(base)} />
       <div className="flex flex-wrap items-start justify-between gap-3">

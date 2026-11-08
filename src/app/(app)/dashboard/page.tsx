@@ -594,7 +594,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               <p className="text-muted-foreground mt-1 mb-4">
                 {upcoming.module.name}
                 {focus?.groupNames.length ? ` · ${focus.groupNames.join(", ")}` : ""}
-                {focus ? ` · ${focus.students.total} étudiant·es` : ""}
+                {focus
+                  ? ` · ${focus.students.total} étudiant·e${focus.students.total > 1 ? "s" : ""}`
+                  : ""}
               </p>
               <div className="flex flex-wrap gap-2.5">
                 <Link
