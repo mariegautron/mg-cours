@@ -57,7 +57,7 @@ export default async function PresentAssessmentPage({
     <PresentShell
       title={`${mod.name} — Sujet : ${assessment.title}`}
       backHref={backHref}
-      backLabel="l’évaluation"
+      backLabel="à l’évaluation"
       sections={["Sujet"]}
       slides={slides}
     />

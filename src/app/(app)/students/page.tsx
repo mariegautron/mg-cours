@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Camera, Plus, Upload } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { StudentSearchInput } from "@/components/students/student-search-input";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listModules } from "@/lib/modules/queries";
 import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
@@ -96,7 +96,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <Label htmlFor="q">Recherche</Label>
-          <Input id="q" name="q" defaultValue={q} placeholder="Nom, prénom, e-mail…" />
+          <StudentSearchInput defaultValue={q} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="year">Année scolaire</Label>

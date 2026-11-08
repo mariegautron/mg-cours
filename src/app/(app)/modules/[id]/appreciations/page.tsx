@@ -96,19 +96,29 @@ export default async function AppreciationsPage({
                 Comment les rédiger
               </h2>
               <p className="text-muted-foreground text-sm">
-                Longueur maximale de ton école (celle du champ d’Hyperplanning) :{" "}
+                {mod.school ? (
+                  <>Longueur maximale pour {mod.school.name} (celle du champ d’Hyperplanning) : </>
+                ) : (
+                  <>
+                    Ce module n’a pas d’école : la limite par défaut s’applique, celle du champ
+                    d’Hyperplanning :{" "}
+                  </>
+                )}
                 <strong className="text-foreground">{rules.appreciationMax} caractères</strong>.{" "}
-                <Link href="/settings#school-rules" className="underline underline-offset-2">
+                <Link
+                  href={`/settings?retour=${encodeURIComponent(`/modules/${id}/appreciations`)}#${mod.school ? `rules-${mod.school.id}` : "school-rules"}`}
+                  className="underline underline-offset-2"
+                >
                   Changer cette limite
+                  {mod.school ? ` pour ${mod.school.name}` : ""}
                 </Link>
               </p>
-              <p className="text-muted-foreground text-sm">
-                Ce qui sert de base, à toi de choisir :
-              </p>
+              <p className="text-muted-foreground text-sm">Pour chaque personne, vise :</p>
               <ul className="text-muted-foreground list-disc pl-5 text-sm">
-                <li>les notes du module, individuelles et de groupe ;</li>
-                <li>tes commentaires de correction (points forts, progrès) ;</li>
-                <li>tes observations de séance (privées).</li>
+                <li>un point fort ;</li>
+                <li>un axe de progrès concret ;</li>
+                <li>un encouragement ;</li>
+                <li>le tout au « tu », centré sur le comportement.</li>
               </ul>
             </section>
             <section aria-labelledby="ex" className="bg-primary/10 space-y-2 rounded-xl border p-5">

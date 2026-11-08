@@ -19,7 +19,7 @@ export default async function PresentGroupsPage({
     <PresentShell
       title={`${mod.name} — les groupes`}
       backHref={`/modules/${id}/groups`}
-      backLabel="les groupes du module"
+      backLabel="aux groupes du module"
       sections={["Groupes"]}
       slides={[
         {

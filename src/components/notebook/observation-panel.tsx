@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ObservationItem } from "@/components/notebook/observation-item";
 import { GroupObservationPanel } from "@/components/notebook/group-observation-panel";
 import type { CourseObservation, GroupObservationRow } from "@/lib/notebook/queries";
@@ -76,7 +77,8 @@ export function ObservationPanel({
   const [lastSaved, setLastSaved] = useState<number | undefined>(undefined);
   const [toastOn, setToastOn] = useState(false);
   const [undone, setUndone] = useState<string | null>(null);
-  const noteRef = useRef<HTMLInputElement>(null);
+  const noteRef = useRef<HTMLTextAreaElement>(null);
+  const [noteLength, setNoteLength] = useState(0);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const filterId = useId();
 
@@ -131,6 +133,7 @@ export function ObservationPanel({
 
   const open = (id: string) => {
     setSelectedTag(null);
+    setNoteLength(0);
     setOpenId(id);
   };
   const close = () => setOpenId(null);
@@ -169,11 +172,15 @@ export function ObservationPanel({
             close();
             return;
           }
-          const typing = e.target instanceof HTMLInputElement;
+          const typing =
+            e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
           const tag = tagForKeyEvent(e);
           // 1 à 5 : l'étiquette. Dans le champ de note, tant qu'il est vide (ou avec Alt) : on ne
           // gêne pas la frappe d'un chiffre dans une note déjà commencée.
-          const emptyNote = typing && e.target instanceof HTMLInputElement && e.target.value === "";
+          const emptyNote =
+            typing &&
+            (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) &&
+            e.target.value === "";
           if (tag && !e.ctrlKey && !e.metaKey && (!typing || e.altKey || emptyNote)) {
             e.preventDefault();
             setSelectedTag(tag);
@@ -184,23 +191,36 @@ export function ObservationPanel({
         <input type="hidden" name="studentId" value={s.id} />
         <input type="hidden" name="tagDefault" value={selectedTag ?? "other"} />
         <div className="space-y-1">
-          <Label htmlFor={`${panelId}-note`}>Note (facultatif)</Label>
-          <Input
+          <Label htmlFor={`${panelId}-note`}>Observation (facultatif)</Label>
+          <Textarea
             id={`${panelId}-note`}
             ref={noteRef}
             name="note"
             maxLength={1000}
+            rows={3}
             autoComplete="off"
             aria-describedby={`${panelId}-keys`}
+            onChange={(e) => {
+              setNoteLength(e.target.value.length);
+              // Le champ s'agrandit avec le texte (remarques longues « Faits / Mon avis / À challenger »).
+              e.currentTarget.style.height = "auto";
+              e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 320)}px`;
+            }}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 e.currentTarget.form?.requestSubmit();
               }
             }}
+            className="resize-y"
           />
           <p id={`${panelId}-keys`} className="text-muted-foreground text-xs">
             Un clic sur une étiquette enregistre.
+            {noteLength >= 800 ? (
+              <span className={noteLength >= 1000 ? "text-destructive ml-2 font-semibold" : "ml-2"}>
+                {noteLength} / 1000 caractères
+              </span>
+            ) : null}
           </p>
         </div>
         <fieldset>
@@ -273,8 +293,8 @@ export function ObservationPanel({
               {[
                 stats[s.id].group,
                 stats[s.id].total
-                  ? `${stats[s.id].total} note${stats[s.id].total > 1 ? "s" : ""}`
-                  : "aucune note",
+                  ? `${stats[s.id].total} observation${stats[s.id].total > 1 ? "s" : ""}`
+                  : "aucune observation",
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -342,7 +362,7 @@ export function ObservationPanel({
         <div role="group" aria-label="Filtrer" className="flex flex-wrap gap-1">
           {[
             { key: "all", label: `Tous · ${students.length}` },
-            { key: "none", label: `Sans note · ${withoutNote}` },
+            { key: "none", label: `Sans observation · ${withoutNote}` },
             ...groupNames.map((g) => ({ key: g, label: g })),
           ].map((f) => (
             <Button

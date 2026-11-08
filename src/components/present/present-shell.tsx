@@ -278,7 +278,7 @@ export function PresentShell({
         <Button asChild variant="ghost" size="touch">
           <Link href={backHref}>
             <X aria-hidden />
-            Quitter<span className="sr-only"> la présentation, retour à {backLabel}</span>
+            Quitter<span className="sr-only"> la présentation, retour {backLabel}</span>
           </Link>
         </Button>
         <h1 className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium">

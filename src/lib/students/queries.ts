@@ -1,3 +1,4 @@
+import { normalize } from "@/lib/search/search";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
@@ -49,12 +50,18 @@ export async function listStudents(filters: StudentListFilters = {}): Promise<St
     );
   } else {
     let query = supabase.from("student").select("*").order("last_name").order("first_name");
-    if (filters.q) {
-      const like = `%${filters.q}%`;
-      query = query.or(`first_name.ilike.${like},last_name.ilike.${like},email.ilike.${like}`);
-    }
     const { data } = await query;
     students = data ?? [];
+  }
+
+  // Recherche sans accents ni casse, dans les deux sens de « Prénom Nom » (« clement » trouve Clément).
+  if (filters.q?.trim()) {
+    const q = normalize(filters.q);
+    students = students.filter((s) =>
+      [`${s.first_name} ${s.last_name}`, `${s.last_name} ${s.first_name}`, s.email ?? ""].some(
+        (t) => normalize(t).includes(q),
+      ),
+    );
   }
 
   const years = await yearsByStudent();

@@ -17,7 +17,12 @@ import { getProfile, listAllSchools, listSchoolRules } from "@/lib/settings/quer
 export const metadata: Metadata = { title: "Réglages" };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
-  const { saved } = await searchParams;
+  const { saved, retour } = await searchParams;
+  // Retour proposé seulement vers une page d'appréciations du module (jamais une adresse libre).
+  const backTo =
+    typeof retour === "string" && /^\/modules\/[0-9a-f-]{36}\/appreciations$/.test(retour)
+      ? retour
+      : null;
   const [profile, schools, rules] = await Promise.all([
     getProfile(),
     listAllSchools(),
@@ -29,6 +34,11 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   return (
     <div className="max-w-6xl space-y-6">
       <div>
+        {backTo ? (
+          <Link href={backTo} className="text-sm underline underline-offset-2">
+            ← Retour aux appréciations
+          </Link>
+        ) : null}
         <h1 className="text-2xl font-semibold">Réglages</h1>
         <p className="text-muted-foreground">
           Ce que tu règles une fois. Chaque changement s’enregistre et te le dit.

@@ -21,7 +21,7 @@ describe("navigation du module", () => {
       "Où j’en suis",
       "Séances",
       "Évaluations",
-      "Étudiant·es",
+      "Étudiant·es et groupes",
       "Documents",
       "Facture",
       "Retour étudiant·es",

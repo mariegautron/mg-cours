@@ -64,7 +64,7 @@ export default async function PresentCoursePage({
     <PresentShell
       title={`${mod.name} — Séance ${position + 1} : ${course.title}`}
       backHref={`/modules/${mod.id}/courses/${courseId}`}
-      backLabel="la séance"
+      backLabel="à la séance"
       sections={sections}
       slides={slides}
       syncChannel={syncChannelName(courseId)}

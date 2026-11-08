@@ -3,6 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
+import { ClassOverview, type OverviewRow } from "@/components/students/class-overview";
+import { appreciationStatus, STATUS_LABELS } from "@/lib/appreciations/appreciation";
+import { listAppreciations } from "@/lib/appreciations/queries";
+import { listModuleObservations } from "@/lib/notebook/queries";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
@@ -14,17 +19,44 @@ export const metadata: Metadata = { title: "Étudiant·es du module" };
 
 export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[id]/groups">) {
   const { id } = await params;
-  const [mod, groups, assessments] = await Promise.all([
+  const [mod, groups, assessments, observations, appreciations, rules] = await Promise.all([
     getModule(id),
     listModuleGroups(id),
     listModuleAssessments(id),
+    listModuleObservations(id),
+    listAppreciations(id),
+    getSchoolRulesForModule(id),
   ]);
   if (!mod) notFound();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
+  const people = [...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values()];
+  const overview: OverviewRow[] = people.map((m) => {
+    const mine = observations.filter((o) => o.student_id === m.id);
+    const count = (...tags: string[]) => mine.filter((o) => tags.includes(o.tag)).length;
+    const status = appreciationStatus(
+      appreciations.byStudent.get(m.id) ?? "",
+      rules.appreciationMax,
+    );
+    return {
+      id: m.id,
+      firstName: m.first_name,
+      lastName: m.last_name,
+      participation: count("participation"),
+      question: count("relevant_question"),
+      difficulty: count("difficulty"),
+      other: count("other", "absent_late"),
+      total: mine.length,
+      appreciation:
+        appreciations.proposals.has(m.id) && status !== "todo"
+          ? "Proposé, à relire"
+          : STATUS_LABELS[status],
+      appreciationTone: status === "written" ? "ok" : status === "too_long" ? "lock" : "warn",
+    };
+  });
   const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       <section aria-labelledby="groups">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 id="groups" className="font-heading text-2xl font-bold">
@@ -85,6 +117,18 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           </ul>
         )}
       </section>
+
+      {overview.length > 0 ? (
+        <section aria-labelledby="overview" className="rounded-lg border p-4">
+          <h2 id="overview" className="mb-2 text-lg font-medium">
+            Vue de classe
+          </h2>
+          <p className="text-muted-foreground mb-2 text-sm">
+            Tes observations privées, par personne. Clique un titre de colonne pour trier.
+          </p>
+          <ClassOverview moduleId={id} rows={overview} />
+        </section>
+      ) : null}
 
       <section aria-labelledby="assessments" className="rounded-lg border p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

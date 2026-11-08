@@ -39,8 +39,9 @@ export function SchoolRulesForm({
   return (
     <form
       onSubmit={keepFormValues(action)}
+      id={id}
       aria-labelledby={`${id}-title`}
-      className="space-y-4 rounded-lg border p-4"
+      className="scroll-mt-20 space-y-4 rounded-lg border p-4"
     >
       <h3 id={`${id}-title`} className="font-medium">
         {schoolName}

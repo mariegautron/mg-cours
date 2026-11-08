@@ -758,7 +758,7 @@ export function PresenterView({
         <section
           aria-labelledby="pv-students"
           data-scroll-panel
-          className="space-y-2 rounded-lg border p-4 lg:min-h-0 lg:overflow-y-auto"
+          className="space-y-2 rounded-lg border p-4 max-lg:order-first max-lg:max-h-[55dvh] max-lg:overflow-y-auto lg:min-h-0 lg:overflow-y-auto"
         >
           <h2 id="pv-students" className="font-medium">
             Étudiant·es

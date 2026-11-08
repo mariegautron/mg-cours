@@ -18,7 +18,7 @@ export default async function PresentFrisePage({
     <PresentShell
       title={`${frise.moduleName} — la frise du module`}
       backHref={`/modules/${id}/frise`}
-      backLabel="la frise du module"
+      backLabel="à la frise du module"
       sections={["Frise"]}
       slides={[
         { section: 0, label: frise.moduleName, node: <FriseProjected frise={frise} large /> },

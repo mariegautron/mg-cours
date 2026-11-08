@@ -104,7 +104,7 @@ export default async function PresentModulePage({ params }: PageProps<"/present/
     <PresentShell
       title={`${mod.name} — présentation du module`}
       backHref={`/modules/${mod.id}`}
-      backLabel="la fiche du module"
+      backLabel="à la fiche du module"
       sections={sections}
       slides={slides}
     />

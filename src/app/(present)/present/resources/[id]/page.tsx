@@ -46,7 +46,7 @@ export default async function PresentResourcePage({
     <PresentShell
       title={resource.title}
       backHref={`/resources/${resource.id}`}
-      backLabel="la ressource"
+      backLabel="à la ressource"
       sections={[resource.title]}
       slides={resourceSlides(0, resource)}
     />
