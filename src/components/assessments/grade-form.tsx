@@ -803,7 +803,8 @@ export function GradeForm({
       ? `en cours (${gp.scored}/${gp.total} critères)`
       : null;
 
-  const totalLine = (
+  // Pas de « Total : 0 / 20 » (ni de reste d'une ancienne note) quand la copie n'a pas de note.
+  const totalLine = totalEmpty ? null : (
     <p className="text-muted-foreground text-sm" aria-live={compact ? "polite" : undefined}>
       Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
       {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}

@@ -124,6 +124,14 @@ export default async function CompareCriterionPage({
                 comment: parseCriterionComments(copy.grade?.criterion_comments)[selected.id] ?? "",
                 absent:
                   copy.kind === "student" && (copy.grade?.attendance ?? "present") !== "present",
+                absence:
+                  copy.kind !== "student"
+                    ? null
+                    : copy.grade?.attendance === "absent_unexcused"
+                      ? "unexcused"
+                      : copy.grade?.attendance === "absent_excused"
+                        ? "excused"
+                        : null,
               };
             })}
           />
