@@ -85,6 +85,7 @@ function BlockView({
   resolveImageSrc,
   size,
   id,
+  tableLabel,
 }: {
   block: Block;
   headingLevel: 2 | 3 | 4;
@@ -92,6 +93,8 @@ function BlockView({
   size: MarkdownSize;
   /** Ancre d'un titre (sommaire). */
   id?: string;
+  /** Titre qui précède un tableau : sert de légende (sinon « Tableau »). */
+  tableLabel?: string;
 }) {
   const present = size === "present";
   switch (block.type) {
@@ -149,11 +152,11 @@ function BlockView({
         <div
           tabIndex={0}
           role="region"
-          aria-label="Tableau"
+          aria-label={tableLabel ?? "Tableau"}
           className="focus-visible:ring-ring overflow-x-auto rounded-md border focus-visible:ring-2 focus-visible:outline-none"
         >
           <table className={present ? "w-full text-xl" : "w-full text-sm"}>
-            <caption className="sr-only">Tableau</caption>
+            <caption className="sr-only">{tableLabel ?? "Tableau"}</caption>
             <thead>
               <tr>
                 {block.header.map((cell, i) => (
@@ -229,16 +232,33 @@ export function Markdown({
         size === "present" ? "space-y-6 text-2xl leading-relaxed" : "space-y-3 leading-relaxed"
       }
     >
-      {(blocks ?? parseMarkdown(source)).map((block, i) => (
-        <BlockView
-          key={i}
-          block={block}
-          headingLevel={headingLevel}
-          resolveImageSrc={resolveImageSrc}
-          size={size}
-          id={anchorPrefix && block.type === "heading" ? `${anchorPrefix}-${i}` : undefined}
-        />
-      ))}
+      {(blocks ?? parseMarkdown(source)).map((block, i, all) => {
+        // Légende d'un tableau : le dernier titre rencontré avant lui.
+        let tableLabel: string | undefined;
+        if (block.type === "table") {
+          for (let k = i - 1; k >= 0; k--) {
+            const prev = all[k];
+            if (prev.type === "heading") {
+              tableLabel = prev.runs
+                .map((r) => ("text" in r ? r.text : " "))
+                .join("")
+                .trim();
+              break;
+            }
+          }
+        }
+        return (
+          <BlockView
+            key={i}
+            block={block}
+            headingLevel={headingLevel}
+            resolveImageSrc={resolveImageSrc}
+            size={size}
+            id={anchorPrefix && block.type === "heading" ? `${anchorPrefix}-${i}` : undefined}
+            tableLabel={tableLabel || undefined}
+          />
+        );
+      })}
     </div>
   );
 }

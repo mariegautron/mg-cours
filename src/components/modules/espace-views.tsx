@@ -442,7 +442,7 @@ export function CoursFicheView({
   };
 
   return (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-10">
+    <div className="flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-10">
       <article aria-labelledby="fiche-titre" className="max-w-3xl min-w-0">
         <p className="mb-2 text-sm">
           <Link href={`${data.base}/cours`} className="underline underline-offset-2">
@@ -523,23 +523,41 @@ export function CoursFicheView({
         </nav>
       </article>
       {toc.length > 1 ? (
-        <nav aria-label="Sommaire de la fiche" className="mt-8 xl:mt-0">
-          <div className="xl:sticky xl:top-6">
-            <p className="mb-2 text-sm font-bold">Dans cette fiche</p>
-            <ul className="space-y-1 text-sm">
-              {toc.map((h) => (
-                <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
-                  <a
-                    href={`#${h.id}`}
-                    className="focus-visible:ring-ring inline-block min-h-6 rounded hover:underline focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    {h.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </nav>
+        <>
+          <nav aria-label="Sommaire de la fiche" className="order-first mb-4 xl:hidden">
+            <details className="bg-card rounded-xl border p-3">
+              <summary className="min-h-6 cursor-pointer text-sm font-bold">
+                Dans cette fiche
+              </summary>
+              <ul className="mt-2 space-y-1 text-sm">
+                {toc.map((h) => (
+                  <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
+                    <a href={`#${h.id}`} className="inline-block min-h-6 hover:underline">
+                      {h.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </nav>
+          <nav aria-label="Sommaire de la fiche" className="hidden xl:block">
+            <div className="xl:sticky xl:top-6">
+              <p className="mb-2 text-sm font-bold">Dans cette fiche</p>
+              <ul className="space-y-1 text-sm">
+                {toc.map((h) => (
+                  <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
+                    <a
+                      href={`#${h.id}`}
+                      className="focus-visible:ring-ring inline-block min-h-6 rounded hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                    >
+                      {h.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+        </>
       ) : null}
     </div>
   );
