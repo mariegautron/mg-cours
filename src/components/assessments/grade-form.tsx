@@ -1222,45 +1222,55 @@ export function GradeForm({
   // Bande « Rendu » (maquette IndCopie) : sur toute la largeur, avant les critères.
   const submissionsCard =
     submissions !== undefined ? (
-      <section
+      <details
         aria-label={`Rendu de ${title}`}
-        className="bg-card space-y-2 rounded-3xl border p-4 text-sm shadow-sm"
+        className="bg-card rounded-3xl border p-3 text-sm shadow-sm"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-heading text-base font-bold">Rendu</h2>
-          {submissions.length === 0 ? <span>{submissionSummary(0)}</span> : null}
-          {submissions.map((l) => (
-            <a
-              key={l.id}
-              href={l.href}
-              className="bg-muted/40 focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-3 font-medium focus-visible:ring-2 focus-visible:outline-none"
-              {...(l.kind === "link"
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : { download: true })}
-            >
-              <span className="sr-only">
-                Ouvrir {l.title} de {title}
-              </span>
-              <span>
-                {l.kind === "link" ? "Lien" : "Fichier"} · {l.title}
-              </span>
-              <span className="text-muted-foreground font-normal">{l.detail}</span>
-            </a>
-          ))}
-          {overviewHref ? (
-            <a
-              href={`${overviewHref.split("#")[0]}#rendus`}
-              className="text-primary inline-flex min-h-11 items-center font-semibold underline-offset-2 hover:underline"
-            >
-              Ajouter un fichier ou un lien (GitHub, Figma…)
-            </a>
-          ) : null}
+        <summary className="min-h-8 cursor-pointer font-bold">
+          Rendu ·{" "}
+          <span className="font-normal">
+            {submissions.length === 0
+              ? "aucun rendu"
+              : `${submissions.length} élément${submissions.length > 1 ? "s" : ""}`}
+          </span>
+        </summary>
+        <div className="space-y-2 pt-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-heading text-base font-bold">Rendu</h2>
+            {submissions.length === 0 ? <span>{submissionSummary(0)}</span> : null}
+            {submissions.map((l) => (
+              <a
+                key={l.id}
+                href={l.href}
+                className="bg-muted/40 focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-3 font-medium focus-visible:ring-2 focus-visible:outline-none"
+                {...(l.kind === "link"
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : { download: true })}
+              >
+                <span className="sr-only">
+                  Ouvrir {l.title} de {title}
+                </span>
+                <span>
+                  {l.kind === "link" ? "Lien" : "Fichier"} · {l.title}
+                </span>
+                <span className="text-muted-foreground font-normal">{l.detail}</span>
+              </a>
+            ))}
+            {overviewHref ? (
+              <a
+                href={`${overviewHref.split("#")[0]}#rendus`}
+                className="text-primary inline-flex min-h-11 items-center font-semibold underline-offset-2 hover:underline"
+              >
+                Ajouter un fichier ou un lien (GitHub, Figma…)
+              </a>
+            ) : null}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Le rendu arrive de la personne (lien personnel) ou de toi : fichiers, ou liens GitHub,
+            Figma ou autre. Rien reçu ? Tu ajoutes ce que tu as.
+          </p>
         </div>
-        <p className="text-muted-foreground text-xs">
-          Le rendu arrive de la personne (lien personnel) ou de toi : fichiers, ou liens GitHub,
-          Figma ou autre. Rien reçu ? Tu ajoutes ce que tu as.
-        </p>
-      </section>
+      </details>
     ) : null;
 
   const observationsCard =
@@ -1562,7 +1572,11 @@ export function GradeForm({
                     </section>
                   ) : step ? (
                     <>
-                      <div role="group" aria-label="Critères" className="flex flex-wrap gap-2">
+                      <div
+                        role="group"
+                        aria-label="Critères"
+                        className="flex gap-2 overflow-x-auto pb-1"
+                      >
                         {ordered.map((c) => {
                           const pill = pointsPill(c);
                           const on = c.id === step.id;
@@ -1572,7 +1586,7 @@ export function GradeForm({
                               type="button"
                               aria-current={on ? "step" : undefined}
                               onClick={() => setStepId(c.id)}
-                              className={`focus-visible:ring-ring flex min-h-11 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
+                              className={`focus-visible:ring-ring flex min-h-11 shrink-0 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
                             >
                               {c.is_bonus ? "Bonus · " : ""}
                               {c.label}

@@ -94,17 +94,28 @@ export function OralTimer({
         ? "text-destructive"
         : "text-foreground";
 
+  const status =
+    view.phase === "warning"
+      ? "Dernière minute"
+      : view.phase === "over"
+        ? "Temps écoulé"
+        : view.phase === "paused"
+          ? "En pause"
+          : view.phase === "idle"
+            ? "Prêt à démarrer"
+            : "En cours";
+
   return (
     <section
       aria-labelledby="oral-timer-title"
       className={cn(
-        // Collé en haut : le chrono reste visible pendant qu'on note ; dernière minute bien visible.
-        "bg-background/95 sticky top-0 z-20 space-y-2 rounded-lg border p-3 backdrop-blur",
+        // Une seule ligne, collée en haut : le chrono reste visible sans cacher la grille.
+        "bg-background/95 sticky top-0 z-20 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border px-3 py-1.5 backdrop-blur",
         view.phase === "warning" && "border-destructive bg-destructive/15 border-2",
         view.phase === "over" && "border-destructive bg-destructive/25 border-2",
       )}
     >
-      <h3 id="oral-timer-title" className="font-medium">
+      <h3 id="oral-timer-title" className="sr-only">
         Chronomètre — {durationMinutes} min
       </h3>
       <p
@@ -112,7 +123,7 @@ export function OralTimer({
         aria-live="off"
         aria-label="Temps restant"
         className={cn(
-          "font-mono text-5xl font-semibold tabular-nums",
+          "font-mono text-3xl leading-none font-semibold tabular-nums",
           tone,
           view.phase === "warning" && "motion-safe:animate-pulse",
         )}
@@ -120,26 +131,32 @@ export function OralTimer({
         {view.label}
       </p>
       <p className="text-sm font-medium">
-        {view.phase === "warning" ? "Dernière minute." : null}
-        {view.phase === "over" ? "Temps écoulé." : null}
-        {view.phase === "paused" ? "En pause." : null}
-        {view.phase === "idle" ? "Prêt à démarrer." : null}
-        {view.phase === "running" ? "En cours." : null}
+        {status}
+        <span className="text-muted-foreground font-normal"> · {durationMinutes} min</span>
       </p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={toggle}>
+      <div className="ml-auto flex gap-2">
+        <Button type="button" size="sm" onClick={toggle}>
           {running ? <Pause aria-hidden /> : <Play aria-hidden />}
           {running ? "Pause" : view.phase === "idle" ? "Démarrer" : "Reprendre"}
         </Button>
-        <Button type="button" variant="outline" onClick={reset} disabled={view.phase === "idle"}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={reset}
+          disabled={view.phase === "idle"}
+          aria-label="Remettre à zéro"
+        >
           <RotateCcw aria-hidden />
-          Remettre à zéro
         </Button>
       </div>
       <div role="status" aria-live="polite" className="sr-only">
         {polite}
       </div>
-      <div role="alert" className="text-destructive text-sm font-medium">
+      <div
+        role="alert"
+        className={alert ? "text-destructive w-full text-sm font-medium" : "sr-only"}
+      >
         {alert}
       </div>
     </section>

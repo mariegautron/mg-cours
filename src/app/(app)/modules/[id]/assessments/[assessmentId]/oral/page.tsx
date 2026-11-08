@@ -108,12 +108,18 @@ export default async function OralPage({
         </p>
       </div>
 
-      <details
-        open={orderedSlots.every((s) => s.status === "waiting")}
-        className="rounded-lg border p-4"
-      >
+      <details open={orderedSlots.length === 0} className="rounded-lg border p-3">
         <summary className="cursor-pointer text-lg font-medium">
           Ordre de passage et créneaux
+          {orderedSlots.length > 0 ? (
+            <span className="text-muted-foreground text-base font-normal">
+              {" "}
+              · {orderedSlots.length} groupe{orderedSlots.length > 1 ? "s" : ""}
+              {orderedSlots[0].start && orderedSlots[orderedSlots.length - 1].end
+                ? ` · ${orderedSlots[0].start}–${orderedSlots[orderedSlots.length - 1].end}`
+                : ""}
+            </span>
+          ) : null}
         </summary>
         <div className="mt-4">
           <OralPlan

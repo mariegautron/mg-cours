@@ -333,6 +333,13 @@ export function GradingSession({
                           e.preventDefault();
                           focusCopy(i.id);
                         }}
+                        title={`${i.title} : ${
+                          done
+                            ? "corrigée"
+                            : partial
+                              ? `en cours (${partial.scored}/${partial.total} critères)`
+                              : "à corriger"
+                        }`}
                         className="underline-offset-2 hover:underline"
                       >
                         {i.title}
