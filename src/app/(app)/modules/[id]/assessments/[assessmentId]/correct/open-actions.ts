@@ -55,7 +55,8 @@ async function ensureReview(supabase: Supabase, attemptId: string): Promise<Revi
     .eq("assessment_id", assessmentId)
     .eq("student_id", attempt.student_id)
     .maybeSingle();
-  const legacy = attempt.review_complete && grade?.value !== null && grade?.value !== undefined;
+  // Toute copie déjà notée s'ouvre verrouillée, même si l'ancienne relecture n'était pas terminée.
+  const legacy = grade?.value !== null && grade?.value !== undefined;
   const manual = obj(attempt.manual_scores);
   const now = new Date().toISOString();
   const questions: Record<string, Json> = {};
@@ -482,15 +483,13 @@ export async function setQuestionCriteria(
     .eq("question_id", questionId);
   if (clearError) return { error: failure("enregistrer le rattachement") };
   if (criterionIds.length > 0) {
-    const { error } = await supabase
-      .from("quiz_question_criterion")
-      .insert(
-        criterionIds.map((criterion_id) => ({
-          quiz_id: quiz.id,
-          question_id: questionId,
-          criterion_id,
-        })),
-      );
+    const { error } = await supabase.from("quiz_question_criterion").insert(
+      criterionIds.map((criterion_id) => ({
+        quiz_id: quiz.id,
+        question_id: questionId,
+        criterion_id,
+      })),
+    );
     if (error) return { error: failure("enregistrer le rattachement") };
   }
   refresh(moduleId, assessmentId);

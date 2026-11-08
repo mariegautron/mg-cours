@@ -148,7 +148,7 @@ export async function loadOpenReviewContext(
         manual,
         review,
         gradeValue: gradeOf.get(r.student_id) ?? null,
-        legacyDone: !review && r.review_complete && (gradeOf.get(r.student_id) ?? null) !== null,
+        legacyDone: !review && (gradeOf.get(r.student_id) ?? null) !== null,
       } satisfies ReviewAttempt;
     })
     .sort((x, y) => x.name.localeCompare(y.name, "fr"));
