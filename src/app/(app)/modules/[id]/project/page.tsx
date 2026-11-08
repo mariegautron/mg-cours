@@ -7,8 +7,6 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ProjectForm } from "@/components/projects/project-form";
 import { SkeletonEditor } from "@/components/projects/skeleton-editor";
 import { ThemeAssignment } from "@/components/projects/theme-assignment";
-import { PhaseList } from "@/components/projects/phase-list";
-import { assessmentForPhase, parsePhases } from "@/lib/projects/phases";
 import { ThemesEditor } from "@/components/projects/themes-editor";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
@@ -66,7 +64,6 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
 
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
   const hasThemes = !!project && project.themes.length > 0;
-  const phases = project ? parsePhases(project.brief_md) : [];
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
@@ -108,35 +105,6 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
 
         {project ? (
           <div className="w-full min-w-0 space-y-5 lg:w-[34rem] lg:flex-none">
-            {phases.length ? (
-              <section aria-labelledby="phases-heading" className={card}>
-                <h2 id="phases-heading" className="font-heading mb-1 text-xl font-bold">
-                  Les phases
-                </h2>
-                <p className="text-muted-foreground mb-2 text-sm">
-                  Chaque phase a son livrable. Tu choisis lesquelles sont notées.
-                </p>
-                <PhaseList
-                  moduleId={mod.id}
-                  phases={phases.map((p) => {
-                    const a = assessmentForPhase(p, project.assessments);
-                    return {
-                      title: p.title,
-                      deliverable: p.deliverable,
-                      assessment: a
-                        ? {
-                            id: a.id,
-                            title: a.title,
-                            graded: a.gradeCount > 0,
-                            gradeCount: a.gradeCount,
-                          }
-                        : null,
-                    };
-                  })}
-                />
-              </section>
-            ) : null}
-
             <section aria-labelledby="project-assessments" className={card}>
               <h2 id="project-assessments" className="font-heading mb-1 text-xl font-bold">
                 Évaluations du projet ({project.assessments.length})
