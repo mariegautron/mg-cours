@@ -13,6 +13,14 @@ import {
 } from "@/lib/assessments/oral-space";
 import { loadOralContext, seedFor } from "@/lib/assessments/oral-space-server";
 import { failure, NOT_FOUND } from "@/lib/messages";
+import { parseCriterionComments } from "@/lib/assessments/feedback";
+import {
+  findNames,
+  hashText,
+  textFields,
+  textState,
+  type TextEntry,
+} from "@/lib/assessments/oral-texts";
 import { saveVersionedField, type SaveFieldResult } from "@/lib/assessments/versioned-save";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
@@ -35,6 +43,8 @@ function readField(space: Space, field: string): string {
   if (name === "person") return str(obj(space.person_notes)[key]);
   if (name === "presence") return str(obj(space.attendance)[key]);
   if (name === "rule") return space.absence_rule;
+  if (name === "text") return str(obj(obj(space.texts)[key]).text);
+  if (name === "pcomment") return str(obj(obj(space.person_comments)[key]).text);
   return "";
 }
 
@@ -59,6 +69,16 @@ function patchFor(space: Space, field: string, value: string): Partial<Space> | 
   if (name === "presence") {
     if (value !== "" && !isAttendance(value)) return { error: "Présence inconnue." };
     return { attendance: withKey(space.attendance, value) };
+  }
+  if (name === "text" || name === "pcomment") {
+    // Texte à valider : modifié à la main, il repasse « à valider » (un texte validé est comparé à son empreinte).
+    const column = name === "text" ? "texts" : "person_comments";
+    const current = obj(space[column]);
+    const cur = obj(current[key]);
+    const state =
+      cur.state === "validated" || cur.state === "to_review" ? cur.state : "to_validate";
+    const next = { ...current, [key]: { ...cur, text: value.slice(0, 5000), state } };
+    return { [column]: next } as Partial<Space>;
   }
   if (name === "rule") {
     if (value !== "group_all" && value !== "legacy") return { error: "Règle inconnue." };
@@ -140,6 +160,8 @@ export async function saveOralField(
 export interface WriteState {
   error?: string;
   written?: boolean;
+  /** Textes non validés, donc non écrits. */
+  missingTexts?: string[];
 }
 
 /**
@@ -190,6 +212,37 @@ export async function writeOralNote(
   const scores = scoresFromLetters(ctx.criteria, letters);
   for (const id of auto) delete scores[id];
 
+  // Textes : seuls les textes validés (et non modifiés depuis) sont écrits ; les autres sont signalés.
+  const textEntries = obj(space.texts);
+  const validText = (fieldId: string, letter?: string): string | null => {
+    const e = obj(textEntries[fieldId]);
+    const entry = {
+      text: str(e.text),
+      state: (e.state as TextEntry["state"]) ?? "to_validate",
+      hash: typeof e.hash === "string" ? e.hash : null,
+      letter: typeof e.letter === "string" ? e.letter : null,
+      sources: [],
+    };
+    return textState(entry, letter) === "validated" ? entry.text : null;
+  };
+  const missingTexts: string[] = [];
+  const newComments: Record<string, string> = {
+    ...parseCriterionComments(ctx.grade?.criterion_comments),
+  };
+  const textPatch: { strengths?: string; progress?: string; feedback?: string } = {};
+  for (const field of textFields(ctx.criteria)) {
+    const letter = field.criterionId ? letters[field.criterionId] : undefined;
+    const text = validText(field.id, letter);
+    if (text === null) {
+      missingTexts.push(field.label);
+      continue;
+    }
+    if (field.criterionId) newComments[field.criterionId] = text;
+    else if (field.kind === "strengths") textPatch.strengths = text;
+    else if (field.kind === "progress") textPatch.progress = text;
+    else textPatch.feedback = text;
+  }
+
   const individual = !ctx.assessment.is_group_grade;
   const studentAttendance: Attendance = individual
     ? (attendance[subjectId] ?? "present")
@@ -202,6 +255,8 @@ export async function writeOralNote(
     value: individual ? (perStudent[subjectId] ?? null) : result.total,
     attendance: studentAttendance,
     scores,
+    criterion_comments: newComments,
+    ...textPatch,
   };
 
   // Photo de l'état précédent : en cas d'échec, on le remet tel quel.
@@ -283,7 +338,7 @@ export async function writeOralNote(
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/oral`);
   revalidatePath(`/modules/${moduleId}`);
-  return { written: true };
+  return { written: true, missingTexts };
 }
 
 /**
@@ -321,4 +376,187 @@ export async function discardOralDraft(
   if (error) return { error: failure("abandonner le brouillon") };
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/oral`);
   return {};
+}
+
+// ── Textes à valider, propositions, répartition des notes ───────────────────
+
+export interface TextActionState {
+  error?: string;
+  ok?: boolean;
+}
+
+/** Prénoms de tous les étudiant·es du module (un texte de groupe n'en contient aucun). */
+async function moduleFirstNames(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  moduleId: string,
+) {
+  const { data } = await supabase
+    .from("group_member")
+    .select("student:student_id(first_name), student_group:student_group_id!inner(module_id)")
+    .eq("student_group.module_id", moduleId);
+  return (data ?? [])
+    .map((r) => (r.student as unknown as { first_name: string } | null)?.first_name)
+    .filter((n): n is string => !!n);
+}
+
+/** Valide un texte : empreinte et lettre mémorisées. Un texte de groupe contenant un prénom du module est refusé. */
+export async function validateOralText(
+  moduleId: string,
+  assessmentId: string,
+  subjectId: string,
+  fieldId: string,
+): Promise<TextActionState> {
+  const supabase = await createClient();
+  const found = await ensureSpace(supabase, assessmentId, subjectId);
+  if (!found) return { error: NOT_FOUND.assessment };
+  const { space, ctx } = found;
+  const isPerson = fieldId.startsWith("pcomment:");
+  const column = isPerson ? "person_comments" : "texts";
+  const key = isPerson ? fieldId.slice("pcomment:".length) : fieldId;
+  const entries = obj(space[column]);
+  const cur = obj(entries[key]);
+  const text = str(cur.text).trim();
+  if (text === "") return { error: "Il n’y a pas de texte à valider." };
+  if (!isPerson && ctx.assessment.is_group_grade) {
+    const hits = findNames(text, await moduleFirstNames(supabase, ctx.assessment.module_id));
+    if (hits.length > 0)
+      return {
+        error: `Un prénom apparaît dans ce texte de groupe (${[...new Set(hits.map((h) => h.name))].join(", ")}) : retire-le avant de valider.`,
+      };
+  }
+  const letter = key.startsWith("crit:") ? str(obj(space.letters)[key.slice(5)]) : null;
+  const next = {
+    ...entries,
+    [key]: { ...cur, text, state: "validated", hash: hashText(text), letter: letter || null },
+  };
+  const { error } = await supabase
+    .from("oral_space")
+    .update(isPerson ? { person_comments: next as Json } : { texts: next as Json })
+    .eq("id", space.id);
+  if (error) return { error: failure("valider le texte") };
+  return { ok: true };
+}
+
+/** Pose une proposition (gabarit) dans un champ. Un texte déjà écrit n'est écrasé qu'avec `overwrite`. */
+export async function applyOralProposal(
+  moduleId: string,
+  assessmentId: string,
+  subjectId: string,
+  fieldId: string,
+  proposal: { text: string; segments: { text: string; source: string }[] },
+  overwrite: boolean,
+): Promise<TextActionState> {
+  const supabase = await createClient();
+  const found = await ensureSpace(supabase, assessmentId, subjectId);
+  if (!found) return { error: NOT_FOUND.assessment };
+  const { space } = found;
+  const entries = obj(space.texts);
+  const cur = obj(entries[fieldId]);
+  if (str(cur.text).trim() !== "" && cur.state !== "proposed" && !overwrite)
+    return { error: "Ce texte est déjà écrit : confirme pour le remplacer." };
+  const next = {
+    ...entries,
+    [fieldId]: {
+      text: proposal.text.slice(0, 5000),
+      state: "proposed",
+      hash: null,
+      letter: null,
+      sources: proposal.segments,
+    },
+  };
+  const { error } = await supabase
+    .from("oral_space")
+    .update({ texts: next as Json })
+    .eq("id", space.id);
+  if (error) return { error: failure("proposer le texte") };
+  return { ok: true };
+}
+
+export interface RoutedLine {
+  key: string;
+  dest: "criterion" | "person" | "notebook" | "nowhere";
+  target?: string;
+  text: string;
+}
+
+export interface RouteResult {
+  error?: string;
+  done: string[];
+  failed: { key: string; reason: string }[];
+}
+
+/**
+ * Répartit les notes cochées. Chaque ligne est traitée seule : si l'une échoue elle est signalée et
+ * les autres restent écrites. La note d'origine reste dans le bloc-notes, marquée « répartie ».
+ */
+export async function routeOralNotes(
+  moduleId: string,
+  assessmentId: string,
+  subjectId: string,
+  lines: RoutedLine[],
+): Promise<RouteResult> {
+  const supabase = await createClient();
+  const found = await ensureSpace(supabase, assessmentId, subjectId);
+  if (!found) return { error: NOT_FOUND.assessment, done: [], failed: [] };
+  const { space, ctx } = found;
+  const texts = { ...obj(space.texts) };
+  const comments = { ...obj(space.person_comments) };
+  const routed = { ...obj(space.routed) };
+  const done: string[] = [];
+  const failed: { key: string; reason: string }[] = [];
+  const append = (entries: Record<string, Json>, key: string, text: string) => {
+    const cur = obj(entries[key]);
+    const old = str(cur.text).trim();
+    entries[key] = {
+      ...cur,
+      text: old ? `${old}\n${text}` : text,
+      state: "to_validate",
+      hash: null,
+      letter: null,
+    };
+  };
+  for (const line of lines) {
+    try {
+      if (line.dest === "criterion") {
+        // Une remarque ne va jamais vers un texte de groupe si elle vise une personne : le client l'a déjà exclu.
+        if (!line.target || !ctx.criteria.some((c) => c.id === line.target))
+          throw new Error("Critère inconnu.");
+        append(texts, `crit:${line.target}`, line.text);
+      } else if (line.dest === "person") {
+        if (!line.target || !ctx.members.some((m) => m.id === line.target))
+          throw new Error("Personne inconnue.");
+        append(comments, line.target, line.text);
+      } else if (line.dest === "notebook") {
+        const note = line.text.slice(0, 5000);
+        const res =
+          line.target && ctx.members.some((m) => m.id === line.target)
+            ? await supabase.from("student_observation").insert({
+                module_id: ctx.assessment.module_id,
+                student_id: line.target,
+                tag: "other",
+                note,
+              })
+            : ctx.assessment.is_group_grade
+              ? await supabase.from("group_observation").insert({
+                  module_id: ctx.assessment.module_id,
+                  student_group_id: subjectId,
+                  tag: "other",
+                  note,
+                })
+              : { error: { message: "Aucune personne visée." } };
+        if (res.error) throw new Error("Le carnet n’a pas pu être écrit.");
+      }
+      routed[line.key] = { dest: line.dest, at: new Date().toISOString() };
+      done.push(line.key);
+    } catch (e) {
+      failed.push({ key: line.key, reason: e instanceof Error ? e.message : "Échec." });
+    }
+  }
+  const { error } = await supabase
+    .from("oral_space")
+    .update({ texts: texts as Json, person_comments: comments as Json, routed: routed as Json })
+    .eq("id", space.id);
+  if (error) return { error: failure("répartir les notes"), done: [], failed };
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/oral`);
+  return { done, failed };
 }
