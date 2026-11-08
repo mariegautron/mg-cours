@@ -7,6 +7,14 @@ import { moduleShareUrl, publicSlidesUrl } from "@/lib/modules/frise";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
+import {
+  getAssessment,
+  getGradesByAssessment,
+  listModuleAssessments,
+} from "@/lib/assessments/queries";
+import { incompleteCopies } from "@/lib/assessments/incomplete";
+import { publishResults } from "@/app/(app)/modules/[id]/assessments/results-links-actions";
+import { listResultLinks } from "@/lib/result-links/queries";
 import { failure, NOT_FOUND } from "@/lib/messages";
 import { generateToken, hashToken } from "@/lib/quiz/token";
 import { createClient } from "@/lib/supabase/server";
@@ -17,6 +25,18 @@ export interface ShareState {
   url?: string;
   revoked?: boolean;
   updated?: boolean;
+  /** Notes poussées dans les espaces avec la mise à jour. */
+  notes?: {
+    published: number;
+    /** Copies incomplètes : non publiées (l'ancienne note éventuelle reste visible tant qu'on ne la retire pas). */
+    incomplete: {
+      assessmentId: string;
+      title: string;
+      copy: string;
+      students: { id: string; name: string }[];
+      hasOldNote: boolean;
+    }[];
+  };
 }
 
 const UNAVAILABLE =
@@ -48,7 +68,46 @@ export async function updateModuleLink(
   if (error) return { error: failure("mettre à jour le lien") };
   if (!data?.length) return { error: "Aucun lien actif : crée-le d’abord." };
   revalidatePath(`/modules/${moduleId}/frise`);
-  return { updated: true };
+  const notes = await publishModuleNotes(moduleId);
+  if ("error" in notes) return { error: notes.error };
+  return { updated: true, notes };
+}
+
+/**
+ * Publie dans les espaces les notes des copies COMPLÈTES de toutes les évaluations du module, et
+ * relève les copies incomplètes (non publiées) pour que Marie le sache au moment du clic.
+ */
+async function publishModuleNotes(
+  moduleId: string,
+): Promise<NonNullable<ShareState["notes"]> | { error: string }> {
+  const out: NonNullable<ShareState["notes"]> = { published: 0, incomplete: [] };
+  const assessments = (await listModuleAssessments(moduleId)).filter((a) => !a.makeup_of_id);
+  for (const a of assessments) {
+    const grades = await getGradesByAssessment(a.id);
+    if (grades.length === 0) continue;
+    const full = await getAssessment(a.id);
+    const copies = incompleteCopies(grades, full?.groups ?? []);
+    if (grades.some((g) => g.value !== null || g.attendance === "absent_excused")) {
+      const res = await publishResults(moduleId, a.id);
+      if (res.error && res.error !== "Aucune note à publier pour l’instant.") {
+        return { error: res.error };
+      }
+      out.published += (res.created?.length ?? 0) + (res.refreshed ?? 0);
+    }
+    if (copies.length > 0) {
+      const links = (await listResultLinks(a.id)).byStudent;
+      for (const c of copies) {
+        out.incomplete.push({
+          assessmentId: a.id,
+          title: a.title,
+          copy: c.name,
+          students: c.students,
+          hasOldNote: c.students.some((s) => links.has(s.id)),
+        });
+      }
+    }
+  }
+  return out;
 }
 
 export async function publishModuleLink(
