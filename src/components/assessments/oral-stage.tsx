@@ -179,6 +179,7 @@ export function OralStage({
                   onNext={goNext}
                   nextLabel={last ? "Terminer l’oral" : "Groupe suivant"}
                   nextPending={pending}
+                  afterOral={slot.status === "done"}
                 />
               </div>
             );

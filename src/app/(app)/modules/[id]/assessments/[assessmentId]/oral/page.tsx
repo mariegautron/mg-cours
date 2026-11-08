@@ -9,6 +9,9 @@ import {
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { OralPlan, type PlanSlot } from "@/components/assessments/oral-plan";
 import { OralStage, type StageSlot } from "@/components/assessments/oral-stage";
+import type { TextMeta } from "@/components/assessments/oral-texts-panel";
+import { groupByOwner } from "@/lib/projects/submission-items";
+import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import type { OralSpaceInit } from "@/components/assessments/oral-space";
 import { memberValues, parseWritten, type OralCriterion } from "@/lib/assessments/oral-space";
 import { seedFor } from "@/lib/assessments/oral-space-server";
@@ -103,6 +106,43 @@ export default async function OralPage({
     .select("*")
     .eq("assessment_id", assessmentId);
   const schoolRule = await getAbsenceRuleForModule(id);
+  // Prénoms du module (un texte de groupe n'en contient aucun) et supports déposés par groupe.
+  const { data: nameRows } = await supabase
+    .from("group_member")
+    .select("student:student_id(first_name), student_group:student_group_id!inner(module_id)")
+    .eq("student_group.module_id", id);
+  const moduleNames = [
+    ...new Set(
+      (nameRows ?? [])
+        .map((r) => (r.student as unknown as { first_name: string } | null)?.first_name)
+        .filter((n): n is string => !!n),
+    ),
+  ];
+  const submissionData = await listSubmissionItems(assessmentId);
+  const supportByGroup = groupByOwner(
+    submissionData.items.map((it) => {
+      const x = it as unknown as { submitted_at?: string | null };
+      return { ...it, submitted_at: x.submitted_at ?? null, submitted_by_name: null };
+    }),
+  );
+  const asTexts = (v: unknown): Record<string, TextMeta> => {
+    if (typeof v !== "object" || v === null || Array.isArray(v)) return {};
+    const out: Record<string, TextMeta> = {};
+    for (const [k, raw] of Object.entries(v as Record<string, unknown>)) {
+      const e = raw as Record<string, unknown>;
+      if (typeof e?.text !== "string") continue;
+      out[k] = {
+        text: e.text,
+        state: (["proposed", "to_validate", "validated", "to_review"].includes(String(e.state))
+          ? e.state
+          : "to_validate") as TextMeta["state"],
+        hash: typeof e.hash === "string" ? e.hash : null,
+        letter: typeof e.letter === "string" ? e.letter : null,
+        sources: Array.isArray(e.sources) ? (e.sources as TextMeta["sources"]) : [],
+      };
+    }
+    return out;
+  };
   const oralCriteria: OralCriterion[] = (assessment.grading_grid?.criteria ?? []).map((c) => ({
     id: c.id,
     label: c.label,
@@ -182,6 +222,12 @@ export default async function OralPage({
           before,
           hasNote: !!grade && grade.value !== null,
           noteAt: row?.written_at ?? (grade && grade.value !== null ? grade.updated_at : null),
+          texts: asTexts(row?.texts),
+          routed: (row?.routed && typeof row.routed === "object" && !Array.isArray(row.routed)
+            ? row.routed
+            : {}) as Record<string, { dest: string; at: string }>,
+          moduleNames,
+          support: supportByGroup.get(group.id) ?? [],
           resultsHref: `/modules/${id}/assessments/${assessmentId}/results`,
         },
       };

@@ -116,6 +116,14 @@ export function useVersionedFields(save: FieldSaver, init: FieldsInit) {
   /** Conflit : garder sa version (écrase la leur, à la demande de Marie). */
   const keepMine = useCallback((field: string) => void send(field, true), [send]);
 
+  /** Remplace la valeur d'un champ par une valeur déjà enregistrée côté serveur (proposition posée, par exemple). */
+  const adopt = useCallback((field: string, value: string) => {
+    latest.current = { ...latest.current, [field]: value };
+    savedRef.current = { ...savedRef.current, [field]: value };
+    setValues(latest.current);
+    setSaved(savedRef.current);
+  }, []);
+
   /** Conflit : prendre l'autre version. */
   const takeTheirs = useCallback((field: string) => {
     const theirs = conflictsRef.current[field] ?? "";
@@ -168,6 +176,7 @@ export function useVersionedFields(save: FieldSaver, init: FieldsInit) {
     conflicts,
     keepMine,
     takeTheirs,
+    adopt,
     flush,
     dirty,
     saving: inflight > 0,

@@ -8,6 +8,14 @@ import {
   discardOralDraft,
   writeOralNote,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/oral/space-actions";
+import {
+  OralRoutePanel,
+  OralTextsPanel,
+  type TextMeta,
+} from "@/components/assessments/oral-texts-panel";
+import { SubmissionItems } from "@/components/assessments/submission-items";
+import type { SubmissionItemLike } from "@/lib/projects/submission-items";
+import { textFields } from "@/lib/assessments/oral-texts";
 import { useOralFields } from "@/components/assessments/use-oral-fields";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +58,12 @@ export interface OralSpaceInit {
   /** Date de la note écrite (écrite par l'espace, sinon dernière modification de la note existante). */
   noteAt: string | null;
   resultsHref: string;
+  texts: Record<string, TextMeta>;
+  routed: Record<string, { dest: string; at: string }>;
+  /** Prénoms de tous les étudiant·es du module (un texte de groupe n'en contient aucun). */
+  moduleNames: string[];
+  /** Support déposé pour ce groupe (PDF). */
+  support: SubmissionItemLike[];
 }
 
 const fmt = (n: number | null) => (n === null ? "—" : formatNumber(n));
@@ -74,6 +88,7 @@ export function OralSpace({
   onNext,
   nextLabel,
   nextPending,
+  afterOral = false,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -89,6 +104,8 @@ export function OralSpace({
   onNext?: () => void;
   nextLabel?: string;
   nextPending?: boolean;
+  /** Le groupe est passé : « Répartir mes notes » est actif. */
+  afterOral?: boolean;
 }) {
   const initial = useMemo(() => {
     const values: Record<string, string> = { pad: init.pad };
@@ -100,6 +117,8 @@ export function OralSpace({
       values[`person:${m.id}`] = init.personNotes[m.id] ?? "";
       values[`presence:${m.id}`] = init.attendance[m.id] ?? (init.fromExisting ? "present" : "");
     }
+    for (const field of textFields(criteria))
+      values[`text:${field.id}`] = init.texts[field.id]?.text ?? "";
     values.rule = init.absenceRule;
     return { values, versions: init.versions };
     // L'état de départ ne sert qu'au premier rendu.
@@ -114,6 +133,11 @@ export function OralSpace({
   const [editing, setEditing] = useState(!init.hasNote);
   const [noteAt, setNoteAt] = useState<string | null>(init.noteAt);
   const readOnly = !editing;
+  const [showTexts, setShowTexts] = useState(false);
+  const [showRoute, setShowRoute] = useState(false);
+  const textsRef = useRef<HTMLDivElement>(null);
+  const routeRef = useRef<HTMLDivElement>(null);
+  const [missingTexts, setMissingTexts] = useState<string[]>([]);
   const recapRef = useRef<HTMLHeadingElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [writeState, setWriteState] = useState<{ error?: string; written?: boolean; at?: string }>(
@@ -206,6 +230,7 @@ export function OralSpace({
           value: result.total,
           per_student: after,
         });
+        setMissingTexts(res.missingTexts ?? []);
         setConfirm(false);
         setNoteAt(new Date().toISOString());
         setEditing(false);
@@ -488,6 +513,52 @@ export function OralSpace({
         >
           {showRecap ? "Masquer le récapitulatif" : "Récapitulatif et note"}
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const open = !showTexts;
+            setShowTexts(open);
+            if (open)
+              setTimeout(() => {
+                const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                textsRef.current?.scrollIntoView({
+                  behavior: reduce ? "auto" : "smooth",
+                  block: "start",
+                });
+                textsRef.current?.querySelector<HTMLElement>("h4")?.focus();
+              }, 0);
+          }}
+        >
+          {showTexts ? "Masquer les textes" : "Textes à valider"}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={!afterOral && progress.state !== "complete"}
+          title={
+            !afterOral && progress.state !== "complete"
+              ? "Actif une fois l’oral passé (ou toutes les lettres posées)."
+              : undefined
+          }
+          onClick={() => {
+            const open = !showRoute;
+            setShowRoute(open);
+            if (open)
+              setTimeout(() => {
+                const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                routeRef.current?.scrollIntoView({
+                  behavior: reduce ? "auto" : "smooth",
+                  block: "start",
+                });
+                routeRef.current?.querySelector<HTMLElement>("h4")?.focus();
+              }, 0);
+          }}
+        >
+          Répartir mes notes
+        </Button>
         {onNext ? (
           <Button
             type="button"
@@ -501,6 +572,71 @@ export function OralSpace({
           </Button>
         ) : null}
       </div>
+
+      {showTexts ? (
+        <div ref={textsRef}>
+          <OralTextsPanel
+            moduleId={moduleId}
+            assessmentId={assessmentId}
+            subjectId={subjectId}
+            isGroup={isGroup}
+            criteria={criteria}
+            letters={letters}
+            fields={f}
+            initialMeta={init.texts}
+            moduleNames={init.moduleNames}
+            members={members}
+            criterionNotes={Object.fromEntries(
+              criteria.map((c) => [c.id, f.values[`note:${c.id}`] ?? ""]),
+            )}
+            pad={f.values.pad ?? ""}
+            readOnly={readOnly}
+          />
+        </div>
+      ) : null}
+
+      {showRoute ? (
+        <div ref={routeRef}>
+          <OralRoutePanel
+            moduleId={moduleId}
+            assessmentId={assessmentId}
+            subjectId={subjectId}
+            criteria={criteria}
+            members={members}
+            criterionNotes={Object.fromEntries(
+              criteria.map((c) => [c.id, f.values[`note:${c.id}`] ?? ""]),
+            )}
+            personNotes={Object.fromEntries(
+              members.map((m) => [m.id, f.values[`person:${m.id}`] ?? ""]),
+            )}
+            pad={f.values.pad ?? ""}
+            routed={init.routed}
+            isGroup={isGroup}
+          />
+        </div>
+      ) : null}
+
+      <details className="bg-card rounded-2xl border p-3">
+        <summary className="min-h-9 cursor-pointer font-semibold">
+          Déposer le support (PDF)
+          {init.support.length > 0
+            ? ` · ${init.support.length} fichier${init.support.length > 1 ? "s" : ""} déposé${init.support.length > 1 ? "s" : ""}`
+            : ""}
+        </summary>
+        <div className="pt-3">
+          <SubmissionItems
+            moduleId={moduleId}
+            assessmentId={assessmentId}
+            rows={[
+              {
+                owner: { kind: isGroup ? "group" : "student", id: subjectId },
+                name: subjectName,
+                items: init.support,
+              },
+            ]}
+          />
+        </div>
+      </details>
 
       {showRecap ? (
         <section
@@ -636,6 +772,11 @@ export function OralSpace({
           {blockedReason ? (
             <p id={`why-${subjectId}`} className="text-sun text-sm">
               {blockedReason}
+            </p>
+          ) : null}
+          {missingTexts.length > 0 && writeState.written ? (
+            <p role="status" className="text-sun text-sm">
+              Textes non validés, donc non écrits : {missingTexts.join(", ")}.
             </p>
           ) : null}
           <div role="status" aria-live="polite" className="text-sm">
