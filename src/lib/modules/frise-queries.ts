@@ -178,3 +178,28 @@ export async function getStudentLinkInfo(
     return empty(false);
   }
 }
+
+export interface StudentSpaceModule {
+  moduleId: string;
+  moduleName: string;
+  /** L'espace du module est publié (sans quoi un lien personnel n'ouvre rien). */
+  published: boolean;
+  row: StudentLinkRow;
+}
+
+/** Espace d'UNE personne dans chacun de ses modules : statut du lien personnel. */
+export async function getStudentSpaces(
+  student: { id: string; first_name: string; last_name: string },
+  modules: { id: string; name: string }[],
+): Promise<StudentSpaceModule[]> {
+  const out: StudentSpaceModule[] = [];
+  for (const m of modules) {
+    const [info, published] = await Promise.all([
+      getStudentLinkInfo(m.id, [student]),
+      isModuleShared(m.id),
+    ]);
+    if (!info.available) continue;
+    out.push({ moduleId: m.id, moduleName: m.name, published, row: info.rows[0] });
+  }
+  return out;
+}

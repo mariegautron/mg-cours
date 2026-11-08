@@ -40,7 +40,7 @@ export function namesOf(names: string[]): string {
   return `${names.slice(0, 3).join(", ")} et ${names.length - 3} autres`;
 }
 
-function Confirm({
+export function Confirm({
   trigger,
   title,
   description,
@@ -78,7 +78,7 @@ function Confirm({
   );
 }
 
-function statusOf(r: StudentLinkRow): string {
+export function statusOf(r: StudentLinkRow): string {
   if (!r.hasLink) return "Pas de lien";
   if (r.firstViewedAt) {
     return `Ouvert le ${frDate(r.firstViewedAt)} (${r.viewCount} vue${r.viewCount > 1 ? "s" : ""})`;
@@ -167,7 +167,7 @@ export function StudentLinksPanel({
       </p>
       <p role="note" className="bg-muted rounded-xl border p-3 text-sm">
         <strong>Un lien ne s’affiche qu’une fois</strong>, à sa création : copie-le tout de suite («
-        Copier le message » est prêt pour Teams). Si quelqu’un le perd, créez-lui un nouveau lien.
+        Copier le message » est prêt pour Teams). Si quelqu’un le perd, crée-lui un nouveau lien.
       </p>
 
       <div className="flex flex-wrap gap-2">

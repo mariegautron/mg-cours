@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 
 import { StudentPhotoManager } from "@/components/students/student-photo-manager";
+import { StudentSpaceCard } from "@/components/students/student-space-card";
+import { getStudentSpaces } from "@/lib/modules/frise-queries";
 import { StudentActions } from "@/components/students/student-actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,14 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
   const missed = absences(gradeLines);
   const promos = promotions(years);
   if (!student) notFound();
+  const spaceModules = [
+    ...new Map(
+      groups.flatMap((g) =>
+        g.module ? [[g.module.id, { id: g.module.id, name: g.module.name }]] : [],
+      ),
+    ).values(),
+  ];
+  const spaces = await getStudentSpaces(student, spaceModules);
 
   const card = "bg-card rounded-xl border p-5";
   const initials = `${student.first_name.charAt(0)}${student.last_name.charAt(0)}`.toUpperCase();
@@ -252,6 +262,13 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
               ))}
             </ul>
           )}
+        </section>
+
+        <section aria-labelledby="space" className={card}>
+          <h2 id="space" className="font-heading mb-2 text-lg font-bold">
+            Espace étudiant·e
+          </h2>
+          <StudentSpaceCard spaces={spaces} />
         </section>
 
         <section aria-labelledby="attendance" className={card}>
