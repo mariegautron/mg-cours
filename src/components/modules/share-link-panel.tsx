@@ -10,6 +10,7 @@ import {
   updateModuleLink,
   type ShareState,
 } from "@/app/(app)/modules/[id]/frise/actions";
+import { revokeResultLink } from "@/app/(app)/modules/[id]/assessments/results-links-actions";
 import { StudentLinksPanel } from "@/components/modules/student-links-panel";
 import type { StudentLinkRow } from "@/lib/modules/frise-queries";
 import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
@@ -260,9 +261,9 @@ export function ShareLinkPanel({
         <p className="text-muted-foreground text-sm">
           Un lien est actif ({active.viewCount} consultation{active.viewCount > 1 ? "s" : ""}),
           publié le {new Date(active.publishedAt).toLocaleDateString("fr-FR")}. « Mettre à jour »
-          garde la même adresse ; « Créer un nouveau lien » fait cesser l’ancien. Les notes n’en
-          dépendent pas : elles arrivent dans l’espace dès que tu publies les résultats d’une
-          évaluation.
+          garde la même adresse ; « Créer un nouveau lien » fait cesser l’ancien. « Mettre à jour
+          les cours publiés » publie aussi les notes des copies complètes ; une copie incomplète
+          n’est jamais publiée.
         </p>
       ) : null}
       {state.url ? (
@@ -307,7 +308,57 @@ export function ShareLinkPanel({
         rows={studentLinks.rows}
       />
       {state.revoked ? <p className="text-sm">Lien dépublié : il n’affiche plus rien.</p> : null}
-      {state.updated ? <p className="text-sm">Lien mis à jour.</p> : null}
+      {state.updated ? (
+        <div role="status" className="space-y-2 text-sm">
+          <p>
+            Espace mis à jour.{" "}
+            {state.notes?.published
+              ? `Notes publiées pour ${state.notes.published} personne${state.notes.published > 1 ? "s" : ""}.`
+              : "Aucune note à publier."}
+          </p>
+          {state.notes?.incomplete.length ? (
+            <ul className="space-y-2">
+              {state.notes.incomplete.map((c) => (
+                <li
+                  key={`${c.assessmentId}-${c.copy}`}
+                  className="bg-muted flex flex-wrap items-center gap-2 rounded-xl border p-3"
+                >
+                  <span>
+                    <strong>{c.title}</strong> : copie incomplète ({c.copy}), non publiée.
+                  </span>
+                  {c.hasOldNote ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={pending}
+                      onClick={() =>
+                        start(async () => {
+                          for (const st of c.students) {
+                            await revokeResultLink(moduleId, c.assessmentId, st.id);
+                          }
+                          setState((prev) => ({
+                            ...prev,
+                            notes: prev.notes && {
+                              ...prev.notes,
+                              incomplete: prev.notes.incomplete.map((x) =>
+                                x === c ? { ...x, hasOldNote: false } : x,
+                              ),
+                            },
+                          }));
+                          router.refresh();
+                        })
+                      }
+                    >
+                      Retirer l’ancienne note
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
       <p role="status" aria-live="polite" className="text-muted-foreground min-h-5 text-sm">
         {note}
       </p>
