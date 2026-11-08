@@ -169,6 +169,25 @@ export async function markAssessmentReady(
   return {};
 }
 
+/** Change l'état du sujet (À construire / Prête / Fournie) : un clic depuis le badge. */
+export async function setAssessmentPrepStatus(
+  moduleId: string,
+  assessmentId: string,
+  status: "to_build" | "ready" | "provided",
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("assessment")
+    .update({ prep_status: status })
+    .eq("id", assessmentId)
+    .eq("module_id", moduleId);
+  if (error) return { error: failure("changer l’état du sujet") };
+  revalidatePath(`/modules/${moduleId}/assessments`);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+  revalidatePath(`/modules/${moduleId}/frise`);
+  return {};
+}
+
 /**
  * Remet à jour l'espace publié en gardant ses réglages actuels (cases cochées, lien du QCM) : sert aux
  * boutons « Rendre visible maintenant ». Sans espace publié, ne fait rien et le dit.

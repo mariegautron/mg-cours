@@ -40,6 +40,7 @@ import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { Pill } from "@/components/dashboard/pill";
+import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Button } from "@/components/ui/button";
 import {
   getAssessment,
@@ -465,10 +466,15 @@ export default async function AssessmentPage({
                         Grille pour les étudiant·es (PDF)
                       </DownloadButton>
                     ) : (
-                      <p className="text-muted-foreground self-center text-sm">
-                        La grille se remet aux étudiant·es une fois le sujet « Prête » ou « Fournie
-                        ».
-                      </p>
+                      <>
+                        <Button type="button" variant="ghost" disabled aria-describedby="pdf-hint">
+                          <FileDown aria-hidden />
+                          Grille pour les étudiant·es (PDF)
+                        </Button>
+                        <p id="pdf-hint" className="text-muted-foreground self-center text-sm">
+                          Passe le sujet en « Prête » pour la remettre aux étudiant·es.
+                        </p>
+                      </>
                     )}
                   </div>
                   {gridGroups.map((g, gi) => (
@@ -568,9 +574,12 @@ export default async function AssessmentPage({
                   ))}
                 </ul>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Pill tone={assessment.prep_status === "to_build" ? "warn" : "ok"}>
-                    {PREP_STATUS_LABELS[assessment.prep_status]}
-                  </Pill>
+                  <SubjectStatusBadge
+                    moduleId={id}
+                    assessmentId={assessmentId}
+                    title={assessment.title}
+                    status={assessment.prep_status}
+                  />
                   <Button asChild variant="ghost">
                     <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
                       Modifier le cadre
@@ -583,11 +592,21 @@ export default async function AssessmentPage({
                         Présenter le sujet
                       </Link>
                     </Button>
-                  ) : null}
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled
+                      aria-describedby="not-ready-hint"
+                    >
+                      <Presentation aria-hidden />
+                      Présenter le sujet
+                    </Button>
+                  )}
                 </div>
                 {canPresent(assessment.prep_status) ? null : (
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    Le sujet se projette une fois « Prête » ou « Fournie ».
+                  <p id="not-ready-hint" className="text-muted-foreground mt-2 text-sm">
+                    Passe le sujet en « Prête » pour le présenter.
                   </p>
                 )}
                 {course ? (
@@ -728,9 +747,12 @@ export default async function AssessmentPage({
                 </p>
               ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Pill tone={assessment.prep_status === "to_build" ? "warn" : "ok"}>
-                  {PREP_STATUS_LABELS[assessment.prep_status]}
-                </Pill>
+                <SubjectStatusBadge
+                  moduleId={id}
+                  assessmentId={assessmentId}
+                  title={assessment.title}
+                  status={assessment.prep_status}
+                />
                 <Button asChild variant="ghost">
                   <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
                     Modifier le cadre
@@ -744,9 +766,20 @@ export default async function AssessmentPage({
                     </Link>
                   </Button>
                 ) : (
-                  <span className="text-muted-foreground text-sm">
-                    Le sujet se projette une fois « Prête » ou « Fournie ».
-                  </span>
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled
+                      aria-describedby="not-ready-hint2"
+                    >
+                      <Presentation aria-hidden />
+                      Présenter le sujet
+                    </Button>
+                    <span id="not-ready-hint2" className="text-muted-foreground text-sm">
+                      Passe le sujet en « Prête » pour le présenter.
+                    </span>
+                  </>
                 )}
               </div>
               <WhereToSubmit

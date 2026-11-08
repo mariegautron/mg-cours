@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
+import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Pill } from "@/components/dashboard/pill";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -228,7 +229,23 @@ export default async function ModuleAssessmentsPage({
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                       {dueSessions.has(a.id) ? "" : ""}
                     </p>
-                    <StatusRow label="Cadre pour les étudiant·es" status={frame} />
+                    <div className="mb-1 text-sm">
+                      <span className="text-muted-foreground">Sujet : </span>
+                      <SubjectStatusBadge
+                        moduleId={id}
+                        assessmentId={a.id}
+                        title={a.title}
+                        status={a.prep_status}
+                      />
+                    </div>
+                    <StatusRow
+                      label="Cadre pour les étudiant·es"
+                      status={
+                        a.prep_status === "to_build" && frame.tone === "ok"
+                          ? { tone: "warn", label: "Rédigé, à passer en Prête" }
+                          : frame
+                      }
+                    />
                     <StatusRow
                       label="Grille de correction"
                       status={gridStatus(a.grading_grid?.name ?? null)}
