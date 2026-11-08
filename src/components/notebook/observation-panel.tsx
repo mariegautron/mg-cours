@@ -14,15 +14,6 @@ import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/not
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
 
-/** Libellés courts des étiquettes (le libellé complet reste en info-bulle et pour les lecteurs d'écran). */
-const SHORT_TAG_LABELS: Record<string, string> = {
-  relevant_question: "Question",
-  participation: "Participation",
-  difficulty: "Difficulté",
-  absent_late: "Absence/retard",
-  other: "Autre",
-};
-
 type Action = (state: NotebookState, formData: FormData) => Promise<NotebookState>;
 
 interface Student {
@@ -104,7 +95,17 @@ export function ObservationPanel({
       closedAfterSave.current = openId;
       // Sans faire défiler la page : seul le panneau des étudiant·es défile pour montrer le formulaire.
       noteRef.current?.focus({ preventScroll: true });
-      noteRef.current?.form?.scrollIntoView({ block: "nearest" });
+      const form = noteRef.current?.form;
+      const panel = form?.closest<HTMLElement>("[data-scroll-panel]");
+      if (form && panel) {
+        // Seul le panneau défile (jamais la page) : on amène le formulaire dans sa zone visible.
+        const f = form.getBoundingClientRect();
+        const p = panel.getBoundingClientRect();
+        if (f.bottom > p.bottom) panel.scrollTop += f.bottom - p.bottom;
+        else if (f.top < p.top) panel.scrollTop -= p.top - f.top;
+      } else {
+        form?.scrollIntoView({ block: "nearest" });
+      }
     } else if (closedAfterSave.current) {
       triggerRefs.current.get(closedAfterSave.current)?.focus();
       closedAfterSave.current = null;
@@ -190,30 +191,32 @@ export function ObservationPanel({
         </div>
         <fieldset>
           <legend className="mb-2 text-sm font-medium">Étiquette pour {name}</legend>
-          <div className="grid grid-cols-2 gap-1.5">
-            {OBSERVATION_TAGS.map((t, i) => (
-              <PendingButton
-                key={t.value}
-                type="submit"
-                name="tag"
-                value={t.value}
-                variant={selectedTag === t.value ? "default" : "secondary"}
-                aria-pressed={selectedTag === t.value}
-                pending={pending && pressedTag === t.value}
-                pendingLabel="Enregistrement…"
-                disabled={pending && pressedTag !== t.value}
-                onClick={() => setPressedTag(t.value)}
-                size="touch"
-                title={t.label}
-                aria-label={t.label}
-                className="justify-start px-2"
-              >
-                <kbd aria-hidden className="mr-1 shrink-0 text-xs opacity-70">
-                  {i + 1}
-                </kbd>
-                {SHORT_TAG_LABELS[t.value] ?? t.label}
-              </PendingButton>
-            ))}
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-1.5 @md:grid-cols-2">
+              {OBSERVATION_TAGS.map((t, i) => (
+                <PendingButton
+                  key={t.value}
+                  type="submit"
+                  name="tag"
+                  value={t.value}
+                  variant={selectedTag === t.value ? "default" : "secondary"}
+                  aria-pressed={selectedTag === t.value}
+                  pending={pending && pressedTag === t.value}
+                  pendingLabel="Enregistrement…"
+                  disabled={pending && pressedTag !== t.value}
+                  onClick={() => setPressedTag(t.value)}
+                  size="touch"
+                  title={t.label}
+                  aria-label={t.label}
+                  className="justify-start px-2"
+                >
+                  <kbd aria-hidden className="mr-1 shrink-0 text-xs opacity-70">
+                    {i + 1}
+                  </kbd>
+                  {t.label}
+                </PendingButton>
+              ))}
+            </div>
           </div>
         </fieldset>
         <Button type="button" variant="ghost" size="touch" onClick={close}>
