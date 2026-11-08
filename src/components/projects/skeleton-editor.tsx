@@ -75,8 +75,11 @@ export function SkeletonEditor({
       ) : (
         <ul className="space-y-3">
           {rows.map((row, i) => (
-            <li key={row.key} className="grid gap-3 rounded-md border p-3 sm:grid-cols-12">
-              <div className="space-y-1 sm:col-span-5">
+            <li
+              key={row.key}
+              className="grid min-w-0 gap-3 rounded-md border p-3 sm:grid-cols-2 2xl:grid-cols-12"
+            >
+              <div className="min-w-0 space-y-1 2xl:col-span-5">
                 <Label htmlFor={`title-${row.key}`}>Titre de l’évaluation {i + 1}</Label>
                 <Input
                   id={`title-${row.key}`}
@@ -84,7 +87,7 @@ export function SkeletonEditor({
                   onChange={(e) => update(row.key, { title: e.target.value })}
                 />
               </div>
-              <div className="space-y-1 sm:col-span-3">
+              <div className="min-w-0 space-y-1 2xl:col-span-3">
                 <Label htmlFor={`role-${row.key}`}>Rôle</Label>
                 <select
                   id={`role-${row.key}`}
@@ -106,7 +109,7 @@ export function SkeletonEditor({
                   ))}
                 </select>
               </div>
-              <div className="space-y-1 sm:col-span-2">
+              <div className="min-w-0 space-y-1 2xl:col-span-2">
                 <Label htmlFor={`date-${row.key}`}>Date</Label>
                 <Input
                   id={`date-${row.key}`}
@@ -115,12 +118,12 @@ export function SkeletonEditor({
                   onChange={(e) => update(row.key, { date: e.target.value })}
                 />
               </div>
-              <div className="flex items-end justify-between gap-2 sm:col-span-2">
+              <div className="flex min-w-0 items-end justify-between gap-2 2xl:col-span-2">
                 <div className="space-y-1">
                   <Label htmlFor={`kind-${row.key}`}>Note</Label>
                   <select
                     id={`kind-${row.key}`}
-                    className={SELECT_CLASS}
+                    className={`${SELECT_CLASS} w-full min-w-0`}
                     value={row.isGroupGrade ? "group" : "individual"}
                     onChange={(e) => update(row.key, { isGroupGrade: e.target.value === "group" })}
                   >

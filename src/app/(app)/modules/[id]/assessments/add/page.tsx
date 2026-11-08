@@ -149,6 +149,19 @@ export default async function AddAssessmentPage({
               Ajouter une évaluation
             </h2>
             <div className="flex flex-col gap-2.5">
+              <section aria-labelledby="create" className="bg-muted/40 rounded-2xl border p-4">
+                <h3 id="create" className="text-lg font-bold">
+                  En créer une nouvelle
+                </h3>
+                <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
+                  Sujet, grille, groupes, date : le formulaire complet.
+                </p>
+                <Button asChild>
+                  <Link href={`/modules/${id}/assessments/new${jalon ? "?jalon=1" : ""}`}>
+                    Créer une évaluation
+                  </Link>
+                </Button>
+              </section>
               {otherAssessments.length > 0 ? (
                 <section
                   aria-labelledby="from-module"
@@ -223,20 +236,6 @@ export default async function AddAssessmentPage({
                     ))}
                   </ul>
                 )}
-              </section>
-
-              <section aria-labelledby="create" className="bg-muted/40 rounded-2xl border p-4">
-                <h3 id="create" className="text-lg font-bold">
-                  En créer une nouvelle
-                </h3>
-                <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
-                  Sujet, grille, groupes, date : le formulaire complet.
-                </p>
-                <Button asChild>
-                  <Link href={`/modules/${id}/assessments/new${jalon ? "?jalon=1" : ""}`}>
-                    Créer une évaluation
-                  </Link>
-                </Button>
               </section>
 
               <section aria-labelledby="school" className="bg-muted/40 rounded-2xl border p-4">
