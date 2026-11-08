@@ -5,6 +5,7 @@ import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/note
 import { PreviousRecap } from "@/components/present/previous-recap";
 import { ObservationPanel } from "@/components/notebook/observation-panel";
 import { notebookStudents } from "@/lib/notebook/notebook";
+import { listCourseObservations } from "@/lib/notebook/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { listResources } from "@/lib/resources/queries";
 import { buildCourseDeck } from "@/components/present/course-deck";
@@ -100,6 +101,7 @@ export default async function PresenterPage({
       content: r.content,
     }));
 
+  const recent = await listCourseObservations(courseId);
   const students = notebookStudents(groups).map(({ id, first_name, last_name, photo_path }) => ({
     id,
     first_name,
@@ -151,6 +153,7 @@ export default async function PresenterPage({
         <ObservationPanel
           action={addObservation.bind(null, mod.id, courseId)}
           students={students}
+          recent={recent}
         />
       }
     />

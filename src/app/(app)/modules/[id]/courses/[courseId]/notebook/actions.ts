@@ -17,6 +17,8 @@ export interface NotebookState {
   message?: string;
   /** Change à chaque enregistrement réussi (réinitialise le formulaire côté client). */
   savedAt?: number;
+  /** Observation qui vient d'être créée (pour « Annuler »). */
+  observationId?: string;
 }
 
 function refresh(moduleId: string, courseId: string) {
@@ -63,21 +65,67 @@ export async function addObservation(
   )?.student;
   if (!student) return { error: "Cet·te étudiant·e n’appartient à aucun groupe du module." };
 
-  const { error } = await supabase.from("student_observation").insert({
-    module_id: moduleId,
-    course_id: courseId,
-    student_id: studentId,
-    tag,
-    note,
-  });
-  if (error) return { error: failure("enregistrer") };
+  const { data: created, error } = await supabase
+    .from("student_observation")
+    .insert({
+      module_id: moduleId,
+      course_id: courseId,
+      student_id: studentId,
+      tag,
+      note,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { error: failure("enregistrer") };
 
   refresh(moduleId, courseId);
   revalidatePath(`/students/${studentId}`);
   return {
     message: observationAddedMessage(`${student.first_name} ${student.last_name}`, tag),
     savedAt: Date.now(),
+    observationId: created.id,
   };
+}
+
+/** Corrige une observation : personne, étiquette, texte. */
+export async function updateObservation(
+  observationId: string,
+  _prev: NotebookState,
+  formData: FormData,
+): Promise<NotebookState> {
+  const parsed = readObservationForm(formData);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Saisie invalide." };
+  const { studentId, tag, note } = parsed.data;
+  const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("student_observation")
+    .select("student_id, module_id, course_id")
+    .eq("id", observationId)
+    .maybeSingle();
+  if (!before) return { error: "Cette observation n’existe plus." };
+  const { error } = await supabase
+    .from("student_observation")
+    .update({ student_id: studentId, tag, note })
+    .eq("id", observationId);
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  if (before.course_id) refresh(before.module_id, before.course_id);
+  revalidatePath(`/students/${before.student_id}`);
+  revalidatePath(`/students/${studentId}`);
+  return { message: "Observation corrigée.", savedAt: Date.now() };
+}
+
+/** Supprime une observation depuis la fiche étudiant·e ou la vue privée (annulation comprise). */
+export async function deleteObservationById(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("student_observation")
+    .delete()
+    .eq("id", id)
+    .select("student_id, module_id, course_id")
+    .maybeSingle();
+  if (!data) return;
+  if (data.course_id) refresh(data.module_id, data.course_id);
+  revalidatePath(`/students/${data.student_id}`);
 }
 
 export async function deleteObservation(moduleId: string, courseId: string, id: string) {

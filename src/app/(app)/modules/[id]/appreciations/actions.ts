@@ -1,8 +1,7 @@
 "use server";
 
-import { cleanAppreciation, validateLength } from "@/lib/appreciations/appreciation";
+import { cleanAppreciation } from "@/lib/appreciations/appreciation";
 import { failure } from "@/lib/messages";
-import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AppreciationState {
@@ -12,7 +11,7 @@ export interface AppreciationState {
 
 /**
  * Enregistre (ou efface) l'appréciation d'un·e étudiant·e pour un module (US-149a). Texte écrit à
- * la main : rien n'est généré. La longueur maximale est celle de l'école du module.
+ * la main : rien n'est généré. Le brouillon est toujours enregistré, même trop long : seule la copie vers Hyperplanning est bloquée.
  */
 export async function saveAppreciation(
   moduleId: string,
@@ -20,9 +19,6 @@ export async function saveAppreciation(
   text: string,
 ): Promise<AppreciationState> {
   const cleaned = cleanAppreciation(text);
-  const { appreciationMax } = await getSchoolRulesForModule(moduleId);
-  const check = validateLength(cleaned, appreciationMax);
-  if (!check.ok) return { error: check.message };
 
   const supabase = await createClient();
   if (cleaned === "") {

@@ -3,16 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyeOff, Play } from "lucide-react";
 
-import {
-  addObservation,
-  deleteObservation,
-} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
-import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import { ObservationItem } from "@/components/notebook/observation-item";
 import { ObservationPanel } from "@/components/notebook/observation-panel";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
-import { notebookStudents, OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { notebookStudents } from "@/lib/notebook/notebook";
 import { listCourseObservations } from "@/lib/notebook/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
@@ -124,25 +120,19 @@ export default async function CourseNotebookPage({
             {observations.map((o) => {
               const name = o.student ? `${o.student.first_name} ${o.student.last_name}` : "—";
               return (
-                <li
-                  key={o.id}
-                  className="flex items-start justify-between gap-2 rounded-lg border p-2"
-                >
-                  <div>
-                    <p className="flex flex-wrap items-center gap-2">
-                      <span className="text-muted-foreground">{time(o.created_at)}</span>
-                      <span className="font-medium">{name}</span>
-                      <Badge variant="outline">{OBSERVATION_TAG_LABELS[o.tag]}</Badge>
-                    </p>
-                    {o.note ? <p className="mt-1 whitespace-pre-wrap">{o.note}</p> : null}
-                  </div>
-                  <ConfirmDeleteButton
-                    iconOnly
-                    touch
-                    itemName={`l’observation sur ${name} (${time(o.created_at)})`}
-                    title="Supprimer cette observation ?"
-                    description="Elle disparaîtra aussi du journal de la fiche étudiant·e."
-                    onConfirm={deleteObservation.bind(null, id, courseId, o.id)}
+                <li key={o.id} className="rounded-lg border p-2">
+                  <ObservationItem
+                    id={o.id}
+                    studentId={o.student?.id ?? ""}
+                    tag={o.tag}
+                    note={o.note}
+                    students={students}
+                    heading={
+                      <>
+                        <span className="text-muted-foreground">{time(o.created_at)}</span>
+                        <span className="font-medium">{name}</span>
+                      </>
+                    }
                   />
                 </li>
               );

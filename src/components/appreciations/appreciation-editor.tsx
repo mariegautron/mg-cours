@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
 import { saveAppreciation } from "@/app/(app)/modules/[id]/appreciations/actions";
@@ -46,9 +46,31 @@ export function AppreciationEditor({
   const [error, setError] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const status = appreciationStatus(text, max);
+  const [saving, setSaving] = useState(false);
+  const pending = saving || text.trim() !== saved;
+
+  // Prévient avant de quitter, recharger ou fermer tant que quelque chose n'est pas enregistré.
+  useEffect(() => {
+    if (!pending) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [pending]);
 
   async function save(value: string) {
-    const result = await saveAppreciation(moduleId, studentId, value);
+    setSaving(true);
+    let result: Awaited<ReturnType<typeof saveAppreciation>>;
+    try {
+      result = await saveAppreciation(moduleId, studentId, value);
+    } catch {
+      setSaving(false);
+      setError("L’enregistrement a échoué : ton texte est encore là, réessaie.");
+      return;
+    }
+    setSaving(false);
     if (result.error) {
       setError(result.error);
       return;
@@ -123,13 +145,18 @@ export function AppreciationEditor({
           <Button
             type="button"
             size="touch"
-            disabled={text.trim() === ""}
+            disabled={text.trim() === "" || status === "too_long"}
             onClick={() => void copy()}
           >
             <Copy aria-hidden />
             Copier pour Hyperplanning
             <span className="sr-only"> : l’appréciation de {name}</span>
           </Button>
+          {status === "too_long" ? (
+            <p role="status" className="text-destructive self-center text-sm">
+              Trop longue pour Hyperplanning : raccourcis avant de copier. Le brouillon est gardé.
+            </p>
+          ) : null}
           <Button asChild variant="ghost" size="touch">
             <Link href={backHref}>← Toutes les appréciations</Link>
           </Button>

@@ -4,12 +4,17 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 
 import { ActionError } from "@/components/action-error";
-import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import {
+  deleteObservationById,
+  type NotebookState,
+} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ObservationItem } from "@/components/notebook/observation-item";
+import type { CourseObservation } from "@/lib/notebook/queries";
 import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/notebook/live";
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
@@ -42,12 +47,15 @@ export function ObservationPanel({
   students,
   stats,
   defaultView = "list",
+  recent,
 }: {
   action: Action;
   students: Student[];
   /** Notes et groupe de chaque étudiant·e : active les filtres et les compteurs du trombinoscope. */
   stats?: Record<string, StudentStat>;
   defaultView?: "list" | "grid";
+  /** Observations déjà prises pendant cette séance (liste repliable, avec correction). */
+  recent?: CourseObservation[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [query, setQuery] = useState("");
@@ -59,6 +67,7 @@ export function ObservationPanel({
   const [pressedTag, setPressedTag] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<number | undefined>(undefined);
   const [toastOn, setToastOn] = useState(false);
+  const [undone, setUndone] = useState<string | null>(null);
   const noteRef = useRef<HTMLInputElement>(null);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const filterId = useId();
@@ -86,7 +95,7 @@ export function ObservationPanel({
   }
   useEffect(() => {
     if (!toastOn) return;
-    const timer = window.setTimeout(() => setToastOn(false), 4000);
+    const timer = window.setTimeout(() => setToastOn(false), 8000);
     return () => window.clearTimeout(timer);
   }, [toastOn, lastSaved]);
   const closedAfterSave = useRef<string | null>(null);
@@ -347,16 +356,32 @@ export function ObservationPanel({
       </p>
 
       {/* Confirmation en surimpression : elle ne décale jamais la liste sous le curseur. */}
-      <p
-        role="status"
+      <div
         className={
           state.message && toastOn
-            ? "bg-card fixed right-4 bottom-4 z-50 max-w-sm rounded-xl border px-4 py-3 text-sm font-medium shadow-lg"
+            ? "bg-card fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-lg"
             : "sr-only"
         }
       >
-        {state.message ?? ""}
-      </p>
+        <p role="status">
+          {undone === state.observationId ? "Observation annulée." : (state.message ?? "")}
+        </p>
+        {state.message && toastOn && state.observationId && undone !== state.observationId ? (
+          <Button
+            type="button"
+            size="touch"
+            variant="outline"
+            onClick={async () => {
+              const id = state.observationId;
+              if (!id) return;
+              await deleteObservationById(id);
+              setUndone(id);
+            }}
+          >
+            Annuler
+          </Button>
+        ) : null}
+      </div>
       {state.error ? <ActionError error={state.error} /> : null}
 
       {students.length === 0 ? (
@@ -388,6 +413,35 @@ export function ObservationPanel({
           ) : null}
         </>
       )}
+      {recent ? (
+        <details className="rounded-lg border">
+          <summary className="min-h-11 cursor-pointer px-3 py-2 text-sm font-medium">
+            Notées pendant cette séance ({recent.length})
+          </summary>
+          {recent.length === 0 ? (
+            <p className="text-muted-foreground px-3 pb-3 text-sm">Rien pour l’instant.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {recent.map((o) => (
+                <li key={o.id} className="p-3">
+                  <ObservationItem
+                    id={o.id}
+                    studentId={o.student?.id ?? ""}
+                    tag={o.tag}
+                    note={o.note}
+                    students={students}
+                    heading={
+                      <span className="font-medium">
+                        {o.student ? `${o.student.first_name} ${o.student.last_name}` : "—"}
+                      </span>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
+      ) : null}
     </div>
   );
 }

@@ -9,9 +9,8 @@ import { StudentSpaceCard } from "@/components/students/student-space-card";
 import { getStudentSpaces } from "@/lib/modules/frise-queries";
 import { StudentActions } from "@/components/students/student-actions";
 import { Pill } from "@/components/dashboard/pill";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { OBSERVATION_TAG_LABELS } from "@/lib/notebook/notebook";
+import { ObservationItem } from "@/components/notebook/observation-item";
 import { listStudentObservations } from "@/lib/notebook/queries";
 import {
   listStudentAppreciations,
@@ -213,21 +212,27 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
             <ol className="divide-y text-sm">
               {observations.map((o) => (
                 <li key={o.id} className="py-2">
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <time dateTime={o.created_at} className="font-semibold">
-                      {new Date(o.created_at).toLocaleString("fr-FR", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                        timeZone: "Europe/Paris",
-                      })}
-                    </time>
-                    <span className="text-muted-foreground">
-                      {[o.module?.name, o.course?.title].filter(Boolean).join(" · ") ||
-                        "Séance supprimée"}
-                    </span>
-                    <Badge variant="outline">{OBSERVATION_TAG_LABELS[o.tag]}</Badge>
-                  </p>
-                  {o.note ? <p className="mt-1 whitespace-pre-wrap">{o.note}</p> : null}
+                  <ObservationItem
+                    id={o.id}
+                    studentId={id}
+                    tag={o.tag}
+                    note={o.note}
+                    heading={
+                      <>
+                        <time dateTime={o.created_at} className="font-semibold">
+                          {new Date(o.created_at).toLocaleString("fr-FR", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                            timeZone: "Europe/Paris",
+                          })}
+                        </time>
+                        <span className="text-muted-foreground">
+                          {[o.module?.name, o.course?.title].filter(Boolean).join(" · ") ||
+                            "Séance supprimée"}
+                        </span>
+                      </>
+                    }
+                  />
                 </li>
               ))}
             </ol>
