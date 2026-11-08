@@ -47,6 +47,11 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
             </Link>
           </Button>
           <Button asChild variant="outline">
+            <Link href={`/modules/${id}/apercu`} target="_blank" rel="noopener">
+              Voir comme un·e étudiant·e
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href={`/modules/${id}/planning`}>Voir le planning</Link>
           </Button>
           <Button asChild variant="ghost">

@@ -145,9 +145,12 @@ export function ThemesEditor({
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" variant="ghost" asChild>
-                  <Link href={`/modules/${moduleId}/frise`}>
+                  <Link href={`/modules/${moduleId}/apercu`} target="_blank" rel="noopener">
                     Voir ce que voient les étudiant·es
                   </Link>
+                </Button>
+                <Button type="button" variant="ghost" asChild>
+                  <Link href={`/modules/${moduleId}/frise`}>Page de publication</Link>
                 </Button>
                 <Button
                   type="button"

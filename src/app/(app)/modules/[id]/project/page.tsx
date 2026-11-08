@@ -89,7 +89,9 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
           ) : null}
           {project ? (
             <Button asChild variant="outline">
-              <Link href={`/modules/${mod.id}/frise`}>Voir ce que voient les étudiant·es</Link>
+              <Link href={`/modules/${mod.id}/apercu`} target="_blank" rel="noopener">
+                Voir ce que voient les étudiant·es
+              </Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost">
