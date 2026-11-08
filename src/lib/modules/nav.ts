@@ -46,7 +46,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   build: { key: "sessions", label: "Construire les séances" },
   assessments: { key: "assessments", label: "Évaluations" },
   project: { key: "assessments", label: "Projet fil rouge" },
-  groups: { key: "students", label: "Groupes" },
+  groups: { key: "students", label: "Étudiant·es" },
   rattrapages: { key: "assessments", label: "Rattrapages" },
   appreciations: { key: "students", label: "Appréciations" },
   billing: { key: "invoice", label: "Facture" },

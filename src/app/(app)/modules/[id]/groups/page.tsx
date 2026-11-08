@@ -28,7 +28,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       <section aria-labelledby="groups">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 id="groups" className="font-heading text-2xl font-bold">
-            Groupes ({groups.length})
+            Étudiant·es · {groups.length} groupe{groups.length > 1 ? "s" : ""}
           </h1>
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">

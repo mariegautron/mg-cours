@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Confirm } from "@/components/modules/student-links-panel";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Pill } from "@/components/dashboard/pill";
 import { allLinksText, viewStatus, type ViewInfo } from "@/lib/result-links/sheet";
@@ -148,7 +149,12 @@ export function PublishResults({
               <AlertDialogAction
                 onClick={() =>
                   start(async () =>
-                    apply(await publishResults(moduleId, assessmentId), "Résultats publiés."),
+                    apply(
+                      await publishResults(moduleId, assessmentId),
+                      withSpace > 0
+                        ? `Résultats publiés. Visible dans l’espace de ${withSpace} étudiant·e${withSpace > 1 ? "s" : ""}.`
+                        : "Résultats publiés.",
+                    ),
                   )
                 }
               >
@@ -229,12 +235,18 @@ export function PublishResults({
               ) : null}
               {s.link ? (
                 <>
-                  <Button
-                    type="button"
-                    size="touch"
+                  <Confirm
                     variant="ghost"
+                    trigger={
+                      <>
+                        Régénérer<span className="sr-only"> le lien de {s.name}</span>
+                      </>
+                    }
+                    title={`Régénérer le lien de ${s.name} ?`}
+                    description={`L’ancien lien de ${s.name} cessera de fonctionner. Le nouveau ne s’affichera qu’une fois : copie-le tout de suite.`}
+                    action="Régénérer"
                     disabled={pending}
-                    onClick={() =>
+                    onConfirm={() =>
                       start(async () =>
                         apply(
                           await regenerateResultLink(moduleId, assessmentId, s.id),
@@ -242,15 +254,19 @@ export function PublishResults({
                         ),
                       )
                     }
-                  >
-                    Régénérer<span className="sr-only"> le lien de {s.name}</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    size="touch"
+                  />
+                  <Confirm
                     variant="ghost"
+                    trigger={
+                      <>
+                        Révoquer<span className="sr-only"> le lien de {s.name}</span>
+                      </>
+                    }
+                    title={`Révoquer le lien de ${s.name} ?`}
+                    description={`Le lien de résultats de ${s.name} cessera de fonctionner.`}
+                    action="Révoquer"
                     disabled={pending}
-                    onClick={() =>
+                    onConfirm={() =>
                       start(async () =>
                         apply(
                           await revokeResultLink(moduleId, assessmentId, s.id),
@@ -258,9 +274,7 @@ export function PublishResults({
                         ),
                       )
                     }
-                  >
-                    Révoquer<span className="sr-only"> le lien de {s.name}</span>
-                  </Button>
+                  />
                 </>
               ) : null}
             </div>

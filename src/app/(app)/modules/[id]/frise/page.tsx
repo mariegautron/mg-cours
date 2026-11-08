@@ -58,6 +58,37 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
         </div>
       </div>
 
+      <p
+        role="status"
+        className="bg-card flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border px-4 py-3 text-sm"
+      >
+        {share.active ? (
+          <>
+            <strong>
+              Publié le {new Date(share.active.publishedAt).toLocaleDateString("fr-FR")}
+            </strong>
+            <span>
+              {studentLinks.active} lien{studentLinks.active > 1 ? "s" : ""} actif
+              {studentLinks.active > 1 ? "s" : ""}
+            </span>
+            {share.active.stale ? (
+              <a href="#share" className="font-semibold underline underline-offset-2">
+                Mettre à jour les cours publiés
+              </a>
+            ) : (
+              <span className="text-muted-foreground">À jour</span>
+            )}
+          </>
+        ) : (
+          <>
+            <strong>Pas encore publié</strong>
+            <a href="#share" className="font-semibold underline underline-offset-2">
+              Publier pour les étudiant·es
+            </a>
+          </>
+        )}
+      </p>
+
       <section aria-label="Aperçu de la frise projetée" className={card}>
         <FriseProjected frise={frise} embedded />
       </section>

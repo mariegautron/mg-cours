@@ -62,6 +62,7 @@ export function ShareLinkPanel({
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
+  const [showUrl, setShowUrl] = useState(false);
   const [pending, start] = useTransition();
 
   function run(fn: () => Promise<ShareState>) {
@@ -177,7 +178,7 @@ export function ShareLinkPanel({
                   run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
                 }
               >
-                Mettre à jour
+                Mettre à jour les cours publiés
               </Button>
             </p>
           ) : null}
@@ -191,7 +192,7 @@ export function ShareLinkPanel({
                   run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
                 }
               >
-                Mettre à jour
+                Mettre à jour les cours publiés
               </Button>
             ) : (
               <Button
@@ -236,7 +237,9 @@ export function ShareLinkPanel({
         <p className="text-muted-foreground text-sm">
           Un lien est actif ({active.viewCount} consultation{active.viewCount > 1 ? "s" : ""}),
           publié le {new Date(active.publishedAt).toLocaleDateString("fr-FR")}. « Mettre à jour »
-          garde la même adresse ; « Créer un nouveau lien » fait cesser l’ancien.
+          garde la même adresse ; « Créer un nouveau lien » fait cesser l’ancien. Les notes n’en
+          dépendent pas : elles arrivent dans l’espace dès que tu publies les résultats d’une
+          évaluation.
         </p>
       ) : null}
       {state.url ? (
@@ -248,10 +251,20 @@ export function ShareLinkPanel({
             <input
               id="share-url"
               readOnly
+              type={showUrl ? "text" : "password"}
               value={state.url}
               className="bg-background min-w-0 flex-1 rounded-md border px-2 py-1 text-sm"
               onFocus={(e) => e.currentTarget.select()}
             />
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              aria-pressed={showUrl}
+              onClick={() => setShowUrl((v) => !v)}
+            >
+              {showUrl ? "Masquer" : "Afficher"}
+            </Button>
             <Button
               type="button"
               size="sm"

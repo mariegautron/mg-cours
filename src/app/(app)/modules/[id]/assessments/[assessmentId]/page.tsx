@@ -1,5 +1,6 @@
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
+import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
 import { listResultLinks } from "@/lib/result-links/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -260,6 +261,14 @@ export default async function AssessmentPage({
 
   // Toutes les copies commencées ont une note : l'envoi des résultats passe en haut de la page.
   const readyToSend = hasGrades && incompleteCopies(grades, assessment.groups).length === 0;
+  // Notes qui n'arriveront pas dans un espace : la personne n'a pas (ou plus) de lien d'espace actif.
+  const spaceIds = hasGrades ? await activeSpaceStudentIds(id) : new Set<string>();
+  const noSpace = hasGrades
+    ? targets
+        .flatMap(({ students }) => students)
+        .filter((st) => !spaceIds.has(st.id))
+        .map((st) => `${st.first_name} ${st.last_name}`)
+    : [];
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
@@ -359,6 +368,22 @@ export default async function AssessmentPage({
       {assessment.is_group_grade ? (
         <>
           <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+            {hasGrades && noSpace.length > 0 ? (
+              <p role="status" className="bg-muted rounded-xl border p-4 text-sm">
+                <strong>
+                  {noSpace.length} étudiant·e{noSpace.length > 1 ? "s" : ""} sans espace actif
+                </strong>{" "}
+                ({noSpace.slice(0, 4).join(", ")}
+                {noSpace.length > 4 ? "…" : ""}) : leur note n’apparaîtra pas dans un espace.{" "}
+                <Link
+                  href={`/modules/${id}/frise`}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Créer leurs liens d’espace
+                </Link>
+              </p>
+            ) : null}
+
             {readyToSend ? (
               <section
                 aria-labelledby="send-top"

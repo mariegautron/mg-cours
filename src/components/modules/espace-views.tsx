@@ -67,11 +67,13 @@ export function EspaceLayout({
       >
         Aller au contenu
       </a>
-      <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6">
+      <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6 [@media(max-height:500px)]:py-2">
         <div className="lg:sticky lg:top-6">
           <p className="text-primary text-xs font-bold tracking-widest uppercase">Mon espace</p>
-          <p className="font-heading mt-1 text-lg leading-tight font-bold">{frise.moduleName}</p>
-          <nav aria-label="Espace étudiant·e" className="mt-4">
+          <p className="font-heading mt-1 text-lg leading-tight font-bold [@media(max-height:500px)]:mt-0 [@media(max-height:500px)]:text-base">
+            {frise.moduleName}
+          </p>
+          <nav aria-label="Espace étudiant·e" className="mt-4 [@media(max-height:500px)]:mt-2">
             <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
               {items
                 .filter((i) => i.show)
