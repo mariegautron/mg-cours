@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { buildGridHandout } from "@/lib/assessments/grid-handout";
 import { getAssessment } from "@/lib/assessments/queries";
 import { canPresent } from "@/lib/assessments/subject";
+import { safeDownloadName } from "@/lib/modules/espace";
 import { getModule } from "@/lib/modules/queries";
 import { GridHandoutDocument } from "@/lib/pdf/grid";
 
@@ -33,11 +34,12 @@ export async function GET(
     durationMinutes: assessment.duration_minutes,
     maxScore: assessment.max_score,
   });
+  const fileName = `grille-${safeDownloadName(assessment.title).replace(/\.+$/, "")}.pdf`;
   const buffer = await renderToBuffer(GridHandoutDocument({ handout }));
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="grille-evaluation.pdf"',
+      "Content-Disposition": `attachment; filename="${fileName}"`,
       "Cache-Control": "private, no-store",
     },
   });

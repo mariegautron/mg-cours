@@ -58,7 +58,10 @@ function Criterion({ c }: { c: HandoutCriterion }) {
 export function GridHandoutDocument({ handout }: { handout: GridHandout }) {
   const { context } = handout;
   return (
-    <Document title={`Grille d’évaluation — ${context?.assessmentTitle ?? handout.gridName}`}>
+    <Document
+      language="fr"
+      title={`Grille d’évaluation — ${context?.assessmentTitle ?? handout.gridName}`}
+    >
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>{context?.assessmentTitle ?? handout.gridName}</Text>
         <Text style={styles.sub}>
@@ -71,7 +74,6 @@ export function GridHandoutDocument({ handout }: { handout: GridHandout }) {
             .filter(Boolean)
             .join(" · ")}
         </Text>
-        {context ? <Text style={styles.sub}>Grille : {handout.gridName}</Text> : null}
         {handout.description ? <Text style={styles.intro}>{handout.description}</Text> : null}
 
         {handout.axes.map((axis, i) => (
