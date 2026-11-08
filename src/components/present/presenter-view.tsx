@@ -275,20 +275,31 @@ export function PresenterView({
     const i = sectionKeys.findIndex((k) => k.startsWith("subject:"));
     return i >= 0 && starts[i] >= 0 ? starts[i] : null;
   })();
+  const qcmIndex = (() => {
+    const i = sectionKeys.findIndex((k) => k.startsWith("qcm:"));
+    return i >= 0 && starts[i] >= 0 ? starts[i] : null;
+  })();
   const clock = minutes ? clockInParis() : "";
   const remaining = minutes ? remainingLabel(Number(minutes), endTime) : null;
   const elapsed = minutes ? elapsedLabel(Number(minutes), startTime) : null;
 
   return (
-    <div className="bg-background text-foreground flex min-h-dvh flex-col lg:h-dvh">
-      <header className="bg-background z-20 flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2">
+    <div className="bg-background text-foreground flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
+      <header className="bg-background z-20 flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 lg:flex-nowrap [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap [&_label]:whitespace-nowrap">
         <Button asChild variant="ghost" size="touch">
-          <Link href={backHref}>Quitter la vue privée</Link>
+          <Link href={backHref}>
+            Quitter<span className="sr-only"> la vue privée</span>
+          </Link>
         </Button>
-        <h1 className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium">
+        <h1
+          className="text-muted-foreground min-w-0 flex-1 truncate text-sm font-medium"
+          title={title}
+        >
           Vue privée · {title}
         </h1>
-        <Badge variant="outline">Vue privée : jamais projetée</Badge>
+        <Badge variant="outline" className="hidden 2xl:inline-flex">
+          Vue privée : jamais projetée
+        </Badge>
         <Button asChild variant="ghost" size="touch">
           <a
             href={projectedHref}
@@ -300,8 +311,8 @@ export function PresenterView({
             }}
           >
             <Presentation aria-hidden />
-            Ouvrir la fenêtre projetée
-            <span className="sr-only"> (nouvel onglet)</span>
+            Fenêtre projetée
+            <span className="sr-only"> : ouvrir (nouvelle fenêtre)</span>
           </a>
         </Button>
         <div className="text-right tabular-nums">
@@ -337,7 +348,7 @@ export function PresenterView({
         {slidesUrl ? (
           <Button asChild variant="outline" size="touch">
             <a href={slidesUrl} target="_blank" rel="noopener noreferrer">
-              Slides de la séance<span className="sr-only"> (nouvel onglet)</span>
+              Slides<span className="sr-only"> de la séance (nouvel onglet)</span>
             </a>
           </Button>
         ) : null}
@@ -411,6 +422,12 @@ export function PresenterView({
               Suivant
               <ChevronRight aria-hidden />
             </Button>
+            {qcmIndex !== null ? (
+              <Button type="button" size="touch" variant="outline" onClick={() => go(qcmIndex)}>
+                Mini-QCM
+                <span className="sr-only"> : projeter la première question</span>
+              </Button>
+            ) : null}
             {consignesIndex !== null ? (
               <Button
                 type="button"

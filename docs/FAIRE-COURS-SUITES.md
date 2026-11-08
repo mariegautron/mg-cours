@@ -52,3 +52,22 @@ créneau 23:00-23:59 à 17 h) ; relevé de la projection à la clôture, qui mon
 de la veille (probablement dû au changement de date de la séance de test) ; « Préparer la séance
 suivante » sur un module qui a une séance suivante ; badge « Vue privée : jamais projetée »
 affiché alors que la diapo est projetée (libellé à revoir ?).
+
+## Revérification du 8 novembre : corrections et questions
+
+Corrigé : choix « Pour moi » enregistrés dès l'ouverture de « Avant de commencer » (même si le choix
+venait d'un réglage local plus ancien) ; vue privée qui ne défile plus au clic sur un nom et en-tête
+sur une ligne ; fenêtre projetée qui démarre en Diapositives ; étiquettes d'observation en libellés
+courts avec info-bulle ; bouton « Mini-QCM » à côté de « Consignes et grille » ; règle unique des
+raccourcis d'étiquette ; choix « à reporter » / « pas fait volontairement » par élément à la clôture ;
+« Vue présentatrice » devenu « Vue privée ».
+
+À vérifier à l'écran : 1366 × 768, 1280 × 720 et 1093 × 614 (équivalent 125 %) pour A2 (page qui ne
+défile pas, en-tête sur une ligne) et B1 ; le carnet → « Ouvrir la présentation » avec une fiche
+« pour aller plus loin » réglée « Pour moi » après avoir ouvert « Avant de commencer » une fois.
+
+Questions pour Marie :
+1. La touche chiffre (1 à 5) doit-elle enregistrer directement l'observation (un seul geste) quand
+   la note est vide, plutôt que choisir l'étiquette puis Entrée ?
+2. Un élément « pas fait volontairement » doit-il rester visible dans le relevé de la séance
+   clôturée ? Aujourd'hui il disparaît de la liste des points à reporter, sans trace.

@@ -138,7 +138,9 @@ export default async function CourseClosePage({
       <ClosureForm
         action={saveCourseClosure.bind(null, id, courseId)}
         number={position + 1}
-        suggestedNotCovered={recap.status === "late" ? recap.suggestedCarryOver : ""}
+        suggestedNotCovered={
+          recap.status === "late" && !course.completion ? recap.suggestedCarryOver : ""
+        }
         recap={<ProjectionStatus recap={recap} />}
         aside={aside}
         backHref={`/present/modules/${id}/courses/${courseId}/presenter`}

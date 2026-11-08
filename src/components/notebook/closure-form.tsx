@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 
 import { ActionError } from "@/components/action-error";
 import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
@@ -48,6 +48,18 @@ export function ClosureForm({
   };
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  // Éléments prévus mais non projetés : chacun est « à reporter » (rappelé à la séance suivante)
+  // ou « pas fait volontairement » (retiré de la liste, non rappelé).
+  const suggestedItems = course.not_covered
+    ? []
+    : suggestedNotCovered
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+  const [skipped, setSkipped] = useState<Set<string>>(new Set());
+  const [extra, setExtra] = useState(course.not_covered ?? "");
+  const carried = suggestedItems.filter((t) => !skipped.has(t));
+  const notCoveredValue = [...carried, ...(extra.trim() ? [extra.trim()] : [])].join("\n");
 
   return (
     <form onSubmit={keepFormValues(formAction)}>
@@ -90,17 +102,75 @@ export function ClosureForm({
             {recap}
             <div className="space-y-1">
               <Label htmlFor="notCovered">Points non traités, à reporter</Label>
+              {suggestedItems.length ? (
+                <fieldset className="space-y-2 rounded-lg border p-3">
+                  <legend className="px-1 text-sm font-medium">
+                    Prévu mais pas projeté : à reporter ou pas fait volontairement ?
+                  </legend>
+                  <ul className="space-y-2">
+                    {suggestedItems.map((item) => {
+                      const isSkipped = skipped.has(item);
+                      return (
+                        <li
+                          key={item}
+                          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                        >
+                          <span className="min-w-0 flex-1 font-medium">{item}</span>
+                          <span
+                            role="group"
+                            aria-label={item}
+                            className="grid grid-cols-2 overflow-hidden rounded-lg border"
+                          >
+                            {(
+                              [
+                                [false, "À reporter"],
+                                [true, "Pas fait volontairement"],
+                              ] as const
+                            ).map(([value, label]) => (
+                              <button
+                                key={label}
+                                type="button"
+                                aria-pressed={isSkipped === value}
+                                onClick={() =>
+                                  setSkipped((prev) => {
+                                    const next = new Set(prev);
+                                    if (value) next.add(item);
+                                    else next.delete(item);
+                                    return next;
+                                  })
+                                }
+                                className={`focus-visible:ring-ring min-h-11 px-3 text-[0.8rem] font-semibold focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset ${
+                                  isSkipped === value
+                                    ? "bg-primary text-primary-foreground"
+                                    : "hover:bg-accent"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="text-muted-foreground text-xs">
+                    Seuls les éléments « à reporter » sont rappelés au début de la séance suivante.
+                  </p>
+                </fieldset>
+              ) : null}
               <Textarea
                 id="notCovered"
-                name="notCovered"
-                defaultValue={course.not_covered || suggestedNotCovered}
+                value={extra}
+                onChange={(e) => setExtra(e.target.value)}
                 aria-describedby="notCovered-hint"
+                placeholder={
+                  suggestedItems.length ? "Autre point à reporter (facultatif)" : undefined
+                }
               />
+              <input type="hidden" name="notCovered" value={notCoveredValue} />
               <p id="notCovered-hint" className="text-muted-foreground text-xs">
-                {suggestedNotCovered && !course.not_covered
-                  ? "Proposé d’après ce qui n’a pas été projeté : modifie ou efface ce qui ne colle pas. "
-                  : ""}
-                Rien de noté n’est perdu : ces points sont rappelés au début de la séance suivante.
+                Rien de noté n’est perdu : les points à reporter sont rappelés au début de la séance
+                suivante.
               </p>
             </div>
           </section>

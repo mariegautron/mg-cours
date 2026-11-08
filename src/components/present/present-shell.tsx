@@ -122,6 +122,9 @@ export function PresentShell({
       setMode(saved.mode);
       setIndex(saved.index);
       indexRef.current = saved.index;
+    } else if (syncChannel) {
+      // Séance projetée avec une vue privée : on démarre en Diapositives, comme la vue privée.
+      setMode("slides");
     }
     setHydrated(true);
     if (Number.isInteger(storedScale) && storedScale >= 0 && storedScale < SCALES.length) {
@@ -327,7 +330,7 @@ export function PresentShell({
             }
           >
             <MonitorUp aria-hidden />
-            Vue présentatrice
+            Vue privée
             <span className="sr-only"> (nouvelle fenêtre)</span>
           </Button>
         ) : null}

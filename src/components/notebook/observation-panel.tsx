@@ -14,6 +14,15 @@ import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/not
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
 
+/** Libellés courts des étiquettes (le libellé complet reste en info-bulle et pour les lecteurs d'écran). */
+const SHORT_TAG_LABELS: Record<string, string> = {
+  relevant_question: "Question",
+  participation: "Participation",
+  difficulty: "Difficulté",
+  absent_late: "Absence/retard",
+  other: "Autre",
+};
+
 type Action = (state: NotebookState, formData: FormData) => Promise<NotebookState>;
 
 interface Student {
@@ -93,7 +102,9 @@ export function ObservationPanel({
   useEffect(() => {
     if (openId) {
       closedAfterSave.current = openId;
-      noteRef.current?.focus();
+      // Sans faire défiler la page : seul le panneau des étudiant·es défile pour montrer le formulaire.
+      noteRef.current?.focus({ preventScroll: true });
+      noteRef.current?.form?.scrollIntoView({ block: "nearest" });
     } else if (closedAfterSave.current) {
       triggerRefs.current.get(closedAfterSave.current)?.focus();
       closedAfterSave.current = null;
@@ -171,16 +182,15 @@ export function ObservationPanel({
             }}
           />
           <p id={`${panelId}-keys`} className="text-muted-foreground text-xs">
-            Entrée enregistre (étiquette «{" "}
-            {OBSERVATION_TAGS.find((t) => t.value === (selectedTag ?? "other"))?.label} »), Échap
-            annule. 1 à 5 choisissent l’étiquette tant que la note est vide (ensuite Alt + 1 à 5).
+            Un clic sur une étiquette enregistre. Au clavier, 1 à 5 choisissent l’étiquette (tant
+            que la note est vide, sinon Alt + 1 à 5), puis Entrée enregistre (étiquette «{" "}
+            {OBSERVATION_TAGS.find((t) => t.value === (selectedTag ?? "other"))?.label} »). Échap
+            annule.
           </p>
         </div>
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">
-            Étiquette — un appui enregistre pour {name}
-          </legend>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          <legend className="mb-2 text-sm font-medium">Étiquette pour {name}</legend>
+          <div className="grid grid-cols-2 gap-1.5">
             {OBSERVATION_TAGS.map((t, i) => (
               <PendingButton
                 key={t.value}
@@ -194,11 +204,14 @@ export function ObservationPanel({
                 disabled={pending && pressedTag !== t.value}
                 onClick={() => setPressedTag(t.value)}
                 size="touch"
+                title={t.label}
+                aria-label={t.label}
+                className="justify-start px-2"
               >
-                <kbd aria-hidden className="mr-1 text-xs opacity-70">
+                <kbd aria-hidden className="mr-1 shrink-0 text-xs opacity-70">
                   {i + 1}
                 </kbd>
-                {t.label}
+                {SHORT_TAG_LABELS[t.value] ?? t.label}
               </PendingButton>
             ))}
           </div>

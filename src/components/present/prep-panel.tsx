@@ -74,9 +74,19 @@ export function PrepPanel({
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- préférences locales lues après hydratation */
-    setHidden(
-      storedHidden ? new Set(storedHidden) : readHidden(courseId, defaultHiddenKeys(items)),
-    );
+    const initial = storedHidden
+      ? new Set(storedHidden)
+      : readHidden(courseId, defaultHiddenKeys(items));
+    setHidden(initial);
+    // Aucun choix enregistré avec la séance : ce que l'écran montre devient ce que toute
+    // ouverture de la projection (carnet, adresse…) applique, même si le choix venait d'avant.
+    if (storedHidden === null) {
+      const known = new Set(items.map((i) => i.key));
+      void saveHiddenKeys(
+        courseId,
+        [...initial].filter((k) => known.has(k)),
+      );
+    }
     try {
       setCalledDone(window.localStorage.getItem(`mg-appel-${courseId}`) === "1");
     } catch {
