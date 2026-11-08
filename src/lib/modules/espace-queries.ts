@@ -60,7 +60,16 @@ export async function loadEspace(
     for (const a of list) {
       const deck = await loadSubjectDeck(a.id);
       if (!deck) continue;
+      const sub = a as unknown as { submit_mode?: string; submit_accepts?: string };
       evaluations.push({
+        id: a.id,
+        submit: {
+          mode: sub.submit_mode === "app" ? "app" : "elsewhere",
+          accepts:
+            sub.submit_accepts === "file" || sub.submit_accepts === "link"
+              ? sub.submit_accepts
+              : "both",
+        },
         title: a.title,
         type: a.type,
         groupGrade: a.is_group_grade,

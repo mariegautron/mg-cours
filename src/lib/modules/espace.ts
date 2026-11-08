@@ -32,6 +32,10 @@ export interface EspaceGrid {
 }
 
 export interface EspaceEvaluation {
+  /** Identifiant de l'évaluation : sert au dépôt (toujours revérifié côté serveur). */
+  id: string;
+  /** Rendre dans MG COURS ? Sinon la consigne dit où rendre. */
+  submit: { mode: "app" | "elsewhere"; accepts: "file" | "link" | "both" };
   title: string;
   type: string | null;
   groupGrade: boolean;
@@ -249,6 +253,14 @@ export function parseEspace(payload: unknown): Espace | null {
       if (!title) return [];
       return [
         {
+          id: str(o.id) ?? "",
+          submit: {
+            mode: obj(o.submit).mode === "app" ? ("app" as const) : ("elsewhere" as const),
+            accepts:
+              obj(o.submit).accepts === "file" || obj(o.submit).accepts === "link"
+                ? (obj(o.submit).accepts as "file" | "link")
+                : ("both" as const),
+          },
           title,
           type: str(o.type),
           groupGrade: o.groupGrade === true,

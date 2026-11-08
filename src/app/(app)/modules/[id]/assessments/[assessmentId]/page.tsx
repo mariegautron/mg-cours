@@ -34,6 +34,7 @@ import { Submissions } from "@/components/assessments/submissions";
 import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
+import { SubmitSettings } from "@/components/assessments/submit-settings";
 import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
@@ -737,6 +738,20 @@ export default async function AssessmentPage({
                 moduleId={id}
                 assessmentId={assessmentId}
                 initial={assessment.where_to_submit ?? ""}
+              />
+              <SubmitSettings
+                moduleId={id}
+                assessmentId={assessmentId}
+                mode={
+                  (assessment as unknown as { submit_mode?: string }).submit_mode === "app"
+                    ? "app"
+                    : "elsewhere"
+                }
+                accepts={(() => {
+                  const v = (assessment as unknown as { submit_accepts?: string }).submit_accepts;
+                  return v === "file" || v === "link" ? v : "both";
+                })()}
+                hasDeadline={!!assessment.date || !!course?.session_date}
               />
             </section>
           </div>

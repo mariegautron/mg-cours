@@ -22,6 +22,7 @@ import type { PublicSheet } from "@/lib/result-links/sheet";
  * Les étudiant·es sont vouvoyé·es. Aucune donnée privée : tout vient de l'instantané publié.
  */
 export interface EspaceData {
+  token: string;
   /** Préfixe des adresses (`/espace/<jeton>`). */
   base: string;
   firstName: string | null;
@@ -270,7 +271,16 @@ export function ProjetView({ espace }: { espace: Espace }) {
   );
 }
 
-export function EvaluationView({ data, index }: { data: EspaceData; index: number }) {
+export function EvaluationView({
+  data,
+  index,
+  deposit,
+}: {
+  data: EspaceData;
+  index: number;
+  /** Zone de dépôt (rendu « dans MG COURS »), calculée côté serveur par la page. */
+  deposit?: React.ReactNode;
+}) {
   const { base, espace, frise } = data;
   const e = espace?.evaluations[index];
   if (!espace || !e) return <Empty title="Évaluations" text="Cette évaluation n’existe pas." />;
@@ -373,6 +383,7 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
           </ul>
         </section>
       ) : null}
+      {deposit}
       {e.grid ? (
         <section aria-labelledby="grille" id="grille" className="mt-9 scroll-mt-6">
           <h2 className="font-heading mb-1 text-xl font-bold">

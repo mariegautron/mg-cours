@@ -1,0 +1,210 @@
+"use client";
+
+import { useRef, useState, useTransition } from "react";
+
+import {
+  commitDeposit,
+  getDeposit,
+  prepareUploads,
+  type DepositState,
+} from "@/app/espace/[token]/deposit-actions";
+import { Button } from "@/components/ui/button";
+import { ASSESSMENT_FILE_ACCEPT, ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
+import { lateLabel } from "@/lib/deposits/rules";
+import { createClient } from "@/lib/supabase/client";
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "numeric",
+    month: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+const size = (n: number | null) =>
+  n === null
+    ? ""
+    : n < 1024 * 1024
+      ? `${Math.max(1, Math.round(n / 1024))} Ko`
+      : `${(n / 1024 / 1024).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} Mo`;
+
+/**
+ * Dépôt d'un rendu depuis l'espace personnel. Les fichiers partent directement vers le stockage par des
+ * adresses signées de courte durée ; la date de dépôt est celle du serveur. Un retard est seulement
+ * signalé. Un rendu de groupe est partagé : remplacer le dépôt d'un·e camarade demande confirmation.
+ */
+export function DepositBox({
+  token,
+  assessmentId,
+  accepts,
+  initial,
+  deadlineLabel,
+}: {
+  token: string;
+  assessmentId: string;
+  accepts: "file" | "link" | "both";
+  initial: DepositState;
+  deadlineLabel: string;
+}) {
+  const [state, setState] = useState<DepositState>(initial);
+  const [files, setFiles] = useState<File[]>([]);
+  const [link, setLink] = useState("");
+  const [progress, setProgress] = useState("");
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  const [pending, start] = useTransition();
+  const input = useRef<HTMLInputElement>(null);
+
+  const deposited = state.items.length > 0;
+
+  function submit() {
+    setError("");
+    setDone(false);
+    if (
+      deposited &&
+      state.byOther &&
+      !window.confirm(
+        `${state.byName ?? "Un·e camarade"} a déjà déposé ce rendu pour ${state.group ?? "ton groupe"}. Le remplacer ?`,
+      )
+    ) {
+      return;
+    }
+    start(async () => {
+      const meta = files.map((f) => ({ name: f.name, size: f.size, mime: f.type }));
+      const prep = await prepareUploads(token, assessmentId, meta, link.trim() || null);
+      if (prep.error || !prep.batchId || !prep.uploads) {
+        setError(prep.error ?? "L’envoi n’a pas pu démarrer.");
+        return;
+      }
+      const storage = createClient().storage.from(ASSESSMENT_FILES_BUCKET);
+      for (const [i, file] of files.entries()) {
+        setProgress(`Envoi du fichier ${i + 1} sur ${files.length}…`);
+        const up = prep.uploads[i];
+        const { error: upError } = await storage.uploadToSignedUrl(up.path, up.token, file);
+        if (upError) {
+          setProgress("");
+          setError("L’envoi a été interrompu (connexion ?). Rien n’est déposé : réessaie.");
+          return;
+        }
+      }
+      setProgress("Enregistrement…");
+      const res = await commitDeposit(token, assessmentId, prep.batchId, meta, link.trim() || null);
+      setProgress("");
+      if (res.error) {
+        setError(res.error);
+        setState(res);
+        return;
+      }
+      setState(res);
+      setFiles([]);
+      setLink("");
+      setDone(true);
+    });
+  }
+
+  async function refresh() {
+    setState(await getDeposit(token, assessmentId));
+  }
+
+  return (
+    <section aria-labelledby="depot" className="bg-card mt-7 rounded-2xl border p-5">
+      <h2 id="depot" className="font-heading text-xl font-bold">
+        Déposer mon rendu
+      </h2>
+      <p className="text-muted-foreground mt-1 text-sm">
+        À rendre : {deadlineLabel}.{" "}
+        {state.group ? `Rendu de groupe (${state.group}) : tout le groupe voit le même dépôt.` : ""}
+      </p>
+
+      {deposited ? (
+        <div role="status" className="mt-3 rounded-xl border p-3 text-sm">
+          <p className="font-semibold">
+            C’est rendu ! Le {state.submittedAt ? fmtDate(state.submittedAt) : ""}
+            {state.byName && state.group ? `, déposé par ${state.byName}` : ""}.
+          </p>
+          {state.lateMinutes > 0 ? (
+            <p className="text-muted-foreground">
+              Rendu en retard ({lateLabel(state.lateMinutes)}). C’est seulement signalé.
+            </p>
+          ) : null}
+          <ul className="mt-1 list-disc pl-5">
+            {state.items.map((it) => (
+              <li key={it.id}>
+                {it.kind === "link" ? (
+                  <>Lien : {it.url}</>
+                ) : (
+                  <>
+                    {it.fileName} ({size(it.sizeBytes)})
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-muted-foreground mt-1">Tu peux le remplacer en déposant à nouveau.</p>
+        </div>
+      ) : (
+        <p className="text-muted-foreground mt-3 text-sm">
+          Pas encore rendu. Tu peux déposer à tout moment ; après la date limite, ce sera signalé en
+          retard.
+        </p>
+      )}
+
+      <div className="mt-4 space-y-3">
+        {accepts !== "link" ? (
+          <div>
+            <label htmlFor="depot-fichiers" className="text-sm font-medium">
+              Fichiers (50 Mo maximum chacun)
+            </label>
+            <input
+              id="depot-fichiers"
+              ref={input}
+              type="file"
+              multiple
+              accept={ASSESSMENT_FILE_ACCEPT}
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
+            />
+          </div>
+        ) : null}
+        {accepts !== "file" ? (
+          <div>
+            <label htmlFor="depot-lien" className="text-sm font-medium">
+              Lien (par exemple GitHub)
+            </label>
+            <input
+              id="depot-lien"
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://github.com/…"
+              className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
+            />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            size="touch"
+            disabled={pending || (files.length === 0 && !link.trim())}
+            onClick={submit}
+          >
+            {deposited ? "Remplacer mon rendu" : "Déposer mon rendu"}
+          </Button>
+          <Button type="button" size="touch" variant="ghost" onClick={() => void refresh()}>
+            Actualiser
+          </Button>
+        </div>
+        <p role="status" aria-live="polite" className="min-h-5 text-sm">
+          {progress}
+          {done ? " Dépôt enregistré." : ""}
+        </p>
+        {error ? (
+          <p role="alert" className="text-sm font-medium">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}

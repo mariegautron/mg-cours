@@ -120,3 +120,24 @@ export async function deleteSubmissionItem(
   refresh(moduleId, assessmentId);
   return { ok: true };
 }
+
+/** Réglages du dépôt par les étudiant·es : rendre dans MG COURS ou ailleurs, fichier / lien / les deux. */
+export async function updateSubmitSettings(
+  moduleId: string,
+  assessmentId: string,
+  mode: string,
+  accepts: string,
+): Promise<SubmissionItemState> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("assessment")
+    .update({
+      submit_mode: mode === "app" ? "app" : "elsewhere",
+      submit_accepts: accepts === "file" || accepts === "link" ? accepts : "both",
+    } as never)
+    .eq("id", assessmentId)
+    .eq("module_id", moduleId);
+  if (error) return { error: failure("enregistrer le mode de rendu") };
+  refresh(moduleId, assessmentId);
+  return { ok: true };
+}

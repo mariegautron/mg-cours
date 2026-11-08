@@ -6,9 +6,9 @@ export type AssessmentFile = ResourceFile;
 export const ASSESSMENT_FILES_BUCKET = "assessment-files";
 export const ASSESSMENT_FILE_MAX_BYTES = 50 * 1024 * 1024;
 export const ASSESSMENT_FILE_EXTENSIONS =
-  /\.(pdf|docx?|odt|pptx?|odp|png|jpe?g|gif|webp|html?|txt|zip)$/i;
+  /\.(pdf|docx?|odt|xlsx?|ods|pptx?|odp|png|jpe?g|gif|webp|html?|txt|md|zip)$/i;
 export const ASSESSMENT_FILE_ACCEPT =
-  ".pdf,.doc,.docx,.odt,.ppt,.pptx,.odp,.png,.jpg,.jpeg,.gif,.webp,.html,.htm,.txt,.zip";
+  ".pdf,.doc,.docx,.odt,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.png,.jpg,.jpeg,.gif,.webp,.html,.htm,.txt,.md,.zip";
 
 export function assessmentFileUrl(assessmentId: string, name: string) {
   return `/api/assessments/${assessmentId}/files/${encodeURIComponent(name)}`;

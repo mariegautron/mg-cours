@@ -14,6 +14,9 @@ import {
   type EspaceData,
   type EspaceSection,
 } from "@/components/modules/espace-views";
+import { DepositBox } from "@/components/modules/deposit-box";
+import { dueLabel } from "@/lib/modules/espace";
+import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
 import { callStudentView } from "@/lib/modules/student-public";
 
@@ -46,6 +49,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   }
 
   const data: EspaceData = {
+    token,
     base: `/espace/${token}`,
     firstName: res.firstName,
     frise: res.content.frise,
@@ -68,7 +72,25 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     body = <EvaluationsListView data={data} />;
   } else if (section === "evaluation" && slug.length === 2 && Number.isInteger(number)) {
     current = "evaluation";
-    body = <EvaluationView data={data} index={number - 1} />;
+    const ev = data.espace?.evaluations[number - 1];
+    let deposit: React.ReactNode = null;
+    if (ev && ev.id && ev.submit.mode === "app") {
+      const due =
+        ev.date ??
+        (ev.sessionNumber
+          ? (data.frise.sessions.find((s) => s.number === ev.sessionNumber)?.date ?? null)
+          : null);
+      deposit = (
+        <DepositBox
+          token={token}
+          assessmentId={ev.id}
+          accepts={ev.submit.accepts}
+          initial={await getDeposit(token, ev.id)}
+          deadlineLabel={dueLabel(due, ev.time)}
+        />
+      );
+    }
+    body = <EvaluationView data={data} index={number - 1} deposit={deposit} />;
   } else if (section === "cours" && slug.length === 2 && Number.isInteger(number)) {
     // Ancienne adresse d'une séance : on ouvre sa première fiche.
     redirect(`/espace/${token}/cours/${number}/1`);
