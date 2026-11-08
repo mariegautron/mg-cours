@@ -46,6 +46,15 @@ export function gradeCompletion(
   if (required === 0) {
     return { state: grade.value !== null ? "complete" : "none", scored: 0, total: 0 };
   }
+  // Une note sans aucun point par critère ne vient pas de la grille (note directe, QCM corrigé
+  // question par question) : elle compte. Une copie « en cours » de grille a au moins un critère noté.
+  const scoresMap = isRecord(grade.scores) ? grade.scores : {};
+  const hasCriterionScore = Object.values(scoresMap).some(
+    (v) => typeof v === "number" && Number.isFinite(v),
+  );
+  if (grade.value !== null && !hasCriterionScore) {
+    return { state: "complete", scored: required, total: required };
+  }
   const scoring: ScoringCriterion[] = criteria.map((c) => ({
     id: c.id,
     weight: 0,
