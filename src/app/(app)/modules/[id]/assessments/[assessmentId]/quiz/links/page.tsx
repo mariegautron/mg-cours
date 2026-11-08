@@ -59,7 +59,7 @@ export default async function QuizLinksPage({
 
   return (
     <div className="flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-start">
-      <div className="min-w-0 flex-[3_1_0] space-y-4">
+      <div className="flex min-w-0 flex-[3_1_0] flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <h1 className="font-heading text-3xl font-bold tracking-tight">Donner accès au QCM</h1>
@@ -75,89 +75,187 @@ export default async function QuizLinksPage({
           <ActionError error={error} className="border-destructive rounded-md border p-3" />
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="ma" className="font-heading text-lg font-bold">
-                En classe : code et QR
-              </h2>
-              <Pill tone="ok">Recommandé</Pill>
+        {closed ? (
+          <details className={`${card} order-2`}>
+            <summary className="min-h-8 cursor-pointer font-semibold">
+              Donner accès (QR et liens personnels)
+            </summary>
+            <div className="pt-3">
+              <div className="grid gap-4 md:grid-cols-2">
+                <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 id="ma" className="font-heading text-lg font-bold">
+                      En classe : code et QR
+                    </h2>
+                    <Pill tone="ok">Recommandé</Pill>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Tu projettes un QR code. Chacun·e le scanne avec son téléphone et choisit son
+                    nom dans la liste.
+                  </p>
+                  {!info.available ? (
+                    <p className="text-sm">
+                      Le QR code sera disponible après la mise à jour de la base de données. Les
+                      liens personnels restent utilisables.
+                    </p>
+                  ) : url && svg ? (
+                    <>
+                      <div
+                        role="img"
+                        aria-label="QR code vers la page de choix du nom"
+                        className="w-32 bg-white p-1 [&_svg]:h-auto [&_svg]:w-full"
+                        dangerouslySetInnerHTML={{ __html: svg }}
+                      />
+                      <p className="text-sm break-all">
+                        <a href={url} className="underline underline-offset-2">
+                          {url}
+                        </a>
+                      </p>
+                      <Button asChild size="touch" className="w-full">
+                        <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
+                          Afficher sur l’écran projeté
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Pas encore de QR code pour ce QCM.
+                    </p>
+                  )}
+                  {quiz.status === "draft" ? (
+                    <p className="text-muted-foreground text-xs">
+                      Le QCM n’est pas publié : les étudiant·es verront « pas encore ouvert ».
+                    </p>
+                  ) : null}
+                  {info.available ? (
+                    <ClassLinkControls
+                      moduleId={id}
+                      assessmentId={assessmentId}
+                      hasLink={!!info.token}
+                      releasable={info.claimed
+                        .filter((c) => canRelease(c.status))
+                        .map((c) => ({ attemptId: c.attemptId, name: c.name }))}
+                    />
+                  ) : null}
+                </section>
+
+                <section aria-labelledby="mb" className={`${card} space-y-2`}>
+                  <h2 id="mb" className="font-heading text-lg font-bold">
+                    Par lien personnel
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    Un lien personnel pour chacun·e : pratique pour les absents ou un rattrapage.
+                    Les liens ne s’affichent qu’une fois.
+                  </p>
+                  {students.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">
+                      {assessment.makeup_of_id
+                        ? "Personne n’est inscrit·e à ce rattrapage."
+                        : "Aucun·e étudiant·e dans les groupes de cette évaluation."}
+                    </p>
+                  ) : (
+                    <PrepareLinks moduleId={id} assessmentId={assessmentId} missing={missing} />
+                  )}
+                  {absent > 0 ? (
+                    <p className="text-muted-foreground text-xs">
+                      {absent} absent·e{absent > 1 ? "s" : ""} déclaré·e{absent > 1 ? "s" : ""} sur
+                      l’évaluation : pas de lien (une absence excusée se rattrape avec un
+                      rattrapage).
+                    </p>
+                  ) : null}
+                </section>
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Tu projettes un QR code. Chacun·e le scanne avec son téléphone et choisit son nom dans
-              la liste.
-            </p>
-            {!info.available ? (
-              <p className="text-sm">
-                Le QR code sera disponible après la mise à jour de la base de données. Les liens
-                personnels restent utilisables.
-              </p>
-            ) : url && svg ? (
-              <>
-                <div
-                  role="img"
-                  aria-label="QR code vers la page de choix du nom"
-                  className="w-32 bg-white p-1 [&_svg]:h-auto [&_svg]:w-full"
-                  dangerouslySetInnerHTML={{ __html: svg }}
-                />
-                <p className="text-sm break-all">
-                  <a href={url} className="underline underline-offset-2">
-                    {url}
-                  </a>
+          </details>
+        ) : (
+          <div className="order-1">
+            <div className="grid gap-4 md:grid-cols-2">
+              <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="ma" className="font-heading text-lg font-bold">
+                    En classe : code et QR
+                  </h2>
+                  <Pill tone="ok">Recommandé</Pill>
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Tu projettes un QR code. Chacun·e le scanne avec son téléphone et choisit son nom
+                  dans la liste.
                 </p>
-                <Button asChild size="touch" className="w-full">
-                  <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
-                    Afficher sur l’écran projeté
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm">Pas encore de QR code pour ce QCM.</p>
-            )}
-            {quiz.status !== "published" ? (
-              <p className="text-muted-foreground text-xs">
-                Le QCM n’est pas publié : les étudiant·es verront « pas encore ouvert ».
-              </p>
-            ) : null}
-            {info.available ? (
-              <ClassLinkControls
-                moduleId={id}
-                assessmentId={assessmentId}
-                hasLink={!!info.token}
-                releasable={info.claimed
-                  .filter((c) => canRelease(c.status))
-                  .map((c) => ({ attemptId: c.attemptId, name: c.name }))}
-              />
-            ) : null}
-          </section>
+                {!info.available ? (
+                  <p className="text-sm">
+                    Le QR code sera disponible après la mise à jour de la base de données. Les liens
+                    personnels restent utilisables.
+                  </p>
+                ) : url && svg ? (
+                  <>
+                    <div
+                      role="img"
+                      aria-label="QR code vers la page de choix du nom"
+                      className="w-32 bg-white p-1 [&_svg]:h-auto [&_svg]:w-full"
+                      dangerouslySetInnerHTML={{ __html: svg }}
+                    />
+                    <p className="text-sm break-all">
+                      <a href={url} className="underline underline-offset-2">
+                        {url}
+                      </a>
+                    </p>
+                    <Button asChild size="touch" className="w-full">
+                      <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
+                        Afficher sur l’écran projeté
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    Pas encore de QR code pour ce QCM.
+                  </p>
+                )}
+                {quiz.status !== "published" ? (
+                  <p className="text-muted-foreground text-xs">
+                    Le QCM n’est pas publié : les étudiant·es verront « pas encore ouvert ».
+                  </p>
+                ) : null}
+                {info.available ? (
+                  <ClassLinkControls
+                    moduleId={id}
+                    assessmentId={assessmentId}
+                    hasLink={!!info.token}
+                    releasable={info.claimed
+                      .filter((c) => canRelease(c.status))
+                      .map((c) => ({ attemptId: c.attemptId, name: c.name }))}
+                  />
+                ) : null}
+              </section>
 
-          <section aria-labelledby="mb" className={`${card} space-y-2`}>
-            <h2 id="mb" className="font-heading text-lg font-bold">
-              Par lien personnel
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Un lien personnel pour chacun·e : pratique pour les absents ou un rattrapage. Les
-              liens ne s’affichent qu’une fois.
-            </p>
-            {students.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                {assessment.makeup_of_id
-                  ? "Personne n’est inscrit·e à ce rattrapage."
-                  : "Aucun·e étudiant·e dans les groupes de cette évaluation."}
-              </p>
-            ) : (
-              <PrepareLinks moduleId={id} assessmentId={assessmentId} missing={missing} />
-            )}
-            {absent > 0 ? (
-              <p className="text-muted-foreground text-xs">
-                {absent} absent·e{absent > 1 ? "s" : ""} déclaré·e{absent > 1 ? "s" : ""} sur
-                l’évaluation : pas de lien (une absence excusée se rattrape avec un rattrapage).
-              </p>
-            ) : null}
-          </section>
-        </div>
+              <section aria-labelledby="mb" className={`${card} space-y-2`}>
+                <h2 id="mb" className="font-heading text-lg font-bold">
+                  Par lien personnel
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  Un lien personnel pour chacun·e : pratique pour les absents ou un rattrapage. Les
+                  liens ne s’affichent qu’une fois.
+                </p>
+                {students.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    {assessment.makeup_of_id
+                      ? "Personne n’est inscrit·e à ce rattrapage."
+                      : "Aucun·e étudiant·e dans les groupes de cette évaluation."}
+                  </p>
+                ) : (
+                  <PrepareLinks moduleId={id} assessmentId={assessmentId} missing={missing} />
+                )}
+                {absent > 0 ? (
+                  <p className="text-muted-foreground text-xs">
+                    {absent} absent·e{absent > 1 ? "s" : ""} déclaré·e{absent > 1 ? "s" : ""} sur
+                    l’évaluation : pas de lien (une absence excusée se rattrape avec un rattrapage).
+                  </p>
+                ) : null}
+              </section>
+            </div>
+          </div>
+        )}
 
-        <section aria-labelledby="follow" className={card}>
+        <section aria-labelledby="follow" className={`${card} ${closed ? "order-1" : "order-2"}`}>
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="follow" className="font-heading text-lg font-bold">
               Suivi des copies
