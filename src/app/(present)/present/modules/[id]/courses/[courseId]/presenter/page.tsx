@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import {
+  addGroupObservation,
+  addObservation,
+} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { PreviousRecap } from "@/components/present/previous-recap";
 import { ObservationPanel } from "@/components/notebook/observation-panel";
 import { notebookStudents } from "@/lib/notebook/notebook";
-import { listCourseObservations } from "@/lib/notebook/queries";
+import {
+  countGroupObservations,
+  listCourseGroupObservations,
+  listCourseObservations,
+} from "@/lib/notebook/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { listResources } from "@/lib/resources/queries";
 import { buildCourseDeck } from "@/components/present/course-deck";
@@ -102,6 +109,8 @@ export default async function PresenterPage({
     }));
 
   const recent = await listCourseObservations(courseId);
+  const groupRecent = await listCourseGroupObservations(courseId);
+  const groupCounts = await countGroupObservations(mod.id);
   const students = notebookStudents(groups).map(({ id, first_name, last_name, photo_path }) => ({
     id,
     first_name,
@@ -154,6 +163,13 @@ export default async function PresenterPage({
           action={addObservation.bind(null, mod.id, courseId)}
           students={students}
           recent={recent}
+          groupAction={addGroupObservation.bind(null, mod.id, courseId)}
+          groupList={groups.map((g) => ({
+            id: g.id,
+            name: g.name,
+            count: groupCounts.get(g.id) ?? 0,
+          }))}
+          groupRecent={groupRecent}
         />
       }
     />

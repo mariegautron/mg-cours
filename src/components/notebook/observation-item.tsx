@@ -3,7 +3,9 @@
 import { useActionState, useState } from "react";
 
 import {
+  deleteGroupObservationById,
   deleteObservationById,
+  updateGroupObservation,
   updateObservation,
   type NotebookState,
 } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
@@ -30,8 +32,10 @@ export function ObservationItem({
   note,
   heading,
   students,
+  scope = "student",
 }: {
   id: string;
+  /** Identifiant de la personne, ou du groupe quand `scope` vaut « group ». */
   studentId: string;
   tag: ObservationTag;
   note: string | null;
@@ -39,10 +43,11 @@ export function ObservationItem({
   heading: React.ReactNode;
   /** Si fourni, la personne peut être changée. */
   students?: { id: string; first_name: string; last_name: string }[];
+  scope?: "student" | "group";
 }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(async (prev: NotebookState, fd: FormData) => {
-    const r = await updateObservation(id, prev, fd);
+    const r = await (scope === "group" ? updateGroupObservation : updateObservation)(id, prev, fd);
     if (!r.error) setEditing(false);
     return r;
   }, {});
@@ -69,7 +74,11 @@ export function ObservationItem({
               </select>
             </div>
           ) : (
-            <input type="hidden" name="studentId" value={studentId} />
+            <input
+              type="hidden"
+              name={scope === "group" ? "groupId" : "studentId"}
+              value={studentId}
+            />
           )}
           <div className="space-y-1">
             <Label htmlFor={`${fieldId}-tag`}>Étiquette</Label>
@@ -125,8 +134,15 @@ export function ObservationItem({
               touch
               itemName="cette observation"
               title="Supprimer cette observation ?"
-              description="Elle disparaîtra aussi du journal de la fiche étudiant·e."
-              onConfirm={deleteObservationById.bind(null, id)}
+              description={
+                scope === "group"
+                  ? "Elle disparaîtra de la fiche du groupe et de la base de chaque membre."
+                  : "Elle disparaîtra aussi du journal de la fiche étudiant·e."
+              }
+              onConfirm={(scope === "group"
+                ? deleteGroupObservationById
+                : deleteObservationById
+              ).bind(null, id)}
             />
           </div>
         </>

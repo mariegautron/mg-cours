@@ -1,5 +1,6 @@
 "use client";
 
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import {
   cleanExpectations,
   joinDescription,
@@ -238,6 +239,7 @@ export function GridForm({
       }}
       className="max-w-2xl space-y-6"
     >
+      <UnsavedChangesGuard />
       {inUse ? (
         <div
           role="note"

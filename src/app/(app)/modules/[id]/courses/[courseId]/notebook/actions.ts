@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { observationAddedMessage } from "@/lib/notebook/live";
-import { readClosureForm, readObservationForm } from "@/lib/notebook/notebook";
+import {
+  readClosureForm,
+  readGroupObservationForm,
+  readObservationForm,
+} from "@/lib/notebook/notebook";
 import { applyCarryOver, undoCarryOver } from "@/lib/present/carry-over-server";
 import { parseKeyList } from "@/lib/present/carry-over";
 import { appendDatedNote } from "@/lib/present/presenter";
@@ -273,4 +277,76 @@ export async function addSessionNote(
 
   refresh(moduleId, courseId);
   return { message: "Note enregistrée.", notes: next, savedAt: Date.now() };
+}
+
+/** Observation sur un groupe entier : enregistrée une fois sur le groupe, visible dans la base de chaque membre. */
+export async function addGroupObservation(
+  moduleId: string,
+  courseId: string,
+  _prev: NotebookState,
+  formData: FormData,
+): Promise<NotebookState> {
+  const parsed = readGroupObservationForm(formData);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Saisie invalide." };
+  const { groupId, tag, note } = parsed.data;
+  if (!(await courseBelongsToModule(moduleId, courseId))) return { error: NOT_FOUND.course };
+
+  const supabase = await createClient();
+  const { data: group } = await supabase
+    .from("student_group")
+    .select("name")
+    .eq("id", groupId)
+    .eq("module_id", moduleId)
+    .maybeSingle();
+  if (!group) return { error: "Ce groupe n’appartient pas au module." };
+
+  const { data: created, error } = await supabase
+    .from("group_observation")
+    .insert({ module_id: moduleId, course_id: courseId, student_group_id: groupId, tag, note })
+    .select("id")
+    .single();
+  if (error || !created) return { error: failure("enregistrer") };
+
+  refresh(moduleId, courseId);
+  revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
+  return {
+    message: `Observation ajoutée pour le groupe ${group.name}.`,
+    savedAt: Date.now(),
+    observationId: created.id,
+  };
+}
+
+export async function updateGroupObservation(
+  observationId: string,
+  _prev: NotebookState,
+  formData: FormData,
+): Promise<NotebookState> {
+  const parsed = readGroupObservationForm(formData);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Saisie invalide." };
+  const { groupId, tag, note } = parsed.data;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("group_observation")
+    .update({ student_group_id: groupId, tag, note })
+    .eq("id", observationId)
+    .select("module_id, course_id")
+    .maybeSingle();
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  if (!data) return { error: "Cette observation n’existe plus." };
+  if (data.course_id) refresh(data.module_id, data.course_id);
+  revalidatePath(`/modules/${data.module_id}/groups/${groupId}`);
+  return { message: "Observation corrigée.", savedAt: Date.now() };
+}
+
+export async function deleteGroupObservationById(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("group_observation")
+    .delete()
+    .eq("id", id)
+    .select("module_id, course_id, student_group_id")
+    .maybeSingle();
+  if (!data) return;
+  if (data.course_id) refresh(data.module_id, data.course_id);
+  revalidatePath(`/modules/${data.module_id}/groups/${data.student_group_id}`);
 }

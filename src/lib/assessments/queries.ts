@@ -183,11 +183,15 @@ async function attachGradeCounts<
   if (assessments.length === 0) return [];
   const { data: grades } = await supabase
     .from("grade")
-    .select("assessment_id, value, scores, attendance")
+    .select("assessment_id, student_id, student_group_id, value, scores, attendance")
     .in(
       "assessment_id",
       assessments.map((a) => a.id),
     );
+  const rewrite = await loadRewriteKeys(
+    supabase,
+    assessments.map((a) => a.id),
+  );
 
   const byAssessment = new Map<string, typeof grades>();
   for (const g of grades ?? []) {
@@ -200,7 +204,8 @@ async function attachGradeCounts<
     let counted = 0;
     let inProgress = 0;
     for (const g of byAssessment.get(a.id) ?? []) {
-      if (isGradeCounted(g, a.gridCriteria, a.auto_validated_criterion_ids)) counted += 1;
+      if (rewrite.has(`${a.id}:${g.student_group_id ?? g.student_id}`)) inProgress += 1;
+      else if (isGradeCounted(g, a.gridCriteria, a.auto_validated_criterion_ids)) counted += 1;
       else if (
         gradeCompletion(g, a.gridCriteria, a.auto_validated_criterion_ids).state === "partial"
       )
@@ -325,7 +330,10 @@ export async function listGroupGradeMembers(
   return data ?? [];
 }
 
-export async function getGradesByAssessment(assessmentId: string): Promise<Tables<"grade">[]> {
+export async function getGradesByAssessment(
+  assessmentId: string,
+  options: { skipRewrite?: boolean } = {},
+): Promise<Tables<"grade">[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("grade").select("*").eq("assessment_id", assessmentId);
   const rows = data ?? [];
@@ -335,7 +343,20 @@ export async function getGradesByAssessment(assessmentId: string): Promise<Table
     id: c.id,
     isBonus: c.is_bonus,
   }));
-  return guardIncompleteGrades(rows, criteria, assessment?.auto_validated_criterion_ids ?? []);
+  const guarded = guardIncompleteGrades(
+    rows,
+    criteria,
+    assessment?.auto_validated_criterion_ids ?? [],
+  );
+  if (options.skipRewrite) return guarded;
+  // Oral dont la note écrite est « à réécrire » : copie « en cours », sans note.
+  const rewrite = await loadRewriteKeys(supabase, [assessmentId]);
+  if (rewrite.size === 0) return guarded;
+  return guarded.map((g) =>
+    rewrite.has(`${assessmentId}:${g.student_group_id ?? g.student_id}`)
+      ? { ...g, value: null }
+      : g,
+  );
 }
 
 /**
@@ -426,6 +447,10 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     gradesByAssessment.set(g.assessment_id, list);
   }
 
+  const rewrite = await loadRewriteKeys(
+    supabase,
+    assessments.map((a) => a.id),
+  );
   const groupGradeIds = (grades ?? []).filter((g) => g.student_group_id).map((g) => g.id);
   const overrides = await listGroupGradeMembers(groupGradeIds);
   const overrideOf = new Map(
@@ -474,6 +499,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       // Une copie incomplète n'entre jamais dans une moyenne.
       if (
         row.value === null ||
+        rewrite.has(`${assessment.id}:${row.student_group_id ?? row.student_id}`) ||
         !isGradeCounted(row, assessment.gridCriteria, assessment.auto_validated_criterion_ids)
       )
         continue;

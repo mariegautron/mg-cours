@@ -1,5 +1,6 @@
 "use client";
 
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useActionState, useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -107,6 +108,7 @@ export function QuizConfigForm({
 
   return (
     <form action={action} className="max-w-2xl space-y-6">
+      <UnsavedChangesGuard />
       {state.errors?.length ? (
         <div
           role="alert"

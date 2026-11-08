@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Copy } from "lucide-react";
 
-import { saveAppreciation } from "@/app/(app)/modules/[id]/appreciations/actions";
+import { saveAppreciation, setReported } from "@/app/(app)/modules/[id]/appreciations/actions";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   appreciationStatus,
   counterLabel,
-  exportLine,
+  textOnly,
   STATUS_LABELS,
 } from "@/lib/appreciations/appreciation";
 
@@ -30,6 +31,8 @@ export function AppreciationEditor({
   initial,
   max,
   backHref,
+  prev,
+  next,
 }: {
   moduleId: string;
   studentId: string;
@@ -38,7 +41,11 @@ export function AppreciationEditor({
   initial: string;
   max: number;
   backHref: string;
+  /** Personne précédente / suivante, dans l'ordre alphabétique de la liste. */
+  prev?: { href: string; name: string } | null;
+  next?: { href: string; name: string } | null;
 }) {
+  const router = useRouter();
   const name = `${firstName} ${lastName}`;
   const [text, setText] = useState(initial);
   const [saved, setSaved] = useState(initial);
@@ -80,10 +87,20 @@ export function AppreciationEditor({
     setMessage(`Appréciation de ${name} enregistrée à ${result.savedAt}.`);
   }
 
+  /** Enregistre ce qui est en attente puis change de personne. */
+  async function go(e: React.MouseEvent, href: string) {
+    e.preventDefault();
+    if (timer.current) clearTimeout(timer.current);
+    if (text.trim() !== saved) await save(text);
+    router.push(href);
+  }
+
   async function copy() {
     try {
-      await navigator.clipboard.writeText(exportLine({ firstName, lastName, text }));
-      setMessage(`Appréciation de ${name} copiée.`);
+      await navigator.clipboard.writeText(textOnly(text));
+      await save(text);
+      await setReported(moduleId, studentId, true);
+      setMessage(`Appréciation de ${name} copiée (texte seul), marquée reportée.`);
     } catch {
       setMessage("Copie impossible depuis ce navigateur : sélectionne le texte à la main.");
     }
@@ -157,8 +174,28 @@ export function AppreciationEditor({
               Trop longue pour Hyperplanning : raccourcis avant de copier. Le brouillon est gardé.
             </p>
           ) : null}
+          {prev ? (
+            <Button asChild variant="outline" size="touch">
+              <Link href={prev.href} onClick={(e) => void go(e, prev.href)}>
+                ← Précédent·e
+                <span className="sr-only"> : {prev.name}</span>
+              </Link>
+            </Button>
+          ) : null}
+          {next ? (
+            <Button asChild variant="outline" size="touch">
+              <Link href={next.href} onClick={(e) => void go(e, next.href)}>
+                Suivant·e →<span className="sr-only"> : {next.name}</span>
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild variant="ghost" size="touch">
-            <Link href={backHref}>← Toutes les appréciations</Link>
+            <Link
+              href={`${backHref}#student-${studentId}`}
+              onClick={(e) => void go(e, `${backHref}#student-${studentId}`)}
+            >
+              ← Toutes les appréciations
+            </Link>
           </Button>
         </div>
         <p className="text-muted-foreground text-sm">

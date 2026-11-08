@@ -66,6 +66,17 @@ export async function GET(req: Request) {
         terms: ["publier", "partager", "lien", "liens", "frise", "espace étudiant", m.name],
         href: `/modules/${m.id}/frise`,
       })),
+    // Appréciations Hyperplanning : « appréciations » ouvre la liste du module.
+    ...(modules.data ?? [])
+      .filter((m) => !m.archived_at)
+      .map((m) => ({
+        kind: "appreciation" as const,
+        id: m.id,
+        label: "Appréciations",
+        detail: m.name,
+        terms: ["appréciation", "appreciations", "hyperplanning", "écrire", m.name],
+        href: `/modules/${m.id}/appreciations`,
+      })),
     ...(resources.data ?? []).map((r) => ({ kind: "resource" as const, id: r.id, label: r.title })),
     // Séances : par titre ou par numéro (« séance 5 »), ouvertes sur « Avant de commencer ».
     ...sessionNumbers(courses.data ?? [])

@@ -4,10 +4,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
+import { AppreciationList } from "@/components/appreciations/appreciation-list";
 import { AppreciationExport } from "@/components/appreciations/appreciation-export";
-import { Pill } from "@/components/dashboard/pill";
-import { Button } from "@/components/ui/button";
-import { appreciationStatus, countText, STATUS_LABELS } from "@/lib/appreciations/appreciation";
+import { appreciationStatus, sortRows } from "@/lib/appreciations/appreciation";
 import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { listAppreciations } from "@/lib/appreciations/queries";
 import { getModule } from "@/lib/modules/queries";
@@ -74,51 +73,21 @@ export default async function AppreciationsPage({
             <h2 id="ap" className="sr-only">
               Appréciations par personne
             </h2>
-            <ul className="divide-y">
-              {students.map((s) => {
-                const text = appreciations.byStudent.get(s.id) ?? "";
-                const status = appreciationStatus(text, rules.appreciationMax);
-                const average = averageOf.get(s.id) ?? null;
-                const name = `${s.first_name} ${s.last_name}`;
-                return (
-                  <li key={s.id} className="space-y-1 py-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span
-                        aria-hidden
-                        className="bg-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      >
-                        {s.first_name.charAt(0)}
-                        {s.last_name.charAt(0)}
-                      </span>
-                      <strong className="min-w-0 flex-1">{name}</strong>
-                      <span className="text-muted-foreground text-sm">
-                        Note{" "}
-                        {average !== null
-                          ? average.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
-                          : "—"}
-                      </span>
-                      <Pill
-                        tone={status === "written" ? "ok" : status === "too_long" ? "lock" : "warn"}
-                      >
-                        {STATUS_LABELS[status]}
-                      </Pill>
-                      <span className="text-muted-foreground text-sm">
-                        {text.trim() ? countText(text).chars : 0} caractères
-                      </span>
-                      <Button asChild variant="ghost" size="touch">
-                        <Link href={`/modules/${id}/appreciations/${s.id}`}>
-                          {text.trim() ? "Relire" : "Écrire"}
-                          <span className="sr-only"> l’appréciation de {name}</span>
-                        </Link>
-                      </Button>
-                    </div>
-                    {text.trim() ? (
-                      <p className="text-muted-foreground pl-12 text-sm">{text}</p>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
+            <AppreciationList
+              moduleId={id}
+              max={rules.appreciationMax}
+              rows={sortRows(
+                students.map((s) => ({
+                  studentId: s.id,
+                  firstName: s.first_name,
+                  lastName: s.last_name,
+                  text: appreciations.byStudent.get(s.id) ?? "",
+                  reportedText: appreciations.reported.get(s.id) ?? null,
+                  proposal: appreciations.proposals.has(s.id),
+                  average: averageOf.get(s.id) ?? null,
+                })),
+              )}
+            />
           </section>
 
           <div className="min-w-0 flex-[2_1_0] space-y-4">

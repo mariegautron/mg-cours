@@ -50,6 +50,20 @@ export const observationSchema = z.object({
   note: optionalText(1000),
 });
 
+export const groupObservationSchema = z.object({
+  groupId: z.uuid("Groupe invalide."),
+  tag: z.enum(TAG_VALUES, "Choisis une étiquette."),
+  note: optionalText(1000),
+});
+
+export function readGroupObservationForm(formData: FormData) {
+  return groupObservationSchema.safeParse({
+    groupId: formData.get("groupId") ?? "",
+    tag: formData.get("tag") || formData.get("tagDefault") || "",
+    note: formData.get("note") ?? "",
+  });
+}
+
 export function readObservationForm(formData: FormData) {
   return observationSchema.safeParse({
     studentId: formData.get("studentId") ?? "",

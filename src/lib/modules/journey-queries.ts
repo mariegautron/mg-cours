@@ -12,6 +12,7 @@ import {
   getRetainedResources,
 } from "@/lib/modules/queries";
 import { isModuleShared } from "@/lib/modules/frise-queries";
+import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { getOutline } from "@/lib/outline/queries";
 import { trameStatus } from "@/lib/ynov/trame";
 
@@ -30,10 +31,11 @@ export const getModuleJourney = cache(async (id: string) => {
       loadInvoiceContext(id),
       getInvoiceByModule(id),
     ]);
-  const [notes, coverage, shared] = await Promise.all([
+  const [notes, coverage, shared, appreciations] = await Promise.all([
     moduleNoteProgress(id, mod.total_hours, assessments),
     getModuleCoverage(id, expectations, retained),
     isModuleShared(id),
+    getAppreciationProgress(id),
   ]);
   return buildJourney({
     mod,
@@ -48,5 +50,6 @@ export const getModuleJourney = cache(async (id: string) => {
     invoice,
     invoiceCtx,
     shared,
+    appreciations,
   });
 });

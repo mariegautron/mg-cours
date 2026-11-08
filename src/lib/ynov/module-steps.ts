@@ -1,5 +1,5 @@
 /**
- * E18 : « Où j'en suis » — parcours d'un module en 11 étapes, de la fiche de l'école au paiement.
+ * E18 : « Où j'en suis » — parcours d'un module en 12 étapes, de la fiche de l'école au paiement.
  * Fonction pure, source unique du badge « Prochaine étape » de la fiche module. La facturation
  * (`/billing`) continue d'utiliser `nextStep()` (next-step.ts) pour ses raisons de blocage.
  * Un module rangé garde ses dix étapes (consultables), sans « prochaine étape ».
@@ -18,6 +18,7 @@ export type StepKey =
   | "share"
   | "teach"
   | "assess"
+  | "appreciations"
   | "admin"
   | "invoice";
 
@@ -41,6 +42,8 @@ export interface ModuleStepsContext {
   /** Évaluations (hors rattrapages) rattachées à une séance. */
   plannedAssessments: number;
   adminDocs: { done: number; total: number };
+  /** Appréciations pour Hyperplanning (après les notes). */
+  appreciations?: { written: number; total: number };
   invoice: "draft" | "ready" | "sent" | "paid" | null;
   /** L'espace étudiant·es est publié (lien de la classe actif). */
   shared?: boolean;
@@ -106,6 +109,8 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   const sendDone = prepared;
   const teachDone = delivered || (courses.total > 0 && courses.done === courses.total);
   const assessDone = delivered || notes.satisfied;
+  const apps = ctx.appreciations ?? { written: 0, total: 0 };
+  const appreciationsDone = delivered || (apps.total > 0 && apps.written >= apps.total);
   const adminDone = delivered || (adminDocs.total > 0 && adminDocs.done === adminDocs.total);
 
   const inProgress = (done: boolean, started: boolean): StepState =>
@@ -229,6 +234,14 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       summary: `Notées : ${notes.entered} / ${notes.required}`,
       action: { label: "Saisir les notes", href: `${base}/assessments` },
       badge: `saisir les notes manquantes (${notes.entered}/${notes.required} requises)`,
+    },
+    {
+      key: "appreciations",
+      title: "Appréciations",
+      state: inProgress(appreciationsDone, apps.written > 0),
+      summary: apps.total > 0 ? `Écrites : ${apps.written} / ${apps.total}` : "aucun·e étudiant·e",
+      action: { label: "Écrire les appréciations", href: `${base}/appreciations` },
+      badge: "écrire les appréciations",
     },
     {
       key: "admin",

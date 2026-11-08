@@ -272,21 +272,32 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
             <p className="text-muted-foreground text-sm">
               Les appréciations seront disponibles après la mise à jour de la base de données.
             </p>
-          ) : appreciations.items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune appréciation écrite.</p>
+          ) : spaceModules.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Cette personne n’est dans aucun module.</p>
           ) : (
             <ul className="space-y-2 text-sm">
-              {appreciations.items.map((a) => (
-                <li key={a.moduleId} className="bg-muted/40 rounded-lg p-3">
-                  <Link
-                    href={`/modules/${a.moduleId}/appreciations/${student.id}`}
-                    className="font-semibold underline underline-offset-2"
-                  >
-                    {a.moduleName}
-                  </Link>
-                  <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{a.text}</p>
-                </li>
-              ))}
+              {spaceModules.map((m) => {
+                const a = appreciations.items.find((x) => x.moduleId === m.id);
+                return (
+                  <li key={m.id} className="bg-muted/40 rounded-lg p-3">
+                    <p className="flex flex-wrap items-center justify-between gap-2">
+                      <strong>{m.name}</strong>
+                      <Link
+                        href={`/modules/${m.id}/appreciations/${student.id}`}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {a ? "Modifier l’appréciation" : "Écrire l’appréciation"}
+                        <span className="sr-only"> pour {m.name}</span>
+                      </Link>
+                    </p>
+                    {a ? (
+                      <p className="text-muted-foreground mt-1 whitespace-pre-wrap">{a.text}</p>
+                    ) : (
+                      <p className="text-muted-foreground mt-1">Aucune appréciation écrite.</p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

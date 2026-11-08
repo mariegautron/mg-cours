@@ -4,6 +4,8 @@ import { isAttendance, type Attendance, type MemberOverride } from "@/lib/assess
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
   lettersFromScores,
+  needsRewrite,
+  parseWritten,
   type OralCriterion,
   type OralLevel,
 } from "@/lib/assessments/oral-space";
@@ -160,3 +162,36 @@ export function seedFor(ctx: OralContext): SpaceSeed {
 }
 
 export type { MemberOverride };
+
+/**
+ * Oraux dont la note écrite est « à réécrire » : une lettre ou une présence a changé depuis
+ * l'écriture. Clés `<évaluation>:<groupe ou personne>`. Ces copies comptent comme « en cours »
+ * (hors moyennes, appréciations et publication) tant qu'elles ne sont pas réécrites. Les oraux
+ * jamais écrits par l'espace (notes d'avant) ne sont jamais concernés : leur note ne bouge pas.
+ */
+export async function loadRewriteKeys(
+  supabase: Supabase,
+  assessmentIds: readonly string[],
+): Promise<Set<string>> {
+  if (assessmentIds.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("oral_space")
+    .select("assessment_id, subject_id, letters, attendance, written")
+    .in("assessment_id", assessmentIds as string[])
+    .not("written", "is", null);
+  if (error || !data) return new Set();
+  const asStrings = (v: unknown): Record<string, string> =>
+    typeof v === "object" && v !== null && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.entries(v as Record<string, unknown>).filter(
+            (e): e is [string, string] => typeof e[1] === "string",
+          ),
+        )
+      : {};
+  const keys = new Set<string>();
+  for (const row of data) {
+    if (needsRewrite(parseWritten(row.written), asStrings(row.letters), asStrings(row.attendance)))
+      keys.add(`${row.assessment_id}:${row.subject_id}`);
+  }
+  return keys;
+}

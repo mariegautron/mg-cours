@@ -87,6 +87,8 @@ export interface TodoSources {
     missingCount: number;
   }[];
   billing: { module: { id: string; name: string }; kind: "ready" | "toSend" | "toCollect" }[];
+  /** Modules dont toutes les notes sont saisies et qui ont des appréciations à écrire. */
+  appreciations?: { module: { id: string; name: string }; remaining: number }[];
   /** Horizon des séances à préparer, en jours. */
   prepHorizonDays?: number;
 }
@@ -133,6 +135,16 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       detail: `${a.moduleName} · ${inDays(d)} · ${a.missingCount} point${a.missingCount > 1 ? "s" : ""} à compléter`,
       href: `/modules/${a.moduleId}/assessments`,
       urgency: d <= 1 ? d - 2 : d,
+    });
+  }
+  for (const a of src.appreciations ?? []) {
+    out.push({
+      key: `appreciations-${a.module.id}`,
+      kind: "appreciations",
+      title: `Écrire les appréciations (${a.remaining} restante${a.remaining > 1 ? "s" : ""})`,
+      detail: a.module.name,
+      href: `/modules/${a.module.id}/appreciations`,
+      urgency: 7,
     });
   }
   for (const b of src.billing) {

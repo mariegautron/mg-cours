@@ -3,13 +3,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EyeOff } from "lucide-react";
 
-import { addObservation } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
+import {
+  addGroupObservation,
+  addObservation,
+} from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 import { Pill } from "@/components/dashboard/pill";
 import { ObservationPanel, type StudentStat } from "@/components/notebook/observation-panel";
 import { Button } from "@/components/ui/button";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
-import { listCourseObservations, listModuleObservations } from "@/lib/notebook/queries";
+import {
+  countGroupObservations,
+  listCourseGroupObservations,
+  listCourseObservations,
+  listModuleObservations,
+} from "@/lib/notebook/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Ma classe" };
@@ -22,13 +30,16 @@ export default async function ClassPage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/trombinoscope">) {
   const { id, courseId } = await params;
-  const [mod, courses, groups, moduleNotes, todayNotes] = await Promise.all([
-    getModule(id),
-    getModuleCourses(id),
-    listModuleGroups(id),
-    listModuleObservations(id),
-    listCourseObservations(courseId),
-  ]);
+  const [mod, courses, groups, moduleNotes, todayNotes, groupObservations, groupCounts] =
+    await Promise.all([
+      getModule(id),
+      getModuleCourses(id),
+      listModuleGroups(id),
+      listModuleObservations(id),
+      listCourseObservations(courseId),
+      listCourseGroupObservations(courseId),
+      countGroupObservations(id),
+    ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
 
@@ -74,6 +85,13 @@ export default async function ClassPage({
         action={addObservation.bind(null, id, courseId)}
         students={students}
         stats={stats}
+        groupAction={addGroupObservation.bind(null, id, courseId)}
+        groupList={groups.map((g) => ({
+          id: g.id,
+          name: g.name,
+          count: groupCounts.get(g.id) ?? 0,
+        }))}
+        groupRecent={groupObservations}
         defaultView="grid"
       />
       <p className="text-muted-foreground text-sm">

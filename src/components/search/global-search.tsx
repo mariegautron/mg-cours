@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CircleHelp,
   ClipboardCheck,
+  PenLine,
   GraduationCap,
   Library,
   Search,
@@ -27,6 +28,7 @@ const ICONS: Record<SearchKind, typeof Search> = {
   resource: Library,
   question: CircleHelp,
   assessment: ClipboardCheck,
+  appreciation: PenLine,
 };
 
 const DEBOUNCE_MS = 200;

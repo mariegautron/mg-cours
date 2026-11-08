@@ -1,5 +1,6 @@
 "use client";
 
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { coefficientFor } from "@/lib/ynov/notation";
 import { useActionState, useState } from "react";
 import Link from "next/link";
@@ -85,6 +86,7 @@ export function AssessmentForm({
 
   return (
     <form onSubmit={keepFormValues(formAction)} className="max-w-xl space-y-6">
+      <UnsavedChangesGuard />
       <div className="space-y-2">
         <Label htmlFor="title">Titre</Label>
         <Input

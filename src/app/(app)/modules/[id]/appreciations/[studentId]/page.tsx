@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AppreciationBasisPanel } from "@/components/appreciations/appreciation-basis";
+import { sortRows } from "@/lib/appreciations/appreciation";
+import { notebookStudents } from "@/lib/notebook/notebook";
+import { listModuleGroups } from "@/lib/students/queries";
 import { getAppreciationBasis } from "@/lib/appreciations/basis-queries";
 import { AppreciationEditor } from "@/components/appreciations/appreciation-editor";
 import { listAppreciations } from "@/lib/appreciations/queries";
@@ -36,6 +39,20 @@ export default async function AppreciationPage({
   const found = averages.find((a) => a.student.id === studentId);
   const average = found?.average.average ?? null;
   const bonusText = bonusLine(found?.bonusEffect ?? null);
+  const ordered = sortRows(
+    notebookStudents(await listModuleGroups(id)).map((s) => ({
+      id: s.id,
+      firstName: s.first_name,
+      lastName: s.last_name,
+    })),
+  );
+  const at = ordered.findIndex((s) => s.id === studentId);
+  const neighbour = (d: number) => {
+    const o = ordered[at + d];
+    return at >= 0 && o
+      ? { href: `/modules/${id}/appreciations/${o.id}`, name: `${o.firstName} ${o.lastName}` }
+      : null;
+  };
   const name = `${student.first_name} ${student.last_name}`;
   const initials = `${student.first_name.charAt(0)}${student.last_name.charAt(0)}`.toUpperCase();
 
@@ -85,6 +102,8 @@ export default async function AppreciationPage({
           initial={appreciations.byStudent.get(studentId) ?? ""}
           max={rules.appreciationMax}
           backHref={`/modules/${id}/appreciations`}
+          prev={neighbour(-1)}
+          next={neighbour(1)}
         />
       </div>
     </div>

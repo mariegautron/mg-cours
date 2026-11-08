@@ -82,6 +82,47 @@ export interface ExportRow {
 const upperName = (s: string) => s.toLocaleUpperCase("fr-FR");
 const oneLine = (s: string) => s.replace(/\s*\n\s*/g, " ").trim();
 
+/** Texte seul, sur une ligne, sans nom : ce qu'on colle dans la case d'une personne dans Hyperplanning. */
+export function textOnly(text: string): string {
+  return oneLine(text);
+}
+
+/** Texte modifié depuis qu'il a été reporté dans Hyperplanning ? (`null` = jamais reporté.) */
+export function modifiedSinceReport(text: string, reportedText: string | null): boolean {
+  return reportedText !== null && oneLine(text) !== oneLine(reportedText);
+}
+
+export type ListFilter = "all" | "todo" | "too_long" | "not_reported";
+
+export const LIST_FILTER_LABELS: Record<ListFilter, string> = {
+  all: "Toutes",
+  todo: "À écrire",
+  too_long: "Trop longues",
+  not_reported: "Non reportées",
+};
+
+/** Filtre de la liste : à écrire, trop longues, écrites mais pas (ou plus) reportées. */
+export function matchesFilter(
+  filter: ListFilter,
+  text: string,
+  reportedText: string | null,
+  max: number,
+): boolean {
+  const status = appreciationStatus(text, max);
+  switch (filter) {
+    case "all":
+      return true;
+    case "todo":
+      return status === "todo";
+    case "too_long":
+      return status === "too_long";
+    case "not_reported":
+      return (
+        status !== "todo" && (reportedText === null || modifiedSinceReport(text, reportedText))
+      );
+  }
+}
+
 /** Ligne à coller : « NOM Prénom : texte » (le texte tient sur une ligne). */
 export function exportLine(row: ExportRow): string {
   return `${upperName(row.lastName)} ${row.firstName} : ${oneLine(row.text)}`;
@@ -95,7 +136,9 @@ export function exportAll(rows: readonly ExportRow[]): string {
     .join("\n");
 }
 
-function sortRows<T extends ExportRow>(rows: readonly T[]): T[] {
+export function sortRows<T extends { firstName: string; lastName: string }>(
+  rows: readonly T[],
+): T[] {
   return [...rows].sort(
     (a, b) =>
       a.lastName.localeCompare(b.lastName, "fr") || a.firstName.localeCompare(b.firstName, "fr"),

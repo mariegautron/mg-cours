@@ -14,7 +14,8 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ObservationItem } from "@/components/notebook/observation-item";
-import type { CourseObservation } from "@/lib/notebook/queries";
+import { GroupObservationPanel } from "@/components/notebook/group-observation-panel";
+import type { CourseObservation, GroupObservationRow } from "@/lib/notebook/queries";
 import { clampActive, findStudents, moveActive, tagForKeyEvent } from "@/lib/notebook/live";
 import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,9 @@ export function ObservationPanel({
   stats,
   defaultView = "list",
   recent,
+  groupAction,
+  groupList,
+  groupRecent,
 }: {
   action: Action;
   students: Student[];
@@ -56,6 +60,10 @@ export function ObservationPanel({
   defaultView?: "list" | "grid";
   /** Observations déjà prises pendant cette séance (liste repliable, avec correction). */
   recent?: CourseObservation[];
+  /** Observation sur un groupe entier : une ligne par groupe au-dessus de la liste des personnes. */
+  groupAction?: Action;
+  groupList?: { id: string; name: string; count: number }[];
+  groupRecent?: GroupObservationRow[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [query, setQuery] = useState("");
@@ -288,6 +296,9 @@ export function ObservationPanel({
 
   return (
     <div className="space-y-3">
+      {groupAction && groupList ? (
+        <GroupObservationPanel action={groupAction} groups={groupList} recent={groupRecent ?? []} />
+      ) : null}
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-48 flex-1 space-y-1">
           <Label htmlFor={filterId}>Filtrer par nom</Label>

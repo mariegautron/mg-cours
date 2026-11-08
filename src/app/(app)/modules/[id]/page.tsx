@@ -1,3 +1,4 @@
+import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -130,6 +131,7 @@ export default async function ModulePage({
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const coverage = await getModuleCoverage(id, expectations, retained);
   const shared = await isModuleShared(id);
+  const appreciations = await getAppreciationProgress(id);
   const journey = buildJourney({
     mod,
     courses,
@@ -143,6 +145,7 @@ export default async function ModulePage({
     invoice,
     invoiceCtx,
     shared,
+    appreciations,
   });
 
   // Fiches « à reporter » d'une clôture sans séance suivante : à signaler jusqu'à ce qu'elles aient une place.

@@ -86,3 +86,66 @@ export async function observationSummaries(): Promise<Map<string, ObservationSum
   }
   return out;
 }
+
+export interface GroupObservationRow {
+  id: string;
+  tag: ObservationTag;
+  note: string | null;
+  created_at: string;
+  student_group_id: string;
+  course: { id: string; title: string; session_date: string | null } | null;
+}
+
+/** Observations de groupe d'une séance. Protégé : table absente → liste vide. */
+export async function listCourseGroupObservations(
+  courseId: string,
+): Promise<GroupObservationRow[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("group_observation")
+      .select(
+        "id, tag, note, created_at, student_group_id, course:course_id(id, title, session_date)",
+      )
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: false });
+    return error ? [] : ((data ?? []) as unknown as GroupObservationRow[]);
+  } catch {
+    return [];
+  }
+}
+
+/** Observations faites sur un groupe, les plus récentes d'abord. Protégé comme ci-dessus. */
+export async function listGroupObservations(groupId: string): Promise<GroupObservationRow[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("group_observation")
+      .select(
+        "id, tag, note, created_at, student_group_id, course:course_id(id, title, session_date)",
+      )
+      .eq("student_group_id", groupId)
+      .order("created_at", { ascending: false });
+    return error ? [] : ((data ?? []) as unknown as GroupObservationRow[]);
+  } catch {
+    return [];
+  }
+}
+
+/** Nombre d'observations de groupe par groupe, pour un module. Protégé. */
+export async function countGroupObservations(moduleId: string): Promise<Map<string, number>> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("group_observation")
+      .select("student_group_id")
+      .eq("module_id", moduleId);
+    const counts = new Map<string, number>();
+    if (error) return counts;
+    for (const r of data ?? [])
+      counts.set(r.student_group_id, (counts.get(r.student_group_id) ?? 0) + 1);
+    return counts;
+  } catch {
+    return new Map();
+  }
+}

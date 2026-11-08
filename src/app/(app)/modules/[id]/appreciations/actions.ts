@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { cleanAppreciation } from "@/lib/appreciations/appreciation";
 import { failure } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
@@ -44,4 +46,28 @@ export async function saveAppreciation(
       timeZone: "Europe/Paris",
     }),
   };
+}
+
+/** Coche ou décoche « Reportée dans Hyperplanning » : mémorise le texte reporté pour repérer les modifications ensuite. */
+export async function setReported(
+  moduleId: string,
+  studentId: string,
+  reported: boolean,
+): Promise<AppreciationState> {
+  const supabase = await createClient();
+  const { data: row } = await supabase
+    .from("appreciation")
+    .select("text")
+    .eq("module_id", moduleId)
+    .eq("student_id", studentId)
+    .maybeSingle();
+  if (!row) return { error: "Écris d’abord l’appréciation." };
+  const { error } = await supabase
+    .from("appreciation")
+    .update({ reported_text: reported ? row.text : null })
+    .eq("module_id", moduleId)
+    .eq("student_id", studentId);
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  revalidatePath(`/modules/${moduleId}/appreciations`);
+  return {};
 }

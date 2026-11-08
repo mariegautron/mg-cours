@@ -1,3 +1,4 @@
+import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -113,9 +114,24 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const todayIds = new Set(sessions.map((c) => c.id));
   const surprises = dueToday(await listSurprisesForCourses([...todayIds]), todayIds);
 
+  const appreciationTodos = (
+    await Promise.all(
+      modules
+        .filter((m) => !m.archived_at && !m.finished_at)
+        .map(async (m) => ({
+          module: { id: m.id, name: m.name },
+          p: await getAppreciationProgress(m.id),
+        })),
+    )
+  ).flatMap((x) =>
+    x.p.allGraded && x.p.total > x.p.written
+      ? [{ module: x.module, remaining: x.p.total - x.p.written }]
+      : [],
+  );
   const todos = pickTodos(
     buildTodos({
       today,
+      appreciations: appreciationTodos,
       outlineAlerts: alerts,
       upcomingCourses: [...coursesToday, ...coursesAfter]
         .filter((c) => c.module && !c.module.archived_at)

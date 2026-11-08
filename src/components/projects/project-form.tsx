@@ -1,5 +1,6 @@
 "use client";
 
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useActionState } from "react";
 
 import { ActionError } from "@/components/action-error";
@@ -33,6 +34,7 @@ export function ProjectForm({
 
   return (
     <form onSubmit={keepFormValues(formAction)} className="space-y-5">
+      <UnsavedChangesGuard />
       <div className="bg-card rounded-3xl border p-5 shadow-sm">
         <div className="space-y-2">
           <Label htmlFor="title" className="text-muted-foreground font-normal">
