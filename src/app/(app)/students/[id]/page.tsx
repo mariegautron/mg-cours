@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 
 import { StudentPhotoManager } from "@/components/students/student-photo-manager";
 import { StudentSpaceCard } from "@/components/students/student-space-card";
+import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { getStudentSpaces } from "@/lib/modules/frise-queries";
 import { StudentActions } from "@/components/students/student-actions";
 import { Pill } from "@/components/dashboard/pill";
@@ -41,6 +42,18 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       listStudentSubmissions(id),
     ]);
   const gradeModules = gradesByModule(gradeLines);
+  // Mêmes notes et même moyenne que l'écran d'appréciation : une seule source (moyenne du module).
+  const moduleAverages = new Map(
+    await Promise.all(
+      gradeModules.map(
+        async (m) =>
+          [
+            m.moduleId,
+            (await moduleStudentAverages(m.moduleId)).find((a) => a.student.id === id) ?? null,
+          ] as const,
+      ),
+    ),
+  );
   const missed = absences(gradeLines);
   const promos = promotions(years);
   if (!student) notFound();
@@ -171,23 +184,32 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
                     </Link>
                   </h3>
                   <ul className="divide-y text-sm">
-                    {m.lines.map((l) => (
+                    {(moduleAverages.get(m.moduleId)?.lines ?? []).map((l) => (
                       <li
-                        key={`${l.assessmentId}-${l.isGroupGrade}`}
+                        key={`${l.assessmentId}-${l.kind}`}
                         className="flex flex-wrap justify-between gap-2 py-2"
                       >
                         <span>
                           <Link
-                            href={`/modules/${l.moduleId}/assessments/${l.assessmentId}`}
+                            href={`/modules/${m.moduleId}/assessments/${l.assessmentId}`}
                             className="underline underline-offset-2"
                           >
-                            {l.assessmentTitle}
+                            {l.title}
                           </Link>
-                          {l.isGroupGrade ? " · note de groupe" : ""}
+                          {l.kind === "group" ? " · note de groupe" : " · individuelle"}
+                          {l.isBonus ? " · bonus" : ` · coef. ${l.coefficient}`}
                         </span>
-                        <strong>{formatGrade(l.value, l.maxScore)}</strong>
+                        <strong>{formatGrade(l.value, l.max)}</strong>
                       </li>
                     ))}
+                    {moduleAverages.get(m.moduleId)?.average.average != null ? (
+                      <li className="flex justify-between gap-2 py-2 font-semibold">
+                        <span>Moyenne du module</span>
+                        <span>
+                          {formatGrade(moduleAverages.get(m.moduleId)!.average.average, 20)}
+                        </span>
+                      </li>
+                    ) : null}
                   </ul>
                 </section>
               ))}

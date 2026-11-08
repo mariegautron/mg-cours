@@ -1,16 +1,15 @@
-import { isGradeCounted } from "@/lib/assessments/completeness";
 import { bonusLine } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { AppreciationBasisPanel } from "@/components/appreciations/appreciation-basis";
+import { getAppreciationBasis } from "@/lib/appreciations/basis-queries";
 import { AppreciationEditor } from "@/components/appreciations/appreciation-editor";
 import { listAppreciations } from "@/lib/appreciations/queries";
 import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
-import { listModuleObservations } from "@/lib/notebook/queries";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { getStudent } from "@/lib/students/queries";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Appréciation" };
 
@@ -24,73 +23,21 @@ export default async function AppreciationPage({
   params,
 }: PageProps<"/modules/[id]/appreciations/[studentId]">) {
   const { id, studentId } = await params;
-  const supabase = await createClient();
-  const [mod, student, appreciations, averages, rules, observations, { data: grades }] =
-    await Promise.all([
-      getModule(id),
-      getStudent(studentId),
-      listAppreciations(id),
-      moduleStudentAverages(id),
-      getSchoolRulesForModule(id),
-      listModuleObservations(id),
-      supabase
-        .from("grade")
-        .select(
-          "value, scores, attendance, strengths, progress, assessment:assessment_id(title, module_id, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)))",
-        )
-        .eq("student_id", studentId),
-    ]);
+  const [mod, student, appreciations, averages, rules, basis] = await Promise.all([
+    getModule(id),
+    getStudent(studentId),
+    listAppreciations(id),
+    moduleStudentAverages(id),
+    getSchoolRulesForModule(id),
+    getAppreciationBasis(id, studentId),
+  ]);
   if (!mod || !student) notFound();
 
   const found = averages.find((a) => a.student.id === studentId);
   const average = found?.average.average ?? null;
   const bonusText = bonusLine(found?.bonusEffect ?? null);
-  const own = (
-    (grades ?? []) as unknown as {
-      value: number | null;
-      scores: unknown;
-      attendance: string | null;
-      strengths: string | null;
-      progress: string | null;
-      assessment: {
-        title: string;
-        module_id: string;
-        auto_validated_criterion_ids: string[];
-        grading_grid: { grid_criterion: { id: string; is_bonus: boolean }[] } | null;
-      } | null;
-    }[]
-  ).filter((g) => g.assessment?.module_id === id);
-  // Une copie en cours n'est pas une note : même règle que les moyennes.
-  const notes = own.filter((g) =>
-    isGradeCounted(
-      g,
-      (g.assessment?.grading_grid?.grid_criterion ?? []).map((c) => ({
-        id: c.id,
-        isBonus: c.is_bonus,
-      })),
-      g.assessment?.auto_validated_criterion_ids ?? [],
-    ),
-  );
-  const strengths = own.map((g) => g.strengths?.trim()).filter(Boolean);
-  const progress = own.map((g) => g.progress?.trim()).filter(Boolean);
-  const privateNotes = observations.filter((o) => o.student_id === studentId).length;
   const name = `${student.first_name} ${student.last_name}`;
   const initials = `${student.first_name.charAt(0)}${student.last_name.charAt(0)}`.toUpperCase();
-
-  const source = (label: string, detail: string, used: boolean) => (
-    <li className="flex items-start gap-3 border-t py-3 first:border-t-0">
-      <span
-        aria-hidden
-        className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border-2 text-sm font-extrabold ${used ? "bg-primary text-primary-foreground border-transparent" : ""}`}
-      >
-        {used ? "✓" : ""}
-      </span>
-      <span>
-        <strong className="text-sm">{label}</strong>
-        <span className="text-muted-foreground block text-sm">{detail}</span>
-      </span>
-    </li>
-  );
 
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -118,37 +65,18 @@ export default async function AppreciationPage({
           </div>
         </div>
         <h3 className="font-heading pt-2 font-bold">D’après</h3>
-        <ul>
-          {source(
-            "Notes",
-            notes.length
-              ? notes.map((g) => `${g.assessment?.title} : ${fmt(g.value as number)}`).join(" · ")
-              : "Aucune note saisie",
-            notes.length > 0,
-          )}
-          {source(
-            "Tes commentaires de correction",
-            [
-              strengths.length ? `Points forts : ${strengths.join(" ; ")}` : null,
-              progress.length ? `Progrès : ${progress.join(" ; ")}` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ") || "Aucun commentaire de correction",
-            strengths.length + progress.length > 0,
-          )}
-          {source(
-            "Mes observations de séance",
-            privateNotes
-              ? `${privateNotes} note${privateNotes > 1 ? "s" : ""} privée${privateNotes > 1 ? "s" : ""}, à relire dans le carnet`
-              : "Aucune note privée",
-            false,
-          )}
-        </ul>
+        <AppreciationBasisPanel
+          lines={found?.lines ?? []}
+          average={average}
+          comments={basis.comments}
+          observations={basis.observations}
+          group={basis.group}
+        />
         <p className="text-muted-foreground text-xs">
           Tes observations restent privées : à toi de décider ce que tu en fais.
         </p>
       </section>
-      <div className="min-w-0 flex-[3_1_0]">
+      <div className="order-first min-w-0 flex-[3_1_0] lg:order-none">
         <AppreciationEditor
           moduleId={id}
           studentId={studentId}

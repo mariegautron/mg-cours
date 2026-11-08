@@ -134,6 +134,8 @@ export type Database = {
           student_id: string
           text: string
           updated_at: string
+          reported_text: string | null
+          is_proposal: boolean
         }
         Insert: {
           created_at?: string
@@ -143,6 +145,8 @@ export type Database = {
           student_id: string
           text?: string
           updated_at?: string
+          reported_text?: string | null
+          is_proposal?: boolean
         }
         Update: {
           created_at?: string
@@ -152,6 +156,8 @@ export type Database = {
           student_id?: string
           text?: string
           updated_at?: string
+          reported_text?: string | null
+          is_proposal?: boolean
         }
         Relationships: [
           {
@@ -1080,6 +1086,64 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "student"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_observation: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          module_id: string
+          note: string | null
+          owner_id: string
+          student_group_id: string
+          tag: Database["public"]["Enums"]["observation_tag"]
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          note?: string | null
+          owner_id?: string
+          student_group_id: string
+          tag: Database["public"]["Enums"]["observation_tag"]
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          note?: string | null
+          owner_id?: string
+          student_group_id?: string
+          tag?: Database["public"]["Enums"]["observation_tag"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_observation_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "course"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_observation_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "module"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_observation_student_group_id_fkey"
+            columns: ["student_group_id"]
+            isOneToOne: false
+            referencedRelation: "student_group"
             referencedColumns: ["id"]
           },
         ]

@@ -13,6 +13,8 @@ import {
   effectiveMaxScore,
   noteProgress,
   averageWithBonus,
+  GROUP_COEFFICIENT,
+  INDIVIDUAL_COEFFICIENT,
   weightedAverage,
   type GradeInput,
   type NoteProgress,
@@ -357,8 +359,23 @@ export async function moduleNoteProgress(
   return noteProgress(totalHours, { group, individual });
 }
 
+/** Une note qui entre (ou pas) dans la moyenne du module, telle qu'elle est comptée. */
+export interface AverageLine {
+  assessmentId: string;
+  title: string;
+  /** Note retenue pour la personne (absence prise en compte), sur `max`. */
+  value: number;
+  max: number;
+  kind: "group" | "individual";
+  /** Coefficient YNOV (groupe ×1, individuel ×3) ; 0 pour une note bonus. */
+  coefficient: number;
+  isBonus: boolean;
+}
+
 export interface StudentAverage {
   student: Tables<"student">;
+  /** Toutes les notes qui font la moyenne ci-dessous. */
+  lines: AverageLine[];
   average: ReturnType<typeof weightedAverage>;
   /** Points que la note bonus de certification ajoute à la moyenne (jamais négatif) ; `null` sans bonus. */
   bonusEffect: number | null;
@@ -424,6 +441,26 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
 
   const perStudent = new Map<string, GradeInput[]>();
   const bonusPerStudent = new Map<string, GradeInput[]>();
+  const linesPerStudent = new Map<string, AverageLine[]>();
+  const addLine = (
+    studentId: string,
+    a: { id: string; title: string; is_bonus: boolean },
+    value: number,
+    max: number,
+    kind: "group" | "individual",
+  ) => {
+    const list = linesPerStudent.get(studentId) ?? [];
+    list.push({
+      assessmentId: a.id,
+      title: a.title,
+      value,
+      max,
+      kind,
+      coefficient: a.is_bonus ? 0 : kind === "group" ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT,
+      isBonus: a.is_bonus,
+    });
+    linesPerStudent.set(studentId, list);
+  };
   for (const student of allStudents.values()) {
     perStudent.set(student.id, []);
     bonusPerStudent.set(student.id, []);
@@ -450,13 +487,17 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
             overrideOf.get(`${row.id}:${s.id}`),
             absenceRule,
           );
-          if (value !== null) perStudent.get(s.id)?.push({ value, kind, max });
+          if (value !== null) {
+            perStudent.get(s.id)?.push({ value, kind, max });
+            addLine(s.id, assessment, value, max, kind);
+          }
         }
       } else if (row.student_id) {
         // Note bonus : mise de côté, elle ne fait que remonter la moyenne (« jamais pénalisante »).
         (assessment.is_bonus ? bonusPerStudent : perStudent)
           .get(row.student_id)
           ?.push({ value: row.value, kind, max });
+        addLine(row.student_id, assessment, row.value, max, kind);
       }
     }
   }
@@ -475,6 +516,9 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       ).length;
       return {
         student,
+        lines: (linesPerStudent.get(student.id) ?? []).sort((x, y) =>
+          x.title.localeCompare(y.title, "fr"),
+        ),
         average: { points: result.points, weight: result.weight, average: result.average },
         bonusEffect: result.bonusEffect,
         noted: Math.min(perStudent.get(student.id)?.length ?? 0, expected),
