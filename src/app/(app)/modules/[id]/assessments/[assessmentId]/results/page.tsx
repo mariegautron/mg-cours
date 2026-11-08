@@ -21,6 +21,8 @@ import { formatNumber } from "@/lib/assessments/scoring";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
+import { loadRewriteKeys } from "@/lib/assessments/oral-space-server";
+import { createClient } from "@/lib/supabase/server";
 import { listResultLinks } from "@/lib/result-links/queries";
 
 export const metadata: Metadata = { title: "Envoyer les résultats" };
@@ -63,13 +65,18 @@ export default async function ResultsPage({
   // Excusé·e = traité (même règle que la page de correction) ; une copie commencée mais incomplète
   // n'a pas de note et ne compte pas : elle bloque l'envoi.
   const done = grades.filter((g) => g.value !== null || g.attendance === "absent_excused").length;
+  // Oral dont la note écrite est « à réécrire » : une lettre a changé après l'écriture.
+  const rewriteKeys = await loadRewriteKeys(await createClient(), [assessmentId]);
+  const toRewrite = assessment.groups
+    .filter((g) => rewriteKeys.has(`${assessmentId}:${g.id}`))
+    .map((g) => g.name);
   const incompleteList = incompleteCopies(grades, assessment.groups);
   const incomplete = incompleteList.map((c) => c.name);
   const publishedWarnings = publishedIncomplete(
     incompleteList,
     new Set(resultLinks.byStudent.keys()),
   );
-  const allDone = total > 0 && done >= total && incomplete.length === 0;
+  const allDone = total > 0 && done >= total && incomplete.length === 0 && toRewrite.length === 0;
   const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
 
   const absences = [...grades.map((g) => g.attendance), ...overrides.map((o) => o.attendance)];
@@ -92,6 +99,15 @@ export default async function ResultsPage({
       ok: allDone,
       status: allDone ? "Prêt" : "À finir",
     },
+    ...(toRewrite.length > 0
+      ? [
+          {
+            label: `Note à réécrire : tu as changé une lettre après l’avoir écrite (${toRewrite.join(", ")})`,
+            ok: false,
+            status: "À réécrire",
+          },
+        ]
+      : []),
     ...(incomplete.length > 0
       ? [
           {
@@ -198,6 +214,18 @@ export default async function ResultsPage({
             <h2 id="pre" className="text-lg font-semibold">
               Comment envoyer ?
             </h2>
+            {toRewrite.length > 0 ? (
+              <p role="alert" className="text-sm font-medium">
+                La publication est bloquée : note à réécrire pour {toRewrite.join(", ")}. Tu as
+                changé une lettre après avoir écrit la note.{" "}
+                <Link
+                  href={`/modules/${id}/assessments/${assessmentId}/oral`}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  Ouvrir l’oral pour la réécrire
+                </Link>
+              </p>
+            ) : null}
             {incomplete.length > 0 ? (
               <p role="alert" className="text-sm font-medium">
                 L’envoi est bloqué : {incomplete.length} copie
@@ -206,7 +234,7 @@ export default async function ResultsPage({
                 pour pouvoir envoyer.
               </p>
             ) : null}
-            {hasGrades && incomplete.length === 0 ? (
+            {hasGrades && incomplete.length === 0 && toRewrite.length === 0 ? (
               <PublishResults
                 moduleId={id}
                 assessmentId={assessmentId}
@@ -232,7 +260,7 @@ export default async function ResultsPage({
             <ResultsActions
               moduleId={id}
               assessmentId={assessmentId}
-              hasGrades={hasGrades && incomplete.length === 0}
+              hasGrades={hasGrades && incomplete.length === 0 && toRewrite.length === 0}
               recipients={recipients}
               sentAt={assessment.results_sent_at}
             />

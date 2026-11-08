@@ -41,7 +41,7 @@ export default async function OralPage({
     await Promise.all([
       getModule(id),
       getAssessment(assessmentId),
-      getGradesByAssessment(assessmentId),
+      getGradesByAssessment(assessmentId, { skipRewrite: true }),
       listComments(),
       listModuleObservations(id),
       supabase.from("oral_slot").select("*").eq("assessment_id", assessmentId).order("position"),

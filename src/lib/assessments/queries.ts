@@ -3,6 +3,7 @@ import {
   guardIncompleteGrades,
   isGradeCounted,
 } from "@/lib/assessments/completeness";
+import { loadRewriteKeys } from "@/lib/assessments/oral-space-server";
 import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";

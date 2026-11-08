@@ -1,3 +1,4 @@
+import { loadRewriteKeys } from "@/lib/assessments/oral-space-server";
 import { gradeCompletion, isGradeCounted } from "@/lib/assessments/completeness";
 import "server-only";
 
@@ -177,6 +178,10 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
       "assessment_id",
       rows.map((a) => a.id),
     );
+  const rewrite = await loadRewriteKeys(
+    supabase,
+    rows.map((a) => a.id),
+  );
   const criteriaOf = new Map(
     rows.map((a) => [
       a.id,
@@ -200,7 +205,10 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
     const key = `${g.assessment_id}:${g.student_group_id ?? g.student_id}`;
     const state = gradeCompletion(g, c?.criteria ?? [], c?.auto ?? []).state;
     const counted = isGradeCounted(g, c?.criteria ?? [], c?.auto ?? []);
-    if (counted || g.attendance === "absent_excused") handled.add(key);
+    if (rewrite.has(key)) {
+      // Oral dont la note écrite est « à réécrire » : en cours.
+      startedCopies.set(g.assessment_id, (startedCopies.get(g.assessment_id) ?? 0) + 1);
+    } else if (counted || g.attendance === "absent_excused") handled.add(key);
     else if (state === "partial")
       startedCopies.set(g.assessment_id, (startedCopies.get(g.assessment_id) ?? 0) + 1);
   }
