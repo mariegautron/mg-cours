@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
-import { examKindForType } from "@/lib/assessments/individual";
+import { examKindForType, kindOf } from "@/lib/assessments/individual";
 import { makeupInvariants } from "@/lib/assessments/makeup";
 import { parseScale, scaleToPoints } from "@/lib/assessments/score-scale";
 import { readAssessmentForm } from "@/lib/assessments/schema";
@@ -118,6 +118,30 @@ async function milestoneColumns(
     project_role: "milestone" as const,
     project_position: (count ?? 0) + 1,
   };
+}
+
+/**
+ * Oral : sans heure de début saisie, les créneaux partent de l'heure de la séance rattachée (jamais
+ * de l'heure actuelle). Une heure déjà saisie n'est jamais écrasée.
+ */
+async function defaultOralStart(
+  supabase: Supabase,
+  assessmentId: string,
+  type: string | null | undefined,
+  courseId: string | null,
+) {
+  if (!courseId || kindOf(type) !== "oral") return;
+  const { data: course } = await supabase
+    .from("course")
+    .select("start_time")
+    .eq("id", courseId)
+    .maybeSingle();
+  if (!course?.start_time) return;
+  await supabase
+    .from("assessment")
+    .update({ oral_start_time: course.start_time })
+    .eq("id", assessmentId)
+    .is("oral_start_time", null);
 }
 
 const subjectColumns = (d: {
@@ -232,6 +256,7 @@ export async function createAssessment(
     await prepareMakeupInAdvance(moduleId, data.id);
   }
 
+  await defaultOralStart(supabase, data.id, parsed.data.type, parsed.data.courseId);
   revalidatePath(`/modules/${moduleId}/assessments`);
   redirect(`/modules/${moduleId}/assessments/${data.id}?enregistre=1`);
 }
@@ -335,6 +360,7 @@ export async function updateAssessment(
     if (removeError || gradeError) return { error: failure("enregistrer", { kept: true }) };
   }
 
+  await defaultOralStart(supabase, assessmentId, parsed.data.type, parsed.data.courseId);
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   redirect(`/modules/${moduleId}/assessments/${assessmentId}?enregistre=1`);

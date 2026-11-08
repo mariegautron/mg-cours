@@ -319,7 +319,9 @@ export function AssessmentForm({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="durationMinutes">Durée (minutes)</Label>
+            <Label htmlFor="durationMinutes">
+              {whereKind === "oral" ? "Durée par groupe (minutes)" : "Durée (minutes)"}
+            </Label>
             <Input
               id="durationMinutes"
               name="durationMinutes"
