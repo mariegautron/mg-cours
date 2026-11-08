@@ -150,6 +150,18 @@ export function AssessmentForm({
           {groupGrade ? <input type="hidden" name="isGroupGrade" value="on" /> : null}
         </fieldset>
 
+        {hasProject ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="hidden" name="milestoneField" value="1" />
+            <input
+              type="checkbox"
+              name="isMilestone"
+              defaultChecked={assessment ? !!assessment.project_id : initialMilestone}
+            />
+            Jalon du projet fil rouge
+          </label>
+        ) : null}
+
         <fieldset className="space-y-4">
           <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>
           <p className="text-muted-foreground text-sm">
