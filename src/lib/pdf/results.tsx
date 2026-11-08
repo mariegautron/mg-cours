@@ -98,6 +98,35 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               </View>
             ) : null}
 
+            {s.attendance === "absent_excused" ? null : (
+              <Text style={styles.total}>
+                Note : {s.value ?? "—"} / {s.maxScore}
+                {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
+              </Text>
+            )}
+            {s.bonusLine ? <Text style={styles.overflow}>{s.bonusLine}</Text> : null}
+            {s.overflow ? (
+              <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
+            ) : null}
+
+            {s.strengths ? (
+              <View>
+                <Text style={styles.h}>Vos points forts</Text>
+                <Text>{s.strengths}</Text>
+              </View>
+            ) : null}
+            {s.progress ? (
+              <View>
+                <Text style={styles.h}>Vos progrès</Text>
+                <Text>{s.progress}</Text>
+              </View>
+            ) : null}
+            {s.feedback ? (
+              <View>
+                <Text style={styles.h}>Commentaire</Text>
+                <Text>{s.feedback}</Text>
+              </View>
+            ) : null}
             {(s.attendance === "present" ? s.criteria : []).map((c, j) => (
               <View key={c.label + j}>
                 {hasAxes && (j === 0 || c.axis !== s.criteria[j - 1].axis) ? (
@@ -136,35 +165,6 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
               </View>
             ))}
 
-            {s.attendance === "absent_excused" ? null : (
-              <Text style={styles.total}>
-                Note : {s.value ?? "—"} / {s.maxScore}
-                {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
-              </Text>
-            )}
-            {s.bonusLine ? <Text style={styles.overflow}>{s.bonusLine}</Text> : null}
-            {s.overflow ? (
-              <Text style={styles.overflow}>Total avec bonus : {s.overflow}</Text>
-            ) : null}
-
-            {s.strengths ? (
-              <View>
-                <Text style={styles.h}>Vos points forts</Text>
-                <Text>{s.strengths}</Text>
-              </View>
-            ) : null}
-            {s.progress ? (
-              <View>
-                <Text style={styles.h}>Vos progrès</Text>
-                <Text>{s.progress}</Text>
-              </View>
-            ) : null}
-            {s.feedback ? (
-              <View>
-                <Text style={styles.h}>Commentaire</Text>
-                <Text>{s.feedback}</Text>
-              </View>
-            ) : null}
             {s.comments.length > 0 ? (
               <View>
                 <Text style={styles.h}>Commentaires</Text>
