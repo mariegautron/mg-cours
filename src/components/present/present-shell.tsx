@@ -109,7 +109,9 @@ export function PresentShell({
 
   useEffect(() => {
     const storedMode = readStorage(STORAGE_MODE);
-    const storedScale = Number(readStorage(STORAGE_SCALE));
+    const rawScale = readStorage(STORAGE_SCALE);
+    // Sans réglage enregistré : taille par défaut (Number(null) vaudrait 0, soit 80 %).
+    const storedScale = rawScale === null || rawScale === "" ? NaN : Number(rawScale);
     /* eslint-disable react-hooks/set-state-in-effect -- préférences locales lues après hydratation */
     if (storedMode === "slides" || storedMode === "document") setMode(storedMode);
     // Rouverte ou actualisée : on rejoint la position de la séance au lieu de repartir du début.

@@ -143,13 +143,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     coursesWeek.filter((c) => c.session_date && c.session_date < today).map((c) => c.id),
   );
   const tiles = days.map((d) => dayTile(d, today, (c) => doneIds.has(c.id)));
-  const hrefs = days.map((d) =>
-    d.courses[0]?.module
-      ? `/modules/${d.courses[0].module.id}/courses/${d.courses[0].id}/${
-          d.courses[0].session_date === today ? "start" : "edit"
-        }`
-      : null,
-  );
+  const hrefs = days.map((d) => {
+    // Un jour à plusieurs séances mène à la première non clôturée, sinon à la première.
+    const c = d.courses.find((x) => !x.completion && x.module) ?? d.courses[0];
+    return c?.module
+      ? `/modules/${c.module.id}/courses/${c.id}/${c.session_date === today ? "start" : "edit"}`
+      : null;
+  });
   const activeModules = modules.filter((m) => !m.archived_at && !m.finished_at);
   // Même définition que le filtre « En cours » de la page Modules.
   const runningModules = modules.filter((m) =>
@@ -220,6 +220,27 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       )}
     </section>
   );
+
+  const doneTodayCard = doneToday.length ? (
+    <section aria-labelledby="done-today" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <h2 id="done-today" className="font-heading text-lg font-bold">
+        Faite{doneToday.length > 1 ? "s" : ""} aujourd’hui
+      </h2>
+      <ul>
+        {doneToday.map((c) => (
+          <li
+            key={c.id}
+            className="text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t py-3 first:border-t-0"
+          >
+            <p>
+              {c.title} · {c.module.name}
+            </p>
+            <Pill tone="ok">Faite</Pill>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
 
   const surprisesCard = surprises.length ? (
     <section aria-labelledby="surprises" className="bg-card rounded-3xl border p-5 shadow-sm">
@@ -438,29 +459,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         {surprisesCard}
 
-        {doneToday.length ? (
-          <section
-            aria-labelledby="done-today"
-            className="bg-card rounded-3xl border p-5 shadow-sm"
-          >
-            <h2 id="done-today" className="font-heading text-lg font-bold">
-              Faite{doneToday.length > 1 ? "s" : ""} aujourd’hui
-            </h2>
-            <ul>
-              {doneToday.map((c) => (
-                <li
-                  key={c.id}
-                  className="text-muted-foreground flex flex-wrap items-center justify-between gap-4 border-t py-3 first:border-t-0"
-                >
-                  <p>
-                    {c.title} · {c.module.name}
-                  </p>
-                  <Pill tone="ok">Faite</Pill>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        {doneTodayCard}
 
         {sessions.length > 1 ? (
           <section aria-labelledby="after" className="bg-card rounded-3xl border p-5 shadow-sm">
@@ -573,6 +572,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
       <div className="flex flex-wrap items-start gap-4.5 lg:flex-nowrap">
         <div className="min-w-0 flex-1 basis-full space-y-3.5 lg:basis-0">
+          {doneTodayCard}
           {upcoming ? (
             <section
               aria-labelledby="next"

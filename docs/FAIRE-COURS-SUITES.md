@@ -39,3 +39,16 @@ Aucun test automatisé n'a été lancé pour ces corrections. Les tests du lot 1
    sans doute d'un réglage gardé dans le navigateur.
 3. Les mini-QCM n'existent qu'en mode Diapositives (ni en Document, ni dans le Sommaire) : voulu ?
 4. Où se trouve « l'espace étudiant » à mettre à jour ? Il n'a pas été trouvé dans l'application.
+
+## Anomalies relevées au test du 6 novembre (module de test)
+
+Corrigées : enregistrer « Modifier la séance » réordonnait le déroulé et effaçait le type, la
+durée et l'objectif de chaque activité (les liens aux ressources étaient supprimés puis recréés) ;
+« Faite aujourd'hui » absent du tableau de bord quand plus aucune séance n'est à faire, et case du
+jour qui menait à une séance déjà faite ; taille du texte projeté à 80 % sans réglage enregistré.
+
+À vérifier : temps écoulé / restant en vue privée avec un créneau en cours (le test avait un
+créneau 23:00-23:59 à 17 h) ; relevé de la projection à la clôture, qui montrait les projections
+de la veille (probablement dû au changement de date de la séance de test) ; « Préparer la séance
+suivante » sur un module qui a une séance suivante ; badge « Vue privée : jamais projetée »
+affiché alors que la diapo est projetée (libellé à revoir ?).

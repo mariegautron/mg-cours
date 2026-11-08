@@ -24,15 +24,43 @@ async function syncResources(
   courseId: string,
   resourceIds: string[],
 ) {
-  await supabase.from("course_resource").delete().eq("course_id", courseId);
-  if (resourceIds.length === 0) return;
-  await supabase.from("course_resource").insert(
-    resourceIds.map((resourceId, i) => ({
-      course_id: courseId,
-      resource_id: resourceId,
-      role: i === 0 ? ("primary" as const) : ("secondary" as const),
-    })),
-  );
+  // Synchronisation différentielle : les ressources déjà liées gardent leur ligne (ordre du
+  // déroulé, type, durée et objectif de l'activité) ; seules les retirées et les ajoutées changent.
+  const { data: current } = await supabase
+    .from("course_resource")
+    .select("resource_id, role")
+    .eq("course_id", courseId);
+  const existing = new Map((current ?? []).map((r) => [r.resource_id, r.role]));
+  const wanted = new Set(resourceIds);
+
+  const removed = [...existing.keys()].filter((id) => !wanted.has(id));
+  if (removed.length) {
+    await supabase
+      .from("course_resource")
+      .delete()
+      .eq("course_id", courseId)
+      .in("resource_id", removed);
+  }
+  const added = resourceIds.filter((id) => !existing.has(id));
+  if (added.length) {
+    await supabase.from("course_resource").insert(
+      added.map((resourceId) => ({
+        course_id: courseId,
+        resource_id: resourceId,
+        role: resourceIds[0] === resourceId ? ("primary" as const) : ("secondary" as const),
+      })),
+    );
+  }
+  for (const [i, resourceId] of resourceIds.entries()) {
+    const role = i === 0 ? ("primary" as const) : ("secondary" as const);
+    if (existing.has(resourceId) && existing.get(resourceId) !== role) {
+      await supabase
+        .from("course_resource")
+        .update({ role })
+        .eq("course_id", courseId)
+        .eq("resource_id", resourceId);
+    }
+  }
 }
 
 export async function createCourse(
