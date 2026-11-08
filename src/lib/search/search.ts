@@ -3,7 +3,14 @@
  * classement (préfixe avant sous-chaîne, puis ordre alphabétique), groupement et limite.
  */
 export type SearchKind =
-  "module" | "course" | "student" | "resource" | "question" | "assessment" | "appreciation";
+  | "module"
+  | "course"
+  | "student"
+  | "resource"
+  | "question"
+  | "assessment"
+  | "grid"
+  | "appreciation";
 
 export interface SearchCandidate {
   kind: SearchKind;
@@ -39,6 +46,7 @@ export const GROUP_ORDER: { kind: SearchKind; title: string; base: string }[] = 
   { kind: "module", title: "Modules", base: "/modules" },
   { kind: "course", title: "Séances", base: "/modules" },
   { kind: "assessment", title: "Évaluations", base: "/modules" },
+  { kind: "grid", title: "Grilles", base: "/assessments/grids" },
   { kind: "appreciation", title: "Appréciations", base: "/modules" },
   { kind: "student", title: "Étudiant·es", base: "/students" },
   { kind: "resource", title: "Bibliothèque", base: "/resources" },

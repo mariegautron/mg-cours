@@ -28,6 +28,7 @@ const ICONS: Record<SearchKind, typeof Search> = {
   resource: Library,
   question: CircleHelp,
   assessment: ClipboardCheck,
+  grid: ClipboardCheck,
   appreciation: PenLine,
 };
 

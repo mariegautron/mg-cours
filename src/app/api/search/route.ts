@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non connectée" }, { status: 401 });
 
-  const [students, modules, resources, questions, courses, assessments] = await Promise.all([
+  const [students, modules, resources, questions, courses, assessments, grids] = await Promise.all([
     supabase.from("student").select("id, first_name, last_name, scholar_group"),
     supabase.from("module").select("id, name, ycode, year, archived_at"),
     supabase.from("resource").select("id, title").is("archived_at", null),
@@ -38,6 +38,7 @@ export async function GET(req: Request) {
       .from("course")
       .select("id, title, position, module_id, module:module_id(name, archived_at)"),
     supabase.from("assessment").select("id, title, module_id, module:module_id(name, archived_at)"),
+    supabase.from("grading_grid").select("id, name"),
   ]);
 
   const candidates: SearchCandidate[] = [
@@ -89,13 +90,13 @@ export async function GET(req: Request) {
         terms: [`séance ${number}`, `seance ${number}`],
         href: `/modules/${c.module_id}/courses/${c.id}/start`,
       })),
-    // Évaluations : par titre ou module, ou « corriger » ; ouvertes directement sur la correction.
+    // Évaluations : par titre ou module, ou « corriger » ; ouvertes sur leur page (jamais sur la correction).
     ...(assessments.data ?? [])
       .filter((a) => !(a.module as { archived_at: string | null } | null)?.archived_at)
       .map((a) => ({
         kind: "assessment" as const,
         id: a.id,
-        label: `Corriger ${a.title}`,
+        label: a.title,
         detail: (a.module as { name: string } | null)?.name ?? undefined,
         terms: [
           a.title,
@@ -103,8 +104,17 @@ export async function GET(req: Request) {
           "évaluation",
           (a.module as { name: string } | null)?.name ?? "",
         ],
-        href: `/modules/${a.module_id}/assessments/${a.id}/correct`,
+        href: `/modules/${a.module_id}/assessments/${a.id}`,
       })),
+    // Grilles de correction : ouvertes sur leur éditeur.
+    ...(grids.data ?? []).map((g) => ({
+      kind: "grid" as const,
+      id: g.id,
+      label: g.name,
+      detail: "Grille de correction",
+      terms: ["grille", "grilles", "critères"],
+      href: `/assessments/grids/${g.id}/edit`,
+    })),
     ...(questions.data ?? []).map((x) => ({ kind: "question" as const, id: x.id, label: x.name })),
   ];
 
