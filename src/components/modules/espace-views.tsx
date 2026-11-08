@@ -33,6 +33,10 @@ export interface EspaceData {
 
 export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
 
+/** « 1 pt », « 1,5 pt », « 3 pts » : virgule française, pluriel à partir de 2. */
+const pts = (n: number) =>
+  `${n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} pt${n >= 2 ? "s" : ""}`;
+
 const card = "bg-card rounded-2xl border p-5 shadow-sm";
 const tile =
   "bg-card hover:bg-accent focus-visible:ring-ring block rounded-2xl border p-5 shadow-sm focus-visible:ring-2 focus-visible:outline-none";
@@ -52,7 +56,7 @@ export function EspaceLayout({
     {
       key: "evaluation",
       label: "Évaluations",
-      href: `${base}/evaluation/1`,
+      href: `${base}/evaluation`,
       show: !!espace?.evaluations.length,
     },
     { key: "cours", label: "Cours", href: `${base}/cours`, show: !!espace?.courses.length },
@@ -230,11 +234,12 @@ export function AccueilView({ data }: { data: EspaceData }) {
           ) : null}
           {espace?.evaluations.length ? (
             <li>
-              <Link href={`${base}/evaluation/1`} className={tile}>
+              <Link href={`${base}/evaluation`} className={tile}>
                 <strong>Évaluations</strong>
                 <span className="text-muted-foreground block text-sm">
-                  {espace.evaluations.length} sujet{espace.evaluations.length > 1 ? "s" : ""} et
-                  grilles
+                  {espace.evaluations.length > 1
+                    ? `${espace.evaluations.length} sujets et leurs grilles`
+                    : "1 sujet et sa grille"}
                 </span>
               </Link>
             </li>
@@ -299,6 +304,26 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
         </nav>
       ) : null}
       <h1 className="font-heading text-3xl font-bold">{e.title}</h1>
+      {e.sections.length + (e.grid ? 1 : 0) > 1 ? (
+        <nav aria-label="Sur cette page" className="mt-2">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            {e.sections.map((x) => (
+              <li key={x.heading}>
+                <a href={`#s-${x.heading.replace(/\s+/g, "-")}`} className="underline underline-offset-2">
+                  {x.heading}
+                </a>
+              </li>
+            ))}
+            {e.grid ? (
+              <li>
+                <a href="#grille" className="underline underline-offset-2">
+                  Grille
+                </a>
+              </li>
+            ) : null}
+          </ul>
+        </nav>
+      ) : null}
       {e.type ? <p className="text-muted-foreground mt-1">{e.type}</p> : null}
       <dl className={`${card} mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
         {facts.map(([label, value]) => (
@@ -311,8 +336,8 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
         ))}
       </dl>
       {e.sections.map((s) => (
-        <section key={s.heading} aria-labelledby={`s-${s.heading}`} className="mt-7">
-          <h2 id={`s-${s.heading}`} className="font-heading mb-2 text-xl font-bold">
+        <section key={s.heading} aria-labelledby={`s-${s.heading.replace(/\s+/g, "-")}`} className="mt-7">
+          <h2 id={`s-${s.heading.replace(/\s+/g, "-")}`} className="font-heading mb-2 text-xl font-bold">
             {s.heading}
           </h2>
           <Markdown source={s.text} headingLevel={3} />
@@ -332,7 +357,7 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
                 <h3 className="font-heading text-lg font-bold">
                   {axis.label}{" "}
                   <span className="text-muted-foreground text-sm font-semibold">
-                    · {axis.points} point{axis.points > 1 ? "s" : ""}
+                    · {pts(axis.points)}
                   </span>
                 </h3>
               ) : null}
@@ -341,8 +366,9 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
                   <li key={ci} className={card}>
                     <p className="font-semibold">
                       {c.label}
+                      <span className="sr-only">, </span>
                       <span className="text-muted-foreground ml-2 text-sm font-normal">
-                        {c.weight} point{c.weight > 1 ? "s" : ""}
+                        {pts(c.weight)}
                         {c.bonus ? " · bonus" : ""}
                       </span>
                     </p>
@@ -350,10 +376,7 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
                       <ul className="mt-2 space-y-1 text-sm">
                         {c.levels.map((l, li) => (
                           <li key={li}>
-                            <strong>
-                              {l.points} pt{l.points > 1 ? "s" : ""}
-                            </strong>{" "}
-                            : {l.description}
+                            <strong>{pts(l.points)}</strong> : {l.description}
                           </li>
                         ))}
                       </ul>
@@ -764,6 +787,40 @@ export function Empty({ title, text }: { title: string; text: string }) {
     <div className="max-w-2xl space-y-2">
       <h1 className="font-heading text-3xl font-bold">{title}</h1>
       <p className="text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+export function EvaluationsListView({ data }: { data: EspaceData }) {
+  const { base, espace, frise } = data;
+  const today = new Date().toISOString().slice(0, 10);
+  if (!espace?.evaluations.length) {
+    return <Empty title="Évaluations" text="Aucune évaluation n’est publiée pour l’instant." />;
+  }
+  return (
+    <div className="max-w-3xl">
+      <h1 className="font-heading mb-4 text-3xl font-bold">Évaluations</h1>
+      <ul className="space-y-3">
+        {espace.evaluations.map((e, i) => {
+          const due = dateOfEvaluation(e, frise);
+          const status = e.graded ? "noté" : due && due < today ? "rendu" : "à rendre";
+          return (
+            <li key={i}>
+              <Link href={`${base}/evaluation/${i + 1}`} className={tile}>
+                <span className="flex flex-wrap items-baseline justify-between gap-2">
+                  <strong>{e.title}</strong>
+                  <span className="bg-muted rounded-full px-3 py-0.5 text-sm font-semibold">
+                    {status}
+                  </span>
+                </span>
+                <span className="text-muted-foreground block text-sm">
+                  {e.groupGrade ? "Note de groupe" : "Note individuelle"} · {dueLabel(due, e.time)}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

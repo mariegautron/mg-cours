@@ -7,6 +7,7 @@ import {
   CoursFicheView,
   EspaceLayout,
   EvaluationView,
+  EvaluationsListView,
   NotesView,
   ProjetView,
   Empty,
@@ -62,6 +63,9 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   } else if (section === "projet" && slug.length === 1) {
     current = "projet";
     body = data.espace ? <ProjetView espace={data.espace} /> : <Empty title="Projet" text="" />;
+  } else if (section === "evaluation" && slug.length === 1) {
+    current = "evaluation";
+    body = <EvaluationsListView data={data} />;
   } else if (section === "evaluation" && slug.length === 2 && Number.isInteger(number)) {
     current = "evaluation";
     body = <EvaluationView data={data} index={number - 1} />;
