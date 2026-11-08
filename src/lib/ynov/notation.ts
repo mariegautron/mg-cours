@@ -14,6 +14,11 @@
 export const GROUP_COEFFICIENT = 1;
 export const INDIVIDUAL_COEFFICIENT = 3;
 
+/** Coefficient de la règle (YNOV) selon que la note est de groupe ou individuelle. */
+export function coefficientFor(isGroupGrade: boolean): number {
+  return isGroupGrade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT;
+}
+
 /** Barème YNOV / Hyperplanning : toutes les notes sont remontées sur 20. */
 export const DEFAULT_MAX_SCORE = 20;
 

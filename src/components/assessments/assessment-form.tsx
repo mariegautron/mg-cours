@@ -1,5 +1,6 @@
 "use client";
 
+import { coefficientFor } from "@/lib/ynov/notation";
 import { useActionState, useState } from "react";
 import Link from "next/link";
 
@@ -59,6 +60,14 @@ export function AssessmentForm({
   const [dateText, setDateText] = useState(assessment?.date ?? "");
   const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
   const [groupGrade, setGroupGrade] = useState(assessment?.is_group_grade ?? false);
+  const ruleCoefficient = coefficientFor(groupGrade);
+  const [coefficientText, setCoefficientText] = useState(
+    String(assessment?.coefficient ?? coefficientFor(assessment?.is_group_grade ?? false)),
+  );
+  const coefficientContradicts =
+    Number.isFinite(Number(coefficientText)) &&
+    Number(coefficientText) !== ruleCoefficient &&
+    coefficientText.trim() !== "";
   const frame = frameFor(typeText);
   const warnings = frameWarnings({ type: typeText, date: dateText, durationMinutes: durationText });
   const gridCriteria = (grids.find((g) => g.id === gridId)?.criteria ?? []).filter(
@@ -83,6 +92,37 @@ export function AssessmentForm({
         />
         <FieldError id="title" errors={fe.title} />
       </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-base font-medium">Type de note</legend>
+        <div className="flex flex-wrap gap-4 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="isGroupGradeChoice"
+              checked={groupGrade}
+              onChange={() => {
+                setGroupGrade(true);
+                setCoefficientText(String(coefficientFor(true)));
+              }}
+            />
+            Note de groupe (une note par groupe coché, ×{coefficientFor(true)})
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name="isGroupGradeChoice"
+              checked={!groupGrade}
+              onChange={() => {
+                setGroupGrade(false);
+                setCoefficientText(String(coefficientFor(false)));
+              }}
+            />
+            Note individuelle (×{coefficientFor(false)})
+          </label>
+        </div>
+        {groupGrade ? <input type="hidden" name="isGroupGrade" value="on" /> : null}
+      </fieldset>
 
       <fieldset className="space-y-4">
         <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>
@@ -252,8 +292,20 @@ export function AssessmentForm({
             name="coefficient"
             type="number"
             step="0.1"
-            defaultValue={assessment?.coefficient ?? 1}
+            value={coefficientText}
+            onChange={(e) => setCoefficientText(e.target.value)}
+            aria-describedby="coefficient-hint"
           />
+          <p id="coefficient-hint" className="text-muted-foreground text-sm">
+            Règle appliquée : {groupGrade ? "note de groupe" : "note individuelle"} ×
+            {ruleCoefficient}.
+          </p>
+          {coefficientContradicts ? (
+            <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+              Attention : ce coefficient ne suit pas la règle (×{ruleCoefficient}). Tu peux le
+              garder si c’est voulu.
+            </p>
+          ) : null}
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="maxScore">Barème (note sur)</Label>
@@ -353,16 +405,6 @@ export function AssessmentForm({
           </ul>
         ) : null}
       </div>
-
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          name="isGroupGrade"
-          checked={groupGrade}
-          onChange={(e) => setGroupGrade(e.target.checked)}
-        />
-        Note de groupe (une note par groupe coché, coefficient ×1 au lieu de ×3)
-      </label>
 
       {!assessment && canPrepareMakeupInAdvance(groupGrade, false) ? (
         <label className="flex items-center gap-2 text-sm">
