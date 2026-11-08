@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 
 import { StudentResult } from "@/components/results/student-result";
 import {
-  INVALID_LINK_TEXT,
+  invalidLinkText,
   INVALID_LINK_TITLE,
-  THROTTLED_TEXT,
+  throttledText,
   THROTTLED_TITLE,
-  UNAVAILABLE_TEXT,
+  unavailableText,
   UNAVAILABLE_TITLE,
 } from "@/lib/student-messages";
 import { callResult } from "@/lib/result-links/public";
@@ -47,12 +47,12 @@ export default async function PublicResultPage({ params }: PageProps<"/resultats
         <StudentResult sheet={result.sheet} token={token} />
       ) : result.status === "throttled" ? (
         <Message title={THROTTLED_TITLE}>
-          Trop de liens invalides ont été essayés depuis votre connexion. {THROTTLED_TEXT}
+          Trop de liens invalides ont été essayés depuis ta connexion. {throttledText("tu")}
         </Message>
       ) : result.status === "unavailable" ? (
-        <Message title={UNAVAILABLE_TITLE}>{UNAVAILABLE_TEXT}</Message>
+        <Message title={UNAVAILABLE_TITLE}>{unavailableText("tu")}</Message>
       ) : (
-        <Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
+        <Message title={INVALID_LINK_TITLE}>{invalidLinkText("tu")}</Message>
       )}
     </main>
   );

@@ -107,7 +107,7 @@ export function EspaceLayout({
           {children}
         </main>
         <p className="text-muted-foreground border-t px-4 py-3 text-xs lg:px-10">
-          Ce lien est personnel : ne le partagez pas.
+          Ce lien est personnel : ne le partage pas.
         </p>
       </div>
     </div>
@@ -142,7 +142,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
           className="border-primary bg-primary/10 rounded-2xl border-2 p-5"
         >
           <h2 id="quiz" className="font-heading text-xl font-bold">
-            Votre évaluation individuelle est ouverte
+            Ton évaluation individuelle est ouverte
           </h2>
           <p className="mt-1">
             {espace.quiz.title}
@@ -159,7 +159,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
             </a>
           ) : (
             <p className="text-muted-foreground mt-2 text-sm">
-              Utilisez le lien du QCM qui vous a été donné en classe.
+              Utilise le lien du QCM qui t’a été donné en classe.
             </p>
           )}
         </section>
@@ -572,7 +572,7 @@ export function NotesView({ data }: { data: EspaceData }) {
     return (
       <Empty
         title="Notes et corrigés"
-        text="Aucun résultat n’est publié pour l’instant. Vos notes et vos corrigés apparaîtront ici dès que votre enseignante les aura publiés."
+        text="Aucun résultat n’est publié pour l’instant. Tes notes et tes corrigés apparaîtront ici dès que Marie les aura publiés."
       />
     );
   }
@@ -584,7 +584,7 @@ export function NotesView({ data }: { data: EspaceData }) {
     <div className="max-w-3xl">
       <h1 className="font-heading mb-4 text-3xl font-bold">Notes et corrigés</h1>
       {results.length > 1 ? (
-        <nav aria-label="Vos résultats" className={`${card} mb-5`}>
+        <nav aria-label="Tes résultats" className={`${card} mb-5`}>
           <h2 className="font-heading mb-2 text-lg font-bold">Vue d’ensemble</h2>
           <ul className="divide-y text-sm">
             {results.map(({ sheet }, i) => (
@@ -611,7 +611,7 @@ export function NotesView({ data }: { data: EspaceData }) {
             ["Ce qui est réussi", sheet.strengths],
             ["Pour progresser", sheet.progress],
             ["Commentaire", sheet.feedback],
-            ["Un mot pour vous", sheet.personalNote],
+            ["Un mot pour toi", sheet.personalNote],
           ].filter(([, text]) => text?.trim());
           return (
             <li key={i} id={`resultat-${i}`} className={`${card} scroll-mt-4`}>

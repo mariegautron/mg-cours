@@ -29,7 +29,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   const [section, arg] = slug;
   // La consultation n'est comptée qu'à l'accueil.
   const res = await callStudentView(token, slug.length === 0);
-  if (res.status !== "ok") return <EspaceError status={res.status} />;
+  if (res.status !== "ok") return <EspaceError status={res.status} tone="tu" />;
 
   if (!res.content) {
     return (

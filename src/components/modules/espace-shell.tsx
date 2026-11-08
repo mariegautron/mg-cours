@@ -2,12 +2,12 @@ import Link from "next/link";
 
 import type { Espace } from "@/lib/modules/espace";
 import {
-  INVALID_LINK_TEXT,
   INVALID_LINK_TITLE,
-  THROTTLED_TEXT,
+  invalidLinkText,
   THROTTLED_TITLE,
-  UNAVAILABLE_TEXT,
+  throttledText,
   UNAVAILABLE_TITLE,
+  unavailableText,
 } from "@/lib/student-messages";
 import { callModuleFrise, type PublicFrise } from "@/lib/modules/frise-public";
 
@@ -71,13 +71,20 @@ export function EspaceShell({
 }
 
 /** Message pour un lien invalide, limité ou indisponible (même page pour tout l'espace). */
-export function EspaceError({ status }: { status: Exclude<PublicFrise["status"], "ok"> }) {
+export function EspaceError({
+  status,
+  tone = "vous",
+}: {
+  status: Exclude<PublicFrise["status"], "ok">;
+  /** « tu » pour l'espace personnel, « vous » pour le lien de la classe. */
+  tone?: "tu" | "vous";
+}) {
   const text =
     status === "throttled"
-      ? [THROTTLED_TITLE, THROTTLED_TEXT]
+      ? [THROTTLED_TITLE, throttledText(tone)]
       : status === "unavailable"
-        ? [UNAVAILABLE_TITLE, UNAVAILABLE_TEXT]
-        : [INVALID_LINK_TITLE, INVALID_LINK_TEXT];
+        ? [UNAVAILABLE_TITLE, unavailableText(tone)]
+        : [INVALID_LINK_TITLE, invalidLinkText(tone)];
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
       <p className="font-heading border-b px-4 py-4 text-base font-bold">Espace étudiant·e</p>

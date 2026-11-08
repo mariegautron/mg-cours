@@ -44,18 +44,18 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
         ) : null}
         {sheet.attendance === "absent_excused" && sheet.value !== null ? (
           <p className={notice}>
-            Votre absence est excusée : vous gardez la note du groupe (règle de l’école).
+            Ton absence est excusée : tu gardes la note du groupe (règle de l’école).
           </p>
         ) : null}
         {absentExcusedNoNote ? (
           <p className={notice}>
-            Votre absence est excusée : vous n’avez pas de note pour cette évaluation. Votre note
-            sera celle du rattrapage.
+            Ton absence est excusée : tu n’as pas de note pour cette évaluation. Ta note sera celle
+            du rattrapage.
           </p>
         ) : null}
         {sheet.personalNote ? (
           <div className={notice}>
-            <h2 className="font-medium">Un mot pour vous</h2>
+            <h2 className="font-medium">Un mot pour toi</h2>
             <Markdown source={sheet.personalNote} headingLevel={3} />
           </div>
         ) : null}
@@ -148,7 +148,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
           className="bg-primary/10 border-primary/50 order-first rounded-2xl border p-6 lg:order-none lg:col-start-2 lg:row-start-1"
         >
           <h2 id="note" className="font-heading mb-1 font-bold">
-            Votre note
+            Ta note
           </h2>
           <p className="font-heading text-5xl font-bold">
             {sheet.value === null ? "—" : fmt(sheet.value)}{" "}
@@ -181,8 +181,8 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
           Télécharger mon PDF
         </a>
         <p className="text-muted-foreground text-sm">
-          Ce lien est personnel : vous ne voyez que votre résultat. Une question sur votre note ?
-          Voyez-la avec votre intervenante au prochain cours.
+          Ce lien est personnel : tu ne vois que ton résultat. Une question sur ta note ? Vois-la
+          avec Marie au prochain cours.
         </p>
       </section>
     </div>
