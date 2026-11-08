@@ -1,6 +1,7 @@
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
+import { RepublishNotice } from "@/components/assessments/republish-notice";
 import { listResultLinks } from "@/lib/result-links/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -260,6 +261,27 @@ export default async function AssessmentPage({
   const toneOf = { ok: "ok", warn: "warn", build: "warn" } as const;
 
   // Toutes les copies commencées ont une note : l'envoi des résultats passe en haut de la page.
+  // Notes modifiées après leur publication : l'espace montre encore l'ancienne version.
+  const assessmentGroups = assessment.groups;
+  async function changedSincePublication(): Promise<string[]> {
+    if (!hasGrades) return [];
+    const links = (await listResultLinks(assessmentId)).byStudent;
+    if (links.size === 0) return [];
+    const out: string[] = [];
+    for (const g of grades) {
+      if (g.value === null) continue;
+      const people = g.student_group_id
+        ? (assessmentGroups.find((x) => x.id === g.student_group_id)?.members ?? [])
+        : targets.flatMap(({ students }) => students).filter((st) => st.id === g.student_id);
+      for (const st of people) {
+        const link = links.get(st.id);
+        if (link && new Date(g.updated_at).getTime() > new Date(link.published_at).getTime()) {
+          out.push(`${st.first_name} ${st.last_name}`);
+        }
+      }
+    }
+    return out;
+  }
   const readyToSend = hasGrades && incompleteCopies(grades, assessment.groups).length === 0;
   // Notes qui n'arriveront pas dans un espace : la personne n'a pas (ou plus) de lien d'espace actif.
   const spaceIds = hasGrades ? await activeSpaceStudentIds(id) : new Set<string>();
@@ -355,6 +377,12 @@ export default async function AssessmentPage({
           </Button>
         </div>
       </div>
+
+      <RepublishNotice
+        moduleId={id}
+        assessmentId={assessmentId}
+        names={await changedSincePublication()}
+      />
 
       <IncompletePublishedWarning
         moduleId={id}

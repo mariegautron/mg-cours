@@ -170,7 +170,7 @@ export function PublishResults({
       </p>
       {error ? <ActionError error={error} /> : null}
 
-      {lines.length > 0 ? (
+      {lines.length > 0 && !allHaveSpace ? (
         <div className="space-y-2 rounded-md border border-dashed p-3 text-sm">
           <p>
             <strong>Copie ces liens maintenant</strong> : ils ne s’affichent qu’une fois. Ils sont

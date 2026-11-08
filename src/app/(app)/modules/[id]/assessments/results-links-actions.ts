@@ -141,3 +141,38 @@ export async function revokeResultLink(
   refresh(moduleId, assessmentId);
   return {};
 }
+
+/**
+ * Remet à jour les notes DÉJÀ publiées (espace et lien de résultats) après une correction. Ne crée
+ * aucun lien : seules les personnes qui ont déjà une note publiée sont touchées.
+ */
+export async function refreshPublishedResults(
+  moduleId: string,
+  assessmentId: string,
+): Promise<PublishState> {
+  if (!(await tableAvailable())) return { error: UNAVAILABLE };
+  const sheets = await loadResultSheets(moduleId, assessmentId);
+  const supabase = await createClient();
+  const { data: active } = await supabase
+    .from("result_link")
+    .select("id, student_id")
+    .eq("assessment_id", assessmentId)
+    .is("revoked_at", null);
+  const byStudent = new Map((active ?? []).map((l) => [l.student_id, l.id]));
+  let refreshed = 0;
+  for (const sheet of sheets ?? []) {
+    for (const r of sheet.recipients) {
+      const linkId = r.id ? byStudent.get(r.id) : undefined;
+      const payload = r.id ? publicSheetFor(sheet, r.id) : null;
+      if (!linkId || !payload) continue;
+      const { error } = await supabase
+        .from("result_link")
+        .update({ payload: payload as never, published_at: new Date().toISOString() })
+        .eq("id", linkId);
+      if (error) return { error: failure("mettre à jour les notes publiées") };
+      refreshed += 1;
+    }
+  }
+  refresh(moduleId, assessmentId);
+  return { refreshed };
+}

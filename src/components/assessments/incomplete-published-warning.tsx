@@ -40,31 +40,33 @@ export function IncompletePublishedWarning({
         Résultats publiés pour une copie incomplète
       </h2>
       <p className="text-sm">
-        Ces personnes peuvent voir une note calculée sur une correction pas finie. Révoque le lien,
-        termine la copie, puis republie.
+        Ces personnes peuvent voir, dans leur espace, une note calculée sur une correction pas
+        finie. Retire la note des espaces, termine la copie, puis republie.
       </p>
       <ul className="space-y-1 text-sm">
         {copies.map((c) => (
           <li key={c.key} className="flex flex-wrap items-center gap-2">
             <strong>{c.name}</strong>
-            {c.students.map((s) => (
-              <Button
-                key={s.id}
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-                onClick={() =>
-                  start(async () => {
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  let message: string | null = null;
+                  for (const s of c.students) {
                     const state = await revokeResultLink(moduleId, assessmentId, s.id);
-                    setError(state.error ?? null);
-                    router.refresh();
-                  })
-                }
-              >
-                Révoquer le lien de {s.name}
-              </Button>
-            ))}
+                    message = message ?? state.error ?? null;
+                  }
+                  setError(message);
+                  router.refresh();
+                })
+              }
+            >
+              Retirer cette note des espaces
+              <span className="sr-only"> : {c.name}</span>
+            </Button>
           </li>
         ))}
       </ul>
