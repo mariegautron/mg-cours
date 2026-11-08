@@ -309,7 +309,10 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
             {e.sections.map((x) => (
               <li key={x.heading}>
-                <a href={`#s-${x.heading.replace(/\s+/g, "-")}`} className="underline underline-offset-2">
+                <a
+                  href={`#s-${x.heading.replace(/\s+/g, "-")}`}
+                  className="underline underline-offset-2"
+                >
                   {x.heading}
                 </a>
               </li>
@@ -336,13 +339,40 @@ export function EvaluationView({ data, index }: { data: EspaceData; index: numbe
         ))}
       </dl>
       {e.sections.map((s) => (
-        <section key={s.heading} aria-labelledby={`s-${s.heading.replace(/\s+/g, "-")}`} className="mt-7">
-          <h2 id={`s-${s.heading.replace(/\s+/g, "-")}`} className="font-heading mb-2 text-xl font-bold">
+        <section
+          key={s.heading}
+          aria-labelledby={`s-${s.heading.replace(/\s+/g, "-")}`}
+          className="mt-7"
+        >
+          <h2
+            id={`s-${s.heading.replace(/\s+/g, "-")}`}
+            className="font-heading mb-2 text-xl font-bold"
+          >
             {s.heading}
           </h2>
           <Markdown source={s.text} headingLevel={3} />
         </section>
       ))}
+      {e.documents.length > 0 ? (
+        <section aria-labelledby="eval-documents" className="mt-7">
+          <h2 id="eval-documents" className="font-heading mb-2 text-xl font-bold">
+            Documents à télécharger
+          </h2>
+          <ul className="list-disc space-y-1 pl-5">
+            {e.documents.map((d) => (
+              <li key={d.name}>
+                <a
+                  href={`${base}/evaluation-fichier/${index + 1}/${encodeURIComponent(d.name)}`}
+                  className="underline underline-offset-2"
+                >
+                  Télécharger {d.name.replace(/\.[^.]+$/, "")} ({documentKind(d.name)},{" "}
+                  {formatSize(d.size)})
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {e.grid ? (
         <section aria-labelledby="grille" id="grille" className="mt-9 scroll-mt-6">
           <h2 className="font-heading mb-1 text-xl font-bold">

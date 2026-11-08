@@ -70,6 +70,12 @@ export async function loadEspace(
         durationMinutes: a.duration_minutes,
         whereToSubmit: a.where_to_submit?.trim() || null,
         graded: a.gradeCount > 0,
+        documents: parseResourceFiles(a.files).map((f) => ({
+          name: f.name,
+          path: f.path,
+          mime: f.mime,
+          size: f.size,
+        })),
         sections: subjectSections(a).map((s) => ({ heading: s.heading, text: s.text })),
         grid: deck.grid
           ? {

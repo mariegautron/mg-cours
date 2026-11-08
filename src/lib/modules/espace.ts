@@ -44,6 +44,8 @@ export interface EspaceEvaluation {
   whereToSubmit: string | null;
   /** Déjà notée par Marie (aucune note n'est exposée) : ne compte plus comme « prochain rendu ». */
   graded: boolean;
+  /** Documents et templates joints à l'évaluation (publiés avec l'espace). */
+  documents: EspaceDocument[];
   /** Objectif, consigne, rendu attendu, ce qui est évalué : Markdown, dans l'ordre de lecture. */
   sections: { heading: string; text: string }[];
   grid: EspaceGrid | null;
@@ -256,6 +258,16 @@ export function parseEspace(payload: unknown): Espace | null {
           durationMinutes: num(o.durationMinutes),
           whereToSubmit: str(o.whereToSubmit),
           graded: o.graded === true,
+          documents: arr(o.documents).flatMap((d) => {
+            const f = obj(d);
+            const name = str(f.name);
+            const path = str(f.path);
+            const mime = str(f.mime);
+            const size = num(f.size);
+            return name && path && mime
+              ? [{ name, path, mime, size: size !== null && size >= 0 ? size : 0 }]
+              : [];
+          }),
           sections: arr(o.sections).flatMap((s) => {
             const heading = str(obj(s).heading);
             const text = str(obj(s).text);
