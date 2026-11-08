@@ -13,23 +13,16 @@ export function CriterionLevels({ levels }: { levels: Level[] }) {
   const obtained = levels.find((l) => l.obtained);
   return (
     <div className="space-y-3">
-      <ol className="flex flex-wrap items-center gap-2" aria-label="Paliers du critère">
-        {levels.map((l) => (
-          <li
-            key={l.points}
-            aria-current={l.obtained ? "true" : undefined}
-            className={cn(
-              "rounded-full border px-3 py-1 text-sm",
-              l.obtained
-                ? "border-primary bg-primary text-primary-foreground font-semibold"
-                : "text-foreground/70 bg-transparent",
-            )}
-          >
-            {l.obtained ? "✓ " : ""}
-            {fmt(l.points)} pt
-          </li>
+      <p className="text-foreground/80 text-sm" aria-label="Paliers du critère">
+        {levels.map((l, i) => (
+          <span key={l.points}>
+            {i > 0 ? " · " : ""}
+            <span className={l.obtained ? "text-foreground font-semibold underline" : undefined}>
+              {fmt(l.points)} pt{l.obtained ? " (obtenu)" : ""}
+            </span>
+          </span>
         ))}
-      </ol>
+      </p>
       {obtained ? (
         <p className="text-base leading-relaxed">
           <span className="font-semibold">Palier obtenu : </span>

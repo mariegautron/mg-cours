@@ -42,10 +42,10 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
     ["Commentaire", sheet.feedback],
   ].filter(([, text]) => text?.trim());
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[3fr_2fr] lg:items-start">
       <section
         aria-labelledby="res"
-        className="bg-card min-w-0 flex-[3_1_0] space-y-3 rounded-2xl border p-6"
+        className="bg-card min-w-0 space-y-3 rounded-2xl border p-6 lg:col-start-1 lg:row-span-2 lg:row-start-1"
       >
         <p className="text-muted-foreground text-sm">
           {[
@@ -82,6 +82,18 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
           </div>
         ) : null}
 
+        {feedback.length > 0 ? (
+          <div className="space-y-2 pt-1">
+            {feedback.map(([heading, text]) => (
+              <div key={heading}>
+                <h2 className="font-heading text-lg font-bold">{heading}</h2>
+                <div className="text-base leading-relaxed">
+                  <Markdown source={text ?? ""} headingLevel={3} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
           <div aria-labelledby="detail" role="group">
             <h2 id="detail" className="sr-only">
@@ -107,7 +119,9 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
                       {c.label}
                     </strong>
                     <Pill tone={c.points === null ? "warn" : "ok"}>
-                      {c.points === null ? "Critère non évalué" : `${fmt(c.points)} / ${fmt(c.max)}`}
+                      {c.points === null
+                        ? "Critère non évalué"
+                        : `${fmt(c.points)} / ${fmt(c.max)}`}
                       {c.isBonus ? " (bonus)" : ""}
                     </Pill>
                   </p>
@@ -138,18 +152,6 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
           </div>
         ) : null}
 
-        {feedback.length > 0 ? (
-          <div className="space-y-2 pt-1">
-            {feedback.map(([heading, text]) => (
-              <div key={heading}>
-                <h2 className="font-heading text-lg font-bold">{heading}</h2>
-                <div className="text-base leading-relaxed">
-                  <Markdown source={text ?? ""} headingLevel={3} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
         {sheet.comments.length > 0 ? (
           <div>
             <h2 className="font-semibold">Commentaires</h2>
@@ -162,47 +164,48 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
         ) : null}
       </section>
 
-      <div className="min-w-0 flex-[2_1_0] space-y-4">
-        {absentExcusedNoNote ? null : (
-          <section
-            aria-labelledby="note"
-            className="bg-primary/10 border-primary/50 rounded-2xl border p-6"
-          >
-            <h2 id="note" className="font-heading mb-1 font-bold">
-              Votre note
-            </h2>
-            <p className="font-heading text-5xl font-bold">
-              {sheet.value === null ? "—" : fmt(sheet.value)}{" "}
-              <span className="text-muted-foreground text-xl font-normal">
-                / {fmt(sheet.maxScore)}
-              </span>
-            </p>
-            <p className="text-muted-foreground mt-2 text-sm">
-              {sheet.isGroupGrade ? "Note de groupe. " : ""}
-              {sheet.maxScore !== 20 && sheet.valueOn20 !== null
-                ? `Soit ${fmt(sheet.valueOn20)} / 20. `
-                : ""}
-              {sheet.overflow ? `Total avec bonus : ${sheet.overflow}. ` : ""}
-              {sheet.bonusLine ?? ""}
-            </p>
-          </section>
-        )}
-        <section aria-labelledby="dl" className="bg-card space-y-2 rounded-2xl border p-5">
-          <h2 id="dl" className="font-heading font-bold">
-            Garder une trace
+      {absentExcusedNoNote ? null : (
+        <section
+          aria-labelledby="note"
+          className="bg-primary/10 border-primary/50 order-first rounded-2xl border p-6 lg:order-none lg:col-start-2 lg:row-start-1"
+        >
+          <h2 id="note" className="font-heading mb-1 font-bold">
+            Votre note
           </h2>
-          <a
-            href={`/resultats/${token}/pdf`}
-            className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-md px-4 font-medium focus-visible:ring-2 focus-visible:outline-none"
-          >
-            Télécharger mon PDF
-          </a>
-          <p className="text-muted-foreground text-sm">
-            Ce lien est personnel : vous ne voyez que votre résultat. Une question sur votre note ?
-            Voyez-la avec votre intervenante au prochain cours.
+          <p className="font-heading text-5xl font-bold">
+            {sheet.value === null ? "—" : fmt(sheet.value)}{" "}
+            <span className="text-muted-foreground text-xl font-normal">
+              / {fmt(sheet.maxScore)}
+            </span>
+          </p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {sheet.isGroupGrade ? "Note de groupe. " : ""}
+            {sheet.maxScore !== 20 && sheet.valueOn20 !== null
+              ? `Soit ${fmt(sheet.valueOn20)} / 20. `
+              : ""}
+            {sheet.overflow ? `Total avec bonus : ${sheet.overflow}. ` : ""}
+            {sheet.bonusLine ?? ""}
           </p>
         </section>
-      </div>
+      )}
+      <section
+        aria-labelledby="dl"
+        className="bg-card space-y-2 rounded-2xl border p-5 lg:col-start-2 lg:row-start-2"
+      >
+        <h2 id="dl" className="font-heading font-bold">
+          Garder une trace
+        </h2>
+        <a
+          href={`/resultats/${token}/pdf`}
+          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-md px-4 font-medium focus-visible:ring-2 focus-visible:outline-none"
+        >
+          Télécharger mon PDF
+        </a>
+        <p className="text-muted-foreground text-sm">
+          Ce lien est personnel : vous ne voyez que votre résultat. Une question sur votre note ?
+          Voyez-la avec votre intervenante au prochain cours.
+        </p>
+      </section>
     </div>
   );
 }
@@ -232,7 +235,7 @@ export default async function PublicResultPage({ params }: PageProps<"/resultats
       ) : result.status === "unavailable" ? (
         <Message title={UNAVAILABLE_TITLE}>{UNAVAILABLE_TEXT}</Message>
       ) : (
-<Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
+        <Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
       )}
     </main>
   );
