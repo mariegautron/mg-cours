@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   const [students, modules, resources, questions, courses, assessments] = await Promise.all([
     supabase.from("student").select("id, first_name, last_name, scholar_group"),
-    supabase.from("module").select("id, name, ycode, year"),
+    supabase.from("module").select("id, name, ycode, year, archived_at"),
     supabase.from("resource").select("id, title").is("archived_at", null),
     supabase.from("question").select("id, name").is("archived_at", null),
     supabase
@@ -55,6 +55,17 @@ export async function GET(req: Request) {
       detail: [schoolYearLabel(m.year), m.ycode].filter(Boolean).join(" · "),
       terms: m.ycode ? [m.ycode] : [],
     })),
+    // Espace étudiant·es : publier, partager, copier les liens (page « Espace étudiant·es » du module).
+    ...(modules.data ?? [])
+      .filter((m) => !m.archived_at)
+      .map((m) => ({
+        kind: "module" as const,
+        id: `${m.id}-espace`,
+        label: "Espace étudiant·es",
+        detail: m.name,
+        terms: ["publier", "partager", "lien", "liens", "frise", "espace étudiant", m.name],
+        href: `/modules/${m.id}/frise`,
+      })),
     ...(resources.data ?? []).map((r) => ({ kind: "resource" as const, id: r.id, label: r.title })),
     // Séances : par titre ou par numéro (« séance 5 »), ouvertes sur « Avant de commencer ».
     ...sessionNumbers(courses.data ?? [])

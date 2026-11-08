@@ -32,6 +32,7 @@ const HEADLINES: Record<StepKey, string> = {
   planning: "Prévoir tes évaluations et le fil rouge",
   outline: "Générer la progression pédagogique",
   send: "Envoyer la progression à l’école",
+  share: "Partager l’espace aux étudiant·es",
   teach: "Faire cours",
   assess: "Noter les évaluations",
   admin: "Cocher les documents administratifs",
@@ -50,6 +51,8 @@ const TEXTS: Record<StepKey, (s: ModuleStep) => string> = {
   outline: () =>
     "Les séances sont prêtes : génère la progression pédagogique que l’école attend, tu la relis avant de l’envoyer.",
   send: (s) => `${cap(s.summary)}. Envoie la progression à l’école, puis marque-la comme envoyée.`,
+  share: () =>
+    "Publie l’espace des étudiant·es, puis copie le message de chacun·e : ils y trouvent les cours, les sujets et les grilles.",
   teach: (s) => `${cap(s.summary)}. Tout est en place : ouvre ta séance du jour.`,
   assess: (s) => `${cap(s.summary)}. Saisis les notes manquantes pour pouvoir facturer.`,
   admin: (s) => `${cap(s.summary)}. Coche les documents administratifs reçus ou envoyés.`,

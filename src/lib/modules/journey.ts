@@ -26,6 +26,8 @@ export interface JourneyData {
   trame: ReturnType<typeof trameStatus>;
   invoice: Tables<"invoice"> | null;
   invoiceCtx: InvoiceContext | null;
+  /** Espace étudiant·es publié. */
+  shared?: boolean;
 }
 
 /** Contexte de `moduleSteps` à partir des données chargées de la fiche module. */
@@ -59,6 +61,7 @@ export function buildJourney(d: JourneyData): ModuleSteps {
       done: REQUIRED_ADMIN_DOCS.filter((x) => adminDocsDone[x.key]).length,
       total: REQUIRED_ADMIN_DOCS.length,
     },
+    shared: d.shared,
     invoice: d.invoice?.status ?? null,
     billingReady: d.invoiceCtx
       ? invoiceBlockers(d.invoiceCtx).length + missingInvoiceData(d.invoiceCtx).length === 0

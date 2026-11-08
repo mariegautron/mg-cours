@@ -17,6 +17,7 @@ import { formatTimeRange } from "@/lib/modules/course-duration";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
 import { ficheNotice } from "@/lib/modules/fiche-import";
 import { buildHero } from "@/lib/modules/hero";
+import { isModuleShared } from "@/lib/modules/frise-queries";
 import { buildJourney } from "@/lib/modules/journey";
 import { highlightedSession, todayInParis } from "@/lib/modules/next-session";
 import {
@@ -125,6 +126,7 @@ export default async function ModulePage({
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const coverage = await getModuleCoverage(id, expectations, retained);
+  const shared = await isModuleShared(id);
   const journey = buildJourney({
     mod,
     courses,
@@ -137,6 +139,7 @@ export default async function ModulePage({
     trame,
     invoice,
     invoiceCtx,
+    shared,
   });
 
   const closed = !!(mod.archived_at || mod.finished_at);

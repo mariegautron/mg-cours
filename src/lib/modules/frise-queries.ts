@@ -57,6 +57,22 @@ export interface ShareLinkInfo {
   } | null;
 }
 
+/** `true` si le lien de la classe est actif (espace publié, non révoqué). */
+export async function isModuleShared(moduleId: string): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("module_share_link")
+      .select("module_id")
+      .eq("module_id", moduleId)
+      .is("revoked_at", null)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
 export async function getShareLinkInfo(moduleId: string): Promise<ShareLinkInfo> {
   try {
     const supabase = await createClient();

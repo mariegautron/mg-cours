@@ -11,6 +11,7 @@ import {
   getModuleExpectations,
   getRetainedResources,
 } from "@/lib/modules/queries";
+import { isModuleShared } from "@/lib/modules/frise-queries";
 import { getOutline } from "@/lib/outline/queries";
 import { trameStatus } from "@/lib/ynov/trame";
 
@@ -29,9 +30,10 @@ export const getModuleJourney = cache(async (id: string) => {
       loadInvoiceContext(id),
       getInvoiceByModule(id),
     ]);
-  const [notes, coverage] = await Promise.all([
+  const [notes, coverage, shared] = await Promise.all([
     moduleNoteProgress(id, mod.total_hours, assessments),
     getModuleCoverage(id, expectations, retained),
+    isModuleShared(id),
   ]);
   return buildJourney({
     mod,
@@ -45,5 +47,6 @@ export const getModuleJourney = cache(async (id: string) => {
     trame: trameStatus(mod.first_session_date, mod.iceberg_state),
     invoice,
     invoiceCtx,
+    shared,
   });
 });

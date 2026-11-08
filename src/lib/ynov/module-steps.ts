@@ -1,5 +1,5 @@
 /**
- * E18 : « Où j'en suis » — parcours d'un module en 10 étapes, de la fiche de l'école au paiement.
+ * E18 : « Où j'en suis » — parcours d'un module en 11 étapes, de la fiche de l'école au paiement.
  * Fonction pure, source unique du badge « Prochaine étape » de la fiche module. La facturation
  * (`/billing`) continue d'utiliser `nextStep()` (next-step.ts) pour ses raisons de blocage.
  * Un module rangé garde ses dix étapes (consultables), sans « prochaine étape ».
@@ -15,6 +15,7 @@ export type StepKey =
   | "planning"
   | "outline"
   | "send"
+  | "share"
   | "teach"
   | "assess"
   | "admin"
@@ -41,6 +42,8 @@ export interface ModuleStepsContext {
   plannedAssessments: number;
   adminDocs: { done: number; total: number };
   invoice: "draft" | "ready" | "sent" | "paid" | null;
+  /** L'espace étudiant·es est publié (lien de la classe actif). */
+  shared?: boolean;
   /** Aucun blocage de processus ni donnée de facturation manquante. */
   billingReady: boolean;
 }
@@ -58,7 +61,7 @@ export interface ModuleStep {
 }
 
 export interface ModuleSteps {
-  /** Toujours les dix étapes, même pour un module archivé. */
+  /** Toujours les onze étapes, même pour un module archivé. */
   steps: ModuleStep[];
   /** Première étape non terminée ; `null` si tout est fait ou module archivé. */
   current: ModuleStep | null;
@@ -201,6 +204,14 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       badge: "envoyer la progression pédagogique",
     },
     {
+      key: "share",
+      title: "Partager aux étudiant·es",
+      state: ctx.shared || delivered ? "done" : "todo",
+      summary: ctx.shared ? "espace publié" : "pas encore publié",
+      action: { label: "Publier l’espace étudiant·es", href: `${base}/frise` },
+      badge: "partager l’espace aux étudiant·es",
+    },
+    {
       key: "teach",
       title: "Faire cours",
       state: inProgress(teachDone, courses.done > 0),
@@ -238,7 +249,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   ];
 
   const numbered = steps.map((s, i) => ({ ...s, number: i + 1 }));
-  // Module rangé : les dix étapes restent visibles et consultables, sans « prochaine étape ».
+  // Module rangé : les onze étapes restent visibles et consultables, sans « prochaine étape ».
   if (ctx.archived) return { steps: numbered, current: null, badge: null };
   const current = numbered.find((s) => s.state !== "done") ?? null;
   return {

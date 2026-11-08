@@ -3,7 +3,14 @@
  * existants. L'entrée courante se déduit du chemin.
  */
 export type ModuleNavKey =
-  "journey" | "sessions" | "assessments" | "students" | "documents" | "invoice" | "feedback";
+  | "journey"
+  | "sessions"
+  | "assessments"
+  | "students"
+  | "space"
+  | "documents"
+  | "invoice"
+  | "feedback";
 
 export interface ModuleNavItem {
   key: ModuleNavKey;
@@ -18,9 +25,10 @@ export function moduleNavItems(moduleId: string): ModuleNavItem[] {
     { key: "sessions", label: "Séances", href: `${base}/courses` },
     { key: "assessments", label: "Évaluations", href: `${base}/assessments` },
     { key: "students", label: "Étudiant·es", href: `${base}/groups` },
+    { key: "space", label: "Espace étudiant·es", href: `${base}/frise` },
     { key: "documents", label: "Documents", href: `${base}/documents` },
     { key: "invoice", label: "Facture", href: `${base}/billing` },
-    { key: "feedback", label: "Retour étudiant·es", href: `${base}/feedback` },
+    { key: "feedback", label: "Avis des étudiant·es", href: `${base}/feedback` },
   ];
 }
 
@@ -33,7 +41,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   schedule: { key: "sessions", label: "Planning" },
   "import-courses": { key: "sessions", label: "Import des séances" },
   courses: { key: "sessions", label: "Séances" },
-  frise: { key: "journey", label: "Frise du module" },
+  frise: { key: "space", label: "Espace étudiant·es" },
   planning: { key: "journey", label: "Planning du module" },
   build: { key: "sessions", label: "Construire les séances" },
   assessments: { key: "assessments", label: "Évaluations" },
@@ -42,7 +50,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   rattrapages: { key: "assessments", label: "Rattrapages" },
   appreciations: { key: "students", label: "Appréciations" },
   billing: { key: "invoice", label: "Facture" },
-  feedback: { key: "feedback", label: "Retour des étudiant·es" },
+  feedback: { key: "feedback", label: "Avis des étudiant·es" },
   finish: { key: "journey", label: "Terminer le module" },
   edit: { key: null, label: "Modifier" },
 };
