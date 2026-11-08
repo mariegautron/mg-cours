@@ -204,16 +204,19 @@ export function ShareLinkPanel({
           ) : null}
           <div className="flex flex-wrap gap-2 border-t pt-4">
             {active ? (
-              <Button
-                type="button"
-                size="sm"
-                disabled={pending}
-                onClick={() =>
-                  run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
-                }
-              >
-                Mettre à jour les cours publiés
-              </Button>
+              JSON.stringify(options) !== JSON.stringify(active.options) ||
+              (quizUrl.trim() || null) !== (active.quizUrl ?? null) ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() =>
+                    run(() => updateModuleLink(moduleId, options, quizUrl.trim() || null))
+                  }
+                >
+                  Appliquer ces choix
+                </Button>
+              ) : null
             ) : (
               <Button
                 type="button"

@@ -188,12 +188,12 @@ export function StudentLinksPanel({
           disabled={heldList.length === 0}
           onClick={() =>
             void copy(
-              heldList.map((r) => held[r.studentId].message).join("\n\n———\n\n"),
-              "Tous les messages",
+              heldList.map((r) => `${r.name} : ${held[r.studentId].url}`).join("\n"),
+              "Tous les liens",
             )
           }
         >
-          Copier tous les messages{heldList.length ? ` (${heldList.length})` : ""}
+          Copier tous les liens{heldList.length ? ` (${heldList.length})` : ""}
         </Button>
         <Confirm
           trigger="Tout renouveler"
@@ -241,17 +241,17 @@ export function StudentLinksPanel({
                         type="button"
                         size="touch"
                         variant="secondary"
-                        onClick={() => void copy(h.message, `Message de ${r.name}`)}
+                        onClick={() => void copy(h.url, `Lien de ${r.name}`)}
                       >
-                        Copier le message<span className="sr-only"> de {r.name}</span>
+                        Copier le lien<span className="sr-only"> de {r.name}</span>
                       </Button>
                       <Button
                         type="button"
                         size="touch"
                         variant="outline"
-                        onClick={() => void copy(h.url, `Lien de ${r.name}`)}
+                        onClick={() => void copy(h.message, `Message de ${r.name}`)}
                       >
-                        Copier le lien<span className="sr-only"> de {r.name}</span>
+                        Copier le message<span className="sr-only"> de {r.name}</span>
                       </Button>
                     </>
                   ) : null}

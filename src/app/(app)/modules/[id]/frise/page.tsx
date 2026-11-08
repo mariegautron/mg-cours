@@ -13,7 +13,7 @@ import { notebookStudents } from "@/lib/notebook/notebook";
 import { listModuleGroups } from "@/lib/students/queries";
 import { getShareLinkInfo, getStudentLinkInfo, loadFrise } from "@/lib/modules/frise-queries";
 
-export const metadata: Metadata = { title: "Frise du module" };
+export const metadata: Metadata = { title: "Espace étudiant·es" };
 
 export default async function FrisePage({ params }: PageProps<"/modules/[id]/frise">) {
   const { id } = await params;
@@ -33,13 +33,10 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Où j’en suis
-          </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">La frise du module</h1>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Espace étudiant·es</h1>
           <p className="text-muted-foreground mt-1">
-            Les séances et les notes en un coup d’œil : à projeter en classe, ou à partager aux
-            étudiant·es par un lien.
+            Publie le contenu du module et donne à chacun·e son lien. La frise ci-dessous se
+            projette aussi en classe.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -89,7 +86,10 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
         )}
       </p>
 
-      <section aria-label="Aperçu de la frise projetée" className={card}>
+      <section aria-labelledby="frise-titre" className={card}>
+        <h2 id="frise-titre" className="font-heading mb-3 text-xl font-bold">
+          La frise du module
+        </h2>
         <FriseProjected frise={frise} embedded />
       </section>
 
