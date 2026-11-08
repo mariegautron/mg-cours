@@ -693,3 +693,70 @@ export async function saveManualScores(
     if (result.error) return result.error;
   });
 }
+
+export interface ReviewSaveState {
+  error?: string;
+  /** Total après enregistrement. */
+  score?: number;
+  totalPoints?: number;
+  /** Toutes les questions libres sont notées : la copie compte comme corrigée. */
+  complete?: boolean;
+}
+
+/**
+ * Enregistrement automatique de la relecture d'une copie (points des questions libres et un
+ * commentaire privé par question). Les commentaires restent dans `manual_scores` (clés `c<n>`) : ils
+ * ne sont jamais envoyés à l'étudiant·e. Pas de redirection : la page reste en place.
+ */
+export async function saveAttemptReview(
+  moduleId: string,
+  assessmentId: string,
+  attemptId: string,
+  scores: Record<string, string>,
+  comments: Record<string, string>,
+): Promise<ReviewSaveState> {
+  const supabase = await createClient();
+  const manual: Record<string, number | string> = {};
+  for (const [position, raw] of Object.entries(scores)) {
+    if (!/^\d{1,3}$/.test(position) || raw.trim() === "") continue;
+    const n = Number(raw.replace(",", "."));
+    if (!Number.isFinite(n) || n < 0)
+      return {
+        error: `Les points de la question ${position} doivent être un nombre positif ou nul.`,
+      };
+    manual[position] = n;
+  }
+  for (const [position, raw] of Object.entries(comments)) {
+    if (!/^\d{1,3}$/.test(position) || raw.trim() === "") continue;
+    manual[`c${position}`] = raw.trim().slice(0, 2000);
+  }
+  // Une copie d'une autre évaluation ne se modifie pas ici.
+  const { data: attempt } = await supabase
+    .from("quiz_attempt")
+    .select("id, quiz:quiz_id(assessment_id)")
+    .eq("id", attemptId)
+    .maybeSingle();
+  if (
+    !attempt ||
+    (attempt.quiz as unknown as { assessment_id: string }).assessment_id !== assessmentId
+  )
+    return { error: "Copie introuvable." };
+  const { error } = await supabase
+    .from("quiz_attempt")
+    .update({ manual_scores: manual })
+    .eq("id", attemptId);
+  if (error) return { error: `La relecture n’a pas pu être enregistrée (${error.message}).` };
+  const result = await regradeAttempt(supabase, attemptId);
+  if (result.error) return { error: result.error };
+  refresh(moduleId, assessmentId);
+  const { data: fresh } = await supabase
+    .from("quiz_attempt")
+    .select("score, total_points, review_complete")
+    .eq("id", attemptId)
+    .maybeSingle();
+  return {
+    score: fresh?.score === null || fresh?.score === undefined ? result.score : Number(fresh.score),
+    totalPoints: fresh ? Number(fresh.total_points) : undefined,
+    complete: fresh?.review_complete ?? result.complete,
+  };
+}

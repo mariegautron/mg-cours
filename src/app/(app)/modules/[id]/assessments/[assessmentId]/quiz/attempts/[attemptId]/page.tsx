@@ -3,11 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionError } from "@/components/action-error";
-import { saveManualScores } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
+import { AttemptReview } from "@/components/quiz/attempt-review";
 import { Markdown } from "@/components/markdown";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { gradeAttempt, readAnswer } from "@/lib/quiz/grading";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { createClient } from "@/lib/supabase/server";
@@ -40,6 +37,23 @@ export default async function AttemptPage({
   const manual = (attempt.manual_scores ?? {}) as Record<string, unknown>;
   const grade = gradeAttempt(drawn, answers, manual);
   const back = `/modules/${id}/assessments/${assessmentId}/quiz/links`;
+  // Copies rendues, par ordre alphabétique : précédente / suivante.
+  const { data: siblings } = await supabase
+    .from("quiz_attempt")
+    .select("id, student:student_id(first_name, last_name)")
+    .eq("quiz_id", attempt.quiz_id)
+    .eq("status", "submitted");
+  const ordered = (siblings ?? [])
+    .map((a) => {
+      const st = a.student as unknown as { first_name: string; last_name: string } | null;
+      return { id: a.id, name: st ? `${st.last_name} ${st.first_name}` : "" };
+    })
+    .sort((x, y) => x.name.localeCompare(y.name, "fr"));
+  const at = ordered.findIndex((o) => o.id === attemptId);
+  const neighbor = (d: -1 | 1) => {
+    const target = at === -1 ? undefined : ordered[at + d];
+    return target ? `/modules/${id}/assessments/${assessmentId}/quiz/attempts/${target.id}` : null;
+  };
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -64,84 +78,77 @@ export default async function AttemptPage({
         </p>
       ) : null}
 
-      <form action={saveManualScores.bind(null, id, assessmentId, attemptId)} className="space-y-4">
-        {drawn.map((q, i) => {
+      <AttemptReview
+        moduleId={id}
+        assessmentId={assessmentId}
+        attemptId={attemptId}
+        totalPoints={grade.totalPoints}
+        initialScore={grade.score}
+        initialComplete={grade.complete}
+        prevHref={neighbor(-1)}
+        nextHref={neighbor(1)}
+        questions={drawn.map((q, i) => {
           const position = i + 1;
           const g = grade.questions[i];
           const answer = readAnswer(answers[String(position)], q);
-          return (
-            <section
-              key={position}
-              aria-labelledby={`q${position}`}
-              className="space-y-2 rounded-lg border p-4"
-            >
-              <h2 id={`q${position}`} className="text-sm font-medium">
-                Question {position} · {fmt(q.points)} pt{q.points > 1 ? "s" : ""}
-                {g.earned !== null ? ` · obtenus : ${fmt(g.earned)}` : " · à relire"}
-              </h2>
-              <Markdown source={q.statement} />
-              {q.type === "open" ? (
-                <>
-                  <p className="text-sm font-medium">Réponse :</p>
-                  <p className="bg-muted/40 rounded p-2 text-sm whitespace-pre-wrap">
-                    {answer && "text" in answer && answer.text.trim()
-                      ? answer.text
-                      : "Pas de réponse."}
+          const m = manual[String(position)];
+          const c = manual[`c${position}`];
+          return {
+            position,
+            points: q.points,
+            open: q.type === "open",
+            earned: g.earned,
+            initialScore: typeof m === "number" ? String(m).replace(".", ",") : "",
+            initialComment: typeof c === "string" ? c : "",
+            body: (
+              <>
+                <Markdown source={q.statement} />
+                {q.type === "open" ? (
+                  <>
+                    <p className="text-sm font-medium">Réponse :</p>
+                    <p className="bg-muted/40 rounded p-2 text-sm whitespace-pre-wrap">
+                      {answer && "text" in answer && answer.text.trim()
+                        ? answer.text
+                        : "Pas de réponse."}
+                    </p>
+                  </>
+                ) : q.type === "numerical" ? (
+                  <p className="text-sm">
+                    Réponse :{" "}
+                    <strong>
+                      {answer && "number" in answer && answer.number.trim()
+                        ? answer.number
+                        : "aucune"}
+                    </strong>{" "}
+                    — attendu : {q.numeric_value}
+                    {q.numeric_tolerance ? ` (± ${q.numeric_tolerance})` : ""}
                   </p>
-                  <div className="space-y-1">
-                    <Label htmlFor={`score_${position}`}>Points donnés (sur {fmt(q.points)})</Label>
-                    <Input
-                      id={`score_${position}`}
-                      name={`score_${position}`}
-                      inputMode="decimal"
-                      className="w-28"
-                      defaultValue={
-                        typeof manual[String(position)] === "number"
-                          ? String(manual[String(position)]).replace(".", ",")
-                          : ""
-                      }
-                    />
-                  </div>
-                </>
-              ) : q.type === "numerical" ? (
-                <p className="text-sm">
-                  Réponse :{" "}
-                  <strong>
-                    {answer && "number" in answer && answer.number.trim()
-                      ? answer.number
-                      : "aucune"}
-                  </strong>{" "}
-                  — attendu : {q.numeric_value}
-                  {q.numeric_tolerance ? ` (± ${q.numeric_tolerance})` : ""}
-                </p>
-              ) : (
-                <ul className="space-y-1 text-sm">
-                  {q.choices.map((c, k) => {
-                    const chosen = answer && "choices" in answer && answer.choices.includes(k);
-                    return (
-                      <li key={k}>
-                        <span className="font-medium">
-                          {chosen ? "Cochée" : "Non cochée"}
-                          {c.fraction > 0
-                            ? " · bonne réponse"
-                            : c.fraction < 0
-                              ? " · pénalisée"
-                              : ""}
-                          {" : "}
-                        </span>
-                        {c.text}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          );
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {q.choices.map((ch, k) => {
+                      const chosen = answer && "choices" in answer && answer.choices.includes(k);
+                      return (
+                        <li key={k}>
+                          <span className="font-medium">
+                            {chosen ? "Cochée" : "Non cochée"}
+                            {ch.fraction > 0
+                              ? " · bonne réponse"
+                              : ch.fraction < 0
+                                ? " · pénalisée"
+                                : ""}
+                            {" : "}
+                          </span>
+                          {ch.text}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
+            ),
+          };
         })}
-        {drawn.some((q) => q.type === "open") ? (
-          <Button type="submit">Enregistrer la relecture</Button>
-        ) : null}
-      </form>
+      />
     </div>
   );
 }
