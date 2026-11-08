@@ -78,7 +78,7 @@ export default async function ClassPage({ params, searchParams }: PageProps<"/q/
           default:
             return (
               <Message title="Ce lien ne fonctionne pas">
-                Demandez le QR code à votre enseignante : l’ancien a peut-être été remplacé.
+                Demandez le QR code à Marie : l’ancien a peut-être été remplacé.
               </Message>
             );
         }
