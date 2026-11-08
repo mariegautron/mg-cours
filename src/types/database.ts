@@ -1766,6 +1766,65 @@ export type Database = {
           },
         ]
       }
+      open_review: {
+        Row: {
+          attempt_id: string
+          created_at: string
+          criterion_letters: Json
+          field_versions: Json
+          global_comment: string
+          history: Json
+          id: string
+          locked: boolean
+          owner_id: string
+          proposals: Json | null
+          questions: Json
+          updated_at: string
+          written: Json | null
+          written_at: string | null
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string
+          criterion_letters?: Json
+          field_versions?: Json
+          global_comment?: string
+          history?: Json
+          id?: string
+          locked?: boolean
+          owner_id?: string
+          proposals?: Json | null
+          questions?: Json
+          updated_at?: string
+          written?: Json | null
+          written_at?: string | null
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string
+          criterion_letters?: Json
+          field_versions?: Json
+          global_comment?: string
+          history?: Json
+          id?: string
+          locked?: boolean
+          owner_id?: string
+          proposals?: Json | null
+          questions?: Json
+          updated_at?: string
+          written?: Json | null
+          written_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_review_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: true
+            referencedRelation: "quiz_attempt"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oral_slot: {
         Row: {
           assessment_id: string
@@ -2345,6 +2404,7 @@ export type Database = {
         Row: {
           assessment_id: string
           closes_at: string | null
+          correction_mode: string
           created_at: string
           duration_minutes: number | null
           id: string
@@ -2361,6 +2421,7 @@ export type Database = {
         Insert: {
           assessment_id: string
           closes_at?: string | null
+          correction_mode?: string
           created_at?: string
           duration_minutes?: number | null
           id?: string
@@ -2377,6 +2438,7 @@ export type Database = {
         Update: {
           assessment_id?: string
           closes_at?: string | null
+          correction_mode?: string
           created_at?: string
           duration_minutes?: number | null
           id?: string
@@ -2396,6 +2458,41 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: true
             referencedRelation: "assessment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_question_criterion: {
+        Row: {
+          created_at: string
+          criterion_id: string
+          id: string
+          owner_id: string
+          question_id: string
+          quiz_id: string
+        }
+        Insert: {
+          created_at?: string
+          criterion_id: string
+          id?: string
+          owner_id?: string
+          question_id: string
+          quiz_id: string
+        }
+        Update: {
+          created_at?: string
+          criterion_id?: string
+          id?: string
+          owner_id?: string
+          question_id?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_question_criterion_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz"
             referencedColumns: ["id"]
           },
         ]
