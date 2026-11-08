@@ -317,6 +317,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 <p className="text-muted-foreground text-sm">
                   {c.moduleName} · {c.remaining} copie{c.remaining > 1 ? "s" : ""} restante
                   {c.remaining > 1 ? "s" : ""} sur {c.total}
+                  {c.inProgress > 0 ? ` · ${c.inProgress} en cours` : ""}
                   {c.date ? ` · épreuve du ${new Date(c.date).toLocaleDateString("fr-FR")}` : ""}
                 </p>
               </div>

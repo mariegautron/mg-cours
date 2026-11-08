@@ -62,7 +62,6 @@ export default async function QuizLinksPage({
       <div className="min-w-0 flex-[3_1_0] space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
             <h1 className="font-heading text-3xl font-bold tracking-tight">Donner accès au QCM</h1>
           </div>
           <p role="status">

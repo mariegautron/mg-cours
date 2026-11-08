@@ -1,3 +1,6 @@
+import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
+import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
+import { listResultLinks } from "@/lib/result-links/queries";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -259,9 +262,6 @@ export default async function AssessmentPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Évaluations
-          </p>
           <h1 className="font-heading text-3xl font-bold tracking-tight">{assessment.title}</h1>
           <p className="text-muted-foreground mt-1">
             {[
@@ -343,6 +343,15 @@ export default async function AssessmentPage({
           </Button>
         </div>
       </div>
+
+      <IncompletePublishedWarning
+        moduleId={id}
+        assessmentId={assessmentId}
+        copies={publishedIncomplete(
+          incompleteCopies(grades, assessment.groups),
+          new Set((await listResultLinks(assessmentId)).byStudent.keys()),
+        )}
+      />
 
       {assessment.is_group_grade ? (
         <>

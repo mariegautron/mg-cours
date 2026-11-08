@@ -1,3 +1,8 @@
+import {
+  gradeCompletion,
+  guardIncompleteGrades,
+  isGradeCounted,
+} from "@/lib/assessments/completeness";
 import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
@@ -116,17 +121,22 @@ export interface AssessmentWithMeta extends Tables<"assessment"> {
   grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
   /** Barème effectif (saisi, sinon total de la grille, sinon 20). */
   maxScore: number;
+  /** Copies corrigées en entier (une copie en cours n'est pas comptée). */
   gradeCount: number;
+  /** Copies commencées mais incomplètes. */
+  inProgressCount: number;
+  /** Critères de la grille, pour la règle de complétude. */
+  gridCriteria: { id: string; isBonus: boolean }[];
 }
 
 const LIST_SELECT =
-  "*, assessment_group(student_group:student_group_id(id, name)), grading_grid:grading_grid_id(id, name, grid_criterion(weight, is_bonus))";
+  "*, assessment_group(student_group:student_group_id(id, name)), grading_grid:grading_grid_id(id, name, grid_criterion(id, weight, is_bonus))";
 
 type RawListed = Tables<"assessment"> & {
   assessment_group: { student_group: GroupRef | null }[];
   grading_grid:
     | (Pick<Tables<"grading_grid">, "id" | "name"> & {
-        grid_criterion: { weight: number; is_bonus: boolean }[];
+        grid_criterion: { id: string; weight: number; is_bonus: boolean }[];
       })
     | null;
 };
@@ -141,11 +151,16 @@ function flattenGroups<T extends RawListed>(
   groups: GroupRef[];
   grading_grid: Pick<Tables<"grading_grid">, "id" | "name"> | null;
   maxScore: number;
+  gridCriteria: { id: string; isBonus: boolean }[];
 })[] {
   return rows.map(({ assessment_group, grading_grid, ...a }) => ({
     ...a,
     grading_grid: grading_grid ? { id: grading_grid.id, name: grading_grid.name } : null,
     maxScore: effectiveMaxScore(a.max_score, criteriaTotal(grading_grid?.grid_criterion ?? [])),
+    gridCriteria: (grading_grid?.grid_criterion ?? []).map((c) => ({
+      id: c.id,
+      isBonus: c.is_bonus,
+    })),
     groups: assessment_group
       .map((ag) => ag.student_group)
       .filter((g): g is GroupRef => g !== null)
@@ -153,26 +168,44 @@ function flattenGroups<T extends RawListed>(
   }));
 }
 
-async function attachGradeCounts<T extends { id: string }>(
+async function attachGradeCounts<
+  T extends {
+    id: string;
+    gridCriteria: { id: string; isBonus: boolean }[];
+    auto_validated_criterion_ids: string[];
+  },
+>(
   supabase: Awaited<ReturnType<typeof createClient>>,
   assessments: T[],
-): Promise<(T & { gradeCount: number })[]> {
+): Promise<(T & { gradeCount: number; inProgressCount: number })[]> {
   if (assessments.length === 0) return [];
   const { data: grades } = await supabase
     .from("grade")
-    .select("assessment_id, value")
+    .select("assessment_id, value, scores, attendance")
     .in(
       "assessment_id",
       assessments.map((a) => a.id),
     );
 
-  const counts = new Map<string, number>();
+  const byAssessment = new Map<string, typeof grades>();
   for (const g of grades ?? []) {
-    if (g.value === null) continue;
-    counts.set(g.assessment_id, (counts.get(g.assessment_id) ?? 0) + 1);
+    const list = byAssessment.get(g.assessment_id) ?? [];
+    list.push(g);
+    byAssessment.set(g.assessment_id, list);
   }
 
-  return assessments.map((a) => ({ ...a, gradeCount: counts.get(a.id) ?? 0 }));
+  return assessments.map((a) => {
+    let counted = 0;
+    let inProgress = 0;
+    for (const g of byAssessment.get(a.id) ?? []) {
+      if (isGradeCounted(g, a.gridCriteria, a.auto_validated_criterion_ids)) counted += 1;
+      else if (
+        gradeCompletion(g, a.gridCriteria, a.auto_validated_criterion_ids).state === "partial"
+      )
+        inProgress += 1;
+    }
+    return { ...a, gradeCount: counted, inProgressCount: inProgress };
+  });
 }
 
 export async function listModuleAssessments(moduleId: string): Promise<AssessmentWithMeta[]> {
@@ -293,7 +326,14 @@ export async function listGroupGradeMembers(
 export async function getGradesByAssessment(assessmentId: string): Promise<Tables<"grade">[]> {
   const supabase = await createClient();
   const { data } = await supabase.from("grade").select("*").eq("assessment_id", assessmentId);
-  return data ?? [];
+  const rows = data ?? [];
+  if (rows.length === 0) return rows;
+  const assessment = await getAssessment(assessmentId);
+  const criteria = (assessment?.grading_grid?.criteria ?? []).map((c) => ({
+    id: c.id,
+    isBonus: c.is_bonus,
+  }));
+  return guardIncompleteGrades(rows, criteria, assessment?.auto_validated_criterion_ids ?? []);
 }
 
 /**
@@ -394,7 +434,12 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     const kind = assessment.is_group_grade ? "group" : "individual";
     const max = assessment.maxScore;
     for (const row of rows) {
-      if (row.value === null) continue;
+      // Une copie incomplète n'entre jamais dans une moyenne.
+      if (
+        row.value === null ||
+        !isGradeCounted(row, assessment.gridCriteria, assessment.auto_validated_criterion_ids)
+      )
+        continue;
       if (assessment.is_group_grade && row.student_group_id) {
         for (const s of studentsByGroup.get(row.student_group_id) ?? []) {
           // Absent·e non prévenu·e : 0 ; excusé·e : selon la règle de l'école (garde la note du groupe

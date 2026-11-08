@@ -58,7 +58,6 @@ export default async function CompareCriterionPage({
     <div className="max-w-5xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
           <h1 className="text-3xl font-semibold">
             Comparer un critère entre les {assessment.is_group_grade ? "groupes" : "étudiant·es"}
           </h1>

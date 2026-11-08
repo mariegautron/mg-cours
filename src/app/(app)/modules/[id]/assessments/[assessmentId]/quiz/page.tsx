@@ -129,7 +129,6 @@ export default async function QuizPage({
               {assessment.title}
             </Link>
           </nav>
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
           <h1 id="qp" className="font-heading text-3xl font-bold tracking-tight">
             QCM{quiz ? ` — ${quiz.title}` : ""}
           </h1>

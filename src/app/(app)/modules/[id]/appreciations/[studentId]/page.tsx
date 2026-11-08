@@ -1,3 +1,4 @@
+import { isGradeCounted } from "@/lib/assessments/completeness";
 import { bonusLine } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -34,7 +35,9 @@ export default async function AppreciationPage({
       listModuleObservations(id),
       supabase
         .from("grade")
-        .select("value, strengths, progress, assessment:assessment_id(title, module_id)")
+        .select(
+          "value, scores, attendance, strengths, progress, assessment:assessment_id(title, module_id, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)))",
+        )
         .eq("student_id", studentId),
     ]);
   if (!mod || !student) notFound();
@@ -45,12 +48,29 @@ export default async function AppreciationPage({
   const own = (
     (grades ?? []) as unknown as {
       value: number | null;
+      scores: unknown;
+      attendance: string | null;
       strengths: string | null;
       progress: string | null;
-      assessment: { title: string; module_id: string } | null;
+      assessment: {
+        title: string;
+        module_id: string;
+        auto_validated_criterion_ids: string[];
+        grading_grid: { grid_criterion: { id: string; is_bonus: boolean }[] } | null;
+      } | null;
     }[]
   ).filter((g) => g.assessment?.module_id === id);
-  const notes = own.filter((g) => g.value !== null);
+  // Une copie en cours n'est pas une note : même règle que les moyennes.
+  const notes = own.filter((g) =>
+    isGradeCounted(
+      g,
+      (g.assessment?.grading_grid?.grid_criterion ?? []).map((c) => ({
+        id: c.id,
+        isBonus: c.is_bonus,
+      })),
+      g.assessment?.auto_validated_criterion_ids ?? [],
+    ),
+  );
   const strengths = own.map((g) => g.strengths?.trim()).filter(Boolean);
   const progress = own.map((g) => g.progress?.trim()).filter(Boolean);
   const privateNotes = observations.filter((o) => o.student_id === studentId).length;

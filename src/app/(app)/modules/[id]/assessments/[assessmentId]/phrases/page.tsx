@@ -44,7 +44,6 @@ export default async function PhrasesPage({
     <div className="max-w-5xl space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
           <h1 className="text-3xl font-semibold">Phrases : {assessment.title}</h1>
           <p className="text-muted-foreground">
             Rangées par critère de la grille, et proposées pendant la correction. Le nombre

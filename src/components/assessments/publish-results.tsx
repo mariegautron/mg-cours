@@ -112,7 +112,10 @@ export function PublishResults({
             Chaque étudiant·e reçoit un lien personnel et ne voit que son propre résultat.{" "}
             {published} lien{published > 1 ? "s" : ""} publié{published > 1 ? "s" : ""} sur{" "}
             {students.length}
-            {published > 0 ? ` · ${viewed} personne${viewed > 1 ? "s" : ""} l’ont consulté` : ""}.
+            {published > 0
+              ? ` · ${viewed} personne${viewed > 1 ? "s" : ""} ${viewed > 1 ? "l’ont" : "l’a"} consulté`
+              : ""}
+            .
           </p>
         </div>
         <AlertDialog>

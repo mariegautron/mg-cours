@@ -1,3 +1,4 @@
+import { isOralAssessment } from "@/lib/assessments/oral";
 import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
 import { listAssessmentExpectations } from "@/lib/assessments/expectation-queries";
 import { getModuleExpectations } from "@/lib/modules/queries";
@@ -197,6 +198,7 @@ export default async function ModuleAssessmentsPage({
             </h2>
             <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...cards, ...makeups].map((a) => {
+                const oral = isOralAssessment(a);
                 const frame = frameStatus({
                   objective: a.objective,
                   subject: a.subject,
@@ -250,9 +252,14 @@ export default async function ModuleAssessmentsPage({
                     <StatusRow
                       label="Notes"
                       status={
-                        a.gradeCount > 0
-                          ? { tone: "ok", label: "Notée" }
-                          : { tone: "warn", label: "À noter" }
+                        a.inProgressCount > 0
+                          ? {
+                              tone: "warn",
+                              label: `En cours (${a.inProgressCount} copie${a.inProgressCount > 1 ? "s" : ""} à finir)`,
+                            }
+                          : a.gradeCount > 0
+                            ? { tone: "ok", label: "Notée" }
+                            : { tone: "warn", label: "À noter" }
                       }
                     />
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -263,20 +270,34 @@ export default async function ModuleAssessmentsPage({
                       >
                         <Link
                           href={
-                            frame.tone === "ok"
-                              ? `/modules/${id}/assessments/${a.id}/correct`
-                              : `/modules/${id}/assessments/${a.id}`
+                            oral
+                              ? `/modules/${id}/assessments/${a.id}/oral`
+                              : frame.tone === "ok"
+                                ? `/modules/${id}/assessments/${a.id}/correct`
+                                : `/modules/${id}/assessments/${a.id}`
                           }
                           aria-describedby={`ev-${a.id}`}
                         >
-                          {frame.tone !== "ok"
-                            ? "Préparer"
-                            : a.gradeCount > 0
-                              ? "Continuer la correction"
-                              : "Corriger"}
+                          {oral
+                            ? "Faire passer l’oral"
+                            : frame.tone !== "ok"
+                              ? "Préparer"
+                              : a.gradeCount + a.inProgressCount > 0
+                                ? "Continuer la correction"
+                                : "Corriger"}
                         </Link>
                       </Button>
-                      {a.gradeCount > 0 ? (
+                      {oral && frame.tone !== "ok" ? (
+                        <Button asChild variant="outline">
+                          <Link
+                            href={`/modules/${id}/assessments/${a.id}`}
+                            aria-describedby={`ev-${a.id}`}
+                          >
+                            Préparer
+                          </Link>
+                        </Button>
+                      ) : null}
+                      {a.gradeCount + a.inProgressCount > 0 ? (
                         <Button asChild variant="outline">
                           <Link
                             href={`/modules/${id}/assessments/${a.id}/results`}

@@ -1,3 +1,4 @@
+import { gradeCompletion, isGradeCounted } from "@/lib/assessments/completeness";
 import "server-only";
 
 import { listModuleAssessments } from "@/lib/assessments/queries";
@@ -41,16 +42,19 @@ export async function loadFocusKpis(moduleId: string, moduleName: string): Promi
     const expected = lastGraded.is_group_grade
       ? targetGroups.length
       : new Set(targetGroups.flatMap((g) => g.members.map((m) => m.id))).size;
-    const { data: grades } = await supabase
+    const { data: rawGrades } = await supabase
       .from("grade")
-      .select("value")
+      .select("value, scores, attendance")
       .eq("assessment_id", lastGraded.id)
       .not("value", "is", null);
+    const grades = (rawGrades ?? []).filter((g) =>
+      isGradeCounted(g, lastGraded.gridCriteria, lastGraded.auto_validated_criterion_ids),
+    );
     graded = {
       title: lastGraded.title,
       done: lastGraded.gradeCount,
       expected: Math.max(expected, lastGraded.gradeCount),
-      valuesOn20: (grades ?? []).map((g) => toTwenty(Number(g.value), lastGraded.maxScore)),
+      valuesOn20: grades.map((g) => toTwenty(Number(g.value), lastGraded.maxScore)),
     };
   }
 
@@ -118,16 +122,21 @@ export async function loadModuleMean(moduleId: string): Promise<number[]> {
   const supabase = await createClient();
   const assessments = await listModuleAssessments(moduleId);
   // Une note bonus n'entre pas dans le bilan de la classe : elle ne sert qu'à remonter une moyenne.
-  const byId = new Map(
-    assessments.filter((a) => !a.makeup_of_id && !a.is_bonus).map((a) => [a.id, a.maxScore]),
-  );
+  const usable = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
+  const byId = new Map(usable.map((a) => [a.id, a.maxScore]));
+  const byAssessment = new Map(usable.map((a) => [a.id, a]));
   if (byId.size === 0) return [];
   const { data } = await supabase
     .from("grade")
-    .select("assessment_id, value")
+    .select("assessment_id, value, scores, attendance")
     .in("assessment_id", [...byId.keys()])
     .not("value", "is", null);
-  return (data ?? []).map((g) => toTwenty(Number(g.value), byId.get(g.assessment_id) ?? 20));
+  return (data ?? [])
+    .filter((g) => {
+      const a = byAssessment.get(g.assessment_id);
+      return !!a && isGradeCounted(g, a.gridCriteria, a.auto_validated_criterion_ids);
+    })
+    .map((g) => toTwenty(Number(g.value), byId.get(g.assessment_id) ?? 20));
 }
 
 export interface ToCorrect {
@@ -138,6 +147,8 @@ export interface ToCorrect {
   date: string | null;
   remaining: number;
   total: number;
+  /** Copies commencées mais pas finies. */
+  inProgress: number;
   /** Première copie qui reste à corriger (`?copy=`). */
   nextCopyId: string | null;
 }
@@ -151,7 +162,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   const { data } = await supabase
     .from("assessment")
     .select(
-      "id, title, module_id, date, is_group_grade, makeup_of_id, is_bonus, module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
+      "id, title, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
     )
     .is("makeup_of_id", null);
   const rows = (data ?? []).filter((a) => {
@@ -161,16 +172,38 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   if (rows.length === 0) return [];
   const { data: grades } = await supabase
     .from("grade")
-    .select("assessment_id, student_id, student_group_id, value, attendance")
+    .select("assessment_id, student_id, student_group_id, value, scores, attendance")
     .in(
       "assessment_id",
       rows.map((a) => a.id),
     );
-  const handled = new Set(
-    (grades ?? [])
-      .filter((g) => g.value !== null || g.attendance === "absent_excused")
-      .map((g) => `${g.assessment_id}:${g.student_group_id ?? g.student_id}`),
+  const criteriaOf = new Map(
+    rows.map((a) => [
+      a.id,
+      {
+        criteria: (
+          (
+            a.grading_grid as unknown as {
+              grid_criterion: { id: string; is_bonus: boolean }[];
+            } | null
+          )?.grid_criterion ?? []
+        ).map((c) => ({ id: c.id, isBonus: c.is_bonus })),
+        auto: (a.auto_validated_criterion_ids as string[] | null) ?? [],
+      },
+    ]),
   );
+  // Même règle que la correction : traitée = tous les critères notés, ou absence posée.
+  const handled = new Set<string>();
+  const startedCopies = new Map<string, number>();
+  for (const g of grades ?? []) {
+    const c = criteriaOf.get(g.assessment_id);
+    const key = `${g.assessment_id}:${g.student_group_id ?? g.student_id}`;
+    const state = gradeCompletion(g, c?.criteria ?? [], c?.auto ?? []).state;
+    const counted = isGradeCounted(g, c?.criteria ?? [], c?.auto ?? []);
+    if (counted || g.attendance === "absent_excused") handled.add(key);
+    else if (state === "partial")
+      startedCopies.set(g.assessment_id, (startedCopies.get(g.assessment_id) ?? 0) + 1);
+  }
 
   const out: ToCorrect[] = [];
   for (const a of rows) {
@@ -220,12 +253,23 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
       date: a.date,
       remaining: todo.length,
       total: ids.length,
+      inProgress: startedCopies.get(a.id) ?? 0,
       nextCopyId: todo[0] ?? null,
     });
   }
   const today = new Date().toISOString().slice(0, 10);
-  return out
-    .filter((c) => c.remaining < c.total || (c.date !== null && c.date <= today))
-    .sort((x, y) => (x.date ?? "9999").localeCompare(y.date ?? "9999"))
-    .slice(0, limit);
+  return (
+    out
+      // En cours, entamée, sans date (oral à noter) ou déjà passée. Une épreuve datée du futur attend.
+      .filter(
+        (c) => c.remaining < c.total || c.inProgress > 0 || c.date === null || c.date <= today,
+      )
+      // Les évaluations en cours d'abord, puis par date d'épreuve (sans date en dernier).
+      .sort(
+        (x, y) =>
+          Number(y.inProgress > 0) - Number(x.inProgress > 0) ||
+          (x.date ?? "9999").localeCompare(y.date ?? "9999"),
+      )
+      .slice(0, limit)
+  );
 }

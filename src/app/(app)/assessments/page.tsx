@@ -73,8 +73,10 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
                     {a.groups.map((g) => g.name).join(", ") || "—"}
                   </p>
                 </div>
-                <Badge variant={a.gradeCount > 0 ? "secondary" : "outline"}>
-                  {a.gradeCount > 0 ? "notée" : "à noter"}
+                <Badge
+                  variant={a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"}
+                >
+                  {a.inProgressCount > 0 ? "en cours" : a.gradeCount > 0 ? "notée" : "à noter"}
                 </Badge>
               </Link>
             </li>

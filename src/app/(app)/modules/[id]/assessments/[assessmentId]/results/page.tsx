@@ -18,6 +18,8 @@ import { loadResultSheets } from "@/lib/assessments/results-data";
 import { resultsRecipients } from "@/lib/assessments/results";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { formatNumber } from "@/lib/assessments/scoring";
+import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
+import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { listResultLinks } from "@/lib/result-links/queries";
 
 export const metadata: Metadata = { title: "Envoyer les résultats" };
@@ -59,21 +61,12 @@ export default async function ResultsPage({
   // Excusé·e = traité (même règle que la page de correction) ; une copie commencée mais incomplète
   // n'a pas de note et ne compte pas : elle bloque l'envoi.
   const done = grades.filter((g) => g.value !== null || g.attendance === "absent_excused").length;
-  const names = new Map<string, string>(
-    assessment.groups.flatMap((g) => [
-      [g.id, g.name] as [string, string],
-      ...g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as [string, string]),
-    ]),
+  const incompleteList = incompleteCopies(grades, assessment.groups);
+  const incomplete = incompleteList.map((c) => c.name);
+  const publishedWarnings = publishedIncomplete(
+    incompleteList,
+    new Set(resultLinks.byStudent.keys()),
   );
-  const incomplete = grades
-    .filter(
-      (g) =>
-        g.value === null &&
-        g.attendance === "present" &&
-        Object.keys((g.scores ?? {}) as Record<string, unknown>).length > 0,
-    )
-    .map((g) => names.get(g.student_group_id ?? g.student_id ?? "") ?? "Copie")
-    .sort((a, b) => a.localeCompare(b, "fr"));
   const allDone = total > 0 && done >= total && incomplete.length === 0;
   const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
 
@@ -115,7 +108,6 @@ export default async function ResultsPage({
     <div className="max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
           <h1 className="text-3xl font-semibold">
             {allDone ? "Tout est corrigé : envoyer les résultats" : "Envoyer les résultats"}
           </h1>
@@ -137,6 +129,12 @@ export default async function ResultsPage({
           actions={[{ label: "Aller à la correction", href: `${back}/correct` }]}
         />
       ) : null}
+
+      <IncompletePublishedWarning
+        moduleId={id}
+        assessmentId={assessmentId}
+        copies={publishedWarnings}
+      />
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <section aria-labelledby="ver" className={`${card} min-w-0 flex-[1_1_0]`}>

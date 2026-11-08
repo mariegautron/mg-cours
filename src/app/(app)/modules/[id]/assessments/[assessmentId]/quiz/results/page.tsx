@@ -50,7 +50,6 @@ export default async function QuizResultsPage({
   return (
     <div className="flex max-w-6xl flex-col gap-5 lg:flex-row lg:items-start">
       <section aria-labelledby="qr" className={`${card} min-w-0 flex-[3_1_0] space-y-3`}>
-        <p className="text-primary text-xs font-bold tracking-widest uppercase">Évaluations</p>
         <h1 id="qr" className="font-heading text-3xl font-bold tracking-tight">
           Résultats du QCM
         </h1>
