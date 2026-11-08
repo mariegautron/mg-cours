@@ -672,7 +672,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                               </strong>
                               <span className="bg-muted rounded-full px-3 py-1 font-bold">
                                 {c.points === null
-                                  ? "Pas noté"
+                                  ? "Critère non évalué"
                                   : `${fmt(c.points)} / ${fmt(c.max)}`}
                                 {c.isBonus ? " (bonus)" : ""}
                               </span>

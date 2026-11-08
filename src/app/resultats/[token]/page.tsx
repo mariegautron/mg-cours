@@ -107,7 +107,7 @@ function Result({ sheet, token }: { sheet: PublicSheet; token: string }) {
                       {c.label}
                     </strong>
                     <Pill tone={c.points === null ? "warn" : "ok"}>
-                      {c.points === null ? "Pas noté" : `${fmt(c.points)} / ${fmt(c.max)}`}
+                      {c.points === null ? "Critère non évalué" : `${fmt(c.points)} / ${fmt(c.max)}`}
                       {c.isBonus ? " (bonus)" : ""}
                     </Pill>
                   </p>
