@@ -47,7 +47,7 @@ export function AssessmentForm({
   groups: Pick<Tables<"student_group">, "id" | "name">[];
   grids: Pick<GridWithCriteria, "id" | "name" | "criteria" | "axes">[];
   /** Séances du module (rattachement du sujet, US-90). */
-  courses?: Pick<Tables<"course">, "id" | "title">[];
+  courses?: (Pick<Tables<"course">, "id" | "title"> & { session_date?: string | null })[];
   assessment?: AssessmentDetail;
   /** Grille choisie depuis la bibliothèque (US-126). */
   initialGridId?: string;
@@ -59,6 +59,7 @@ export function AssessmentForm({
   const [typeText, setTypeText] = useState(assessment?.type ?? "");
   const [dateText, setDateText] = useState(assessment?.date ?? "");
   const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
+  const [courseId, setCourseId] = useState(assessment?.course_id ?? "");
   const [groupGrade, setGroupGrade] = useState(assessment?.is_group_grade ?? false);
   const ruleCoefficient = coefficientFor(groupGrade);
   const [coefficientText, setCoefficientText] = useState(
@@ -68,6 +69,9 @@ export function AssessmentForm({
     Number.isFinite(Number(coefficientText)) &&
     Number(coefficientText) !== ruleCoefficient &&
     coefficientText.trim() !== "";
+  const selectedCourseDate = courses.find((c) => c.id === courseId)?.session_date?.slice(0, 10);
+  const dateMismatch = !!(selectedCourseDate && dateText && dateText !== selectedCourseDate);
+  const formatFr = (d: string) => new Date(d).toLocaleDateString("fr-FR");
   const frame = frameFor(typeText);
   const warnings = frameWarnings({ type: typeText, date: dateText, durationMinutes: durationText });
   const gridCriteria = (grids.find((g) => g.id === gridId)?.criteria ?? []).filter(
@@ -198,7 +202,13 @@ export function AssessmentForm({
             <select
               id="courseId"
               name="courseId"
-              defaultValue={assessment?.course_id ?? ""}
+              value={courseId}
+              onChange={(e) => {
+                const next = e.target.value;
+                setCourseId(next);
+                const d = courses.find((c) => c.id === next)?.session_date;
+                if (d) setDateText(d.slice(0, 10));
+              }}
               aria-describedby={fe.courseId ? "courseId-error" : undefined}
               className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
             >
@@ -210,6 +220,17 @@ export function AssessmentForm({
               ))}
             </select>
             <FieldError id="courseId" errors={fe.courseId} />
+            {!courseId ? (
+              <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                Pas rattachée à une séance : absente de la frise des étudiant·es.
+              </p>
+            ) : null}
+            {dateMismatch ? (
+              <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                La date ({formatFr(dateText)}) ne correspond pas à la séance choisie (
+                {formatFr(selectedCourseDate ?? "")}). Corrige l’une des deux avant de projeter.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="prepStatus">État de préparation</Label>
