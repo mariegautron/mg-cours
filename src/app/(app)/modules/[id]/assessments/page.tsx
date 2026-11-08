@@ -108,6 +108,7 @@ export default async function ModuleAssessmentsPage({
       courseId: a.course_id,
       role: a.project_role,
       isGroupGrade: a.is_group_grade,
+      type: a.type,
       makeup: false,
     })),
   );
@@ -231,10 +232,19 @@ export default async function ModuleAssessmentsPage({
       {cards.length === 0 ? (
         <EmptyState
           title="Pas encore d’évaluation"
-          description="Commence par le projet fil rouge : il organise les jalons. Tu peux aussi créer directement une évaluation."
+          description={
+            project
+              ? "Le projet fil rouge existe : ajoute ses jalons, ou une évaluation à part."
+              : "Commence par le projet fil rouge : il organise les jalons. Tu peux aussi créer directement une évaluation."
+          }
           actions={[
-            { label: "Créer le projet", href: `/modules/${id}/project` },
-            { label: "Ajouter une évaluation", href: `/modules/${id}/assessments/add` },
+            project
+              ? { label: "Modifier le brief", href: `/modules/${id}/project` }
+              : { label: "Créer le projet", href: `/modules/${id}/project` },
+            {
+              label: "Ajouter une évaluation",
+              href: `/modules/${id}/assessments/add${project ? "?jalon=1" : ""}`,
+            },
           ]}
         />
       ) : (

@@ -51,6 +51,7 @@ export default async function AddAssessmentPage({
         courseId: a.course_id,
         role: a.project_role,
         isGroupGrade: a.is_group_grade,
+        type: a.type,
         makeup: false,
       })),
     ).map((r) => [r.assessmentId, r.dueSession]),

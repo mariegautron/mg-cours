@@ -16,6 +16,7 @@ import { SurprisesEditor } from "@/components/projects/surprises-editor";
 import { listProjectSurprises } from "@/lib/projects/surprise-queries";
 import { sortSurprises } from "@/lib/projects/surprises";
 import { getModuleCourses } from "@/lib/modules/queries";
+import { listModuleAssessments } from "@/lib/assessments/queries";
 import { getModuleProject, listReusableProjects } from "@/lib/projects/queries";
 import { getModule } from "@/lib/modules/queries";
 import {
@@ -44,10 +45,22 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
     : [[], { available: true, items: [] }];
   const courseOptions = courses.map((c, i) => ({ id: c.id, number: i + 1, title: c.title }));
   const courseOrder = new Map(courseOptions.map((c) => [c.id, c.number]));
+  // Le squelette tient compte de toutes les évaluations du module, rattachées au projet ou non.
+  const moduleAssessments = project ? await listModuleAssessments(id) : [];
   const proposed = project
     ? remainingSkeleton(
         projectSkeleton(mod.total_hours),
-        project.assessments.map((a) => a.project_role!),
+        moduleAssessments
+          .filter((a) => !a.makeup_of_id && !a.is_bonus)
+          .map((a) =>
+            a.project_role
+              ? a.project_role
+              : /oral/i.test(a.type ?? "")
+                ? ("oral" as const)
+                : a.is_group_grade
+                  ? ("milestone" as const)
+                  : ("individual" as const),
+          ),
       )
     : [];
 

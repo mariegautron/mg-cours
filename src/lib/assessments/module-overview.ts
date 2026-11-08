@@ -2,6 +2,7 @@
  * « Les évaluations du module » : la frise qui croise les séances et les évaluations (quel cours
  * alimente quel rendu) et l'état de préparation de chaque évaluation. Fonctions pures.
  */
+import { kindOf } from "@/lib/assessments/individual";
 import { isPlaceholderTitle } from "@/lib/modules/outline-checks";
 
 export interface TimelineCourse {
@@ -21,6 +22,8 @@ export interface TimelineAssessment {
   role: "milestone" | "oral" | "individual" | null;
   isGroupGrade: boolean;
   makeup: boolean;
+  /** Type choisi (liste fermée) : sert à nommer la case de la frise. */
+  type?: string | null;
 }
 
 export type CellKind = "launch" | "work" | "due" | "oral" | "solo";
@@ -41,6 +44,26 @@ export interface TimelineRow {
   /** Numéro (1-based) de la séance du rendu, `null` si l'évaluation n'est pas rattachée à une séance. */
   dueSession: number | null;
   cells: TimelineCell[];
+}
+
+/** Nom de la case d'une évaluation hors jalon, d'après son vrai type. */
+function soloLabel(type: string | null | undefined): string {
+  switch (kindOf(type)) {
+    case "quiz":
+      return "QCM";
+    case "open_questions":
+      return "Questions ouvertes";
+    case "oral":
+      return "Passage à l'oral";
+    case "checkpoint":
+      return "Point d'étape";
+    case "in_class":
+      return "Épreuve en classe";
+    case "delivery":
+      return "Rendu de fichiers ou de liens";
+    default:
+      return "Évaluation";
+  }
 }
 
 const ORDER: Record<string, number> = { milestone: 0, oral: 1, individual: 2 };
@@ -99,7 +122,7 @@ export function buildTimeline(
       }
       cells.push({ col: r, span: 1, kind: "oral", label: "Passage des groupes" });
     } else {
-      cells.push({ col: r, span: 1, kind: "solo", label: "Rendu de fichiers, ou QCM" });
+      cells.push({ col: r, span: 1, kind: "solo", label: soloLabel(a.type) });
     }
     return {
       ...base,
