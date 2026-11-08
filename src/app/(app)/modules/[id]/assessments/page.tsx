@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
+import { listModuleGroups } from "@/lib/students/queries";
 import { DayJBlock } from "@/components/assessments/day-j-block";
 import { dayJReadiness } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
@@ -115,6 +116,9 @@ export default async function ModuleAssessmentsPage({
   const dueSessions = new Set(timeline.filter((r) => r.dueSession).map((r) => r.assessmentId));
   const unplaced = regular.filter((a) => !timeline.some((r) => r.assessmentId === a.id));
   const cards = [...ordered, ...unplaced];
+  const moduleGroups = await listModuleGroups(id);
+  const evaluatedGroupIds = new Set(regular.flatMap((a) => a.groups.map((g) => g.id)));
+  const unevaluatedGroups = moduleGroups.filter((g) => !evaluatedGroupIds.has(g.id));
   const extras = await loadDayJExtras(
     id,
     regular.map((a) => a.id),
@@ -167,6 +171,20 @@ export default async function ModuleAssessmentsPage({
           <Link href={`/modules/${id}`}>← Retour au module</Link>
         </Button>
       </div>
+
+      {regular.length > 0 && unevaluatedGroups.length > 0 ? (
+        <div
+          role="alert"
+          className="rounded-2xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
+        >
+          {unevaluatedGroups.map((g) => (
+            <p key={g.id}>
+              <strong>Groupe {g.name}</strong> n’est évalué nulle part. Coche-le dans une évaluation
+              (« Modifier »).
+            </p>
+          ))}
+        </div>
+      ) : null}
 
       <section aria-labelledby="proj" className={card}>
         <div className="flex flex-wrap items-center justify-between gap-3">

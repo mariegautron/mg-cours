@@ -19,7 +19,16 @@ const GROUP_TYPE_LABELS: Record<string, string> = {
   project: "Projet",
 };
 
-export function GroupForm({ action, moduleId }: { action: Action; moduleId: string }) {
+export function GroupForm({
+  action,
+  moduleId,
+  assessments = [],
+}: {
+  action: Action;
+  moduleId: string;
+  /** Évaluations du module : le nouveau groupe peut y être ajouté d'emblée. */
+  assessments?: { id: string; title: string }[];
+}) {
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
 
@@ -54,6 +63,21 @@ export function GroupForm({ action, moduleId }: { action: Action; moduleId: stri
           ))}
         </select>
       </div>
+      {assessments.length > 0 ? (
+        <fieldset className="space-y-2">
+          <legend className="text-base font-medium">L’ajouter aux évaluations</legend>
+          <p className="text-muted-foreground text-sm">
+            Décoche celles où ce groupe n’est pas évalué.
+          </p>
+          <input type="hidden" name="assessmentsChosen" value="1" />
+          {assessments.map((a) => (
+            <label key={a.id} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="assessmentIds" value={a.id} defaultChecked />
+              {a.title}
+            </label>
+          ))}
+        </fieldset>
+      ) : null}
       {state.error ? <ActionError error={state.error} /> : null}
       <div className="flex gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">

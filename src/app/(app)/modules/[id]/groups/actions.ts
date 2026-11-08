@@ -43,8 +43,25 @@ export async function createGroup(
     };
   }
 
-  await attachGroupsToUngroupedAssessments(supabase, moduleId, [data.id]);
+  if (formData.get("assessmentsChosen") === "1") {
+    const chosen = formData.getAll("assessmentIds").map(String);
+    if (chosen.length > 0) {
+      const { data: own } = await supabase
+        .from("assessment")
+        .select("id")
+        .eq("module_id", moduleId)
+        .in("id", chosen);
+      const rows = (own ?? []).map((a) => ({
+        assessment_id: a.id,
+        student_group_id: data.id,
+      }));
+      if (rows.length > 0) await supabase.from("assessment_group").insert(rows);
+    }
+  } else {
+    await attachGroupsToUngroupedAssessments(supabase, moduleId, [data.id]);
+  }
   revalidatePath(`/modules/${moduleId}`);
+  revalidatePath(`/modules/${moduleId}/assessments`);
   redirect(`/modules/${moduleId}/groups/${data.id}`);
 }
 
