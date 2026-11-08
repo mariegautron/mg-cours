@@ -21,6 +21,37 @@ export function listDateLine(
   return `${d}/${m}${range}`;
 }
 
+const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
+
+/** « 08/11 · 14:00–18:00 » (date et horaires de la liste des séances) ; « Date à fixer » sans date. */
+export function sessionWhen(date: string | null, start: string | null, end: string | null): string {
+  if (!date) return "Date à fixer";
+  const [, m, d] = date.split("-");
+  const range =
+    hhmm(start) && hhmm(end)
+      ? ` · ${hhmm(start)}–${hhmm(end)}`
+      : hhmm(start)
+        ? ` · ${hhmm(start)}`
+        : "";
+  return `${d}/${m}${range}`;
+}
+
+/**
+ * Statut d'une séance dans la liste, avec le vocabulaire de la fiche séance et du tableau de bord :
+ * « Faite » (clôturée), « Aujourd'hui », puis l'état de préparation.
+ */
+export function listStatus(
+  course: { completion: string | null; session_date: string | null; prep_status: string },
+  today: string,
+): { label: string; tone: "ok" | "key" | "warn" | "wip" } {
+  if (course.completion) return { label: "Faite", tone: "ok" };
+  if (course.session_date === today) return { label: "Aujourd’hui", tone: "key" };
+  return {
+    label: statusLabel(course.prep_status),
+    tone: STATUS_TONES[course.prep_status] ?? "warn",
+  };
+}
+
 /** Durée en minutes entre deux « HH:MM[:SS] » ; `null` si absente ou incohérente. */
 export function minutesBetween(start: string | null, end: string | null): number | null {
   if (!start || !end) return null;

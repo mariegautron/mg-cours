@@ -105,3 +105,17 @@ alignées ; « Consignes et grille » déjà livré.
 
 À vérifier à l'écran : 1280 × 720 et 1920 × 1080 sur les diapos de correction des mini-QCM et
 « Process Planning Poker » ; 1093 × 614 pour la rangée de navigation et l'alignement des étiquettes.
+
+## Liste « Séances » d'un module
+
+La liste garde son principe (une ligne par séance) et gagne : le statut à droite (Faite,
+Aujourd'hui, Prête, En préparation, À préparer), les horaires à côté de la date, et un encart en
+haut « Séance du jour » / « Prochaine séance » avec le bouton « Faire cours » (vers « Avant de
+commencer »). La ligne de cette séance est aussi surlignée. Les actions (ajouter, planning, autre
+module, frise) restent sous la liste.
+
+À vérifier à l'écran : 1093 × 614, 1366 × 768, 1280 × 720, sur un module de 15 séances (l'encart est
+visible sans défiler) et sur un module dont toutes les séances sont clôturées (pas d'encart).
+
+Question pour Marie : un bouton « Faire cours » sur toutes les lignes, ou seulement sur la séance du
+jour / la prochaine (choix actuel) ?
