@@ -28,7 +28,6 @@ export function EspaceShell({
   const base = `/module/${token}`;
   const items = [
     { key: "accueil", label: "Accueil", href: base, show: true },
-    { key: "projet", label: "Le projet", href: `${base}/projet`, show: !!espace?.brief },
     {
       key: "evaluation",
       label: "Évaluations",
@@ -36,11 +35,12 @@ export function EspaceShell({
       show: !!espace?.evaluations.length,
     },
     { key: "cours", label: "Cours", href: `${base}/cours`, show: !!espace?.courses.length },
+    { key: "projet", label: "Projet", href: `${base}/projet`, show: !!espace?.brief },
   ].filter((i) => i.show);
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
-      <p className="font-heading border-b px-4 py-4 text-base font-bold">Espace étudiant·e</p>
+      <p className="font-heading border-b px-4 py-4 text-base font-bold">Espace de la classe</p>
       {items.length > 1 ? (
         <nav aria-label="Espace étudiant·e" className="border-b px-4 py-2">
           <ul className="flex flex-wrap gap-2">

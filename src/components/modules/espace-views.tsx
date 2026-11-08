@@ -49,14 +49,14 @@ export function EspaceLayout({
   const { base, espace, frise, results } = data;
   const items: { key: EspaceSection; label: string; href: string; show: boolean }[] = [
     { key: "accueil", label: "Accueil", href: base, show: true },
-    { key: "cours", label: "Cours", href: `${base}/cours`, show: !!espace?.courses.length },
-    { key: "projet", label: "Projet", href: `${base}/projet`, show: !!espace?.brief },
     {
       key: "evaluation",
       label: "Évaluations",
       href: `${base}/evaluation/1`,
       show: !!espace?.evaluations.length,
     },
+    { key: "cours", label: "Cours", href: `${base}/cours`, show: !!espace?.courses.length },
+    { key: "projet", label: "Projet", href: `${base}/projet`, show: !!espace?.brief },
     { key: "notes", label: "Notes et corrigés", href: `${base}/notes`, show: true },
   ];
   return (
@@ -69,9 +69,7 @@ export function EspaceLayout({
       </a>
       <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6">
         <div className="lg:sticky lg:top-6">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">
-            Espace étudiant·e
-          </p>
+          <p className="text-primary text-xs font-bold tracking-widest uppercase">Mon espace</p>
           <p className="font-heading mt-1 text-lg leading-tight font-bold">{frise.moduleName}</p>
           <nav aria-label="Espace étudiant·e" className="mt-4">
             <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
@@ -102,9 +100,14 @@ export function EspaceLayout({
           ) : null}
         </div>
       </aside>
-      <main id="contenu" tabIndex={-1} className="min-w-0 p-4 outline-none lg:p-10">
-        {children}
-      </main>
+      <div className="min-w-0">
+        <main id="contenu" tabIndex={-1} className="p-4 outline-none lg:p-10">
+          {children}
+        </main>
+        <p className="text-muted-foreground border-t px-4 py-3 text-xs lg:px-10">
+          Ce lien est personnel : ne le partagez pas.
+        </p>
+      </div>
     </div>
   );
 }
@@ -624,6 +627,12 @@ export function NotesView({ data }: { data: EspaceData }) {
                   </span>
                 </summary>
                 <div className="mt-3">
+                  <a
+                    href={`${data.base}/pdf/${i + 1}`}
+                    className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-lg px-4 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    Télécharger mon PDF
+                  </a>
                   {feedback.length ? (
                     <dl className="mt-4 space-y-3 text-base">
                       {feedback.map(([label, text]) => (
