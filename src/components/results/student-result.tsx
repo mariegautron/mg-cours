@@ -119,7 +119,29 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
                       {c.level.description}
                     </p>
                   ) : null}
-                  {c.comment ? (
+                  {c.questions?.length ? (
+                    <ul className="space-y-2">
+                      {c.questions.map((q) => (
+                        <li key={q.position} className="bg-muted/30 space-y-1 rounded-xl p-3">
+                          <p className="font-medium">
+                            Question {q.position} · {fmt(q.points)} / {fmt(q.max)}
+                          </p>
+                          {q.comment ? (
+                            <div className="text-base leading-relaxed">
+                              <Markdown source={q.comment} headingLevel={4} />
+                            </div>
+                          ) : null}
+                          {q.statement ? (
+                            <details className="text-sm">
+                              <summary className="cursor-pointer">Revoir la question</summary>
+                              <div className="mt-1 whitespace-pre-wrap">{q.statement}</div>
+                            </details>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {c.comment && !c.questions?.length ? (
                     <div className="border-primary/60 border-l-4 pl-4 text-base leading-relaxed">
                       <Markdown source={c.comment} headingLevel={4} />
                     </div>

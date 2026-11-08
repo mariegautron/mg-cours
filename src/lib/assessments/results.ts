@@ -30,6 +30,14 @@ export interface ResultCriterionLine {
   levels: { points: number; description: string; obtained: boolean }[];
   /** Commentaire du critère. */
   comment: string | null;
+  /** Questions tirées rattachées à ce critère (questions ouvertes) : énoncé, points et commentaire. Jamais l'attendu. */
+  questions?: {
+    position: number;
+    statement: string;
+    points: number;
+    max: number;
+    comment: string;
+  }[];
 }
 
 export interface ResultAxisSubtotal extends Omit<AxisSubtotal, "axisId"> {

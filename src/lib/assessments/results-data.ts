@@ -8,6 +8,8 @@ import {
 import { bonusLine } from "@/lib/assessments/score-scale";
 import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
 import { getQuizByAssessment } from "@/lib/quiz/queries";
+import { parseWrittenReview } from "@/lib/assessments/open-review";
+import { createClient } from "@/lib/supabase/server";
 import { getModule } from "@/lib/modules/queries";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
@@ -47,6 +49,9 @@ export async function loadResultSheets(
     themesByGroup,
     hasQuiz: !!quiz,
   });
+  // Questions ouvertes : sous chaque critère, les questions tirées avec leur commentaire et leurs points
+  // (photo écrite par Marie ; jamais l'attendu ni ses notes privées).
+  await attachOpenQuestions(assessmentId, sheets);
   // Note bonus de certification : l'effet réel sur la moyenne de chaque personne.
   if (assessment.is_bonus) {
     const averages = await moduleStudentAverages(moduleId);
@@ -57,4 +62,47 @@ export async function loadResultSheets(
     }
   }
   return sheets;
+}
+
+async function attachOpenQuestions(assessmentId: string, sheets: ResultSheet[]) {
+  const supabase = await createClient();
+  const { data: quiz } = await supabase
+    .from("quiz")
+    .select("id, correction_mode")
+    .eq("assessment_id", assessmentId)
+    .maybeSingle();
+  if (!quiz || quiz.correction_mode !== "open_questions") return;
+  const { data: attempts } = await supabase
+    .from("quiz_attempt")
+    .select("id, student_id")
+    .eq("quiz_id", quiz.id);
+  const ids = (attempts ?? []).map((a) => a.id);
+  if (ids.length === 0) return;
+  const { data: reviews } = await supabase
+    .from("open_review")
+    .select("attempt_id, written, locked")
+    .in("attempt_id", ids)
+    .eq("locked", true);
+  const studentOf = new Map((attempts ?? []).map((a) => [a.id, a.student_id]));
+  const writtenOf = new Map<string, NonNullable<ReturnType<typeof parseWrittenReview>>>();
+  for (const r of reviews ?? []) {
+    const w = parseWrittenReview(r.written);
+    const student = studentOf.get(r.attempt_id);
+    if (w && student) writtenOf.set(student, w);
+  }
+  for (const sheet of sheets) {
+    const written = sheet.recipients[0]?.id ? writtenOf.get(sheet.recipients[0].id) : undefined;
+    if (!written) continue;
+    for (const line of sheet.criteria) {
+      const found = written.criteria.find((c) => c.label === line.label);
+      if (found)
+        line.questions = found.questions.map((q) => ({
+          position: q.position,
+          statement: q.statement,
+          points: q.points,
+          max: q.max,
+          comment: q.comment,
+        }));
+    }
+  }
 }
