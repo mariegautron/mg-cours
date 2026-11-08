@@ -54,6 +54,7 @@ export default async function ClosedCoursePage({
   const projection = projectionRecap({
     planned: plannedSections(studentFacing(courseResources), subjects, keptForMeKeys(events)),
     events,
+    isLastSession: !courses[position + 1],
     nextSessionResourceIds: (courses[position + 1]?.resources ?? []).map((r) => r.id),
   });
   const recap = closureRecap({

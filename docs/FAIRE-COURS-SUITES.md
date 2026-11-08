@@ -92,3 +92,16 @@ Questions pour Marie :
    le déroulé ; les autres éléments restent un rappel écrit dans « Reprise de la séance précédente ».
 4. Quand une séance est ajoutée après une clôture sans suite, faut-il placer automatiquement les
    éléments en attente, au lieu de passer par « Modifier la clôture » ?
+
+## Revérification du 8 novembre au soir (US-173)
+
+Corrigé : diapos qui ne débordent plus sous la barre du bas (réduction automatique jusqu'à 45 %,
+projection en 1280 × 720 à contrôler) ; numérotation des listes qui continue après un paragraphe ;
+liste « à reporter » recalculée d'après le relevé (les anciennes lignes issues du déroulé ne sont
+plus reprises) et phrase adaptée à la dernière séance ; lien « Modifier la clôture » sur la fiche
+d'une séance clôturée ; rangée Précédent / Suivant / Mini-QCM remontée au-dessus des aperçus, donc
+toujours à la même place ; texte des raccourcis retiré du formulaire d'observation ; étiquettes
+alignées ; « Consignes et grille » déjà livré.
+
+À vérifier à l'écran : 1280 × 720 et 1920 × 1080 sur les diapos de correction des mini-QCM et
+« Process Planning Poker » ; 1093 × 614 pour la rangée de navigation et l'alignement des étiquettes.

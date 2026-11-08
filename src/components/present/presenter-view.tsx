@@ -359,6 +359,48 @@ export function PresenterView({
 
       <main className="grid flex-1 gap-4 p-4 lg:min-h-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)_minmax(0,3fr)] lg:overflow-hidden">
         <div className="space-y-4 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Button
+              type="button"
+              variant="secondary"
+              size="touch-lg"
+              disabled={index === 0}
+              onClick={() => go(index - 1)}
+            >
+              <ChevronLeft aria-hidden />
+              Précédent
+            </Button>
+            <Button
+              type="button"
+              size="touch-lg"
+              disabled={index >= total - 1}
+              onClick={() => go(index + 1)}
+            >
+              Suivant
+              <ChevronRight aria-hidden />
+            </Button>
+            {qcmIndex !== null ? (
+              <Button type="button" size="touch" variant="outline" onClick={() => go(qcmIndex)}>
+                Mini-QCM
+                <span className="sr-only"> : projeter la première question</span>
+              </Button>
+            ) : null}
+            {consignesIndex !== null ? (
+              <Button
+                type="button"
+                size="touch"
+                variant="outline"
+                onClick={() => go(consignesIndex)}
+              >
+                Consignes et grille
+                <span className="sr-only"> : projeter le sujet de la prochaine évaluation</span>
+              </Button>
+            ) : null}
+            <p aria-live="polite" className="text-muted-foreground text-sm whitespace-nowrap">
+              Projeté : diapo {index + 1}
+            </p>
+          </div>
+
           <div className="grid gap-3 xl:grid-cols-[3fr_2fr]">
             <section aria-labelledby="pv-current" className="space-y-2">
               <h2 id="pv-current" className="text-sm font-medium">
@@ -400,48 +442,6 @@ export function PresenterView({
                 </div>
               ) : null}
             </section>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              size="touch-lg"
-              disabled={index === 0}
-              onClick={() => go(index - 1)}
-            >
-              <ChevronLeft aria-hidden />
-              Précédent
-            </Button>
-            <Button
-              type="button"
-              size="touch-lg"
-              disabled={index >= total - 1}
-              onClick={() => go(index + 1)}
-            >
-              Suivant
-              <ChevronRight aria-hidden />
-            </Button>
-            {qcmIndex !== null ? (
-              <Button type="button" size="touch" variant="outline" onClick={() => go(qcmIndex)}>
-                Mini-QCM
-                <span className="sr-only"> : projeter la première question</span>
-              </Button>
-            ) : null}
-            {consignesIndex !== null ? (
-              <Button
-                type="button"
-                size="touch"
-                variant="outline"
-                onClick={() => go(consignesIndex)}
-              >
-                Consignes et grille
-                <span className="sr-only"> : projeter le sujet de la prochaine évaluation</span>
-              </Button>
-            ) : null}
-            <p aria-live="polite" className="text-muted-foreground text-sm">
-              Projeté : diapositive {index + 1}
-            </p>
           </div>
 
           {recap}

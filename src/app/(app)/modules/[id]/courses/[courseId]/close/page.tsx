@@ -48,9 +48,11 @@ export default async function CourseClosePage({
   if (!mod || position === -1) notFound();
   const course = courses[position];
   const following = courses[position + 1] ?? null;
+  const planned = plannedSections(studentFacing(courseResources), subjects, keptForMeKeys(events));
   const recap = projectionRecap({
-    planned: plannedSections(studentFacing(courseResources), subjects, keptForMeKeys(events)),
+    planned,
     events,
+    isLastSession: following === null,
     nextSessionResourceIds: (following?.resources ?? []).map((r) => r.id),
     endedEarly:
       course.session_date === todayInParis() && endedEarly(minutesInParis(), course.end_time),
@@ -156,6 +158,7 @@ export default async function CourseClosePage({
         action={saveCourseClosure.bind(null, id, courseId)}
         number={position + 1}
         items={[...formItems.values()]}
+        plannedTitles={planned.map((p) => p.title)}
         recap={<ProjectionStatus recap={recap} />}
         aside={aside}
         backHref={`/present/modules/${id}/courses/${courseId}/presenter`}

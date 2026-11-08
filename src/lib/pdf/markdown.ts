@@ -23,6 +23,9 @@ export interface ListItem {
 export interface ListBlock {
   type: "list";
   ordered: boolean;
+  /** Numéro du premier point d'une liste numérotée (1 par défaut) : la numérotation continue
+   * quand un paragraphe d'explication coupe la liste. */
+  start?: number;
   items: ListItem[];
 }
 
@@ -43,6 +46,22 @@ const INLINE =
   /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|<br\s*\/?>)/i;
 
 const IMAGE_LINE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)\s*$/;
+/**
+ * Numéro du premier point d'une nouvelle liste numérotée : celui écrit dans le texte s'il est > 1,
+ * sinon la suite de la liste numérotée précédente quand seuls des paragraphes les séparent.
+ */
+function orderedStart(blocks: readonly Block[], marker: string): number | undefined {
+  const written = Number(marker.replace(/\D/g, ""));
+  if (written > 1) return written;
+  let j = blocks.length - 1;
+  while (j >= 0 && blocks[j].type === "paragraph" && blocks.length - 1 - j < 3) j--;
+  const prev = blocks[j];
+  if (j >= 0 && prev.type === "list" && prev.ordered) {
+    return (prev.start ?? 1) + prev.items.length;
+  }
+  return undefined;
+}
+
 const LIST_ITEM = /^(\s*)([-*+]|\d+[.)])\s+(?:\[([ xX])\]\s+)?(.*)$/;
 const TABLE_DELIMITER = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/;
 
@@ -182,6 +201,7 @@ export function parseMarkdown(source: string): Block[] {
           listStack.push({ indent, list: last });
         } else {
           const list: ListBlock = { type: "list", ordered, items: [newItem] };
+          if (ordered) list.start = orderedStart(blocks, item[2]);
           blocks.push(list);
           listStack.push({ indent, list });
         }

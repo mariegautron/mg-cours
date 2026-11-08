@@ -110,7 +110,7 @@ function ListItemsView({ block, depth }: { block: ListBlock; depth: number }) {
                   ? "☑"
                   : "☐"
                 : block.ordered
-                  ? `${i + 1}.`
+                  ? `${(block.start ?? 1) + i}.`
                   : "•"}
             </Text>
             <Text style={{ flex: 1 }}>

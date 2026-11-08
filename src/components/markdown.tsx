@@ -56,7 +56,10 @@ function Gaps({ text }: { text: string }) {
 function ListView({ block, headingLevel }: { block: ListBlock; headingLevel: 2 | 3 | 4 }) {
   const List = block.ordered ? "ol" : "ul";
   return (
-    <List className={`space-y-1 pl-6 ${block.ordered ? "list-decimal" : "list-disc"}`}>
+    <List
+      {...(block.ordered && block.start ? { start: block.start } : {})}
+      className={`space-y-1 pl-6 ${block.ordered ? "list-decimal" : "list-disc"}`}
+    >
       {block.items.map((item, j) => (
         <li key={j} className={item.checked !== null ? "list-none" : undefined}>
           {item.checked !== null ? (

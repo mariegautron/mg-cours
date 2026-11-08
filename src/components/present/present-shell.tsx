@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -101,6 +101,9 @@ export function PresentShell({
   // Le texte s'adapte à la largeur de l'écran projeté : 1280 px = taille de référence.
   const [fit, setFit] = useState(1);
   const rootRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  // Réduction automatique d'une diapo trop haute : valable pour (diapo, taille) donnés seulement.
+  const [shrinkState, setShrinkState] = useState({ key: "", value: 1 });
   const channelRef = useRef<BroadcastChannel | null>(null);
   const indexRef = useRef(0);
   // Position relue du stockage : tant qu'elle ne l'est pas, on n'annonce rien (sinon 0 écraserait).
@@ -236,7 +239,28 @@ export function PresentShell({
   }, [changeMode, changeScale, go, index, mode, toggleFullscreen, tocOpen, total]);
 
   const current = slides[index];
+  const fitKey = `${index}|${mode}|${scaleIndex}|${fit}`;
+  const shrink = shrinkState.key === fitKey ? shrinkState.value : 1;
+
+  // Une diapo ne doit jamais déborder sous la barre du bas : si son contenu dépasse la zone
+  // visible, on réduit sa taille jusqu'à ce qu'il tienne (plancher à 45 %).
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    if (mode !== "slides" || !main || total === 0) return;
+    const over = main.scrollHeight - main.clientHeight;
+    if (over > 1 && shrink > 0.45) {
+      const ratio = main.clientHeight / main.scrollHeight;
+      setShrinkState({ key: fitKey, value: Math.max(0.45, shrink * ratio * 0.97) });
+    }
+  }, [fitKey, mode, shrink, total, current]);
+
+  useEffect(() => {
+    const onResize = () => setShrinkState({ key: "", value: 1 });
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const scale = SCALES[scaleIndex] * fit;
+  const slideScale = scale * shrink;
   const shownScale = SCALES[scaleIndex];
   // Lecture continue : sans les diapos réservées au mode diapositives (mini-QCM).
   const docSlides = slides.filter((s) => !s.slidesOnly);
@@ -371,7 +395,7 @@ export function PresentShell({
         </nav>
       ) : null}
 
-      <main className="flex-1 overflow-auto">
+      <main ref={mainRef} className="flex-1 overflow-auto">
         {total === 0 ? (
           <p className="text-muted-foreground p-12 text-center text-2xl">Rien à présenter.</p>
         ) : mode === "document" ? (
@@ -395,15 +419,17 @@ export function PresentShell({
             ) : null}
           </div>
         ) : (
-          <section
-            key={index}
-            aria-roledescription="diapositive"
-            aria-label={`${index + 1} sur ${total}${current.label ? ` : ${current.label}` : ""}`}
-            style={{ zoom: scale }}
-            className="animate-pop-in mx-auto flex min-h-full max-w-6xl flex-col justify-center px-10 py-12"
-          >
-            {current.node}
-          </section>
+          <div className="flex min-h-full flex-col justify-center">
+            <section
+              key={index}
+              aria-roledescription="diapositive"
+              aria-label={`${index + 1} sur ${total}${current.label ? ` : ${current.label}` : ""}`}
+              style={{ zoom: slideScale }}
+              className="animate-pop-in mx-auto w-full max-w-6xl px-10 py-12"
+            >
+              {current.node}
+            </section>
+          </div>
         )}
       </main>
 

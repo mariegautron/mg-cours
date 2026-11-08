@@ -30,6 +30,7 @@ export function ClosureForm({
   aside,
   backHref,
   items = [],
+  plannedTitles = [],
 }: {
   action: Action;
   number: number;
@@ -40,6 +41,8 @@ export function ClosureForm({
   backHref: string;
   /** Éléments prévus mais pas projetés (ou déjà reportés à une clôture précédente). */
   items?: { key: string; title: string; initial: "carry" | "skip" }[];
+  /** Titres du déroulé prévu : une ligne qui en reprend un vient d'une ancienne proposition, recalculée ici. */
+  plannedTitles?: string[];
   course: {
     completion: CourseCompletion | null;
     not_covered: string | null;
@@ -53,7 +56,7 @@ export function ClosureForm({
   const [skipped, setSkipped] = useState<Set<string>>(
     new Set(items.filter((i) => i.initial === "skip").map((i) => i.key)),
   );
-  const titles = new Set(items.map((i) => i.title));
+  const titles = new Set([...items.map((i) => i.title), ...plannedTitles]);
   const [extra, setExtra] = useState(
     (course.not_covered ?? "")
       .split("\n")
@@ -172,9 +175,7 @@ export function ClosureForm({
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
                 aria-describedby="notCovered-hint"
-                placeholder={
-                  items.length ? "Autre point à reporter (facultatif)" : undefined
-                }
+                placeholder={items.length ? "Autre point à reporter (facultatif)" : undefined}
               />
               <input type="hidden" name="notCovered" value={notCoveredValue} />
               <input type="hidden" name="carryKeys" value={JSON.stringify(carryKeys)} />

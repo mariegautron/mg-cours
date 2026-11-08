@@ -71,6 +71,8 @@ export function projectionRecap(input: {
   nextSessionResourceIds?: string[];
   /** La séance se termine avant l'heure prévue (voir `endedEarly`). */
   endedEarly?: boolean;
+  /** Dernière séance du module : pas de séance où reporter, les points restent en attente. */
+  isLastSession?: boolean;
 }): ProjectionRecap {
   const planned = input.planned;
   const titleOf = new Map(planned.map((p) => [p.key, p.title]));
@@ -123,11 +125,15 @@ export function projectionRecap(input: {
 
   const n = missing.length;
   const sentences: Record<ClosingStatus, string> = {
-    none: "Rien n’a été projeté depuis la vue présentatrice : indique toi-même ce qui n’a pas été traité.",
+    none: "Rien n’a été projeté depuis la vue privée : indique toi-même ce qui n’a pas été traité.",
     on_time: planned.length
       ? "Tout ce qui était prévu a été projeté, dans l’ordre prévu."
       : "Aucune ressource n’était prévue au déroulé.",
-    late: `${n} élément${n > 1 ? "s" : ""} prévu${n > 1 ? "s" : ""} ${n > 1 ? "n’ont" : "n’a"} pas été projeté${n > 1 ? "s" : ""} : tu peux ${n > 1 ? "les" : "le"} reporter à la séance suivante.`,
+    late: `${n} élément${n > 1 ? "s" : ""} prévu${n > 1 ? "s" : ""} ${n > 1 ? "n’ont" : "n’a"} pas été projeté${n > 1 ? "s" : ""} : ${
+      input.isLastSession
+        ? `il n’y a pas de séance suivante, ${n > 1 ? "ils restent" : "il reste"} en attente dans la fiche du module.`
+        : `tu peux ${n > 1 ? "les" : "le"} reporter à la séance suivante.`
+    }`,
     early: nextStarted
       ? "Tout est projeté, et tu as déjà entamé une ressource de la séance suivante."
       : "Tout est projeté et la séance se termine avant l’heure prévue.",

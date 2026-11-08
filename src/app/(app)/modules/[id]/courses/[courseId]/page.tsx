@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Play, NotebookPen, Pencil } from "lucide-react";
+import { ClipboardCheck, Play, NotebookPen, Pencil } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { DownloadButton } from "@/components/download-button";
@@ -185,6 +185,13 @@ export default async function CoursePage({
               <NotebookPen aria-hidden className="mr-2 size-4" />
               Carnet<span className="sr-only"> de séance : {course.title}</span>
             </Link>
+            {course.completion ? (
+              <Link href={`/modules/${id}/courses/${courseId}/close`} className={BTN}>
+                <ClipboardCheck aria-hidden className="mr-2 size-4" />
+                Modifier la clôture
+                <span className="sr-only"> de la séance {index + 1}</span>
+              </Link>
+            ) : null}
             <Link href={`/modules/${id}/courses/${courseId}/edit`} className={BTN}>
               <Pencil aria-hidden className="mr-2 size-4" />
               Modifier
