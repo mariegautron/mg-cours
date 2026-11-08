@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
+  markAssessmentReady,
   publishModuleLink,
   revokeModuleLink,
   updateModuleLink,
@@ -56,12 +58,15 @@ export function ShareLinkPanel({
     included: boolean;
     reason: string | null;
     href: string;
+    /** Sujet rédigé mais au statut « À construire » : un clic le passe en « Prête ». */
+    canMarkReady?: boolean;
   }[];
 }) {
   const [state, setState] = useState<ShareState>({});
   const [note, setNote] = useState("");
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
+  const router = useRouter();
   const [showUrl, setShowUrl] = useState(false);
   const [pending, start] = useTransition();
 
@@ -138,7 +143,22 @@ export function ShareLinkPanel({
                   <li key={e.id}>
                     <strong>{e.title}</strong> : {e.included ? "partira" : "ne partira pas"}
                     {e.reason ? ` (${e.reason})` : ""}.{" "}
-                    {e.reason ? (
+                    {e.canMarkReady ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() =>
+                          start(async () => {
+                            await markAssessmentReady(moduleId, e.id);
+                            router.refresh();
+                          })
+                        }
+                      >
+                        Passer en « Prête »<span className="sr-only"> : {e.title}</span>
+                      </Button>
+                    ) : e.reason ? (
                       <a href={e.href} className="underline underline-offset-2">
                         Corriger<span className="sr-only"> {e.title}</span>
                       </a>

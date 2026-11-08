@@ -7,7 +7,7 @@ import { FriseProjected, FriseStudent } from "@/components/modules/frise-view";
 import { ShareLinkPanel } from "@/components/modules/share-link-panel";
 import { Button } from "@/components/ui/button";
 import { listModuleAssessments } from "@/lib/assessments/queries";
-import { canPresent } from "@/lib/assessments/subject";
+import { canPresent, subjectSections } from "@/lib/assessments/subject";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -106,8 +106,11 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
                 id: a.id,
                 title: a.title,
                 included: canPresent(a.prep_status),
+                canMarkReady: !canPresent(a.prep_status) && subjectSections(a).length > 0,
                 reason: !canPresent(a.prep_status)
-                  ? "sujet à rédiger"
+                  ? subjectSections(a).length > 0
+                    ? "sujet rédigé mais au statut « À construire »"
+                    : "sujet à rédiger"
                   : !a.date && !a.course_id
                     ? "date à renseigner (visible quand même)"
                     : null,

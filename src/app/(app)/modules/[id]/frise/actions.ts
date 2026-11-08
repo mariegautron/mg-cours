@@ -92,3 +92,20 @@ export async function revokeModuleLink(moduleId: string): Promise<ShareState> {
   revalidatePath(`/modules/${moduleId}/frise`);
   return { revoked: true };
 }
+
+/** Passe le sujet d'une évaluation du module en « Prête » : il devient visible dans l'espace à la prochaine mise à jour. */
+export async function markAssessmentReady(
+  moduleId: string,
+  assessmentId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("assessment")
+    .update({ prep_status: "ready" })
+    .eq("id", assessmentId)
+    .eq("module_id", moduleId);
+  if (error) return { error: failure("changer le statut du sujet") };
+  revalidatePath(`/modules/${moduleId}/frise`);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+  return {};
+}
