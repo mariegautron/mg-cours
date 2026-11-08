@@ -76,7 +76,17 @@ function emptyRow(): Row {
   };
 }
 
-export function GridForm({ action, grid }: { action: Action; grid?: GridWithCriteria }) {
+export function GridForm({
+  action,
+  grid,
+  usage,
+}: {
+  action: Action;
+  grid?: GridWithCriteria;
+  /** Évaluations qui utilisent déjà cette grille (édition seulement). */
+  usage?: { assessments: number; graded: number };
+}) {
+  const inUse = (usage?.assessments ?? 0) > 0;
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
   const formRef = useRef<HTMLFormElement>(null);
@@ -228,6 +238,22 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
       }}
       className="max-w-2xl space-y-6"
     >
+      {inUse ? (
+        <div
+          role="note"
+          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
+        >
+          <p className="font-medium">
+            Utilisée dans {usage!.assessments} évaluation{usage!.assessments > 1 ? "s" : ""}, dont{" "}
+            {usage!.graded} avec des notes.
+          </p>
+          <p className="text-muted-foreground">
+            Aucune note déjà saisie n’est modifiée par un enregistrement ; les paliers et les
+            critères changent pour toutes ces évaluations. Pour ne pas les toucher, enregistre une
+            copie.
+          </p>
+        </div>
+      ) : null}
       <input type="hidden" name="criteriaJson" />
       <input type="hidden" name="axesJson" />
       <input ref={confirmInputRef} type="hidden" name="confirmDeleteCriteria" />
@@ -356,10 +382,15 @@ export function GridForm({ action, grid }: { action: Action; grid?: GridWithCrit
       </fieldset>
 
       {state.error && !state.confirmRequired ? <ActionError error={state.error} /> : null}
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
-          Enregistrer
+          {inUse ? "Modifier pour toutes" : "Enregistrer"}
         </PendingButton>
+        {inUse ? (
+          <Button type="submit" name="saveAs" value="copy" variant="secondary" disabled={pending}>
+            En faire une copie pour la suite
+          </Button>
+        ) : null}
         <Button type="button" variant="ghost" asChild>
           <Link href="/assessments/grids">Annuler</Link>
         </Button>

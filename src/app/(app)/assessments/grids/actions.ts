@@ -228,6 +228,18 @@ export async function updateGrid(
   _prev: GridFormState,
   formData: FormData,
 ): Promise<GridFormState> {
+  // « En faire une copie pour la suite » : la grille d'origine et ses évaluations ne bougent pas.
+  if (formData.get("saveAs") === "copy") {
+    const supabase = await createClient();
+    const { data: original } = await supabase
+      .from("grading_grid")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle();
+    const typed = String(formData.get("name") ?? "").trim();
+    if (original && typed === original.name) formData.set("name", `${typed} (copie)`);
+    return createGrid(_prev, formData);
+  }
   const parsed = readGridForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
