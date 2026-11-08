@@ -36,7 +36,10 @@ export async function GET(
     .select("*")
     .eq("assessment_id", id)
     .order("created_at");
-  if (!items?.length) return new Response("Aucun rendu à télécharger", { status: 404 });
+  const current = (items ?? []).filter(
+    (i) => !(i as unknown as { replaced_at?: string | null }).replaced_at,
+  );
+  if (!current.length) return new Response("Aucun rendu à télécharger", { status: 404 });
 
   const [{ data: groups }, { data: students }] = await Promise.all([
     supabase.from("student_group").select("id, name"),
@@ -53,8 +56,8 @@ export async function GET(
   );
 
   const files: Record<string, Uint8Array> = {};
-  const folders = new Map<string, typeof items>();
-  for (const it of items) {
+  const folders = new Map<string, typeof current>();
+  for (const it of current) {
     const key = it.group_id ?? it.student_id ?? "";
     folders.set(key, [...(folders.get(key) ?? []), it]);
   }

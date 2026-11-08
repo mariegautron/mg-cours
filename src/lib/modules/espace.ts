@@ -352,7 +352,7 @@ export function nextEvaluationIndex(
     e.date ?? (e.sessionNumber !== null ? (dateOf.get(e.sessionNumber) ?? null) : null);
   const upcoming = espace.evaluations
     .map((e, index) => ({ e, index, due: dueOf(e) }))
-    .filter((x) => !x.e.graded && !deposited.has(x.e.id) && (!x.due || x.due >= today))
+    .filter((x) => !x.e.graded && !deposited.has(x.e.id) && !!x.due && x.due >= today)
     .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.index - b.index);
   return upcoming[0]?.index ?? null;
 }
@@ -425,4 +425,12 @@ export function flatFiches(espace: Espace | null): {
   return (espace?.courses ?? []).flatMap((c) =>
     c.resources.map((r, i) => ({ session: c.number, index: i + 1, title: r.title })),
   );
+}
+
+/** Un oral ou un point d'étape sans dépôt : jamais présenté comme un « rendu » ni suivi d'un statut. */
+export function isNoDepositEvaluation(
+  e: Pick<EspaceEvaluation, "type" | "title" | "submit">,
+): boolean {
+  if (e.submit.mode === "app") return false;
+  return /oral|point d.[ée]tape|soutenance/i.test(`${e.type ?? ""} ${e.title}`);
 }

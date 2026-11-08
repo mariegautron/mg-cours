@@ -9,6 +9,7 @@ import { formatSize } from "@/lib/storage/files";
 import {
   dueLabel,
   flatFiches,
+  isNoDepositEvaluation,
   nextEvaluationIndex,
   quizIsOpen,
   type Espace,
@@ -168,12 +169,15 @@ function dateOfEvaluation(e: EspaceEvaluation, frise: Frise) {
 export function AccueilView({ data }: { data: EspaceData }) {
   const { base, espace, frise, results, firstName } = data;
   const today = new Date().toISOString().slice(0, 10);
-  const nextIndex = nextEvaluationIndex(
-    espace,
-    frise,
-    today,
-    new Set(Object.keys(data.deposits ?? {})),
-  );
+  // Exclues de « Prochain rendu » : déjà rendue, note publiée, oral ou point d'étape sans dépôt.
+  const noted = new Set(results.map((r) => r.sheet.title));
+  const settled = new Set([
+    ...Object.keys(data.deposits ?? {}),
+    ...(espace?.evaluations ?? [])
+      .filter((e) => noted.has(e.title) || isNoDepositEvaluation(e))
+      .map((e) => e.id),
+  ]);
+  const nextIndex = nextEvaluationIndex(espace, frise, today, settled);
   const next = nextIndex !== null ? espace!.evaluations[nextIndex] : null;
   const quizOpen = quizIsOpen(espace?.quiz ?? null);
 
@@ -213,7 +217,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
       ) : null}
 
       {!next && espace?.evaluations.length ? (
-        <p className="text-muted-foreground">Aucun rendu à venir.</p>
+        <p className="text-muted-foreground">Rien à rendre pour l’instant.</p>
       ) : null}
 
       {next && nextIndex !== null ? (
@@ -906,27 +910,32 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
         {espace.evaluations.map((e, i) => {
           const due = dateOfEvaluation(e, frise);
           const dep = data.deposits?.[e.id];
-          const status = e.graded
-            ? "noté"
-            : dep
-              ? dep.late > 0
-                ? "rendu en retard"
-                : "rendu"
-              : e.submit.mode === "app"
-                ? due && due < today
-                  ? "pas encore rendu"
-                  : "à rendre"
-                : due && due < today
-                  ? "rendu"
-                  : "à rendre";
+          const publishedNote = data.results.some((r) => r.sheet.title === e.title);
+          const status = isNoDepositEvaluation(e)
+            ? null
+            : e.graded || publishedNote
+              ? "noté"
+              : dep
+                ? dep.late > 0
+                  ? "rendu en retard"
+                  : "rendu"
+                : e.submit.mode === "app"
+                  ? due && due < today
+                    ? "pas encore rendu"
+                    : "à rendre"
+                  : due && due < today
+                    ? "rendu"
+                    : "à rendre";
           return (
             <li key={i}>
               <Link href={`${base}/evaluation/${i + 1}`} className={tile}>
                 <span className="flex flex-wrap items-baseline justify-between gap-2">
                   <strong>{e.title}</strong>
-                  <span className="bg-muted rounded-full px-3 py-0.5 text-sm font-semibold">
-                    {status}
-                  </span>
+                  {status ? (
+                    <span className="bg-muted rounded-full px-3 py-0.5 text-sm font-semibold">
+                      {status}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="text-muted-foreground block text-sm">
                   {e.groupGrade ? "Note de groupe" : "Note individuelle"} · {dueLabel(due, e.time)}

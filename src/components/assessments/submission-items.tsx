@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label";
 import { ASSESSMENT_FILE_ACCEPT, ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
 import {
   itemTitle,
-  linkHost,
   submissionSummary,
   validateFile,
   type SubmissionItemLike,
@@ -33,6 +32,8 @@ export interface SubmissionOwnerRow {
   owner: SubmissionOwner;
   name: string;
   items: SubmissionItemLike[];
+  /** Nombre de versions du dépôt (la dernière comprise) ; l'historique n'est visible que par Marie. */
+  versions?: number;
 }
 
 const fmtParis = (iso: string) =>
@@ -83,9 +84,20 @@ export function ItemList({
       {items.map((i) => (
         <li key={i.id} className="flex flex-wrap items-center justify-between gap-2">
           <span>
-            {itemTitle(i)}
+            {i.kind === "link" && i.url ? (
+              <a
+                href={i.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2"
+              >
+                {itemTitle(i)}
+              </a>
+            ) : (
+              itemTitle(i)
+            )}
             <span className="text-muted-foreground">
-              {i.kind === "link" && i.url ? ` · ${linkHost(i.url)}` : " · fichier"}
+              {i.kind === "link" ? "" : " · fichier"}
               {i.added_by === "student" && i.submitted_at
                 ? ` · déposé${i.submitted_by_name ? ` par ${i.submitted_by_name}` : " par l’étudiant·e"} le ${fmtParis(i.submitted_at)}`
                 : " · ajouté par toi"}
@@ -237,6 +249,9 @@ export function SubmissionItems({
                   <p className="text-muted-foreground text-sm">
                     {receiptStatus(row.items, deadline).label} ·{" "}
                     {submissionSummary(row.items.length)}
+                    {(row.versions ?? 1) > 1 && studentDeposit(row.items)
+                      ? ` · ${row.versions} versions, la dernière le ${fmtParis(studentDeposit(row.items)!.at)}${studentDeposit(row.items)!.by ? ` par ${studentDeposit(row.items)!.by}` : ""}`
+                      : ""}
                   </p>
                 </div>
                 <ItemList

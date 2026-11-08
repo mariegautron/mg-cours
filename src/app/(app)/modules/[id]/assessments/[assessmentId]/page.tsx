@@ -35,6 +35,7 @@ import { Submissions } from "@/components/assessments/submissions";
 import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
+import { MarkDepositsSeen } from "@/components/assessments/mark-deposits-seen";
 import { SubmitSettings } from "@/components/assessments/submit-settings";
 import { deadlineOf } from "@/lib/deposits/rules";
 import { SubmissionItems } from "@/components/assessments/submission-items";
@@ -415,6 +416,26 @@ export default async function AssessmentPage({
       {assessment.is_group_grade ? (
         <>
           <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+            {(submissionData.unseen?.length ?? 0) > 0 ? (
+              <p
+                role="status"
+                className="bg-primary/10 border-primary/50 rounded-xl border p-4 text-sm"
+              >
+                <strong>
+                  {new Set(submissionData.unseen?.map((u) => u.group_id ?? u.student_id)).size}{" "}
+                  nouveau
+                  {new Set(submissionData.unseen?.map((u) => u.group_id ?? u.student_id)).size > 1
+                    ? "x rendus"
+                    : " rendu"}
+                </strong>{" "}
+                pour {assessment.title}. Il disparaît une fois vu.
+              </p>
+            ) : null}
+            <MarkDepositsSeen
+              assessmentId={assessmentId}
+              active={(submissionData.unseen?.length ?? 0) > 0}
+            />
+
             {hasGrades && noSpace.length > 0 ? (
               <p role="status" className="bg-muted rounded-xl border p-4 text-sm">
                 <strong>
@@ -1020,8 +1041,9 @@ export default async function AssessmentPage({
             Rendus déposés
           </h2>
           <p className="text-muted-foreground text-sm">
-            Plusieurs fichiers ou liens par {assessment.is_group_grade ? "groupe" : "étudiant·e"},
-            ajoutés par toi. Ils s’ouvrent aussi depuis la copie à corriger.
+            Les dépôts des étudiant·es arrivent ici ; tu peux aussi ajouter à la main des fichiers
+            ou liens par {assessment.is_group_grade ? "groupe" : "étudiant·e"} (« ajouté par toi »).
+            Ils s’ouvrent aussi depuis la copie à corriger.
           </p>
           <SubmissionItems
             moduleId={id}
@@ -1035,11 +1057,21 @@ export default async function AssessmentPage({
               )?.toISOString() ?? null
             }
             rows={(() => {
-              const nameOf = new Map(
-                targets.flatMap(({ students }) =>
+              const nameOf = new Map([
+                ...targets.flatMap(({ students }) =>
                   students.map((st) => [st.id, `${st.first_name} ${st.last_name}`] as const),
                 ),
-              );
+                ...assessment.groups.flatMap((g) =>
+                  g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+                ),
+              ]);
+              const versionsOf = new Map<string, Set<string>>();
+              for (const r of submissionData.replaced ?? []) {
+                const key = r.group_id ?? r.student_id;
+                const batch = (r as unknown as { batch_id?: string | null }).batch_id;
+                if (key && batch)
+                  versionsOf.set(key, (versionsOf.get(key) ?? new Set()).add(batch));
+              }
               const byOwner = groupByOwner(
                 submissionData.items.map((it) => {
                   const x = it as unknown as {
@@ -1060,12 +1092,14 @@ export default async function AssessmentPage({
                     owner: { kind: "group" as const, id: group.id },
                     name: group.name,
                     items: byOwner.get(group.id) ?? [],
+                    versions: (versionsOf.get(group.id)?.size ?? 0) + 1,
                   }))
                 : targets.flatMap(({ students }) =>
                     students.map((s) => ({
                       owner: { kind: "student" as const, id: s.id },
                       name: `${s.first_name} ${s.last_name}`,
                       items: byOwner.get(s.id) ?? [],
+                      versions: (versionsOf.get(s.id)?.size ?? 0) + 1,
                     })),
                   );
             })()}

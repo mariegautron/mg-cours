@@ -57,7 +57,9 @@ async function readState(ctx: DepositContext): Promise<DepositState> {
     .eq(f.col, f.id)
     .eq("added_by", "student")
     .order("created_at");
-  const rows = (data ?? []) as unknown as {
+  const rows = ((data ?? []) as unknown as { replaced_at?: string | null }[]).filter(
+    (r) => !r.replaced_at,
+  ) as unknown as {
     id: string;
     kind: string;
     label: string;
@@ -162,10 +164,14 @@ export async function commitDeposit(
   const f = ownerFilter(ctx);
   const { data: old } = await admin
     .from("submission_item")
-    .select("id, storage_path")
+    .select("*")
     .eq("assessment_id", assessmentId)
     .eq(f.col, f.id)
     .eq("added_by", "student");
+  // Seuls les éléments encore en place sont remplacés (les anciennes versions restent).
+  const current = (old ?? []).filter(
+    (o) => !(o as unknown as { replaced_at?: string | null }).replaced_at,
+  );
   const now = new Date().toISOString();
   const rows = [
     ...files.map((file, i) => ({
@@ -209,17 +215,28 @@ export async function commitDeposit(
       .remove(files.map((file, i) => `${folder}/${i}-${storageName(file.name)}`));
     return { ...(await readState(ctx)), error: "Le dépôt n’a pas pu être enregistré. Réessaie." };
   }
-  // L'ancien rendu n'est retiré qu'une fois le nouveau enregistré.
-  if (old?.length) {
-    await admin
+  // L'ancien rendu n'est plus supprimé : il est marqué « remplacé » (visible par Marie seulement) et ses
+  // fichiers sont conservés. Sans la colonne (migration pas appliquée), on retombe sur l'ancien
+  // comportement.
+  if (current.length) {
+    const { error: keepError } = await admin
       .from("submission_item")
-      .delete()
+      .update({ replaced_at: now, replaced_by_student_id: ctx.studentId } as never)
       .in(
         "id",
-        old.map((o) => o.id),
+        current.map((o) => o.id),
       );
-    const paths = old.map((o) => o.storage_path).filter((p): p is string => !!p);
-    if (paths.length) await admin.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
+    if (keepError) {
+      await admin
+        .from("submission_item")
+        .delete()
+        .in(
+          "id",
+          current.map((o) => o.id),
+        );
+      const paths = current.map((o) => o.storage_path).filter((p): p is string => !!p);
+      if (paths.length) await admin.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
+    }
   }
   return readState(ctx);
 }

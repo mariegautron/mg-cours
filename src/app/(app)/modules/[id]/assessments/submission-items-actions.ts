@@ -154,3 +154,14 @@ export async function updateSubmitSettings(
   refresh(moduleId, assessmentId);
   return { ok: true };
 }
+
+/** Marque les dépôts d'étudiant·es de l'évaluation comme vus (la notification disparaît). Sans effet si la colonne manque. */
+export async function markDepositsSeen(assessmentId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("submission_item")
+    .update({ teacher_seen_at: new Date().toISOString() } as never)
+    .eq("assessment_id", assessmentId)
+    .eq("added_by", "student")
+    .is("teacher_seen_at" as never, null);
+}

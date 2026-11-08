@@ -73,14 +73,25 @@ export function linkHost(url: string): string {
   }
 }
 
-/** Nom affiché : l'étiquette si elle existe, sinon le nom du fichier ou le domaine du lien. */
+/** Adresse lisible d'un lien : « github.com/equipe/projet » (sans https, www ni barre finale). */
+export function linkLabel(url: string): string {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/\/+$/, "");
+    return `${u.hostname.replace(/^www\./, "")}${path === "/" ? "" : path}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Nom affiché : l'étiquette si elle existe, sinon le nom du fichier ou l'adresse lisible du lien. */
 export function itemTitle(
   item: Pick<SubmissionItemLike, "kind" | "label" | "file_name" | "url">,
 ): string {
   const label = item.label.trim();
   if (label) return label;
   if (item.kind === "file") return item.file_name ?? "Fichier";
-  return item.url ? linkHost(item.url) : "Lien";
+  return item.url ? linkLabel(item.url) : "Lien";
 }
 
 /** Rendus d'une personne ou d'un groupe, du plus ancien au plus récent. */

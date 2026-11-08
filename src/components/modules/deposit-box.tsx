@@ -55,23 +55,20 @@ export function DepositBox({
   const [done, setDone] = useState(false);
   const [sent, setSent] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [pending, start] = useTransition();
   const input = useRef<HTMLInputElement>(null);
 
   const deposited = state.items.length > 0;
 
-  function submit() {
+  function submit(confirmed = false) {
     setError("");
     setDone(false);
-    if (
-      deposited &&
-      state.byOther &&
-      !window.confirm(
-        `${state.byName ?? "Un·e camarade"} a déjà déposé ce rendu pour ${state.group ?? "ton groupe"}. Le remplacer ?`,
-      )
-    ) {
+    if (deposited && state.byOther && !confirmed) {
+      setConfirming(true);
       return;
     }
+    setConfirming(false);
     start(async () => {
       const meta = files.map((f) => ({ name: f.name, size: f.size, mime: f.type }));
       const prep = await prepareUploads(token, assessmentId, meta, link.trim() || null);
@@ -217,7 +214,7 @@ export function DepositBox({
             type="button"
             size="touch"
             disabled={pending || (files.length === 0 && !link.trim())}
-            onClick={submit}
+            onClick={() => submit()}
           >
             {deposited ? "Remplacer mon rendu" : "Déposer mon rendu"}
           </Button>
@@ -241,6 +238,31 @@ export function DepositBox({
               </li>
             ))}
           </ul>
+        ) : null}
+        {confirming ? (
+          <div
+            role="alertdialog"
+            aria-labelledby="depot-confirm"
+            className="bg-muted space-y-2 rounded-xl border p-3 text-sm"
+          >
+            <p id="depot-confirm" className="font-medium">
+              {state.byName ?? "Un·e camarade"} a déjà déposé un rendu
+              {state.submittedAt ? ` le ${fmtDate(state.submittedAt)}` : ""}. Le remplacer ?
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" size="touch" onClick={() => submit(true)}>
+                Remplacer
+              </Button>
+              <Button
+                type="button"
+                size="touch"
+                variant="ghost"
+                onClick={() => setConfirming(false)}
+              >
+                Annuler
+              </Button>
+            </div>
+          </div>
         ) : null}
         <p role="status" aria-live="polite" className="min-h-5 text-sm">
           {progress}
