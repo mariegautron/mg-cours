@@ -1,3 +1,4 @@
+import { CorrectionMode } from "@/components/quiz/correction-mode";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -137,6 +138,13 @@ export default async function QuizPage({
           </p>
         </div>
         {errorBox}
+
+        <CorrectionMode
+          moduleId={id}
+          assessmentId={assessmentId}
+          mode={quiz.correction_mode === "open_questions" ? "open_questions" : "classic"}
+        />
+
         <div className="flex flex-wrap items-center gap-2">
           <Pill
             tone={quiz.status === "published" ? "ok" : quiz.status === "closed" ? "plain" : "warn"}

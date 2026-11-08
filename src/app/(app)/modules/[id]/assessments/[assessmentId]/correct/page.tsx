@@ -7,6 +7,8 @@ import { notFound } from "next/navigation";
 import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { createClient } from "@/lib/supabase/server";
+import { OpenReview, type ReviewCopy } from "@/components/assessments/open-review";
+import { loadOpenReviewContext, obj, readEntries } from "@/lib/assessments/open-review-server";
 import { GradingSession } from "@/components/assessments/grading-session";
 import {
   buildSessionSections,
@@ -73,6 +75,92 @@ export default async function CorrectPage({
   }
   const back = `/modules/${id}/assessments/${assessmentId}`;
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
+
+  // Questions ouvertes tirées au sort : l'écran de relecture remplace la correction par copie.
+  if (quiz?.correction_mode === "open_questions") {
+    const ctx = await loadOpenReviewContext(await createClient(), assessmentId);
+    if (ctx) {
+      const copies: ReviewCopy[] = ctx.attempts.map((a) => {
+        const entries = readEntries(a.review?.questions);
+        const versions = Object.fromEntries(
+          Object.entries(obj(a.review?.field_versions)).filter(
+            (e): e is [string, number] => typeof e[1] === "number",
+          ),
+        );
+        return {
+          id: a.id,
+          name: a.name,
+          submitted: a.status === "submitted",
+          locked: a.review ? a.review.locked : a.legacyDone,
+          legacy: a.legacyDone,
+          writtenAt: a.review?.written_at ?? null,
+          drawn: a.drawn.map((q, i) => ({
+            position: i + 1,
+            questionId: q.question_id,
+            statement: q.statement,
+            points: q.points,
+            expected: q.general_feedback,
+          })),
+          answers: Object.fromEntries(
+            a.drawn.map((_, i) => {
+              const raw = a.answers[String(i + 1)];
+              const text =
+                typeof raw === "object" && raw !== null && "text" in raw
+                  ? String((raw as { text: unknown }).text ?? "")
+                  : "";
+              return [String(i + 1), text];
+            }),
+          ),
+          // Copie corrigée par l'ancienne page : points repris, en lecture.
+          entries:
+            a.review || !a.legacyDone
+              ? entries
+              : Object.fromEntries(
+                  Object.entries(a.manual)
+                    .filter((e): e is [string, number] => typeof e[1] === "number")
+                    .map(([pos, points]) => [
+                      pos,
+                      {
+                        letter: "",
+                        points,
+                        comment: "",
+                        validated_at: "legacy",
+                        validated: { letter: "", points, comment: "" },
+                      },
+                    ]),
+                ),
+          globalComment: a.review?.global_comment ?? "",
+          criterionLetters: Object.fromEntries(
+            Object.entries(obj(a.review?.criterion_letters)).filter(
+              (e): e is [string, string] => typeof e[1] === "string",
+            ),
+          ),
+          versions,
+        };
+      });
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h1 className="text-xl font-semibold">Relire : {assessment.title}</h1>
+            <p className="text-muted-foreground text-sm">
+              Questions ouvertes tirées au sort. Tout s’enregistre au fur et à mesure.{" "}
+              <Link href={back} className="underline underline-offset-2">
+                Vue d’ensemble
+              </Link>
+            </p>
+          </div>
+          <OpenReview
+            moduleId={id}
+            assessmentId={assessmentId}
+            maxScore={ctx.maxScore ?? 20}
+            criteria={ctx.criteria}
+            initialLinks={ctx.links}
+            copies={copies}
+          />
+        </div>
+      );
+    }
+  }
   if (quiz) {
     // Réponses du QCM affichées dans la copie, en lecture seule (la relecture reste dans le suivi).
     const supabase = await createClient();
