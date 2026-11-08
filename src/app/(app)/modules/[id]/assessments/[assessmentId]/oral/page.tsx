@@ -9,6 +9,9 @@ import {
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { OralPlan, type PlanSlot } from "@/components/assessments/oral-plan";
 import { OralStage, type StageSlot } from "@/components/assessments/oral-stage";
+import type { OralSpaceInit } from "@/components/assessments/oral-space";
+import { memberValues, parseWritten, type OralCriterion } from "@/lib/assessments/oral-space";
+import { seedFor } from "@/lib/assessments/oral-space-server";
 import {
   getAssessment,
   getGradesByAssessment,
@@ -93,19 +96,106 @@ export default async function OralPage({
   }));
   const orderedSlots = slots;
 
+  // Espaces de correction (lettres, notes privées, récapitulatif). Sans la table en base, on garde
+  // l'ancienne grille de correction.
+  const { data: spaceRows, error: spaceError } = await supabase
+    .from("oral_space")
+    .select("*")
+    .eq("assessment_id", assessmentId);
+  const schoolRule = await getAbsenceRuleForModule(id);
+  const oralCriteria: OralCriterion[] = (assessment.grading_grid?.criteria ?? []).map((c) => ({
+    id: c.id,
+    label: c.label,
+    weight: c.weight,
+    axisId: c.axis_id,
+    isBonus: c.is_bonus,
+    levels: c.levels.map((l) => ({ points: l.points, description: l.description })),
+  }));
+  const spaces: Record<string, { members: { id: string; name: string }[]; init: OralSpaceInit }> =
+    {};
+  if (!spaceError && oralCriteria.length > 0) {
+    for (const slot of orderedSlots) {
+      const group = assessment.groups.find((g) => g.id === slot.groupId);
+      if (!group) continue;
+      const members = group.members
+        .map((m) => ({ id: m.id, name: `${m.first_name} ${m.last_name}` }))
+        .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+      const grade = grades.find((g) => g.student_group_id === group.id) ?? null;
+      const overrides = grade ? overrideRows.filter((o) => o.grade_id === grade.id) : [];
+      const seed = seedFor({
+        assessment: {
+          id: assessment.id,
+          module_id: id,
+          is_group_grade: true,
+          max_score: assessment.max_score,
+          auto_validated_criterion_ids: assessment.auto_validated_criterion_ids,
+        },
+        criteria: oralCriteria,
+        maxScore: assessment.max_score,
+        members,
+        grade,
+        overrides,
+      });
+      const row = (spaceRows ?? []).find((r) => r.subject_id === group.id);
+      const asObj = (v: unknown): Record<string, string> =>
+        typeof v === "object" && v !== null && !Array.isArray(v)
+          ? Object.fromEntries(
+              Object.entries(v as Record<string, unknown>).filter(
+                (e): e is [string, string] => typeof e[1] === "string",
+              ),
+            )
+          : {};
+      const versions = Object.fromEntries(
+        Object.entries((row?.field_versions ?? {}) as Record<string, unknown>).filter(
+          (e): e is [string, number] => typeof e[1] === "number",
+        ),
+      );
+      // Ancienne note par personne, d'après la règle d'origine de cet oral.
+      const before =
+        grade && grade.value !== null
+          ? memberValues(
+              grade.value,
+              assessment.maxScore,
+              members,
+              Object.fromEntries(overrides.map((o) => [o.student_id, o.attendance])),
+              "legacy",
+              schoolRule,
+            )
+          : {};
+      spaces[group.id] = {
+        members,
+        init: {
+          letters: row ? asObj(row.letters) : seed.letters,
+          criterionNotes: row ? asObj(row.criterion_notes) : seed.criterion_notes,
+          pad: row?.pad ?? "",
+          personNotes: row ? asObj(row.person_notes) : {},
+          attendance: row ? asObj(row.attendance) : seed.attendance,
+          versions,
+          absenceRule: row
+            ? row.absence_rule === "legacy"
+              ? "legacy"
+              : "group_all"
+            : seed.absence_rule,
+          fromExisting: row ? row.from_existing : seed.from_existing,
+          written: parseWritten(row?.written),
+          writtenAt: row?.written_at ?? null,
+          before,
+          hasNote: !!grade && grade.value !== null,
+        },
+      };
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-[96rem] space-y-8">
-      <div>
+    <div className="mx-auto max-w-[96rem] space-y-3">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <Link
           href={`/modules/${id}/assessments/${assessmentId}`}
           className="text-sm underline underline-offset-2"
         >
           ← {assessment.title}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Faire passer l’oral — {assessment.title}</h1>
-        <p className="text-muted-foreground">
-          Ordre de passage, chronomètre et grille ouverte sur le groupe qui passe.
-        </p>
+        <h1 className="text-xl font-semibold">Faire passer l’oral</h1>
       </div>
 
       <details open={orderedSlots.length === 0} className="rounded-lg border p-3">
@@ -145,7 +235,9 @@ export default async function OralPage({
           comments={comments}
           autoValidatedIds={assessment.auto_validated_criterion_ids}
           subject={mod.name}
-          absenceRule={await getAbsenceRuleForModule(id)}
+          absenceRule={schoolRule}
+          spaces={Object.keys(spaces).length > 0 ? spaces : undefined}
+          oralCriteria={Object.keys(spaces).length > 0 ? oralCriteria : undefined}
         />
       ) : (
         <p className="text-muted-foreground">
