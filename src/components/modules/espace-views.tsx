@@ -210,7 +210,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
         <FriseProjected frise={frise} embedded />
       </section>
 
-      <section aria-labelledby="acces" className="space-y-3">
+      <section aria-labelledby="acces" className="hidden space-y-3 min-[600px]:block">
         <h2 id="acces" className="font-heading text-xl font-bold">
           Tout le cours au même endroit
         </h2>
@@ -686,6 +686,7 @@ export function NotesView({ data }: { data: EspaceData }) {
               <details open={i === 0} className="group/result">
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <div>
+                    <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
                     <p className="text-muted-foreground text-sm">
                       {[
                         sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null,
@@ -697,7 +698,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
+
                     {sheet.value !== null ? (
                       <p className="bg-primary/15 mt-2 inline-flex items-baseline gap-1 rounded-2xl px-4 py-2">
                         <span className="font-heading text-5xl font-bold">{fmt(sheet.value)}</span>

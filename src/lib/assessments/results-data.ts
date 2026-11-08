@@ -7,6 +7,7 @@ import {
 } from "@/lib/assessments/queries";
 import { bonusLine } from "@/lib/assessments/score-scale";
 import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
+import { getQuizByAssessment } from "@/lib/quiz/queries";
 import { getModule } from "@/lib/modules/queries";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
@@ -28,9 +29,10 @@ export async function loadResultSheets(
   const memberOverrides = await listGroupGradeMembers(
     grades.filter((g) => g.student_group_id).map((g) => g.id),
   );
-  const [themesByGroup, absenceRule] = await Promise.all([
+  const [themesByGroup, absenceRule, quiz] = await Promise.all([
     themeTitleByGroup(assessment.project_id),
     getAbsenceRuleForModule(moduleId),
+    getQuizByAssessment(assessmentId),
   ]);
   const sheets = buildResultSheets({
     moduleName: mod.name,
@@ -43,6 +45,7 @@ export async function loadResultSheets(
     absenceRule,
     comments,
     themesByGroup,
+    hasQuiz: !!quiz,
   });
   // Note bonus de certification : l'effet réel sur la moyenne de chaque personne.
   if (assessment.is_bonus) {

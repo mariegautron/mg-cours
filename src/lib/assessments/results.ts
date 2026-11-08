@@ -105,6 +105,11 @@ interface Input {
   comments: Pick<Tables<"predefined_comment">, "id" | "text">[];
   /** Titre du thème de chaque groupe (identifiant de groupe → titre), US-89. */
   themesByGroup?: Record<string, string>;
+  /**
+   * L'évaluation a aussi un QCM : sa note (sur le barème du QCM) partage la ligne de note avec la grille.
+   * Quand la grille est remplie, c'est elle qui compte, sur son propre barème : une seule note affichée.
+   */
+  hasQuiz?: boolean;
 }
 
 /**
@@ -133,14 +138,18 @@ export function buildResultSheets(input: Input): ResultSheet[] {
     groupId: string,
   ): ResultSheet => {
     const scores = (grade.scores ?? {}) as Record<string, number>;
+    // QCM + grille : si la grille est remplie, la note est celle de la grille, sur le barème de la grille.
+    const gridWins = !!input.hasQuiz && grade.value !== null && Object.keys(scores).length > 0;
     const totals = computeTotals(scoringCriteria, scores, {
       autoValidatedIds,
-      maxScore: assessment.max_score,
+      maxScore: gridWins ? null : assessment.max_score,
     });
+    const shownValue = gridWins ? totals.value : grade.value;
+    const shownMax = gridWins ? totals.maxScore : maxScore;
     // Le dépassement n'est affiché que si la note enregistrée est bien celle qu'on recalcule
     // (la grille a pu être modifiée depuis la saisie).
     const criterionComments = parseCriterionComments(grade.criterion_comments);
-    const consistent = grade.value !== null && Math.abs(totals.value - grade.value) < 0.01;
+    const consistent = shownValue !== null && Math.abs(totals.value - shownValue) < 0.01;
     return {
       recipients,
       title: assessment.title,
@@ -149,9 +158,9 @@ export function buildResultSheets(input: Input): ResultSheet[] {
       theme: input.themesByGroup?.[groupId] ?? null,
       moduleName: input.moduleName,
       date: assessment.date,
-      value: grade.value,
-      maxScore,
-      valueOn20: grade.value === null ? null : toTwenty(grade.value, maxScore),
+      value: shownValue,
+      maxScore: shownMax,
+      valueOn20: shownValue === null ? null : toTwenty(shownValue, shownMax),
       criteria: criteria.map((c, i) => {
         const autoValidated = !c.is_bonus && autoValidatedIds.includes(c.id);
         const level = findLevel(c.levels ?? [], autoValidated ? c.weight : scores[c.id]);
