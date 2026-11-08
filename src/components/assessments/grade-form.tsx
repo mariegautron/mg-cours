@@ -1677,7 +1677,7 @@ export function GradeForm({
 
       {legacyComments.length > 0 ? (
         <fieldset className="space-y-1">
-          <legend className="text-sm font-medium">Commentaires prédéfinis (ancien mode)</legend>
+          <legend className="text-sm font-medium">Phrases (ancien mode)</legend>
           <p className="text-muted-foreground text-xs">
             Déjà liés à cette note ; décoche pour les retirer. Les nouvelles phrases s’insèrent
             directement dans les commentaires.

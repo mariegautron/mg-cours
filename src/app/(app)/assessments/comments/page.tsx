@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { commentTags, listComments } from "@/lib/assessments/queries";
 
-export const metadata: Metadata = { title: "Commentaires prédéfinis" };
+export const metadata: Metadata = { title: "Phrases" };
 
 const CATEGORY_LABELS: Record<string, string> = {
   positive: "Positif",
@@ -30,7 +30,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Commentaires prédéfinis</h1>
+          <h1 className="text-2xl font-semibold">Phrases</h1>
           <p className="text-muted-foreground">Bibliothèque réutilisable pour les appréciations.</p>
         </div>
         <Button asChild>

@@ -49,3 +49,28 @@ seulement : `tsc --noEmit`, ESLint, Prettier. Rien n'a été regardé dans le na
    recharger. Préfères-tu pouvoir choisir quelle version garder ?
 7. **Copies partielles anciennes.** On remet à « en cours » (sans note) celles déjà enregistrées
    avec une note incomplète, ou on les laisse comme elles sont ?
+
+## Mise à jour du 8 novembre 2026 (revérification en production)
+
+Fait (sans test, vérifié seulement par types et lint) :
+- Règle unique « à corriger / en cours / corrigée » : `src/lib/assessments/completeness.ts`, garde de
+  lecture dans `queries.ts` (cartes, moyennes, notes lues par la correction et les résultats). Les
+  appréciations, le tableau de bord (carte « À corriger », bilan) l'utilisent aussi. Les anciennes
+  copies partielles déjà en base ne comptent donc plus, sans migration.
+- Résultats publiés pour une copie incomplète : alerte avec bouton Révoquer (page Résultats et fiche).
+- Réponses au QCM visibles pendant la correction (lecture seule, repliées).
+- Relecture d'une copie QCM : enregistrement automatique, précédente/suivante (Alt + flèches), un
+  commentaire privé par question (stocké dans `manual_scores`, clés `c<n>`), barre du bas collante.
+- « Relire les copies » passe avant les liens sur un QCM clôturé.
+- Chrono d'oral sur une ligne, ordre de passage résumé, carte « Faire passer l'oral ».
+- Aperçu « Voir comme l'étudiant·e » (même composant que la page publique).
+- Rendu replié, liste des critères défilante, sur-titres retirés, accord « l'a consulté », « Phrases ».
+
+Encore ouvert :
+- **Note qui fait foi pour un QCM** (points par question ou paliers de la grille) : à valider avec Marie.
+- **Bloc-notes privé d'oral** : à valider avec Marie, non ajouté.
+- **#9** : premier palier visible sans défiler à 1366×768, 1280×720 et 125 % : non mesuré (aucune
+  session avec la bonne taille de fenêtre). Test Playwright non écrit (consigne).
+- **Fiche étudiant·e et indicateurs** (`record-queries.ts`, `indicators-queries.ts`) lisent encore
+  `grade.value` sans la garde de complétude.
+- **« Critères non notés » dans Avant d'envoyer** + confirmation : repris par une autre session.
