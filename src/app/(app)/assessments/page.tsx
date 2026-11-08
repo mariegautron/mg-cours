@@ -6,6 +6,7 @@ import { ClipboardList, MessageSquareText } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PREP_STATUS_LABELS } from "@/lib/assessments/subject";
 import { listAllAssessments } from "@/lib/assessments/queries";
 
 export const metadata: Metadata = { title: "Évaluations" };
@@ -73,11 +74,16 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
                     {a.groups.map((g) => g.name).join(", ") || "—"}
                   </p>
                 </div>
-                <Badge
-                  variant={a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"}
-                >
-                  {a.inProgressCount > 0 ? "en cours" : a.gradeCount > 0 ? "notée" : "à noter"}
-                </Badge>
+                <span className="flex flex-wrap gap-1.5">
+                  <Badge variant={a.prep_status === "to_build" ? "outline" : "secondary"}>
+                    Sujet : {PREP_STATUS_LABELS[a.prep_status]}
+                  </Badge>
+                  <Badge
+                    variant={a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"}
+                  >
+                    {a.inProgressCount > 0 ? "en cours" : a.gradeCount > 0 ? "notée" : "à noter"}
+                  </Badge>
+                </span>
               </Link>
             </li>
           ))}
