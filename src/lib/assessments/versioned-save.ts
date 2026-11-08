@@ -7,10 +7,8 @@ import type { Json } from "@/types/db";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-export type SaveFieldResult =
-  | { ok: true; version: number }
-  | { ok: false; conflict: true; version: number; theirs: string }
-  | { ok: false; conflict?: false; error: string };
+export type { SaveFieldResult } from "@/lib/assessments/versioned-save-types";
+import type { SaveFieldResult } from "@/lib/assessments/versioned-save-types";
 
 interface VersionedRow {
   id: string;

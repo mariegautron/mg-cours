@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { saveOralField } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/oral/space-actions";
+import type { SaveFieldResult } from "@/lib/assessments/versioned-save-types";
 
 const AUTOSAVE_MS = 2000;
 const RETRY_MS = 5000;
@@ -12,17 +13,34 @@ export interface FieldsInit {
   versions: Record<string, number>;
 }
 
-/**
- * Enregistrement champ par champ d'un espace d'oral. Chaque champ porte sa version : un
- * enregistrement n'écrase jamais une saisie plus récente (conflit : les deux versions sont gardées
- * et Marie choisit). Coupure réseau : le texte reste dans la page, l'envoi reprend seul.
- */
+export type FieldSaver = (
+  field: string,
+  value: string,
+  baseVersion: number,
+  force: boolean,
+) => Promise<SaveFieldResult>;
+
+/** Espace d'oral : champ par champ, voir `useVersionedFields`. */
 export function useOralFields(
   moduleId: string,
   assessmentId: string,
   subjectId: string,
   init: FieldsInit,
 ) {
+  const save = useCallback<FieldSaver>(
+    (field, value, baseVersion, force) =>
+      saveOralField(moduleId, assessmentId, subjectId, field, value, baseVersion, force),
+    [moduleId, assessmentId, subjectId],
+  );
+  return useVersionedFields(save, init);
+}
+
+/**
+ * Enregistrement champ par champ. Chaque champ porte sa version : un
+ * enregistrement n'écrase jamais une saisie plus récente (conflit : les deux versions sont gardées
+ * et Marie choisit). Coupure réseau : le texte reste dans la page, l'envoi reprend seul.
+ */
+export function useVersionedFields(save: FieldSaver, init: FieldsInit) {
   const [values, setValues] = useState<Record<string, string>>(init.values);
   const [saved, setSaved] = useState<Record<string, string>>(init.values);
   const [conflicts, setConflicts] = useState<Record<string, string>>({});
@@ -45,15 +63,7 @@ export function useOralFields(
       busy.current.add(field);
       setInflight((n) => n + 1);
       try {
-        const res = await saveOralField(
-          moduleId,
-          assessmentId,
-          subjectId,
-          field,
-          sent,
-          versions.current[field] ?? 0,
-          force,
-        );
+        const res = await save(field, sent, versions.current[field] ?? 0, force);
         if (res.ok) {
           versions.current[field] = res.version;
           savedRef.current = { ...savedRef.current, [field]: sent };
@@ -90,7 +100,7 @@ export function useOralFields(
         setInflight((n) => n - 1);
       }
     },
-    [moduleId, assessmentId, subjectId],
+    [save],
   );
 
   const set = useCallback(
@@ -118,6 +128,17 @@ export function useOralFields(
     conflictsRef.current = rest;
     setConflicts(rest);
   }, []);
+
+  /** Envoie tout de suite ce qui n'est pas enregistré et attend la fin (avant de valider une réponse). */
+  const flush = useCallback(async () => {
+    for (const field of Object.keys(latest.current)) {
+      clearTimeout(timers.current[field]);
+      if ((latest.current[field] ?? "") !== (savedRef.current[field] ?? "")) await send(field);
+    }
+    for (let i = 0; i < 60 && busy.current.size > 0; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }, [send]);
 
   // Retour du réseau : on renvoie tout de suite ce qui n'est pas enregistré.
   useEffect(() => {
@@ -147,6 +168,7 @@ export function useOralFields(
     conflicts,
     keepMine,
     takeTheirs,
+    flush,
     dirty,
     saving: inflight > 0,
     failed: failed && dirty,
