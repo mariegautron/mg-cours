@@ -14,6 +14,10 @@ import {
 import { EMPTY_ACTIVITY } from "@/lib/modules/activity";
 import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { getCourseResourcesFull, getModuleCourses } from "@/lib/modules/queries";
+import { QCM_DEFAULT_LIMIT } from "@/lib/present/qcm";
+import { loadCourseQcm } from "@/lib/present/qcm-data";
+import { resolveHidden } from "@/lib/present/items";
+import { resourceKey } from "@/lib/present/plan";
 import { createClient } from "@/lib/supabase/server";
 import { isImageMime, parseResourceFiles } from "@/lib/resources/files";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
@@ -83,12 +87,44 @@ export async function loadEspace(
   const espaceCourses: Espace["courses"] = [];
   if (options.courses) {
     for (const [i, c] of courses.entries()) {
-      const resources = studentFacing(await getCourseResourcesFull(c.id)).filter(
-        (r) => r.kind !== null && COURSE_KINDS.has(r.kind),
-      );
-      if (!resources.length) continue;
+      const projected = studentFacing(await getCourseResourcesFull(c.id));
+      const resources = projected.filter((r) => r.kind !== null && COURSE_KINDS.has(r.kind));
+      // Mini-QCM de la séance : publiés seulement une fois la séance clôturée, jamais avant le cours.
+      // Mêmes fiches que la projection : une fiche « Pour moi » n'a pas de mini-QCM.
+      const hidden = resolveHidden(null, c.hidden_keys, projected);
+      const qcmGroups = c.completion
+        ? await loadCourseQcm(
+            projected.filter((r) => !hidden.has(resourceKey(r.id))),
+            QCM_DEFAULT_LIMIT,
+            hidden,
+          )
+        : [];
+      if (!resources.length && !qcmGroups.length) continue;
       const activities = await getCourseActivities(c.id);
       espaceCourses.push({
+        qcm: qcmGroups.map((g) => ({
+          title: g.title,
+          questions: g.shown.flatMap((q) =>
+            q.type === "open"
+              ? []
+              : [
+                  {
+                    type: q.type,
+                    statement: q.statement,
+                    choices: q.choices.map((ch) => ({
+                      text: ch.text,
+                      correct: ch.isCorrect,
+                      feedback: ch.feedback.trim() || null,
+                    })),
+                    numeric:
+                      q.numericValue === null
+                        ? null
+                        : { value: q.numericValue, tolerance: q.numericTolerance ?? 0 },
+                    feedback: q.generalFeedback.trim() || null,
+                  },
+                ],
+          ),
+        })),
         number: i + 1,
         title: c.title,
         date: c.session_date,

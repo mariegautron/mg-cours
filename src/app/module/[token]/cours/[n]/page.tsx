@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { EspaceError, EspaceShell, readEspace } from "@/components/modules/espace-shell";
 import { Markdown } from "@/components/markdown";
+import { EspaceQcm } from "@/components/modules/espace-qcm";
 import { sessionHeading } from "@/lib/modules/frise";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,7 @@ export default async function EspaceCoursSeancePage({
           </article>
         ))}
       </div>
+      {course.qcm.length ? <EspaceQcm groups={course.qcm} /> : null}
     </EspaceShell>
   );
 }

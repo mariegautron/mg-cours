@@ -110,11 +110,63 @@ export interface EspaceResource {
   documents: EspaceDocument[];
 }
 
+/** Question d'un mini-QCM de séance, avec sa correction (publiée seulement après la séance). */
+export interface EspaceQcmQuestion {
+  type: "single_choice" | "multiple_choice" | "true_false" | "numerical";
+  /** Markdown. */
+  statement: string;
+  choices: { text: string; correct: boolean; feedback: string | null }[];
+  numeric: { value: number; tolerance: number } | null;
+  feedback: string | null;
+}
+
+/** Mini-QCM d'une fiche de la séance, à refaire par les étudiant·es. */
+export interface EspaceQcmGroup {
+  title: string;
+  questions: EspaceQcmQuestion[];
+}
+
 export interface EspaceCourse {
   number: number;
   title: string;
   date: string | null;
   resources: EspaceResource[];
+  /** Mini-QCM projetés pendant la séance ; vide tant que la séance n'est pas clôturée. */
+  qcm: EspaceQcmGroup[];
+}
+
+const QCM_TYPES = ["single_choice", "multiple_choice", "true_false", "numerical"] as const;
+
+function parseQcm(raw: unknown): EspaceQcmGroup[] {
+  return arr(raw).flatMap((g) => {
+    const o = obj(g);
+    const title = str(o.title);
+    if (!title) return [];
+    const questions = arr(o.questions).flatMap((q) => {
+      const k = obj(q);
+      const type = QCM_TYPES.find((t) => t === k.type);
+      const statement = str(k.statement);
+      if (!type || !statement) return [];
+      const numeric = obj(k.numeric);
+      return [
+        {
+          type,
+          statement,
+          choices: arr(k.choices).flatMap((c) => {
+            const f = obj(c);
+            const text = str(f.text);
+            return text ? [{ text, correct: f.correct === true, feedback: str(f.feedback) }] : [];
+          }),
+          numeric:
+            num(numeric.value) !== null
+              ? { value: num(numeric.value)!, tolerance: num(numeric.tolerance) ?? 0 }
+              : null,
+          feedback: str(k.feedback),
+        },
+      ];
+    });
+    return questions.length ? [{ title, questions }] : [];
+  });
 }
 
 /** QCM individuel ouvert au moment de la publication : bannière de l'accueil. */
@@ -219,6 +271,7 @@ export function parseEspace(payload: unknown): Espace | null {
           number,
           title: str(o.title) ?? `Séance ${number}`,
           date: str(o.date),
+          qcm: parseQcm(o.qcm),
           resources: arr(o.resources).flatMap((r) => {
             const k = obj(r);
             const title = str(k.title);

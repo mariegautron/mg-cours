@@ -71,3 +71,24 @@ Questions pour Marie :
    la note est vide, plutôt que choisir l'étiquette puis Entrée ?
 2. Un élément « pas fait volontairement » doit-il rester visible dans le relevé de la séance
    clôturée ? Aujourd'hui il disparaît de la liste des points à reporter, sans trace.
+
+## Report à la séance suivante et mini-QCM dans l'espace étudiant·e (US-173)
+
+À appliquer : la migration `20261116000000_course_carried_over.sql` (sans elle, la clôture
+fonctionne mais le report n'a pas lieu). Les mini-QCM n'apparaissent dans l'espace qu'après une
+nouvelle publication de l'espace, une fois la séance clôturée.
+
+À vérifier : clôturer une séance dont une fiche n'a pas été projetée → la fiche apparaît en tête du
+déroulé de la séance suivante et a quitté la séance clôturée ; « Annuler le report » remet tout ;
+« Modifier la clôture » ne crée pas de doublon ; dernière séance du module → bandeau « à reporter,
+en attente » sur la fiche module ; espace étudiant·e republié → « Mini-QCM de la séance » sur la
+page de la séance, absent tant qu'elle n'est pas clôturée.
+
+Questions pour Marie :
+1. Un interrupteur par séance (ou par fiche) pour ne pas publier un mini-QCM donné ?
+2. Les étudiant·es retrouvent-elles les questions posées en classe (5 par fiche par défaut) ou
+   toutes les questions de la fiche ?
+3. Sujets d'évaluation et mini-QCM « à reporter » : seules les fiches de cours se déplacent dans
+   le déroulé ; les autres éléments restent un rappel écrit dans « Reprise de la séance précédente ».
+4. Quand une séance est ajoutée après une clôture sans suite, faut-il placer automatiquement les
+   éléments en attente, au lieu de passer par « Modifier la clôture » ?
