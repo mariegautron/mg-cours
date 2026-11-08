@@ -244,6 +244,12 @@ export default async function OralPage({
           ← {assessment.title}
         </Link>
         <h1 className="text-xl font-semibold">Faire passer l’oral</h1>
+        <Link
+          href={`/modules/${id}/assessments/${assessmentId}/consignes`}
+          className="text-sm underline underline-offset-2"
+        >
+          Voir les consignes comme l’étudiant·e
+        </Link>
       </div>
 
       <details open={orderedSlots.length === 0} className="rounded-lg border px-3 py-1.5">

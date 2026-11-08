@@ -60,3 +60,31 @@ Rien n'a été regardé à l'écran, et aucune capture n'a été prise.
 - Test « bloc-notes jamais lu ailleurs » : remplacé par une vérification de code (`oral_space` n'est
   lu que dans `oral/page.tsx`, `oral/space-actions.ts`, `oral-space-server.ts`).
 - Lots suivants (répartir les notes, commentaires proposés, comparaison, support PDF) : non commencés.
+
+## Lot 2 (sans aucun service externe)
+
+Décision : pour l'instant, algorithmes et gabarits uniquement ; aucun appel à un service d'analyse.
+Les propositions viendront plus tard d'un service externe, branché derrière les mêmes écrans.
+
+- **Migration** `20261122000000_oral_texts.sql` (ajout de trois colonnes à `oral_space`), à appliquer
+  comme la précédente ; retour arrière dans son en-tête.
+- **US5, textes à valider** : huit textes (un par critère, points forts, axes de progrès, commentaire
+  global). États proposé, à valider, à revoir, validé ; empreinte du texte et lettre mémorisées à la
+  validation ; un texte validé repasse « à revoir » si son texte ou la lettre de son critère change.
+  Un prénom du module dans un texte de groupe est surligné et empêche la validation. « Proposer »
+  assemble un gabarit à partir des phrases des paliers de la grille et des notes du critère
+  (reformulées au vouvoiement) ; chaque phrase garde sa source (« D'où vient cette proposition ? »).
+  Le bloc-notes n'est jamais repris tel quel. « Écrire la note » n'écrit que les textes validés et dit
+  lesquels manquent.
+- **US6, répartir mes notes** : une destination proposée par règles pour chaque note (critère,
+  commentaire perso, carnet privé, nulle part), avec reformulation (vouvoiement pour un critère,
+  tutoiement pour une personne), cases à cocher, rien déplacé avant validation. Une remarque sur une
+  personne ne va jamais vers un texte de groupe. L'original reste dans le bloc-notes, noté comme
+  réparti. Chaque ligne est traitée seule ; un échec est signalé. Les commentaires perso sont stockés
+  (`person_comments`) pour le lot suivant : ils ne sont pas encore montrés à l'étudiant·e.
+- **US7** : « Déposer le support (PDF) » dans l'espace de chaque groupe, avec le composant et le
+  stockage du dépôt de documents existants (`SubmissionItems`, aucune seconde implémentation).
+  Aperçu « Voir les consignes comme l'étudiant·e » depuis la page de l'oral. La création d'un oral de
+  groupe (×1) ou individuel (×3) passe par le choix de type existant du formulaire d'évaluation.
+- **Pas fait** : lecture du PDF critère par critère (lot 4) ; affichage du commentaire perso à
+  l'étudiant·e ; l'espace d'un oral individuel (l'ordre de passage reste par groupe).
