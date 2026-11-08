@@ -129,6 +129,19 @@ export async function updateSubmitSettings(
   accepts: string,
 ): Promise<SubmissionItemState> {
   const supabase = await createClient();
+  if (mode === "app") {
+    // Rendre dans MG COURS exige une date limite (sinon aucun retard ne peut être signalé).
+    const { data: row } = await supabase
+      .from("assessment")
+      .select("date, course:course_id(session_date)")
+      .eq("id", assessmentId)
+      .eq("module_id", moduleId)
+      .maybeSingle();
+    const course = row?.course as unknown as { session_date: string | null } | null;
+    if (!row || (!row.date && !course?.session_date)) {
+      return { error: "Renseigne d’abord la date limite (champ « Quand »)." };
+    }
+  }
   const { error } = await supabase
     .from("assessment")
     .update({

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { clientEnv } from "@/lib/env";
 import { moduleShareUrl, publicSlidesUrl } from "@/lib/modules/frise";
-import { DEFAULT_ESPACE_OPTIONS, type EspaceOptions } from "@/lib/modules/espace";
+import { DEFAULT_ESPACE_OPTIONS, parseEspace, type EspaceOptions } from "@/lib/modules/espace";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
 import {
@@ -167,4 +167,25 @@ export async function markAssessmentReady(
   revalidatePath(`/modules/${moduleId}/frise`);
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   return {};
+}
+
+/**
+ * Remet à jour l'espace publié en gardant ses réglages actuels (cases cochées, lien du QCM) : sert aux
+ * boutons « Rendre visible maintenant ». Sans espace publié, ne fait rien et le dit.
+ */
+export async function refreshSpaceKeepingOptions(moduleId: string): Promise<ShareState> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("module_share_link")
+    .select("payload")
+    .eq("module_id", moduleId)
+    .is("revoked_at", null)
+    .maybeSingle();
+  if (!data) return { error: "L’espace n’est pas encore publié : publie-le d’abord." };
+  const espace = parseEspace(data.payload);
+  return updateModuleLink(
+    moduleId,
+    espace?.options ?? DEFAULT_ESPACE_OPTIONS,
+    espace?.quiz?.url ?? null,
+  );
 }

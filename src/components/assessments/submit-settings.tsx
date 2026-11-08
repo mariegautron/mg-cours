@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { refreshSpaceKeepingOptions } from "@/app/(app)/modules/[id]/frise/actions";
 import { updateSubmitSettings } from "@/app/(app)/modules/[id]/assessments/submission-items-actions";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +27,7 @@ export function SubmitSettings({
   const [a, setA] = useState(accepts);
   const [note, setNote] = useState("");
   const [pending, start] = useTransition();
+  const [saved, setSaved] = useState(false);
   return (
     <div className="mt-3 space-y-2 border-t pt-3 text-sm">
       <p className="font-medium">Les étudiant·es rendent</p>
@@ -80,6 +82,7 @@ export function SubmitSettings({
           onClick={() =>
             start(async () => {
               const res = await updateSubmitSettings(moduleId, assessmentId, m, a);
+              setSaved(!res.error && m === "app");
               setNote(
                 res.error ?? "Enregistré. Visible après « Mettre à jour les cours publiés ».",
               );
@@ -91,6 +94,22 @@ export function SubmitSettings({
         <span role="status" aria-live="polite">
           {note}
         </span>
+        {saved ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                const res = await refreshSpaceKeepingOptions(moduleId);
+                setNote(res.error ?? "Espace mis à jour : le dépôt est visible.");
+                if (!res.error) setSaved(false);
+              })
+            }
+          >
+            Rendre le dépôt visible maintenant (mettre à jour l’espace)
+          </Button>
+        ) : null}
       </div>
     </div>
   );
