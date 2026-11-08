@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 
 import { isAttendance, individualValueFor, type Attendance } from "@/lib/assessments/attendance";
 import {
-  decideFieldSave,
   isLetter,
   memberValues,
   missingForWrite,
@@ -14,14 +13,12 @@ import {
 } from "@/lib/assessments/oral-space";
 import { loadOralContext, seedFor } from "@/lib/assessments/oral-space-server";
 import { failure, NOT_FOUND } from "@/lib/messages";
+import { saveVersionedField, type SaveFieldResult } from "@/lib/assessments/versioned-save";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
 import type { Json, Tables } from "@/types/db";
 
-export type SaveFieldResult =
-  | { ok: true; version: number }
-  | { ok: false; conflict: true; version: number; theirs: string }
-  | { ok: false; conflict?: false; error: string };
+export type { SaveFieldResult };
 
 type Space = Tables<"oral_space">;
 
@@ -127,37 +124,17 @@ export async function saveOralField(
   force = false,
 ): Promise<SaveFieldResult> {
   const supabase = await createClient();
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const found = await ensureSpace(supabase, assessmentId, subjectId);
-    if (!found) return { ok: false, error: NOT_FOUND.assessment };
-    const { space } = found;
-    const versions = obj(space.field_versions);
-    const storedVersion = typeof versions[field] === "number" ? (versions[field] as number) : 0;
-    const outcome = decideFieldSave(
-      { value: readField(space, field), version: storedVersion },
-      { baseVersion: force ? storedVersion : baseVersion, value },
-    );
-    if (outcome.kind === "conflict")
-      return { ok: false, conflict: true, version: outcome.version, theirs: outcome.theirs };
-    if (outcome.kind === "same") return { ok: true, version: outcome.version };
-    const patch = patchFor(space, field, value);
-    if ("error" in patch && typeof patch.error === "string")
-      return { ok: false, error: patch.error };
-    // Écriture conditionnelle : si la ligne a bougé entre la lecture et l'écriture, on relit.
-    const { data: updated, error } = await supabase
-      .from("oral_space")
-      .update({
-        ...(patch as Partial<Space>),
-        field_versions: { ...versions, [field]: outcome.version },
-      })
-      .eq("id", space.id)
-      .eq("updated_at", space.updated_at)
-      .select("id")
-      .maybeSingle();
-    if (error) return { ok: false, error: failure("enregistrer", { kept: true }) };
-    if (updated) return { ok: true, version: outcome.version };
-  }
-  return { ok: false, error: failure("enregistrer", { kept: true }) };
+  return saveVersionedField<Space>({
+    supabase,
+    table: "oral_space",
+    load: async () => (await ensureSpace(supabase, assessmentId, subjectId))?.space ?? null,
+    field,
+    value,
+    baseVersion,
+    force,
+    readField,
+    patchFor: (row, f, v) => patchFor(row, f, v),
+  });
 }
 
 export interface WriteState {
