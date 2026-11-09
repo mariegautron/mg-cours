@@ -104,8 +104,8 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     outline && depositedOutline
       ? `Progression générée depuis les séances le ${fr(outline.generated_at)} (brouillon, non envoyée).`
       : outline
-        ? `Générée le ${parisLongDateTime(outline.generated_at)}${outline.sent_at ? ` · envoyée le ${fr(outline.sent_at)}` : ""}${
-            outline.validated_at ? ` · validée le ${fr(outline.validated_at)}` : ""
+        ? `Générée le ${parisLongDateTime(outline.generated_at)}${outline.sent_at ? ` · envoyée le ${parisLongDateTime(outline.sent_at)}` : ""}${
+            outline.validated_at ? ` · validée le ${parisLongDateTime(outline.validated_at)}` : ""
           }.`
         : null;
 
