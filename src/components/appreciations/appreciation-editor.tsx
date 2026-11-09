@@ -119,7 +119,16 @@ export function AppreciationEditor({
     setMessage(`Gabarit prêt pour ${name} : complète les [à compléter…] avant de copier.`);
   }
 
+  const [busyPart, setBusyPart] = useState<Part | null>(null);
   async function another(part: Part) {
+    setBusyPart(part);
+    try {
+      await anotherInner(part);
+    } finally {
+      setBusyPart(null);
+    }
+  }
+  async function anotherInner(part: Part) {
     const current = sentences?.[part];
     // Chaque bouton change SA partie, retrouvée même si les trous ont été remplis.
     const at = current && sentences ? locateParts(text, sentences)[part] : null;
@@ -202,9 +211,13 @@ export function AppreciationEditor({
                 type="button"
                 variant="outline"
                 size="sm"
+                disabled={busyPart !== null}
+                aria-busy={busyPart === part}
                 onClick={() => void another(part)}
               >
-                Autre formulation : {PART_LABELS[part].toLowerCase()}
+                {busyPart === part
+                  ? "Nouvelle formulation…"
+                  : `Autre formulation : ${PART_LABELS[part].toLowerCase()}`}
               </Button>
             ))}
           </div>

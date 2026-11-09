@@ -119,7 +119,7 @@ export function ClassOverview({
                   {c.key === "average"
                     ? r.average === null
                       ? "—"
-                      : r.average.toLocaleString("fr-FR", { maximumFractionDigits: 1 })
+                      : r.average.toLocaleString("fr-FR", { maximumFractionDigits: 2 })
                     : r[c.key as Exclude<SortKey, "name" | "average">]}
                 </td>
               ))}
