@@ -528,12 +528,14 @@ async function saveGrade(
   } else {
     const raw = formData.get("value");
     const num = typeof raw === "string" && raw !== "" ? Number(raw.replace(",", ".")) : Number.NaN;
-    if (!Number.isFinite(num)) return { error: "Saisis une note." };
+    // Champ vide : pas encore de note (par exemple une copie excusée remise en « Présent·e »).
+    const empty = typeof raw !== "string" || raw.trim() === "";
+    if (!empty && !Number.isFinite(num)) return { error: "Saisis une note valide." };
     const maxScore = assessment.max_score ?? 20;
-    if (num < 0 || num > maxScore) {
+    if (!empty && (num < 0 || num > maxScore)) {
       return { error: `La note doit être comprise entre 0 et ${maxScore}.` };
     }
-    value = num;
+    value = empty ? null : num;
   }
   // Absent·e non prévenu·e : 0 automatique ; excusé·e : pas de note (hors moyenne).
   if (target.studentId) value = individualValueFor(attendance, value);

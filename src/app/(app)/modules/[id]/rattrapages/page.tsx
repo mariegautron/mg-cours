@@ -11,6 +11,7 @@ import { MAKEUP_STEP_LABELS, makeupSummary } from "@/lib/assessments/makeup-over
 import { getModule } from "@/lib/modules/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
+import { createClient } from "@/lib/supabase/server";
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { MakeupDateForm } from "@/components/assessments/makeup-date-form";
 
@@ -30,7 +31,21 @@ export default async function MakeupsPage({
 
   // Même calcul que le tableau de bord et la fiche du module.
   const groups = await loadMakeupGroups(id);
-  const dateOf = new Map((await listModuleAssessments(id)).map((a) => [a.id, a.date]));
+  const moduleAssessments = await listModuleAssessments(id);
+  const dateOf = new Map(moduleAssessments.map((a) => [a.id, a.date]));
+  const maxOf = new Map(moduleAssessments.map((a) => [a.id, a.maxScore]));
+  // « Note remplacée : 0/4 » : la note obtenue au rattrapage.
+  const makeupIds = groups.flatMap((g) => (g.makeup ? [g.makeup.id] : []));
+  const supabase = await createClient();
+  const { data: makeupGrades } = makeupIds.length
+    ? await supabase
+        .from("grade")
+        .select("assessment_id, student_id, value")
+        .in("assessment_id", makeupIds)
+    : { data: [] as { assessment_id: string; student_id: string | null; value: number | null }[] };
+  const makeupValue = (makeupId: string, studentId: string) =>
+    (makeupGrades ?? []).find((x) => x.assessment_id === makeupId && x.student_id === studentId)
+      ?.value ?? null;
 
   const rule = await getAbsenceRuleForModule(id);
   const toOrganise = groups.flatMap((g) =>
@@ -115,6 +130,11 @@ export default async function MakeupsPage({
                       </span>
                       <Pill tone={r.step === "done" ? "ok" : "warn"}>
                         {MAKEUP_STEP_LABELS[r.step]}
+                        {r.step === "done" &&
+                        g.makeup &&
+                        makeupValue(g.makeup.id, r.student.id) !== null
+                          ? ` : ${makeupValue(g.makeup.id, r.student.id)!.toLocaleString("fr-FR")}/${maxOf.get(g.makeup.id) ?? 20}`
+                          : ""}
                       </Pill>
                     </li>
                   ))}
@@ -124,6 +144,7 @@ export default async function MakeupsPage({
                     moduleId={id}
                     makeupId={g.makeup.id}
                     initial={dateOf.get(g.makeup.id) ?? null}
+                    who={g.rows.map((r) => r.student.name.split(" ")[0]).join(", ")}
                   />
                 ) : null}
                 <MakeupPanel

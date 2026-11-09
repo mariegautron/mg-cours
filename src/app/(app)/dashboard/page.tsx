@@ -48,6 +48,7 @@ import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-asses
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
 import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
+import { createClient } from "@/lib/supabase/server";
 import {
   formatSessionDay,
   nextSession,
@@ -183,7 +184,35 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const doneIds = new Set(
     coursesWeek.filter((c) => c.session_date && c.session_date < today).map((c) => c.id),
   );
-  const tiles = days.map((d) => dayTile(d, today, (c) => doneIds.has(c.id)));
+  // Rattrapages datés cette semaine : visibles dans le jour (pas sur la frise publique).
+  const supabaseWeek = await createClient();
+  const { data: weekMakeups } = await supabaseWeek
+    .from("assessment")
+    .select("id, title, date, module:module_id(archived_at, finished_at)")
+    .not("makeup_of_id", "is", null)
+    .gte("date", days[0].date)
+    .lte("date", days[days.length - 1].date);
+  const makeupDays = new Map<string, number>();
+  for (const a of (weekMakeups ?? []) as unknown as {
+    date: string | null;
+    module: { archived_at: string | null } | null;
+  }[]) {
+    if (!a.date || a.module?.archived_at) continue;
+    const d = a.date.slice(0, 10);
+    makeupDays.set(d, (makeupDays.get(d) ?? 0) + 1);
+  }
+  const tiles = days.map((d) => {
+    const tile = dayTile(d, today, (c) => doneIds.has(c.id));
+    const n = makeupDays.get(d.date) ?? 0;
+    if (n === 0) return tile;
+    const label = `${n} rattrapage${n > 1 ? "s" : ""}`;
+    return {
+      ...tile,
+      state: tile.state === "empty" && d.date >= today ? ("upcoming" as const) : tile.state,
+      mark: tile.mark || "▲",
+      caption: tile.caption ? `${tile.caption} · ${label}` : label,
+    };
+  });
   const hrefs = days.map((d) => {
     // Un jour à plusieurs séances mène à la première non clôturée, sinon à la première.
     const c = d.courses.find((x) => !x.completion && x.module) ?? d.courses[0];

@@ -9,7 +9,10 @@ export function MakeupDateForm({
   moduleId,
   makeupId,
   initial,
+  who = "",
 }: {
+  /** Prénoms des personnes concernées, pour le nom accessible du champ. */
+  who?: string;
   moduleId: string;
   makeupId: string;
   initial: string | null;
@@ -21,6 +24,7 @@ export function MakeupDateForm({
       Date du rattrapage
       <input
         type="date"
+        aria-label={who ? `Date du rattrapage de ${who}` : "Date du rattrapage"}
         defaultValue={initial?.slice(0, 10) ?? ""}
         disabled={pending}
         onChange={(e) => {
