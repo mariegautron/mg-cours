@@ -11,7 +11,7 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | --- | ------------------------------------------- | -------- | -- |
 | P1  | Se connecter et régler son espace           | Marie    | ⬜ |
 | P2  | Alimenter la bibliothèque de ressources     | Marie    | ⬜ |
-| P3  | Préparer un module et obtenir une progression pédagogique correcte (inclut l'ancien P11) | Marie | 📝 |
+| P3  | Préparer un module et obtenir une progression pédagogique correcte (inclut l'ancien P11) | Marie | 🚧 lot 1 en cours (9 nov.) |
 | P4  | Accueillir les étudiant·es et former les groupes | Marie | ⬜ |
 | P5  | Faire cours (séance)                        | Marie    | 🔧 refactoré, reste le test en conditions réelles |
 | P6  | ~~Piloter le projet fil rouge~~ → fusionné dans P7 | —  | — |
@@ -73,7 +73,8 @@ directes : les liens reçus par les étudiant·es.
   `journey-links`, `responsive-journey`.
 - **À regarder en QA** : import Hyperplanning, rapprochement ressources/attendus, étape courante, reprise après pause.
 - **Améliorations notées** :
-  - …
+  - 9 nov. : 1.3 « Corrigé : … » n'atteint plus le PDF, 1.5 texte propre (puces, markdown, emoji) (`44c0cb4`) ; 1.1 « Avant de générer » = même couverture que la page Couverture et le PDF (`4afe510`).
+  - Reste lot 1 : 1.2 relier séance ↔ attendu, 1.4 versions envoyées figées, 1.6, 1.7 ; puis lots 2 et 3.
 
 ## P4 · Accueillir les étudiant·es et former les groupes
 
