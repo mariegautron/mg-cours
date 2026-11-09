@@ -46,6 +46,11 @@ const NEXT_TIME_ALLOWED = "src/lib/present/reprise.ts";
 const PRIVATE_VIEW_PAGE =
   "src/app/(present)/present/modules/[id]/courses/[courseId]/presenter/page.tsx";
 const PROJECTED_PAGE = "src/app/(present)/present/modules/[id]/courses/[courseId]/page.tsx";
+/**
+ * « Exporter mes données » (Réglages, 9 nov. 2026) : l'archive personnelle de Marie, téléchargée
+ * par elle seule, contient ses observations à sa demande. Jamais envoyée ni projetée.
+ */
+const PERSONAL_EXPORT = "src/app/api/export/route.ts";
 
 function files(path: string): string[] {
   const abs = join(ROOT, path);
@@ -60,7 +65,7 @@ describe("carnet de séance : données privées", () => {
     );
     expect(sources.length).toBeGreaterThan(10);
     const leaks = sources
-      .filter((f) => f !== PRIVATE_VIEW_PAGE)
+      .filter((f) => f !== PRIVATE_VIEW_PAGE && f !== PERSONAL_EXPORT)
       .filter((f) => PRIVATE.test(readFileSync(join(ROOT, f), "utf8")));
     expect(leaks).toEqual([]);
   });

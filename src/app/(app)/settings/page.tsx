@@ -9,6 +9,7 @@ import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft
 import { getStudent } from "@/lib/students/queries";
 import { listPhrases } from "@/lib/appreciations/queries";
 import { SchoolRulesForm } from "@/components/settings/school-rules-form";
+import { ExportButton } from "@/components/settings/export-button";
 import { AccountSection } from "@/components/settings/account-section";
 import { AppearanceForm } from "@/components/settings/appearance-form";
 import { readTextSize, TEXT_SIZE_COOKIE } from "@/lib/settings/text-size";
@@ -221,14 +222,11 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               Mes données
             </h2>
             <p className="text-muted-foreground text-sm">
-              Tout ce que l’appli garde pour toi : notes, ressources, modules, évaluations, factures
-              (un fichier).
+              Tout ce que l’appli garde pour toi, observations et fichiers compris, dans un .zip. Il
+              contient tes coordonnées bancaires et les données de tes étudiant·es : garde-le en
+              lieu sûr.
             </p>
-            <Button asChild variant="outline" size="touch">
-              <a href="/api/export" download>
-                Exporter mes données
-              </a>
-            </Button>
+            <ExportButton />
           </section>
 
           <section aria-labelledby="account" className="space-y-2">
