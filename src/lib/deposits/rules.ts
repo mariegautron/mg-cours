@@ -125,3 +125,22 @@ export function parisDayTime(iso: string): string {
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
   return `${get("day")}/${get("month")} à ${Number(get("hour"))} h ${get("minute")}`;
 }
+
+/** « 12 novembre 2026 à 11 h 07 » : date longue et heure de Paris, à la française. */
+export function parisLongDateTime(iso: string): string {
+  const d = new Date(iso);
+  const day = d.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Paris",
+  });
+  const parts = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${day} à ${Number(get("hour"))} h ${get("minute")}`;
+}

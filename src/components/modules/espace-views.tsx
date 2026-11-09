@@ -17,7 +17,7 @@ import {
   type Espace,
   type EspaceEvaluation,
 } from "@/lib/modules/espace";
-import { lateLabel, parisDayTime } from "@/lib/deposits/rules";
+import { lateLabel, parisDayTime, parisLongDateTime } from "@/lib/deposits/rules";
 import { sessionHeading, type Frise } from "@/lib/modules/frise";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -199,17 +199,13 @@ export function AccueilView({ data }: { data: EspaceData }) {
           <p className="mt-1">
             {espace.quiz.title}
             {espace.quiz.closesAt
-              ? ` · jusqu’au ${new Date(espace.quiz.closesAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" })}`
+              ? ` · jusqu’au ${parisLongDateTime(espace.quiz.closesAt)}`
               : ""}
           </p>
           {data.quizSubmittedAt ? (
             <p className="mt-2 font-semibold">
               Copie rendue le{" "}
-              {new Date(data.quizSubmittedAt).toLocaleString("fr-FR", {
-                dateStyle: "long",
-                timeStyle: "short",
-                timeZone: "Europe/Paris",
-              })}
+              {parisLongDateTime(data.quizSubmittedAt)}
               .
             </p>
           ) : espace.quiz.url ? (
