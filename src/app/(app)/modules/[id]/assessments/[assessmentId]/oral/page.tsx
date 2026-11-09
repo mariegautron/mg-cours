@@ -211,7 +211,9 @@ export default async function OralPage({
           criterionNotes: row ? asObj(row.criterion_notes) : seed.criterion_notes,
           pad: row?.pad ?? "",
           personNotes: row ? asObj(row.person_notes) : {},
-          attendance: row ? asObj(row.attendance) : seed.attendance,
+          // Présence posée dans l'espace, sinon celle de la note existante (absence enregistrée en
+          // correction comprise) : jamais « À poser » pour une présence déjà connue.
+          attendance: { ...seed.attendance, ...(row ? asObj(row.attendance) : {}) },
           versions,
           absenceRule: row
             ? row.absence_rule === "legacy"
