@@ -77,6 +77,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : 1.1, 1.3, 1.5 validés au retest ; titre « ## » plus en puce, espace avant ponctuation après emoji (`e51dd21`).
   - 9 nov. : 1.2 « Attendus traités » cochables sur la séance (`c34d0f0`) et « Traité en séance… » sur la Couverture (`3d10b69`).
   - 9 nov. : 1.4 version envoyée figée et téléchargeable, avertissement avant de régénérer, nom de fichier daté (`ec2f471`).
+  - 9 nov. : 1.2 suite : attendus des ressources du déroulé proposés, « Attendus évalués » sur toute évaluation (`9077284`).
   - Reste lot 1 : 1.6 (avec l'aperçu 2.1), 1.7 « Reprise : à relire » (migration) ; puis lots 2 et 3.
 
 ## P4 · Accueillir les étudiant·es et former les groupes
