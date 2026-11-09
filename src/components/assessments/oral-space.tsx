@@ -57,6 +57,8 @@ export interface OralSpaceInit {
   hasNote: boolean;
   /** « À réécrire » selon le serveur (même règle que Résultats, cartes et moyennes). */
   serverRewrite?: boolean;
+  /** Début de la correction (création de l'espace) ; `null` tant que rien n'est saisi. */
+  startedAt?: string | null;
   /** Date de la note écrite (écrite par l'espace, sinon dernière modification de la note existante). */
   noteAt: string | null;
   resultsHref: string;

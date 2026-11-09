@@ -166,6 +166,7 @@ export async function buildSpaceInits({
           before,
           hasNote: (!!grade && grade.value !== null) || !!parseWritten(row?.written),
           serverRewrite: rewriteKeys.has(`${assessmentId}:${group.id}`),
+          startedAt: row?.created_at ?? null,
           noteAt: row?.written_at ?? (grade && grade.value !== null ? grade.updated_at : null),
           texts: asTexts(row?.texts),
           routed: (row?.routed && typeof row.routed === "object" && !Array.isArray(row.routed)

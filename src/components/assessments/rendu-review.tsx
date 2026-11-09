@@ -19,6 +19,8 @@ export interface RenduCopy {
   members: { id: string; name: string }[];
   init: OralSpaceInit;
   items: SubmissionItemLike[];
+  /** Versions remplacées (plus récente d'abord). */
+  history?: { key: string; at: string | null; by: string | null; items: SubmissionItemLike[] }[];
 }
 
 const isPdf = (i: SubmissionItemLike) => /\.pdf$/i.test(i.file_name ?? "");
@@ -317,6 +319,18 @@ export function RenduReview({
             Rendu
           </h2>
           {copy.items.length === 0 ? <p className="text-sm">Pas de rendu.</p> : null}
+          {deposit?.submitted_at &&
+          copy.init.startedAt &&
+          !copy.init.hasNote &&
+          deposit.submitted_at > copy.init.startedAt ? (
+            <p role="status" className="border-sun/60 bg-sun/10 rounded-lg border p-2 text-sm">
+              <strong>
+                Nouveau dépôt le {parisDayTime(deposit.submitted_at)}, pendant ta correction.
+              </strong>{" "}
+              Ce qui est déjà noté reste en place. L’ancien dépôt est dans « Anciennes versions »
+              ci-dessous.
+            </p>
+          ) : null}
           {deposit?.submitted_at ? (
             <p className="text-muted-foreground text-sm">
               Déposé le {parisDayTime(deposit.submitted_at)}
@@ -334,6 +348,7 @@ export function RenduReview({
                 owner: { kind: copy.isGroup ? "group" : "student", id: copy.id },
                 name: copy.name,
                 items: copy.items,
+                history: copy.history,
               },
             ]}
           />

@@ -131,6 +131,31 @@ export default async function CorrectPage({
           };
         }),
       );
+      // Anciennes versions (dépôts remplacés), regroupées par envoi.
+      const historyOf = (ownerId: string) => {
+        const byBatch = new Map<string, typeof submissionData.items>();
+        for (const r of submissionData.replaced ?? []) {
+          if ((r.group_id ?? r.student_id) !== ownerId) continue;
+          const batch = (r as unknown as { batch_id?: string | null }).batch_id ?? r.id;
+          byBatch.set(batch, [...(byBatch.get(batch) ?? []), r]);
+        }
+        return [...byBatch.entries()]
+          .map(([key, list]) => {
+            const x = list[0] as unknown as {
+              submitted_at?: string | null;
+              submitted_by_student_id?: string | null;
+            };
+            return {
+              key,
+              at: x.submitted_at ?? list[0].created_at,
+              by: x.submitted_by_student_id
+                ? (nameOf.get(x.submitted_by_student_id) ?? null)
+                : null,
+              items: list,
+            };
+          })
+          .sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
+      };
       const copies: RenduCopy[] = subjects.flatMap((sub) =>
         spaces[sub.id]
           ? [
@@ -141,6 +166,7 @@ export default async function CorrectPage({
                 members: spaces[sub.id].members,
                 init: spaces[sub.id].init,
                 items: byOwner.get(sub.id) ?? [],
+                history: historyOf(sub.id),
               },
             ]
           : [],
