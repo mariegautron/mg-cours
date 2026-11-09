@@ -55,7 +55,14 @@ export default async function OralPage({
     assessment.groups.some((g) => g.id === r.student_group_id),
   );
   const durations = rows.map((r) => slotDuration(r.duration_minutes, assessment.duration_minutes));
-  const schedule = oralSchedule(assessment.oral_start_time, durations);
+  // Sans heure de début réglée, les créneaux partent de l'heure de la séance rattachée.
+  const { data: courseRow } = assessment.course_id
+    ? await supabase.from("course").select("start_time").eq("id", assessment.course_id).maybeSingle()
+    : { data: null };
+  const schedule = oralSchedule(
+    assessment.oral_start_time ?? courseRow?.start_time ?? null,
+    durations,
+  );
   const slots: (PlanSlot & StageSlot)[] = rows.map((r, i) => {
     const group = assessment.groups.find((g) => g.id === r.student_group_id)!;
     return {

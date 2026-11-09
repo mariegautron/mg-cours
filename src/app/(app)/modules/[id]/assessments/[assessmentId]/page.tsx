@@ -66,6 +66,7 @@ import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { assessmentFileUrl } from "@/lib/assessments/files";
 import { isOralAssessment } from "@/lib/assessments/oral";
+import { OralTimingForm } from "@/components/assessments/oral-timing-form";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
 import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
 import { createClient } from "@/lib/supabase/server";
@@ -242,6 +243,21 @@ export default async function AssessmentPage({
     ? Math.round(grid.criteria.filter((c) => !c.is_bonus).reduce((n, c) => n + c.weight, 0) * 100) /
       100
     : 0;
+  // Oral : heure de début et durée par groupe, réglables la veille depuis la préparation.
+  const oralTiming = isOralAssessment(assessment) ? (
+    <section aria-labelledby="oral-timing" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <h2 id="oral-timing" className="font-heading mb-2 text-xl font-bold">
+        Horaires de l’oral
+      </h2>
+      <OralTimingForm
+        moduleId={id}
+        assessmentId={assessmentId}
+        startTime={assessment.oral_start_time?.slice(0, 5) ?? null}
+        durationMinutes={assessment.duration_minutes}
+        courseStart={course?.start_time?.slice(0, 5) ?? null}
+      />
+    </section>
+  ) : null;
   const frameBase = frameStatus({
     hasDate: !!assessment.date || !!course?.session_date,
     whereOk:
@@ -663,6 +679,7 @@ export default async function AssessmentPage({
               aria-label="Préparation de l’évaluation"
               className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
             >
+              {oralTiming}
               <section aria-labelledby="ce" className={card}>
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                   <h2 id="ce" className="font-heading text-xl font-bold">
@@ -913,6 +930,7 @@ export default async function AssessmentPage({
             aria-label="Préparation de l’évaluation"
             className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
           >
+              {oralTiming}
             <section aria-labelledby="gr" className={card}>
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                 <h2 id="gr" className="font-heading text-xl font-bold">
