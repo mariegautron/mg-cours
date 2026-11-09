@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useRef, useTransition } from "react";
 
 import { ActionError } from "@/components/action-error";
 import {
@@ -11,8 +11,6 @@ import {
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PHOTO_ACCEPT } from "@/lib/students/photo";
 
 /** Photo de la fiche : ajout, remplacement, suppression. */
@@ -26,6 +24,7 @@ export function StudentPhotoManager({
     {},
   );
   const [removing, startTransition] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   return (
     <section aria-labelledby="photo" className="flex flex-wrap items-start gap-4">
@@ -35,14 +34,28 @@ export function StudentPhotoManager({
           Photo
         </h2>
         <form action={formAction} className="flex flex-wrap items-end gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="photo-file">
-              {student.photo_path ? "Remplacer la photo" : "Ajouter une photo"}
-            </Label>
-            <Input id="photo-file" name="photo" type="file" accept={PHOTO_ACCEPT} required />
-          </div>
-          <PendingButton type="submit" variant="secondary" pending={pending} pendingLabel="Envoi…">
-            Enregistrer la photo
+          {/* Champ natif caché (« Choose File ») : un seul bouton en français, envoi dès le choix. */}
+          <input
+            ref={fileRef}
+            id="photo-file"
+            name="photo"
+            type="file"
+            accept={PHOTO_ACCEPT}
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={(e) => {
+              if (e.target.files?.length) e.target.form?.requestSubmit();
+            }}
+          />
+          <PendingButton
+            type="button"
+            variant="secondary"
+            pending={pending}
+            pendingLabel="Envoi…"
+            onClick={() => fileRef.current?.click()}
+          >
+            {student.photo_path ? "Remplacer la photo" : "Ajouter une photo"}
           </PendingButton>
           {student.photo_path ? (
             <Button

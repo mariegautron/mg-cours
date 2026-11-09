@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PendingButton } from "@/components/ui/pending-button";
 
-export function StudentActions({ id }: { id: string }) {
+export function StudentActions({ id, name }: { id: string; name: string }) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -35,15 +35,17 @@ export function StudentActions({ id }: { id: string }) {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Supprimer cet·te étudiant·e ?</AlertDialogTitle>
+          <AlertDialogTitle>Supprimer {name} ?</AlertDialogTitle>
           <AlertDialogDescription>
-            Action définitive. Iel sera retiré·e de tous ses groupes.
+            Action définitive, dans tous les modules : sa fiche, ses notes, ses appréciations, ses
+            observations, ses présences, ses rendus et ses liens d’espace étudiant·e sont effacés,
+            et iel est retiré·e de tous ses groupes.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={() => startTransition(() => void deleteStudent(id))}>
-            Supprimer
+            Supprimer {name}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
