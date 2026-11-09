@@ -71,6 +71,13 @@ export function AttemptReview({
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const dirty = snapshot !== saved;
+  // Questions encore sans points : la vue « à relire » est cochée tant qu'il en reste.
+  const pendingCount = questions.filter((q) => q.open && !q.initialScore.trim()).length;
+  const [onlyToReview, setOnlyToReview] = useState(pendingCount > 0);
+  const [openComments, setOpenComments] = useState<Set<number>>(new Set());
+  const shown = onlyToReview
+    ? questions.filter((q) => q.open && !q.initialScore.trim())
+    : questions;
 
   function save() {
     const sent = snapshot;
@@ -125,16 +132,43 @@ export function AttemptReview({
           ? `Enregistré à ${savedAt}`
           : "Tout est enregistré";
 
+  const half = (n: number) => String(Math.round((n / 2) * 100) / 100).replace(".", ",");
+
   return (
     <div className="space-y-4">
-      {questions.map((q) => (
+      {pendingCount > 0 ? (
+        <fieldset className="flex flex-wrap gap-2">
+          <legend className="sr-only">Questions affichées</legend>
+          {(
+            [
+              [true, `Seulement les réponses à relire (${pendingCount})`],
+              [false, "Toutes les questions"],
+            ] as const
+          ).map(([value, label]) => (
+            <label
+              key={label}
+              className="has-[:checked]:bg-primary has-[:checked]:text-primary-foreground flex min-h-11 cursor-pointer items-center rounded-xl border px-3 text-sm font-semibold"
+            >
+              <input
+                type="radio"
+                name="review-filter"
+                className="sr-only"
+                checked={onlyToReview === value}
+                onChange={() => setOnlyToReview(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+      ) : null}
+      {shown.map((q) => (
         <section
           key={q.position}
           aria-labelledby={`q${q.position}`}
           className="space-y-2 rounded-lg border p-4"
         >
           <h2 id={`q${q.position}`} className="text-sm font-medium">
-            Question {q.position} · {fmt(q.points)} pt{q.points > 1 ? "s" : ""}
+            Question {q.position} · {fmt(q.points)} point{q.points > 1 ? "s" : ""}
             {q.open
               ? scores[q.position]?.trim()
                 ? ` · donnés : ${scores[q.position]}`
@@ -145,32 +179,59 @@ export function AttemptReview({
           </h2>
           {q.body}
           {q.open ? (
+            <fieldset className="space-y-1">
+              <legend className="text-sm font-medium">Points donnés (sur {fmt(q.points)})</legend>
+              <div className="flex flex-wrap items-center gap-2">
+                {["0", half(q.points), fmt(q.points)].map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    aria-pressed={scores[q.position] === v}
+                    onClick={() => setScores((s) => ({ ...s, [q.position]: v }))}
+                    className="aria-pressed:bg-primary aria-pressed:text-primary-foreground min-h-11 min-w-14 rounded-xl border px-3 font-semibold"
+                  >
+                    {v}
+                  </button>
+                ))}
+                <Label htmlFor={`score_${q.position}`} className="text-sm">
+                  autre
+                </Label>
+                <Input
+                  id={`score_${q.position}`}
+                  inputMode="decimal"
+                  className="w-24"
+                  value={scores[q.position] ?? ""}
+                  onChange={(e) => setScores((s) => ({ ...s, [q.position]: e.target.value }))}
+                />
+              </div>
+            </fieldset>
+          ) : null}
+          {q.open || comments[q.position]?.trim() || openComments.has(q.position) ? (
             <div className="space-y-1">
-              <Label htmlFor={`score_${q.position}`}>Points donnés (sur {fmt(q.points)})</Label>
-              <Input
-                id={`score_${q.position}`}
-                inputMode="decimal"
-                className="w-28"
-                value={scores[q.position] ?? ""}
-                onChange={(e) => setScores((s) => ({ ...s, [q.position]: e.target.value }))}
+              <Label htmlFor={`comment_${q.position}`}>Commentaire (pour toi seule)</Label>
+              <Textarea
+                id={`comment_${q.position}`}
+                rows={2}
+                value={comments[q.position] ?? ""}
+                onChange={(e) => setComments((c) => ({ ...c, [q.position]: e.target.value }))}
               />
             </div>
-          ) : null}
-          <div className="space-y-1">
-            <Label htmlFor={`comment_${q.position}`}>Commentaire (pour toi seule)</Label>
-            <Textarea
-              id={`comment_${q.position}`}
-              rows={2}
-              value={comments[q.position] ?? ""}
-              onChange={(e) => setComments((c) => ({ ...c, [q.position]: e.target.value }))}
-            />
-          </div>
+          ) : (
+            // Question corrigée toute seule : le commentaire reste replié.
+            <button
+              type="button"
+              onClick={() => setOpenComments((o) => new Set(o).add(q.position))}
+              className="text-primary min-h-9 text-sm font-semibold"
+            >
+              + Commentaire
+            </button>
+          )}
         </section>
       ))}
 
       <div className="bg-background/95 sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border px-3 py-2 backdrop-blur">
         <p className="font-semibold">
-          {fmt(state.score)} / {fmt(state.totalPoints ?? totalPoints)} pts
+          {fmt(state.score)} / {fmt(state.totalPoints ?? totalPoints)} points
           {state.complete ? "" : " (partiel)"}
         </p>
         <p role="status" className="text-sm">
@@ -189,10 +250,16 @@ export function AttemptReview({
             </Link>
           ) : null}
           {nextHref ? (
-            <Link href={nextHref} className="underline underline-offset-2">
+            <Link href={nextHref} className="font-semibold underline underline-offset-2">
               Copie suivante →
             </Link>
           ) : null}
+          <Link
+            href={`/modules/${moduleId}/assessments/${assessmentId}/quiz/links`}
+            className="underline underline-offset-2"
+          >
+            Retour au suivi
+          </Link>
         </div>
       </div>
     </div>
