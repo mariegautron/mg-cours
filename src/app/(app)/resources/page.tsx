@@ -31,6 +31,7 @@ import {
   type ResourceGroup,
 } from "@/lib/resources/kind";
 import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
+import { nestParts } from "@/lib/resources/parts";
 import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/resources/queries";
 
 export const metadata: Metadata = { title: "Bibliothèque" };
@@ -46,7 +47,7 @@ const GROUPINGS: Record<ResourceGrouping, string> = {
   category: "Par matière",
 };
 
-function ResourceRow({ r }: { r: ResourceWithUsage }) {
+function ResourceRow({ r, parts = [] }: { r: ResourceWithUsage; parts?: ResourceWithUsage[] }) {
   return (
     <li className="flex flex-wrap items-center gap-3 py-3">
       <Link
@@ -84,6 +85,19 @@ function ResourceRow({ r }: { r: ResourceWithUsage }) {
         </Pill>
       </span>
       <AddToModule resourceId={r.id} action={addResourceToModule.bind(null, r.id)} />
+      {parts.length ? (
+        <details className="basis-full pl-4">
+          <summary className="text-muted-foreground min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            {r.title} · {parts.length} partie{parts.length > 1 ? "s" : ""} copiée
+            {parts.length > 1 ? "s" : ""} à part
+          </summary>
+          <ul className="divide-y border-l pl-3">
+            {parts.map((p) => (
+              <ResourceRow key={p.id} r={p} />
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </li>
   );
 }
@@ -106,7 +120,10 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     return qs ? `/resources?${qs}` : "/resources";
   };
   const pageCount = Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1);
-  const shown = resources.slice(0, pageCount * PAGE_SIZE);
+  // Morceaux « Cours — partie » rangés sous leur cours (dépliables) au lieu d'être à égalité.
+  const nested = nestParts(resources);
+  const partsOf = new Map(nested.map((n) => [n.item.id, n.parts]));
+  const shown = nested.slice(0, pageCount * PAGE_SIZE).map((n) => n.item);
   const groups: ResourceGroup<ResourceWithUsage>[] | null =
     group === "kind" ? groupByKind(shown) : group === "category" ? groupByCategory(shown) : null;
 
@@ -392,7 +409,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
               </h2>
               <ul className="divide-y">
                 {g.items.map((r) => (
-                  <ResourceRow key={r.id} r={r} />
+                  <ResourceRow key={r.id} r={r} parts={partsOf.get(r.id)} />
                 ))}
               </ul>
             </section>
@@ -402,17 +419,17 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         <section aria-label="Liste" className="bg-card rounded-xl border p-5">
           <ul className="divide-y">
             {shown.map((r) => (
-              <ResourceRow key={r.id} r={r} />
+              <ResourceRow key={r.id} r={r} parts={partsOf.get(r.id)} />
             ))}
           </ul>
         </section>
       )}
-      {resources.length > PAGE_SIZE ? (
+      {nested.length > PAGE_SIZE ? (
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-muted-foreground text-sm" role="status">
-            {shown.length} sur {resources.length}
+            {shown.length} sur {nested.length}
           </p>
-          {shown.length < resources.length ? (
+          {shown.length < nested.length ? (
             <Button asChild variant="secondary" size="touch">
               <Link href={pageHref(pageCount + 1)} scroll={false}>
                 Afficher plus

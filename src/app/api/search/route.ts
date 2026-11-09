@@ -9,6 +9,7 @@ import {
   type SearchCandidate,
 } from "@/lib/search/search";
 import { schoolYearLabel } from "@/lib/modules/list-state";
+import { nestParts, partTitle } from "@/lib/resources/parts";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -160,7 +161,14 @@ export async function GET(req: Request) {
         terms: ["rattrapage", "rattrapages", "absence excusée", "excusé", m.name],
         href: `/modules/${m.id}/rattrapages`,
       })),
-    ...(resources.data ?? []).map((r) => ({ kind: "resource" as const, id: r.id, label: r.title })),
+    // Morceaux « Cours — partie » : rangés sous leur cours (« 19 parties »), trouvables par leur nom.
+    ...nestParts(resources.data ?? []).map(({ item: r, parts }) => ({
+      kind: "resource" as const,
+      id: r.id,
+      label: r.title,
+      detail: parts.length ? `${parts.length} partie${parts.length > 1 ? "s" : ""}` : undefined,
+      terms: parts.map((p) => partTitle(p.title)?.part ?? p.title),
+    })),
     // Séances : par titre ou par numéro (« séance 5 »), ouvertes sur « Avant de commencer ».
     ...sessionNumbers(courses.data ?? [])
       .filter(({ c }) => !(c.module as { archived_at: string | null } | null)?.archived_at)
