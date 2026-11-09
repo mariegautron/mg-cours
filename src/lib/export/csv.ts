@@ -37,14 +37,14 @@ export const README = (date: string, skipped: string[]) =>
     "",
     "tableurs/ : un fichier par sujet (étudiant·es, notes, appréciations, présences, modules,",
     "  séances), à ouvrir avec Excel ou LibreOffice.",
-    "fichiers/ : rendus des étudiant·es, pièces jointes des évaluations et des ressources,",
-    "  documents des modules, photos.",
+    "Les fichiers (rendus, pièces jointes, documents, photos) sont dans un second .zip :",
+    "  « Exporter mes fichiers » dans les réglages.",
     "donnees-completes.json : toutes les données de l'appli, pour une restauration future.",
     "",
     "ATTENTION : ce dossier contient tes coordonnées bancaires (IBAN) et les données de tes",
     "étudiant·es (notes, appréciations, photos). Garde-le en lieu sûr, ne le partage pas.",
     ...(skipped.length
-      ? ["", "Fichiers non inclus (trop lourds ou illisibles) :", ...skipped.map((s) => `- ${s}`)]
+      ? ["", "Fichiers non inclus (illisibles) :", ...skipped.map((s) => `- ${s}`)]
       : []),
     "",
   ].join("\r\n");

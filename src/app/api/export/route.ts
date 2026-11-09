@@ -1,10 +1,7 @@
 import { zipSync, strToU8 } from "fflate";
 
-import { ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
-import { README, safeName, toCsv } from "@/lib/export/csv";
+import { README, toCsv } from "@/lib/export/csv";
 import { deliverExport } from "@/lib/pdf/export-delivery";
-import { parseResourceFiles, RESOURCE_FILES_BUCKET } from "@/lib/resources/files";
-import { STUDENT_PHOTOS_BUCKET } from "@/lib/students/photo";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -83,16 +80,15 @@ const TABLES = [
  * ne sort jamais de l'appli (garde-fou du carnet de séance).
  */
 
-/**
- * Au-delà, les fichiers suivants ne sont pas mis dans le .zip (cités dans LISEZ-MOI) : l'archive
- * passe par le bucket `exports`, limité à 50 Mo par fichier.
- */
-const FILES_MAX_BYTES = 40 * 1024 * 1024;
 const PAGE = 1000;
 
 type Row = Record<string, unknown>;
 
-/** Export .zip de toutes les données de la personne connectée : tableurs, fichiers, JSON complet. */
+/**
+ * Export .zip des données de la personne connectée : tableurs, JSON complet, LISEZ-MOI. Les fichiers
+ * (rendus, photos…) passent par « Exporter mes fichiers » : le navigateur les télécharge lui-même
+ * (télécharger tout le stockage ici dépassait le délai d'une fonction Vercel : 502 après 1 min 40).
+ */
 export async function GET() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -254,78 +250,10 @@ export async function GET() {
       ]),
     ),
   );
-  // Fichiers : rendus, pièces jointes, documents de module, ressources, photos.
-  const wanted: { bucket: string; path: string; name: string }[] = [];
-  for (const s of data.submission_item ?? []) {
-    if (!s.storage_path) continue;
-    const a = assessments.get(str(s.assessment_id));
-    const who = s.student_id
-      ? studentName(s.student_id)
-      : str(groups.get(str(s.group_id))?.name) || "groupe";
-    wanted.push({
-      bucket: ASSESSMENT_FILES_BUCKET,
-      path: str(s.storage_path),
-      name: `fichiers/rendus/${safeName(moduleName(a?.module_id))}/${safeName(str(a?.title))}/${safeName(who)} - ${safeName(str(s.file_name) || str(s.label))}`,
-    });
-  }
-  for (const a of data.assessment ?? []) {
-    for (const f of parseResourceFiles(a.files as never)) {
-      wanted.push({
-        bucket: ASSESSMENT_FILES_BUCKET,
-        path: f.path,
-        name: `fichiers/evaluations/${safeName(moduleName(a.module_id))}/${safeName(str(a.title))}/${safeName(f.name)}`,
-      });
-    }
-  }
-  for (const r of data.resource ?? []) {
-    for (const f of parseResourceFiles(r.files as never)) {
-      wanted.push({
-        bucket: RESOURCE_FILES_BUCKET,
-        path: f.path,
-        name: `fichiers/ressources/${safeName(str(r.title))}/${safeName(f.name)}`,
-      });
-    }
-  }
-  for (const d of data.module_document ?? []) {
-    wanted.push({
-      bucket: "module-documents",
-      path: str(d.path),
-      name: `fichiers/documents/${safeName(moduleName(d.module_id))}/${safeName(str(d.name))}`,
-    });
-  }
-  for (const s of data.student ?? []) {
-    if (!s.photo_path) continue;
-    const ext = str(s.photo_path).split(".").pop() || "jpg";
-    wanted.push({
-      bucket: STUDENT_PHOTOS_BUCKET,
-      path: str(s.photo_path),
-      name: `fichiers/photos/${safeName(`${str(s.last_name)} ${str(s.first_name)}`)}.${ext}`,
-    });
-  }
-
-  const skipped: string[] = [];
-  let total = 0;
-  for (const w of wanted) {
-    if (total > FILES_MAX_BYTES) {
-      skipped.push(w.name);
-      continue;
-    }
-    const { data: blob, error } = await supabase.storage.from(w.bucket).download(w.path);
-    if (error || !blob) {
-      skipped.push(w.name);
-      continue;
-    }
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    total += bytes.byteLength;
-    let name = w.name;
-    for (let n = 2; files[name]; n++) name = w.name.replace(/(\.[^./]+)?$/, ` (${n})$1`);
-    files[name] = bytes;
-  }
-
   files["donnees-completes.json"] = strToU8(
     JSON.stringify({ exported_at: new Date().toISOString(), ...data }, null, 2),
   );
-  files["LISEZ-MOI.txt"] = strToU8(README(today, skipped));
+  files["LISEZ-MOI.txt"] = strToU8(README(today, []));
 
   const zip = zipSync(files, { level: 6 });
   // Plus de 4 Mo : déposé dans le stockage privé, le bouton suit une URL signée courte.
