@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
+
 import { groupResults, type SearchCandidate } from "@/lib/search/search";
 import { schoolYearLabel } from "@/lib/modules/list-state";
 import { createClient } from "@/lib/supabase/server";
@@ -46,8 +48,16 @@ export async function GET(req: Request) {
     .from("grade")
     .select("assessment:assessment_id!inner(module_id)")
     .eq("attendance", "absent_excused");
-  const makeupModules = new Set(
+  const excusedModules = new Set(
     (excused ?? []).map((g) => (g.assessment as unknown as { module_id: string }).module_id),
+  );
+  // Seulement les modules où un rattrapage reste à faire (même calcul que la page Rattrapages).
+  const makeupModules = new Set(
+    (
+      await Promise.all(
+        [...excusedModules].map(async (mid) => ((await countPendingMakeups(mid)) > 0 ? [mid] : [])),
+      )
+    ).flat(),
   );
 
   const candidates: SearchCandidate[] = [
