@@ -34,6 +34,8 @@ export interface SubmissionOwnerRow {
   items: SubmissionItemLike[];
   /** Nombre de versions du dépôt (la dernière comprise) ; l'historique n'est visible que par Marie. */
   versions?: number;
+  /** Versions remplacées, de la plus récente à la plus ancienne (consultables, hors ZIP). */
+  history?: { key: string; at: string | null; by: string | null; items: SubmissionItemLike[] }[];
 }
 
 const fmtParis = (iso: string) => parisDayTime(iso);
@@ -256,6 +258,28 @@ export function SubmissionItems({
                     router.refresh();
                   }}
                 />
+                {row.history && row.history.length > 0 ? (
+                  <details className="rounded-md border p-2 text-sm">
+                    <summary className="cursor-pointer font-medium">
+                      Anciennes versions ({row.history.length})
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        · le ZIP ne garde que la dernière
+                      </span>
+                    </summary>
+                    <ol className="mt-2 space-y-3">
+                      {row.history.map((v) => (
+                        <li key={v.key} className="space-y-1">
+                          <p className="text-muted-foreground text-xs">
+                            {v.at ? `Déposée le ${fmtParis(v.at)}` : "Version précédente"}
+                            {v.by ? ` par ${v.by}` : ""}
+                          </p>
+                          <ItemList assessmentId={assessmentId} items={v.items} />
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                ) : null}
                 <form
                   className="flex flex-wrap items-end gap-2"
                   onSubmit={(e) => {

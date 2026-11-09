@@ -1130,6 +1130,42 @@ export default async function AssessmentPage({
                   g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
                 ),
               ]);
+              const withMeta = <T extends object>(it: T) => {
+                const x = it as unknown as {
+                  submitted_at?: string | null;
+                  submitted_by_student_id?: string | null;
+                };
+                return {
+                  ...it,
+                  submitted_at: x.submitted_at ?? null,
+                  submitted_by_name: x.submitted_by_student_id
+                    ? (nameOf.get(x.submitted_by_student_id) ?? null)
+                    : null,
+                };
+              };
+              // Anciennes versions par personne ou groupe, regroupées par envoi (la plus récente d'abord).
+              const historyOf = new Map<
+                string,
+                Map<string, ReturnType<typeof withMeta<(typeof replacedRows)[number]>>[]>
+              >();
+              const replacedRows = submissionData.replaced ?? [];
+              for (const r of replacedRows) {
+                const key = r.group_id ?? r.student_id;
+                const batch = (r as unknown as { batch_id?: string | null }).batch_id ?? r.id;
+                if (!key) continue;
+                const byBatch = historyOf.get(key) ?? new Map();
+                byBatch.set(batch, [...(byBatch.get(batch) ?? []), withMeta(r)]);
+                historyOf.set(key, byBatch);
+              }
+              const historyFor = (key: string) =>
+                [...(historyOf.get(key)?.entries() ?? [])]
+                  .map(([batch, items]) => ({
+                    key: batch,
+                    at: items[0]?.submitted_at ?? items[0]?.created_at ?? null,
+                    by: items[0]?.submitted_by_name ?? null,
+                    items,
+                  }))
+                  .sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
               const versionsOf = new Map<string, Set<string>>();
               for (const r of submissionData.replaced ?? []) {
                 const key = r.group_id ?? r.student_id;
@@ -1158,6 +1194,7 @@ export default async function AssessmentPage({
                     name: group.name,
                     items: byOwner.get(group.id) ?? [],
                     versions: (versionsOf.get(group.id)?.size ?? 0) + 1,
+                    history: historyFor(group.id),
                   }))
                 : targets.flatMap(({ students }) =>
                     students.map((s) => ({
@@ -1165,6 +1202,7 @@ export default async function AssessmentPage({
                       name: `${s.first_name} ${s.last_name}`,
                       items: byOwner.get(s.id) ?? [],
                       versions: (versionsOf.get(s.id)?.size ?? 0) + 1,
+                      history: historyFor(s.id),
                     })),
                   );
             })()}
