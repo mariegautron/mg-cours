@@ -225,6 +225,12 @@ export function ResourceForm({
   const CHIP_KINDS = ["course", "workshop", "project", "question_bank"];
   const showKindSelect = otherKind || !kindValue || !CHIP_KINDS.includes(kindValue);
 
+  function markToBuild() {
+    const select = formRef.current?.elements.namedItem("status");
+    if (select instanceof HTMLSelectElement) select.value = "progress";
+    formRef.current?.requestSubmit();
+  }
+
   function markReady() {
     const select = formRef.current?.elements.namedItem("status");
     if (select instanceof HTMLSelectElement) select.value = "ready";
@@ -870,9 +876,15 @@ export function ResourceForm({
           >
             Enregistrer
           </PendingButton>
-          <Button type="button" onClick={markReady} disabled={pending}>
-            Marquer comme prête
-          </Button>
+          {resource?.status === "ready" ? (
+            <Button type="button" variant="outline" onClick={markToBuild} disabled={pending}>
+              Remettre « À construire »
+            </Button>
+          ) : (
+            <Button type="button" onClick={markReady} disabled={pending}>
+              Marquer comme prête
+            </Button>
+          )}
         </div>
       </div>
     </form>

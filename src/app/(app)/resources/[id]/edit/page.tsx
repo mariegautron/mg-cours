@@ -44,7 +44,9 @@ export default async function EditResourcePage({
             href={`/resources/${id}?dupliquer=1${origin ? `&module=${origin.moduleId}&course=${origin.courseId}` : ""}#dupliquer`}
             className="font-semibold underline underline-offset-2"
           >
-            {from ? `Faire plutôt une copie pour ${from.name}` : "Faire plutôt une copie"}
+            {from
+              ? `Faire plutôt une copie pour ${from.name} (${schoolYearOf(from.year)})`
+              : "Faire plutôt une copie"}
           </Link>
         </div>
       ) : null}
