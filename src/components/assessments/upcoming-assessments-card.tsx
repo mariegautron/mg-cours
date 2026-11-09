@@ -23,7 +23,7 @@ export function UpcomingAssessmentsCard({
         {items.map((a) => (
           <li key={a.id} className="text-sm">
             <Link
-              href={`/modules/${a.moduleId}/assessments`}
+              href={`/modules/${a.moduleId}/assessments/${a.id}#dayj-top`}
               className="font-semibold underline-offset-2 hover:underline"
             >
               {a.title}

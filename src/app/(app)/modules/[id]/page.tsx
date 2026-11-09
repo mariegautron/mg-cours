@@ -173,7 +173,9 @@ export default async function ModulePage({
   const askNote = hero?.offerFinish ? await retrospectiveAvailable() : false;
   const finishedView = hero?.kind === "finished";
   const upcoming = closed ? null : highlightedSession(courses, today);
-  const upcomingEvals = await listUpcomingAssessments(today, 14, id);
+  // Fiche du module : les évaluations des 60 prochains jours dans « À venir » ; la carte garde 14 jours.
+  const moduleEvals = await listUpcomingAssessments(today, 60, id);
+  const upcomingEvals = moduleEvals.filter((a) => daysBetween(today, a.date) <= 14);
   const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
@@ -328,6 +330,26 @@ export default async function ModulePage({
                 ) : (
                   <p className="text-muted-foreground mb-3">Aucune séance datée à venir.</p>
                 )}
+                {moduleEvals.length > 0 ? (
+                  <>
+                    <p>
+                      <strong>Évaluations</strong>
+                    </p>
+                    <ul className="text-muted-foreground mb-3 text-sm">
+                      {moduleEvals.map((a) => (
+                        <li key={a.id}>
+                          <Link
+                            href={`/modules/${id}/assessments/${a.id}`}
+                            className="text-foreground underline-offset-2 hover:underline"
+                          >
+                            {a.title}
+                          </Link>{" "}
+                          · {formatSessionDay(a.date)} · dans {daysBetween(today, a.date)} jours
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
                 {trame.dueDate ? (
                   <>
                     <p>
