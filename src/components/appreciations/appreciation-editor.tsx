@@ -225,9 +225,17 @@ export function AppreciationEditor({
             const value = e.target.value;
             timer.current = setTimeout(() => void save(value), AUTOSAVE_MS);
           }}
-          onBlur={() => {
+          onBlur={(e) => {
             if (timer.current) clearTimeout(timer.current);
-            if (text.trim() !== saved) void save(text);
+            // Valeur réelle du champ : un remplacement d'un coup (collage, remplissage auto,
+            // glisser-déposer, champ vidé par un outil) est pris même s'il n'a pas déclenché de saisie.
+            const value = e.currentTarget.value;
+            if (value !== text) setText(value);
+            if (value.trim() !== saved) void save(value);
+          }}
+          onInput={(e) => {
+            const value = e.currentTarget.value;
+            if (value !== text) setText(value);
           }}
         />
         <p
