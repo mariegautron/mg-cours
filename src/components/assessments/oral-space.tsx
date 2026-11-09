@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ChevronRight, Flag } from "lucide-react";
 
@@ -55,6 +55,8 @@ export interface OralSpaceInit {
   /** Note actuellement enregistrée par personne (règle d'origine), pour l'ancienne note du récapitulatif. */
   before: Record<string, number | null>;
   hasNote: boolean;
+  /** « À réécrire » selon le serveur (même règle que Résultats, cartes et moyennes). */
+  serverRewrite?: boolean;
   /** Date de la note écrite (écrite par l'espace, sinon dernière modification de la note existante). */
   noteAt: string | null;
   resultsHref: string;
@@ -132,7 +134,30 @@ export function OralSpace({
   );
   const [showRecap, setShowRecap] = useState(false);
   // Un oral dont la note est écrite s'ouvre en lecture : « Modifier » ouvre un brouillon.
-  const [editing, setEditing] = useState(!init.hasNote);
+  // Un brouillon ouvert (« Modifier ») le reste en revenant sur la page, jusqu'à « Écrire la
+  // note » ou « Abandonner le brouillon ».
+  const draftKey = `oral-draft:${assessmentId}:${subjectId}`;
+  const [editing, setEditingState] = useState(!init.hasNote);
+  const setEditing = (v: boolean) => {
+    setEditingState(v);
+    try {
+      if (v && init.hasNote) window.localStorage.setItem(draftKey, "1");
+      else window.localStorage.removeItem(draftKey);
+    } catch {
+      // Stockage indisponible : le brouillon reste ouvert le temps de la page.
+    }
+  };
+  useEffect(() => {
+    try {
+      // Lu après l'hydratation (le serveur ne connaît pas ce brouillon local).
+      if (init.hasNote && window.localStorage.getItem(draftKey) === "1")
+        queueMicrotask(() => setEditingState(true));
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [serverRewrite, setServerRewrite] = useState(!!init.serverRewrite);
   const [noteAt, setNoteAt] = useState<string | null>(init.noteAt);
   const readOnly = !editing;
   const [showTexts, setShowTexts] = useState(false);
@@ -165,13 +190,15 @@ export function OralSpace({
   const result = recap(criteria, letters, { autoValidatedIds, maxScore });
   const after = memberValues(result.total, result.maxScore, members, attendance, rule, schoolRule);
   const lines = diffLines(members, init.before, after, attendance);
-  const rewrite = needsRewrite(
+  const liveRewrite = needsRewrite(
     written,
     letters,
     Object.fromEntries(
       Object.entries(attendance).filter((e): e is [string, Attendance] => e[1] !== undefined),
     ),
   );
+  // Tant que rien n'a été réécrit ici, l'état du serveur fait foi (même règle que partout).
+  const rewrite = liveRewrite || serverRewrite;
   const replaces = init.hasNote;
 
   function pick(letter: string) {
@@ -235,6 +262,7 @@ export function OralSpace({
         setMissingTexts(res.missingTexts ?? []);
         setConfirm(false);
         setNoteAt(new Date().toISOString());
+        setServerRewrite(false);
         setEditing(false);
       }
     });
@@ -249,6 +277,7 @@ export function OralSpace({
       return;
     startDiscard(async () => {
       await discardOralDraft(moduleId, assessmentId, subjectId);
+      setEditing(false);
       window.location.reload();
     });
   }
@@ -338,7 +367,7 @@ export function OralSpace({
             Abandonner le brouillon
           </Button>
         ) : null}
-        {written && (readOnly || !init.hasNote) ? (
+        {written ? (
           <span
             className={cn(
               "rounded-full border px-2.5 text-xs font-bold",

@@ -70,10 +70,26 @@ export default async function ResultsPage({
   const toRewrite = assessment.groups
     .filter((g) => rewriteKeys.has(`${assessmentId}:${g.id}`))
     .map((g) => g.name);
-  const incompleteList = incompleteCopies(grades, assessment.groups);
+  // « Critères non notés » : seulement les copies vraiment incomplètes, pas une note à réécrire
+  // (ses critères ont tous une lettre).
+  const isRewrite = (g: (typeof grades)[number]) =>
+    rewriteKeys.has(`${assessmentId}:${g.student_group_id ?? g.student_id}`);
+  const incompleteList = incompleteCopies(
+    grades.filter((g) => !isRewrite(g)),
+    assessment.groups,
+  );
   const incomplete = incompleteList.map((c) => c.name);
+  // Un lien de résultats actif (bouton « Publier » de cette page) montre encore l'ancienne note :
+  // copies incomplètes et notes à réécrire.
+  const rewriteCopies = assessment.groups
+    .filter((g) => rewriteKeys.has(`${assessmentId}:${g.id}`))
+    .map((g) => ({
+      key: g.id,
+      name: g.name,
+      students: g.members.map((m) => ({ id: m.id, name: `${m.first_name} ${m.last_name}` })),
+    }));
   const publishedWarnings = publishedIncomplete(
-    incompleteList,
+    [...incompleteList, ...rewriteCopies],
     new Set(resultLinks.byStudent.keys()),
   );
   const allDone = total > 0 && done >= total && incomplete.length === 0 && toRewrite.length === 0;
@@ -149,7 +165,7 @@ export default async function ResultsPage({
         </Button>
       </div>
 
-      {!hasGrades ? (
+      {!hasGrades && resultLinks.byStudent.size === 0 ? (
         <EmptyState
           title="Rien n’est publié"
           description="Les résultats apparaîtront ici après ta confirmation."

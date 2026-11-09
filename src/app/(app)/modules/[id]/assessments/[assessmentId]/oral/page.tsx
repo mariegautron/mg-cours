@@ -14,7 +14,7 @@ import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import type { OralSpaceInit } from "@/components/assessments/oral-space";
 import { memberValues, parseWritten, type OralCriterion } from "@/lib/assessments/oral-space";
-import { seedFor } from "@/lib/assessments/oral-space-server";
+import { loadRewriteKeys, seedFor } from "@/lib/assessments/oral-space-server";
 import {
   getAssessment,
   getGradesByAssessment,
@@ -153,6 +153,8 @@ export default async function OralPage({
   }));
   const spaces: Record<string, { members: { id: string; name: string }[]; init: OralSpaceInit }> =
     {};
+  // « À réécrire » calculé comme partout ailleurs (Résultats, cartes, moyennes) : une seule règle.
+  const rewriteKeys = await loadRewriteKeys(supabase, [assessmentId]);
   if (!spaceError && oralCriteria.length > 0) {
     for (const slot of orderedSlots) {
       const group = assessment.groups.find((g) => g.id === slot.groupId);
@@ -220,7 +222,8 @@ export default async function OralPage({
           written: parseWritten(row?.written),
           writtenAt: row?.written_at ?? null,
           before,
-          hasNote: !!grade && grade.value !== null,
+          hasNote: (!!grade && grade.value !== null) || !!parseWritten(row?.written),
+          serverRewrite: rewriteKeys.has(`${assessmentId}:${group.id}`),
           noteAt: row?.written_at ?? (grade && grade.value !== null ? grade.updated_at : null),
           texts: asTexts(row?.texts),
           routed: (row?.routed && typeof row.routed === "object" && !Array.isArray(row.routed)
