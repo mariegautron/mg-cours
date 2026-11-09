@@ -111,6 +111,32 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const firstName = displayFirstName(profile?.legal_name);
 
   const upcomingEvals = await listUpcomingAssessments(today, 14);
+  // Séances des 14 derniers jours jamais clôturées (modules en cours) : « Clôturer » d'abord.
+  const twoWeeksAgo = new Date(Date.parse(`${today}T12:00:00Z`) - 14 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const yesterday = new Date(Date.parse(`${today}T12:00:00Z`) - 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const activeIds = new Set(
+    modules.filter((m) => !m.archived_at && !m.finished_at).map((m) => m.id),
+  );
+  const toClose = (await listCoursesBetween(twoWeeksAgo, yesterday))
+    .filter((c) => !c.completion && c.module && activeIds.has(c.module.id) && c.session_date)
+    .map((c) => ({
+      id: c.id,
+      position: c.position,
+      session_date: c.session_date!,
+      module: { id: c.module!.id, name: c.module!.name },
+    }));
+  // Module en cours dont toutes les séances sont faites : « Terminer ».
+  const toFinish = modules
+    .filter((m) => activeIds.has(m.id))
+    .filter((m) => {
+      const p = progress.get(m.id);
+      return !!p && p.total > 0 && p.done === p.total;
+    })
+    .map((m) => ({ module: { id: m.id, name: m.name } }));
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
   // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.
   const todayIds = new Set(sessions.map((c) => c.id));
@@ -143,6 +169,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const allTodos = pickTodos(
     buildTodos({
       today,
+      toClose,
+      toFinish,
       makeups: makeupTodos,
       appreciations: appreciationTodos,
       outlineAlerts: alerts,
@@ -487,6 +515,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   if (hero) {
     const prep = preps[0];
     const range = formatTimeRange(hero.start_time, hero.end_time);
+    // Heure de fin passée et séance pas clôturée : on propose de clôturer.
+    const heroEnded =
+      !hero.completion && !!hero.end_time && hero.end_time.slice(0, 5) <= timeInParis();
     return (
       <div className="space-y-5">
         {passwordChanged ? (
@@ -506,7 +537,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         <section
           aria-labelledby="seance"
-          className="bg-primary/15 border-primary/60 flex flex-wrap items-center justify-between gap-6 rounded-3xl border p-6 sm:p-7"
+          className="bg-primary/15 border-primary/60 rounded-3xl border p-5 sm:p-6"
         >
           <div className="min-w-0">
             <p className="text-primary mb-1.5 text-[0.8rem] font-bold tracking-wider uppercase">
@@ -526,23 +557,46 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 {prep.studentCount} étudiant·e{prep.studentCount > 1 ? "s" : ""}
               </Pill>
             </p>
-          </div>
-          <div className="flex w-full flex-col gap-2.5 sm:w-72">
-            <Link
-              href={`/modules/${hero.module.id}/courses/${hero.id}/start`}
-              className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
-            >
-              <Play aria-hidden className="size-4" />
-              Commencer le cours<span className="sr-only"> : {hero.title}</span>
-              <span aria-hidden> →</span>
-            </Link>
-            <Link
-              href={`/modules/${hero.module.id}/courses/${hero.id}/notebook`}
-              className={`${BTN} min-h-12`}
-            >
-              <NotebookPen aria-hidden className="mr-2 size-4" />
-              Ouvrir mon carnet<span className="sr-only"> : {hero.title}</span>
-            </Link>
+            {/* Boutons en ligne sous le titre : visibles sans défiler à 1366 × 768, zoom 125 %. */}
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Link
+                href={
+                  heroEnded
+                    ? `/modules/${hero.module.id}/courses/${hero.id}/close`
+                    : `/modules/${hero.module.id}/courses/${hero.id}/start`
+                }
+                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {heroEnded ? null : <Play aria-hidden className="size-4" />}
+                {heroEnded ? "Clôturer la séance" : "Commencer le cours"}
+                <span className="sr-only"> : {hero.title}</span>
+                <span aria-hidden> →</span>
+              </Link>
+              {heroEnded ? (
+                <Link
+                  href={`/modules/${hero.module.id}/courses/${hero.id}/start`}
+                  className={`${BTN} min-h-12`}
+                >
+                  Rouvrir la séance<span className="sr-only"> : {hero.title}</span>
+                </Link>
+              ) : (
+                <a
+                  href="https://edusign.app/professor/home"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${BTN} min-h-12`}
+                >
+                  Ouvrir Edusign<span className="sr-only"> (nouvel onglet)</span>
+                </a>
+              )}
+              <Link
+                href={`/modules/${hero.module.id}/courses/${hero.id}/notebook`}
+                className={`${BTN} min-h-12`}
+              >
+                <NotebookPen aria-hidden className="mr-2 size-4" />
+                Ouvrir mon carnet<span className="sr-only"> : {hero.title}</span>
+              </Link>
+            </div>
           </div>
         </section>
 

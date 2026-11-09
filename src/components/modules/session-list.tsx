@@ -39,6 +39,12 @@ export function SessionList({
   // Repère de la séance à faire (du jour ou prochaine), pour la retrouver en consultant une autre.
   const today = todayInParis();
   const focus = sessionToTeach(courses, today);
+  // « Prochaine » : la première séance datée aujourd'hui ou plus tard (sinon la séance à faire).
+  const upcomingId =
+    courses
+      .filter((c) => !c.completion && c.session_date && c.session_date >= today)
+      .sort((a, b) => a.session_date!.localeCompare(b.session_date!))[0]?.id ??
+    (focus && (!focus.session_date || focus.session_date >= today) ? focus.id : null);
   const BTN =
     "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
   return (
@@ -81,7 +87,12 @@ export function SessionList({
                   </span>
                 </span>
                 <span className="flex flex-col items-end gap-1">
-                  {c.id === focus?.id ? (
+                  {!c.completion && c.session_date && c.session_date < today ? (
+                    // Séance passée jamais clôturée : jamais « Prochaine ».
+                    <Pill tone="warn" className="min-h-[22px] px-2 text-[0.75rem]">
+                      À clôturer
+                    </Pill>
+                  ) : c.id === upcomingId ? (
                     <Pill tone="key" className="min-h-[22px] px-2 text-[0.75rem]">
                       {c.session_date === today ? "Aujourd’hui" : "Prochaine"}
                     </Pill>

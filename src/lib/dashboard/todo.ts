@@ -5,6 +5,7 @@
 export const TODO_LIMIT = 3;
 
 export type TodoKind =
+  | "session_close"
   | "outline_overdue"
   | "outline_urgent"
   | "session_prep"
@@ -12,12 +13,14 @@ export type TodoKind =
   | "makeups"
   | "appreciations"
   | "outline_soon"
+  | "module_finish"
   | "invoice_send"
   | "invoice_ready"
   | "payment";
 
 /** Ordre de départage à urgence égale (le plus pressant d'abord). */
 const KIND_ORDER: TodoKind[] = [
+  "session_close",
   "outline_overdue",
   "outline_urgent",
   "session_prep",
@@ -25,6 +28,7 @@ const KIND_ORDER: TodoKind[] = [
   "makeups",
   "appreciations",
   "outline_soon",
+  "module_finish",
   "invoice_send",
   "invoice_ready",
   "payment",
@@ -97,10 +101,49 @@ export interface TodoSources {
   makeups?: { module: { id: string; name: string }; pending: number }[];
   /** Horizon des séances à préparer, en jours. */
   prepHorizonDays?: number;
+  /** Séances passées (14 derniers jours) pas encore clôturées, modules en cours seulement. */
+  toClose?: {
+    id: string;
+    position: number;
+    session_date: string;
+    module: { id: string; name: string };
+  }[];
+  /** Modules en cours dont toutes les séances sont faites : bilan puis facture. */
+  toFinish?: { module: { id: string; name: string } }[];
 }
+
+const shortDay = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
 export function buildTodos(src: TodoSources): TodoItem[] {
   const out: TodoItem[] = [];
+  // Séance passée non clôturée : avant tout le reste (urgence négative, la plus ancienne d'abord).
+  for (const c of src.toClose ?? []) {
+    const d = daysBetween(src.today, c.session_date);
+    if (d >= 0 || d < -14) continue;
+    out.push({
+      key: `close-${c.id}`,
+      kind: "session_close",
+      title: `Clôturer la séance ${c.position}`,
+      detail: `${c.module.name} · ${shortDay(c.session_date)}`,
+      href: `/modules/${c.module.id}/courses/${c.id}/close`,
+      urgency: -100 + d,
+    });
+  }
+  for (const m of src.toFinish ?? []) {
+    out.push({
+      key: `finish-${m.module.id}`,
+      kind: "module_finish",
+      title: `Terminer ${m.module.name} : bilan puis facture`,
+      detail: "toutes les séances sont faites",
+      href: `/modules/${m.module.id}/finish`,
+      urgency: 5,
+    });
+  }
   for (const a of src.outlineAlerts) {
     const d = a.daysUntilDue;
     out.push({
@@ -113,7 +156,8 @@ export function buildTodos(src: TodoSources): TodoItem[] {
             : "outline_soon",
       title: `Envoyer la progression de ${a.module.name}`,
       detail: d < 0 ? `en retard de ${Math.abs(d)} j` : `échéance dans ${d} j`,
-      href: `/modules/${a.module.id}`,
+      // Directement à l'étape d'envoi (« Marquer comme envoyée »).
+      href: `/modules/${a.module.id}/outline`,
       urgency: d,
     });
   }
