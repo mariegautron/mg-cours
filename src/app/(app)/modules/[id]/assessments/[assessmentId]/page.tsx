@@ -901,7 +901,7 @@ export default async function AssessmentPage({
                   deliverable: assessment.deliverable_md,
                   evaluated: assessment.evaluated_md,
                   maxScore: assessment.maxScore,
-                  coefficient: assessment.coefficient,
+                  coefficient: assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT,
                   whereToSubmit: assessment.where_to_submit,
                 }).map((line) => (
                   <li key={line.label} className="flex flex-wrap items-start gap-3 py-2.5 text-sm">
