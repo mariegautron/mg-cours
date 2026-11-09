@@ -157,6 +157,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : rendu à 125 % (critères en sélecteur, présences repliées) et case « Pas reçu (0) » retirée (`c3b5594`) ; dépôt corrigé sans phrase ni champs (`befb186`) ; « Par critère » éditable et « Vérifier mes écarts » (`1c9d4a0`, `b21f7d1`). Bandeau « Nouveau dépôt pendant ta correction » et anciennes versions dans la colonne (`d192b75`). Prompt rendu terminé, à retester.
   - 9 nov. : « Effacer la note » sur une note écrite (oral, rendu) (`a39dc14`).
   - 9 nov. : rattrapages visibles (tableau de bord, « Où j'en suis », fiche du module, page Évaluations, lien depuis la copie excusée, Ctrl K) (`63ed166`, `8787d60`, `bba436f`). Suite : Ctrl K dans son groupe (`a4f9435`), statut « Rattrapé·e · x/y », « rattrapage en attente » à côté des moyennes (`b7cf52e`). Tableau de bord SCRUM à revérifier.
+  - 9 nov. : une page restée ouverte n'écrase plus une présence posée ailleurs (groupe `13abd23`, individuelle `51c89a3`) ; Ctrl K rattrapages limité aux modules concernés (`7b2e8a8`).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
