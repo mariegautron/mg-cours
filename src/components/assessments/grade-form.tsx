@@ -882,9 +882,18 @@ export function GradeForm({
         </span>
       ));
 
+  // Les présences ne sont envoyées que si elles ont changé dans CET onglet : un enregistrement
+  // d'un commentaire ne réécrit jamais les présences (posées peut-être ailleurs entre-temps).
+  const membersChanged = Object.entries(memberState).some(([sid, st]) => {
+    const b = memberBase[sid];
+    return (
+      !b || st.attendance !== b.attendance || (st.justification ?? "") !== (b.justification ?? "")
+    );
+  });
+
   const hiddenMembers = members ? (
     <>
-      <input type="hidden" name="memberOverrides" value="1" />
+      {membersChanged ? <input type="hidden" name="memberOverrides" value="1" /> : null}
       {members.map((m) => {
         const st = memberState[m.id];
         return (
@@ -912,14 +921,14 @@ export function GradeForm({
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold">Membres du groupe : qui a fait quoi ?</legend>
         <p className="text-muted-foreground text-xs">
-          Absent·e non prévenu·e : la note est 0. Absent·e excusé·e :{" "}
-          {excusedGroupHint(absenceRule).toLowerCase()} Les points ne sont jamais retirés à une
+          « Absent·e · 0 » : la note est 0. « {groupAttendanceLabel("absent_excused", absenceRule)}{" "}
+          » : {excusedGroupHint(absenceRule).toLowerCase()} Les points ne sont jamais retirés à une
           personne : un mot pour elle, facultatif, ne change pas la note.{" "}
           <Link href="/settings#school-rules" className="underline underline-offset-2">
             Changer la règle de l’école
           </Link>
         </p>
-        <input type="hidden" name="memberOverrides" value="1" />
+        {membersChanged ? <input type="hidden" name="memberOverrides" value="1" /> : null}
         <ul className="space-y-3">
           {list.map((m) => {
             const st = memberState[m.id];
