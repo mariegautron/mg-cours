@@ -8,6 +8,7 @@ import {
   saveReviewField,
   setQuestionCriteria,
   validateAnswer,
+  setCopyAttendance,
   writeReviews,
   type WriteResult,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/correct/open-actions";
@@ -39,6 +40,10 @@ export interface ReviewQuestion {
 export interface ReviewCopy {
   id: string;
   name: string;
+  /** Personne de la copie (pour poser une absence sur une copie non rendue). */
+  studentId?: string;
+  /** Présence enregistrée sur la note (« present » par défaut). */
+  attendance?: string | null;
   submitted: boolean;
   locked: boolean;
   legacy: boolean;
@@ -415,7 +420,35 @@ export function OpenReview({
                   {c.name}
                 </th>
                 <td colSpan={Math.max(1, linkedCriteria.length)} className="p-2">
-                  pas encore rendue
+                  <span className="mr-3">
+                    {c.attendance === "absent_excused"
+                      ? "absent·e excusé·e"
+                      : c.attendance === "absent_unexcused"
+                        ? "absent·e non prévenu·e : 0"
+                        : "pas encore rendue"}
+                  </span>
+                  {c.studentId ? (
+                    <select
+                      aria-label={`Présence de ${c.name}`}
+                      defaultValue={
+                        c.attendance && c.attendance !== "present" ? c.attendance : ""
+                      }
+                      className="border-input bg-background text-foreground min-h-9 rounded-md border px-2"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        void setCopyAttendance(moduleId, assessmentId, c.studentId!, value).then(
+                          (r) => {
+                            if (r.error) setMessage(r.error);
+                            else router.refresh();
+                          },
+                        );
+                      }}
+                    >
+                      <option value="">Présence : à poser</option>
+                      <option value="absent_excused">Absent·e excusé·e</option>
+                      <option value="absent_unexcused">Absent·e non prévenu·e (0)</option>
+                    </select>
+                  ) : null}
                 </td>
               </tr>
             ) : (

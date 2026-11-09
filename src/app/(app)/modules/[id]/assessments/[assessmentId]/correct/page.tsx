@@ -161,6 +161,8 @@ export default async function CorrectPage({
         return {
           id: a.id,
           name: a.name,
+          studentId: a.studentId,
+          attendance: grades.find((g) => g.student_id === a.studentId)?.attendance ?? null,
           submitted: a.status === "submitted",
           locked: a.review ? a.review.locked : a.legacyDone,
           legacy: a.legacyDone,
@@ -229,6 +231,8 @@ export default async function CorrectPage({
         copies.push({
           id: `none-${sid}`,
           name,
+          studentId: sid,
+          attendance: grades.find((g) => g.student_id === sid)?.attendance ?? null,
           submitted: false,
           locked: false,
           legacy: false,

@@ -13,6 +13,7 @@ import {
 } from "@/lib/assessments/open-review";
 import { loadOpenReviewContext, obj, readEntries } from "@/lib/assessments/open-review-server";
 import { isLetter } from "@/lib/assessments/oral-space";
+import { individualValueFor, isAttendance } from "@/lib/assessments/attendance";
 import { saveVersionedField, type SaveFieldResult } from "@/lib/assessments/versioned-save";
 import { regradeAttempt } from "@/lib/quiz/grade-server";
 import type { DrawnQuestion } from "@/lib/quiz/types";
@@ -494,4 +495,42 @@ export async function setQuestionCriteria(
   }
   refresh(moduleId, assessmentId);
   return { ok: true };
+}
+
+/**
+ * Présence d'une personne sans copie rendue (QCM en questions ouvertes) : absent·e excusé·e ou
+ * non prévenu·e (0), ou retour à « à poser ». Une copie rendue garde sa correction.
+ */
+export async function setCopyAttendance(
+  moduleId: string,
+  assessmentId: string,
+  studentId: string,
+  attendance: string,
+): Promise<{ error?: string }> {
+  if (attendance !== "" && !isAttendance(attendance)) return { error: "Présence inconnue." };
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("grade")
+    .select("id, value")
+    .eq("assessment_id", assessmentId)
+    .eq("student_id", studentId)
+    .maybeSingle();
+  if (attendance === "" || attendance === "present") {
+    if (existing)
+      await supabase
+        .from("grade")
+        .update({ attendance: "present", value: null })
+        .eq("id", existing.id);
+  } else {
+    const value = individualValueFor(attendance, existing?.value ?? null);
+    const { error } = existing
+      ? await supabase.from("grade").update({ attendance, value }).eq("id", existing.id)
+      : await supabase
+          .from("grade")
+          .insert({ assessment_id: assessmentId, student_id: studentId, attendance, value });
+    if (error) return { error: failure("enregistrer") };
+  }
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/correct`);
+  return {};
 }
