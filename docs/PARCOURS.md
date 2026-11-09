@@ -161,6 +161,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : « Comparer un critère » en lecture pour une note écrite (bloquant) (`2623ab4`). Reste du prompt exigence UX (commentaires multilignes, lettres, aide clavier, accès) → lot UX.
   - 9 nov. : rattrapages 0b (aucune présence posée automatiquement depuis une observation) et 0e (libellés d'absence sur un travail de groupe) (`aa981c3`).
   - 9 nov. : « Voir son rattrapage » (`3d1dfd2`) ; rattrapages lots 2 et 3 : date, groupes des seuls inscrits, retour « Rattrapage créé », « Rattrapages faits », bouton qui passe à la ligne (`44158eb`). Reste : lots 4 (chrono du QCM), 5, 6 (règles par école, migration).
+  - 9 nov. : rattrapages v3 : retour à « Présent·e » sans note, rattrapages datés dans « Cette semaine », champ date nommé, « Note remplacée : x/y » (`fb828d1`).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
@@ -214,7 +215,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : conditions YNOV de la facture alignées sur le vrai statut de la progression (`63f4140`).
   - 9 nov. : vrais états des étapes même pour un module terminé/facturé (`f7bea79`) ; liste « Terminer » avec appréciations, avis, liens, un seul chemin, libellés Terminer/Archiver (`baee74d`). Coefficient du cadre individuel (`3c2461d`).
   - 9 nov. : étape « Terminer le module », vrai décompte d'un module terminé, bilan facture, message 8 s avec Annuler, Facture d'un module rouvert, plus de « ranger » (`02d5afb`).
-  - Reste (terminer et facturer) : « Rouvrir » sur la fiche, facture simple d'abord (Factur-X à part), questionnaire (un envoi par navigateur, tutoiement, QR), divers.
+  - 9 nov. : « Archivé le », étape Facturer d'après le suivi simple, « Rouvrir le module » sur la fiche, ligne Rattrapages dans la liste Terminer (`d5cfc42`).
+  - Reste (terminer et facturer) : facture simple d'abord (Factur-X à part), questionnaire (un envoi par navigateur, tutoiement, QR), divers.
 
 ## P13 · Piloter au quotidien
 
