@@ -56,7 +56,8 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - 9 nov. (retest « préparer le contenu de mes cours ») : notes « pour moi seule » (`c055e1c`) ; créer / ouvrir une ressource depuis une séance et y revenir, séance « Prête » avec ressource à construire, « Préparer la séance », Présenter en fenêtre et Aperçu, mini-QCM lié (`7014e56`) ; « Où elle sert », compteurs, avertissement ressource partagée, Dupliquer (`4c08f3f`) ; recherche en direct triée par titre, « Chercher dans la bibliothèque » depuis le déroulé (`45e7519`) ; déroulé lisible à 125 % (`089db8e`).
   - Reste (migration) : parties de cours choisies par séance (point 15), « Copiée de … le … » sur une copie.
-  - Reste : regrouper les 221 morceaux de cours sous leur cours (point 16), historique détaillé et petits défauts du point 14, retrait du champ « Lien des slides » (3 séances l'ont rempli : décision de Marie).
+  - 9 nov. (suite) : morceaux de cours rangés sous leur cours (`3c97982`), historique détaillé (`9555ffe`), petits défauts du point 14 (`378ac92`), champ « Lien des slides » retiré, liens existants en lecture seule (voir commit suivant).
+  - Reste (migration) : statut dans l'historique (« À construire → Prête »), « Remplacer par les parties du cours » (dépend du point 15).
 
 ## P3 · Préparer un module et obtenir une progression pédagogique correcte (inclut l'ancien P11)
 
