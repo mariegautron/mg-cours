@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { OralSpace, type OralSpaceInit } from "@/components/assessments/oral-space";
@@ -56,7 +56,16 @@ export function RenduReview({
     copies.findIndex((c) => c.id === initialId),
   );
   const [index, setIndex] = useState(start);
+  const [view, setView] = useState<"copy" | "criterion">("copy");
+  const [criterionId, setCriterionId] = useState(criteria.find((c) => !c.isBonus)?.id ?? "");
   const copy = copies[index];
+  // Chaque copie a sa propre adresse (?copy=…) : un onglet par copie pour comparer.
+  useEffect(() => {
+    if (!copy) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("copy", copy.id);
+    window.history.replaceState(null, "", url);
+  }, [copy]);
   if (!copy) return <p>Aucune copie à corriger : coche des groupes dans l’évaluation.</p>;
   const go = (d: number) => setIndex((i) => Math.min(copies.length - 1, Math.max(0, i + d)));
   const deposit = copy.items
@@ -76,6 +85,33 @@ export function RenduReview({
         <p className="font-semibold">
           {title} · copie {index + 1} sur {copies.length} : {copy.name}
         </p>
+        <a
+          href={`?copy=${copy.id}`}
+          target="_blank"
+          rel="noopener"
+          className="text-sm underline underline-offset-2"
+        >
+          Ouvrir dans un nouvel onglet
+        </a>
+        <div role="group" aria-label="Vue" className="flex gap-1.5">
+          {(
+            [
+              ["copy", "Par copie"],
+              ["criterion", "Par critère"],
+            ] as const
+          ).map(([v, label]) => (
+            <Button
+              key={v}
+              type="button"
+              size="sm"
+              variant={view === v ? "default" : "outline"}
+              aria-pressed={view === v}
+              onClick={() => setView(v)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
         <div className="ml-auto flex gap-2">
           <Button
             type="button"
@@ -100,7 +136,85 @@ export function RenduReview({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      {view === "criterion" ? (
+        <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-2xl border p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 id="by-crit" className="font-heading text-lg font-bold">
+              Par critère
+            </h2>
+            <label className="flex items-center gap-2 text-sm">
+              Critère
+              <select
+                value={criterionId}
+                onChange={(e) => setCriterionId(e.target.value)}
+                className="border-input bg-background min-h-9 rounded-md border px-2"
+              >
+                {criteria
+                  .filter((c) => !c.isBonus)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Lettres et commentaires au chargement de la page ; change une lettre depuis la copie.
+          </p>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th scope="col" className="p-2 font-medium">
+                  Copie
+                </th>
+                <th scope="col" className="p-2 font-medium">
+                  Lettre
+                </th>
+                <th scope="col" className="p-2 font-medium">
+                  Commentaire
+                </th>
+                <th scope="col" className="p-2">
+                  <span className="sr-only">Action</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...copies]
+                .sort((a, b) => a.name.localeCompare(b.name, "fr"))
+                .map((c) => (
+                  <tr key={c.id} className="border-b align-top">
+                    <th scope="row" className="p-2 text-left font-medium">
+                      {c.name}
+                    </th>
+                    <td className="p-2 font-bold">{c.init.letters[criterionId] || "—"}</td>
+                    <td className="p-2 whitespace-pre-wrap">
+                      {c.init.texts[`crit:${criterionId}`]?.text || "—"}
+                    </td>
+                    <td className="p-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIndex(copies.findIndex((x) => x.id === c.id));
+                          setView("copy");
+                        }}
+                      >
+                        Voir le rendu
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
+
+      <div
+        hidden={view !== "copy"}
+        className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+      >
         <section
           aria-labelledby="rendu-title"
           className="bg-card space-y-3 rounded-2xl border p-4 lg:sticky lg:top-16 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto"
