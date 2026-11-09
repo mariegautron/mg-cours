@@ -232,6 +232,16 @@ export function SessionWorkspace({
               </label>
             ))}
           </div>
+          {status === "ready" && resources.some((r) => !r.ready) ? (
+            <p role="status" className="text-sun mt-1 text-sm font-semibold">
+              {(() => {
+                const n = resources.filter((r) => !r.ready).length;
+                return n > 1
+                  ? `${n} ressources du déroulé sont encore « À construire » : elles ne pourront pas être projetées.`
+                  : "1 ressource du déroulé est encore « À construire » : elle ne pourra pas être projetée.";
+              })()}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -373,7 +383,10 @@ export function SessionWorkspace({
                 >
                   <ArrowDown aria-hidden className="size-4" />
                 </button>
-                <Link href={`/resources/${r.id}`} className={BTN}>
+                <Link
+                  href={`/resources/${r.id}?module=${moduleId}&course=${courseId}`}
+                  className={BTN}
+                >
                   Ouvrir<span className="sr-only"> : {r.title}</span>
                 </Link>
                 <button type="button" className={BTN} onClick={() => remove(r)}>
@@ -528,7 +541,10 @@ export function SessionWorkspace({
           </div>
         </details>
         <div className="mt-3 flex flex-wrap gap-2.5">
-          <Link href="/resources/new" className={cn(BTN, "min-h-12 bg-transparent")}>
+          <Link
+            href={`/resources/new?module=${moduleId}&course=${courseId}`}
+            className={cn(BTN, "min-h-12 bg-transparent")}
+          >
             Créer une ressource
           </Link>
         </div>

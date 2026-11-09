@@ -34,6 +34,21 @@ export async function saveQuestion(
     if ("error" in result)
       return { errors: [`On n’a pas pu enregistrer la question : ${result.error}.`] };
     id = result.id;
+    // Créée depuis une ressource : la question y est liée tout de suite.
+    const resourceId = String(formData.get("linkResourceId") ?? "");
+    if (/^[0-9a-f-]{36}$/i.test(resourceId)) {
+      const { error } = await supabase
+        .from("resource_question")
+        .insert({ resource_id: resourceId, question_id: id });
+      if (!error) {
+        revalidatePath("/questions");
+        revalidatePath(`/resources/${resourceId}`);
+        if (formData.get("then") === "another") {
+          redirect(`/questions/new?resource=${resourceId}&ajoutee=1`);
+        }
+        redirect(`/resources/${resourceId}?question=ajoutee#linked-questions`);
+      }
+    }
   }
   revalidatePath("/questions");
   redirect(`/questions/${id}`);

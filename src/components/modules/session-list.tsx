@@ -31,7 +31,11 @@ export function SessionList({
   hoursMessage?: string | null;
 }) {
   const minutes = courses.reduce((n, c) => n + (minutesBetween(c.start_time, c.end_time) ?? 0), 0);
-  const ready = courses.filter((c) => c.prep_status === "ready").length;
+  // Une séance « Prête » dont le déroulé garde une ressource « À construire » ne compte pas comme
+  // prête : la ressource ne pourra pas être projetée.
+  const toBuild = (c: CourseWithResources) =>
+    c.resources.filter((r) => r.status !== "ready").length;
+  const ready = courses.filter((c) => c.prep_status === "ready" && toBuild(c) === 0).length;
   // Repère de la séance à faire (du jour ou prochaine), pour la retrouver en consultant une autre.
   const today = todayInParis();
   const focus = sessionToTeach(courses, today);
@@ -80,11 +84,22 @@ export function SessionList({
                     </Pill>
                   ) : null}
                   <Pill
-                    tone={c.completion ? "ok" : (STATUS_TONES[c.prep_status] ?? "plain")}
+                    tone={
+                      c.completion
+                        ? "ok"
+                        : c.prep_status === "ready" && toBuild(c) > 0
+                          ? "warn"
+                          : (STATUS_TONES[c.prep_status] ?? "plain")
+                    }
                     className="min-h-[22px] px-2 text-[0.75rem]"
                   >
                     {c.completion ? "Faite" : statusLabel(c.prep_status)}
                   </Pill>
+                  {!c.completion && c.prep_status === "ready" && toBuild(c) > 0 ? (
+                    <span className="text-sun text-right text-[0.7rem] leading-tight font-semibold">
+                      {toBuild(c)} ressource{toBuild(c) > 1 ? "s" : ""} à construire
+                    </span>
+                  ) : null}
                 </span>
               </Link>
             </li>

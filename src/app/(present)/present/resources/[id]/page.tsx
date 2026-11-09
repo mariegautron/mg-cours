@@ -16,13 +16,18 @@ export async function generateMetadata({
 
 export default async function PresentResourcePage({
   params,
+  searchParams,
 }: PageProps<"/present/resources/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
   const resource = await getResource(id);
   if (!resource) notFound();
+  // Aperçu d'une ressource « À construire » : Marie répète seule, rien n'est diffusé.
+  const rehearsal = sp.apercu === "1" && resource.status !== "ready";
+  const inWindow = sp.fenetre === "1";
 
   // Garde-fou : une ressource réservée à l'enseignante ne se projette pas.
-  if (resource.audience === "teacher" || resource.status !== "ready") {
+  if (resource.audience === "teacher" || (resource.status !== "ready" && !rehearsal)) {
     return (
       <main className="mx-auto max-w-xl space-y-4 p-12">
         <h1 className="text-2xl font-semibold">
@@ -44,11 +49,16 @@ export default async function PresentResourcePage({
 
   return (
     <PresentShell
-      title={resource.title}
+      title={
+        rehearsal ? `Aperçu : non visible des étudiant·es · ${resource.title}` : resource.title
+      }
       backHref={`/resources/${resource.id}`}
       backLabel="à la ressource"
       sections={[resource.title]}
       slides={resourceSlides(0, resource)}
+      footerNote={rehearsal ? "Aperçu : non visible des étudiant·es" : undefined}
+      startInSlides={inWindow}
+      closeWindowOnQuit={inWindow}
     />
   );
 }

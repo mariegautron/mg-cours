@@ -11,6 +11,7 @@ import {
   updateResource,
   type ResourceFormState,
 } from "@/app/(app)/resources/actions";
+import type { CourseOrigin } from "@/lib/resources/course-origin";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export function ResourceForm({
   modules = [],
   defaultModuleId = "",
   defaultTitle = "",
+  origin = null,
 }: {
   action: Action;
   resource?: Tables<"resource">;
@@ -68,6 +70,8 @@ export function ResourceForm({
   modules?: { id: string; name: string; year: number }[];
   defaultModuleId?: string;
   defaultTitle?: string;
+  /** Séance d'où l'on vient : la ressource y est ajoutée et on y revient après « Enregistrer ». */
+  origin?: CourseOrigin | null;
   /** Matières proposées dans le champ « Matière » (déjà utilisées + liste guidée). */
   subjects: string[];
 }) {
@@ -247,6 +251,12 @@ export function ResourceForm({
       }}
       className="max-w-7xl space-y-5"
     >
+      {origin ? (
+        <>
+          <input type="hidden" name="fromModuleId" value={origin.moduleId} />
+          <input type="hidden" name="fromCourseId" value={origin.courseId} />
+        </>
+      ) : null}
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <section className="min-w-0 flex-[3_1_0] space-y-3">
           <div
@@ -698,7 +708,7 @@ export function ResourceForm({
                 <select
                   id="status"
                   name="status"
-                  defaultValue={resource?.status ?? "ready"}
+                  defaultValue={resource?.status ?? "progress"}
                   className={SELECT_CLASS}
                 >
                   {RESOURCE_STATUSES.map((status) => (
@@ -831,12 +841,16 @@ export function ResourceForm({
 
       <div className="bg-background/95 sticky bottom-0 -mx-1 flex flex-wrap items-center justify-between gap-3 border-t px-1 py-3 backdrop-blur">
         <Button type="button" variant="ghost" asChild>
-          <Link href={resource ? `/resources/${resource.id}` : "/resources"}>← Retour</Link>
+          <Link href={origin ? origin.href : resource ? `/resources/${resource.id}` : "/resources"}>
+            ← {origin ? origin.label : "Retour"}
+          </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-muted-foreground text-sm">
-            Pas fini ? Elle reste « À construire ».
-          </span>
+          {resource?.status !== "ready" ? (
+            <span className="text-muted-foreground text-sm">
+              Pas fini ? Elle reste « À construire ».
+            </span>
+          ) : null}
           <PendingButton
             type="submit"
             variant="secondary"

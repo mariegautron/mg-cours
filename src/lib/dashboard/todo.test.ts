@@ -83,7 +83,7 @@ describe("buildTodos", () => {
     const prep = todos.find((t) => t.key === "prep-c1")!;
     expect(prep.title).toBe("Préparer la séance 5");
     expect(prep.detail).toContain("demain");
-    expect(prep.href).toBe("/modules/m1/courses/c1/edit");
+    expect(prep.href).toBe("/modules/m1/courses/c1#deroule");
   });
   it("le plus urgent d'abord après tri", () => {
     expect(pickTodos(buildTodos(base))[0].key).toBe("outline-m1");

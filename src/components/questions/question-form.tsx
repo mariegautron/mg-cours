@@ -32,10 +32,13 @@ export function QuestionForm({
   id,
   initial,
   categories,
+  resource,
 }: {
   id: string | null;
   initial?: QuestionInput;
   categories: string[];
+  /** Ressource d'où l'on vient : la question y est liée dès l'enregistrement. */
+  resource?: { id: string; title: string };
 }) {
   const [state, action, pending] = useActionState(
     saveQuestion.bind(null, id),
@@ -340,9 +343,17 @@ export function QuestionForm({
         />
       </div>
 
-      <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
-        Enregistrer la question
-      </PendingButton>
+      {resource ? <input type="hidden" name="linkResourceId" value={resource.id} /> : null}
+      <div className="flex flex-wrap gap-2">
+        <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
+          Enregistrer la question
+        </PendingButton>
+        {resource ? (
+          <Button type="submit" name="then" value="another" variant="outline" disabled={pending}>
+            Enregistrer et ajouter une autre
+          </Button>
+        ) : null}
+      </div>
     </form>
   );
 }

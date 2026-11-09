@@ -127,7 +127,7 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       kind: "session_prep",
       title: `Préparer la séance ${c.position}`,
       detail: `${c.module.name} · ${c.title} · ${inDays(d)}`,
-      href: `/modules/${c.module.id}/courses/${c.id}/edit`,
+      href: `/modules/${c.module.id}/courses/${c.id}#deroule`,
       urgency: d,
     });
   }

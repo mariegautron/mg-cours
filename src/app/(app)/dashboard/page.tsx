@@ -698,7 +698,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               </p>
               <div className="flex flex-wrap gap-2.5">
                 <Link
-                  href={`/modules/${upcoming.module.id}/courses/${upcoming.id}/edit`}
+                  href={`/modules/${upcoming.module.id}/courses/${upcoming.id}#deroule`}
                   className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
                 >
                   Préparer la séance {upcoming.position}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { ActionError } from "@/components/action-error";
 import type { LinkState } from "@/app/(app)/questions/link-actions";
@@ -32,6 +33,11 @@ export function LinkPicker({
   idPrefix?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  const router = useRouter();
+  // Liens enregistrés : la page relit les liaisons (« liée à aucune ressource » disparaît).
+  useEffect(() => {
+    if (state.saved) router.refresh();
+  }, [state, router]);
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const [picked, setPicked] = useState(() => new Set(selected));

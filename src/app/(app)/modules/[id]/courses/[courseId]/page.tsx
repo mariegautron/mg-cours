@@ -53,7 +53,10 @@ export default async function CoursePage({
   searchParams,
 }: PageProps<"/modules/[id]/courses/[courseId]">) {
   const { id, courseId } = await params;
-  const saved = (await searchParams).saved === "1";
+  const sp = await searchParams;
+  const saved = sp.saved === "1";
+  // Retour de « Créer une ressource » / « Enregistrer » ouverts depuis le déroulé.
+  const added = sp.ajoutee === "1";
   const [
     mod,
     courses,
@@ -160,9 +163,9 @@ export default async function CoursePage({
               <h1 id="ws" className="font-heading text-2xl font-bold">
                 {course.title}
               </h1>
-              {saved ? (
+              {saved || added ? (
                 <p role="status" className="text-mint text-sm font-semibold">
-                  Enregistré.
+                  {added ? "Ressource ajoutée au déroulé." : "Enregistré."}
                 </p>
               ) : null}
               {course.completion ? (

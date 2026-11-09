@@ -1,6 +1,7 @@
 "use server";
 
 import { retainResource } from "@/app/(app)/modules/[id]/retained/actions";
+import { addCourseResource } from "@/app/(app)/modules/[id]/courses/workspace-actions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -35,6 +36,19 @@ async function retainIfAsked(resourceId: string, formData: FormData): Promise<vo
   await retainResource(moduleId, resourceId);
 }
 
+/**
+ * Ouverte depuis une séance : la ressource est ajoutée à la fin de son déroulé (et retenue pour le
+ * module), puis on revient à la séance avec « Ressource ajoutée au déroulé ».
+ */
+async function backToCourse(resourceId: string, formData: FormData): Promise<void> {
+  const moduleId = String(formData.get("fromModuleId") ?? "");
+  const courseId = String(formData.get("fromCourseId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(moduleId) || !/^[0-9a-f-]{36}$/i.test(courseId)) return;
+  const result = await addCourseResource(moduleId, courseId, resourceId);
+  if (result.error) return;
+  redirect(`/modules/${moduleId}/courses/${courseId}?ajoutee=1#deroule`);
+}
+
 export async function createResource(
   _prev: ResourceFormState,
   formData: FormData,
@@ -66,6 +80,7 @@ export async function createResource(
 
   await retainIfAsked(data.id, formData);
   revalidatePath("/resources");
+  await backToCourse(data.id, formData);
   redirect(`/resources/${data.id}`);
 }
 
@@ -100,6 +115,7 @@ export async function updateResource(
 
   revalidatePath("/resources");
   revalidatePath(`/resources/${id}`);
+  await backToCourse(id, formData);
   redirect(`/resources/${id}`);
 }
 

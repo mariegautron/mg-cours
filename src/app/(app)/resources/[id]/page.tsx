@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/empty-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { History, Presentation } from "lucide-react";
+import { History } from "lucide-react";
 
 import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { AddToModule } from "@/components/resources/add-to-module";
@@ -22,6 +22,8 @@ import { LinkPicker } from "@/components/questions/link-picker";
 import { listQuestionLinks } from "@/lib/questions/link-queries";
 import { linkedQuestionsTitle } from "@/lib/questions/links";
 import { listQuestions } from "@/lib/questions/queries";
+import { OpenInWindowButton } from "@/components/present/open-in-window-button";
+import { originQuery, readCourseOrigin } from "@/lib/resources/course-origin";
 
 export async function generateMetadata({
   params,
@@ -31,14 +33,18 @@ export async function generateMetadata({
   return { title: resource?.title ?? "Ressource" };
 }
 
-export default async function ResourcePage({ params }: PageProps<"/resources/[id]">) {
+export default async function ResourcePage({ params, searchParams }: PageProps<"/resources/[id]">) {
   const { id } = await params;
-  const [resource, modules, links, bank] = await Promise.all([
+  const sp = await searchParams;
+  const [resource, modules, links, bank, origin] = await Promise.all([
     getResource(id),
     getResourceModules(id),
     listQuestionLinks(),
     listQuestions(),
+    readCourseOrigin(sp),
   ]);
+  const questionAdded = sp.question === "ajoutee";
+  const fromCourse = origin ? `?${originQuery(origin.moduleId, origin.courseId)}` : "";
   if (!resource) notFound();
   const files = parseResourceFiles(resource.files);
   const outline = resource.content ? markdownOutline(resource.content, "c") : [];
@@ -67,7 +73,9 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
             {resource.archived_at ? <Badge variant="outline">Archivée</Badge> : null}
           </h1>
           <Button asChild variant="ghost" size="touch">
-            <Link href="/resources">← Bibliothèque</Link>
+            <Link href={origin ? origin.href : "/resources"}>
+              ← {origin ? origin.label : "Bibliothèque"}
+            </Link>
           </Button>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -85,9 +93,15 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
           />
         )}
         {resource.intent_note ? (
-          <p className="max-w-prose text-sm">
-            <strong>À construire :</strong> {resource.intent_note}
-          </p>
+          resource.status === "ready" ? (
+            <p className="text-muted-foreground max-w-prose text-sm">
+              Note : {resource.intent_note}
+            </p>
+          ) : (
+            <p className="max-w-prose text-sm">
+              <strong>À construire :</strong> {resource.intent_note}
+            </p>
+          )
         ) : null}
         {resource.description ? (
           <p className="text-muted-foreground max-w-prose">{resource.description}</p>
@@ -101,7 +115,7 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
               </span>
             </li>
             <li>
-              <Link href={`/resources/${resource.id}/edit`} className={tab}>
+              <Link href={`/resources/${resource.id}/edit${fromCourse}`} className={tab}>
                 Modifier
               </Link>
             </li>
@@ -176,7 +190,9 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
                   compact
                   title="Cette ressource n’a pas de question"
                   description="Ajoutes-en pour lancer un quiz ou générer un QCM."
-                  actions={[{ label: "Ajouter une question", href: "/questions/new" }]}
+                  actions={[
+                    { label: "Ajouter une question", href: `/questions/new?resource=${id}` },
+                  ]}
                 />
               ) : (
                 <ul className="space-y-1 text-sm">
@@ -190,6 +206,16 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
                   ))}
                 </ul>
               )}
+              {questionAdded ? (
+                <p role="status" className="text-mint text-sm font-semibold">
+                  Question ajoutée.
+                </p>
+              ) : null}
+              {linkedQuestions.length > 0 ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/questions/new?resource=${id}`}>Ajouter une question</Link>
+                </Button>
+              ) : null}
               {bank.length ? (
                 <details className="rounded-md border p-3">
                   <summary className="cursor-pointer text-sm font-medium">
@@ -242,13 +268,18 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
             Actions
           </h2>
           <div className="flex flex-col items-start gap-2">
-            {teacherOnly ? null : (
-              <Button asChild>
-                <Link href={`/present/resources/${resource.id}`}>
-                  <Presentation aria-hidden />
-                  Présenter
-                </Link>
-              </Button>
+            {teacherOnly ? null : resource.status === "ready" ? (
+              <OpenInWindowButton href={`/present/resources/${resource.id}`} variant="default">
+                Présenter
+              </OpenInWindowButton>
+            ) : (
+              // À construire : répétition possible, jamais montrée aux étudiant·es.
+              <OpenInWindowButton
+                href={`/present/resources/${resource.id}?apercu=1`}
+                variant="outline"
+              >
+                Aperçu (pas encore projetable)
+              </OpenInWindowButton>
             )}
             <Button asChild variant="ghost">
               <Link href={`/resources/${resource.id}/history`}>
