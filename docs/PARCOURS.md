@@ -128,7 +128,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : « Prêt pour le jour J ? » : signaux justes (cadre « Complet », « Où rendre » selon le mode de dépôt, « QCM publié », fichiers facultatifs, « Pas rattachée à une séance », « Publié (à jour) » se décoche) (`1786459`, `55c6ede`) ; replié par défaut (`9302a81`).
   - 9 nov. : squelette du brief aligné sur « Prévues » (`041a0e0`) ; filtre Module avec l'année, « Groupe Groupe », textes (`172c770`) ; « Visible après la mise à jour » (`bd5d486`) ; reprendre un projet sur un module qui en a déjà un, avec confirmation (`22c78f2`).
   - 9 nov. : cadre « Complet » seulement avec date et « Où rendre », coefficient de la carte = règle YNOV (`8b4af49`).
-  - Reste : lenteur à mesurer.
+  - 9 nov. : carte « Évaluations à venir » enfin affichée (requête cassée) (`a2b08f6`) ; coefficient de l'en-tête = règle YNOV (`c443013`) ; réglage de durée de l'oral ouvert tant qu'elle manque, aussi dans « Modifier » (`6429645`).
+  - Reste : lenteur à mesurer ; le coefficient saisi n'est jamais utilisé (audit schéma).
 
 ## P8 · Corriger et noter
 
@@ -170,7 +171,8 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - 9 nov. : « Copie rendue le … » sur le bandeau QCM (`11baa9b`), heures « 8/11 à 0 h 18 » (`8f74b30`), anciennes versions des dépôts consultables par Marie (`3c7e674`), contact « Une question ? Écris à Marie » d'après l'e-mail de Réglages (`ccdcddb`).
   - 9 nov. : bandeau QCM lu en direct, « Publié le … » rafraîchi après la mise à jour (`74b0c65`).
-  - Reste : « Retirer l'ancienne note ».
+  - 9 nov. : rattrapage rendu = plus de QCM principal « ouvert » (`37569f7`).
+  - Reste : « Retirer l'ancienne note » ; adresse de contact (e-mail du compte affiché, en attente de la décision d'Arnaud).
 
 ## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
 
