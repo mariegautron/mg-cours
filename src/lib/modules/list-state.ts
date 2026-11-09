@@ -31,7 +31,7 @@ export const FILTERS: readonly { key: ListFilter; label: string }[] = [
   { key: "running", label: "En cours" },
   { key: "to_prepare", label: "À préparer" },
   { key: "finished", label: "Terminés" },
-  { key: "archived", label: "Rangés" },
+  { key: "archived", label: "Archivés" },
 ];
 
 export function parseListFilter(value: unknown): ListFilter {

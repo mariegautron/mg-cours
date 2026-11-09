@@ -43,7 +43,7 @@ const EMPTY: Record<ListFilter, { title: string; description: string }> = {
   },
   archived: {
     title: "Aucun module rangé",
-    description: "« Ranger » masque un module sans rien effacer : tu le retrouves ici.",
+    description: "« Archiver » masque un module sans rien effacer : tu le retrouves ici.",
   },
 };
 

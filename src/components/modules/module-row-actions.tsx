@@ -75,7 +75,7 @@ export function ModuleRowActions({
     start(async () => {
       await archiveModule(id);
       toast.success(archivedMessage(name), {
-        description: "Il est dans « Rangés ». Tu peux le restaurer.",
+        description: "Il est dans « Archivés ». Tu peux le restaurer.",
         duration: UNDO_WINDOW_MS,
         action: {
           label: "Annuler",
@@ -106,15 +106,11 @@ export function ModuleRowActions({
 
   return (
     <>
-      {state === "running" || state === "taught" ? (
-        <button
-          type="button"
-          className={BTN}
-          aria-expanded={confirming}
-          onClick={() => setConfirming(true)}
-        >
+      {/* Un seul chemin pour terminer : la liste de contrôle, une fois toutes les séances faites. */}
+      {state === "taught" ? (
+        <Link href={`/modules/${id}/finish`} className={BTN}>
           Terminer<span className="sr-only"> : {name}</span>
-        </button>
+        </Link>
       ) : null}
       {state === "taught" || state === "finished" ? (
         <Link href={`/modules/${id}/billing`} className={BTN}>
@@ -127,7 +123,7 @@ export function ModuleRowActions({
             Rouvrir<span className="sr-only"> : {name}</span>
           </button>
           <button type="button" className={BTN} disabled={pending} onClick={archive}>
-            Ranger<span className="sr-only"> : {name}</span>
+            Archiver<span className="sr-only"> : {name}</span>
           </button>
         </>
       ) : null}

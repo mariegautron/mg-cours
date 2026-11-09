@@ -10,6 +10,8 @@ import { loadInvoiceContext } from "@/lib/invoice/queries";
 import { agreementDeposited } from "@/lib/modules/documents";
 import { finishChecklist } from "@/lib/modules/finish";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
+import { getAppreciationProgress } from "@/lib/appreciations/queries";
+import { createClient } from "@/lib/supabase/server";
 import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 
 export const metadata: Metadata = { title: "Terminer le module" };
@@ -26,6 +28,20 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     getModuleDocuments(id),
   ]);
   if (!mod || !ctx) notFound();
+  const supabase = await createClient();
+  const [appreciations, feedbackLink, feedbackCount] = await Promise.all([
+    getAppreciationProgress(id),
+    supabase
+      .from("module_feedback_link")
+      .select("token")
+      .eq("module_id", id)
+      .is("revoked_at", null)
+      .maybeSingle(),
+    supabase
+      .from("module_feedback")
+      .select("id", { count: "exact", head: true })
+      .eq("module_id", id),
+  ]);
 
   const items = finishChecklist({
     courses: courses.map((c) => ({ completion: c.completion })),
@@ -34,6 +50,17 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     invoiceSent: isSent(mod.iceberg_state),
     invoicePaid: isPaid(mod.iceberg_state),
     agreementDeposited: agreementDeposited(documents),
+    appreciations: { written: appreciations.written, total: appreciations.total },
+    feedbackResponses: feedbackLink.data ? (feedbackCount.count ?? 0) : null,
+    hrefs: {
+      sessions: `/modules/${id}/courses`,
+      notes: `/modules/${id}/documents#admin-docs`,
+      appreciations: `/modules/${id}/appreciations`,
+      documents: `/modules/${id}/documents#admin-docs`,
+      invoice: `/modules/${id}/billing`,
+      agreement: `/modules/${id}/documents#convention`,
+      feedback: `/modules/${id}/feedback`,
+    },
   });
   const card = "bg-card rounded-xl border p-5";
 
@@ -45,19 +72,29 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           Terminer le module
         </h1>
         <p className="text-muted-foreground">
-          Tout ce qu’il reste avant de le ranger. Rien n’est bloquant : tu peux revenir.
+          Tout ce qu’il reste avant de le terminer. Rien n’est bloquant : tu peux revenir.
         </p>
         <ul className="divide-y">
           {items.map((i) => (
             <li key={i.key} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="flex items-center gap-3">
-                <Pill tone={i.done ? "ok" : "warn"}>{i.done ? "✓" : "!"}</Pill>
+                <Pill tone={i.done ? "ok" : i.optional ? "lock" : "warn"}>
+                  {i.done ? "✓" : i.optional ? "·" : "!"}
+                </Pill>
                 <div>
-                  <strong>{i.label}</strong>
+                  {i.href ? (
+                    <Link href={i.href} className="font-bold underline-offset-2 hover:underline">
+                      {i.label}
+                    </Link>
+                  ) : (
+                    <strong>{i.label}</strong>
+                  )}
                   <div className="text-muted-foreground text-sm">{i.detail}</div>
                 </div>
               </div>
-              <Pill tone={i.done ? "ok" : "warn"}>{i.done ? "Fait" : "À faire"}</Pill>
+              <Pill tone={i.done ? "ok" : i.optional ? "lock" : "warn"}>
+                {i.done ? "Fait" : i.optional ? "Facultatif" : "À faire"}
+              </Pill>
             </li>
           ))}
         </ul>
@@ -74,7 +111,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
         >
           <h2 id="cl" className="font-heading text-xl font-bold">
-            Ranger le module
+            Terminer
           </h2>
           <p className="text-muted-foreground text-sm">
             Le module sort de la liste « en cours ». Tu le retrouves dans « Terminés », et tu peux

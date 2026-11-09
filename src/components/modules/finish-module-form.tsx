@@ -76,7 +76,7 @@ export function FinishModuleForm({
         pendingLabel="Rangement…"
         onClick={finish}
       >
-        Terminer et ranger
+        Terminer le module
       </PendingButton>
     </div>
   );
