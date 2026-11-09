@@ -45,3 +45,28 @@ export function groupsBySchoolYear<G extends GroupWithModule>(groups: G[]): Scho
         })),
     }));
 }
+
+/**
+ * Noms projetés « Prénom + initiale » ; quand deux personnes ont le même prénom et la même
+ * initiale, l'initiale s'allonge jusqu'à ce qu'elles diffèrent (« Maxence Pa. », « Maxence Pe. »).
+ */
+export function projectedNames(
+  people: { id: string; first_name: string; last_name: string }[],
+): Map<string, string> {
+  const result = new Map<string, string>();
+  const key = (s: string) => s.trim().toLocaleLowerCase("fr");
+  for (const p of people) {
+    const last = p.last_name.trim();
+    const twins = people.filter((o) => o.id !== p.id && key(o.first_name) === key(p.first_name));
+    let n = 1;
+    while (
+      n < last.length &&
+      twins.some((o) => key(o.last_name.trim().slice(0, n)) === key(last.slice(0, n)))
+    ) {
+      n++;
+    }
+    const short = last.slice(0, n);
+    result.set(p.id, `${p.first_name.trim()} ${short}${short.length < last.length ? "." : ""}`);
+  }
+  return result;
+}

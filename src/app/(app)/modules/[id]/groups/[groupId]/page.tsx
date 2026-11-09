@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ObservationItem } from "@/components/notebook/observation-item";
 import { listGroupObservations } from "@/lib/notebook/queries";
 import { createClient } from "@/lib/supabase/server";
-import { getGroup, listStudents } from "@/lib/students/queries";
+import { getGroup, listModuleGroups, listStudents } from "@/lib/students/queries";
 
 const GROUP_TYPE_LABELS: Record<string, string> = { tp: "TP", td: "TD", project: "Projet" };
 
@@ -21,11 +21,14 @@ export async function generateMetadata({
 
 export default async function GroupPage({ params }: PageProps<"/modules/[id]/groups/[groupId]">) {
   const { id, groupId } = await params;
-  const [group, students, observations] = await Promise.all([
+  const [group, students, observations, moduleGroups] = await Promise.all([
     getGroup(groupId),
     listStudents(),
     listGroupObservations(groupId),
+    listModuleGroups(id),
   ]);
+  // Les personnes du module (dans au moins un de ses groupes) sont proposées en premier.
+  const moduleStudentIds = [...new Set(moduleGroups.flatMap((g) => g.members.map((m) => m.id)))];
   if (!group || group.module_id !== id) notFound();
   const supabase = await createClient();
   const { data: rawGrades } = await supabase
@@ -55,7 +58,13 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
         <DeleteGroupButton moduleId={id} groupId={groupId} />
       </div>
 
-      <GroupMembers moduleId={id} groupId={groupId} members={group.members} candidates={students} />
+      <GroupMembers
+        moduleId={id}
+        groupId={groupId}
+        members={group.members}
+        candidates={students}
+        moduleStudentIds={moduleStudentIds}
+      />
 
       <section aria-labelledby="group-notes" className="bg-card space-y-2 rounded-xl border p-5">
         <h2 id="group-notes" className="text-lg font-semibold">

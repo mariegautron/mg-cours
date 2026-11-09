@@ -11,6 +11,7 @@ import {
 import { ActionError } from "@/components/action-error";
 import { Pill } from "@/components/dashboard/pill";
 import { StudentPhoto } from "@/components/students/student-photo";
+import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -219,9 +220,9 @@ export function GroupWizard({
           <Button asChild>
             <Link href={`/modules/${moduleId}/groups`}>Voir les groupes du module</Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link href={`/present/modules/${moduleId}/groups`}>Projeter la liste des groupes</Link>
-          </Button>
+          <OpenInWindowButton href={`/present/modules/${moduleId}/groups`} variant="outline">
+            Projeter la liste des groupes
+          </OpenInWindowButton>
         </div>
       </section>
     );
@@ -792,16 +793,9 @@ export function GroupWizard({
               {groups.map((g, gi) => (
                 <li key={g.id} className="flex flex-wrap items-center gap-3 border-t py-3">
                   <div className="w-44 min-w-0">
-                    <Label htmlFor={`name-${g.id}`} className="sr-only">
-                      Nom du groupe {gi + 1}
-                    </Label>
-                    <Input
-                      id={`name-${g.id}`}
-                      value={g.name}
-                      maxLength={100}
-                      onChange={(e) => setGroups(renameGroup(groups, g.id, e.target.value))}
-                      className="font-heading min-h-11 font-bold"
-                    />
+                    <h3 className="font-heading text-base font-bold break-words">
+                      {g.name.trim() || `Groupe ${gi + 1}`}
+                    </h3>
                     <span className="text-muted-foreground text-[0.8rem]">
                       {g.members.length} personne{g.members.length > 1 ? "s" : ""}
                     </span>

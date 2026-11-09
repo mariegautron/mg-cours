@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { PresentShell } from "@/components/present/present-shell";
 import { getModule } from "@/lib/modules/queries";
+import { projectedNames } from "@/lib/students/groups";
 import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Les groupes — présentation" };
@@ -10,10 +11,15 @@ export const metadata: Metadata = { title: "Les groupes — présentation" };
 /** La liste des groupes projetée en classe : noms seulement, jamais de photo ni de note. */
 export default async function PresentGroupsPage({
   params,
+  searchParams,
 }: PageProps<"/present/modules/[id]/groups">) {
   const { id } = await params;
+  const inWindow = (await searchParams).fenetre === "1";
   const [mod, groups] = await Promise.all([getModule(id), listModuleGroups(id)]);
   if (!mod) notFound();
+  const names = projectedNames([
+    ...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values(),
+  ]);
 
   return (
     <PresentShell
@@ -21,6 +27,8 @@ export default async function PresentGroupsPage({
       backHref={`/modules/${id}/groups`}
       backLabel="aux groupes du module"
       sections={["Groupes"]}
+      startInSlides
+      closeWindowOnQuit={inWindow}
       slides={[
         {
           section: 0,
@@ -37,9 +45,7 @@ export default async function PresentGroupsPage({
                       <h3 className="font-heading text-4xl font-bold">{g.name}</h3>
                       <ul className="mt-3 space-y-1 text-3xl">
                         {g.members.map((m) => (
-                          <li key={m.id}>
-                            {m.first_name} {m.last_name.charAt(0)}.
-                          </li>
+                          <li key={m.id}>{names.get(m.id)}</li>
                         ))}
                       </ul>
                     </li>

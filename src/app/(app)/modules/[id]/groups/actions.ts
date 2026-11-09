@@ -121,3 +121,71 @@ export async function removeMember(moduleId: string, groupId: string, studentId:
     .eq("student_id", studentId);
   revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
 }
+
+/**
+ * Arrivant·e tardif·ve : crée la fiche et l'ajoute au groupe en une fois (elle rejoint ainsi le
+ * module). Inscrite à l'année du module, comme un import.
+ */
+export async function createAndAddMember(
+  moduleId: string,
+  groupId: string,
+  input: { firstName: string; lastName: string; email: string },
+): Promise<{ error?: string; studentId?: string; name?: string }> {
+  "use server";
+  const firstName = input.firstName.trim().slice(0, 100);
+  const lastName = input.lastName.trim().slice(0, 100);
+  const email = input.email.trim().toLowerCase().slice(0, 200) || null;
+  if (!firstName || !lastName) return { error: "Le prénom et le nom sont obligatoires." };
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "E-mail invalide." };
+
+  const supabase = await createClient();
+  const [{ data: group }, { data: mod }] = await Promise.all([
+    supabase
+      .from("student_group")
+      .select("id")
+      .eq("id", groupId)
+      .eq("module_id", moduleId)
+      .maybeSingle(),
+    supabase.from("module").select("year").eq("id", moduleId).maybeSingle(),
+  ]);
+  if (!group || !mod) return { error: NOT_FOUND.group };
+
+  // Même e-mail déjà en base : on reprend la fiche au lieu de créer un doublon.
+  let studentId: string | null = null;
+  if (email) {
+    const { data: known } = await supabase
+      .from("student")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    studentId = known?.id ?? null;
+  }
+  if (!studentId) {
+    const { data: created, error } = await supabase
+      .from("student")
+      .insert({ first_name: firstName, last_name: lastName, email })
+      .select("id")
+      .single();
+    if (error || !created) return { error: failure("créer la fiche") };
+    studentId = created.id;
+    await supabase
+      .from("student_year")
+      .upsert(
+        { student_id: studentId, year: mod.year, scholar_group: null },
+        { onConflict: "student_id,year", ignoreDuplicates: true },
+      );
+  }
+
+  const { error } = await supabase
+    .from("group_member")
+    .upsert(
+      { student_group_id: groupId, student_id: studentId },
+      { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
+    );
+  if (error) return { error: failure("ajouter au groupe") };
+
+  revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath("/students");
+  return { studentId, name: `${firstName} ${lastName}` };
+}

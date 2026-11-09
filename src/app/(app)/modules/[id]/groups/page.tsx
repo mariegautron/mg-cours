@@ -15,6 +15,7 @@ import { listModuleObservations } from "@/lib/notebook/queries";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
+import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { Button } from "@/components/ui/button";
 import {
   listModuleAssessments,
@@ -101,10 +102,20 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
               <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
             </Button>
             {groups.length > 0 ? (
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/present/modules/${mod.id}/groups`}>Projeter la liste</Link>
-              </Button>
+              <OpenInWindowButton
+                href={`/present/modules/${mod.id}/groups`}
+                size="sm"
+                variant="outline"
+              >
+                Projeter la liste
+              </OpenInWindowButton>
             ) : null}
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/modules/${mod.id}/groups/import`}>Ajouter les étudiant·es</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/students/photos">Trombinoscope</Link>
+            </Button>
             <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
             </Button>
@@ -123,7 +134,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
             description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes. Il faut des étudiant·es dans le module pour former des groupes."
             actions={[
               { label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` },
-              { label: "Ajouter les étudiant·es", href: "/students/import" },
+              { label: "Ajouter les étudiant·es", href: `/modules/${mod.id}/groups/import` },
             ]}
           />
         ) : (

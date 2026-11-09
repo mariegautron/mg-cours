@@ -17,6 +17,7 @@ import { countCourseQcm } from "@/lib/present/qcm-data";
 import { prepItems } from "@/lib/present/items";
 import { studentFacing } from "@/lib/resources/kind";
 import { previousNextTime } from "@/lib/present/reprise";
+import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Avant de commencer" };
 
@@ -25,13 +26,14 @@ export default async function StartCoursePage({
   params,
 }: PageProps<"/modules/[id]/courses/[courseId]/start">) {
   const { id, courseId } = await params;
-  const [mod, courses, resources, subjects, assessments, activities] = await Promise.all([
+  const [mod, courses, resources, subjects, assessments, activities, groups] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
     getCourseResourcesFull(courseId),
     loadCourseSubjects(id, courseId),
     listModuleAssessments(id),
     getCourseActivities(courseId),
+    listModuleGroups(id),
   ]);
   const position = courses.findIndex((c) => c.id === courseId);
   if (!mod || position === -1) notFound();
@@ -63,6 +65,13 @@ export default async function StartCoursePage({
       .map((a) => a.title),
   });
 
+  // Classe pas encore en place : personne dans les groupes, ou pas de groupes alors qu'une
+  // évaluation se note en groupe.
+  const peopleCount = new Set(groups.flatMap((g) => g.members.map((m) => m.id))).size;
+  const classMissing =
+    peopleCount === 0 ||
+    (groups.length === 0 && assessments.some((a) => a.is_group_grade && !a.makeup_of_id));
+
   const when = course.session_date
     ? new Date(`${course.session_date}T12:00:00`).toLocaleDateString("fr-FR", {
         weekday: "long",
@@ -89,6 +98,34 @@ export default async function StartCoursePage({
           <Link href={`/modules/${id}/courses/${courseId}`}>← Retour à la séance</Link>
         </Button>
       </div>
+      {classMissing ? (
+        <section
+          aria-labelledby="class-missing"
+          className="border-sun/60 bg-sun/10 space-y-2 rounded-xl border p-4"
+        >
+          <h2 id="class-missing" className="font-heading text-lg font-bold">
+            Ta classe n’est pas encore en place
+          </h2>
+          <p className="text-sm">
+            {peopleCount === 0
+              ? "Aucun·e étudiant·e dans ce module pour l’instant."
+              : "Pas encore de groupes dans ce module."}{" "}
+            Les deux pages s’ouvrent dans un nouvel onglet : tu ne perds pas le lancement du cours.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="touch">
+              <a href={`/modules/${id}/groups/import`} target="_blank" rel="noopener noreferrer">
+                Importer la liste<span className="sr-only"> (nouvel onglet)</span>
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="touch">
+              <a href={`/modules/${id}/groups/wizard`} target="_blank" rel="noopener noreferrer">
+                Faire les groupes<span className="sr-only"> (nouvel onglet)</span>
+              </a>
+            </Button>
+          </div>
+        </section>
+      ) : null}
       {activities.available && resources.length > 0 ? (
         <p role="status" className="text-sm font-medium">
           {

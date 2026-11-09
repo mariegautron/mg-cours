@@ -4,7 +4,16 @@ import { attachGroupsToUngroupedAssessments } from "@/lib/assessments/attach-gro
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { parseStudentsFile, type ParsedStudentRow } from "@/lib/students/import";
+import {
+  buildRows,
+  decodeCsv,
+  detectRoles,
+  readTable,
+  type ColumnRole,
+  type NameOrder,
+  type ParsedStudentRow,
+  type RawTable,
+} from "@/lib/students/import";
 import {
   planGroupImport,
   promotionOf,
@@ -98,7 +107,9 @@ export async function createStudent(
   }
 
   revalidatePath("/students");
-  redirect("/students");
+  // Vers la fiche créée : la liste complète (lourde) mettait plus de 6 s à se recalculer
+  // derrière « Enregistrement… » alors que la fiche était déjà créée.
+  redirect(`/students/${created!.id}`);
 }
 
 export async function updateStudent(
@@ -156,6 +167,10 @@ export async function deleteStudent(id: string) {
 export interface ImportPreviewState {
   error?: string;
   rows?: ParsedStudentRow[];
+  /** Tableau brut et rôle détecté de chaque colonne : l'aperçu permet de les changer. */
+  table?: RawTable;
+  roles?: ColumnRole[];
+  nameOrder?: NameOrder;
   /** Année scolaire choisie pour l'import (année de rentrée). */
   year?: number;
   /** e-mails déjà présents en base : ces étudiant·es seront inscrit·es à l'année, sans doublon. */
@@ -205,12 +220,21 @@ export async function previewStudentsImport(
   const target = readGroupTarget(formData);
 
   let rows: ParsedStudentRow[];
+  let table: RawTable;
+  let roles: ColumnRole[];
+  let nameOrder: NameOrder;
   try {
     const buffer = await file.arrayBuffer();
-    const isCsv = file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv";
-    // XLSX.read en mode "array" décode les octets en Latin-1 : pour du CSV (texte),
-    // on décode nous-mêmes en UTF-8 avant de parser (voir src/lib/students/import.ts).
-    rows = parseStudentsFile(isCsv ? new TextDecoder("utf-8").decode(buffer) : buffer);
+    const name = file.name.toLowerCase();
+    const isText =
+      name.endsWith(".csv") ||
+      name.endsWith(".txt") ||
+      name.endsWith(".tsv") ||
+      file.type.startsWith("text/");
+    // CSV : décodé par nous (UTF-8, sinon Windows-1252) puis lu avec détection du séparateur.
+    table = readTable(isText ? decodeCsv(buffer) : buffer);
+    ({ roles, nameOrder } = detectRoles(table.headers));
+    rows = buildRows(table, roles, { nameOrder });
   } catch {
     return { error: "Fichier illisible. Vérifie le format (CSV ou XLSX)." };
   }
@@ -263,6 +287,9 @@ export async function previewStudentsImport(
 
   return {
     rows,
+    table,
+    roles,
+    nameOrder,
     year,
     existingEmails: existingRows.map((e) => e.email!),
     enrolledEmails,
@@ -284,6 +311,7 @@ export interface ImportConfirmState {
   memberships?: number;
   groupsCreated?: number;
   moduleName?: string;
+  moduleId?: string;
 }
 
 /**
@@ -432,5 +460,13 @@ export async function confirmStudentsImport(
   }
 
   revalidatePath("/students");
-  return { created: newRows.length, enrolled, year, memberships, groupsCreated, moduleName };
+  return {
+    created: newRows.length,
+    enrolled,
+    year,
+    memberships,
+    groupsCreated,
+    moduleName,
+    moduleId: target.moduleId ?? undefined,
+  };
 }

@@ -5,7 +5,11 @@ import Link from "next/link";
 import { UserMinus, UserPlus } from "lucide-react";
 
 import { ActionError } from "@/components/action-error";
-import { addMembers, removeMember } from "@/app/(app)/modules/[id]/groups/actions";
+import {
+  addMembers,
+  createAndAddMember,
+  removeMember,
+} from "@/app/(app)/modules/[id]/groups/actions";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,11 +23,14 @@ export function GroupMembers({
   groupId,
   members,
   candidates,
+  moduleStudentIds = [],
 }: {
   moduleId: string;
   groupId: string;
   members: Tables<"student">[];
   candidates: Tables<"student">[];
+  /** Personnes déjà dans un groupe du module : proposées d'abord. */
+  moduleStudentIds?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   // Bouton en cours : lui seul affiche l'attente ; les autres sont désactivés le temps de l'envoi
@@ -32,7 +39,12 @@ export function GroupMembers({
   const isBusy = (key: string) => pending && busy === key;
   const isBlocked = (key: string) => pending && busy !== key;
   const memberIds = new Set(members.map((m) => m.id));
-  const available = candidates.filter((c) => !memberIds.has(c.id));
+  const inModule = new Set(moduleStudentIds);
+  const moduleAvailable = candidates.filter((c) => inModule.has(c.id) && !memberIds.has(c.id));
+  // Personne d'autre dans le module : on part de toute la base.
+  const [showAll, setShowAll] = useState(moduleAvailable.length === 0);
+  const available = showAll ? candidates.filter((c) => !memberIds.has(c.id)) : moduleAvailable;
+  const [created, setCreated] = useState<{ id: string; name: string } | null>(null);
   const id = useId();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -106,14 +118,38 @@ export function GroupMembers({
 
       <div>
         <h3 className="mb-2 text-sm font-medium">Ajouter</h3>
-        {available.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Tou·te·s les étudiant·es sont déjà dans ce groupe, ou{" "}
-            <Link href="/students/new" className="underline underline-offset-2">
-              crée-en un·e
+        {created ? (
+          <p role="status" className="mb-2 rounded-md border p-2 text-sm">
+            {created.name} ajouté·e au groupe. Pense à lui créer son lien d’espace étudiant·e :{" "}
+            <Link href={`/students/${created.id}`} className="underline underline-offset-2">
+              créer le lien
             </Link>
             .
           </p>
+        ) : null}
+        {!showAll ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="link"
+            className="mb-2 h-auto px-0"
+            onClick={() => setShowAll(true)}
+          >
+            Ajouter quelqu’un d’une autre promo
+          </Button>
+        ) : null}
+        {available.length === 0 ? (
+          <div className="space-y-2">
+            <p className="text-muted-foreground text-sm">
+              Tout le monde est déjà dans ce groupe. Une personne arrive en cours de module ?
+            </p>
+            <NewMemberForm
+              moduleId={moduleId}
+              groupId={groupId}
+              initial=""
+              onCreated={(c) => setCreated(c)}
+            />
+          </div>
         ) : (
           <div className="space-y-2">
             <div className="space-y-1">
@@ -165,7 +201,29 @@ export function GroupMembers({
             </p>
             {error ? <ActionError error={error} /> : null}
             {visible.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Aucun·e étudiant·e ne correspond.</p>
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-sm">Aucun·e étudiant·e ne correspond.</p>
+                {!showAll ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAll(true)}
+                  >
+                    Chercher dans les autres promos
+                  </Button>
+                ) : null}
+                <NewMemberForm
+                  key={query}
+                  moduleId={moduleId}
+                  groupId={groupId}
+                  initial={query}
+                  onCreated={(c) => {
+                    setCreated(c);
+                    setQuery("");
+                  }}
+                />
+              </div>
             ) : (
               <ul className="max-h-72 space-y-1 overflow-y-auto rounded-md border p-2">
                 {visible.map((c) => (
@@ -198,5 +256,113 @@ export function GroupMembers({
         )}
       </div>
     </div>
+  );
+}
+
+/** Coupe « Prénom NOM » tapé dans la recherche pour préremplir le formulaire. */
+function guessName(text: string): { firstName: string; lastName: string } {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return { firstName: words[0] ?? "", lastName: "" };
+  const upper = words.filter((w) => w.length > 1 && w === w.toUpperCase());
+  if (upper.length > 0 && upper.length < words.length) {
+    return {
+      firstName: words.filter((w) => !upper.includes(w)).join(" "),
+      lastName: upper.join(" "),
+    };
+  }
+  return { firstName: words[0], lastName: words.slice(1).join(" ") };
+}
+
+/** Arrivant·e tardif·ve : fiche créée et ajoutée au groupe en un clic. */
+function NewMemberForm({
+  moduleId,
+  groupId,
+  initial,
+  onCreated,
+}: {
+  moduleId: string;
+  groupId: string;
+  initial: string;
+  onCreated: (created: { id: string; name: string }) => void;
+}) {
+  const id = useId();
+  const guess = guessName(initial);
+  const [open, setOpen] = useState(false);
+  const [firstName, setFirstName] = useState(guess.firstName);
+  const [lastName, setLastName] = useState(guess.lastName);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  if (!open) {
+    return (
+      <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>
+        <UserPlus aria-hidden />
+        {initial.trim()
+          ? `Créer « ${initial.trim()} » et l’ajouter au groupe`
+          : "Ajouter une personne"}
+      </Button>
+    );
+  }
+  return (
+    <form
+      className="space-y-2 rounded-md border p-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setError("");
+        startTransition(async () => {
+          const result = await createAndAddMember(moduleId, groupId, {
+            firstName,
+            lastName,
+            email,
+          });
+          if (result.error || !result.studentId) {
+            setError(result.error ?? "Ajout impossible.");
+            return;
+          }
+          onCreated({ id: result.studentId, name: result.name ?? `${firstName} ${lastName}` });
+          setOpen(false);
+        });
+      }}
+    >
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor={`${id}-fn`}>Prénom</Label>
+          <Input
+            id={`${id}-fn`}
+            required
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor={`${id}-ln`}>Nom</Label>
+          <Input
+            id={`${id}-ln`}
+            required
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`${id}-em`}>E-mail (facultatif)</Label>
+        <Input
+          id={`${id}-em`}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
+      {error ? <ActionError error={error} /> : null}
+      <div className="flex gap-2">
+        <PendingButton type="submit" size="sm" pending={pending} pendingLabel="Ajout…">
+          Créer et ajouter au groupe
+        </PendingButton>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+          Annuler
+        </Button>
+      </div>
+    </form>
   );
 }
