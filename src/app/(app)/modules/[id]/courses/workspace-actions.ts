@@ -9,6 +9,7 @@ import { cleanSlidesUrl } from "@/lib/modules/slides";
 import { cleanActivity, type Activity } from "@/lib/modules/activity";
 import { PREP_STATUSES } from "@/lib/modules/schema";
 import { cleanDeliverable } from "@/lib/modules/session-builder";
+import { listSections } from "@/lib/resources/sections";
 import { createClient } from "@/lib/supabase/server";
 
 export interface WorkspaceState {
@@ -224,4 +225,40 @@ export async function deleteEmptySessions(
   revalidatePath(`/modules/${moduleId}`, "layout");
   // La séance affichée a peut-être disparu : retour à la liste des séances.
   redirect(`/modules/${moduleId}/courses`);
+}
+
+/**
+ * Parties d'un cours gardées pour la séance (`null` = tout le cours). Les sections actuelles du
+ * cours sont mémorisées pour signaler plus tard une nouvelle partie.
+ */
+export async function setCourseSections(
+  moduleId: string,
+  courseId: string,
+  resourceId: string,
+  selected: string[] | null,
+): Promise<WorkspaceState> {
+  if (!UUID.test(resourceId)) return { error: failure("enregistrer les parties") };
+  const supabase = await createClient();
+  const [{ data: course }, { data: resource }] = await Promise.all([
+    supabase.from("course").select("id").eq("id", courseId).eq("module_id", moduleId).maybeSingle(),
+    supabase.from("resource").select("content").eq("id", resourceId).maybeSingle(),
+  ]);
+  if (!course) return { error: NOT_FOUND.course };
+  if (!resource) return { error: NOT_FOUND.resource };
+  const all = listSections(resource.content).map((s) => s.title);
+  const kept = selected ? selected.filter((t) => all.includes(t)) : null;
+  // Toutes les parties cochées = tout le cours (les nouvelles parties suivront alors d'office).
+  const value = kept && kept.length > 0 && kept.length < all.length ? kept : null;
+  const { error } = await supabase
+    .from("course_resource")
+    .update({ selected_sections: value, known_sections: value ? all : null })
+    .eq("course_id", courseId)
+    .eq("resource_id", resourceId);
+  if (error) {
+    return {
+      error: "Le choix des parties sera disponible après la mise à jour de la base de données.",
+    };
+  }
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  return { savedAt: new Date().toISOString() };
 }

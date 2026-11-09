@@ -7,6 +7,7 @@ import { subjectSuggestions } from "@/lib/resources/kind";
 import { getResource, getResourceUsage, resourceFacets } from "@/lib/resources/queries";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { readCourseOrigin } from "@/lib/resources/course-origin";
 
 export const metadata: Metadata = { title: "Modifier la ressource" };
@@ -26,6 +27,15 @@ export default async function EditResourcePage({
   if (!resource) notFound();
   // Ressource partagée : une modification change tous les modules qui l'utilisent.
   const from = origin ? usage.find((m) => m.id === origin.moduleId) : null;
+  // Séances qui ne gardent que certaines parties (sans la colonne : aucune).
+  const { data: partial, error: partialError } = await (
+    await createClient()
+  )
+    .from("course_resource")
+    .select("course_id")
+    .eq("resource_id", id)
+    .not("selected_sections", "is", null);
+  const partialCount = partialError ? 0 : (partial ?? []).length;
 
   return (
     <div className="space-y-6">
@@ -39,6 +49,9 @@ export default async function EditResourcePage({
             <strong>Utilisée dans {usage.length} modules</strong> :{" "}
             {usage.map((m) => `${m.name} (${schoolYearOf(m.year)})`).join(", ")}. Ta modification
             changera les {usage.length}.
+            {partialCount
+              ? ` ${partialCount} séance${partialCount > 1 ? "s" : ""} n’en ${partialCount > 1 ? "gardent" : "garde"} que certaines parties.`
+              : ""}
           </p>
           <Link
             href={`/resources/${id}?dupliquer=1${origin ? `&module=${origin.moduleId}&course=${origin.courseId}` : ""}#dupliquer`}

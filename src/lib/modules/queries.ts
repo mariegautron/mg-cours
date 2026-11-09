@@ -9,6 +9,7 @@ import {
 import type { ImportableCourse } from "@/lib/modules/course-import";
 import { getCourseResourceOrder } from "@/lib/modules/course-plan-queries";
 import { orderResources } from "@/lib/modules/session-builder";
+import { filterSections } from "@/lib/resources/sections";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
@@ -161,10 +162,24 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
   const { data } = await supabase
     .from("course")
     .select(
-      "title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(id, title, description, content, url, audience, status, files, updated_at))",
+      "id, title, position, session_date, learning_objectives, material, course_resource(role, resource:resource_id(id, title, description, content, url, audience, status, files, updated_at))",
     )
     .eq("module_id", moduleId)
     .order("position");
+  // PDF des étudiant·es : seulement les parties choisies pour chaque séance.
+  const rows = (data ?? []) as unknown as (ExportCourseRow & { id: string })[];
+  const choices = await loadSectionChoices(rows.map((c) => c.id));
+  for (const c of rows) {
+    for (const cr of c.course_resource) {
+      const choice = cr.resource?.id ? choices.get(`${c.id}|${cr.resource.id}`) : undefined;
+      if (cr.resource && choice) {
+        cr.resource = {
+          ...cr.resource,
+          content: filterSections(cr.resource.content, choice.selected),
+        };
+      }
+    }
+  }
 
   return {
     module: {
@@ -175,7 +190,7 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
       year: mod.year,
       schoolYear: schoolYear(mod.first_session_date, mod.year),
     },
-    courses: toExportCourses((data ?? []) as unknown as ExportCourseRow[]),
+    courses: toExportCourses(rows),
   };
 }
 
@@ -183,7 +198,43 @@ export async function getCourseExport(moduleId: string): Promise<CourseExport | 
  * Ressources complètes d'une séance, principale d'abord. Toutes audiences confondues :
  * passer par `studentFacing()` avant toute diffusion aux étudiant·es.
  */
-export async function getCourseResourcesFull(courseId: string): Promise<Tables<"resource">[]> {
+export interface SectionChoice {
+  selected: string[] | null;
+  known: string[] | null;
+}
+
+/**
+ * Parties choisies par séance (clé `séance|ressource`). Sans les colonnes (migration pas encore
+ * appliquée) : vide, et chaque séance montre le cours entier.
+ */
+export async function loadSectionChoices(courseIds: string[]): Promise<Map<string, SectionChoice>> {
+  const out = new Map<string, SectionChoice>();
+  if (courseIds.length === 0) return out;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("course_resource")
+    .select("course_id, resource_id, selected_sections, known_sections")
+    .in("course_id", courseIds);
+  if (error) return out;
+  for (const r of data ?? []) {
+    if (r.selected_sections) {
+      out.set(`${r.course_id}|${r.resource_id}`, {
+        selected: r.selected_sections,
+        known: r.known_sections,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Ressources de la séance, contenu réduit aux parties choisies pour elle (projection, vue privée,
+ * espace étudiant·es). `raw` : contenu entier (choix des parties).
+ */
+export async function getCourseResourcesFull(
+  courseId: string,
+  options: { raw?: boolean } = {},
+): Promise<Tables<"resource">[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("course_resource")
@@ -197,7 +248,13 @@ export async function getCourseResourcesFull(courseId: string): Promise<Tables<"
     .map((cr) => cr.resource)
     .filter((r) => r !== null);
   // Ordre choisi dans « Construire les séances » (US-124), sinon principale d'abord.
-  return orderResources(ordered, await getCourseResourceOrder(courseId));
+  const sorted = orderResources(ordered, await getCourseResourceOrder(courseId));
+  if (options.raw) return sorted;
+  const choices = await loadSectionChoices([courseId]);
+  return sorted.map((r) => {
+    const choice = choices.get(`${courseId}|${r.id}`);
+    return choice ? { ...r, content: filterSections(r.content, choice.selected) } : r;
+  });
 }
 
 /** Ressources distinctes d'un module, dans l'ordre des séances (même avertissement). */

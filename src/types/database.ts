@@ -782,6 +782,8 @@ export type Database = {
           prep_state: string | null
           resource_id: string
           role: Database["public"]["Enums"]["course_resource_role"]
+          known_sections: string[] | null
+          selected_sections: string[] | null
           start_time: string | null
           updated_at: string
         }
@@ -796,6 +798,8 @@ export type Database = {
           prep_state?: string | null
           resource_id: string
           role?: Database["public"]["Enums"]["course_resource_role"]
+          known_sections?: string[] | null
+          selected_sections?: string[] | null
           start_time?: string | null
           updated_at?: string
         }
@@ -810,6 +814,8 @@ export type Database = {
           prep_state?: string | null
           resource_id?: string
           role?: Database["public"]["Enums"]["course_resource_role"]
+          known_sections?: string[] | null
+          selected_sections?: string[] | null
           start_time?: string | null
           updated_at?: string
         }

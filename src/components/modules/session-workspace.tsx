@@ -28,6 +28,7 @@ import { DELIVERABLE_MAX } from "@/lib/modules/session-builder";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/modules/schema";
 import { cn } from "@/lib/utils";
 import { LibrarySearch } from "@/components/resources/library-search";
+import { CourseParts, type CoursePartsInfo } from "@/components/modules/course-parts";
 
 export interface WorkspaceResource {
   id: string;
@@ -37,6 +38,8 @@ export interface WorkspaceResource {
   subtitle: string;
   /** Détails de l'activité dans le déroulé (durée, type, horaire, objectif, état). */
   activity: Activity;
+  /** Parties du cours choisies pour la séance (cours d'au moins deux sections `##`). */
+  parts?: CoursePartsInfo;
 }
 
 const BTN =
@@ -351,6 +354,20 @@ export function SessionWorkspace({
                 <button type="button" className={BTN} onClick={() => remove(r)}>
                   Retirer<span className="sr-only"> : {r.title}</span>
                 </button>
+                {(() => {
+                  // Les parties viennent des dernières données du serveur (après « Garder ces parties »).
+                  const parts = initial.resources.find((x) => x.id === r.id)?.parts ?? r.parts;
+                  return parts ? (
+                    <CourseParts
+                      key={JSON.stringify(parts.selected)}
+                      moduleId={moduleId}
+                      courseId={courseId}
+                      resourceId={r.id}
+                      title={r.title}
+                      parts={parts}
+                    />
+                  ) : null;
+                })()}
                 {activitiesAvailable ? (
                   <details className="basis-full">
                     <summary className="text-primary min-h-11 cursor-pointer py-2 text-sm font-semibold underline underline-offset-2">

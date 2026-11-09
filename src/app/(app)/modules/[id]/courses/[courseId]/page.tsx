@@ -14,6 +14,7 @@ import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
 import { PruneEmptySessions } from "@/components/modules/prune-empty-sessions";
 import { listEmptySessions } from "@/lib/modules/empty-sessions-queries";
 import { resourceSlides } from "@/components/present/deck";
+import { listSections, sectionChanges } from "@/lib/resources/sections";
 import { SessionList } from "@/components/modules/session-list";
 import { SessionWorkspace, type WorkspaceResource } from "@/components/modules/session-workspace";
 import { deleteCourseAndBack } from "@/app/(app)/modules/[id]/courses/workspace-actions";
@@ -22,6 +23,7 @@ import { getModulePlans } from "@/lib/modules/course-plan-queries";
 import { getExpectationCourses } from "@/lib/modules/matching-queries";
 import {
   getCourseResourcesFull,
+  loadSectionChoices,
   getModule,
   getModuleCourses,
   getModuleExpectations,
@@ -67,6 +69,8 @@ export default async function CoursePage({
     links,
     retained,
     activities,
+    rawResources,
+    sectionChoices,
   ] = await Promise.all([
     getModule(id),
     getModuleCourses(id),
@@ -77,7 +81,10 @@ export default async function CoursePage({
     listQuestionLinks(),
     getRetainedResources(id),
     getCourseActivities(courseId),
+    getCourseResourcesFull(courseId, { raw: true }),
+    loadSectionChoices([courseId]),
   ]);
+  const rawById = new Map(rawResources.map((r) => [r.id, r]));
   const course = courses.find((c) => c.id === courseId);
   if (!mod || !course) notFound();
   const { available, plans } = await getModulePlans(courses.map((c) => c.id));
@@ -98,6 +105,15 @@ export default async function CoursePage({
       slideCount: r.content ? resourceSlides(0, r).length : 0,
     }),
     activity: activities.byResource.get(r.id) ?? EMPTY_ACTIVITY,
+    // Parties du cours (sections ##) : choix possible dès qu'il y en a au moins deux.
+    parts: (() => {
+      const raw = rawById.get(r.id)?.content ?? null;
+      const sections = listSections(raw);
+      if (sections.length < 2) return undefined;
+      const choice = sectionChoices.get(`${courseId}|${r.id}`);
+      const selected = choice?.selected ?? null;
+      return { sections, selected, ...sectionChanges(raw, selected, choice?.known ?? null) };
+    })(),
   }));
 
   const inSession = new Set(ordered.map((r) => r.id));
