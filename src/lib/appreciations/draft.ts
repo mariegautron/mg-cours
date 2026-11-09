@@ -228,6 +228,22 @@ function themes(input: TemplateInput) {
   return { basis, strengthTheme, axisTheme };
 }
 
+/**
+ * Formulations de l'appli, par partie, telles qu'en tête de phrase (sans les variantes
+ * d'ouverture) : montrées en lecture dans Réglages, sous celles de Marie.
+ */
+export function appPhrasesPreview(): Record<Part, string[]> {
+  const bare = (list: string[], opener: string) =>
+    list.filter((p) =>
+      opener ? p.startsWith(opener) : !STRENGTH_OPENERS.some((o) => o && p.startsWith(o)),
+    );
+  return {
+    strength: [...new Set(Object.values(STRENGTH).flatMap((l) => bare(l, "")))],
+    axis: [...new Set(Object.values(AXIS).flatMap((l) => bare(l, AXIS_OPENERS[0])))],
+    encouragement: [...ENCOURAGEMENT],
+  };
+}
+
 /** Toutes les formulations d'une partie pour cette personne : celles de Marie d'abord, puis celles de l'appli. */
 export function phrasePool(part: Part, input: TemplateInput, custom: CustomPhrases = {}): string[] {
   const t = themes(input);

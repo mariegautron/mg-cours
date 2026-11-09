@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
 import { PhraseManager } from "@/components/settings/phrase-manager";
+import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft";
+import { getStudent } from "@/lib/students/queries";
 import { listPhrases } from "@/lib/appreciations/queries";
 import { SchoolRulesForm } from "@/components/settings/school-rules-form";
 import { AccountSection } from "@/components/settings/account-section";
@@ -22,9 +24,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   const { saved, retour } = await searchParams;
   // Retour proposé seulement vers une page d'appréciations du module (jamais une adresse libre).
   const backTo =
-    typeof retour === "string" && /^\/modules\/[0-9a-f-]{36}\/appreciations$/.test(retour)
+    typeof retour === "string" &&
+    /^\/modules\/[0-9a-f-]{36}\/appreciations(\/[0-9a-f-]{36})?$/.test(retour)
       ? retour
       : null;
+  // Retour vers l'appréciation d'une personne : « ← Revenir à l'appréciation de Prénom ».
+  const backStudentId = backTo?.split("/")[4] ?? null;
+  const backStudent = backStudentId ? await getStudent(backStudentId) : null;
+  const appPhrases = appPhrasesPreview();
   const [profile, schools, rules, phrases] = await Promise.all([
     getProfile(),
     listAllSchools(),
@@ -39,7 +46,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <div>
         {backTo ? (
           <Link href={backTo} className="text-sm underline underline-offset-2">
-            ← Revenir aux appréciations
+            {backStudent
+              ? `← Revenir à l’appréciation de ${backStudent.first_name}`
+              : "← Revenir aux appréciations"}
           </Link>
         ) : null}
         <h1 className="text-2xl font-semibold">Réglages</h1>
@@ -181,6 +190,25 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               </p>
             </div>
             <PhraseManager phrases={phrases} />
+            <details className="rounded-lg border p-3 text-sm">
+              <summary className="cursor-pointer font-medium">
+                Les formulations de l’appli (en lecture), par partie
+              </summary>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Les tiennes passent avant. L’appli varie aussi le début de phrase (« Pendant les
+                séances, », « Pour aller plus loin, »…).
+              </p>
+              {PARTS.map((part) => (
+                <div key={part} className="mt-2">
+                  <h3 className="font-semibold">{PART_LABELS[part]}</h3>
+                  <ul className="text-muted-foreground list-disc pl-5">
+                    {appPhrases[part].map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </details>
           </section>
         </div>
         <div className="min-w-0 flex-[2_1_0] space-y-10">
