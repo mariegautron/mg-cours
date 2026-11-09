@@ -149,6 +149,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : « Faire passer l'oral » affiche la présence enregistrée en correction au lieu de « À poser » (`a5fa02c`). Une observation « [Oral] Absent. » ne pose pas la présence automatiquement (choix à faire par Marie).
   - 9 nov. : « Corriger un rendu » étape 1 : écran deux colonnes (rendu / grille en lettres), même espace que l'oral (`8e0c87e`). Reste : étapes 2 (par critère, écarts) et 3 (dépôt fermé après la note).
   - 9 nov. : questions ouvertes : présence (excusé·e / non prévenu·e) posable sur une copie non rendue depuis la vue d'ensemble (`f398120`).
+  - 9 nov. : rendu étape 1, retour du retest : paliers lisibles, date / auteur·e / retard, ajout sans quitter l'écran (`1a7b80d`). SCRUM ouvert en lecture, moyennes identiques (retest).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
