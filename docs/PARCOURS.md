@@ -213,7 +213,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : progression « envoyée » d'après son vrai statut (envoyée / validée / PDF déposé), plus d'après l'iceberg qu'une facture cochée faisait avancer (`0b6c5e6`).
   - 9 nov. : conditions YNOV de la facture alignées sur le vrai statut de la progression (`63f4140`).
   - 9 nov. : vrais états des étapes même pour un module terminé/facturé (`f7bea79`) ; liste « Terminer » avec appréciations, avis, liens, un seul chemin, libellés Terminer/Archiver (`baee74d`). Coefficient du cadre individuel (`3c2461d`).
-  - Reste (terminer et facturer) : 13e étape « Terminer », bilan facture, message 8 s, « Rouvrir » sur la fiche, facture simple d'abord (Factur-X à part), questionnaire (un envoi par navigateur, tutoiement, QR), divers.
+  - 9 nov. : étape « Terminer le module », vrai décompte d'un module terminé, bilan facture, message 8 s avec Annuler, Facture d'un module rouvert, plus de « ranger » (`02d5afb`).
+  - Reste (terminer et facturer) : « Rouvrir » sur la fiche, facture simple d'abord (Factur-X à part), questionnaire (un envoi par navigateur, tutoiement, QR), divers.
 
 ## P13 · Piloter au quotidien
 
