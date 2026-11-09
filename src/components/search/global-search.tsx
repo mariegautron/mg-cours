@@ -1,5 +1,6 @@
 "use client";
 
+import { seeOthers } from "@/lib/plural";
 import { useEffect, useId, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -287,7 +288,7 @@ export function GlobalSearch({
                           onClick={() => go(g.moreHref!)}
                           className="text-primary hover:bg-accent min-h-11 w-full rounded-lg px-2 text-left text-sm font-medium underline-offset-2 hover:underline"
                         >
-                          Voir les {g.total - g.results.length} autres
+                          {seeOthers(g.total - g.results.length)}
                         </button>
                       ) : (
                         <button
@@ -295,7 +296,7 @@ export function GlobalSearch({
                           onClick={() => setExpanded((prev) => new Set(prev).add(g.kind))}
                           className="text-primary hover:bg-accent min-h-11 w-full rounded-lg px-2 text-left text-sm font-medium underline-offset-2 hover:underline"
                         >
-                          Voir les {g.total - g.results.length} autres
+                          {seeOthers(g.total - g.results.length)}
                         </button>
                       )
                     ) : null}

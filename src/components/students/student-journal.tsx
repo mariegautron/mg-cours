@@ -1,5 +1,6 @@
 "use client";
 
+import { seeOthers } from "@/lib/plural";
 import { useState } from "react";
 
 import { ObservationItem } from "@/components/notebook/observation-item";
@@ -112,7 +113,7 @@ export function StudentJournal({
           onClick={() => setAll(true)}
           className="text-primary min-h-11 text-sm font-semibold underline underline-offset-2"
         >
-          Voir les {filtered.length - VISIBLE} autres
+          {seeOthers(filtered.length - VISIBLE)}
         </button>
       ) : null}
     </div>

@@ -1,18 +1,10 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
+import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  CalendarCheck,
-  ClipboardCheck,
-  ListChecks,
-  NotebookPen,
-  PenLine,
-  Play,
-  Users,
-} from "lucide-react";
+import { NotebookPen, PenLine, Play } from "lucide-react";
 
-import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Pill } from "@/components/dashboard/pill";
 import { TodayPrep } from "@/components/dashboard/today-prep";
 import { WeekCard } from "@/components/dashboard/week-card";
@@ -23,14 +15,7 @@ import {
   loadFocusKpis,
   loadPreviousSession,
 } from "@/lib/dashboard/overview-queries";
-import {
-  dayLine,
-  dayTile,
-  meanLabel,
-  percent,
-  progressLabel,
-  untilLabel,
-} from "@/lib/dashboard/overview";
+import { dayLine, dayTile, progressLabel, untilLabel } from "@/lib/dashboard/overview";
 import { CopyMessageButton } from "@/components/projects/copy-message-button";
 import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
 import { copyText, dueToday } from "@/lib/projects/surprises";
@@ -105,7 +90,23 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     todayAll.filter((c) => !c.completion),
     timeInParis(),
   ).filter((c) => !c.completion);
-  const upcoming = sessions.length ? null : nextSession(coursesAfter, today);
+  // Bandeau « prochain cours » : un module déjà commencé, ou une séance dans les 7 jours. Un module
+  // « à préparer » plus lointain passe dans « À faire » (« Préparer la séance 1 de X, dans 21 jours »).
+  const started = (moduleId: string) => (progress.get(moduleId)?.done ?? 0) > 0;
+  const upcoming = sessions.length
+    ? null
+    : nextSession(
+        coursesAfter.filter(
+          (c) =>
+            !!c.module &&
+            !!c.session_date &&
+            (started(c.module.id) || daysBetween(today, c.session_date) <= 7),
+        ),
+        today,
+      );
+  const farFirst = sessions.length ? null : nextSession(coursesAfter, today);
+  const farPrep =
+    farFirst && farFirst.id !== upcoming?.id && !started(farFirst.module.id) ? farFirst : null;
   const alerts = outlineAlerts(modules);
   const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
@@ -206,6 +207,17 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     }),
     Number.POSITIVE_INFINITY,
   );
+  if (farPrep) {
+    const d = daysBetween(today, farPrep.session_date!);
+    allTodos.push({
+      key: `far-prep-${farPrep.id}`,
+      kind: "session_prep",
+      title: `Préparer la séance ${farPrep.position} de ${farPrep.module.name}`,
+      detail: `dans ${d} jours`,
+      href: `/modules/${farPrep.module.id}/courses/${farPrep.id}#deroule`,
+      urgency: d,
+    });
+  }
   // Les 3 plus urgentes ; les autres se déplient (« Voir les N autres »).
   const todos = allTodos.slice(0, 3);
   const moreTodos = allTodos.slice(3);
@@ -321,7 +333,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       {moreTodos.length > 0 ? (
         <details className="border-t pt-2">
           <summary className="text-primary min-h-11 cursor-pointer py-2 text-sm font-semibold">
-            Voir les {moreTodos.length} autre{moreTodos.length > 1 ? "s" : ""}
+            {seeOthers(moreTodos.length)}
           </summary>
           <ol>
             {moreTodos.map((t) => (
@@ -654,7 +666,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     );
   }
 
-  const kpi = focus;
+  // Compteurs de la ligne du haut : tous les modules en cours.
+  const runningIds = new Set(runningModules.map((m) => m.id));
+  const weekRunning = coursesWeek.filter((c) => c.module && runningIds.has(c.module.id));
+  const { count: weekObservations } = await (
+    await createClient()
+  )
+    .from("student_observation")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", `${week.from}T00:00:00`);
   return (
     <div className="space-y-5">
       {passwordChanged ? (
@@ -678,50 +698,35 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </div>
       </header>
 
-      {kpi ? (
-        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard
-            tone="violet"
-            icon={<CalendarCheck aria-hidden className="size-5" />}
-            label="Séances faites"
-            value={`${kpi.courses.done} / ${kpi.courses.total}`}
-            percent={percent(kpi.courses.done, kpi.courses.total)}
-            barLabel={`${percent(kpi.courses.done, kpi.courses.total)} % des séances`}
-            detail={kpi.moduleName}
-          />
-          <KpiCard
-            tone="mint"
-            icon={<ClipboardCheck aria-hidden className="size-5" />}
-            label={kpi.graded ? `${kpi.graded.title} corrigé` : "Évaluations corrigées"}
-            value={kpi.graded ? `${kpi.graded.done} / ${kpi.graded.expected}` : "—"}
-            percent={kpi.graded ? percent(kpi.graded.done, kpi.graded.expected) : 0}
-            barLabel={kpi.graded ? "Copies corrigées" : "Aucune évaluation corrigée"}
-            detail={
-              kpi.graded && meanLabel(kpi.graded.valuesOn20)
-                ? `moyenne de la classe ${meanLabel(kpi.graded.valuesOn20)}`
-                : "pas encore de note"
-            }
-          />
-          <KpiCard
-            tone="sky"
-            icon={<Users aria-hidden className="size-5" />}
-            label="Étudiant·es suivis"
-            value={String(kpi.students.total)}
-            percent={percent(kpi.students.withPhoto, kpi.students.total)}
-            barLabel={`${kpi.students.withPhoto} photo${kpi.students.withPhoto > 1 ? "s" : ""} sur ${kpi.students.total}`}
-            detail={`${kpi.students.observations} observation${kpi.students.observations > 1 ? "s" : ""} notée${kpi.students.observations > 1 ? "s" : ""}`}
-          />
-          <KpiCard
-            tone="sun"
-            icon={<ListChecks aria-hidden className="size-5" />}
-            label="À faire"
-            value={String(allTodos.length)}
-            percent={percent(Math.min(allTodos.length, 3), 3)}
-            barLabel={`${allTodos.length} chose${allTodos.length > 1 ? "s" : ""} à faire`}
-            detail={todos.length ? "par urgence, ci-dessous" : "rien d’urgent"}
-          />
-        </div>
-      ) : null}
+      {/* Jour sans cours : une seule ligne sur tous les modules en cours (pas sur un seul). */}
+      <p
+        role="status"
+        className="bg-card text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border px-4 py-2.5 text-sm"
+      >
+        <span>
+          <strong className="text-foreground">{runningModules.length}</strong> module
+          {runningModules.length > 1 ? "s" : ""} en cours
+        </span>
+        <span>
+          Séances faites cette semaine :{" "}
+          <strong className="text-foreground">
+            {weekRunning.filter((c) => c.completion).length} / {weekRunning.length}
+          </strong>
+        </span>
+        <span>
+          À corriger : <strong className="text-foreground">{toCorrect.length}</strong>
+        </span>
+        <span>
+          Appréciations à écrire :{" "}
+          <strong className="text-foreground">
+            {appreciationTodos.reduce((n, a) => n + a.remaining, 0)}
+          </strong>
+        </span>
+        <span>
+          Observations cette semaine :{" "}
+          <strong className="text-foreground">{weekObservations}</strong>
+        </span>
+      </p>
 
       <div className="flex flex-wrap items-start gap-4.5 lg:flex-nowrap">
         <div className="min-w-0 flex-1 basis-full space-y-3.5 lg:basis-0">
