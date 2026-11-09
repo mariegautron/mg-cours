@@ -162,6 +162,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : rattrapages 0b (aucune présence posée automatiquement depuis une observation) et 0e (libellés d'absence sur un travail de groupe) (`aa981c3`).
   - 9 nov. : « Voir son rattrapage » (`3d1dfd2`) ; rattrapages lots 2 et 3 : date, groupes des seuls inscrits, retour « Rattrapage créé », « Rattrapages faits », bouton qui passe à la ligne (`44158eb`). Reste : lots 4 (chrono du QCM), 5, 6 (règles par école, migration).
   - 9 nov. : rattrapages v3 : retour à « Présent·e » sans note, rattrapages datés dans « Cette semaine », champ date nommé, « Note remplacée : x/y » (`fb828d1`).
+  - 9 nov. : rattrapages : inscription retirée quand on n'est plus excusé·e, retour à présent·e enregistré seul, « ajoutée(s) », rattrapages datés dans « où chacune tombe » (`f94e510`). Reste : lots 4 et 6 (migrations).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
