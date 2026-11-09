@@ -35,14 +35,14 @@ export const README = (date: string, skipped: string[]) =>
   [
     `MG COURS · export de mes données du ${date}`,
     "",
-    "tableurs/ : un fichier par sujet (étudiant·es, notes, appréciations, observations, présences,",
-    "  modules, séances), à ouvrir avec Excel ou LibreOffice.",
+    "tableurs/ : un fichier par sujet (étudiant·es, notes, appréciations, présences, modules,",
+    "  séances), à ouvrir avec Excel ou LibreOffice.",
     "fichiers/ : rendus des étudiant·es, pièces jointes des évaluations et des ressources,",
     "  documents des modules, photos.",
     "donnees-completes.json : toutes les données de l'appli, pour une restauration future.",
     "",
     "ATTENTION : ce dossier contient tes coordonnées bancaires (IBAN) et les données de tes",
-    "étudiant·es (notes, observations, photos). Garde-le en lieu sûr, ne le partage pas.",
+    "étudiant·es (notes, appréciations, photos). Garde-le en lieu sûr, ne le partage pas.",
     ...(skipped.length
       ? ["", "Fichiers non inclus (trop lourds ou illisibles) :", ...skipped.map((s) => `- ${s}`)]
       : []),

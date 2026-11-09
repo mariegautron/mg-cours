@@ -44,8 +44,6 @@ const TABLES = [
   "student_year",
   "student_group",
   "group_member",
-  "student_observation",
-  "group_observation",
   "assessment",
   "assessment_expectation",
   "assessment_group",
@@ -81,7 +79,8 @@ const TABLES = [
 /**
  * Hors export : jetons d'accès (même hachés) et traces techniques sans valeur pour Marie :
  * module_share_link, module_student_link, module_feedback_link, result_link, quiz_class_link,
- * quiz_claim, quiz_ip_failure, projection_event, import_ref.
+ * quiz_claim, quiz_ip_failure, projection_event, import_ref. Le carnet d'observations
+ * ne sort jamais de l'appli (garde-fou du carnet de séance).
  */
 
 /**
@@ -120,7 +119,6 @@ export async function GET() {
   const byId = (t: string) => new Map((data[t] ?? []).map((r) => [str(r.id), r]));
   const modules = byId("module");
   const students = byId("student");
-  const courses = byId("course");
   const assessments = byId("assessment");
   const groups = byId("student_group");
   const studentName = (id: unknown) => {
@@ -256,20 +254,6 @@ export async function GET() {
       ]),
     ),
   );
-  files["tableurs/observations.csv"] = strToU8(
-    toCsv(
-      ["Date", "Étudiant·e", "Module", "Séance", "Catégorie", "Observation"],
-      (data.student_observation ?? []).map((o) => [
-        str(o.created_at).slice(0, 16).replace("T", " "),
-        studentName(o.student_id),
-        moduleName(o.module_id),
-        str(courses.get(str(o.course_id))?.title),
-        str(o.tag),
-        str(o.note),
-      ]),
-    ),
-  );
-
   // Fichiers : rendus, pièces jointes, documents de module, ressources, photos.
   const wanted: { bucket: string; path: string; name: string }[] = [];
   for (const s of data.submission_item ?? []) {

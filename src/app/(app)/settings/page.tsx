@@ -222,9 +222,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               Mes données
             </h2>
             <p className="text-muted-foreground text-sm">
-              Tout ce que l’appli garde pour toi, observations et fichiers compris, dans un .zip. Il
-              contient tes coordonnées bancaires et les données de tes étudiant·es : garde-le en
-              lieu sûr.
+              Tout ce que l’appli garde pour toi, fichiers compris, dans un .zip (tes observations
+              restent dans l’appli). Il contient tes coordonnées bancaires et les données de tes
+              étudiant·es : garde-le en lieu sûr.
             </p>
             <ExportButton />
           </section>
