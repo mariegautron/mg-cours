@@ -129,7 +129,14 @@ export default async function ModulePage({
 
   const today = todayInParis();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
-  const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
+  const trame = trameStatus(
+    mod.first_session_date,
+    mod.iceberg_state,
+    new Date(),
+    outline?.status === "sent" ||
+      outline?.status === "validated" ||
+      documents.some((d) => d.kind === "outline_sent"),
+  );
   const coverage = await getModuleCoverage(id, expectations, retained);
   const expCoverage = await getExpectationCoverageView(id);
   const shared = await isModuleShared(id);

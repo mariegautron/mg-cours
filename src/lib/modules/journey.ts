@@ -9,7 +9,6 @@ import type {
 } from "@/lib/modules/queries";
 import type { Tables } from "@/types/db";
 import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
-import { isOutlineSent } from "@/lib/ynov/iceberg";
 import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import { moduleSteps, type ModuleSteps } from "@/lib/ynov/module-steps";
 import type { trameStatus } from "@/lib/ynov/trame";
@@ -48,8 +47,12 @@ export function buildJourney(d: JourneyData): ModuleSteps {
       done: d.courses.filter((c) => c.completion === "done" || c.completion === "partial").length,
     },
     outlineGeneratedAt: d.outline?.generated_at ?? null,
+    // L'envoi réel : progression marquée envoyée / validée, ou PDF déposé (pas l'état iceberg,
+    // qu'une facture cochée fait avancer).
     outlineSent:
-      isOutlineSent(d.mod.iceberg_state) || d.documents.some((x) => x.kind === "outline_sent"),
+      d.outline?.status === "sent" ||
+      d.outline?.status === "validated" ||
+      d.documents.some((x) => x.kind === "outline_sent"),
     outlineDueDate: d.trame.dueDate ? d.trame.dueDate.toISOString() : null,
     notes: {
       entered: d.notes.enteredTotal,

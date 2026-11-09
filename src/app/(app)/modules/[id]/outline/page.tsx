@@ -60,7 +60,14 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
   // Même calcul que la page Couverture et que le PDF : séances et évaluations (pas les ressources).
   const expectationCoverage = await getExpectationCoverageView(id);
 
-  const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
+  const trame = trameStatus(
+    mod.first_session_date,
+    mod.iceberg_state,
+    new Date(),
+    outline?.status === "sent" ||
+      outline?.status === "validated" ||
+      documents.some((d) => d.kind === "outline_sent"),
+  );
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
   const banner = deadlineBanner(
     trame.level,

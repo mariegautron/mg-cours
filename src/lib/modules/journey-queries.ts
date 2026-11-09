@@ -46,7 +46,14 @@ export const getModuleJourney = cache(async (id: string) => {
     outline,
     assessments,
     notes,
-    trame: trameStatus(mod.first_session_date, mod.iceberg_state),
+    trame: trameStatus(
+      mod.first_session_date,
+      mod.iceberg_state,
+      new Date(),
+      outline?.status === "sent" ||
+        outline?.status === "validated" ||
+        documents.some((x) => x.kind === "outline_sent"),
+    ),
     invoice,
     invoiceCtx,
     shared,

@@ -37,8 +37,14 @@ export function trameStatus(
   firstSessionDate: string | Date | null,
   icebergState: IcebergState,
   today: Date = new Date(),
+  /**
+   * Envoi réel de la progression (statut de la progression ou document déposé). Quand il est
+   * connu, il prime sur l'état iceberg : cocher « Facture envoyée » fait avancer l'iceberg au-delà
+   * de « Progression envoyée » sans que la progression soit partie.
+   */
+  outlineSent?: boolean,
 ): TrameStatus {
-  if (isOutlineSent(icebergState)) {
+  if (outlineSent ?? isOutlineSent(icebergState)) {
     return {
       dueDate: firstSessionDate ? trameDueDate(firstSessionDate) : null,
       daysUntilDue: null,
