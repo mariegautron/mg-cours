@@ -3,6 +3,8 @@
 import { SCHOOL_GRADE_TYPE, validateSchoolGrade } from "@/lib/assessments/module-notes";
 import { prepareMakeupInAdvance } from "@/app/(app)/modules/[id]/assessments/makeup-action";
 import { revalidatePath } from "next/cache";
+
+import { unenrollFromMakeups } from "@/lib/assessments/makeup-queries";
 import { redirect } from "next/navigation";
 
 import { ASSESSMENT_FILES_BUCKET, type AssessmentFile } from "@/lib/assessments/files";
@@ -575,6 +577,14 @@ async function saveGrade(
     ? await supabase.from("grade").update(row).eq("id", existing.id).select("id").single()
     : await supabase.from("grade").insert(row).select("id").single();
   if (saved.error || !saved.data) return { error: failure("enregistrer") };
+  // Plus excusé·e : on retire son inscription au rattrapage (sinon il·elle y reste en silence).
+  if (
+    target.studentId &&
+    existing?.attendance === "absent_excused" &&
+    attendance !== "absent_excused"
+  ) {
+    await unenrollFromMakeups(supabase, assessmentId, target.studentId);
+  }
 
   let memberBaseOut: GradeFormState["memberBase"];
   if (memberOverrides && "overrides" in memberOverrides) {

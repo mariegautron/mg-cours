@@ -52,7 +52,36 @@ export async function makeupHrefs(
   const group = (await loadMakeupGroups(moduleId)).find((g) => g.assessment.id === assessmentId);
   const out = new Map<string, string>();
   if (!group?.makeup) return out;
-  for (const r of group.rows)
+  for (const r of group.rows.filter((x) => x.step !== "to_enroll"))
     out.set(r.student.id, `/modules/${moduleId}/assessments/${group.makeup.id}`);
   return out;
+}
+
+/**
+ * Retire une personne des rattrapages d'une évaluation quand elle n'est plus excusée, tant que
+ * sa note de rattrapage n'existe pas (une note déjà saisie n'est jamais effacée).
+ */
+export async function unenrollFromMakeups(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  assessmentId: string,
+  studentId: string,
+) {
+  const { data: makeups } = await supabase
+    .from("assessment")
+    .select("id")
+    .eq("makeup_of_id", assessmentId);
+  for (const m of makeups ?? []) {
+    const { data: g } = await supabase
+      .from("grade")
+      .select("value")
+      .eq("assessment_id", m.id)
+      .eq("student_id", studentId)
+      .maybeSingle();
+    if (g?.value != null) continue;
+    await supabase
+      .from("assessment_student")
+      .delete()
+      .eq("assessment_id", m.id)
+      .eq("student_id", studentId);
+  }
 }

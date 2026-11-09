@@ -14,6 +14,7 @@ import {
 import { loadOpenReviewContext, obj, readEntries } from "@/lib/assessments/open-review-server";
 import { isLetter } from "@/lib/assessments/oral-space";
 import { individualValueFor, isAttendance } from "@/lib/assessments/attendance";
+import { unenrollFromMakeups } from "@/lib/assessments/makeup-queries";
 import { saveVersionedField, type SaveFieldResult } from "@/lib/assessments/versioned-save";
 import { regradeAttempt } from "@/lib/quiz/grade-server";
 import type { DrawnQuestion } from "@/lib/quiz/types";
@@ -516,12 +517,16 @@ export async function setCopyAttendance(
     .eq("student_id", studentId)
     .maybeSingle();
   if (attendance === "" || attendance === "present") {
+    // Plus excusé·e : retirée du rattrapage (tant qu'aucune note de rattrapage n'existe).
+    await unenrollFromMakeups(supabase, assessmentId, studentId);
     if (existing)
       await supabase
         .from("grade")
         .update({ attendance: "present", value: null })
         .eq("id", existing.id);
   } else {
+    if (attendance === "absent_unexcused")
+      await unenrollFromMakeups(supabase, assessmentId, studentId);
     const value = individualValueFor(attendance, existing?.value ?? null);
     const { error } = existing
       ? await supabase.from("grade").update({ attendance, value }).eq("id", existing.id)

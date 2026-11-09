@@ -229,6 +229,8 @@ export default async function AssessmentPage({
         href: `/modules/${id}/assessments/${mk.id}`,
       };
     }
+    if (mk && row.step === "to_enroll")
+      return { label: "Excusé·e · à inscrire au rattrapage", href: `/modules/${id}/rattrapages` };
     return mk
       ? { label: "Excusé·e · rattrapage préparé", href: `/modules/${id}/assessments/${mk.id}` }
       : { label: "Excusé·e · rattrapage à prévoir", href: `/modules/${id}/rattrapages` };
