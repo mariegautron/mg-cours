@@ -187,8 +187,18 @@ export default async function QuizLinksPage({
             </div>
           </details>
         ) : (
-          <div className="order-1">
-            <div className="grid gap-4 md:grid-cols-2 md:[&>section:first-child]:order-2">
+          // Le suivi monte en premier ; QR et liens repliés, avec leur état en une ligne.
+          <details className={`${card} order-2`} open={attempts.length === 0}>
+            <summary className="min-h-8 cursor-pointer font-semibold">
+              QR et liens personnels ·{" "}
+              <span className="text-muted-foreground font-normal">
+                {url
+                  ? `QR actif · ${info.claimed.length}/${attempts.length} entré·es`
+                  : "pas de QR"}
+                {` · ${attempts.length} lien${attempts.length > 1 ? "s" : ""} prêt${attempts.length > 1 ? "s" : ""}`}
+              </span>
+            </summary>
+            <div className="grid gap-4 pt-3 md:grid-cols-2 md:[&>section:first-child]:order-2">
               <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 id="ma" className="font-heading text-lg font-bold">
@@ -274,10 +284,10 @@ export default async function QuizLinksPage({
                 ) : null}
               </section>
             </div>
-          </div>
+          </details>
         )}
 
-        <section aria-labelledby="follow" className={`${card} ${closed ? "order-1" : "order-2"}`}>
+        <section aria-labelledby="follow" className={`${card} order-1`}>
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="follow" className="font-heading text-lg font-bold">
               Suivi des copies
