@@ -17,6 +17,8 @@ export interface DepositContext {
   deadline: Date | null;
   /** Qui rend : la personne, ou son groupe. */
   owner: { kind: "student"; id: string } | { kind: "group"; id: string; name: string };
+  /** Note écrite pour cette personne ou ce groupe : le dépôt est fermé (décision d'Arnaud, 9 nov.). */
+  graded: boolean;
 }
 
 export type DepositContextResult = { ok: true; ctx: DepositContext } | { ok: false; error: string };
@@ -90,6 +92,14 @@ export async function loadDepositContext(
     };
   }
 
+  // Une fois la note écrite, plus de dépôt (même en retard) ; « Rouvrir la copie » ne le rouvre pas.
+  const { data: gradeRow } = await admin
+    .from("grade")
+    .select("id")
+    .eq("assessment_id", assessmentId)
+    .eq(owner.kind === "group" ? "student_group_id" : "student_id", owner.id)
+    .not("value", "is", null)
+    .limit(1);
   const { data: student } = await admin
     .from("student")
     .select("first_name")
@@ -111,6 +121,7 @@ export async function loadDepositContext(
         extra.oral_start_time ? extra.oral_start_time.slice(0, 5) : null,
       ),
       owner,
+      graded: !!gradeRow?.[0],
     },
   };
 }

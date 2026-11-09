@@ -155,7 +155,12 @@ export function DepositBox({
         </p>
       )}
 
-      <div className="mt-4 space-y-3">
+      {state.closed ? (
+        <p className="mt-4 rounded-md border p-3 text-sm font-medium">
+          Ton rendu est corrigé, tu ne peux plus le remplacer.
+        </p>
+      ) : null}
+      <div className="mt-4 space-y-3" hidden={state.closed}>
         {accepts !== "link" ? (
           <div>
             <label htmlFor="depot-fichiers" className="text-sm font-medium">

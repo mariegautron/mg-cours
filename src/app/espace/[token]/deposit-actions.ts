@@ -29,6 +29,8 @@ export interface DepositState {
   /** Date limite (ISO) ou null. */
   deadline: string | null;
   group: string | null;
+  /** Rendu corrigé : plus de dépôt possible. */
+  closed?: boolean;
 }
 
 const empty = (error?: string): DepositState => ({
@@ -94,6 +96,7 @@ async function readState(ctx: DepositContext): Promise<DepositState> {
     byOther: !!first && first.submitted_by_student_id !== ctx.studentId,
     deadline: ctx.deadline?.toISOString() ?? null,
     group: ctx.owner.kind === "group" ? ctx.owner.name : null,
+    closed: ctx.graded,
   };
 }
 
@@ -114,6 +117,7 @@ export async function prepareUploads(
   const res = await loadDepositContext(token, assessmentId);
   if (!res.ok) return { error: res.error };
   const { ctx } = res;
+  if (ctx.graded) return { error: "Ton rendu est corrigé, tu ne peux plus le remplacer." };
   const check = validateDeposit({ files, link }, ctx.accepts);
   if (!check.ok) return { error: check.error };
   const batchId = randomUUID();
@@ -145,6 +149,7 @@ export async function commitDeposit(
   const res = await loadDepositContext(token, assessmentId);
   if (!res.ok) return empty(res.error);
   const { ctx } = res;
+  if (ctx.graded) return { ...(await readState(ctx)), error: "Ton rendu est corrigé, tu ne peux plus le remplacer." };
   const check = validateDeposit({ files, link }, ctx.accepts);
   if (!check.ok) return { ...(await readState(ctx)), error: check.error };
   if (!/^[0-9a-f-]{36}$/i.test(batchId))
