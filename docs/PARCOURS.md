@@ -22,7 +22,7 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | P11 | ~~Progression pédagogique et envoi à l'école~~ → fusionné dans P3 | — | — |
 | P12 | Clôturer le module, rendre les résultats, facturer | Marie | ⬜ |
 | P13 | Piloter au quotidien (tableau de bord, recherche, planning) | Marie | ⬜ |
-| P14 | Suivre les étudiant·es et écrire les appréciations | Marie | 🔧 retest en cours (9 nov.) |
+| P14 | Suivre les étudiant·es et écrire les appréciations | Marie | ✅ validé en prod (9 nov.) |
 
 Les numéros restent stables (les prompts de test y font référence). P6 n'a plus de section propre.
 
@@ -74,6 +74,7 @@ directes : les liens reçus par les étudiant·es.
 - **À regarder en QA** : import Hyperplanning, rapprochement ressources/attendus, étape courante, reprise après pause.
 - **Améliorations notées** :
   - 9 nov. : 1.3 « Corrigé : … » n'atteint plus le PDF, 1.5 texte propre (puces, markdown, emoji) (`44c0cb4`) ; 1.1 « Avant de générer » = même couverture que la page Couverture et le PDF (`4afe510`).
+  - 9 nov. : 1.1, 1.3, 1.5 validés au retest ; titre « ## » plus en puce, espace avant ponctuation après emoji (`e51dd21`).
   - Reste lot 1 : 1.2 relier séance ↔ attendu, 1.4 versions envoyées figées, 1.6, 1.7 ; puis lots 2 et 3.
 
 ## P4 · Accueillir les étudiant·es et former les groupes
@@ -130,7 +131,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : squelette du brief aligné sur « Prévues » (`041a0e0`) ; filtre Module avec l'année, « Groupe Groupe », textes (`172c770`) ; « Visible après la mise à jour » (`bd5d486`) ; reprendre un projet sur un module qui en a déjà un, avec confirmation (`22c78f2`).
   - 9 nov. : cadre « Complet » seulement avec date et « Où rendre », coefficient de la carte = règle YNOV (`8b4af49`).
   - 9 nov. : carte « Évaluations à venir » enfin affichée (requête cassée) (`a2b08f6`) ; coefficient de l'en-tête = règle YNOV (`c443013`) ; réglage de durée de l'oral ouvert tant qu'elle manque, aussi dans « Modifier » (`6429645`).
-  - Reste : lenteur à mesurer ; le coefficient saisi n'est jamais utilisé (audit schéma).
+  - 9 nov. : évaluations dans « À venir » de la fiche du module, clic de la carte vers l'évaluation (`cb76443`) ; « Horaires de l'oral » sur la page de l'évaluation, créneaux depuis l'heure de la séance (`6059eb8`).
+  - Reste : lenteur à mesurer ; le coefficient saisi n'est jamais utilisé (audit schéma) ; essai à blanc : masquer « Vos réponses sont enregistrées ».
 
 ## P8 · Corriger et noter
 
@@ -174,6 +176,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : bandeau QCM lu en direct, « Publié le … » rafraîchi après la mise à jour (`74b0c65`).
   - 9 nov. : rattrapage rendu = plus de QCM principal « ouvert » (`37569f7`).
   - 9 nov. : « E-mail de contact pour les étudiant·es » distinct de la facturation, migration `20261124000000_student_contact_email` à appliquer (`adc5fa4`).
+  - 9 nov. : rattrapage noté directement = QCM principal masqué (`a8d9fd0`) ; heures du QCM « 11 h 07 » (`fe8a4f2`).
   - Reste : « Retirer l'ancienne note ».
 
 ## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
