@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { DayJBlock } from "@/components/assessments/day-j-block";
-import { dayJReadiness } from "@/lib/assessments/day-j";
+import { dayJReadiness, espaceUpToDate } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Pill } from "@/components/dashboard/pill";
@@ -148,7 +148,10 @@ export default async function ModuleAssessmentsPage({
       whereToSubmit: a.where_to_submit,
       files: a.files,
       isOral: a.project_role === "oral",
-      published: extras.publishedIds ? extras.publishedIds.has(a.id) : undefined,
+      published: extras.published
+        ? espaceUpToDate(extras.published.get(a.id), a)
+        : undefined,
+      submissionMode: a.submission_mode,
       qcm: extras.qcm.get(a.id),
     });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";

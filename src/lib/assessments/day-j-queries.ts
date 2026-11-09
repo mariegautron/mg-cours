@@ -1,10 +1,10 @@
 import { dayJReadiness } from "@/lib/assessments/day-j";
-import { parseEspace } from "@/lib/modules/espace";
+import { parseEspace, type EspaceEvaluation } from "@/lib/modules/espace";
 import { createClient } from "@/lib/supabase/server";
 
 export interface DayJExtras {
-  /** Identifiants d'évaluations présentes dans l'espace publié ; `null` = rien de publié. */
-  publishedIds: Set<string> | null;
+  /** Évaluations telles que publiées dans l'espace, par identifiant ; `null` = rien de publié. */
+  published: Map<string, EspaceEvaluation> | null;
   qcm: Map<string, { rulesOk: boolean; drawsPrepared: boolean; opened: boolean }>;
 }
 
@@ -47,10 +47,13 @@ export async function loadDayJExtras(
     qcm.set(q.assessment_id, {
       rulesOk: q.quiz_draw_rule.length > 0,
       drawsPrepared: withDraw.has(q.id),
-      opened: q.status !== "draft" || !!q.opens_at,
+      opened: q.status !== "draft",
     });
   }
-  return { publishedIds: espace ? new Set(espace.evaluations.map((e) => e.id)) : null, qcm };
+  return {
+    published: espace ? new Map(espace.evaluations.map((e) => [e.id, e])) : null,
+    qcm,
+  };
 }
 
 export interface UpcomingAssessment {
@@ -111,13 +114,14 @@ export async function listUpcomingAssessments(
       examKind: a.exam_kind,
       type: a.type,
       whereToSubmit: a.where_to_submit,
+      submissionMode: a.submission_mode,
       files: a.files,
       isOral: a.project_role === "oral",
       qcm: z
         ? {
             rulesOk: z.quiz_draw_rule.length > 0,
             drawsPrepared: true,
-            opened: z.status !== "draft" || !!z.opens_at,
+            opened: z.status !== "draft",
           }
         : undefined,
     });

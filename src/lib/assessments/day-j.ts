@@ -25,6 +25,8 @@ export interface DayJInput {
   examKind: string | null;
   type: string | null;
   whereToSubmit: string | null;
+  /** « app » : les étudiant·es rendent dans l'application, « Où rendre » est alors rempli. */
+  submissionMode?: string | null;
   files: unknown;
   isOral?: boolean;
   /** Sujet publié et à jour dans l'espace des étudiant·es ; `undefined` = inconnu. */
@@ -40,6 +42,8 @@ export interface DayJItem {
   /** Ce qu'il reste à faire quand le point n'est pas prêt. */
   todo?: string;
   href: string;
+  /** Facultatif : affiché en gris, jamais compté dans « N à compléter ». */
+  optional?: boolean;
 }
 
 export interface DayJ {
@@ -59,6 +63,8 @@ export function dayJReadiness(i: DayJInput): DayJ {
   const items: DayJItem[] = [];
   const add = (key: string, ok: boolean, label: string, todo: string, href = base) =>
     items.push({ key, ok, label, todo: ok ? undefined : todo, href });
+  const info = (key: string, ok: boolean, label: string, href = base) =>
+    items.push({ key, ok, label, href, optional: true });
 
   add("status", canPresent(i.prepStatus), "Sujet prêt", "Passe le sujet en « Prête ».");
   add(
@@ -83,21 +89,37 @@ export function dayJReadiness(i: DayJInput): DayJ {
     "Coche au moins un groupe.",
     edit,
   );
-  const mismatch = !!(i.date && i.courseDate && i.date !== i.courseDate);
-  add(
-    "date",
-    !!i.date && !mismatch,
-    "Date cohérente avec la séance",
-    i.date ? "La date ne correspond pas à la séance rattachée." : "Renseigne la date.",
-    edit,
-  );
-  if (!isQcm && !isOral && kind === "files") {
-    add("where", !!i.whereToSubmit?.trim(), "Où rendre", "Indique où rendre le travail.");
+  if (!i.courseId) {
+    // Sans séance, rien ne permet de dire que la date est « cohérente ».
     add(
+      "date",
+      false,
+      "Pas rattachée à une séance",
+      "absente de la frise des étudiant·es.",
+      edit,
+    );
+  } else {
+    const mismatch = !!(i.date && i.courseDate && i.date !== i.courseDate);
+    add(
+      "date",
+      !!i.date && !mismatch,
+      "Date cohérente avec la séance",
+      i.date ? "La date ne correspond pas à la séance rattachée." : "Renseigne la date.",
+      edit,
+    );
+  }
+  if (!isQcm && !isOral && kind === "files") {
+    add(
+      "where",
+      i.submissionMode === "app" || !!i.whereToSubmit?.trim(),
+      "Où rendre",
+      "Indique où rendre le travail.",
+    );
+    const withFiles = hasFiles(i.files);
+    info(
       "files",
-      hasFiles(i.files),
-      "Fichiers joints",
-      "Ajoute les fichiers du sujet si besoin.",
+      withFiles,
+      withFiles ? "Fichiers joints" : "Aucun fichier joint, facultatif",
       edit,
     );
   }
@@ -120,16 +142,48 @@ export function dayJReadiness(i: DayJInput): DayJ {
       q,
     );
     add("qcm-draws", i.qcm.drawsPrepared, "Tirages et liens préparés", "Prépare les tirages.", q);
-    add(
-      "qcm-open",
-      i.qcm.opened,
-      "QCM publié ou ouverture programmée",
-      "Publie le QCM ou programme l’ouverture.",
-      q,
-    );
+    // Une date d'ouverture ne suffit pas : seul un QCM publié s'ouvre à la date prévue.
+    add("qcm-open", i.qcm.opened, "QCM publié", "Publie le QCM.", q);
   }
-  const missing = items.filter((x) => !x.ok);
+  const missing = items.filter((x) => !x.ok && !x.optional);
   return { items, missing, allReady: missing.length === 0 };
+}
+
+/**
+ * L'évaluation publiée dans l'espace correspond-elle encore à l'évaluation ? Une modification du
+ * titre, de la date, de « Où rendre », du mode de rendu ou du sujet demande une mise à jour.
+ */
+export function espaceUpToDate(
+  published:
+    | {
+        title: string;
+        date: string | null;
+        whereToSubmit: string | null;
+        submit?: { mode: string };
+        sections: { heading: string; text: string }[];
+      }
+    | undefined,
+  current: {
+    title: string;
+    date: string | null;
+    where_to_submit: string | null;
+    submission_mode?: string | null;
+    objective: string | null;
+    subject: string | null;
+    deliverable_md: string | null;
+    evaluated_md: string | null;
+  },
+): boolean {
+  if (!published) return false;
+  const sections = subjectSections(current).map((x) => ({ heading: x.heading, text: x.text }));
+  const mode = current.submission_mode === "app" ? "app" : "elsewhere";
+  return (
+    published.title === current.title &&
+    (published.date ?? null) === (current.date?.slice(0, 10) ?? null) &&
+    (published.whereToSubmit ?? "").trim() === (current.where_to_submit ?? "").trim() &&
+    (!published.submit || published.submit.mode === mode) &&
+    JSON.stringify(published.sections) === JSON.stringify(sections)
+  );
 }
 
 /** Évaluations à venir dans `days` jours (aujourd'hui compris), triées par date. */

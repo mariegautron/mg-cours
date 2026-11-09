@@ -44,7 +44,7 @@ import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { Pill } from "@/components/dashboard/pill";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { DayJBlock } from "@/components/assessments/day-j-block";
-import { dayJReadiness } from "@/lib/assessments/day-j";
+import { dayJReadiness, espaceUpToDate } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Button } from "@/components/ui/button";
@@ -241,7 +241,7 @@ export default async function AssessmentPage({
     ? Math.round(grid.criteria.filter((c) => !c.is_bonus).reduce((n, c) => n + c.weight, 0) * 100) /
       100
     : 0;
-  const frame = frameStatus({
+  const frameBase = frameStatus({
     objective: assessment.objective,
     subject: assessment.subject,
     deliverableMd: assessment.deliverable_md,
@@ -258,10 +258,18 @@ export default async function AssessmentPage({
     [
       "À rendre",
       !blank(assessment.deliverable_md) &&
-        (examKindOf(assessment) !== "files" || !blank(assessment.where_to_submit)),
+        (examKindOf(assessment) !== "files" ||
+          assessment.submission_mode === "app" ||
+          !blank(assessment.where_to_submit)),
     ],
     ["Comment c’est noté", !blank(assessment.evaluated_md) || !!grid],
   ];
+  // « Complet » seulement si toutes les lignes du cadre sont cochées.
+  const frameMissing = frameChecks.filter(([, ok]) => !ok).map(([label]) => label.toLowerCase());
+  const frame =
+    frameBase.tone === "ok" && frameMissing.length > 0
+      ? { tone: "build" as const, label: `À compléter : ${frameMissing.join(", ")}` }
+      : frameBase;
   // Combien de modules utilisent cette grille (la modifier les touche tous).
   let gridModules = 0;
   if (grid) {
@@ -293,7 +301,10 @@ export default async function AssessmentPage({
     whereToSubmit: assessment.where_to_submit,
     files: assessment.files,
     isOral: assessment.project_role === "oral",
-    published: dayJExtras.publishedIds ? dayJExtras.publishedIds.has(assessmentId) : undefined,
+    published: dayJExtras.published
+        ? espaceUpToDate(dayJExtras.published.get(assessmentId), assessment)
+        : undefined,
+      submissionMode: assessment.submission_mode,
     qcm: dayJExtras.qcm.get(assessmentId),
   });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
