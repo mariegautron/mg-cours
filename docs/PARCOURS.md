@@ -151,6 +151,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : questions ouvertes : présence (excusé·e / non prévenu·e) posable sur une copie non rendue depuis la vue d'ensemble (`f398120`).
   - 9 nov. : rendu étape 1, retour du retest : paliers lisibles, date / auteur·e / retard, ajout sans quitter l'écran (`1a7b80d`). SCRUM ouvert en lecture, moyennes identiques (retest).
   - 9 nov. : rendu étape 3 : dépôt fermé une fois la note écrite (`a164dc8`) ; étape 2 : vue « Par critère », adresse par copie et « Ouvrir dans un nouvel onglet » (`b0cda31`). Reste : lettre modifiable depuis « Par critère », « Vérifier mes écarts », bandeau « Nouveau dépôt pendant ta correction ».
+  - 9 nov. : rendu à 125 % (critères en sélecteur, présences repliées) et case « Pas reçu (0) » retirée (`c3b5594`) ; dépôt corrigé sans phrase ni champs (`befb186`) ; « Par critère » éditable et « Vérifier mes écarts » (`1c9d4a0`, `b21f7d1`). Reste : bandeau « Nouveau dépôt pendant ta correction ».
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
