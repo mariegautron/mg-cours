@@ -77,7 +77,7 @@ export async function listUpcomingAssessments(
   let q = supabase
     .from("assessment")
     .select(
-      "*, module:module_id(id, name, archived_at), assessment_group(group_id), course:course_id(session_date)",
+      "*, module:module_id(id, name, archived_at), assessment_group(student_group_id), course:course_id(session_date)",
     )
     .is("makeup_of_id", null)
     .gte("date", today)
