@@ -40,7 +40,15 @@ export type Block =
   | { type: "image"; alt: string; src: string }
   | { type: "hr" }
   | { type: "table"; align: TableAlign[]; header: InlineRun[][]; rows: InlineRun[][][] }
-  | { type: "callout"; blocks: Block[] };
+  | { type: "callout"; blocks: Block[] }
+  /** Note pour l'enseignante (« Notes : … » en fin de diapo) : jamais projetée ni imprimée. */
+  | { type: "note"; text: string };
+
+/**
+ * Début d'une note pour moi seule : une ligne « Notes : », « Note : » ou « > Note : » (gras
+ * accepté). Le bloc court jusqu'au prochain `---`, au prochain titre ou à la fin.
+ */
+export const NOTE_START = /^\s*(?:>\s*)?(?:\*\*)?notes?(?:\s+pour moi)?(?:\*\*)?\s*:(?:\*\*)?\s*/i;
 
 const INLINE =
   /(\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|_[^_\s][^_]*_|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|<br\s*\/?>)/i;
@@ -146,6 +154,22 @@ export function parseMarkdown(source: string): Block[] {
       i++;
       while (i < lines.length && !/^<\/aside>\s*$/i.test(lines[i].trim())) inner.push(lines[i++]);
       blocks.push({ type: "callout", blocks: parseMarkdown(inner.join("\n")) });
+      continue;
+    }
+
+    if (NOTE_START.test(line)) {
+      flushPara();
+      listStack = [];
+      const note: string[] = [line.replace(NOTE_START, "")];
+      while (
+        i + 1 < lines.length &&
+        !/^#{1,6}\s/.test(lines[i + 1]) &&
+        !/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i + 1])
+      ) {
+        note.push(lines[++i].replace(/^>\s?/, ""));
+      }
+      const text = note.join("\n").trim();
+      if (text) blocks.push({ type: "note", text });
       continue;
     }
 

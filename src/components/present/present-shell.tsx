@@ -35,6 +35,8 @@ export interface PresentSlide {
   node: ReactNode;
   /** Jamais en lecture continue (mini-QCM : question et correction ne doivent pas défiler ensemble). */
   slidesOnly?: boolean;
+  /** Notes « pour toi seule » : lues par la vue privée uniquement, jamais rendues ici. */
+  notes?: string[];
 }
 
 type Mode = "document" | "slides";

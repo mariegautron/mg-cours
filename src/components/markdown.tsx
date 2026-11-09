@@ -89,6 +89,7 @@ function BlockView({
   size,
   id,
   tableLabel,
+  showNotes = false,
 }: {
   block: Block;
   headingLevel: 2 | 3 | 4;
@@ -98,9 +99,20 @@ function BlockView({
   id?: string;
   /** Titre qui précède un tableau : sert de légende (sinon « Tableau »). */
   tableLabel?: string;
+  /** Notes pour l'enseignante visibles (Aperçu, Lire) ; masquées partout ailleurs. */
+  showNotes?: boolean;
 }) {
   const present = size === "present";
   switch (block.type) {
+    case "note":
+      return showNotes ? (
+        <aside className="text-muted-foreground border-muted-foreground/40 rounded-md border-l-4 border-dashed px-3 py-1 italic">
+          <span className="text-xs font-semibold tracking-wide uppercase not-italic">
+            Note · pour toi seule
+          </span>
+          <span className="block whitespace-pre-wrap">{block.text}</span>
+        </aside>
+      ) : null;
     case "heading": {
       const Tag = `h${Math.min(headingLevel + block.level - 1, 6)}` as HeadingTag;
       const className = present
@@ -218,6 +230,7 @@ export function Markdown({
   blocks,
   size = "default",
   anchorPrefix,
+  showNotes = false,
 }: {
   source: string;
   headingLevel?: 2 | 3 | 4;
@@ -228,6 +241,8 @@ export function Markdown({
   size?: MarkdownSize;
   /** Donne aux titres de premier niveau l'ancre `${anchorPrefix}-${index du bloc}` (voir `markdownOutline`). */
   anchorPrefix?: string;
+  /** Montre les notes « pour toi seule » (Aperçu et Lire de la ressource seulement). */
+  showNotes?: boolean;
 }) {
   return (
     <div
@@ -259,6 +274,7 @@ export function Markdown({
             size={size}
             id={anchorPrefix && block.type === "heading" ? `${anchorPrefix}-${i}` : undefined}
             tableLabel={tableLabel || undefined}
+            showNotes={showNotes}
           />
         );
       })}

@@ -62,6 +62,8 @@ export interface SlideSpec {
   part: { index: number; total: number } | null;
   /** Rôle annoncé par le titre (mise en page propre : définition, exemple, exercice…). */
   role: SlideRole | null;
+  /** Notes pour l'enseignante (« Notes : … »), montrées dans la vue privée, jamais projetées. */
+  notes: string[];
 }
 
 const runsText = (runs: InlineRun[]): string =>
@@ -98,6 +100,7 @@ export function blockLines(block: Block): number {
     case "image":
       return MAX_SLIDE_LINES;
     case "hr":
+    case "note":
       return 0;
   }
 }
@@ -181,6 +184,7 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
   let section: string | null = null;
   let current: Block[] = [];
   let used = 0;
+  let notes: string[] = [];
 
   const headingOnly = () => current.length === 1 && current[0].type === "heading";
 
@@ -193,7 +197,9 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
         reminder: opensSection ? null : section,
         part,
         role: slideRole(current),
+        notes,
       });
+      notes = [];
     }
     current = [];
     used = 0;
@@ -215,6 +221,12 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
   };
 
   for (const block of blocks) {
+    if (block.type === "note") {
+      // Une note suit sa diapo ; tapée après un `---`, elle revient à la diapo précédente.
+      if (current.length || specs.length === 0) notes.push(block.text);
+      else specs[specs.length - 1].notes.push(block.text);
+      continue;
+    }
     if (block.type === "hr") {
       // Un titre seul n'est pas fermé par `---` : il reste avec son contenu (sinon diapo « un mot »).
       if (!headingOnly()) flush();
@@ -249,6 +261,8 @@ export function buildSlides(blocks: Block[]): SlideSpec[] {
     }
   }
   flush();
+  // Notes sans diapo après elles (contenu vide) : rattachées à la dernière.
+  if (notes.length && specs.length) specs[specs.length - 1].notes.push(...notes);
   return specs;
 }
 

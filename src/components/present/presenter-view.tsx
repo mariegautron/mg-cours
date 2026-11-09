@@ -430,6 +430,19 @@ export function PresenterView({
               <div className="max-h-[32vh] overflow-auto rounded-lg border p-4">
                 <div style={{ zoom: 0.5 }}>{current?.node}</div>
               </div>
+              {current?.notes?.length ? (
+                <aside
+                  aria-label="Tes notes pour cette diapositive"
+                  className="bg-sun/10 border-sun/60 rounded-lg border p-3 text-sm"
+                >
+                  <p className="font-semibold">Tes notes · pour toi seule</p>
+                  {current.notes.map((n, i) => (
+                    <p key={i} className="mt-1 whitespace-pre-wrap italic">
+                      {n}
+                    </p>
+                  ))}
+                </aside>
+              ) : null}
             </section>
 
             <section aria-labelledby="pv-next" className="space-y-2">

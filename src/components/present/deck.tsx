@@ -99,8 +99,9 @@ export function markdownSlides(
       : sameAsCover
         ? [{ ...first, blocks: first.blocks.slice(1), role: null }, ...specs.slice(1)]
         : specs;
-  return shown.map(({ blocks, reminder, part, role }) => ({
+  return shown.map(({ blocks, reminder, part, role, notes }) => ({
     section,
+    notes: notes.length ? notes : undefined,
     label: slideTitle(blocks) ?? (reminder ? `${reminder} (suite)` : null),
     node: (
       <div className={`space-y-4 ${role ? ROLE_FRAME[role] : ""}`}>
@@ -133,7 +134,10 @@ export function markdownSlides(
 
 /** « retro-boucle.png » → « retro boucle » : un nom de fichier n'est ni un titre ni un alt. */
 const readableFileName = (name: string) =>
-  name.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ").trim() || name;
+  name
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[-_]+/g, " ")
+    .trim() || name;
 
 /** Intercalaire + contenu + lien + fichiers joints d'une ressource. */
 export function resourceSlides(section: number, resource: Tables<"resource">): PresentSlide[] {

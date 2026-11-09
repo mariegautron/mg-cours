@@ -141,6 +141,7 @@ export default async function ResourcePage({ params }: PageProps<"/resources/[id
             </h2>
             <Markdown
               source={resource.content}
+              showNotes
               anchorPrefix="c"
               resolveImageSrc={(src) => resolveImageSrc(resource.id, src)}
             />

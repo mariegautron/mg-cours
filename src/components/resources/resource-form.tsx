@@ -318,6 +318,7 @@ export function ResourceForm({
                 ["Code", "\n```\ncode\n```\n"],
                 ["Image", "\n![description](fichier.png)\n"],
                 ["Tableau", "\n| A | B |\n| --- | --- |\n| 1 | 2 |\n"],
+                ["Note pour moi", "\nNotes : ce que tu veux te rappeler (jamais projeté)\n"],
               ] as const
             ).map(([label, snippet]) => (
               <Button
@@ -335,6 +336,11 @@ export function ResourceForm({
               ou écris en Markdown, c’est pareil
             </span>
           </div>
+          <p className="text-muted-foreground text-sm">
+            Une ligne qui commence par « Notes : » en fin de diapo est une note pour toi seule :
+            jamais projetée, ni dans les PDF, ni dans l’espace étudiant·es. Tu la retrouves dans la
+            vue privée pendant le cours.
+          </p>
           {restorable ? (
             <div
               role="status"
@@ -458,6 +464,7 @@ export function ResourceForm({
               {tab !== "preview" ? null : content.trim() ? (
                 <Markdown
                   source={content}
+                  showNotes
                   resolveImageSrc={
                     resource ? (src) => resolveImageSrc(resource.id, src) : undefined
                   }
