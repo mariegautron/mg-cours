@@ -201,6 +201,7 @@ directes : les liens reçus par les étudiant·es.
 - **À regarder en QA** : cases envoyée / payée, vue globale `/billing`, archivage, suppression (zone sensible).
 - **Améliorations notées** :
   - 9 nov. : progression « envoyée » d'après son vrai statut (envoyée / validée / PDF déposé), plus d'après l'iceberg qu'une facture cochée faisait avancer (`0b6c5e6`).
+  - 9 nov. : conditions YNOV de la facture alignées sur le vrai statut de la progression (`63f4140`).
   - Reste : le reste du prompt « terminer et facturer ».
 
 ## P13 · Piloter au quotidien
