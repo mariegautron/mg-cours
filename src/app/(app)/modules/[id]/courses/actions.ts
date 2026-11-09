@@ -218,3 +218,38 @@ export async function setCourseExpectations(
   revalidatePath(`/modules/${moduleId}`);
   return {};
 }
+
+/** Couverture : « Traité en séance… » relie un attendu à une séance (sans retirer les autres). */
+export async function linkExpectationToCourse(
+  moduleId: string,
+  expectationId: string,
+  courseId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const [{ data: course }, { data: expectation }] = await Promise.all([
+    supabase.from("course").select("id").eq("id", courseId).eq("module_id", moduleId).maybeSingle(),
+    supabase
+      .from("module_expectation")
+      .select("id")
+      .eq("id", expectationId)
+      .eq("module_id", moduleId)
+      .maybeSingle(),
+  ]);
+  if (!course || !expectation) return { error: NOT_FOUND.course };
+  const { data: existing } = await supabase
+    .from("course_expectation")
+    .select("course_id")
+    .eq("course_id", courseId)
+    .eq("expectation_id", expectationId)
+    .maybeSingle();
+  if (!existing) {
+    const { error } = await supabase
+      .from("course_expectation")
+      .insert({ course_id: courseId, expectation_id: expectationId });
+    if (error) return { error: failure("enregistrer") };
+  }
+  revalidatePath(`/modules/${moduleId}/couverture`);
+  revalidatePath(`/modules/${moduleId}/courses/${courseId}`);
+  revalidatePath(`/modules/${moduleId}/outline`);
+  return {};
+}

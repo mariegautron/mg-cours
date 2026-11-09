@@ -6,7 +6,8 @@ import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { COVERAGE_STATE_LABELS } from "@/lib/modules/expectation-coverage";
 import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
-import { getModule } from "@/lib/modules/queries";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { LinkExpectationCourse } from "@/components/modules/link-expectation-course";
 
 export const metadata: Metadata = { title: "Couverture des attendus" };
 
@@ -14,7 +15,10 @@ export default async function CoveragePage({ params }: PageProps<"/modules/[id]/
   const { id } = await params;
   const mod = await getModule(id);
   if (!mod) notFound();
-  const { rows, summary } = await getExpectationCoverageView(id);
+  const [{ rows, summary }, courses] = await Promise.all([
+    getExpectationCoverageView(id),
+    getModuleCourses(id),
+  ]);
   const tone = { both: "ok", course: "ok", assessment: "ok", none: "warn" } as const;
 
   return (
@@ -82,7 +86,19 @@ export default async function CoveragePage({ params }: PageProps<"/modules/[id]/
                     {r.label}
                   </th>
                   <td className="py-2 pr-3">
-                    {r.courses.length ? r.courses.map((c) => c.title).join(", ") : "—"}
+                    {r.courses.length ? (
+                      r.courses.map((c) => c.title).join(", ")
+                    ) : (
+                      <LinkExpectationCourse
+                        moduleId={id}
+                        expectationId={r.id}
+                        label={r.label}
+                        courses={courses.map((c, i) => ({
+                          id: c.id,
+                          title: `Séance ${i + 1} — ${c.title}`,
+                        }))}
+                      />
+                    )}
                   </td>
                   <td className="py-2 pr-3">
                     {r.assessments.length ? (
