@@ -10,6 +10,8 @@ import { Plus } from "lucide-react";
 import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { todayInParis } from "@/lib/modules/next-session";
+import { examKindOf } from "@/lib/assessments/exam-kind";
+import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { DayJBlock } from "@/components/assessments/day-j-block";
 import {
   dayJReadiness,
@@ -275,6 +277,11 @@ export default async function ModuleAssessmentsPage({
               {[...cards, ...makeups].map((a) => {
                 const oral = isOralAssessment(a);
                 const frame = frameStatus({
+                  hasDate: !!a.date || !!(a.course_id && courseDate.get(a.course_id)),
+                  whereOk:
+                    ["qcm", "oral", "in_class"].includes(examKindOf(a)) ||
+                    submitModeOf(a) === "app" ||
+                    !!a.where_to_submit?.trim(),
                   objective: a.objective,
                   subject: a.subject,
                   deliverableMd: a.deliverable_md,
@@ -302,7 +309,9 @@ export default async function ModuleAssessmentsPage({
                     <p className="text-muted-foreground mb-1 text-[0.8rem]">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
-                      {a.type ? `${a.type} · ` : ""}coefficient {a.coefficient} ·{" "}
+                      {/* Même coefficient que le badge : celui de la règle YNOV, qui fait la moyenne. */}
+                      {a.type ? `${a.type} · ` : ""}coefficient{" "}
+                      {a.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT} ·{" "}
                       {a.groups.map((g) => g.name).join(", ") || "—"} · sur {a.maxScore}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                       {dueSessions.has(a.id) ? "" : ""}

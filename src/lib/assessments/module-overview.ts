@@ -158,6 +158,10 @@ export function courseCellLabel(course: TimelineCourse): { text: string; todo: b
 }
 
 export interface FrameInput {
+  /** Date connue (de l'évaluation ou de sa séance) ; absent = non vérifié. */
+  hasDate?: boolean;
+  /** « Où rendre » rempli (ou rendu dans l'appli, ou sans objet) ; absent = non vérifié. */
+  whereOk?: boolean;
   objective: string | null;
   subject: string | null;
   deliverableMd: string | null;
@@ -184,9 +188,10 @@ export function frameStatus(f: FrameInput): Status {
   if (f.isOral) {
     if (!f.date) missing.push("date");
     if (blank(f.oralStartTime)) missing.push("heure");
-  }
+  } else if (f.hasDate === false) missing.push("date");
+  if (f.whereOk === false) missing.push("où rendre");
   if (missing.length === 0) return { tone: "ok", label: "Complet" };
-  const contentMissing = missing.filter((m) => !["date", "heure"].includes(m));
+  const contentMissing = missing.filter((m) => !["date", "heure", "où rendre"].includes(m));
   if (contentMissing.length === 4) return { tone: "build", label: "À écrire" };
   return { tone: "build", label: `À compléter : ${missing.join(", ")}` };
 }

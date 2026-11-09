@@ -242,6 +242,11 @@ export default async function AssessmentPage({
       100
     : 0;
   const frameBase = frameStatus({
+    hasDate: !!assessment.date || !!course?.session_date,
+    whereOk:
+      ["qcm", "oral", "in_class"].includes(examKindOf(assessment)) ||
+      submitModeOf(assessment) === "app" ||
+      !!assessment.where_to_submit?.trim(),
     objective: assessment.objective,
     subject: assessment.subject,
     deliverableMd: assessment.deliverable_md,
@@ -253,7 +258,7 @@ export default async function AssessmentPage({
   const blank = (v: string | null) => !v || !v.trim();
   const frameChecks: [string, boolean][] = [
     ["Quoi", !blank(assessment.objective) || !blank(assessment.subject)],
-    ["Quand", !!assessment.date || !!course],
+    ["Quand", !!assessment.date || !!course?.session_date],
     ["Avec qui", assessment.groups.length > 0],
     [
       "À rendre",
