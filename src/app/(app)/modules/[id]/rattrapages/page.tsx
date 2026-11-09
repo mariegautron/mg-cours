@@ -11,17 +11,26 @@ import { MAKEUP_STEP_LABELS, makeupSummary } from "@/lib/assessments/makeup-over
 import { getModule } from "@/lib/modules/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
+import { listModuleAssessments } from "@/lib/assessments/queries";
+import { MakeupDateForm } from "@/components/assessments/makeup-date-form";
 
 export const metadata: Metadata = { title: "Rattrapages" };
 
 /** Rattrapages du module (US-148) : qui est à rattraper, où en est chacun·e, et les gestes pour avancer. */
-export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/rattrapages">) {
+export default async function MakeupsPage({
+  params,
+  searchParams,
+}: PageProps<"/modules/[id]/rattrapages">) {
   const { id } = await params;
+  const sp = await searchParams;
+  const created = typeof sp.cree === "string" ? sp.cree : null;
+  const createdQcm = sp.qcm === "1";
   const mod = await getModule(id);
   if (!mod) notFound();
 
   // Même calcul que le tableau de bord et la fiche du module.
   const groups = await loadMakeupGroups(id);
+  const dateOf = new Map((await listModuleAssessments(id)).map((a) => [a.id, a.date]));
 
   const rule = await getAbsenceRuleForModule(id);
   const toOrganise = groups.flatMap((g) =>
@@ -30,6 +39,27 @@ export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/r
 
   return (
     <div className="max-w-6xl space-y-5">
+      {created ? (
+        <div role="status" className="border-mint/50 bg-mint/10 space-y-1 rounded-xl border p-4">
+          <p className="font-semibold">Rattrapage créé.</p>
+          <p className="flex flex-wrap gap-3 text-sm">
+            <Link
+              href={`/modules/${id}/assessments/${created}/edit`}
+              className="underline underline-offset-2"
+            >
+              Modifier le sujet
+            </Link>
+            {createdQcm ? (
+              <Link
+                href={`/modules/${id}/assessments/${created}/quiz/links`}
+                className="underline underline-offset-2"
+              >
+                Donner le lien
+              </Link>
+            ) : null}
+          </p>
+        </div>
+      ) : null}
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold">Rattrapages — {mod.name}</h1>
         <p role="status" className="text-muted-foreground">
@@ -55,7 +85,8 @@ export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/r
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 id={`mk-${g.assessment.id}`} className="text-lg font-semibold">
-                    À rattraper : {g.assessment.title}
+                    {g.rows.every((r) => r.step === "done") ? "Rattrapages faits" : "À rattraper"} :{" "}
+                    {g.assessment.title}
                   </h2>
                   <Button asChild size="touch" variant="outline">
                     <Link href={`/modules/${id}/assessments/${g.assessment.id}`}>
@@ -88,6 +119,13 @@ export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/r
                     </li>
                   ))}
                 </ul>
+                {g.makeup ? (
+                  <MakeupDateForm
+                    moduleId={id}
+                    makeupId={g.makeup.id}
+                    initial={dateOf.get(g.makeup.id) ?? null}
+                  />
+                ) : null}
                 <MakeupPanel
                   moduleId={id}
                   assessmentId={g.assessment.id}

@@ -13,6 +13,7 @@ export function CopyMessage({ text, label }: { text: string; label: string }) {
         type="button"
         size="touch"
         variant="secondary"
+        className="h-auto w-full whitespace-normal text-left sm:w-auto"
         onClick={async () => {
           try {
             await navigator.clipboard.writeText(text);

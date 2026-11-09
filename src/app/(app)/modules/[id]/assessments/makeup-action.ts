@@ -67,11 +67,23 @@ async function createMakeup(
     }
     makeupId = created.id;
 
-    // Mêmes groupes que l'original : c'est dans ces groupes que se trouvent les étudiant·es concerné·es.
-    const { data: groups } = await supabase
+    // Seulement les groupes des personnes à rattraper (pas tous les groupes de l'original).
+    const { data: originalGroups } = await supabase
       .from("assessment_group")
       .select("student_group_id")
       .eq("assessment_id", originalId);
+    const { data: memberships } = excused.length
+      ? await supabase
+          .from("group_member")
+          .select("student_group_id")
+          .in("student_id", excused)
+          .in(
+            "student_group_id",
+            (originalGroups ?? []).map((g) => g.student_group_id),
+          )
+      : { data: [] as { student_group_id: string }[] };
+    const wanted = new Set((memberships ?? []).map((m) => m.student_group_id));
+    const groups = (originalGroups ?? []).filter((g) => wanted.has(g.student_group_id));
     if (groups?.length) {
       const { error: groupError } = await supabase
         .from("assessment_group")
@@ -119,11 +131,9 @@ async function createMakeup(
 
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}/assessments/${originalId}`);
-  redirect(
-    quiz.quiz
-      ? `/modules/${moduleId}/assessments/${makeupId}/quiz`
-      : `/modules/${moduleId}/assessments/${makeupId}/edit`,
-  );
+  revalidatePath(`/modules/${moduleId}/rattrapages`);
+  // Retour sur la page Rattrapages : « Rattrapage créé », avec « Modifier le sujet » et « Donner le lien ».
+  redirect(`/modules/${moduleId}/rattrapages?cree=${makeupId}${quiz.quiz ? "&qcm=1" : ""}`);
 }
 
 export async function prepareMakeup(moduleId: string, originalId: string): Promise<MakeupState> {
@@ -136,4 +146,27 @@ export async function prepareMakeupInAdvance(
   originalId: string,
 ): Promise<MakeupState> {
   return createMakeup(moduleId, originalId, { inAdvance: true });
+}
+
+/** Date (et heure de passage facultative) d'un rattrapage, depuis la page Rattrapages. */
+export async function setMakeupDate(
+  moduleId: string,
+  makeupId: string,
+  date: string,
+): Promise<{ error?: string }> {
+  const value = date.trim();
+  if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) return { error: "Date invalide." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("assessment")
+    .update({ date: value || null })
+    .eq("id", makeupId)
+    .eq("module_id", moduleId)
+    .not("makeup_of_id", "is", null);
+  if (error) return { error: "La date n’a pas pu être enregistrée." };
+  revalidatePath(`/modules/${moduleId}/rattrapages`);
+  revalidatePath(`/modules/${moduleId}/assessments`);
+  revalidatePath(`/modules/${moduleId}`);
+  revalidatePath("/dashboard");
+  return {};
 }
