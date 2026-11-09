@@ -23,6 +23,9 @@ import { emailFromTemplate } from "@/lib/settings/school-rules";
 import { regradeAttempt } from "@/lib/quiz/grade-server";
 import { inviteSubject, inviteText, type InviteContext } from "@/lib/quiz/links";
 import { getQuizByAssessment, loadBank, passingStudents } from "@/lib/quiz/queries";
+import { openNowWindow } from "@/lib/quiz/open-state";
+import { createClassLink } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/qr/actions";
+import { getClassLinkInfo } from "@/lib/quiz/class-queries";
 import { generateToken, hashToken, quizUrl } from "@/lib/quiz/token";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { createClient } from "@/lib/supabase/server";
@@ -154,6 +157,87 @@ export async function saveQuizConfig(
   }
   refresh(moduleId, assessmentId);
   return { saved: true };
+}
+
+/** Ce qui empêche de publier (configuration, banque trop petite). */
+async function publishProblems(
+  quiz: NonNullable<Awaited<ReturnType<typeof getQuizByAssessment>>>,
+): Promise<string[]> {
+  return [
+    ...validateQuizConfig({
+      title: quiz.title,
+      instructions: quiz.instructions,
+      durationMinutes: quiz.duration_minutes,
+      opensAt: quiz.opens_at,
+      closesAt: quiz.closes_at,
+      showResults: quiz.show_results,
+      shuffleQuestions: quiz.shuffle_questions,
+      shuffleChoices: quiz.shuffle_choices,
+      rules: quiz.rules,
+    }),
+    ...shortages(await loadBank(quiz.id), quiz.rules),
+  ];
+}
+
+/**
+ * « Ouvrir maintenant » : publie si besoin, ouverture = maintenant, fermeture au moins à
+ * maintenant + durée + 10 min. Revient à la page d'où l'on vient (accès ou projection).
+ */
+export async function openQuizNow(
+  moduleId: string,
+  assessmentId: string,
+  back: "links" | "present",
+): Promise<void> {
+  const quiz = await getQuizByAssessment(assessmentId);
+  if (!quiz) redirect(path(moduleId, assessmentId));
+  const target =
+    back === "present"
+      ? `/present/modules/${moduleId}/assessments/${assessmentId}/quiz`
+      : `${path(moduleId, assessmentId)}/links`;
+  if (quiz.status === "closed") redirect(target);
+  const window = openNowWindow(quiz);
+  if (quiz.status === "draft") {
+    const problems = await publishProblems({ ...quiz, ...window });
+    if (problems.length)
+      redirect(
+        `${path(moduleId, assessmentId)}/links?error=${encodeURIComponent(`Ouverture impossible : ${problems.join(" ")}`)}`,
+      );
+  }
+  const supabase = await createClient();
+  await supabase
+    .from("quiz")
+    .update({ status: "published", ...window })
+    .eq("id", quiz.id);
+  refresh(moduleId, assessmentId);
+  revalidatePath(target);
+  redirect(target);
+}
+
+/**
+ * « Faire passer en classe (QR) » : publie si besoin, prépare les copies de celles et ceux qui n'en
+ * ont pas, crée le QR s'il n'existe pas, puis ouvre la projection (qui dit si le QCM est fermé).
+ */
+export async function passInClass(moduleId: string, assessmentId: string): Promise<void> {
+  const quiz = await getQuizByAssessment(assessmentId);
+  if (!quiz) redirect(path(moduleId, assessmentId));
+  const supabase = await createClient();
+  if (quiz.status === "draft") {
+    const problems = await publishProblems(quiz);
+    if (problems.length)
+      redirect(
+        `${path(moduleId, assessmentId)}?error=${encodeURIComponent(`Publication impossible : ${problems.join(" ")}`)}`,
+      );
+    await supabase.from("quiz").update({ status: "published" }).eq("id", quiz.id);
+  }
+  const prepared = await prepareLinks(moduleId, assessmentId, {}, new FormData());
+  // « Tout le monde a déjà un lien » n'est pas un problème ici : les copies existent.
+  const blocking = (prepared.errors ?? []).filter((e) => !e.startsWith("Tout le monde"));
+  if (blocking.length)
+    redirect(`${path(moduleId, assessmentId)}?error=${encodeURIComponent(blocking.join(" "))}`);
+  const info = await getClassLinkInfo(quiz.id);
+  if (info.available && !info.token) await createClassLink(moduleId, assessmentId);
+  refresh(moduleId, assessmentId);
+  redirect(`/present/modules/${moduleId}/assessments/${assessmentId}/quiz`);
 }
 
 /** Publie le QCM : la banque doit pouvoir honorer chaque règle. */

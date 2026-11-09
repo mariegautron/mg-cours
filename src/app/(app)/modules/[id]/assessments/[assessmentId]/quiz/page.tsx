@@ -7,6 +7,7 @@ import { ActionError } from "@/components/action-error";
 import {
   closeQuiz,
   createQuiz,
+  passInClass,
   publishQuiz,
   unpublishQuiz,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
@@ -113,6 +114,8 @@ export default async function QuizPage({
   const pool = await getQuizPool(quiz.id);
   const submitted = attempts.filter((a) => a.status === "submitted").length;
   const toReview = attempts.filter((a) => a.status === "submitted" && !a.reviewComplete).length;
+  // Copies commencées (ou rendues) : le QCM ne peut plus repasser en brouillon.
+  const started = attempts.filter((a) => a.status !== "ready").length;
   const categories = [...new Set(bank.map((q) => q.category).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, "fr"),
   );
@@ -274,6 +277,18 @@ export default async function QuizPage({
                 </>
               )
             ) : null}
+            {quiz.status !== "closed" && validRules ? (
+              <form action={passInClass.bind(null, id, assessmentId)}>
+                <Button
+                  type="submit"
+                  size="touch"
+                  variant={quiz.status === "draft" ? "outline" : "default"}
+                  className="h-auto w-full py-2 whitespace-normal"
+                >
+                  Faire passer en classe (QR)
+                </Button>
+              </form>
+            ) : null}
             {quiz.rules.length > 0 ? (
               <Button asChild size="touch" variant="outline">
                 <Link href={`${back}/quiz/essai`} target="_blank" rel="noopener">
@@ -283,11 +298,30 @@ export default async function QuizPage({
             ) : null}
             {quiz.status === "published" ? (
               <>
-                <form action={unpublishQuiz.bind(null, id, assessmentId)}>
-                  <Button type="submit" size="touch" variant="secondary" className="w-full">
-                    Repasser en brouillon
-                  </Button>
-                </form>
+                {started > 0 ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="touch"
+                      variant="secondary"
+                      disabled
+                      className="w-full"
+                      aria-describedby="unpublish-hint"
+                    >
+                      Repasser en brouillon
+                    </Button>
+                    <p id="unpublish-hint" className="text-muted-foreground text-sm">
+                      Impossible : {started} copie{started > 1 ? "s" : ""} déjà commencée
+                      {started > 1 ? "s" : ""}. Clôture le QCM ou rouvre la copie.
+                    </p>
+                  </>
+                ) : (
+                  <form action={unpublishQuiz.bind(null, id, assessmentId)}>
+                    <Button type="submit" size="touch" variant="secondary" className="w-full">
+                      Repasser en brouillon
+                    </Button>
+                  </form>
+                )}
                 <form action={closeQuiz.bind(null, id, assessmentId)}>
                   <Button type="submit" size="touch" variant="secondary" className="w-full">
                     Clôturer le QCM
@@ -301,7 +335,7 @@ export default async function QuizPage({
               </Button>
             ) : null}
             <Button asChild size="touch" variant={submitted > 0 ? "secondary" : "default"}>
-              <Link href={`${back}/quiz/links`}>Donner accès : préparer les liens personnels</Link>
+              <Link href={`${back}/quiz/links`}>Liens personnels et suivi des copies</Link>
             </Button>
           </div>
         </section>

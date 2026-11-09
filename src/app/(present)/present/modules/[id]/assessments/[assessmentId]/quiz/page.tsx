@@ -9,7 +9,8 @@ import { getAssessment } from "@/lib/assessments/queries";
 import { clientEnv } from "@/lib/env";
 import { classUrl } from "@/lib/quiz/class-access";
 import { getClassLinkInfo } from "@/lib/quiz/class-queries";
-import { minutesUntil } from "@/lib/quiz/timer";
+import { closesAtLabel, quizAccess } from "@/lib/quiz/open-state";
+import { QuizClosedBanner } from "@/components/quiz/quiz-closed-banner";
 import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 
 export const metadata: Metadata = { title: "QCM : QR code de la classe" };
@@ -33,11 +34,19 @@ export default async function ProjectedQuizQrPage({
     : null;
   const back = `/modules/${id}/assessments/${assessmentId}/quiz/links`;
   const entered = info.claimed.length;
-  const remaining = minutesUntil(quiz.closes_at);
+  const access = quizAccess(quiz);
+  const closesLabel = closesAtLabel(quiz.closes_at);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-5xl flex-col justify-center gap-8 p-10">
       <LiveRefresh />
+      <QuizClosedBanner
+        access={access}
+        moduleId={id}
+        assessmentId={assessmentId}
+        back="present"
+        large
+      />
       <div>
         <p className="text-muted-foreground text-xl">QCM : {quiz.title}</p>
         <h1 className="font-heading text-6xl leading-tight font-bold tracking-tight">
@@ -71,13 +80,7 @@ export default async function ProjectedQuizQrPage({
           {entered > 1 ? "sont" : "est"} entrée
           {entered > 1 ? "s" : ""}
         </p>
-        {quiz.status !== "published" ? (
-          <Pill tone="warn">QCM pas encore publié</Pill>
-        ) : remaining !== null ? (
-          <span role="timer" aria-label={`Reste ${remaining} minutes`}>
-            <Pill tone="wip">Reste {remaining} minutes</Pill>
-          </span>
-        ) : null}
+        {access.open && closesLabel ? <Pill tone="wip">{closesLabel}</Pill> : null}
       </div>
       <p>
         <Link href={back} className="text-muted-foreground text-sm underline underline-offset-2">

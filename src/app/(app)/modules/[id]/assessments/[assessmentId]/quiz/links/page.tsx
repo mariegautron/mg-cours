@@ -7,6 +7,8 @@ import { closeQuizToResults } from "@/app/(app)/modules/[id]/assessments/[assess
 import { ActionError } from "@/components/action-error";
 import { Pill } from "@/components/dashboard/pill";
 import { AttemptActions } from "@/components/quiz/attempt-actions";
+import { QuizClosedBanner } from "@/components/quiz/quiz-closed-banner";
+import { quizAccess } from "@/lib/quiz/open-state";
 import { ClassLinkControls } from "@/components/quiz/class-link-controls";
 import { PrepareLinks } from "@/components/quiz/links-panel";
 import { Button } from "@/components/ui/button";
@@ -62,7 +64,9 @@ export default async function QuizLinksPage({
       <div className="flex min-w-0 flex-[3_1_0] flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="font-heading text-3xl font-bold tracking-tight">Donner accès au QCM</h1>
+            <h1 className="font-heading text-3xl font-bold tracking-tight">
+              Liens personnels et suivi des copies
+            </h1>
           </div>
           <p role="status">
             <Pill tone={quiz.status === "published" ? "wip" : "plain"}>
@@ -70,6 +74,13 @@ export default async function QuizLinksPage({
             </Pill>
           </p>
         </div>
+
+        <QuizClosedBanner
+          access={quizAccess(quiz)}
+          moduleId={id}
+          assessmentId={assessmentId}
+          back="links"
+        />
 
         {typeof error === "string" ? (
           <ActionError error={error} className="border-destructive rounded-md border p-3" />
