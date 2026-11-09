@@ -29,20 +29,27 @@ export interface Readiness {
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n > 1 ? many : one}`;
 
 export function sessionReadiness(i: ReadinessInput): Readiness {
-  const edit = `/modules/${i.moduleId}/courses/${i.courseId}/edit`;
+  const edit = `/modules/${i.moduleId}/courses/${i.courseId}#deroule`;
   const toBuild = i.resources.filter((r) => r.status !== "ready").length;
   const items: ReadinessItem[] = [];
 
   items.push(
-    i.prepStatus === "ready"
-      ? { key: "outline", ok: true, title: "Déroulé prêt" }
-      : {
+    i.prepStatus === "ready" && i.resources.length === 0
+      ? {
           key: "outline",
           ok: false,
-          title: "Déroulé à finaliser",
-          detail: "La séance n’est pas encore marquée prête.",
-          action: { label: "Finaliser la séance", href: edit },
-        },
+          title: "Déroulé vide : rien ne sera projeté",
+          action: { label: "Ajouter une ressource", href: edit },
+        }
+      : i.prepStatus === "ready"
+        ? { key: "outline", ok: true, title: "Déroulé prêt" }
+        : {
+            key: "outline",
+            ok: false,
+            title: "Déroulé à finaliser",
+            detail: "La séance n’est pas encore marquée prête.",
+            action: { label: "Finaliser la séance", href: edit },
+          },
   );
 
   if (i.resources.length === 0) {

@@ -737,10 +737,12 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       <div className="flex flex-wrap items-start gap-4.5 lg:flex-nowrap">
         <div className="min-w-0 flex-1 basis-full space-y-3.5 lg:basis-0">
           {doneTodayCard}
+          {/* « À faire » d'abord : visible sans défiler à 125 %, avant la carte du prochain cours. */}
+          {todoCard}
           {upcoming ? (
             <section
               aria-labelledby="next"
-              className="bg-card border-l-primary rounded-3xl border border-l-[6px] p-6 shadow-sm"
+              className="bg-card border-l-primary rounded-3xl border border-l-[6px] p-5 shadow-sm"
             >
               <p className="mb-1.5 flex flex-wrap items-center gap-2.5">
                 <Pill tone="wip">{untilLabel(today, upcoming.session_date!)}</Pill>
@@ -790,7 +792,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               )}
             </section>
           )}
-          {todoCard}
           {surprisesCard}
         </div>
         <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">

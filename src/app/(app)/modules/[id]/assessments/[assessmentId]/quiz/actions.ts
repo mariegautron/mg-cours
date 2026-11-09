@@ -217,27 +217,26 @@ export async function openQuizNow(
  * « Faire passer en classe (QR) » : publie si besoin, prépare les copies de celles et ceux qui n'en
  * ont pas, crée le QR s'il n'existe pas, puis ouvre la projection (qui dit si le QCM est fermé).
  */
-export async function passInClass(moduleId: string, assessmentId: string): Promise<void> {
+export async function passInClass(
+  moduleId: string,
+  assessmentId: string,
+): Promise<{ error?: string; url?: string }> {
   const quiz = await getQuizByAssessment(assessmentId);
-  if (!quiz) redirect(path(moduleId, assessmentId));
+  if (!quiz) return { error: "Ce QCM n’existe plus." };
   const supabase = await createClient();
   if (quiz.status === "draft") {
     const problems = await publishProblems(quiz);
-    if (problems.length)
-      redirect(
-        `${path(moduleId, assessmentId)}?error=${encodeURIComponent(`Publication impossible : ${problems.join(" ")}`)}`,
-      );
+    if (problems.length) return { error: `Publication impossible : ${problems.join(" ")}` };
     await supabase.from("quiz").update({ status: "published" }).eq("id", quiz.id);
   }
   const prepared = await prepareLinks(moduleId, assessmentId, {}, new FormData());
   // « Tout le monde a déjà un lien » n'est pas un problème ici : les copies existent.
   const blocking = (prepared.errors ?? []).filter((e) => !e.startsWith("Tout le monde"));
-  if (blocking.length)
-    redirect(`${path(moduleId, assessmentId)}?error=${encodeURIComponent(blocking.join(" "))}`);
+  if (blocking.length) return { error: blocking.join(" ") };
   const info = await getClassLinkInfo(quiz.id);
   if (info.available && !info.token) await createClassLink(moduleId, assessmentId);
   refresh(moduleId, assessmentId);
-  redirect(`/present/modules/${moduleId}/assessments/${assessmentId}/quiz`);
+  return { url: `/present/modules/${moduleId}/assessments/${assessmentId}/quiz` };
 }
 
 /** Publie le QCM : la banque doit pouvoir honorer chaque règle. */

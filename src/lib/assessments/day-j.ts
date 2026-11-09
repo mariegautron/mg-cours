@@ -14,6 +14,8 @@ export interface DayJInput {
   courseId: string | null;
   /** Date de la séance rattachée. */
   courseDate?: string | null;
+  /** Numéro de la séance rattachée (message de date incohérente). */
+  coursePosition?: number | null;
   prepStatus: PrepStatus;
   objective: string | null;
   subject: string | null;
@@ -91,20 +93,19 @@ export function dayJReadiness(i: DayJInput): DayJ {
   );
   if (!i.courseId) {
     // Sans séance, rien ne permet de dire que la date est « cohérente ».
-    add(
-      "date",
-      false,
-      "Pas rattachée à une séance",
-      "absente de la frise des étudiant·es.",
-      edit,
-    );
+    add("date", false, "Pas rattachée à une séance", "absente de la frise des étudiant·es.", edit);
   } else {
     const mismatch = !!(i.date && i.courseDate && i.date !== i.courseDate);
+    const dm = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
     add(
       "date",
       !!i.date && !mismatch,
-      "Date cohérente avec la séance",
-      i.date ? "La date ne correspond pas à la séance rattachée." : "Renseigne la date.",
+      mismatch ? "Date" : "Date cohérente avec la séance",
+      mismatch
+        ? `la date (${dm(i.date!)}) ne correspond pas à la séance rattachée (${i.coursePosition ? `séance ${i.coursePosition}, ` : ""}${dm(i.courseDate!)}).`
+        : i.date
+          ? "La date ne correspond pas à la séance rattachée."
+          : "Renseigne la date.",
       edit,
     );
   }

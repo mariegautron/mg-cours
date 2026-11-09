@@ -24,7 +24,7 @@ describe("sessionReadiness", () => {
   it("déroulé non prêt : lien vers la séance", () => {
     const x = item({ ...ready, prepStatus: "draft" }, "outline");
     expect(x.ok).toBe(false);
-    expect(x.action?.href).toBe("/modules/m1/courses/c1/edit");
+    expect(x.action?.href).toBe("/modules/m1/courses/c1#deroule");
   });
   it("ressources : aucune, à construire, toutes prêtes", () => {
     expect(item({ ...ready, resources: [] }, "resources").title).toBe("Aucune ressource attachée");

@@ -68,12 +68,16 @@ export function openNowWindow(
   return { opens_at: now.toISOString(), closes_at: closes };
 }
 
-/** « Ferme à 18:00 » (heure de Paris). */
-export function closesAtLabel(closesAt: string | null): string | null {
+/** « Ferme à 18:00 » aujourd'hui, sinon « Ferme le 27/11 à 13:30 » (heure de Paris). */
+export function closesAtLabel(closesAt: string | null, now: Date = new Date()): string | null {
   if (!closesAt) return null;
-  return `Ferme à ${new Date(closesAt).toLocaleTimeString("fr-FR", {
+  const d = new Date(closesAt);
+  const day = (x: Date) =>
+    x.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", timeZone: "Europe/Paris" });
+  const time = d.toLocaleTimeString("fr-FR", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Paris",
-  })}`;
+  });
+  return day(d) === day(now) ? `Ferme à ${time}` : `Ferme le ${day(d)} à ${time}`;
 }

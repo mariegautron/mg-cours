@@ -1,13 +1,13 @@
 import { CorrectionMode } from "@/components/quiz/correction-mode";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PassInClassButton } from "@/components/quiz/pass-in-class-button";
 import { notFound } from "next/navigation";
 
 import { ActionError } from "@/components/action-error";
 import {
   closeQuiz,
   createQuiz,
-  passInClass,
   publishQuiz,
   unpublishQuiz,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
@@ -278,16 +278,11 @@ export default async function QuizPage({
               )
             ) : null}
             {quiz.status !== "closed" && validRules ? (
-              <form action={passInClass.bind(null, id, assessmentId)}>
-                <Button
-                  type="submit"
-                  size="touch"
-                  variant={quiz.status === "draft" ? "outline" : "default"}
-                  className="h-auto w-full py-2 whitespace-normal"
-                >
-                  Faire passer en classe (QR)
-                </Button>
-              </form>
+              <PassInClassButton
+                moduleId={id}
+                assessmentId={assessmentId}
+                primary={quiz.status !== "draft"}
+              />
             ) : null}
             {quiz.rules.length > 0 ? (
               <Button asChild size="touch" variant="outline">

@@ -124,7 +124,11 @@ export default async function QuizLinksPage({
                         </a>
                       </p>
                       <Button asChild size="touch" className="w-full">
-                        <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
+                        <Link
+                          href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}
+                          target="_blank"
+                          rel="noopener"
+                        >
                           Afficher sur l’écran projeté
                         </Link>
                       </Button>
@@ -211,7 +215,11 @@ export default async function QuizLinksPage({
                       </a>
                     </p>
                     <Button asChild size="touch" className="w-full">
-                      <Link href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}>
+                      <Link
+                        href={`/present/modules/${id}/assessments/${assessmentId}/quiz`}
+                        target="_blank"
+                        rel="noopener"
+                      >
                         Afficher sur l’écran projeté
                       </Link>
                     </Button>
