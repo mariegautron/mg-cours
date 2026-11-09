@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ContactLine } from "@/components/modules/contact-line";
+
 import type { Espace } from "@/lib/modules/espace";
 import {
   INVALID_LINK_TITLE,
@@ -61,11 +63,12 @@ export function EspaceShell({
         </nav>
       ) : null}
       <main className="flex-1 p-4 sm:py-6">{children}</main>
-      {publishedAt ? (
-        <p className="text-muted-foreground border-t px-4 py-3 text-xs">
-          Mise à jour le {new Date(publishedAt).toLocaleDateString("fr-FR")}.
-        </p>
-      ) : null}
+      <div className="text-muted-foreground space-y-1 border-t px-4 py-3 text-xs">
+        <ContactLine tone="vous" />
+        {publishedAt ? (
+          <p>Mise à jour le {new Date(publishedAt).toLocaleDateString("fr-FR")}.</p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -91,6 +94,7 @@ export function EspaceError({
       <main className="flex-1 space-y-2 p-4 sm:py-6">
         <h1 className="text-2xl font-semibold">{text[0]}</h1>
         <p className="text-muted-foreground">{text[1]}</p>
+        <ContactLine tone={tone} className="text-muted-foreground pt-2" />
       </main>
     </div>
   );

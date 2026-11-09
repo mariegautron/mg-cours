@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ContactLine } from "@/components/modules/contact-line";
+
 import { Markdown, markdownOutline } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
@@ -117,9 +119,10 @@ export function EspaceLayout({
         <main id="contenu" tabIndex={-1} className="p-4 outline-none lg:p-10">
           {children}
         </main>
-        <p className="text-muted-foreground border-t px-4 py-3 text-xs lg:px-10">
-          Ce lien est personnel : ne le partage pas.
-        </p>
+        <div className="text-muted-foreground space-y-1 border-t px-4 py-3 text-xs lg:px-10">
+          <ContactLine tone="tu" />
+          <p>Ce lien est personnel : ne le partage pas.</p>
+        </div>
       </div>
     </div>
   );
