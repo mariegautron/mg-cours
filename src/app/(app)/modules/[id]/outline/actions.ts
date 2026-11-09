@@ -1,6 +1,10 @@
 "use server";
 
+import { renderToBuffer } from "@react-pdf/renderer";
 import { revalidatePath } from "next/cache";
+
+import { OutlineDocument } from "@/lib/pdf/outline";
+import type { OutlineContent } from "@/lib/ynov/outline";
 
 import { buildCurrentOutline, getOutline } from "@/lib/outline/queries";
 import { advanceModule } from "@/lib/modules/advance";
@@ -44,9 +48,26 @@ export async function markOutlineSent(moduleId: string): Promise<OutlineActionSt
   if (!outline) return { error: "Génère d’abord la progression pédagogique." };
 
   const supabase = await createClient();
+  // La version envoyée est figée : le PDF de ce moment est gardé à part. « Régénérer » ensuite
+  // ne touche jamais à ce que l'école a reçu.
+  const sentAt = new Date().toISOString();
+  let pdfPath: string | null = null;
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const buffer = await renderToBuffer(
+      OutlineDocument({ content: outline.content as unknown as OutlineContent }),
+    );
+    const path = `${auth.user?.id}/${moduleId}/progression-envoyee-${sentAt.replace(/[:.]/g, "-")}.pdf`;
+    const { error: upError } = await supabase.storage
+      .from("module-documents")
+      .upload(path, new Uint8Array(buffer), { contentType: "application/pdf", upsert: false });
+    if (!upError) pdfPath = path;
+  } catch {
+    // Le PDF figé est un plus : l'envoi est enregistré même si la copie n'a pas pu être gardée.
+  }
   const { error } = await supabase
     .from("pedagogical_outline")
-    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .update({ status: "sent", sent_at: sentAt, ...(pdfPath ? { pdf_path: pdfPath } : {}) })
     .eq("id", outline.id);
   if (error) return { error: failure("enregistrer") };
 

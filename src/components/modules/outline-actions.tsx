@@ -63,7 +63,10 @@ export function OutlineActions({
   archived = false,
   generatedLabel,
   deposited,
+  sentVersion = null,
 }: {
+  /** Version figée au clic sur « J'ai envoyé » : « 08/11/2026 à 23 h 39 », sinon `null`. */
+  sentVersion?: string | null;
   moduleId: string;
   /** `null` = trame jamais générée. */
   status: "draft" | "sent" | "validated" | null;
@@ -109,6 +112,20 @@ export function OutlineActions({
             </p>
             {deposited && generatedLabel ? (
               <p className="text-muted-foreground text-sm">{generatedLabel}</p>
+            ) : null}
+            {sentVersion ? (
+              <Button asChild variant="secondary" className="w-full">
+                <a href={`/api/modules/${moduleId}/outline?version=envoyee`}>
+                  Télécharger la version envoyée le {sentVersion}
+                </a>
+              </Button>
+            ) : null}
+            {!archived && (status === "sent" || status === "validated") ? (
+              <p className="text-sun text-sm">
+                Tu as déjà envoyé une version
+                {sentVersion ? ` le ${sentVersion}` : ""} : régénérer ne remplace pas ce que l’école a
+                reçu.
+              </p>
             ) : null}
             {!archived ? (
               <form action={genAction}>

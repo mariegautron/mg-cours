@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { parisLongDateTime } from "@/lib/deposits/rules";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 
@@ -102,7 +104,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     outline && depositedOutline
       ? `Progression générée depuis les séances le ${fr(outline.generated_at)} (brouillon, non envoyée).`
       : outline
-        ? `Générée le ${fr(outline.generated_at)}${outline.sent_at ? ` · envoyée le ${fr(outline.sent_at)}` : ""}${
+        ? `Générée le ${parisLongDateTime(outline.generated_at)}${outline.sent_at ? ` · envoyée le ${fr(outline.sent_at)}` : ""}${
             outline.validated_at ? ` · validée le ${fr(outline.validated_at)}` : ""
           }.`
         : null;
@@ -209,6 +211,9 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
             hasDepositedOutline={!!depositedOutline}
             archived={!!mod.archived_at}
             generatedLabel={generatedLabel}
+            sentVersion={
+              outline?.pdf_path && outline.sent_at ? parisLongDateTime(outline.sent_at) : null
+            }
             deposited={
               depositedOutline
                 ? { id: depositedOutline.id, date: fr(depositedOutline.created_at) }
