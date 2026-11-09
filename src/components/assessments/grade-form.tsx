@@ -200,6 +200,21 @@ export function GradeForm({
   // Présence (note individuelle) et ajustements par membre (note de groupe).
   const isGroup = members !== undefined;
   const [attendance, setAttendance] = useState<Attendance>(grade?.attendance ?? "present");
+  // Présences des membres telles que connues par CET onglet (dernier chargement ou enregistrement) :
+  // le serveur n'écrit que celles changées ici, sans écraser une saisie faite ailleurs.
+  const [memberBase, setMemberBase] = useState<
+    Record<string, { attendance: string; justification: string }>
+  >(() =>
+    Object.fromEntries(
+      (members ?? []).map((m) => {
+        const o = memberOverrides?.[m.id];
+        return [
+          m.id,
+          { attendance: o?.attendance ?? "present", justification: o?.justification ?? "" },
+        ];
+      }),
+    ),
+  );
   const [memberState, setMemberState] = useState<Record<string, MemberDraft>>(() =>
     Object.fromEntries(
       (members ?? []).map((m) => {
@@ -266,6 +281,33 @@ export function GradeForm({
     setLastState(state);
     if (state.saved) {
       if (state.base) setBase(state.base);
+      if (state.memberBase) {
+        const next = state.memberBase;
+        // Une présence changée ailleurs (et gardée par le serveur) remplace l'affichage ici,
+        // sauf si elle a été modifiée dans cet onglet depuis.
+        setMemberState((prev) =>
+          Object.fromEntries(
+            Object.entries(prev).map(([sid, draft]) => {
+              const old = memberBase[sid];
+              const unchangedHere =
+                !old ||
+                (draft.attendance === old.attendance &&
+                  (draft.justification ?? "") === (old.justification ?? ""));
+              return [
+                sid,
+                unchangedHere && next[sid]
+                  ? {
+                      ...draft,
+                      attendance: next[sid].attendance as typeof draft.attendance,
+                      justification: next[sid].justification,
+                    }
+                  : draft,
+              ];
+            }),
+          ),
+        );
+        setMemberBase(next);
+      }
       setSaved(submitted);
       setSavedAt(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
     }
@@ -1180,8 +1222,7 @@ export function GradeForm({
       </div>
       {ATTENDANCE_HINTS[attendance] ? (
         <p className="text-muted-foreground text-xs">
-          {ATTENDANCE_HINTS[attendance]}{" "}
-          {attendance === "absent_excused" ? <MakeupLink /> : null}
+          {ATTENDANCE_HINTS[attendance]} {attendance === "absent_excused" ? <MakeupLink /> : null}
         </p>
       ) : null}
     </fieldset>
@@ -1454,6 +1495,9 @@ export function GradeForm({
       className="space-y-3"
     >
       <input type="hidden" name="base" value={JSON.stringify(base)} />
+      {isGroup ? (
+        <input type="hidden" name="memberBase" value={JSON.stringify(memberBase)} />
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3

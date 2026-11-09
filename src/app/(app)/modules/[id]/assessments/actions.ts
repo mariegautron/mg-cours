@@ -17,6 +17,7 @@ import {
   isAttendance,
   readMemberOverrides,
   type Attendance,
+  type MemberOverride,
 } from "@/lib/assessments/attendance";
 import { parseCriterionComments, readFeedback } from "@/lib/assessments/feedback";
 import { computeTotals, gradingProgress, readScores } from "@/lib/assessments/scoring";
@@ -391,6 +392,8 @@ export interface GradeFormState {
   elsewhere?: boolean;
   /** Nouvelle version de référence de l'onglet après enregistrement. */
   base?: GradeContent;
+  /** Présences des membres après enregistrement (référence de l'onglet). */
+  memberBase?: Record<string, { attendance: string; justification: string }>;
 }
 
 async function saveGrade(
@@ -558,8 +561,71 @@ async function saveGrade(
     : await supabase.from("grade").insert(row).select("id").single();
   if (saved.error || !saved.data) return { error: failure("enregistrer") };
 
+  let memberBaseOut: GradeFormState["memberBase"];
   if (memberOverrides && "overrides" in memberOverrides) {
     const gradeId = saved.data.id;
+    // Deux onglets : seules les présences changées dans CET onglet sont écrites ; celles changées
+    // ailleurs (autre onglet, écran de l'oral) sont gardées. Même valeur des deux côtés : pas de conflit.
+    let memberBaseIn: Record<string, { attendance: string; justification: string }> | null = null;
+    try {
+      const raw = formData.get("memberBase");
+      if (typeof raw === "string" && raw) memberBaseIn = JSON.parse(raw);
+    } catch {
+      memberBaseIn = null;
+    }
+    if (memberBaseIn) {
+      const { data: currentRows } = await supabase
+        .from("group_grade_member")
+        .select("student_id, attendance, justification")
+        .eq("grade_id", gradeId);
+      const current = new Map(
+        (currentRows ?? []).map((r) => [
+          r.student_id,
+          { attendance: r.attendance as string, justification: r.justification ?? "" },
+        ]),
+      );
+      const ids = new Set([...Object.keys(memberBaseIn), ...memberOverrides.overrides.keys()]);
+      const merged = new Map<string, MemberOverride>();
+      const same = (a: { attendance: string; justification: string }, b: typeof a) =>
+        a.attendance === b.attendance && (a.justification ?? "") === (b.justification ?? "");
+      for (const sid of ids) {
+        const def = { attendance: "present", justification: "" };
+        const mineO = memberOverrides.overrides.get(sid);
+        const mine = mineO
+          ? { attendance: mineO.attendance as string, justification: mineO.justification ?? "" }
+          : def;
+        const base = memberBaseIn[sid] ?? def;
+        const cur = current.get(sid) ?? def;
+        let result = mine;
+        if (same(mine, base)) result = cur;
+        else if (!same(cur, base) && !same(cur, mine)) {
+          return {
+            error:
+              "La présence d'un membre a été modifiée sur une autre page : recharge pour voir la version la plus récente avant de la changer ici.",
+            conflict: true,
+          };
+        }
+        if (!same(result, def))
+          merged.set(sid, {
+            attendance: result.attendance as MemberOverride["attendance"],
+            factor: 1,
+            justification: result.justification || null,
+          });
+      }
+      memberOverrides = { overrides: merged };
+    }
+    memberBaseOut = Object.fromEntries(
+      [...ids0(memberBaseIn, memberOverrides.overrides)].map((sid) => {
+        const o =
+          memberOverrides && "overrides" in memberOverrides
+            ? memberOverrides.overrides.get(sid)
+            : undefined;
+        return [
+          sid,
+          { attendance: o?.attendance ?? "present", justification: o?.justification ?? "" },
+        ];
+      }),
+    );
     const { error: clearError } = await supabase
       .from("group_grade_member")
       .delete()
@@ -581,7 +647,15 @@ async function saveGrade(
 
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}`);
-  return { saved: true, base: returnedBase, elsewhere };
+  return { saved: true, base: returnedBase, elsewhere, memberBase: memberBaseOut };
+}
+
+/** Membres connus de l'onglet ou présents dans la saisie. */
+function ids0(
+  base: Record<string, unknown> | null,
+  overrides: ReadonlyMap<string, unknown>,
+): Set<string> {
+  return new Set([...Object.keys(base ?? {}), ...overrides.keys()]);
 }
 
 /**
