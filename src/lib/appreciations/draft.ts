@@ -62,7 +62,7 @@ const HOLE_EXAMPLE = "[à compléter : un exemple précis]";
 
 const STRENGTH_OPENERS = [
   "",
-  "Ce module,",
+  "Dans ce module,",
   "Pendant les séances,",
   "Tout au long du module,",
   "En cours,",
@@ -100,7 +100,7 @@ const STRENGTH: Record<
     "tu as trouvé ta place dans ton groupe et contribué à une bonne dynamique",
     "tu as travaillé dans un esprit d’équipe qui a servi le projet",
     "tu as montré un vrai sens de la collaboration",
-    "tu t’es investi·e dans le travail collectif avec sérieux",
+    "tu t’impliques avec sérieux dans le travail collectif",
     "tu as su travailler avec les autres de façon constructive",
   ]),
   corrections: strength([
@@ -108,12 +108,12 @@ const STRENGTH: Record<
     "tes rendus montrent de vraies compétences",
     "tu as livré un travail soigné et réfléchi",
     "tes productions témoignent d’un investissement réel",
-    "tu as fourni un travail solide dont tu peux être fier·ère",
+    "tu as fourni un travail solide qui te fait honneur",
   ]),
   generic: strength([
-    "tu t’es investi·e dans le module avec sérieux",
+    "tu t’impliques avec sérieux",
     "ton attitude a été positive et agréable",
-    "tu as suivi le module avec application",
+    "tu as suivi les cours avec application",
     "tu as fait preuve de motivation",
     "ton comportement en classe a été respectueux et constructif",
   ]),
@@ -162,7 +162,7 @@ const AXIS: Record<"difficulty" | "voice" | "progress" | "generic", string[]> = 
 const ENCOURAGEMENT = [
   "Continue ainsi, tu as de belles ressources.",
   "Je suis confiante pour la suite.",
-  "Tu peux être fier·ère du chemin parcouru, poursuis.",
+  "Le chemin parcouru te fait honneur, poursuis.",
   "Garde cette énergie, elle te mènera loin.",
   "Tu as tout ce qu’il faut pour réussir.",
   "Bonne continuation, je crois en toi.",
@@ -261,6 +261,35 @@ export function otherPhrase(
   }
   const p = pool[(at + 1) % pool.length];
   return { phrase: p, fresh: false };
+}
+
+/**
+ * Où se trouve chaque partie du gabarit dans le texte, même après que Marie a rempli les trous :
+ * on cherche le début de la phrase (jusqu'au premier trou) ; une partie s'arrête là où commence
+ * la suivante. Renvoie `null` pour une partie introuvable.
+ */
+export function locateParts(
+  text: string,
+  sentences: Partial<Record<Part, string>>,
+): Record<Part, { start: number; end: number } | null> {
+  const starts = PARTS.map((p) => {
+    const s = sentences[p];
+    if (!s) return -1;
+    const key = phraseKey(s);
+    return key.length >= 8 ? text.indexOf(key) : -1;
+  });
+  const out = {} as Record<Part, { start: number; end: number } | null>;
+  PARTS.forEach((p, i) => {
+    const start = starts[i];
+    if (start === -1) {
+      out[p] = null;
+      return;
+    }
+    const nexts = starts.filter((x) => x > start);
+    const end = nexts.length ? Math.min(...nexts) : text.length;
+    out[p] = { start, end };
+  });
+  return out;
 }
 
 /** Gabarit complet pour une personne, dans la limite de l'école (la conclusion saute en dernier recours). */

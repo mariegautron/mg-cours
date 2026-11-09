@@ -24,6 +24,7 @@ import {
 } from "@/lib/appreciations/appreciation";
 import {
   BASIS_LABELS,
+  locateParts,
   PARTS,
   PART_LABELS,
   type Part,
@@ -120,7 +121,9 @@ export function AppreciationEditor({
 
   async function another(part: Part) {
     const current = sentences?.[part];
-    if (!current || !text.includes(current)) {
+    // Chaque bouton change SA partie, retrouvée même si les trous ont été remplis.
+    const at = current && sentences ? locateParts(text, sentences)[part] : null;
+    if (!current || !at) {
       setMessage("Cette phrase a déjà été modifiée : remplace-la à la main.");
       return;
     }
@@ -129,7 +132,9 @@ export function AppreciationEditor({
       setError(r.error ?? "Aucune autre formulation.");
       return;
     }
-    const nextText = text.replace(current, r.phrase);
+    const before = text.slice(0, at.start);
+    const after = text.slice(at.end);
+    const nextText = `${before}${r.phrase}${after.startsWith(" ") || after === "" ? "" : " "}${after}`;
     setText(nextText);
     setSentences({ ...sentences, [part]: r.phrase });
     await save(nextText);
