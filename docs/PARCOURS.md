@@ -75,7 +75,8 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - 9 nov. : 1.3 « Corrigé : … » n'atteint plus le PDF, 1.5 texte propre (puces, markdown, emoji) (`44c0cb4`) ; 1.1 « Avant de générer » = même couverture que la page Couverture et le PDF (`4afe510`).
   - 9 nov. : 1.1, 1.3, 1.5 validés au retest ; titre « ## » plus en puce, espace avant ponctuation après emoji (`e51dd21`).
-  - Reste lot 1 : 1.2 relier séance ↔ attendu, 1.4 versions envoyées figées, 1.6, 1.7 ; puis lots 2 et 3.
+  - 9 nov. : 1.2 « Attendus traités » cochables sur la séance (`c34d0f0`) et « Traité en séance… » sur la Couverture (`3d10b69`).
+  - Reste lot 1 : 1.4 versions envoyées figées, 1.6 (avec l'aperçu 2.1), 1.7 « Reprise : à relire » (migration) ; puis lots 2 et 3.
 
 ## P4 · Accueillir les étudiant·es et former les groupes
 
@@ -152,6 +153,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : rendu étape 1, retour du retest : paliers lisibles, date / auteur·e / retard, ajout sans quitter l'écran (`1a7b80d`). SCRUM ouvert en lecture, moyennes identiques (retest).
   - 9 nov. : rendu étape 3 : dépôt fermé une fois la note écrite (`a164dc8`) ; étape 2 : vue « Par critère », adresse par copie et « Ouvrir dans un nouvel onglet » (`b0cda31`). Reste : lettre modifiable depuis « Par critère », « Vérifier mes écarts », bandeau « Nouveau dépôt pendant ta correction ».
   - 9 nov. : rendu à 125 % (critères en sélecteur, présences repliées) et case « Pas reçu (0) » retirée (`c3b5594`) ; dépôt corrigé sans phrase ni champs (`befb186`) ; « Par critère » éditable et « Vérifier mes écarts » (`1c9d4a0`, `b21f7d1`). Bandeau « Nouveau dépôt pendant ta correction » et anciennes versions dans la colonne (`d192b75`). Prompt rendu terminé, à retester.
+  - 9 nov. : « Effacer la note » sur une note écrite (oral, rendu) (`a39dc14`).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
