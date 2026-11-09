@@ -173,7 +173,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : « Copie rendue le … » sur le bandeau QCM (`11baa9b`), heures « 8/11 à 0 h 18 » (`8f74b30`), anciennes versions des dépôts consultables par Marie (`3c7e674`), contact « Une question ? Écris à Marie » d'après l'e-mail de Réglages (`ccdcddb`).
   - 9 nov. : bandeau QCM lu en direct, « Publié le … » rafraîchi après la mise à jour (`74b0c65`).
   - 9 nov. : rattrapage rendu = plus de QCM principal « ouvert » (`37569f7`).
-  - Reste : « Retirer l'ancienne note » ; adresse de contact (e-mail du compte affiché, en attente de la décision d'Arnaud).
+  - 9 nov. : « E-mail de contact pour les étudiant·es » distinct de la facturation, migration `20261124000000_student_contact_email` à appliquer (`adc5fa4`).
+  - Reste : « Retirer l'ancienne note ».
 
 ## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
 
