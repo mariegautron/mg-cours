@@ -175,6 +175,8 @@ export interface ImportPreviewState {
   year?: number;
   /** Lignes déjà en base (même e-mail, ou même prénom et nom) : inscrites à l'année, sans doublon. */
   knownRows?: number[];
+  /** Ligne reconnue par son nom dont l'e-mail du fichier diffère de la fiche (e-mail de la fiche). */
+  emailChanges?: Record<number, string | null>;
   /** Lignes déjà inscrites à cette année avec la même promotion : rien à faire. */
   enrolledRows?: number[];
   /** US-77 : sens de la colonne « groupe », module cible et groupe global. */
@@ -226,8 +228,10 @@ function nameKey(first: string, last: string): string {
 async function matchExisting(
   supabase: Supabase,
   rows: ParsedStudentRow[],
+  emails?: Map<number, string | null>,
 ): Promise<Map<number, string>> {
   const { data } = await supabase.from("student").select("id, email, first_name, last_name");
+  const emailOf = new Map((data ?? []).map((s) => [s.id, s.email]));
   const byEmail = new Map<string, string>();
   const byName = new Map<string, string | null>();
   for (const s of data ?? []) {
@@ -241,7 +245,10 @@ async function matchExisting(
       (r.email ? byEmail.get(r.email) : undefined) ??
       byName.get(nameKey(r.firstName, r.lastName)) ??
       null;
-    if (id) out.set(r.rowNumber, id);
+    if (id) {
+      out.set(r.rowNumber, id);
+      emails?.set(r.rowNumber, emailOf.get(id) ?? null);
+    }
   }
   return out;
 }
@@ -297,7 +304,16 @@ export async function previewStudentsImport(
     );
   }
 
-  const known = await matchExisting(supabase, rows);
+  const ficheEmails = new Map<number, string | null>();
+  const known = await matchExisting(supabase, rows, ficheEmails);
+  // E-mail du fichier différent de celui de la fiche : signalé dans l'aperçu (la fiche ne change pas).
+  const emailChanges = Object.fromEntries(
+    rows.flatMap((r) => {
+      if (!known.has(r.rowNumber) || !r.email) return [];
+      const current = ficheEmails.get(r.rowNumber) ?? null;
+      return current?.toLowerCase() === r.email ? [] : [[r.rowNumber, current]];
+    }),
+  ) as Record<number, string | null>;
   const knownIds = [...new Set(known.values())];
   const { data: enrolled } = knownIds.length
     ? await supabase
@@ -323,6 +339,7 @@ export async function previewStudentsImport(
     nameOrder,
     year,
     knownRows: [...known.keys()],
+    emailChanges,
     enrolledRows,
     mode: target.mode,
     moduleId: target.moduleId ?? undefined,

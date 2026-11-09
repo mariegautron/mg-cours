@@ -371,11 +371,20 @@ function ImportPreview({
                     {r.errors.length > 0 ? (
                       <span className="text-destructive">{r.errors.join(", ")}</span>
                     ) : isDuplicate ? (
-                      <span className="text-muted-foreground">
-                        {enrolled.has(r.rowNumber)
-                          ? `déjà inscrit·e à ${yearLabel}`
-                          : `déjà en base : inscription à ${yearLabel}`}
-                      </span>
+                      <>
+                        <span className="text-muted-foreground">
+                          {enrolled.has(r.rowNumber)
+                            ? `déjà inscrit·e à ${yearLabel}`
+                            : `déjà en base : inscription à ${yearLabel}`}
+                        </span>
+                        {previewState.emailChanges?.[r.rowNumber] !== undefined ? (
+                          <span className="text-sun block text-xs font-semibold">
+                            E-mail différent de la fiche (
+                            {previewState.emailChanges[r.rowNumber] ?? "aucun"}) : la fiche garde le
+                            sien, change-le sur sa fiche si besoin.
+                          </span>
+                        ) : null}
+                      </>
                     ) : (
                       <span>à importer</span>
                     )}

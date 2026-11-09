@@ -708,10 +708,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           {runningModules.length > 1 ? "s" : ""} en cours
         </span>
         <span>
-          Séances faites cette semaine :{" "}
-          <strong className="text-foreground">
-            {weekRunning.filter((c) => c.completion).length} / {weekRunning.length}
-          </strong>
+          {weekRunning.length === 0 ? (
+            "Pas de séance cette semaine"
+          ) : (
+            <>
+              Séances faites cette semaine :{" "}
+              <strong className="text-foreground">
+                {weekRunning.filter((c) => c.completion).length} / {weekRunning.length}
+              </strong>
+            </>
+          )}
         </span>
         <span>
           À corriger : <strong className="text-foreground">{toCorrect.length}</strong>
