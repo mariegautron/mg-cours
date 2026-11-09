@@ -126,9 +126,10 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
     done ? "done" : started ? "in_progress" : "todo";
 
   let invoiceState: StepState = "todo";
-  let invoiceSummary = ctx.billingReady ? "facture à générer" : "blocages à lever avant la facture";
-  let invoiceAction = { label: "Voir la facturation", href: `${base}/billing` };
-  let invoiceBadge = "lever les blocages de facturation";
+  // Suivi simple : Marie fait sa facture ailleurs, la dépose, puis coche envoyée / payée.
+  let invoiceSummary = "facture à déposer";
+  let invoiceAction = { label: "Déposer la facture", href: `${base}/billing` };
+  let invoiceBadge = "déposer la facture";
   if (invoice === "paid") {
     invoiceState = "done";
     invoiceSummary = "facture payée";
@@ -143,9 +144,6 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
     invoiceSummary = "facture à envoyer";
     invoiceAction = { label: "Envoyer la facture", href: `${base}/billing` };
     invoiceBadge = "envoyer la facture";
-  } else if (ctx.billingReady) {
-    invoiceAction = { label: "Générer la facture", href: `${base}/billing` };
-    invoiceBadge = "générer la facture";
   }
 
   const steps: Omit<ModuleStep, "number">[] = [

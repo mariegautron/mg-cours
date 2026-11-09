@@ -138,7 +138,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
               </p>
               {state === "archived" ? (
                 <p className="mt-0.5 text-sm">
-                  Rangé le {new Date(m.archived_at!).toLocaleDateString("fr-FR")}
+                  Archivé le {new Date(m.archived_at!).toLocaleDateString("fr-FR")}
                 </p>
               ) : next ? (
                 <p className="mt-0.5 text-sm">{next}</p>

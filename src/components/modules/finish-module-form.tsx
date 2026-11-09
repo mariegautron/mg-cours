@@ -76,7 +76,7 @@ export function FinishModuleForm({
         type="button"
         size="touch"
         pending={pending}
-        pendingLabel="Rangement…"
+        pendingLabel="Enregistrement…"
         onClick={finish}
       >
         Terminer le module

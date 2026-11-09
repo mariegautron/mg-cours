@@ -37,6 +37,7 @@ import { schoolYearOf } from "@/lib/modules/list-state";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getOutline } from "@/lib/outline/queries";
+import { ReopenModuleButton } from "@/components/modules/reopen-module-button";
 import { isPaid, isSent } from "@/lib/invoice/simple";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -283,6 +284,7 @@ export default async function ModulePage({
         <div className="w-full min-w-0 space-y-4 lg:w-96 lg:flex-none">
           {finishedView ? (
             <>
+              {mod.finished_at ? <ReopenModuleButton id={mod.id} name={mod.name} /> : null}
               <Card id="bilan" title="Le bilan">
                 <div className="grid grid-cols-2 gap-2.5">
                   <Stat label="Moyenne de la classe" value={meanLabel(mean) ?? "—"} />

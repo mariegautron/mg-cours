@@ -116,7 +116,7 @@ export function FinishModuleButton({
           <PendingButton
             type="button"
             pending={pending}
-            pendingLabel="Rangement…"
+            pendingLabel="Enregistrement…"
             onClick={(e) => {
               e.preventDefault();
               confirm();

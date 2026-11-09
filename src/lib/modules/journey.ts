@@ -82,9 +82,15 @@ export function buildJourney(d: JourneyData): ModuleSteps {
         invoicePaid: isPaid(d.mod.iceberg_state),
         agreementDeposited: agreementDeposited(d.documents),
         appreciations: d.appreciations,
+        makeups: d.makeups,
       }).filter((i) => !i.done && !i.optional).length,
     },
-    invoice: d.invoice?.status ?? null,
+    // Suivi simple (facture déposée, cases envoyée / payée) avant la facture électronique.
+    invoice: isPaid(d.mod.iceberg_state)
+      ? "paid"
+      : isSent(d.mod.iceberg_state)
+        ? "sent"
+        : (d.invoice?.status ?? null),
     billingReady: d.invoiceCtx
       ? invoiceBlockers(d.invoiceCtx).length + missingInvoiceData(d.invoiceCtx).length === 0
       : false,

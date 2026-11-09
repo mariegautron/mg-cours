@@ -10,6 +10,8 @@ export interface FinishInput {
   invoicePaid: boolean;
   /** Au moins une convention de formation déposée (facultatif : absent = non déposée). */
   agreementDeposited?: boolean;
+  /** Rattrapages des absences excusées (pas encore faits / au total). */
+  makeups?: { pending: number; total: number };
   /** Appréciations écrites / à écrire (ce que Marie oublie le plus). */
   appreciations?: { written: number; total: number };
   /** Avis des étudiant·es : réponses reçues, `null` si le questionnaire n'est pas encore envoyé. */
@@ -19,7 +21,7 @@ export interface FinishInput {
 }
 
 export interface FinishItem {
-  key: "sessions" | "notes" | "appreciations" | "documents" | "invoice" | "agreement" | "feedback";
+  key: "sessions" | "notes" | "makeups" | "appreciations" | "documents" | "invoice" | "agreement" | "feedback";
   label: string;
   detail: string;
   done: boolean;
@@ -50,6 +52,19 @@ export function finishChecklist(i: FinishInput): FinishItem[] {
       detail: `${i.notes.entered} note${i.notes.entered > 1 ? "s" : ""} sur ${i.notes.required}${hyper ? "" : " · Hyperplanning à cocher"}`,
       done: i.notes.required > 0 && i.notes.entered >= i.notes.required && hyper,
     },
+    ...(i.makeups && i.makeups.total > 0
+      ? [
+          {
+            key: "makeups" as const,
+            label: "Rattrapages faits",
+            detail:
+              i.makeups.pending === 0
+                ? "Toutes les absences excusées sont rattrapées"
+                : `${i.makeups.pending} à faire`,
+            done: i.makeups.pending === 0,
+          },
+        ]
+      : []),
     ...(apps
       ? [
           {

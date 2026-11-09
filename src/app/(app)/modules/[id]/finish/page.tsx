@@ -12,6 +12,7 @@ import { finishChecklist } from "@/lib/modules/finish";
 import { getModule, getModuleCourses, getModuleDocuments } from "@/lib/modules/queries";
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { createClient } from "@/lib/supabase/server";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 
 export const metadata: Metadata = { title: "Terminer le module" };
@@ -29,7 +30,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
   ]);
   if (!mod || !ctx) notFound();
   const supabase = await createClient();
-  const [appreciations, feedbackLink, feedbackCount] = await Promise.all([
+  const [appreciations, feedbackLink, feedbackCount, makeupGroups] = await Promise.all([
     getAppreciationProgress(id),
     supabase
       .from("module_feedback_link")
@@ -41,7 +42,9 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
       .from("module_feedback")
       .select("id", { count: "exact", head: true })
       .eq("module_id", id),
+    loadMakeupGroups(id),
   ]);
+  const makeupRows = makeupGroups.flatMap((g) => g.rows);
 
   const items = finishChecklist({
     courses: courses.map((c) => ({ completion: c.completion })),
@@ -51,11 +54,16 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     invoicePaid: isPaid(mod.iceberg_state),
     agreementDeposited: agreementDeposited(documents),
     appreciations: { written: appreciations.written, total: appreciations.total },
+    makeups: {
+      pending: makeupRows.filter((r) => r.step !== "done").length,
+      total: makeupRows.length,
+    },
     feedbackResponses: feedbackLink.data ? (feedbackCount.count ?? 0) : null,
     hrefs: {
       sessions: `/modules/${id}/courses`,
       notes: `/modules/${id}/documents#admin-docs`,
       appreciations: `/modules/${id}/appreciations`,
+      makeups: `/modules/${id}/rattrapages`,
       documents: `/modules/${id}/documents#admin-docs`,
       invoice: `/modules/${id}/billing`,
       agreement: `/modules/${id}/documents#convention`,
