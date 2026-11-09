@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/empty-state";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AutoSubmitForm } from "@/components/auto-submit-form";
+import { StudentSearchInput } from "@/components/students/student-search-input";
 import { Label } from "@/components/ui/label";
 import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
 import { createDraftResource } from "@/app/(app)/resources/actions";
@@ -234,16 +236,15 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         })}
       </div>
 
-      <form className="space-y-3" role="search" aria-label="Filtrer les ressources">
+      <AutoSubmitForm className="space-y-3" role="search" aria-label="Filtrer les ressources">
         {filters.family ? <input type="hidden" name="family" value={filters.family} /> : null}
         {filters.status ? <input type="hidden" name="status" value={filters.status} /> : null}
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-64 flex-1 space-y-1">
             <Label htmlFor="q">Recherche</Label>
-            <Input
-              id="q"
-              name="q"
-              defaultValue={filters.q}
+            {/* Filtre pendant la frappe (300 ms) ; « Filtrer » reste pour qui le cherche. */}
+            <StudentSearchInput
+              defaultValue={filters.q ?? ""}
               placeholder="Chercher : titre, tag, contenu…"
             />
           </div>
@@ -329,7 +330,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
             </label>
           </div>
         </details>
-      </form>
+      </AutoSubmitForm>
 
       <form
         action={createDraftResource}

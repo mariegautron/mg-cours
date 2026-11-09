@@ -138,13 +138,37 @@ export function searchResource(resource: SearchableResource, query: string): Sea
   return { matched: true, excerpt: firstExcerpt(fields, terms) };
 }
 
-/** Garde les ressources qui correspondent, avec leur extrait ; sans recherche, tout est gardé. */
+/**
+ * Rang d'une ressource trouvée : 0 titre exact, 1 titre qui commence par la recherche, 2 titre qui
+ * la contient, 3 tags, 4 description ou contenu.
+ */
+export function titleRank(resource: SearchableResource, query: string): number {
+  const q = normalizeSearch(query);
+  if (!q) return 0;
+  const title = normalizeSearch(resource.title);
+  if (title === q) return 0;
+  if (title.startsWith(q)) return 1;
+  if (title.includes(q) || searchTerms(query).every((t) => title.includes(t))) return 2;
+  const tags = normalizeSearch((resource.tags ?? []).join(" "));
+  if (searchTerms(query).every((t) => tags.includes(t))) return 3;
+  return 4;
+}
+
+/**
+ * Garde les ressources qui correspondent, avec leur extrait ; sans recherche, tout est gardé (ordre
+ * d'entrée). Avec une recherche : le titre d'abord (exact, début, contenu), puis tags, puis contenu ;
+ * l'ordre d'entrée départage.
+ */
 export function searchResources<T extends SearchableResource>(
   resources: T[],
   query: string,
 ): { resource: T; excerpt: SearchExcerpt | null }[] {
-  return resources.flatMap((resource) => {
+  const found = resources.flatMap((resource, index) => {
     const { matched, excerpt } = searchResource(resource, query);
-    return matched ? [{ resource, excerpt }] : [];
+    return matched ? [{ resource, excerpt, index, rank: titleRank(resource, query) }] : [];
   });
+  if (!normalizeSearch(query)) return found.map(({ resource, excerpt }) => ({ resource, excerpt }));
+  return found
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ resource, excerpt }) => ({ resource, excerpt }));
 }

@@ -7,11 +7,11 @@ import { ActionError } from "@/components/action-error";
 import {
   autosaveResource,
   getResourceSeed,
-  listSeedChoices,
   updateResource,
   type ResourceFormState,
 } from "@/app/(app)/resources/actions";
 import type { CourseOrigin } from "@/lib/resources/course-origin";
+import { LibrarySearch } from "@/components/resources/library-search";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
@@ -511,25 +511,16 @@ export function ResourceForm({
               />
             </label>
             {seeds === null ? (
-              <Button
-                type="button"
-                size="touch"
-                variant="ghost"
-                onClick={async () => setSeeds(await listSeedChoices())}
-              >
+              <Button type="button" size="touch" variant="ghost" onClick={() => setSeeds([])}>
                 Partir d’une ressource existante
               </Button>
             ) : (
-              <div className="flex items-center gap-2">
-                <Label htmlFor="seed" className="sr-only">
-                  Ressource à copier
-                </Label>
-                <select
-                  id="seed"
-                  className={SELECT_CLASS}
-                  defaultValue=""
-                  onChange={async (e) => {
-                    const seed = e.target.value ? await getResourceSeed(e.target.value) : null;
+              <div className="w-full">
+                <LibrarySearch
+                  label="Ressource à copier (toute la bibliothèque)"
+                  actionLabel="Copier"
+                  onPick={async (found) => {
+                    const seed = await getResourceSeed(found.id);
                     if (!seed) return;
                     setContent(seed.content);
                     setKindValue(seed.kind ?? "");
@@ -546,14 +537,7 @@ export function ResourceForm({
                     setDirty(true);
                     setImportNote(`Copié depuis « ${seed.title} » : adapte puis enregistre.`);
                   }}
-                >
-                  <option value="">Choisir une ressource à copier…</option>
-                  {seeds.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.title}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             )}
             <span role="status" aria-live="polite" className="text-muted-foreground text-sm">

@@ -491,3 +491,26 @@ export async function duplicateResource(
       : `/resources/${copy.id}/edit`,
   );
 }
+
+/**
+ * Recherche dans toute la bibliothèque (ressources actives), titre d'abord : sert à « Partir d'une
+ * ressource existante » et à « Chercher dans la bibliothèque » depuis le déroulé.
+ */
+export async function findLibraryResources(
+  query: string,
+): Promise<{ id: string; title: string; ready: boolean }[]> {
+  const q = query.trim();
+  if (q.length < 2 || q.length > 100) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("resource")
+    .select("id, title, description, tags, content, status")
+    .is("archived_at", null);
+  return searchResources(data ?? [], q)
+    .slice(0, 20)
+    .map(({ resource }) => ({
+      id: resource.id,
+      title: resource.title,
+      ready: resource.status === "ready",
+    }));
+}

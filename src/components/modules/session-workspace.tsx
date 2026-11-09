@@ -18,6 +18,7 @@ import {
   ACTIVITY_TYPES,
   describeActivity,
   checkDuration,
+  EMPTY_ACTIVITY,
   OBJECTIVES,
   startTimes,
   totalMinutes,
@@ -27,6 +28,7 @@ import { moveDown, moveUp, reorder } from "@/lib/modules/session-builder";
 import { DELIVERABLE_MAX } from "@/lib/modules/session-builder";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/modules/schema";
 import { cn } from "@/lib/utils";
+import { LibrarySearch } from "@/components/resources/library-search";
 
 export interface WorkspaceResource {
   id: string;
@@ -538,6 +540,28 @@ export function SessionWorkspace({
                 ))}
               </ul>
             )}
+          </div>
+        </details>
+        <details className="mt-2">
+          <summary className="text-primary min-h-11 cursor-pointer py-2 font-semibold underline underline-offset-2">
+            Chercher dans la bibliothèque
+          </summary>
+          <div className="bg-muted/30 mt-2 rounded-xl border p-3">
+            <LibrarySearch
+              label="Toute la bibliothèque : la ressource choisie est retenue pour le module et ajoutée au déroulé"
+              actionLabel="Ajouter"
+              exclude={resources.map((r) => r.id)}
+              onPick={(found) =>
+                add({
+                  id: found.id,
+                  title: found.title,
+                  kindLabel: "Ressource",
+                  ready: found.ready,
+                  subtitle: found.ready ? "Prête" : "À construire",
+                  activity: EMPTY_ACTIVITY,
+                })
+              }
+            />
           </div>
         </details>
         <div className="mt-3 flex flex-wrap gap-2.5">

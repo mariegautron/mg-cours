@@ -6,7 +6,16 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 
 /** Champ de recherche de la liste : filtre pendant la frappe (comme Ctrl K), sans accents. */
-export function StudentSearchInput({ defaultValue }: { defaultValue: string }) {
+export function StudentSearchInput({
+  defaultValue,
+  placeholder = "Nom, prénom, e-mail…",
+  delay = 300,
+}: {
+  defaultValue: string;
+  placeholder?: string;
+  /** Pause de frappe avant de filtrer (ms). */
+  delay?: number;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -22,7 +31,7 @@ export function StudentSearchInput({ defaultValue }: { defaultValue: string }) {
       type="search"
       value={value}
       autoComplete="off"
-      placeholder="Nom, prénom, e-mail…"
+      placeholder={placeholder}
       onChange={(e) => {
         const next = e.target.value;
         setValue(next);
@@ -33,7 +42,7 @@ export function StudentSearchInput({ defaultValue }: { defaultValue: string }) {
           else sp.delete("q");
           const qs = sp.toString();
           router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-        }, 150);
+        }, delay);
       }}
     />
   );
