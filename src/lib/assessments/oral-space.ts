@@ -225,6 +225,25 @@ function sameMap(a: Record<string, string>, b: Record<string, string>): boolean 
   return ka.length === kb.length && ka.every((k) => a[k] === b[k]);
 }
 
+/**
+ * Présences effectives d'un espace : la valeur enregistrée, sinon « présent » pour un oral repris
+ * d'une note existante. Règle unique, utilisée par l'écran de l'oral, l'écriture de la note et le
+ * calcul « à réécrire » côté serveur (sinon l'écran dit « Note écrite » et le serveur « à réécrire »).
+ */
+export function effectiveAttendance(
+  stored: Readonly<Record<string, string | undefined>>,
+  memberIds: readonly string[],
+  fromExisting: boolean,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const id of memberIds) {
+    const v = stored[id];
+    if (v) out[id] = v;
+    else if (fromExisting) out[id] = "present";
+  }
+  return out;
+}
+
 /** « À réécrire » : une lettre ou une présence a changé depuis la photo. Rien n'est modifié seul. */
 export function needsRewrite(
   written: WrittenSnapshot | null,

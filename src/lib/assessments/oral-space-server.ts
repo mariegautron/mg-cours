@@ -3,6 +3,7 @@ import "server-only";
 import { isAttendance, type Attendance, type MemberOverride } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
+  effectiveAttendance,
   lettersFromScores,
   needsRewrite,
   parseWritten,
@@ -176,7 +177,7 @@ export async function loadRewriteKeys(
   if (assessmentIds.length === 0) return new Set();
   const { data, error } = await supabase
     .from("oral_space")
-    .select("assessment_id, subject_id, letters, attendance, written")
+    .select("assessment_id, subject_id, letters, attendance, written, from_existing")
     .in("assessment_id", assessmentIds as string[])
     .not("written", "is", null);
   if (error || !data) return new Set();
@@ -190,7 +191,14 @@ export async function loadRewriteKeys(
       : {};
   const keys = new Set<string>();
   for (const row of data) {
-    if (needsRewrite(parseWritten(row.written), asStrings(row.letters), asStrings(row.attendance)))
+    const written = parseWritten(row.written);
+    if (!written) continue;
+    // Mêmes présences que l'écran de l'oral : la photo donne la liste des personnes.
+    const stored = asStrings(row.attendance);
+    const ids = [...new Set([...Object.keys(written.attendance ?? {}), ...Object.keys(stored)])];
+    // Une note est écrite : une présence jamais posée vaut « présent », comme à l'écran.
+    const attendance = effectiveAttendance(stored, ids, true);
+    if (needsRewrite(written, asStrings(row.letters), attendance))
       keys.add(`${row.assessment_id}:${row.subject_id}`);
   }
   return keys;

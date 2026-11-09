@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { isAttendance, individualValueFor, type Attendance } from "@/lib/assessments/attendance";
 import {
+  effectiveAttendance,
   isLetter,
   memberValues,
   missingForWrite,
@@ -183,10 +184,19 @@ export async function writeOralNote(
       (e): e is [string, string] => typeof e[1] === "string",
     ),
   );
+  // Mêmes présences que l'écran de l'oral (« présent » par défaut pour un oral repris).
   const attendance = Object.fromEntries(
-    Object.entries(obj(space.attendance)).filter(
-      (e): e is [string, Attendance] => typeof e[1] === "string" && isAttendance(e[1]),
-    ),
+    Object.entries(
+      effectiveAttendance(
+        Object.fromEntries(
+          Object.entries(obj(space.attendance)).filter(
+            (e): e is [string, string] => typeof e[1] === "string",
+          ),
+        ),
+        ctx.members.map((m) => m.id),
+        !!space.from_existing || !!space.written || (!!ctx.grade && ctx.grade.value !== null),
+      ),
+    ).filter((e): e is [string, Attendance] => isAttendance(e[1])),
   );
   const auto = ctx.assessment.auto_validated_criterion_ids;
   const missing = missingForWrite(ctx.criteria, letters, ctx.members, attendance, auto);
