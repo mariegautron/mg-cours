@@ -83,6 +83,7 @@ export default async function AppreciationPage({
         </div>
         <h3 className="font-heading pt-2 font-bold">D’après</h3>
         <AppreciationBasisPanel
+          excluded={found?.excluded ?? []}
           lines={found?.lines ?? []}
           average={average}
           comments={basis.comments}

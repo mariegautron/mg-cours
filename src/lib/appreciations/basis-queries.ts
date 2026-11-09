@@ -150,6 +150,40 @@ export async function getAppreciationBasis(
     });
   }
 
+  // Copies de groupe : tous les membres en ont les commentaires (« même bateau »), pas seulement
+  // ceux qui ont une ligne de présence particulière (group_grade_member).
+  const { data: memberships } = await supabase
+    .from("group_member")
+    .select("student_group_id, student_group:student_group_id!inner(module_id)")
+    .eq("student_id", studentId)
+    .eq("student_group.module_id", moduleId);
+  const groupIds = (memberships ?? []).map((m) => m.student_group_id);
+  if (groupIds.length) {
+    const { data: groupGrades } = await supabase
+      .from("grade")
+      .select("strengths, progress, feedback, assessment:assessment_id!inner(id, title, module_id)")
+      .in("student_group_id", groupIds)
+      .eq("assessment.module_id", moduleId);
+    for (const r of (groupGrades ?? []) as unknown as {
+      strengths: string | null;
+      progress: string | null;
+      feedback: string | null;
+      assessment: A;
+    }[]) {
+      if (!r.assessment) continue;
+      if (comments.some((c) => c.isGroup && c.assessmentId === r.assessment!.id)) continue;
+      comments.push({
+        assessmentId: r.assessment.id,
+        assessmentTitle: r.assessment.title,
+        isGroup: true,
+        strengths: clean(r.strengths),
+        progress: clean(r.progress),
+        feedback: clean(r.feedback),
+        personalNote: null,
+      });
+    }
+  }
+
   return {
     group,
     comments: comments

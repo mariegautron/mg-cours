@@ -52,7 +52,10 @@ export function AppreciationBasisPanel({
   comments,
   observations,
   group,
+  excluded = [],
 }: {
+  /** Copies commencées mais pas comptées : dites, jamais silencieuses. */
+  excluded?: { assessmentId: string; title: string; reason: "incomplete" | "rewrite" }[];
   lines: AverageLine[];
   average: number | null;
   comments: CorrectionComment[];
@@ -66,6 +69,18 @@ export function AppreciationBasisPanel({
   return (
     <div className="space-y-2">
       <Block title="Notes du module" count={lines.length}>
+        {excluded.length > 0 ? (
+          <ul className="text-sun mb-1 space-y-0.5">
+            {excluded.map((x) => (
+              <li key={x.assessmentId}>
+                {x.title} :{" "}
+                {x.reason === "rewrite"
+                  ? "note à réécrire (une lettre a changé), pas comptée"
+                  : "copie incomplète, pas comptée"}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {lines.length === 0 ? (
           <p className="text-muted-foreground">Aucune note saisie.</p>
         ) : (

@@ -404,6 +404,8 @@ export interface StudentAverage {
   /** Notes entrées / notes attendues (évaluations hors bonus et rattrapages qui visent cette personne). */
   noted: number;
   expected: number;
+  /** Copies commencées mais pas comptées (incomplètes ou note à réécrire), avec la raison. */
+  excluded: { assessmentId: string; title: string; reason: "incomplete" | "rewrite" }[];
 }
 
 /** Moyenne pondérée YNOV sur 20 (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
@@ -468,6 +470,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
   const perStudent = new Map<string, GradeInput[]>();
   const bonusPerStudent = new Map<string, GradeInput[]>();
   const linesPerStudent = new Map<string, AverageLine[]>();
+  const excludedPerStudent = new Map<string, StudentAverage["excluded"]>();
   const addLine = (
     studentId: string,
     a: { id: string; title: string; is_bonus: boolean },
@@ -497,13 +500,36 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     const kind = assessment.is_group_grade ? "group" : "individual";
     const max = assessment.maxScore;
     for (const row of rows) {
-      // Une copie incomplète n'entre jamais dans une moyenne.
+      // Une copie incomplète n'entre jamais dans une moyenne ; on dit pourquoi elle manque.
+      const isRewrite = rewrite.has(`${assessment.id}:${row.student_group_id ?? row.student_id}`);
+      const started =
+        row.value !== null ||
+        (typeof row.scores === "object" &&
+          row.scores !== null &&
+          Object.keys(row.scores as object).length > 0);
       if (
         row.value === null ||
-        rewrite.has(`${assessment.id}:${row.student_group_id ?? row.student_id}`) ||
+        isRewrite ||
         !isGradeCounted(row, assessment.gridCriteria, assessment.auto_validated_criterion_ids)
-      )
+      ) {
+        if (started && !assessment.is_bonus) {
+          const who = row.student_group_id
+            ? (studentsByGroup.get(row.student_group_id) ?? []).map((s) => s.id)
+            : row.student_id
+              ? [row.student_id]
+              : [];
+          for (const id of who) {
+            const list = excludedPerStudent.get(id) ?? [];
+            list.push({
+              assessmentId: assessment.id,
+              title: assessment.title,
+              reason: isRewrite ? "rewrite" : "incomplete",
+            });
+            excludedPerStudent.set(id, list);
+          }
+        }
         continue;
+      }
       if (assessment.is_group_grade && row.student_group_id) {
         for (const s of studentsByGroup.get(row.student_group_id) ?? []) {
           // Absent·e non prévenu·e : 0 ; excusé·e : selon la règle de l'école (garde la note du groupe
@@ -550,6 +576,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
         bonusEffect: result.bonusEffect,
         noted: Math.min(perStudent.get(student.id)?.length ?? 0, expected),
         expected,
+        excluded: excludedPerStudent.get(student.id) ?? [],
       };
     })
     .sort((a, b) => a.student.last_name.localeCompare(b.student.last_name, "fr"));
