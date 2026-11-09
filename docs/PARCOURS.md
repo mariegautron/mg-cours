@@ -142,6 +142,7 @@ directes : les liens reçus par les étudiant·es.
 - **Améliorations notées** :
   - 9 nov. : oral : aucune note privée recopiée par « Proposer » (`d93d214`) ; un seul état « à réécrire » partout (`97770fc`, `7e03333`) ; brouillon visible et conservé après « Modifier » (`fd9fc65`, `7e03333`).
   - 9 nov. : étude de cas : critère sans question = lettre choisie par Marie, plus de « écrite, verrouillée » sur une copie incomplète, réponses à choix affichées, copies non rendues en gris, récapitulatif complet (`f73b106`).
+  - 9 nov. : « Faire passer l'oral » affiche la présence enregistrée en correction au lieu de « À poser » (`a5fa02c`). Une observation « [Oral] Absent. » ne pose pas la présence automatiquement (choix à faire par Marie).
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
@@ -214,7 +215,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : N1 copie de groupe exclue dite dans « Notes du module », N2 commentaires de groupe chez tous les membres (`28fb9ee`) ; N7 tournures (`680b72f`) ; N8 « Tout marquer comme reporté » (`79c7555`) ; N9 retour vers l'appréciation et formulations de l'appli en lecture (`e3b9396`) ; N10 lignes de groupe dans la vue de classe (`85c1aba`).
   - 9 nov. : N5 texte remplacé d'un coup pris en compte et enregistré (`110e72b`).
   - N3 : logique vérifiée (chaque bouton change sa partie) ; le « décalage d'un clic » du retest vient sans doute d'une lecture du champ avant la réponse du serveur : attendre le message « Autre formulation pour … ».
-  - Reste : N4, N6.
+  - 9 nov. : N3 et N5 validés au retest ; N4 boutons « Autre formulation » gardés après rechargement (`4c510f5`) ; N6 observations de groupe dans « Notées pendant cette séance » avec Annuler (`0175d5d`) ; indicateur « Nouvelle formulation… » et vue de classe à 2 décimales (`28d3b30`).
+  - Reste : rien du prompt v3 ; à retester N4 et N6.
 
 ---
 
