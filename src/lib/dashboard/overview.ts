@@ -30,7 +30,7 @@ export function sessionsCaption(numbers: readonly number[]): string {
  * Tuile d'un jour : passé avec séances = fait (✓), aujourd'hui = ●, à venir avec séances = ▲.
  * `isDone` dit si une séance du jour est faite (clôturée).
  */
-export function dayTile<C extends { position: number }>(
+export function dayTile<C extends { position: number; start_time?: string | null }>(
   day: WeekDay<C>,
   today: string,
   isDone: (c: C) => boolean,
@@ -38,7 +38,15 @@ export function dayTile<C extends { position: number }>(
   const numbers = day.courses.map((c) => c.position);
   const base = { label: day.label, day: day.day, isToday: day.isToday };
   if (day.isToday) {
-    return { ...base, state: "today", mark: "●", caption: "Aujourd’hui" };
+    // Le jour même : l'heure et le numéro de séance (« 13:30 · Séance 4 »).
+    const first = day.courses[0];
+    const time = first?.start_time ? first.start_time.slice(0, 5) : null;
+    return {
+      ...base,
+      state: "today",
+      mark: "●",
+      caption: first ? [time, sessionsCaption(numbers)].filter(Boolean).join(" · ") : "Aujourd’hui",
+    };
   }
   if (day.courses.length === 0) return { ...base, state: "empty", mark: "", caption: "" };
   if (day.date < today) {

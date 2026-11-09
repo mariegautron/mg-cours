@@ -136,7 +136,7 @@ export default async function QuizPage({
             </Link>
           </nav>
           <h1 id="qp" className="font-heading text-3xl font-bold tracking-tight">
-            QCM{quiz ? ` — ${quiz.title}` : ""}
+            QCM{quiz ? ` · ${quiz.title}` : ""}
           </h1>
           <p className="text-muted-foreground text-sm">
             Évaluation individuelle sous forme de QCM, tirage différent pour chaque personne.
@@ -242,7 +242,8 @@ export default async function QuizPage({
             Prêt ?
           </h2>
           <p className="text-muted-foreground text-sm">
-            Chaque étudiant·e a un lien personnel. Personne ne voit les réponses avant d’avoir
+            En classe : « Faire passer en classe » projette un QR code, chacun·e choisit son nom. À
+            distance : un lien personnel par étudiant·e. Personne ne voit les réponses avant d’avoir
             envoyé les siennes.
           </p>
           <p className="text-muted-foreground text-sm">
@@ -291,47 +292,58 @@ export default async function QuizPage({
                 </Link>
               </Button>
             ) : null}
-            {quiz.status === "published" ? (
-              <>
-                {started > 0 ? (
-                  <>
-                    <Button
-                      type="button"
-                      size="touch"
-                      variant="secondary"
-                      disabled
-                      className="w-full"
-                      aria-describedby="unpublish-hint"
-                    >
-                      Repasser en brouillon
-                    </Button>
-                    <p id="unpublish-hint" className="text-muted-foreground text-sm">
-                      Impossible : {started} copie{started > 1 ? "s" : ""} déjà commencée
-                      {started > 1 ? "s" : ""}. Clôture le QCM ou rouvre la copie.
-                    </p>
-                  </>
-                ) : (
-                  <form action={unpublishQuiz.bind(null, id, assessmentId)}>
-                    <Button type="submit" size="touch" variant="secondary" className="w-full">
-                      Repasser en brouillon
-                    </Button>
-                  </form>
-                )}
-                <form action={closeQuiz.bind(null, id, assessmentId)}>
-                  <Button type="submit" size="touch" variant="secondary" className="w-full">
-                    Clôturer le QCM
-                  </Button>
-                </form>
-              </>
-            ) : null}
-            {submitted > 0 ? (
+            {toReview > 0 ? (
               <Button asChild size="touch">
-                <Link href={`${back}/quiz/links#follow`}>Relire les copies ({submitted})</Link>
+                <Link href={`${back}/quiz/links#follow`}>Relire les copies ({toReview})</Link>
               </Button>
             ) : null}
-            <Button asChild size="touch" variant={submitted > 0 ? "secondary" : "default"}>
+            <Button
+              asChild
+              size="touch"
+              variant={submitted > 0 ? "secondary" : "default"}
+              className="h-auto py-2 whitespace-normal"
+            >
               <Link href={`${back}/quiz/links`}>Liens personnels et suivi des copies</Link>
             </Button>
+            {quiz.status === "published" ? (
+              // Actions rares, à l'écart du bouton principal.
+              <details className="rounded-lg border p-2">
+                <summary className="min-h-11 cursor-pointer px-1 py-2 text-sm font-semibold">
+                  Plus…
+                </summary>
+                <div className="flex flex-col gap-2 pt-1">
+                  {started > 0 ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="touch"
+                        variant="secondary"
+                        disabled
+                        className="w-full"
+                        aria-describedby="unpublish-hint"
+                      >
+                        Repasser en brouillon
+                      </Button>
+                      <p id="unpublish-hint" className="text-muted-foreground text-sm">
+                        Impossible : {started} copie{started > 1 ? "s" : ""} déjà commencée
+                        {started > 1 ? "s" : ""}. Clôture le QCM ou rouvre la copie.
+                      </p>
+                    </>
+                  ) : (
+                    <form action={unpublishQuiz.bind(null, id, assessmentId)}>
+                      <Button type="submit" size="touch" variant="secondary" className="w-full">
+                        Repasser en brouillon
+                      </Button>
+                    </form>
+                  )}
+                  <form action={closeQuiz.bind(null, id, assessmentId)}>
+                    <Button type="submit" size="touch" variant="secondary" className="w-full">
+                      Clôturer le QCM
+                    </Button>
+                  </form>
+                </div>
+              </details>
+            ) : null}
           </div>
         </section>
         {quiz.status === "draft" && attempts.length === 0 ? (
