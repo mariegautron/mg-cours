@@ -257,7 +257,10 @@ export default async function OralPage({
         </Link>
       </div>
 
-      <details open={orderedSlots.length === 0} className="rounded-lg border px-3 py-1.5">
+      <details
+        open={orderedSlots.length === 0 || !assessment.duration_minutes}
+        className="rounded-lg border px-3 py-1.5"
+      >
         <summary className="cursor-pointer text-base font-medium">
           Ordre de passage et créneaux
           {orderedSlots.length > 0 ? (
