@@ -46,6 +46,8 @@ export function AssessmentForm({
   hasProject = false,
   initialMilestone = false,
   coefficients = { group: GROUP_COEFFICIENT, individual: INDIVIDUAL_COEFFICIENT },
+  reviewTargets = [],
+  initialType,
   children,
 }: {
   action: Action;
@@ -62,6 +64,10 @@ export function AssessmentForm({
   initialMilestone?: boolean;
   /** Coefficients de l'école du module (YNOV par défaut). */
   coefficients?: { group: number; individual: number };
+  /** Évaluations notées du module auxquelles un point d'étape peut se rattacher. */
+  reviewTargets?: { id: string; title: string; gradingGridId: string | null; isGroup: boolean }[];
+  /** Type choisi d'avance (« Créer un point d'étape »). */
+  initialType?: string;
   /** Sections annexes (fichiers joints…), placées au-dessus du bouton Enregistrer. */
   children?: ReactNode;
 }) {
@@ -69,7 +75,12 @@ export function AssessmentForm({
   const fe = state.fieldErrors ?? {};
   const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? initialGridId);
   // Cadre selon le type (US-144) : libellé de la date, durée attendue, points à vérifier.
-  const [typeText, setTypeText] = useState(assessment?.type ?? "");
+  // Ancien libellé du point d'étape : repris sous le nouveau.
+  const [typeText, setTypeText] = useState(
+    kindOf(assessment?.type) === "checkpoint"
+      ? "Point d’étape (sans note)"
+      : (assessment?.type ?? initialType ?? ""),
+  );
   const [dateText, setDateText] = useState(assessment?.date ?? "");
   const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
   const [courseId, setCourseId] = useState(assessment?.course_id ?? "");
@@ -89,6 +100,10 @@ export function AssessmentForm({
   const formatFr = (d: string) => new Date(d).toLocaleDateString("fr-FR");
   const frame = frameFor(typeText);
   const whereKind = kindOf(typeText);
+  // Point d'étape : sans note, rattaché à l'évaluation notée qui le prend en compte.
+  const isReview = whereKind === "checkpoint";
+  const [reviewForId, setReviewForId] = useState(assessment?.review_for_id ?? "");
+  const reviewSelected = new Set(assessment?.review_criterion_ids ?? []);
   const warnings = frameWarnings({ type: typeText, date: dateText, durationMinutes: durationText });
   const gridCriteria = (grids.find((g) => g.id === gridId)?.criteria ?? []).filter(
     (c) => !c.is_bonus,
@@ -132,7 +147,9 @@ export function AssessmentForm({
                   setCoefficientText(String(coefficientFor(true)));
                 }}
               />
-              Note de groupe (une note par groupe coché, ×{coefficientFor(true)})
+              {isReview
+                ? "De groupe (un retour par groupe coché)"
+                : `Note de groupe (une note par groupe coché, ×${coefficientFor(true)})`}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -144,7 +161,7 @@ export function AssessmentForm({
                   setCoefficientText(String(coefficientFor(false)));
                 }}
               />
-              Note individuelle (×{coefficientFor(false)})
+              {isReview ? "Individuel" : `Note individuelle (×${coefficientFor(false)})`}
             </label>
           </div>
           {groupGrade ? <input type="hidden" name="isGroupGrade" value="on" /> : null}
@@ -342,7 +359,38 @@ export function AssessmentForm({
               onChange={(e) => setDurationText(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
+          {isReview ? (
+            <div className="space-y-2 sm:col-span-2">
+              <input type="hidden" name="coefficient" value="1" />
+              <Label htmlFor="reviewForId">Pris en compte dans</Label>
+              <select
+                id="reviewForId"
+                name="reviewForId"
+                value={reviewForId}
+                onChange={(e) => {
+                  setReviewForId(e.target.value);
+                  const target = reviewTargets.find((t) => t.id === e.target.value);
+                  if (target?.gradingGridId) setGridId(target.gradingGridId);
+                  if (target) setGroupGrade(target.isGroup);
+                }}
+                className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                aria-describedby="reviewForId-hint"
+              >
+                <option value="">Choisis l’évaluation notée…</option>
+                {reviewTargets.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title}
+                  </option>
+                ))}
+              </select>
+              <p id="reviewForId-hint" className="text-muted-foreground text-sm">
+                Sans note, sans coefficient, hors moyenne. Il reprend la grille de l’évaluation
+                notée : coche ses critères plus bas. Ses retours s’affichent dans la correction de
+                cette évaluation.
+              </p>
+            </div>
+          ) : null}
+          <div className={isReview ? "hidden" : "space-y-2"}>
             <Label htmlFor="coefficient">Coefficient</Label>
             <Input
               id="coefficient"
@@ -364,10 +412,10 @@ export function AssessmentForm({
               </p>
             ) : null}
           </div>
-          <div className="space-y-2 sm:col-span-2">
+          <div className={isReview ? "hidden" : "space-y-2 sm:col-span-2"}>
             <Label htmlFor="maxScore">Barème (note sur)</Label>
             <p id="maxScore-hint" className="text-muted-foreground text-sm">
-              Laisser vide : total de la grille, ou 20 sans grille. Les moyennes YNOV sont toujours
+              Laisser vide : total de la grille, ou 20 sans grille. Les moyennes sont toujours
               ramenées sur 20.
             </p>
             <Input
@@ -424,7 +472,32 @@ export function AssessmentForm({
               ))}
             </select>
           </div>
-          {gridCriteria.length > 0 ? (
+          {isReview && gridCriteria.length > 0 ? (
+            <fieldset key={`review-${gridId}`} className="space-y-2 sm:col-span-2">
+              <legend className="text-sm leading-none font-medium">
+                Critères commentés dans ce point d’étape
+              </legend>
+              <p className="text-muted-foreground text-sm">
+                Tous cochés : toute la grille. Décoche ceux qui ne sont pas encore abordés.
+              </p>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {gridCriteria.map((c) => (
+                  <li key={c.id}>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="reviewCriterionIds"
+                        value={c.id}
+                        defaultChecked={reviewSelected.size === 0 || reviewSelected.has(c.id)}
+                      />
+                      {c.label}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </fieldset>
+          ) : null}
+          {!isReview && gridCriteria.length > 0 ? (
             <fieldset key={gridId} className="space-y-2 sm:col-span-2">
               <legend className="text-sm leading-none font-medium">
                 Critères validés d’office pour cette évaluation
@@ -483,7 +556,7 @@ export function AssessmentForm({
           <FieldError id="experienceNote" errors={fe.experienceNote} />
         </fieldset>
 
-        {!assessment && canPrepareMakeupInAdvance(groupGrade, false) ? (
+        {!assessment && !isReview && canPrepareMakeupInAdvance(groupGrade, false) ? (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="prepareMakeup" />
             Préparer dès maintenant le sujet de rattrapage (même grille, même coefficient)

@@ -12,7 +12,7 @@ export const TYPE_PRESETS = [
   "Questions ouvertes tirées au sort",
   "QCM",
   "Oral (groupe ou individuel)",
-  "Point d’étape (non noté, hors moyenne)",
+  "Point d’étape (sans note)",
 ] as const;
 
 /** Type d'épreuve (`exam_kind`) déduit du type choisi : un seul choix pour Marie. */
@@ -72,7 +72,7 @@ const FRAMES: Record<IndividualKind, Frame> = {
   checkpoint: {
     dateLabel: "Date",
     needsDuration: false,
-    hint: "Point d'étape : non noté, hors moyenne.",
+    hint: "Point d'étape : un rendu commenté sans note (en avance, sur la bonne voie, à revoir), hors moyenne et hors notes exigées.",
   },
   in_class: {
     dateLabel: "Date de l'épreuve",

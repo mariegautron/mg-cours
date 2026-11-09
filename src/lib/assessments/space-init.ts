@@ -14,6 +14,77 @@ import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
 
+export interface ReviewHistoryEntry {
+  title: string;
+  date: string | null;
+  /** Pour qui : le groupe, ou la personne (point d'étape individuel dans un oral de groupe). */
+  who: string | null;
+  marks: Record<string, string>;
+  globalComment: string;
+}
+
+const strMap = (v: unknown): Record<string, string> =>
+  typeof v === "object" && v !== null && !Array.isArray(v)
+    ? Object.fromEntries(
+        Object.entries(v as Record<string, unknown>).filter(
+          (e): e is [string, string] => typeof e[1] === "string",
+        ),
+      )
+    : {};
+
+/**
+ * Retours terminés des points d'étape rattachés à une évaluation notée, rangés par date. Rend une
+ * fonction : pour des identifiants (groupe, membres), les retours qui les concernent. Base pas
+ * encore à jour : aucun.
+ */
+async function loadReviewHistory(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  assessmentId: string,
+  groups: readonly { id: string; name: string; members: { id: string; first_name: string }[] }[],
+): Promise<(ids: readonly string[]) => ReviewHistoryEntry[]> {
+  const none = () => [];
+  try {
+    const { data: reviews, error } = await supabase
+      .from("assessment")
+      .select("id, title, date")
+      .eq("review_for_id", assessmentId);
+    if (error || !reviews?.length) return none;
+    const { data: rows } = await supabase
+      .from("progress_review")
+      .select("assessment_id, subject_id, marks, global_comment, done_at, state")
+      .in(
+        "assessment_id",
+        reviews.map((r) => r.id),
+      )
+      .eq("state", "done");
+    if (!rows?.length) return none;
+    const nameOf = new Map<string, string>();
+    for (const g of groups) {
+      nameOf.set(g.id, g.name);
+      for (const m of g.members) nameOf.set(m.id, m.first_name);
+    }
+    const byId = new Map(reviews.map((r) => [r.id, r]));
+    return (ids) => {
+      const want = new Set(ids);
+      return rows
+        .filter((r) => want.has(r.subject_id))
+        .map((r) => {
+          const a = byId.get(r.assessment_id);
+          return {
+            title: a?.title ?? "Point d’étape",
+            date: a?.date ?? r.done_at,
+            who: ids[0] === r.subject_id ? null : (nameOf.get(r.subject_id) ?? null),
+            marks: strMap(r.marks),
+            globalComment: r.global_comment,
+          };
+        })
+        .sort((x, y) => (x.date ?? "").localeCompare(y.date ?? ""));
+    };
+  } catch {
+    return none;
+  }
+}
+
 export interface SpaceSubject {
   id: string;
   isGroup: boolean;
@@ -94,6 +165,8 @@ export async function buildSpaceInits({
   }));
   const spaces: Record<string, { members: { id: string; name: string }[]; init: OralSpaceInit }> =
     {};
+  // Points d'étape rattachés à cette évaluation : rappel par groupe / personne (retours terminés).
+  const reviewsOf = await loadReviewHistory(supabase, assessmentId, assessment.groups);
   // « À réécrire » calculé comme partout ailleurs (Résultats, cartes, moyennes) : une seule règle.
   const rewriteKeys = await loadRewriteKeys(supabase, [assessmentId]);
   if (!spaceError && oralCriteria.length > 0) {
@@ -175,6 +248,7 @@ export async function buildSpaceInits({
           moduleNames,
           support: supportByGroup.get(group.id) ?? [],
           resultsHref: `/modules/${id}/assessments/${assessmentId}/results`,
+          reviews: reviewsOf([group.id, ...members.map((m) => m.id)]),
         },
       };
     }

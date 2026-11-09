@@ -61,6 +61,7 @@ import {
 } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { isProgressReview } from "@/lib/assessments/progress-review";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -185,6 +186,16 @@ export default async function AssessmentPage({
   ]);
   let makeupPanel: React.ReactNode = null;
   const makeupOf = makeup.original;
+  // « Copiée de » : évaluation reprise d'un autre module (« Reprise : à relire » tant que pas enregistrée).
+  const { data: copiedFrom } = assessment.copied_from_id
+    ? await (
+        await createClient()
+      )
+        .from("assessment")
+        .select("id, title, module_id, module:module_id(name)")
+        .eq("id", assessment.copied_from_id)
+        .maybeSingle()
+    : { data: null };
   if (makeup.panel) {
     makeupPanel = (
       <MakeupPanel
@@ -438,7 +449,9 @@ export default async function AssessmentPage({
             {[
               assessment.project_role ? "Projet fil rouge" : null,
               assessment.type,
-              `${assessment.is_group_grade ? "groupe" : "individuelle"} ×${ruleCoefficient}`,
+              isProgressReview(assessment)
+                ? "point d’étape · sans note"
+                : `${assessment.is_group_grade ? "groupe" : "individuelle"} ×${ruleCoefficient}`,
               groupNames,
               course ? `rendu séance ${courseNumber}` : null,
               assessment.date ? new Date(assessment.date).toLocaleDateString("fr-FR") : null,
@@ -458,6 +471,42 @@ export default async function AssessmentPage({
               </>
             ) : null}
           </p>
+          {copiedFrom ? (
+            <p
+              role={assessment.needs_review ? "status" : undefined}
+              className={
+                assessment.needs_review
+                  ? "border-sun/60 bg-sun/10 mt-2 rounded-xl border p-3 text-sm"
+                  : "text-muted-foreground mt-1 text-sm"
+              }
+            >
+              {assessment.needs_review ? <strong>Reprise : à relire. </strong> : null}
+              Copiée de{" "}
+              <Link
+                href={`/modules/${copiedFrom.module_id}/assessments/${copiedFrom.id}`}
+                className="underline underline-offset-2"
+              >
+                {copiedFrom.title}
+              </Link>
+              {(copiedFrom.module as unknown as { name: string } | null)?.name
+                ? ` (${(copiedFrom.module as unknown as { name: string }).name})`
+                : ""}
+              .
+              {assessment.needs_review ? (
+                <>
+                  {" "}
+                  Le sujet et « Ce qui est évalué » parlent peut-être encore de l’autre module : ils
+                  partiraient tels quels dans la progression.{" "}
+                  <Link
+                    href={`/modules/${assessment.module_id}/assessments/${assessment.id}/edit`}
+                    className="font-semibold underline underline-offset-2"
+                  >
+                    Relire et enregistrer
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {makeupOf ? (
             <p className="mt-1 text-sm">
               Rattrapage de{" "}
@@ -472,14 +521,20 @@ export default async function AssessmentPage({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            <Pill>Coefficient {ruleCoefficient}</Pill>
-            <Pill>Sur {assessment.maxScore}</Pill>
-            <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
+            {isProgressReview(assessment) ? (
+              <Pill tone="key">Point d’étape · sans note · hors moyenne</Pill>
+            ) : (
+              <>
+                <Pill>Coefficient {ruleCoefficient}</Pill>
+                <Pill>Sur {assessment.maxScore}</Pill>
+                <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
+              </>
+            )}
             {grid ? <Pill tone="key">{grid.name}</Pill> : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!assessment.is_group_grade ? (
+          {!assessment.is_group_grade && !isProgressReview(assessment) ? (
             <Button asChild variant="secondary">
               <Link href={`/modules/${id}/assessments/${assessmentId}/quiz`}>
                 <ListChecks aria-hidden />
@@ -499,7 +554,11 @@ export default async function AssessmentPage({
             <Button asChild>
               <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
                 <ClipboardCheck aria-hidden />
-                {overview.done + overview.inProgress > 0 ? "Continuer la correction" : "Corriger"}
+                {isProgressReview(assessment)
+                  ? "Commenter"
+                  : overview.done + overview.inProgress > 0
+                    ? "Continuer la correction"
+                    : "Corriger"}
               </Link>
             </Button>
           ) : null}

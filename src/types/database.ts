@@ -205,6 +205,10 @@ export type Database = {
       }
       assessment: {
         Row: {
+          copied_from_id: string | null
+          needs_review: boolean
+          review_criterion_ids: string[] | null
+          review_for_id: string | null
           auto_validated_criterion_ids: string[]
           coefficient: number
           course_id: string | null
@@ -242,6 +246,10 @@ export type Database = {
           score_scale: Json | null
         }
         Insert: {
+          copied_from_id?: string | null
+          needs_review?: boolean
+          review_criterion_ids?: string[] | null
+          review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           course_id?: string | null
@@ -279,6 +287,10 @@ export type Database = {
           score_scale?: Json | null
         }
         Update: {
+          copied_from_id?: string | null
+          needs_review?: boolean
+          review_criterion_ids?: string[] | null
+          review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           course_id?: string | null
@@ -2499,6 +2511,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      progress_review: {
+        Row: {
+          assessment_id: string
+          comments: Json
+          created_at: string
+          done_at: string | null
+          field_versions: Json
+          global_comment: string
+          id: string
+          marks: Json
+          owner_id: string
+          person_comments: Json
+          private_note: string
+          published: Json | null
+          published_at: string | null
+          state: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          comments?: Json
+          created_at?: string
+          done_at?: string | null
+          field_versions?: Json
+          global_comment?: string
+          id?: string
+          marks?: Json
+          owner_id?: string
+          person_comments?: Json
+          private_note?: string
+          published?: Json | null
+          published_at?: string | null
+          state?: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          comments?: Json
+          created_at?: string
+          done_at?: string | null
+          field_versions?: Json
+          global_comment?: string
+          id?: string
+          marks?: Json
+          owner_id?: string
+          person_comments?: Json
+          private_note?: string
+          published?: Json | null
+          published_at?: string | null
+          state?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       quiz: {
         Row: {

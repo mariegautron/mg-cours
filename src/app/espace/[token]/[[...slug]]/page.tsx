@@ -20,6 +20,8 @@ import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
 import { callStudentView } from "@/lib/modules/student-public";
 import { liveQuizForToken } from "@/lib/quiz/espace-attempt";
+import { loadPublishedReview } from "@/lib/assessments/review-public";
+import { ReviewFeedback } from "@/components/modules/review-feedback";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -116,6 +118,15 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
         />
       );
     }
+    // Point d'étape : le retour publié de Marie, sous le dépôt.
+    const review = ev?.id ? await loadPublishedReview(token, ev.id) : null;
+    if (review)
+      deposit = (
+        <>
+          {deposit}
+          <ReviewFeedback review={review} />
+        </>
+      );
     body = <EvaluationView data={data} index={number - 1} deposit={deposit} />;
   } else if (section === "cours" && slug.length === 2 && Number.isInteger(number)) {
     // Ancienne adresse d'une séance : on ouvre sa première fiche.

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isProgressReview } from "@/lib/assessments/progress-review";
 import { callStudentView } from "@/lib/modules/student-public";
 import { hashToken, isWellFormedToken } from "@/lib/quiz/token";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -100,6 +101,17 @@ export async function loadDepositContext(
     .eq(owner.kind === "group" ? "student_group_id" : "student_id", owner.id)
     .not("value", "is", null)
     .limit(1);
+  // Point d'étape : pas de note ; le dépôt se ferme quand le retour est terminé.
+  let reviewDone = false;
+  if (isProgressReview(row)) {
+    const { data: review } = await admin
+      .from("progress_review")
+      .select("state")
+      .eq("assessment_id", assessmentId)
+      .eq("subject_id", owner.id)
+      .maybeSingle();
+    reviewDone = review?.state === "done";
+  }
   const { data: student } = await admin
     .from("student")
     .select("first_name")
@@ -121,7 +133,7 @@ export async function loadDepositContext(
         extra.oral_start_time ? extra.oral_start_time.slice(0, 5) : null,
       ),
       owner,
-      graded: !!gradeRow?.[0],
+      graded: !!gradeRow?.[0] || reviewDone,
     },
   };
 }

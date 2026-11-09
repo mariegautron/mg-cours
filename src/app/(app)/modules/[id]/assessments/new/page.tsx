@@ -5,6 +5,7 @@ import { createAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { listGrids } from "@/lib/assessments/queries";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { listReviewTargets } from "@/lib/assessments/review-targets";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
@@ -21,7 +22,7 @@ export default async function NewAssessmentPage({
   searchParams,
 }: PageProps<"/modules/[id]/assessments/new">) {
   const { id } = await params;
-  const { grille, jalon } = await searchParams;
+  const { grille, jalon, type } = await searchParams;
   const project = await getModuleProject(id);
   const [mod, groups, grids, courses] = await Promise.all([
     getModule(id),
@@ -47,8 +48,10 @@ export default async function NewAssessmentPage({
         grids={grids}
         courses={courses}
         coefficients={await schoolCoefficients(id)}
+        reviewTargets={await listReviewTargets(id)}
         hasProject={!!project}
         initialMilestone={jalon === "1"}
+        initialType={type === "etape" ? "Point d’étape (sans note)" : undefined}
         initialGridId={
           typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
         }

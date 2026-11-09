@@ -2,6 +2,8 @@
  * US-126 : « Les évaluations du module ». Fonctions pures : message sur les notes exigées d'après
  * les heures du module (règle YNOV, `requiredNotes`), nombre de jalons, coefficients cumulés.
  */
+import { kindOf } from "@/lib/assessments/individual";
+
 export interface NotesProgressLike {
   requirement: { total: number; group: number; individual: number; exact: boolean };
   enteredTotal: number;
@@ -26,6 +28,8 @@ export function notesMessage(p: NotesProgressLike): string {
 
 export interface PlannedLike {
   is_group_grade: boolean;
+  /** « Point d'étape » : sans note, hors notes exigées. */
+  type?: string | null;
   is_bonus?: boolean | null;
   makeup_of_id?: string | null;
 }
@@ -46,7 +50,9 @@ export function plannedProgress(
   requirement: NotesProgressLike["requirement"],
   assessments: readonly PlannedLike[],
 ): PlannedProgress {
-  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
+  const counted = assessments.filter(
+    (a) => !a.makeup_of_id && !a.is_bonus && kindOf(a.type) !== "checkpoint",
+  );
   const plannedGroup = counted.filter((a) => a.is_group_grade).length;
   const plannedIndividual = counted.length - plannedGroup;
   return {

@@ -9,6 +9,8 @@ import { Plus } from "lucide-react";
 
 import { listModuleGroups } from "@/lib/students/queries";
 import { weightingSentence } from "@/lib/schools/rules";
+import { isProgressReview } from "@/lib/assessments/progress-review";
+import { countDoneReviews } from "@/lib/assessments/review-targets";
 import { getResolvedRulesForModule } from "@/lib/settings/rules-queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
@@ -167,6 +169,19 @@ export default async function ModuleAssessmentsPage({
       qcm: extras.qcm.get(a.id),
     });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  // Points d'étape : « 2 retours terminés sur 4 », jamais une note.
+  const reviewDone = await countDoneReviews(
+    assessments.filter((a) => isProgressReview(a)).map((a) => a.id),
+  );
+  const reviewTotal = (a: (typeof assessments)[number]) =>
+    a.is_group_grade
+      ? a.groups.length
+      : new Set(
+          moduleGroups
+            .filter((g) => a.groups.some((x) => x.id === g.id))
+            .flatMap((g) => g.members.map((m) => m.id)),
+        ).size;
+  const titleOf = new Map(assessments.map((a) => [a.id, a.title]));
   const makeupRowsAll = (await loadMakeupGroups(id)).flatMap((g) => g.rows);
   const makeupsPending = makeupRowsAll.filter((r) => r.step !== "done").length;
   // Absence excusée pas encore rattrapée : « rattrapage en attente » à côté de la moyenne.
@@ -287,6 +302,7 @@ export default async function ModuleAssessmentsPage({
             <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...cards, ...makeups].map((a) => {
                 const oral = isOralAssessment(a);
+                const review = isProgressReview(a);
                 const frame = frameStatus({
                   hasDate: !!a.date || !!(a.course_id && courseDate.get(a.course_id)),
                   whereOk:
@@ -313,9 +329,13 @@ export default async function ModuleAssessmentsPage({
                         </Link>
                       </h3>
                       <span className="flex flex-wrap gap-1.5">
-                        <Pill>
-                          {a.is_group_grade ? "Groupe" : "Individuelle"} ×{coef(a.is_group_grade)}
-                        </Pill>
+                        {review ? (
+                          <Pill tone="key">Point d’étape · sans note</Pill>
+                        ) : (
+                          <Pill>
+                            {a.is_group_grade ? "Groupe" : "Individuelle"} ×{coef(a.is_group_grade)}
+                          </Pill>
+                        )}
                         {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
                       </span>
                     </div>
@@ -323,8 +343,15 @@ export default async function ModuleAssessmentsPage({
                       {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {/* Même coefficient que le badge : celui de la règle de l'école, qui fait la moyenne. */}
-                      {a.type ? `${a.type} · ` : ""}coefficient {coef(a.is_group_grade)} ·{" "}
-                      {a.groups.map((g) => g.name).join(", ") || "—"} · sur {a.maxScore}
+                      {review
+                        ? `Point d’étape · sans note · ${
+                            a.review_for_id && titleOf.get(a.review_for_id)
+                              ? `pour ${titleOf.get(a.review_for_id)}`
+                              : "pas encore rattaché"
+                          } · `
+                        : `${a.type ? `${a.type} · ` : ""}coefficient ${coef(a.is_group_grade)} · `}
+                      {a.groups.map((g) => g.name).join(", ") || "—"}
+                      {review ? "" : ` · sur ${a.maxScore}`}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                       {dueSessions.has(a.id) ? "" : ""}
                     </p>
@@ -362,16 +389,24 @@ export default async function ModuleAssessmentsPage({
                       />
                     ) : null}
                     <StatusRow
-                      label="Notes"
+                      label={review ? "Retours" : "Notes"}
                       status={
-                        a.inProgressCount > 0
+                        review
                           ? {
-                              tone: "warn",
-                              label: `En cours (${a.inProgressCount} copie${a.inProgressCount > 1 ? "s" : ""} à finir)`,
+                              tone:
+                                (reviewDone.get(a.id) ?? 0) >= reviewTotal(a) && reviewTotal(a) > 0
+                                  ? "ok"
+                                  : "warn",
+                              label: `${reviewDone.get(a.id) ?? 0} retour${(reviewDone.get(a.id) ?? 0) > 1 ? "s" : ""} terminé${(reviewDone.get(a.id) ?? 0) > 1 ? "s" : ""} sur ${reviewTotal(a)}`,
                             }
-                          : a.gradeCount > 0
-                            ? { tone: "ok", label: "Notée" }
-                            : { tone: "warn", label: "À noter" }
+                          : a.inProgressCount > 0
+                            ? {
+                                tone: "warn",
+                                label: `En cours (${a.inProgressCount} copie${a.inProgressCount > 1 ? "s" : ""} à finir)`,
+                              }
+                            : a.gradeCount > 0
+                              ? { tone: "ok", label: "Notée" }
+                              : { tone: "warn", label: "À noter" }
                       }
                     />
                     {!a.makeup_of_id ? (
@@ -402,11 +437,13 @@ export default async function ModuleAssessmentsPage({
                         >
                           {oral
                             ? "Faire passer l’oral"
-                            : frame.tone !== "ok"
-                              ? "Préparer"
-                              : a.gradeCount + a.inProgressCount > 0
-                                ? "Continuer la correction"
-                                : "Corriger"}
+                            : review && frame.tone === "ok"
+                              ? "Commenter"
+                              : frame.tone !== "ok"
+                                ? "Préparer"
+                                : a.gradeCount + a.inProgressCount > 0
+                                  ? "Continuer la correction"
+                                  : "Corriger"}
                         </Link>
                       </Button>
                       {oral && frame.tone !== "ok" ? (

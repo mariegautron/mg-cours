@@ -10,6 +10,8 @@ import { readAnswer } from "@/lib/quiz/grading";
 import { createClient } from "@/lib/supabase/server";
 import { makeupHrefs } from "@/lib/assessments/makeup-queries";
 import { RenduReview, type RenduCopy } from "@/components/assessments/rendu-review";
+import { isProgressReview } from "@/lib/assessments/progress-review";
+import { ProgressReviewPage } from "@/components/assessments/progress-review-page";
 import { buildSpaceInits } from "@/lib/assessments/space-init";
 import { examKindOf } from "@/lib/assessments/exam-kind";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -57,6 +59,17 @@ export default async function CorrectPage({
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
 
+  // Point d'étape : un rendu commenté sans note (repères par critère), jamais de note.
+  if (isProgressReview(assessment)) {
+    return (
+      <ProgressReviewPage
+        moduleId={id}
+        assessment={assessment}
+        initialId={typeof copy === "string" ? copy : undefined}
+      />
+    );
+  }
+
   const [overrideRows, themes, submissionData] = await Promise.all([
     listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
     themeTitleByGroup(assessment.project_id),
@@ -88,7 +101,11 @@ export default async function CorrectPage({
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
 
   // Rendu (fichiers ou liens) corrigé à la grille : le rendu à gauche, la grille en lettres à droite.
-  if (!quiz && examKindOf(assessment) === "files" && (assessment.grading_grid?.criteria ?? []).length) {
+  if (
+    !quiz &&
+    examKindOf(assessment) === "files" &&
+    (assessment.grading_grid?.criteria ?? []).length
+  ) {
     const rawGrades = await getGradesByAssessment(assessmentId, { skipRewrite: true });
     const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
     const subjects = assessment.is_group_grade

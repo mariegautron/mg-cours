@@ -18,6 +18,7 @@ import {
   type EspaceEvaluation,
 } from "@/lib/modules/espace";
 import { lateLabel, parisDayTime, parisLongDateTime } from "@/lib/deposits/rules";
+import { kindOf } from "@/lib/assessments/individual";
 import { sessionHeading, type Frise } from "@/lib/modules/frise";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -202,9 +203,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
           </h2>
           <p className="mt-1">
             {espace.quiz.title}
-            {espace.quiz.closesAt
-              ? ` · jusqu’au ${parisLongDateTime(espace.quiz.closesAt)}`
-              : ""}
+            {espace.quiz.closesAt ? ` · jusqu’au ${parisLongDateTime(espace.quiz.closesAt)}` : ""}
           </p>
           {data.quizMakeupPlanned ? (
             <p className="mt-2">
@@ -212,9 +211,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
             </p>
           ) : data.quizSubmittedAt ? (
             <p className="mt-2 font-semibold">
-              Copie rendue le{" "}
-              {parisLongDateTime(data.quizSubmittedAt)}
-              .
+              Copie rendue le {parisLongDateTime(data.quizSubmittedAt)}.
             </p>
           ) : espace.quiz.url ? (
             <a
@@ -353,7 +350,13 @@ export function EvaluationView({
     e.sessionNumber ? ["Séance", `Séance ${e.sessionNumber}`] : null,
     e.durationMinutes ? ["Durée", `${e.durationMinutes} min`] : null,
     e.whereToSubmit ? ["Où rendre", e.whereToSubmit] : null,
-    ["Note", e.groupGrade ? "Note de groupe" : "Note individuelle"],
+    // Point d'étape : un retour commenté, jamais le mot « note ».
+    kindOf(e.type) === "checkpoint"
+      ? [
+          "Point d’étape",
+          e.groupGrade ? "Retour au groupe, sans note" : "Retour personnel, sans note",
+        ]
+      : ["Note", e.groupGrade ? "Note de groupe" : "Note individuelle"],
   ].filter((f): f is string[] => f !== null);
 
   return (

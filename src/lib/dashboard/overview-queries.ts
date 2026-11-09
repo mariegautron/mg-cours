@@ -7,6 +7,7 @@ import { getModuleCourses } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { listModuleGroups } from "@/lib/students/queries";
 import { toTwenty } from "@/lib/ynov/notation";
+import { isProgressReview } from "@/lib/assessments/progress-review";
 
 export interface FocusKpis {
   moduleId: string;
@@ -163,7 +164,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   const { data } = await supabase
     .from("assessment")
     .select(
-      "id, title, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
+      "id, title, type, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
     )
     .is("makeup_of_id", null);
   const rows = (data ?? []).filter((a) => {
@@ -200,6 +201,18 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   // Même règle que la correction : traitée = tous les critères notés, ou absence posée.
   const handled = new Set<string>();
   const startedCopies = new Map<string, number>();
+  // Point d'étape (sans note) : traité = retour terminé ; en cours = retour commencé.
+  const reviewIds = rows.filter((a) => isProgressReview(a)).map((a) => a.id);
+  if (reviewIds.length) {
+    const { data: reviews } = await supabase
+      .from("progress_review")
+      .select("assessment_id, subject_id, state")
+      .in("assessment_id", reviewIds);
+    for (const r of reviews ?? []) {
+      if (r.state === "done") handled.add(`${r.assessment_id}:${r.subject_id}`);
+      else startedCopies.set(r.assessment_id, (startedCopies.get(r.assessment_id) ?? 0) + 1);
+    }
+  }
   for (const g of grades ?? []) {
     const c = criteriaOf.get(g.assessment_id);
     const key = `${g.assessment_id}:${g.student_group_id ?? g.student_id}`;
@@ -256,7 +269,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
     out.push({
       assessmentId: a.id,
       moduleId: a.module_id,
-      title: a.title,
+      title: isProgressReview(a) ? `${a.title} · sans note` : a.title,
       moduleName: (a.module as { name: string } | null)?.name ?? "",
       date: a.date,
       remaining: todo.length,

@@ -6,6 +6,7 @@ import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { AssessmentFiles } from "@/components/assessments/assessment-files";
 import { getAssessment, listGrids } from "@/lib/assessments/queries";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { listReviewTargets } from "@/lib/assessments/review-targets";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModuleCourses } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
@@ -40,6 +41,7 @@ export default async function EditAssessmentPage({
         grids={grids}
         courses={courses}
         coefficients={await schoolCoefficients(id)}
+        reviewTargets={await listReviewTargets(id, assessmentId)}
         hasProject={!!(await getModuleProject(id))}
         assessment={assessment}
       >

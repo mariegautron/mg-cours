@@ -41,6 +41,12 @@ import {
   type WrittenSnapshot,
 } from "@/lib/assessments/oral-space";
 import { formatNumber } from "@/lib/assessments/scoring";
+import {
+  isReviewMark,
+  markHistory,
+  REVIEW_MARK_LABELS,
+  type ReviewMark,
+} from "@/lib/assessments/progress-review";
 import { cn } from "@/lib/utils";
 
 export interface OralSpaceInit {
@@ -70,6 +76,14 @@ export interface OralSpaceInit {
   moduleNames: string[];
   /** Support déposé pour ce groupe (PDF). */
   support: SubmissionItemLike[];
+  /** Points d'étape rattachés (retours terminés), du plus ancien au plus récent. */
+  reviews?: {
+    title: string;
+    date: string | null;
+    who: string | null;
+    marks: Record<string, string>;
+    globalComment: string;
+  }[];
 }
 
 const fmt = (n: number | null) => (n === null ? "—" : formatNumber(n));
@@ -477,6 +491,38 @@ export function OralSpace({
         </>
       )}
 
+      {init.reviews?.length ? (
+        // Points d'étape rattachés : visibles ici (portable), jamais sur l'écran projeté.
+        <details className="bg-muted/40 rounded-xl border p-3 text-sm">
+          <summary className="cursor-pointer font-semibold">
+            Points d’étape ({init.reviews.length})
+          </summary>
+          <ol className="mt-2 space-y-2">
+            {init.reviews.map((r, i) => (
+              <li key={i} className="rounded-lg border p-2">
+                <p className="font-medium">
+                  {r.title}
+                  {r.date ? ` · ${new Date(r.date).toLocaleDateString("fr-FR")}` : ""}
+                  {r.who ? ` · ${r.who}` : ""}
+                </p>
+                <ul className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                  {criteria
+                    .filter((c) => isReviewMark(r.marks[c.id]))
+                    .map((c) => (
+                      <li key={c.id}>
+                        {c.label} : {REVIEW_MARK_LABELS[r.marks[c.id] as ReviewMark]}
+                      </li>
+                    ))}
+                </ul>
+                {r.globalComment.trim() ? (
+                  <p className="mt-1 whitespace-pre-wrap">{r.globalComment}</p>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+
       <div
         // Rendu : la colonne est plus étroite (le rendu est à gauche) : critères en ligne, paliers
         // pleine largeur, notes privées dessous.
@@ -548,6 +594,15 @@ export function OralSpace({
             <h4 id={`crit-${subjectId}`} className="font-heading text-base font-bold">
               {current.label}
             </h4>
+            {init.reviews?.length &&
+            markHistory(init.reviews.map((r) => ({ date: r.date, mark: r.marks[current.id] }))) ? (
+              <p className="text-muted-foreground text-sm">
+                Points d’étape :{" "}
+                {markHistory(
+                  init.reviews.map((r) => ({ date: r.date, mark: r.marks[current.id] })),
+                )}
+              </p>
+            ) : null}
             <div
               ref={cardsRef}
               role="group"

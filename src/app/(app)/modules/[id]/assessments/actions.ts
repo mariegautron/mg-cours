@@ -13,6 +13,7 @@ import { makeupInvariants } from "@/lib/assessments/makeup";
 import { parseScale, scaleToPoints } from "@/lib/assessments/score-scale";
 import { readAssessmentForm } from "@/lib/assessments/schema";
 import { parseResourceFiles, upsertFile } from "@/lib/resources/files";
+import { isProgressReview } from "@/lib/assessments/progress-review";
 import { createClient } from "@/lib/supabase/server";
 import {
   individualValueFor,
@@ -81,6 +82,33 @@ async function courseBelongsToModule(
     .eq("module_id", moduleId)
     .eq("id", courseId);
   return count === 1;
+}
+
+/**
+ * Point d'étape : rattachement à l'évaluation notée du module qui le prend en compte, et critères
+ * de sa grille commentés (`null` : toute la grille). Autre type : colonnes remises à vide.
+ */
+async function reviewColumns(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  moduleId: string,
+  formData: FormData,
+  type: string | null | undefined,
+  selfId: string | null,
+): Promise<{ review_for_id: string | null; review_criterion_ids: string[] | null }> {
+  if (!isProgressReview({ type })) return { review_for_id: null, review_criterion_ids: null };
+  const forId = String(formData.get("reviewForId") ?? "");
+  let reviewFor: string | null = null;
+  if (/^[0-9a-f-]{36}$/i.test(forId) && forId !== selfId) {
+    const { data } = await supabase
+      .from("assessment")
+      .select("id")
+      .eq("id", forId)
+      .eq("module_id", moduleId)
+      .maybeSingle();
+    reviewFor = data?.id ?? null;
+  }
+  const picked = formData.getAll("reviewCriterionIds").map(String);
+  return { review_for_id: reviewFor, review_criterion_ids: picked.length ? picked : null };
 }
 
 /**
@@ -221,10 +249,13 @@ export async function createAssessment(
   );
 
   const milestone = await milestoneColumns(supabase, moduleId, formData, null);
+  const review = await reviewColumns(supabase, moduleId, formData, parsed.data.type, null);
   const { data, error } = await supabase
     .from("assessment")
     .insert({
       ...(milestone ?? {}),
+      // Colonnes du point d'étape seulement quand elles servent (base pas encore à jour sinon).
+      ...(review.review_for_id || review.review_criterion_ids ? review : {}),
       module_id: moduleId,
       title: parsed.data.title,
       subject: parsed.data.subject || null,
@@ -306,10 +337,21 @@ export async function updateAssessment(
     : { data: null };
 
   const milestone = await milestoneColumns(supabase, moduleId, formData, assessmentId);
+  const review = await reviewColumns(supabase, moduleId, formData, parsed.data.type, assessmentId);
+  const { data: before } = await supabase
+    .from("assessment")
+    .select("*")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  const hadReview = !!before && ("review_for_id" in before || "review_criterion_ids" in before);
+  // Reprise d'un autre module : enregistrée une fois par Marie, elle n'est plus « à relire ».
+  const reviewed = before && "needs_review" in before ? { needs_review: false } : {};
   const { error } = await supabase
     .from("assessment")
     .update({
       ...(milestone ?? {}),
+      ...(hadReview ? review : {}),
+      ...reviewed,
       title: parsed.data.title,
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,

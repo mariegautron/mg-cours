@@ -8,6 +8,7 @@ import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { isProgressReview } from "@/lib/assessments/progress-review";
 import { createClient } from "@/lib/supabase/server";
 import {
   criteriaTotal,
@@ -374,7 +375,8 @@ export async function moduleNoteProgress(
   const assessments = loaded ?? (await listModuleAssessments(moduleId));
   // Un rattrapage remplace l'absence excusée de l'original : il ne compte pas comme une note de plus.
   // Une note bonus (certification) ne compte pas dans les notes exigées d'après les heures.
-  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
+  // Un point d'étape (sans note) ne compte jamais dans les notes exigées.
+  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isProgressReview(a));
   const group = counted.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
   const individual = counted.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
   const { grading } = await getSchoolRulesForModule(moduleId);
@@ -573,6 +575,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
         (a) =>
           !a.is_bonus &&
           !a.makeup_of_id &&
+          !isProgressReview(a) &&
           a.groups.some((g) => (studentsByGroup.get(g.id) ?? []).some((m) => m.id === student.id)),
       ).length;
       return {

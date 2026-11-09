@@ -26,7 +26,7 @@ const asObject = (v: Json | undefined): Record<string, Json> =>
  */
 export async function saveVersionedField<Row extends VersionedRow>(opts: {
   supabase: Supabase;
-  table: "oral_space" | "open_review";
+  table: "oral_space" | "open_review" | "progress_review";
   load: () => Promise<Row | null>;
   field: string;
   value: string;
