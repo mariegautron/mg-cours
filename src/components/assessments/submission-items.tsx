@@ -217,14 +217,17 @@ export function SubmissionItems({
       </p>
       {error ? <ActionError error={error} /> : null}
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex min-h-11 items-center gap-2">
-          <input
-            type="checkbox"
-            checked={onlyMissing}
-            onChange={(e) => setOnlyMissing(e.target.checked)}
-          />
-          Pas reçu ({missingCount})
-        </label>
+        {/* Filtre utile seulement avec plusieurs copies (pas dans la colonne d'une copie). */}
+        {rows.length > 1 ? (
+          <label className="flex min-h-11 items-center gap-2">
+            <input
+              type="checkbox"
+              checked={onlyMissing}
+              onChange={(e) => setOnlyMissing(e.target.checked)}
+            />
+            Seulement les copies sans rendu ({missingCount})
+          </label>
+        ) : null}
         <Button asChild size="touch" variant="outline">
           <a href={`/api/assessments/${assessmentId}/submissions/zip`}>
             <Download aria-hidden />

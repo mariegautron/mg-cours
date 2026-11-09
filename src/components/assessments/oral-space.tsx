@@ -124,7 +124,8 @@ export function OralSpace({
       values[`person:${m.id}`] = init.personNotes[m.id] ?? "";
       // Oral déjà noté : une présence jamais posée vaut « présent » (même règle que le serveur).
       values[`presence:${m.id}`] =
-        init.attendance[m.id] || (init.fromExisting || init.hasNote || init.written ? "present" : "");
+        init.attendance[m.id] ||
+        (init.fromExisting || init.hasNote || init.written ? "present" : "");
     }
     for (const field of textFields(criteria))
       values[`text:${field.id}`] = init.texts[field.id]?.text ?? "";
@@ -384,41 +385,97 @@ export function OralSpace({
         ) : null}
       </div>
 
-      {/* Présence, sur une ligne */}
-      <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <legend className="sr-only">Présence</legend>
-        <span className="font-medium">Présence :</span>
-        {members.map((m) => (
-          <label key={m.id} className="flex items-center gap-1.5">
-            <span>{m.name}</span>
-            <select
-              value={f.values[`presence:${m.id}`] ?? ""}
-              disabled={readOnly}
-              onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
-              className="border-input bg-background min-h-9 rounded-md border px-1.5"
-            >
-              <option value="">À poser</option>
-              {ATTENDANCE_VALUES.map((a) => (
-                <option key={a} value={a}>
-                  {ATTENDANCE_LABELS[a]}
-                </option>
+      {isRendu ? (
+        // Rendu : présences repliées sur une ligne, pour garder les paliers visibles à 125 %.
+        <details className="text-sm">
+          <summary className="cursor-pointer">
+            Présence : {members.filter((m) => (attendance[m.id] ?? "present") === "present").length}{" "}
+            présent·e
+            {members.filter((m) => (attendance[m.id] ?? "present") === "present").length > 1
+              ? "s"
+              : ""}{" "}
+            sur {members.length} · modifier
+          </summary>
+          <div className="pt-1">
+            {/* Présence, sur une ligne */}
+            <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <legend className="sr-only">Présence</legend>
+              <span className="font-medium">Présence :</span>
+              {members.map((m) => (
+                <label key={m.id} className="flex items-center gap-1.5">
+                  <span>{m.name}</span>
+                  <select
+                    value={f.values[`presence:${m.id}`] ?? ""}
+                    disabled={readOnly}
+                    onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
+                    className="border-input bg-background min-h-9 rounded-md border px-1.5"
+                  >
+                    <option value="">À poser</option>
+                    {ATTENDANCE_VALUES.map((a) => (
+                      <option key={a} value={a}>
+                        {ATTENDANCE_LABELS[a]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               ))}
-            </select>
-          </label>
-        ))}
-      </fieldset>
+            </fieldset>
+          </div>
+        </details>
+      ) : (
+        <>
+          {/* Présence, sur une ligne */}
+          <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            <legend className="sr-only">Présence</legend>
+            <span className="font-medium">Présence :</span>
+            {members.map((m) => (
+              <label key={m.id} className="flex items-center gap-1.5">
+                <span>{m.name}</span>
+                <select
+                  value={f.values[`presence:${m.id}`] ?? ""}
+                  disabled={readOnly}
+                  onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
+                  className="border-input bg-background min-h-9 rounded-md border px-1.5"
+                >
+                  <option value="">À poser</option>
+                  {ATTENDANCE_VALUES.map((a) => (
+                    <option key={a} value={a}>
+                      {ATTENDANCE_LABELS[a]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </fieldset>
+        </>
+      )}
 
       <div
         // Rendu : la colonne est plus étroite (le rendu est à gauche) : critères en ligne, paliers
         // pleine largeur, notes privées dessous.
-        className={cn(
-          "grid gap-3",
-          !isRendu && "lg:grid-cols-[11rem_minmax(0,1fr)_16rem]",
-        )}
+        className={cn("grid gap-3", !isRendu && "lg:grid-cols-[11rem_minmax(0,1fr)_16rem]")}
         onKeyDown={onCardsKey}
       >
         {/* Critères */}
-        <nav aria-label="Critères" className={cn(!isRendu && "lg:self-start")}>
+        {isRendu ? (
+          <label className="flex flex-wrap items-center gap-2 text-sm font-medium">
+            Critère {criteria.findIndex((c) => c.id === current?.id) + 1} sur {criteria.length}
+            <select
+              value={current?.id ?? ""}
+              onChange={(e) => setCurrentId(e.target.value)}
+              className="border-input bg-background min-h-9 min-w-0 flex-1 rounded-md border px-2"
+            >
+              {criteria.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.isBonus ? "Bonus · " : ""}
+                  {c.label}
+                  {isLetter(letters[c.id]) ? ` · ${letters[c.id]}` : " · à noter"}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <nav aria-label="Critères" hidden={isRendu} className={cn(!isRendu && "lg:self-start")}>
           <ul
             className={cn(
               "flex gap-1.5",
