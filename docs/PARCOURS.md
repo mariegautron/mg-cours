@@ -76,7 +76,8 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : 1.3 « Corrigé : … » n'atteint plus le PDF, 1.5 texte propre (puces, markdown, emoji) (`44c0cb4`) ; 1.1 « Avant de générer » = même couverture que la page Couverture et le PDF (`4afe510`).
   - 9 nov. : 1.1, 1.3, 1.5 validés au retest ; titre « ## » plus en puce, espace avant ponctuation après emoji (`e51dd21`).
   - 9 nov. : 1.2 « Attendus traités » cochables sur la séance (`c34d0f0`) et « Traité en séance… » sur la Couverture (`3d10b69`).
-  - Reste lot 1 : 1.4 versions envoyées figées, 1.6 (avec l'aperçu 2.1), 1.7 « Reprise : à relire » (migration) ; puis lots 2 et 3.
+  - 9 nov. : 1.4 version envoyée figée et téléchargeable, avertissement avant de régénérer, nom de fichier daté (`ec2f471`).
+  - Reste lot 1 : 1.6 (avec l'aperçu 2.1), 1.7 « Reprise : à relire » (migration) ; puis lots 2 et 3.
 
 ## P4 · Accueillir les étudiant·es et former les groupes
 
