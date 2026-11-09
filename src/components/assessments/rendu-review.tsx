@@ -213,7 +213,9 @@ export function RenduReview({
 
       <div
         hidden={view !== "copy"}
-        className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+        className={
+          view === "copy" ? "grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "hidden"
+        }
       >
         <section
           aria-labelledby="rendu-title"

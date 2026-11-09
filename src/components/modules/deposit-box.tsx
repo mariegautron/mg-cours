@@ -146,7 +146,11 @@ export function DepositBox({
               </li>
             ))}
           </ul>
-          <p className="text-muted-foreground mt-1">Tu peux le remplacer en déposant à nouveau.</p>
+          {state.closed ? null : (
+            <p className="text-muted-foreground mt-1">
+              Tu peux le remplacer en déposant à nouveau.
+            </p>
+          )}
         </div>
       ) : (
         <p className="text-muted-foreground mt-3 text-sm">
@@ -160,118 +164,121 @@ export function DepositBox({
           Ton rendu est corrigé, tu ne peux plus le remplacer.
         </p>
       ) : null}
-      <div className="mt-4 space-y-3" hidden={state.closed}>
-        {accepts !== "link" ? (
-          <div>
-            <label htmlFor="depot-fichiers" className="text-sm font-medium">
-              Fichiers (50 Mo maximum chacun)
-            </label>
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                setFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
-              }}
-              className={`mt-1 rounded-md border-2 border-dashed p-3 text-center text-sm ${dragging ? "bg-accent" : ""}`}
-            >
-              Glisse tes fichiers ici, ou choisis-les ci-dessous.
-            </div>
-            <input
-              id="depot-fichiers"
-              ref={input}
-              type="file"
-              multiple
-              accept={ASSESSMENT_FILE_ACCEPT}
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-              className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
-            />
-          </div>
-        ) : null}
-        {accepts !== "file" ? (
-          <div>
-            <label htmlFor="depot-lien" className="text-sm font-medium">
-              Lien (par exemple GitHub)
-            </label>
-            <input
-              id="depot-lien"
-              type="url"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://github.com/…"
-              className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
-            />
-          </div>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            size="touch"
-            disabled={pending || (files.length === 0 && !link.trim())}
-            onClick={() => submit()}
-          >
-            {deposited ? "Remplacer mon rendu" : "Déposer mon rendu"}
-          </Button>
-          <Button type="button" size="touch" variant="ghost" onClick={() => void refresh()}>
-            Actualiser
-          </Button>
-        </div>
-        {pending && files.length > 0 ? (
-          <progress
-            className="w-full"
-            max={files.length}
-            value={sent}
-            aria-label="Progression de l’envoi"
-          />
-        ) : null}
-        {files.length > 0 ? (
-          <ul className="text-sm">
-            {files.map((f, i) => (
-              <li key={`${f.name}-${i}`}>
-                {f.name} ({size(f.size)})
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {confirming ? (
-          <div
-            role="alertdialog"
-            aria-labelledby="depot-confirm"
-            className="bg-muted space-y-2 rounded-xl border p-3 text-sm"
-          >
-            <p id="depot-confirm" className="font-medium">
-              {state.byName ?? "Un·e camarade"} a déjà déposé un rendu
-              {state.submittedAt ? ` le ${fmtDate(state.submittedAt)}` : ""}. Le remplacer ?
-            </p>
-            <div className="flex gap-2">
-              <Button type="button" size="touch" onClick={() => submit(true)}>
-                Remplacer
-              </Button>
-              <Button
-                type="button"
-                size="touch"
-                variant="ghost"
-                onClick={() => setConfirming(false)}
+      {/* Rendu corrigé : plus aucun champ de dépôt (pas seulement masqué). */}
+      {state.closed ? null : (
+        <div className="mt-4 space-y-3">
+          {accepts !== "link" ? (
+            <div>
+              <label htmlFor="depot-fichiers" className="text-sm font-medium">
+                Fichiers (50 Mo maximum chacun)
+              </label>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  setFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+                }}
+                className={`mt-1 rounded-md border-2 border-dashed p-3 text-center text-sm ${dragging ? "bg-accent" : ""}`}
               >
-                Annuler
-              </Button>
+                Glisse tes fichiers ici, ou choisis-les ci-dessous.
+              </div>
+              <input
+                id="depot-fichiers"
+                ref={input}
+                type="file"
+                multiple
+                accept={ASSESSMENT_FILE_ACCEPT}
+                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
+              />
             </div>
+          ) : null}
+          {accepts !== "file" ? (
+            <div>
+              <label htmlFor="depot-lien" className="text-sm font-medium">
+                Lien (par exemple GitHub)
+              </label>
+              <input
+                id="depot-lien"
+                type="url"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder="https://github.com/…"
+                className="bg-background mt-1 block w-full rounded-md border px-2 py-2 text-sm"
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              size="touch"
+              disabled={pending || (files.length === 0 && !link.trim())}
+              onClick={() => submit()}
+            >
+              {deposited ? "Remplacer mon rendu" : "Déposer mon rendu"}
+            </Button>
+            <Button type="button" size="touch" variant="ghost" onClick={() => void refresh()}>
+              Actualiser
+            </Button>
           </div>
-        ) : null}
-        <p role="status" aria-live="polite" className="min-h-5 text-sm">
-          {progress}
-          {done ? " Dépôt enregistré." : ""}
-        </p>
-        {error ? (
-          <p role="alert" className="text-sm font-medium">
-            {error}
+          {pending && files.length > 0 ? (
+            <progress
+              className="w-full"
+              max={files.length}
+              value={sent}
+              aria-label="Progression de l’envoi"
+            />
+          ) : null}
+          {files.length > 0 ? (
+            <ul className="text-sm">
+              {files.map((f, i) => (
+                <li key={`${f.name}-${i}`}>
+                  {f.name} ({size(f.size)})
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {confirming ? (
+            <div
+              role="alertdialog"
+              aria-labelledby="depot-confirm"
+              className="bg-muted space-y-2 rounded-xl border p-3 text-sm"
+            >
+              <p id="depot-confirm" className="font-medium">
+                {state.byName ?? "Un·e camarade"} a déjà déposé un rendu
+                {state.submittedAt ? ` le ${fmtDate(state.submittedAt)}` : ""}. Le remplacer ?
+              </p>
+              <div className="flex gap-2">
+                <Button type="button" size="touch" onClick={() => submit(true)}>
+                  Remplacer
+                </Button>
+                <Button
+                  type="button"
+                  size="touch"
+                  variant="ghost"
+                  onClick={() => setConfirming(false)}
+                >
+                  Annuler
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          <p role="status" aria-live="polite" className="min-h-5 text-sm">
+            {progress}
+            {done ? " Dépôt enregistré." : ""}
           </p>
-        ) : null}
-      </div>
+          {error ? (
+            <p role="alert" className="text-sm font-medium">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      )}
     </section>
   );
 }
