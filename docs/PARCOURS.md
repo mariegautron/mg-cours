@@ -44,7 +44,7 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `password-reset`, `settings`, `school-rules`, `export`, `skip-link`, `shell-a11y`, `sidebar-nav`.
 - **À regarder en QA** : mot de passe oublié de bout en bout, création d'école, navigation clavier, mobile.
 - **Améliorations notées** :
-  - …
+  - 9 nov. (retest « recherche et compte ») : mot de passe actuel demandé pour en changer, menu du compte sur l'adresse en haut de page, e-mail repris sur « Mot de passe oublié », libellés du menu replié (`d6e9c7d`) ; export .zip complet et lisible (`7f1b942`).
 
 ## P2 · Alimenter la bibliothèque de ressources
 
@@ -229,7 +229,8 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `dashboard`, `global-search`, `schedule`, `sidebar-nav`, `route-states`.
 - **À regarder en QA** : tableau de bord (à repenser plus tard), prochaine action, états vides, jalons.
 - **Améliorations notées** :
-  - …
+  - 9 nov. (retest « recherche et compte ») : recherche « Aller à », une faute tolérée, contexte des étudiant·es, « Voir les N autres », lenteur (`6b4d8a5`) ; « Facturation » au menu (`d6e9c7d`) ; « À faire » complet, filtres de la liste Étudiant·es, onglet Modules vide sur une année (`caa8b1f`).
+  - Reste : compteurs du haut sur tous les modules en cours, bandeau du prochain cours limité aux modules en cours, « Terminer » dans le menu ⋯ de la liste Modules (fichier en cours de modification sur l'autre fil).
 
 ## P14 · Suivre les étudiant·es et écrire les appréciations
 
@@ -244,6 +245,7 @@ directes : les liens reçus par les étudiant·es.
   observations d'une étudiante, voir la base d'une appréciation à côté du champ, limite de
   caractères, enregistrement automatique, navigation entre étudiant·es, report vers Hyperplanning.
 - **Améliorations notées** :
+  - 9 nov. (retest « recherche et compte ») : fiche étudiant·e lisible en un écran (résumé, ordre, journal filtrable, tous les modules, photo en un bouton, confirmation de suppression) (`215981b`).
   - 9 nov. : N1 copie de groupe exclue dite dans « Notes du module », N2 commentaires de groupe chez tous les membres (`28fb9ee`) ; N7 tournures (`680b72f`) ; N8 « Tout marquer comme reporté » (`79c7555`) ; N9 retour vers l'appréciation et formulations de l'appli en lecture (`e3b9396`) ; N10 lignes de groupe dans la vue de classe (`85c1aba`).
   - 9 nov. : N5 texte remplacé d'un coup pris en compte et enregistré (`110e72b`).
   - N3 : logique vérifiée (chaque bouton change sa partie) ; le « décalage d'un clic » du retest vient sans doute d'une lecture du champ avant la réponse du serveur : attendre le message « Autre formulation pour … ».
