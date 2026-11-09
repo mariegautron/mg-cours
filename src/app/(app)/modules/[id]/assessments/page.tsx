@@ -9,8 +9,9 @@ import { Plus } from "lucide-react";
 
 import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
+import { todayInParis } from "@/lib/modules/next-session";
 import { DayJBlock } from "@/components/assessments/day-j-block";
-import { dayJReadiness, espaceUpToDate } from "@/lib/assessments/day-j";
+import { dayJReadiness, espaceUpToDate, upcomingAssessments } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Pill } from "@/components/dashboard/pill";
@@ -127,6 +128,7 @@ export default async function ModuleAssessmentsPage({
     regular.map((a) => a.id),
   );
   const courseDate = new Map(courses.map((c) => [c.id, c.session_date]));
+  const todayIso = todayInParis();
   const dayJOf = (a: (typeof regular)[number]) =>
     dayJReadiness({
       moduleId: id,
@@ -347,7 +349,14 @@ export default async function ModuleAssessmentsPage({
                       }
                     />
                     {!a.makeup_of_id ? (
-                      <DayJBlock dayJ={dayJOf(a)} titleId={`dayj-${a.id}`} />
+                      <DayJBlock
+                        dayJ={dayJOf(a)}
+                        titleId={`dayj-${a.id}`}
+                        collapsible
+                        defaultOpen={
+                          !dayJOf(a).allReady && upcomingAssessments([a], todayIso, 7).length > 0
+                        }
+                      />
                     ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
