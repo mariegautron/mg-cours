@@ -45,11 +45,12 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   const courseOrder = new Map(courseOptions.map((c) => [c.id, c.number]));
   // Le squelette tient compte de toutes les évaluations du module, rattachées au projet ou non.
   const moduleAssessments = project ? await listModuleAssessments(id) : [];
+  // Mêmes évaluations que les compteurs « Prévues » du module (hors rattrapages et bonus).
+  const counted = moduleAssessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
   const proposed = project
     ? remainingSkeleton(
         projectSkeleton(mod.total_hours),
-        moduleAssessments
-          .filter((a) => !a.makeup_of_id && !a.is_bonus)
+        counted
           .map((a) =>
             a.project_role
               ? a.project_role
@@ -221,11 +222,11 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                 oral, et un jalon pour chaque note restante. Modifie avant de créer.
               </p>
               <SkeletonEditor
-                resetKey={project.assessments.map((a) => a.id).join(",")}
+                resetKey={counted.map((a) => a.id).join(",")}
                 moduleId={mod.id}
                 totalHours={mod.total_hours}
                 proposed={proposed}
-                existing={project.assessments.map((a) => ({ isGroupGrade: a.is_group_grade }))}
+                existing={counted.map((a) => ({ isGroupGrade: a.is_group_grade }))}
               />
             </section>
 

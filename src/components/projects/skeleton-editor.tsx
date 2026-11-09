@@ -150,7 +150,11 @@ export function SkeletonEditor({
         {balance.proposed.total}/{balance.required.total} notes YNOV exigées (
         {balance.proposed.group} de groupe, {balance.proposed.individual} individuelle
         {balance.proposed.individual > 1 ? "s" : ""}).
-        {balance.message ? ` ${balance.message}` : ""}
+        {rows.length === 0 && balance.proposed.total >= balance.required.total
+          ? " Toutes les évaluations exigées sont prévues."
+          : balance.message
+            ? ` ${balance.message}`
+            : ""}
       </p>
 
       {state.error ? <ActionError error={state.error} /> : null}
@@ -175,14 +179,11 @@ export function SkeletonEditor({
           <Plus aria-hidden />
           Ajouter une évaluation
         </Button>
-        <PendingButton
-          type="submit"
-          pending={pending}
-          pendingLabel="Création…"
-          disabled={rows.length === 0}
-        >
-          Créer {rows.length} évaluation{rows.length > 1 ? "s" : ""}
-        </PendingButton>
+        {rows.length > 0 ? (
+          <PendingButton type="submit" pending={pending} pendingLabel="Création…">
+            Créer {rows.length} évaluation{rows.length > 1 ? "s" : ""}
+          </PendingButton>
+        ) : null}
       </div>
     </form>
   );
