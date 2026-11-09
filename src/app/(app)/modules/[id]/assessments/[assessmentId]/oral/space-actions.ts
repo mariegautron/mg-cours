@@ -570,3 +570,39 @@ export async function routeOralNotes(
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/oral`);
   return { done, failed };
 }
+
+/**
+ * « Effacer la note écrite » : retire la note de ce groupe ou de cette personne (la copie
+ * redevient « à corriger » ; lettres et notes privées de l'espace restent). Ce qui a déjà été
+ * publié reste visible jusqu'au prochain « Mettre à jour » de l'espace.
+ */
+export async function clearWrittenNote(
+  moduleId: string,
+  assessmentId: string,
+  subjectId: string,
+): Promise<WriteState> {
+  const supabase = await createClient();
+  const found = await ensureSpace(supabase, assessmentId, subjectId);
+  if (!found) return { error: NOT_FOUND.assessment };
+  const { ctx, space } = found;
+  const { data: rows } = await supabase
+    .from("grade")
+    .select("id")
+    .eq("assessment_id", assessmentId)
+    .eq(ctx.assessment.is_group_grade ? "student_group_id" : "student_id", subjectId);
+  const ids = (rows ?? []).map((r) => r.id);
+  if (ids.length) {
+    await supabase.from("group_grade_member").delete().in("grade_id", ids);
+    const { error } = await supabase.from("grade").delete().in("id", ids);
+    if (error) return { error: failure("effacer la note") };
+  }
+  await supabase
+    .from("oral_space")
+    .update({ written: null, written_at: null, from_existing: false })
+    .eq("id", space.id);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/correct`);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}/oral`);
+  revalidatePath(`/modules/${moduleId}`);
+  return { written: false };
+}

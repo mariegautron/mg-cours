@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Flag } from "lucide-react";
 
 import {
+  clearWrittenNote,
   discardOralDraft,
   writeOralNote,
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/oral/space-actions";
@@ -362,6 +363,29 @@ export function OralSpace({
         {readOnly && (init.hasNote || written) ? (
           <Button type="button" size="sm" variant="secondary" onClick={() => setEditing(true)}>
             Modifier
+          </Button>
+        ) : null}
+        {readOnly && (init.hasNote || written) ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={pendingDiscard}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  `Effacer la note écrite de ${subjectName} ? La copie redevient « à corriger » (tes lettres et notes privées restent). Ce qui a déjà été publié reste visible jusqu’au prochain « Mettre à jour ».`,
+                )
+              )
+                return;
+              startDiscard(async () => {
+                const res = await clearWrittenNote(moduleId, assessmentId, subjectId);
+                if (res.error) setWriteState({ error: res.error });
+                else window.location.reload();
+              });
+            }}
+          >
+            Effacer la note
           </Button>
         ) : null}
         {!readOnly && init.hasNote ? (
