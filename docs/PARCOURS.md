@@ -15,14 +15,14 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | P4  | Accueillir les étudiant·es et former les groupes | Marie | ⬜ |
 | P5  | Faire cours (séance)                        | Marie    | 🔧 refactoré, reste le test en conditions réelles |
 | P6  | ~~Piloter le projet fil rouge~~ → fusionné dans P7 | —  | — |
-| P7  | Préparer les évaluations (fil rouge, individuelle, préparation du QCM, oral) | Marie | 📝 |
-| P8  | Corriger et noter                           | Marie    | 🚧 |
+| P7  | Préparer les évaluations (fil rouge, individuelle, préparation du QCM, oral) | Marie | 🔧 retest en cours (9 nov.) |
+| P8  | Corriger et noter                           | Marie    | 🔧 retest en cours (9 nov.) |
 | P9  | QCM en ligne : passation et résultats (la préparation est dans P7) | Marie + étudiant·es | ⬜ |
-| P10 | Espace et liens étudiant·es                 | Étudiant·es | 🚧 |
+| P10 | Espace et liens étudiant·es                 | Étudiant·es | 🔧 retest en cours (9 nov.) |
 | P11 | ~~Progression pédagogique et envoi à l'école~~ → fusionné dans P3 | — | — |
 | P12 | Clôturer le module, rendre les résultats, facturer | Marie | ⬜ |
 | P13 | Piloter au quotidien (tableau de bord, recherche, planning) | Marie | ⬜ |
-| P14 | Suivre les étudiant·es et écrire les appréciations | Marie | 📝 |
+| P14 | Suivre les étudiant·es et écrire les appréciations | Marie | 🔧 retest en cours (9 nov.) |
 
 Les numéros restent stables (les prompts de test y font référence). P6 n'a plus de section propre.
 
@@ -124,7 +124,11 @@ directes : les liens reçus par les étudiant·es.
   `submission-items`, `individual-prep`.
 - **À regarder en QA** : grille → attendus, publication aux étudiant·es, suivi des rendus, évaluation sans groupe.
 - **Améliorations notées** :
-  - …
+  - 9 nov. : page « QCM en ligne » qui plantait sur tous les QCM (`995d568`).
+  - 9 nov. : « Prêt pour le jour J ? » : signaux justes (cadre « Complet », « Où rendre » selon le mode de dépôt, « QCM publié », fichiers facultatifs, « Pas rattachée à une séance », « Publié (à jour) » se décoche) (`1786459`, `55c6ede`) ; replié par défaut (`9302a81`).
+  - 9 nov. : squelette du brief aligné sur « Prévues » (`041a0e0`) ; filtre Module avec l'année, « Groupe Groupe », textes (`172c770`) ; « Visible après la mise à jour » (`bd5d486`) ; reprendre un projet sur un module qui en a déjà un, avec confirmation (`22c78f2`).
+  - 9 nov. : cadre « Complet » seulement avec date et « Où rendre », coefficient de la carte = règle YNOV (`8b4af49`).
+  - Reste : lenteur à mesurer.
 
 ## P8 · Corriger et noter
 
@@ -136,7 +140,9 @@ directes : les liens reçus par les étudiant·es.
   `grade-feedback`, `oral`, `phrases`, `appreciations`, `assessment-bonus`, `makeup`.
 - **À regarder en QA** : correction sur mobile, oral entre deux groupes, calculs de note, bonus, rattrapage, appréciations.
 - **Améliorations notées** :
-  - …
+  - 9 nov. : oral : aucune note privée recopiée par « Proposer » (`d93d214`) ; un seul état « à réécrire » partout (`97770fc`, `7e03333`) ; brouillon visible et conservé après « Modifier » (`fd9fc65`, `7e03333`).
+  - 9 nov. : étude de cas : critère sans question = lettre choisie par Marie, plus de « écrite, verrouillée » sur une copie incomplète, réponses à choix affichées, copies non rendues en gris, récapitulatif complet (`f73b106`).
+  - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats
 
@@ -161,7 +167,9 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `result-links`, `quiz-class-link`.
 - **À regarder en QA** : liens expirés ou faux, mobile, accessibilité (RGAA), ce qui est visible avant/après évaluation.
 - **Améliorations notées** :
-  - …
+  - 9 nov. : « Copie rendue le … » sur le bandeau QCM (`11baa9b`), heures « 8/11 à 0 h 18 » (`8f74b30`), anciennes versions des dépôts consultables par Marie (`3c7e674`), contact « Une question ? Écris à Marie » d'après l'e-mail de Réglages (`ccdcddb`).
+  - 9 nov. : bandeau QCM lu en direct, « Publié le … » rafraîchi après la mise à jour (`74b0c65`).
+  - Reste : « Retirer l'ancienne note ».
 
 ## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
 
@@ -203,7 +211,10 @@ directes : les liens reçus par les étudiant·es.
   observations d'une étudiante, voir la base d'une appréciation à côté du champ, limite de
   caractères, enregistrement automatique, navigation entre étudiant·es, report vers Hyperplanning.
 - **Améliorations notées** :
-  - …
+  - 9 nov. : N1 copie de groupe exclue dite dans « Notes du module », N2 commentaires de groupe chez tous les membres (`28fb9ee`) ; N7 tournures (`680b72f`) ; N8 « Tout marquer comme reporté » (`79c7555`) ; N9 retour vers l'appréciation et formulations de l'appli en lecture (`e3b9396`) ; N10 lignes de groupe dans la vue de classe (`85c1aba`).
+  - 9 nov. : N5 texte remplacé d'un coup pris en compte et enregistré (`110e72b`).
+  - N3 : logique vérifiée (chaque bouton change sa partie) ; le « décalage d'un clic » du retest vient sans doute d'une lecture du champ avant la réponse du serveur : attendre le message « Autre formulation pour … ».
+  - Reste : N4, N6.
 
 ---
 
