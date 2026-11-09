@@ -41,6 +41,15 @@ export async function GET(req: Request) {
     supabase.from("grading_grid").select("id, name"),
   ]);
 
+  // Modules avec au moins une absence excusée (la page Rattrapages a quelque chose à montrer).
+  const { data: excused } = await supabase
+    .from("grade")
+    .select("assessment:assessment_id!inner(module_id)")
+    .eq("attendance", "absent_excused");
+  const makeupModules = new Set(
+    (excused ?? []).map((g) => (g.assessment as unknown as { module_id: string }).module_id),
+  );
+
   const candidates: SearchCandidate[] = [
     ...(students.data ?? []).map((s) => ({
       kind: "student" as const,
@@ -78,9 +87,9 @@ export async function GET(req: Request) {
         terms: ["appréciation", "appreciations", "hyperplanning", "écrire", m.name],
         href: `/modules/${m.id}/appreciations`,
       })),
-    // Rattrapages : « rattrapage » ouvre la page Rattrapages du module.
+    // Rattrapages : « rattrapage » ouvre la page Rattrapages des modules qui en ont.
     ...(modules.data ?? [])
-      .filter((m) => !m.archived_at)
+      .filter((m) => !m.archived_at && makeupModules.has(m.id))
       .map((m) => ({
         kind: "makeup" as const,
         id: `makeup-${m.id}`,
