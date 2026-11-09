@@ -29,6 +29,8 @@ export interface InvoiceContext {
     hourly_rate: number | null;
     purchase_order_ref: string | null;
     iceberg_state: IcebergState;
+    /** Envoi réel de la progression (statut envoyée / validée ou PDF déposé) ; prime sur l'iceberg. */
+    outline_sent?: boolean;
     admin_docs: Record<string, boolean>;
     end_date: string | null;
     first_session_date: string | null;
@@ -59,7 +61,7 @@ export const OUTLINE_NOT_SENT = "La progression pédagogique n’a pas été env
 /** Conditions de processus bloquantes (progression, notes, documents administratifs). */
 export function invoiceBlockers(ctx: InvoiceContext): string[] {
   const reasons: string[] = [];
-  if (!isOutlineSent(ctx.module.iceberg_state)) {
+  if (!(ctx.module.outline_sent ?? isOutlineSent(ctx.module.iceberg_state))) {
     reasons.push(OUTLINE_NOT_SENT);
   }
   if (!ctx.notes.satisfied) {

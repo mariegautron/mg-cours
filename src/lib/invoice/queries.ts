@@ -23,13 +23,20 @@ async function buildInvoiceContext(
   schools?: Map<string, Tables<"school">>,
 ): Promise<InvoiceContext> {
   const supabase = await createClient();
-  const [notes, schoolRes] = await Promise.all([
+  const [notes, schoolRes, { data: outline }, { data: sentDoc }] = await Promise.all([
     moduleNoteProgress(mod.id, mod.total_hours),
     schools
       ? Promise.resolve({ data: mod.school_id ? (schools.get(mod.school_id) ?? null) : null })
       : mod.school_id
         ? supabase.from("school").select("*").eq("id", mod.school_id).maybeSingle()
         : Promise.resolve({ data: null }),
+    supabase.from("pedagogical_outline").select("status").eq("module_id", mod.id).maybeSingle(),
+    supabase
+      .from("module_document")
+      .select("id")
+      .eq("module_id", mod.id)
+      .eq("kind", "outline_sent")
+      .limit(1),
   ]);
 
   return {
@@ -41,6 +48,9 @@ async function buildInvoiceContext(
       hourly_rate: mod.hourly_rate,
       purchase_order_ref: mod.purchase_order_ref,
       iceberg_state: mod.iceberg_state,
+      // Envoi réel (pas l'iceberg, qu'une facture déposée ou cochée fait avancer).
+      outline_sent:
+        outline?.status === "sent" || outline?.status === "validated" || !!sentDoc?.length,
       admin_docs: (mod.admin_docs as Record<string, boolean>) ?? {},
       end_date: mod.end_date,
       first_session_date: mod.first_session_date,
