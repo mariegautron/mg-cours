@@ -71,7 +71,8 @@ export function AddToModule({
       >
         Ajouter
       </PendingButton>
-      <p aria-live="polite" className="text-sm">
+      {/* Sous le formulaire, jamais à côté : le titre de la carte garde sa largeur. */}
+      <p aria-live="polite" className="basis-full text-sm">
         {state.done ?? ""}
       </p>
       {state.error ? <ActionError error={state.error} /> : null}

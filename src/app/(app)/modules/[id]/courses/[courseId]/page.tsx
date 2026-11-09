@@ -13,6 +13,7 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
 import { PruneEmptySessions } from "@/components/modules/prune-empty-sessions";
 import { listEmptySessions } from "@/lib/modules/empty-sessions-queries";
+import { resourceSlides } from "@/components/present/deck";
 import { SessionList } from "@/components/modules/session-list";
 import { SessionWorkspace, type WorkspaceResource } from "@/components/modules/session-workspace";
 import { deleteCourseAndBack } from "@/app/(app)/modules/[id]/courses/workspace-actions";
@@ -32,7 +33,6 @@ import { getCourseActivities } from "@/lib/modules/activity-queries";
 import { orderResources } from "@/lib/modules/session-builder";
 import { formatSessionDay } from "@/lib/dashboard/today";
 import { listQuestionLinks } from "@/lib/questions/link-queries";
-import { slidePreviews } from "@/lib/resources/paste";
 import { COMPLETION_LABELS } from "@/lib/notebook/notebook";
 import { KIND_LABELS } from "@/lib/resources/kind";
 import {
@@ -94,7 +94,8 @@ export default async function CoursePage({
       status: r.status,
       audience: r.audience,
       kind: r.kind,
-      slideCount: r.content ? slidePreviews(r.content).length : 0,
+      // Même décompte que la fiche et la projection (page de titre comprise).
+      slideCount: r.content ? resourceSlides(0, r).length : 0,
     }),
     activity: activities.byResource.get(r.id) ?? EMPTY_ACTIVITY,
   }));

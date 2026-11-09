@@ -91,6 +91,7 @@ export function ResourceForm({
   const [audienceTouched, setAudienceTouched] = useState(!!resource);
   const [content, setContent] = useState(resource?.content ?? "");
   const [kindValue, setKindValue] = useState<string>(resource?.kind ?? "");
+  const [otherKind, setOtherKind] = useState(false);
   const [seeds, setSeeds] = useState<{ id: string; title: string }[] | null>(null);
   const [importNote, setImportNote] = useState("");
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -221,6 +222,9 @@ export function ResourceForm({
     return () => clearTimeout(timer);
   }, [dirty, pending, tick]);
 
+  const CHIP_KINDS = ["course", "workshop", "project", "question_bank"];
+  const showKindSelect = otherKind || !kindValue || !CHIP_KINDS.includes(kindValue);
+
   function markReady() {
     const select = formRef.current?.elements.namedItem("status");
     if (select instanceof HTMLSelectElement) select.value = "ready";
@@ -289,6 +293,7 @@ export function ResourceForm({
                   checked={kindValue === value}
                   onChange={() => {
                     setKindValue(value);
+                    setOtherKind(false);
                     onKindChange(value);
                     setDirty(true);
                   }}
@@ -297,6 +302,19 @@ export function ResourceForm({
                 {label}
               </label>
             ))}
+            <button
+              type="button"
+              aria-pressed={showKindSelect}
+              onClick={() => setOtherKind(true)}
+              className={cn(
+                "focus-visible:ring-ring flex min-h-11 items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none",
+                showKindSelect && kindValue
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : "bg-muted/40",
+              )}
+            >
+              Autre…
+            </button>
             <span className="text-muted-foreground text-xs">
               Plus de choix (corrigé, modèle, notes…) dans « Classement ».
             </span>
@@ -484,9 +502,10 @@ export function ResourceForm({
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div id="import" className="flex scroll-mt-24 flex-wrap items-center gap-2">
             <label className="focus-within:ring-ring bg-secondary text-secondary-foreground inline-flex min-h-11 cursor-pointer items-center rounded-xl px-4 text-sm font-semibold focus-within:ring-2">
               Importer un fichier
+              <span className="sr-only"> (.md ou .txt)</span>
               <input
                 type="file"
                 accept=".md,.markdown,.txt,text/markdown,text/plain"
@@ -510,6 +529,7 @@ export function ResourceForm({
                 }}
               />
             </label>
+            <span className="text-muted-foreground text-sm">Fichiers acceptés : .md, .txt</span>
             {seeds === null ? (
               <Button type="button" size="touch" variant="ghost" onClick={() => setSeeds([])}>
                 Partir d’une ressource existante
@@ -553,7 +573,8 @@ export function ResourceForm({
           <section className="bg-card space-y-4 rounded-xl border p-4">
             <h2 className="font-heading text-lg font-bold">Classement</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
+              {/* Le type se choisit par les pastilles « C'est un… » ; la liste ne sert qu'à « Autre… ». */}
+              <div className={showKindSelect ? "space-y-2" : "hidden"}>
                 <Label htmlFor="kind">
                   Type <span aria-hidden>*</span>
                 </Label>
@@ -735,7 +756,7 @@ export function ResourceForm({
           <aside aria-labelledby="slides-title" className="bg-card space-y-2 rounded-xl border p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 id="slides-title" className="font-heading text-lg font-bold">
-                Diapositives ({slides.length})
+                Diapositives ({slides.length ? slides.length + 1 : 0})
               </h2>
               {slides.length > 0 ? (
                 <Button
@@ -753,7 +774,7 @@ export function ResourceForm({
               <p role="status" className="text-muted-foreground text-sm">
                 {flagged
                   ? `${flagged} diapo${flagged > 1 ? "s" : ""} à regarder.`
-                  : "Aucune diapo à regarder."}
+                  : "Rien à corriger dans les diapos."}
               </p>
             ) : null}
             {deckNotes.map((note) => (
@@ -772,6 +793,12 @@ export function ResourceForm({
                   board ? "grid grid-cols-2 gap-2" : "space-y-2",
                 )}
               >
+                {/* Même décompte que la fiche et la projection : la page de titre compte. */}
+                <li className="bg-card text-muted-foreground rounded-md border p-3 text-sm">
+                  <p className="font-medium">
+                    1. Page de titre <span className="text-xs">(titre de la ressource)</span>
+                  </p>
+                </li>
                 {slides.map((sl) => (
                   <li
                     key={sl.number}
@@ -782,7 +809,7 @@ export function ResourceForm({
                     )}
                   >
                     <p className="font-medium">
-                      <span className="text-muted-foreground">{sl.number}.</span>{" "}
+                      <span className="text-muted-foreground">{sl.number + 1}.</span>{" "}
                       {sl.role ? <span className="text-primary">{sl.role} · </span> : null}
                       {sl.title ?? "Sans titre"}
                     </p>
