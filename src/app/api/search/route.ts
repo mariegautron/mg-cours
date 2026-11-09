@@ -78,6 +78,17 @@ export async function GET(req: Request) {
         terms: ["appréciation", "appreciations", "hyperplanning", "écrire", m.name],
         href: `/modules/${m.id}/appreciations`,
       })),
+    // Rattrapages : « rattrapage » ouvre la page Rattrapages du module.
+    ...(modules.data ?? [])
+      .filter((m) => !m.archived_at)
+      .map((m) => ({
+        kind: "module" as const,
+        id: `makeup-${m.id}`,
+        label: `Rattrapages — ${m.name}`,
+        detail: "absences excusées à rattraper",
+        terms: ["rattrapage", "rattrapages", "absence excusée", "excusé", m.name],
+        href: `/modules/${m.id}/rattrapages`,
+      })),
     ...(resources.data ?? []).map((r) => ({ kind: "resource" as const, id: r.id, label: r.title })),
     // Séances : par titre ou par numéro (« séance 5 »), ouvertes sur « Avant de commencer ».
     ...sessionNumbers(courses.data ?? [])
