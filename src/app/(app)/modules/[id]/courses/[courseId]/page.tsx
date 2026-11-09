@@ -141,7 +141,8 @@ export default async function CoursePage({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-stretch gap-4 lg:flex-nowrap">
+      {/* Sous 1280 px (portable à 125 %) : attendus, évaluation et quiz passent sous le déroulé. */}
+      <div className="flex flex-wrap items-stretch gap-4 xl:flex-nowrap">
         <SessionList
           moduleId={id}
           courses={courses}
@@ -303,7 +304,7 @@ export default async function CoursePage({
         </section>
 
         <aside
-          className="w-full min-w-0 space-y-3 lg:w-72 lg:flex-none"
+          className="w-full min-w-0 space-y-3 xl:w-72 xl:flex-none"
           aria-label="Autour de la séance"
         >
           <section aria-labelledby="at" className="bg-card rounded-3xl border p-4 shadow-sm">

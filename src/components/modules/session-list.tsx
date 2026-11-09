@@ -69,7 +69,10 @@ export function SessionList({
                 <strong className="w-5">{i + 1}</strong>
                 <span className="min-w-0 flex-1">
                   <span
-                    className={cn("block truncate text-sm", current ? "font-bold" : "font-medium")}
+                    className={cn(
+                      "line-clamp-2 block text-sm break-words",
+                      current ? "font-bold" : "font-medium",
+                    )}
                   >
                     {c.title}
                   </span>

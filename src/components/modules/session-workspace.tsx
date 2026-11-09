@@ -341,8 +341,8 @@ export function SessionWorkspace({
                   className="text-muted-foreground size-5 shrink-0 cursor-grab"
                 />
                 <strong className="w-5">{i + 1}</strong>
-                <div className="min-w-0 flex-1">
-                  <strong className="block truncate">{r.title}</strong>
+                <div className="min-w-40 flex-1">
+                  <strong className="line-clamp-2 block break-words">{r.title}</strong>
                   <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
                   {activitiesAvailable ? (
                     <span className="text-muted-foreground block text-[0.8rem]">
@@ -522,8 +522,8 @@ export function SessionWorkspace({
               <ul className="flex flex-col gap-2">
                 {addable.map((r) => (
                   <li key={r.id} className="flex flex-wrap items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <strong className="block truncate">{r.title}</strong>
+                    <div className="min-w-40 flex-1">
+                      <strong className="line-clamp-2 block break-words">{r.title}</strong>
                       <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
                     </div>
                     <Pill>{r.kindLabel}</Pill>
