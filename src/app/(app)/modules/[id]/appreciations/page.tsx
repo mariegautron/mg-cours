@@ -34,6 +34,7 @@ export default async function AppreciationsPage({
   const averageOf = new Map(averages.map((a) => [a.student.id, a.average.average]));
 
   const rows = students.map((s) => ({
+    studentId: s.id,
     firstName: s.first_name,
     lastName: s.last_name,
     // Un gabarit avec un trou à compléter n'est jamais exporté.
@@ -125,7 +126,7 @@ export default async function AppreciationsPage({
               <h2 id="ex" className="text-lg font-semibold">
                 Reporter dans Hyperplanning
               </h2>
-              <AppreciationExport rows={rows} tooLong={tooLong} />
+              <AppreciationExport moduleId={id} rows={rows} tooLong={tooLong} />
             </section>
             <BackLink href={`/modules/${id}/assessments`}>← Retour</BackLink>
           </div>

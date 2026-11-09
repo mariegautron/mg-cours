@@ -1,20 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Copy, Download } from "lucide-react";
 
+import { setReported } from "@/app/(app)/modules/[id]/appreciations/actions";
 import { Button } from "@/components/ui/button";
 import { exportAll, exportCsv, type ExportRow } from "@/lib/appreciations/appreciation";
 
 /** « Reporter dans Hyperplanning » : tout copier, CSV. Seules les appréciations écrites sont exportées. */
-export function AppreciationExport({ rows, tooLong }: { rows: ExportRow[]; tooLong: number }) {
+export function AppreciationExport({
+  moduleId,
+  rows,
+  tooLong,
+}: {
+  moduleId: string;
+  rows: (ExportRow & { studentId: string })[];
+  tooLong: number;
+}) {
+  const router = useRouter();
   const [message, setMessage] = useState("");
+  // Après « Tout copier » ou le CSV : proposer de tout marquer comme reporté (rien n'est coché seul).
+  const [offerMark, setOfferMark] = useState(false);
+  const [marking, startMark] = useTransition();
   const written = rows.filter((r) => r.text.trim() !== "");
+
+  function markAll() {
+    startMark(async () => {
+      let failed = 0;
+      for (const r of written) {
+        const res = await setReported(moduleId, r.studentId, true);
+        if (res.error) failed++;
+      }
+      setOfferMark(false);
+      setMessage(
+        failed
+          ? `${written.length - failed} marquée${written.length - failed > 1 ? "s" : ""} comme reportée${written.length - failed > 1 ? "s" : ""}, ${failed} en échec : réessaie.`
+          : `${written.length} appréciation${written.length > 1 ? "s marquées reportées" : " marquée reportée"}.`,
+      );
+      router.refresh();
+    });
+  }
 
   async function copyAll() {
     try {
       await navigator.clipboard.writeText(exportAll(written));
       setMessage("Tout copié.");
+      setOfferMark(true);
     } catch {
       setMessage("Copie impossible depuis ce navigateur : sélectionne le texte à la main.");
     }
@@ -31,6 +63,7 @@ export function AppreciationExport({ rows, tooLong }: { rows: ExportRow[]; tooLo
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
     setMessage("CSV téléchargé.");
+    setOfferMark(true);
   }
 
   return (
@@ -65,6 +98,13 @@ export function AppreciationExport({ rows, tooLong }: { rows: ExportRow[]; tooLo
       <p role="status" className="min-h-5 text-sm font-medium">
         {message}
       </p>
+      {offerMark && written.length > 0 ? (
+        <Button type="button" size="touch" disabled={marking} onClick={markAll}>
+          {marking
+            ? "Marquage…"
+            : `Tout marquer comme reporté (${written.length} appréciation${written.length > 1 ? "s" : ""})`}
+        </Button>
+      ) : null}
     </div>
   );
 }
