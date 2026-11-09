@@ -269,9 +269,9 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
       key: "expectations",
       ok: false,
       title: `${plural(expectations.uncovered, "attendu non couvert", "attendus non couverts")}`,
-      detail: `${expectationsSummary(expectations.objectives, expectations.units)} · tu peux générer quand même : ils restent à rapprocher avant la remise`,
-      to: "/matching",
-      toLabel: "rapprocher",
+      detail: `${expectationsSummary(expectations.objectives, expectations.units)} · ni par une séance ni par une évaluation : le PDF l'écrira tel quel`,
+      to: "/couverture",
+      toLabel: "voir la couverture",
     });
   } else {
     checks.push({

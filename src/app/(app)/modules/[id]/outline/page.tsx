@@ -6,14 +6,13 @@ import { Check } from "lucide-react";
 import { OutlineActions } from "@/components/modules/outline-actions";
 import { Button } from "@/components/ui/button";
 import { listModuleAssessments } from "@/lib/assessments/queries";
-import { getModuleCoverage } from "@/lib/modules/coverage-queries";
+import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
 import { deadlineBanner, outlineChecks } from "@/lib/modules/outline-checks";
 import {
   getModule,
   getModuleCourses,
   getModuleDocuments,
   getModuleExpectations,
-  getRetainedResources,
 } from "@/lib/modules/queries";
 import { publishableText, suspectLines } from "@/lib/ynov/private-text";
 import { getOutline } from "@/lib/outline/queries";
@@ -47,7 +46,7 @@ function publicationInfo(
 
 export default async function ModuleOutlinePage({ params }: PageProps<"/modules/[id]/outline">) {
   const { id } = await params;
-  const [mod, documents, expectations, outline, courses, assessments, retained] = await Promise.all(
+  const [mod, documents, expectations, outline, courses, assessments] = await Promise.all(
     [
       getModule(id),
       getModuleDocuments(id),
@@ -55,11 +54,11 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
       getOutline(id),
       getModuleCourses(id),
       listModuleAssessments(id),
-      getRetainedResources(id),
     ],
   );
   if (!mod) notFound();
-  const coverage = await getModuleCoverage(id, expectations, retained);
+  // Même calcul que la page Couverture et que le PDF : séances et évaluations (pas les ressources).
+  const expectationCoverage = await getExpectationCoverageView(id);
 
   const trame = trameStatus(mod.first_session_date, mod.iceberg_state);
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
@@ -85,7 +84,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     assessments: { total: regular.length, linked: regular.filter((a) => a.course_id).length },
     expectations: {
       total: expectations.length,
-      uncovered: coverage.uncovered,
+      uncovered: expectationCoverage.summary.byNone,
       objectives: expectations.filter((e) => e.kind === "objective").length,
       units: expectations.filter((e) => e.kind === "unit").length,
     },
