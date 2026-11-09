@@ -8,6 +8,7 @@ import { Markdown } from "@/components/markdown";
 import { Button } from "@/components/ui/button";
 import { resolveImageSrc } from "@/lib/resources/files";
 import { getResource, listResourceVersions } from "@/lib/resources/queries";
+import { describeChange } from "@/lib/resources/version-diff";
 
 export async function generateMetadata({
   params,
@@ -46,41 +47,53 @@ export default async function ResourceHistoryPage({
         </p>
       ) : (
         <ol className="space-y-3">
-          {versions.map((v) => (
-            <li key={v.id} className="rounded-lg border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">
-                  Version du <time dateTime={v.created_at}>{when(v.created_at)}</time>
+          {versions.map((v, i) => {
+            // Chaque version est l'état d'avant une modification : on la compare à l'état suivant.
+            const after = i === 0 ? resource : versions[i - 1];
+            const changes = describeChange(v, after);
+            return (
+              <li key={v.id} className="rounded-lg border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">
+                    Version du <time dateTime={v.created_at}>{when(v.created_at)}</time>
+                  </p>
+                  <form action={restoreResourceVersion.bind(null, id, v.id)}>
+                    <Button type="submit" size="sm" variant="secondary">
+                      <RotateCcw aria-hidden />
+                      Restaurer cette version
+                      <span className="sr-only"> du {when(v.created_at)}</span>
+                    </Button>
+                  </form>
+                </div>
+                <p className="text-sm">{v.title}</p>
+                <p className="text-muted-foreground text-sm">
+                  Changé ensuite :{" "}
+                  {changes.length ? changes.join(" · ") : "rien de visible (statut ou réglages)"}
                 </p>
-                <form action={restoreResourceVersion.bind(null, id, v.id)}>
-                  <Button type="submit" size="sm" variant="secondary">
-                    <RotateCcw aria-hidden />
-                    Restaurer cette version
-                    <span className="sr-only"> du {when(v.created_at)}</span>
-                  </Button>
-                </form>
-              </div>
-              <p className="text-sm">{v.title}</p>
-              {v.description ? (
-                <p className="text-muted-foreground text-sm">{v.description}</p>
-              ) : null}
-              {v.content ? (
+                {v.description ? (
+                  <p className="text-muted-foreground text-sm">{v.description}</p>
+                ) : null}
                 <details className="mt-2">
                   <summary className="cursor-pointer text-sm underline underline-offset-2">
                     Voir le contenu
                     <span className="sr-only"> de la version du {when(v.created_at)}</span>
                   </summary>
                   <div className="bg-muted/40 mt-2 rounded-md border p-3 text-sm">
-                    <Markdown
-                      source={v.content}
-                      headingLevel={4}
-                      resolveImageSrc={(src) => resolveImageSrc(id, src)}
-                    />
+                    {v.content ? (
+                      <Markdown
+                        source={v.content}
+                        headingLevel={4}
+                        showNotes
+                        resolveImageSrc={(src) => resolveImageSrc(id, src)}
+                      />
+                    ) : (
+                      <p className="text-muted-foreground">Contenu vide à cette version.</p>
+                    )}
                   </div>
                 </details>
-              ) : null}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ol>
       )}
     </div>
