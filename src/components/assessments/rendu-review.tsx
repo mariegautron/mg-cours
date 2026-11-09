@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { saveOralField } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/oral/space-actions";
 import { OralSpace, type OralSpaceInit } from "@/components/assessments/oral-space";
 import { SubmissionItems } from "@/components/assessments/submission-items";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,31 @@ export function RenduReview({
   const [index, setIndex] = useState(start);
   const [view, setView] = useState<"copy" | "criterion">("copy");
   const [criterionId, setCriterionId] = useState(criteria.find((c) => !c.isBonus)?.id ?? "");
+  // Lettres posées depuis « Par critère » (copie → critère → lettre / version), par-dessus le chargement.
+  const [edits, setEdits] = useState<Record<string, { letter: string; version: number }>>({});
+  const [gapsOpen, setGapsOpen] = useState(false);
+  const [critMessage, setCritMessage] = useState("");
+  const letterOf = (c: RenduCopy, critId: string) =>
+    edits[`${c.id}|${critId}`]?.letter ?? c.init.letters[critId] ?? "";
+  async function setLetterFromView(c: RenduCopy, critId: string, letter: string) {
+    const key = `${c.id}|${critId}`;
+    const field = `letter:${critId}`;
+    const base = edits[key]?.version ?? c.init.versions[field] ?? 0;
+    const next = letterOf(c, critId) === letter ? "" : letter;
+    const res = await saveOralField(moduleId, assessmentId, c.id, field, next, base);
+    if (!res.ok) {
+      setCritMessage(
+        "conflict" in res && res.conflict
+          ? `La lettre de ${c.name} a changé ailleurs : ouvre la copie pour choisir.`
+          : "error" in res
+            ? res.error
+            : "Enregistrement impossible.",
+      );
+      return;
+    }
+    setEdits((e) => ({ ...e, [key]: { letter: next, version: res.version } }));
+    setCritMessage(`Lettre de ${c.name} enregistrée.`);
+  }
   const copy = copies[index];
   // Chaque copie a sa propre adresse (?copy=…) : un onglet par copie pour comparer.
   useEffect(() => {
@@ -159,9 +185,42 @@ export function RenduReview({
               </select>
             </label>
           </div>
-          <p className="text-muted-foreground text-xs">
-            Lettres et commentaires au chargement de la page ; change une lettre depuis la copie.
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-expanded={gapsOpen}
+              onClick={() => setGapsOpen((o) => !o)}
+            >
+              Vérifier mes écarts
+            </Button>
+            <p role="status" className="text-sm">
+              {critMessage}
+            </p>
+          </div>
+          {gapsOpen ? (
+            <div className="bg-muted/40 rounded-lg border p-3 text-sm">
+              {(["A", "B", "C", "D"] as const).map((l) => {
+                const who = copies.filter((c) => letterOf(c, criterionId) === l);
+                return (
+                  <p key={l}>
+                    <strong>{l}</strong> : {who.length ? who.map((c) => c.name).join(", ") : "—"}
+                  </p>
+                );
+              })}
+              <p>
+                <strong>Sans lettre</strong> :{" "}
+                {copies
+                  .filter((c) => !letterOf(c, criterionId))
+                  .map((c) => c.name)
+                  .join(", ") || "—"}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Relis côte à côte les copies d’une même lettre : même travail, même lettre.
+              </p>
+            </div>
+          ) : null}
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
@@ -187,7 +246,36 @@ export function RenduReview({
                     <th scope="row" className="p-2 text-left font-medium">
                       {c.name}
                     </th>
-                    <td className="p-2 font-bold">{c.init.letters[criterionId] || "—"}</td>
+                    <td className="p-2">
+                      {c.init.hasNote ? (
+                        <span title="Note écrite : ouvre la copie et clique sur « Modifier »">
+                          <strong>{letterOf(c, criterionId) || "—"}</strong>
+                          <span className="text-muted-foreground text-xs"> · note écrite</span>
+                        </span>
+                      ) : (
+                        <span
+                          role="group"
+                          aria-label={`Lettre de ${c.name}`}
+                          className="flex gap-1"
+                        >
+                          {(["A", "B", "C", "D"] as const).map((l) => (
+                            <button
+                              key={l}
+                              type="button"
+                              aria-pressed={letterOf(c, criterionId) === l}
+                              onClick={() => void setLetterFromView(c, criterionId, l)}
+                              className={
+                                letterOf(c, criterionId) === l
+                                  ? "border-primary bg-primary/10 min-h-9 min-w-9 rounded-md border font-bold"
+                                  : "hover:bg-accent min-h-9 min-w-9 rounded-md border font-bold"
+                              }
+                            >
+                              {l}
+                            </button>
+                          ))}
+                        </span>
+                      )}
+                    </td>
                     <td className="p-2 whitespace-pre-wrap">
                       {c.init.texts[`crit:${criterionId}`]?.text || "—"}
                     </td>
