@@ -7,15 +7,10 @@ import { CopyMessage } from "@/components/assessments/copy-message";
 import { Pill } from "@/components/dashboard/pill";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { Button } from "@/components/ui/button";
-import {
-  MAKEUP_STEP_LABELS,
-  makeupOverview,
-  makeupSummary,
-} from "@/lib/assessments/makeup-overview";
-import { listModuleAssessments } from "@/lib/assessments/queries";
+import { MAKEUP_STEP_LABELS, makeupSummary } from "@/lib/assessments/makeup-overview";
 import { getModule } from "@/lib/modules/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
-import { createClient } from "@/lib/supabase/server";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 
 export const metadata: Metadata = { title: "Rattrapages" };
 
@@ -25,38 +20,8 @@ export default async function MakeupsPage({ params }: PageProps<"/modules/[id]/r
   const mod = await getModule(id);
   if (!mod) notFound();
 
-  const supabase = await createClient();
-  const assessments = await listModuleAssessments(id);
-  const ids = assessments.map((a) => a.id);
-  const makeupIds = assessments.filter((a) => a.makeup_of_id).map((a) => a.id);
-  const [{ data: grades }, { data: enrolledRows }, { data: students }] = await Promise.all([
-    ids.length
-      ? supabase
-          .from("grade")
-          .select("assessment_id, student_id, attendance, value")
-          .in("assessment_id", ids)
-      : Promise.resolve({ data: [] as never[] }),
-    makeupIds.length
-      ? supabase
-          .from("assessment_student")
-          .select("assessment_id, student_id")
-          .in("assessment_id", makeupIds)
-      : Promise.resolve({ data: [] as never[] }),
-    supabase.from("student").select("id, first_name, last_name"),
-  ]);
-
-  const enrolled = new Map<string, string[]>();
-  for (const r of (enrolledRows ?? []) as { assessment_id: string; student_id: string }[]) {
-    enrolled.set(r.assessment_id, [...(enrolled.get(r.assessment_id) ?? []), r.student_id]);
-  }
-  const groups = makeupOverview({
-    assessments,
-    grades: (grades ?? []) as never,
-    enrolled,
-    studentNames: new Map(
-      (students ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`] as const),
-    ),
-  });
+  // Même calcul que le tableau de bord et la fiche du module.
+  const groups = await loadMakeupGroups(id);
 
   const rule = await getAbsenceRuleForModule(id);
   const toOrganise = groups.flatMap((g) =>

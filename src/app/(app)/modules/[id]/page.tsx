@@ -37,6 +37,7 @@ import { schoolYearOf } from "@/lib/modules/list-state";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getOutline } from "@/lib/outline/queries";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { trameStatus } from "@/lib/ynov/trame";
 
@@ -141,6 +142,8 @@ export default async function ModulePage({
   const expCoverage = await getExpectationCoverageView(id);
   const shared = await isModuleShared(id);
   const appreciations = await getAppreciationProgress(id);
+  const makeupRows = (await loadMakeupGroups(id)).flatMap((g) => g.rows);
+  const makeupsPending = makeupRows.filter((r) => r.step !== "done").length;
   const journey = buildJourney({
     mod,
     courses,
@@ -155,6 +158,7 @@ export default async function ModulePage({
     invoiceCtx,
     shared,
     appreciations,
+    makeups: { pending: makeupsPending, total: makeupRows.length },
   });
 
   // Fiches « à reporter » d'une clôture sans séance suivante : à signaler jusqu'à ce qu'elles aient une place.
@@ -311,6 +315,20 @@ export default async function ModulePage({
             </>
           ) : (
             <>
+              {makeupsPending > 0 ? (
+                <Card id="rattrapages" title="Rattrapages">
+                  <p>
+                    <strong>{makeupsPending} à faire</strong> : absences excusées à rattraper avant
+                    les appréciations et l’envoi des notes.
+                  </p>
+                  <Link
+                    href={`/modules/${id}/rattrapages`}
+                    className="font-semibold underline underline-offset-2"
+                  >
+                    Voir les rattrapages
+                  </Link>
+                </Card>
+              ) : null}
               {upcomingEvals.length > 0 ? (
                 <UpcomingAssessmentsCard
                   items={upcomingEvals}

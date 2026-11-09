@@ -28,6 +28,7 @@ export interface JourneyData {
   /** Espace étudiant·es publié. */
   shared?: boolean;
   appreciations?: { written: number; total: number };
+  makeups?: { pending: number; total: number };
 }
 
 /** Contexte de `moduleSteps` à partir des données chargées de la fiche module. */
@@ -67,6 +68,7 @@ export function buildJourney(d: JourneyData): ModuleSteps {
     },
     shared: d.shared,
     appreciations: d.appreciations,
+    makeups: d.makeups,
     invoice: d.invoice?.status ?? null,
     billingReady: d.invoiceCtx
       ? invoiceBlockers(d.invoiceCtx).length + missingInvoiceData(d.invoiceCtx).length === 0

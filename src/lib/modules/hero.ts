@@ -35,6 +35,7 @@ const HEADLINES: Record<StepKey, string> = {
   share: "Partager l’espace aux étudiant·es",
   teach: "Faire cours",
   assess: "Noter les évaluations",
+  makeups: "Rattraper les absences excusées",
   appreciations: "Écrire les appréciations",
   admin: "Cocher les documents administratifs",
   invoice: "Facturer le module",
@@ -56,6 +57,8 @@ const TEXTS: Record<StepKey, (s: ModuleStep) => string> = {
     "Publie l’espace des étudiant·es, puis copie le message de chacun·e : ils y trouvent les cours, les sujets et les grilles.",
   teach: (s) => `${cap(s.summary)}. Tout est en place : ouvre ta séance du jour.`,
   assess: (s) => `${cap(s.summary)}. Saisis les notes manquantes pour pouvoir facturer.`,
+  makeups: (s) =>
+    `${cap(s.summary)}. Prépare et note les rattrapages avant les appréciations et l’envoi des notes.`,
   appreciations: (s) =>
     `${cap(s.summary)}. Une appréciation par étudiant·e, à reporter dans Hyperplanning.`,
   admin: (s) => `${cap(s.summary)}. Coche les documents administratifs reçus ou envoyés.`,

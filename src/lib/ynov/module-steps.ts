@@ -18,6 +18,7 @@ export type StepKey =
   | "share"
   | "teach"
   | "assess"
+  | "makeups"
   | "appreciations"
   | "admin"
   | "invoice";
@@ -44,6 +45,8 @@ export interface ModuleStepsContext {
   adminDocs: { done: number; total: number };
   /** Appréciations pour Hyperplanning (après les notes). */
   appreciations?: { written: number; total: number };
+  /** Rattrapages des absences excusées : pas encore faits / au total. */
+  makeups?: { pending: number; total: number };
   invoice: "draft" | "ready" | "sent" | "paid" | null;
   /** L'espace étudiant·es est publié (lien de la classe actif). */
   shared?: boolean;
@@ -235,6 +238,25 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       action: { label: "Saisir les notes", href: `${base}/assessments` },
       badge: `saisir les notes manquantes (${notes.entered}/${notes.required} requises)`,
     },
+    // Rattraper les absences excusées : avant les appréciations et l'envoi des notes.
+    ...(ctx.makeups && ctx.makeups.total > 0
+      ? [
+          {
+            key: "makeups" as const,
+            title: "Rattraper les absences excusées",
+            state: inProgress(
+              delivered || ctx.makeups.pending === 0,
+              ctx.makeups.pending < ctx.makeups.total,
+            ),
+            summary:
+              ctx.makeups.pending === 0
+                ? "rattrapages faits"
+                : `${ctx.makeups.pending} à faire`,
+            action: { label: "Voir les rattrapages", href: `${base}/rattrapages` },
+            badge: `rattraper les absences excusées (${ctx.makeups.pending})`,
+          },
+        ]
+      : []),
     {
       key: "appreciations",
       title: "Appréciations",

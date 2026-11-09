@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { todayInParis } from "@/lib/modules/next-session";
+import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
 import { examKindOf } from "@/lib/assessments/exam-kind";
 import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { DayJBlock } from "@/components/assessments/day-j-block";
@@ -164,6 +165,7 @@ export default async function ModuleAssessmentsPage({
       qcm: extras.qcm.get(a.id),
     });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const makeupsPending = await countPendingMakeups(id);
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
@@ -238,7 +240,9 @@ export default async function ModuleAssessmentsPage({
               </Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href={`/modules/${id}/rattrapages`}>Rattrapages</Link>
+              <Link href={`/modules/${id}/rattrapages`}>
+                Rattrapages{makeupsPending > 0 ? ` : ${makeupsPending} à faire` : ""}
+              </Link>
             </Button>
             {project ? null : (
               <Button asChild variant="ghost">

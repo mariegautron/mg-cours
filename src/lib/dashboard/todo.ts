@@ -9,6 +9,7 @@ export type TodoKind =
   | "outline_urgent"
   | "session_prep"
   | "assessment_prep"
+  | "makeups"
   | "appreciations"
   | "outline_soon"
   | "invoice_send"
@@ -21,6 +22,7 @@ const KIND_ORDER: TodoKind[] = [
   "outline_urgent",
   "session_prep",
   "assessment_prep",
+  "makeups",
   "appreciations",
   "outline_soon",
   "invoice_send",
@@ -91,6 +93,8 @@ export interface TodoSources {
   billing: { module: { id: string; name: string }; kind: "ready" | "toSend" | "toCollect" }[];
   /** Modules dont toutes les notes sont saisies et qui ont des appréciations à écrire. */
   appreciations?: { module: { id: string; name: string }; remaining: number }[];
+  /** Rattrapages pas encore faits, par module (avant les appréciations et l'envoi des notes). */
+  makeups?: { module: { id: string; name: string }; pending: number }[];
   /** Horizon des séances à préparer, en jours. */
   prepHorizonDays?: number;
 }
@@ -137,6 +141,16 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       detail: `${a.moduleName} · ${inDays(d)} · ${a.missingCount} point${a.missingCount > 1 ? "s" : ""} à compléter`,
       href: `/modules/${a.moduleId}/assessments`,
       urgency: d <= 1 ? d - 2 : d,
+    });
+  }
+  for (const m of src.makeups ?? []) {
+    out.push({
+      key: `makeups-${m.module.id}`,
+      kind: "makeups",
+      title: `${m.pending} rattrapage${m.pending > 1 ? "s" : ""} à faire`,
+      detail: m.module.name,
+      href: `/modules/${m.module.id}/rattrapages`,
+      urgency: 6,
     });
   }
   for (const a of src.appreciations ?? []) {

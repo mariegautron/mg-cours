@@ -15,6 +15,7 @@ import { isModuleShared } from "@/lib/modules/frise-queries";
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { getOutline } from "@/lib/outline/queries";
 import { trameStatus } from "@/lib/ynov/trame";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 
 /** Parcours du module pour la coque des sous-pages (la fiche calcule le sien avec ses données). */
 export const getModuleJourney = cache(async (id: string) => {
@@ -31,12 +32,14 @@ export const getModuleJourney = cache(async (id: string) => {
       loadInvoiceContext(id),
       getInvoiceByModule(id),
     ]);
-  const [notes, coverage, shared, appreciations] = await Promise.all([
+  const [notes, coverage, shared, appreciations, makeupGroups] = await Promise.all([
     moduleNoteProgress(id, mod.total_hours, assessments),
     getModuleCoverage(id, expectations, retained),
     isModuleShared(id),
     getAppreciationProgress(id),
+    loadMakeupGroups(id),
   ]);
+  const makeupRows = makeupGroups.flatMap((g) => g.rows);
   return buildJourney({
     mod,
     courses,
@@ -58,5 +61,9 @@ export const getModuleJourney = cache(async (id: string) => {
     invoiceCtx,
     shared,
     appreciations,
+    makeups: {
+      pending: makeupRows.filter((r) => r.step !== "done").length,
+      total: makeupRows.length,
+    },
   });
 });

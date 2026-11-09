@@ -47,6 +47,7 @@ import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
 import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
+import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
 import {
   formatSessionDay,
   nextSession,
@@ -128,9 +129,20 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       ? [{ module: x.module, remaining: x.p.total - x.p.written }]
       : [],
   );
+  const makeupTodos = (
+    await Promise.all(
+      modules
+        .filter((m) => !m.archived_at && !m.finished_at)
+        .map(async (m) => ({
+          module: { id: m.id, name: m.name },
+          pending: await countPendingMakeups(m.id),
+        })),
+    )
+  ).filter((x) => x.pending > 0);
   const todos = pickTodos(
     buildTodos({
       today,
+      makeups: makeupTodos,
       appreciations: appreciationTodos,
       outlineAlerts: alerts,
       upcomingCourses: [...coursesToday, ...coursesAfter]
