@@ -37,7 +37,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   if (!mod) notFound();
 
   const project = await getModuleProject(id);
-  const reusable = project ? [] : await listReusableProjects(id);
+  const reusable = await listReusableProjects(id);
   const [courses, surprises] = project
     ? await Promise.all([getModuleCourses(id), listProjectSurprises(project.id)])
     : [[], { available: true, items: [] }];
@@ -83,9 +83,11 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {project ? null : reusable.length > 0 ? (
+          {reusable.length > 0 ? (
             <Button asChild variant="outline">
-              <Link href={`/modules/${mod.id}/project/reuse`}>Partir d’un projet existant</Link>
+              <Link href={`/modules/${mod.id}/project/reuse`}>
+                {project ? "Reprendre un projet d’un autre module" : "Partir d’un projet existant"}
+              </Link>
             </Button>
           ) : null}
           {project ? (

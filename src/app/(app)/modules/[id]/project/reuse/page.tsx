@@ -1,7 +1,7 @@
 import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
@@ -22,8 +22,8 @@ export default async function ReuseProjectPage({
   const sp = await searchParams;
   const mod = await getModule(id);
   if (!mod) notFound();
-  // Le module a déjà son projet : on y retourne.
-  if (await getModuleProject(id)) redirect(`/modules/${id}/project`);
+  // Le module a déjà son projet : la reprise remplace son brief, après confirmation.
+  const hasProject = !!(await getModuleProject(id));
 
   const projects = await listReusableProjects(id);
   const asked = typeof sp.p === "string" ? sp.p : undefined;
@@ -138,7 +138,12 @@ export default async function ReuseProjectPage({
             <h2 id="nt" className="font-heading mb-2 text-xl font-bold">
               Le nouveau thème
             </h2>
-            <ReuseForm moduleId={mod.id} sourceId={chosen.id} hasThemes={themeCount > 0} />
+            <ReuseForm
+              moduleId={mod.id}
+              sourceId={chosen.id}
+              hasThemes={themeCount > 0}
+              replace={hasProject}
+            />
           </section>
         </div>
       )}

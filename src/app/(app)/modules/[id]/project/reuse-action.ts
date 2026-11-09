@@ -33,6 +33,7 @@ export async function startFromProject(
   const newClient = String(formData.get("client") ?? "")
     .trim()
     .slice(0, 2000);
+  const replace = formData.get("replace") === "1";
   if (!UUID.test(sourceId)) return { error: "Choisis un projet à reprendre." };
 
   const supabase = await createClient();
@@ -41,7 +42,7 @@ export async function startFromProject(
     .select("id")
     .eq("module_id", moduleId)
     .maybeSingle();
-  if (existing) return { error: "Ce module a déjà un projet." };
+  if (existing && !replace) return { error: "Ce module a déjà un projet." };
   const { data: mod } = await supabase.from("module").select("id").eq("id", moduleId).maybeSingle();
   if (!mod) return { error: NOT_FOUND.module };
 
@@ -59,6 +60,43 @@ export async function startFromProject(
       .eq("project_id", source.id)
       .order("position"),
   ]);
+
+  // Projet déjà là (choix confirmé par Marie) : le brief est remplacé, les thèmes repris
+  // s'ajoutent, rien d'autre ne bouge (évaluations, groupes, notes, affectations).
+  if (existing && replace) {
+    const patch: { brief_md: string; title?: string; client_context_md?: string } = {
+      brief_md: source.brief_md,
+    };
+    if (newTitle) patch.title = newTitle;
+    if (newClient) patch.client_context_md = `**Client :** ${newClient}`;
+    const { error: upError } = await supabase
+      .from("module_project")
+      .update(patch)
+      .eq("id", existing.id);
+    if (upError) return { error: failure("remplacer le brief") };
+    if (keepThemes && themes?.length) {
+      const { data: current } = await supabase
+        .from("project_theme")
+        .select("title, position")
+        .eq("project_id", existing.id);
+      const known = new Set((current ?? []).map((t) => t.title.trim().toLowerCase()));
+      let position = Math.max(-1, ...(current ?? []).map((t) => t.position)) + 1;
+      const added = themes
+        .filter((t) => !known.has(t.title.trim().toLowerCase()))
+        .map((t) => ({
+          project_id: existing.id,
+          title: t.title,
+          description_md: t.description_md,
+          position: position++,
+        }));
+      if (added.length) {
+        const { error: themeError } = await supabase.from("project_theme").insert(added);
+        if (themeError) return { error: failure("copier les thèmes") };
+      }
+    }
+    revalidatePath(`/modules/${moduleId}/project`);
+    redirect(`/modules/${moduleId}/project`);
+  }
 
   const { data: created, error } = await supabase
     .from("module_project")
