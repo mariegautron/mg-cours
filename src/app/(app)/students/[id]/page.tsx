@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 import { StudentPhotoManager } from "@/components/students/student-photo-manager";
 import { StudentSpaceCard } from "@/components/students/student-space-card";
 import { moduleStudentAverages } from "@/lib/assessments/queries";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { getStudentSpaces } from "@/lib/modules/frise-queries";
 import { StudentActions } from "@/components/students/student-actions";
 import { Pill } from "@/components/dashboard/pill";
@@ -53,6 +54,20 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           ] as const,
       ),
     ),
+  );
+  // Absence excusée pas encore rattrapée, par module : « rattrapage en attente ».
+  const makeupPendingModules = new Set(
+    (
+      await Promise.all(
+        gradeModules.map(async (m) =>
+          (await loadMakeupGroups(m.moduleId))
+            .flatMap((g) => g.rows)
+            .some((r) => r.student.id === id && r.step !== "done")
+            ? [m.moduleId]
+            : [],
+        ),
+      )
+    ).flat(),
   );
   const missed = absences(gradeLines);
   const promos = promotions(years);
@@ -205,8 +220,11 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
                     {moduleAverages.get(m.moduleId)?.average.average != null ? (
                       <li className="flex justify-between gap-2 py-2 font-semibold">
                         <span>Moyenne du module</span>
-                        <span>
+                        <span className="text-right">
                           {formatGrade(moduleAverages.get(m.moduleId)!.average.average, 20)}
+                          {makeupPendingModules.has(m.moduleId) ? (
+                            <span className="text-sun block text-xs">rattrapage en attente</span>
+                          ) : null}
                         </span>
                       </li>
                     ) : null}

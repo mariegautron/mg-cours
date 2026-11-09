@@ -30,6 +30,8 @@ export interface OverviewItem {
   received?: boolean;
   /** Présence enregistrée sur la copie (absence excusée / non prévenue). */
   attendance?: string | null;
+  /** Absence excusée : où en est le rattrapage (libellé + lien). */
+  makeup?: { label: string; href: string } | null;
 }
 
 export interface OverviewRow extends OverviewItem {

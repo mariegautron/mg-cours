@@ -66,6 +66,7 @@ import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { assessmentFileUrl } from "@/lib/assessments/files";
 import { isOralAssessment } from "@/lib/assessments/oral";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { OralTimingForm } from "@/components/assessments/oral-timing-form";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
 import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
@@ -208,6 +209,26 @@ export default async function AssessmentPage({
           .map((a) => a.studentId),
       )
     : null;
+  // Absences excusées : où en est le rattrapage de chaque personne (même calcul que la page Rattrapages).
+  const makeupGroup = (await loadMakeupGroups(id)).find((g) => g.assessment.id === assessmentId);
+  const makeupGrades = makeupGroup?.makeup
+    ? (await getGradesByAssessment(makeupGroup.makeup.id, { skipRewrite: true }))
+    : [];
+  const makeupFor = (studentId: string) => {
+    const row = makeupGroup?.rows.find((r) => r.student.id === studentId);
+    if (!row) return null;
+    const mk = makeupGroup!.makeup;
+    if (row.step === "done" && mk) {
+      const v = makeupGrades.find((g) => g.student_id === studentId)?.value;
+      return {
+        label: `Rattrapé·e${v != null ? ` · ${v.toLocaleString("fr-FR")}/${assessment.maxScore}` : ""}`,
+        href: `/modules/${id}/assessments/${mk.id}`,
+      };
+    }
+    return mk
+      ? { label: "Excusé·e · rattrapage préparé", href: `/modules/${id}/assessments/${mk.id}` }
+      : { label: "Excusé·e · rattrapage à prévoir", href: `/modules/${id}/rattrapages` };
+  };
   const overview = correctionOverview(
     sections.flatMap((section) =>
       section.items.map((item) => ({
@@ -225,6 +246,7 @@ export default async function AssessmentPage({
             ? (item.submissions?.length ?? 0) > 0
             : undefined,
         attendance: item.grade?.attendance ?? null,
+        makeup: makeupFor(item.id),
       })),
     ),
     (assessment.grading_grid?.criteria ?? []).map((c) => c.id),

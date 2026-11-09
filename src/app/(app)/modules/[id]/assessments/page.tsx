@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { todayInParis } from "@/lib/modules/next-session";
-import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
+import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { examKindOf } from "@/lib/assessments/exam-kind";
 import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { DayJBlock } from "@/components/assessments/day-j-block";
@@ -165,7 +165,12 @@ export default async function ModuleAssessmentsPage({
       qcm: extras.qcm.get(a.id),
     });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
-  const makeupsPending = await countPendingMakeups(id);
+  const makeupRowsAll = (await loadMakeupGroups(id)).flatMap((g) => g.rows);
+  const makeupsPending = makeupRowsAll.filter((r) => r.step !== "done").length;
+  // Absence excusée pas encore rattrapée : « rattrapage en attente » à côté de la moyenne.
+  const makeupPendingIds = new Set(
+    makeupRowsAll.filter((r) => r.step !== "done").map((r) => r.student.id),
+  );
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
@@ -572,7 +577,11 @@ export default async function ModuleAssessmentsPage({
                     </td>
                     <td className="p-2">
                       {average.average !== null ? average.average.toFixed(2) : "—"}
-                      {noted < expected ? (
+                      {makeupPendingIds.has(student.id) ? (
+                        <span className="text-sun block text-xs font-semibold">
+                          rattrapage en attente
+                        </span>
+                      ) : noted < expected ? (
                         <span className="text-sun block text-xs font-semibold">
                           provisoire : {noted} note{noted > 1 ? "s" : ""} sur {expected}
                         </span>
