@@ -54,6 +54,7 @@ directes : les liens reçus par les étudiant·es.
   `resource-picker`, `resource-search`, `library-families`, `global-search`.
 - **À regarder en QA** : création par collage, sauvegarde auto, historique et restauration, classement, recherche.
 - **Améliorations notées** :
+  - Nuit du 9 au 10 nov. : parties d'un cours choisies par séance (`cd2b4be`, migration `20261201000000`) ; « Remettre « À construire » », année dans « Faire plutôt une copie » (`6c1c7f2`).
   - 9 nov. (retest « préparer le contenu de mes cours ») : notes « pour moi seule » (`c055e1c`) ; créer / ouvrir une ressource depuis une séance et y revenir, séance « Prête » avec ressource à construire, « Préparer la séance », Présenter en fenêtre et Aperçu, mini-QCM lié (`7014e56`) ; « Où elle sert », compteurs, avertissement ressource partagée, Dupliquer (`4c08f3f`) ; recherche en direct triée par titre, « Chercher dans la bibliothèque » depuis le déroulé (`45e7519`) ; déroulé lisible à 125 % (`089db8e`).
   - Reste (migration) : parties de cours choisies par séance (point 15), « Copiée de … le … » sur une copie.
   - 9 nov. (suite) : morceaux de cours rangés sous leur cours (`3c97982`), historique détaillé (`9555ffe`), petits défauts du point 14 (`378ac92`), champ « Lien des slides » retiré, liens existants en lecture seule (voir commit suivant).
@@ -92,6 +93,7 @@ directes : les liens reçus par les étudiant·es.
   `group-wizard`, `import-groups`.
 - **À regarder en QA** : import CSV avec erreurs, doublons, groupes après arrivée tardive, trombinoscope projeté.
 - **Améliorations notées** :
+  - Nuit du 9 au 10 nov. : inscription au module et « A quitté le module » (`e60ee09`, migration `20261201000100`) ; e-mail différent signalé dans l'aperçu (`f1eecca`).
   - 9 nov. (retest v2) : réimport après changement d'e-mail, fiche reconnue par prénom et nom (voir dernier commit « Import de la liste »).
   - 9 nov. (retest « mise en place de la classe ») : import Hyperplanning tel quel (nom complet coupé, encodage, séparateurs, colonnes modifiables, lignes corrigeables), import depuis le module, arrivant·e créé·e et ajouté·e au groupe, encadré « Ta classe n'est pas encore en place », groupes projetés en fenêtre / Diapositives avec initiales distinctes, nom réel à l'étape 3 de l'assistant, retour sur la fiche créée (`3afdaf1`).
   - Reste (demande une migration) : inscription étudiant·e ↔ module (assistant et liste « Ajouter » limités aux inscrit·es, « Ta classe n'est pas encore là », import sans colonne groupe qui inscrit quand même) et « A quitté le module » (date, annulable, sorti·e des comptes).
@@ -186,6 +188,8 @@ directes : les liens reçus par les étudiant·es.
 - **À regarder en QA** : import de questions, QR en classe, une copie par étudiant·e, reprise après coupure,
   « À corriger » tant que la relecture n'est pas finie.
 - **Améliorations notées** :
+  - Nuit du 9 au 10 nov. : projection en nouvel onglet, « Ferme le … », compteur « pas encore » (`fbf5b61`) ; confirmation du nom, suivi en direct, Résultats réorganisés, « À corriger » avec les QCM (`63b27b4`) ; page QCM « Plus… » (`49b1f88`) ; relecture d'une copie (`20d5896`) ; suivi des copies en premier (`093d281`).
+  - Reste : mode « sans chrono » (avec le 1er fil, chrono du rattrapage), avancement « 7/15 », réponse attendue à côté des réponses libres, « Envoyer par e-mail » désactivé avec sa raison.
   - 9 nov. (« QCM en classe » lot 3) : bandeau rouge « pas encore ouvert » + « Ouvrir maintenant » sur les liens et la projection, « Faire passer en classe (QR) », « Ferme à 18:00 », « Repasser en brouillon » désactivé avec sa raison (`0601d78`).
   - Reste : suivi en direct sur « Donner accès », confirmation du nom, Résultats (Markdown, « Relire les copies »), « À corriger » avec les QCM, mode sans chrono, relecture des copies et mises en page du lot 5.
 
@@ -221,6 +225,7 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `module-finish`, `billing`, `archive`, `module-delete`, `retained`.
 - **À regarder en QA** : cases envoyée / payée, vue globale `/billing`, archivage, suppression (zone sensible).
 - **Améliorations notées** :
+  - Nuit du 9 au 10 nov. : facture simple (PDF manquant, cases immédiates, page Facturation filtrée et repliée, Documents → page Facture, message d'échec d'envoi) (`be04c82`) ; questionnaire d'avis (une réponse par navigateur, tutoiement, QR projeté, lecture résumée) (`06b016d`, migration `20261201000200`).
   - 9 nov. : progression « envoyée » d'après son vrai statut (envoyée / validée / PDF déposé), plus d'après l'iceberg qu'une facture cochée faisait avancer (`0b6c5e6`).
   - 9 nov. : conditions YNOV de la facture alignées sur le vrai statut de la progression (`63f4140`).
   - 9 nov. : vrais états des étapes même pour un module terminé/facturé (`f7bea79`) ; liste « Terminer » avec appréciations, avis, liens, un seul chemin, libellés Terminer/Archiver (`baee74d`). Coefficient du cadre individuel (`3c2461d`).
@@ -235,6 +240,8 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `dashboard`, `global-search`, `schedule`, `sidebar-nav`, `route-states`.
 - **À regarder en QA** : tableau de bord (à repenser plus tard), prochaine action, états vides, jalons.
 - **Améliorations notées** :
+  - Nuit du 9 au 10 nov. : « Pas de séance cette semaine » (`f1eecca`) ; « À faire » avant le prochain cours, « Déroulé vide », message de date d'évaluation (`fbf5b61`) ; tuile du jour avec heure et séance (`49b1f88`).
+  - Reste : « Ajouter au déroulé d'aujourd'hui » (le « non traité » est du texte libre : à préciser), jalons dans « Évaluations à venir » (1er fil, point d'étape).
   - 9 nov. (« piloter au quotidien » lot 1 et retest v2) : séances à clôturer, « Clôturer la séance » après l'heure de fin, « Terminer <module> », Edusign et boutons en ligne dans le bandeau (`443c4c5`) ; compteurs sur tous les modules en cours en une ligne, bandeau limité aux modules commencés, « Voir l'autre » (`d96e7e7`) ; export réparé en deux boutons, données puis fichiers construits par le navigateur (`1530a61`).
   - Reste : « Prêt pour aujourd'hui ? » (déroulé vide), « Ajouter au déroulé d'aujourd'hui », tuile du jour, message de date d'évaluation, jalons dans « Évaluations à venir », retrait de « Ctrl K ».
   - 9 nov. (retest « recherche et compte ») : recherche « Aller à », une faute tolérée, contexte des étudiant·es, « Voir les N autres », lenteur (`6b4d8a5`) ; « Facturation » au menu (`d6e9c7d`) ; « À faire » complet, filtres de la liste Étudiant·es, onglet Modules vide sur une année (`caa8b1f`).
