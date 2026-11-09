@@ -44,7 +44,7 @@ import { listSubmissionItems } from "@/lib/projects/submission-queries";
 import { Pill } from "@/components/dashboard/pill";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { DayJBlock } from "@/components/assessments/day-j-block";
-import { dayJReadiness, espaceUpToDate } from "@/lib/assessments/day-j";
+import { dayJReadiness, espaceUpToDate, submitModeOf } from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Button } from "@/components/ui/button";
@@ -259,7 +259,7 @@ export default async function AssessmentPage({
       "À rendre",
       !blank(assessment.deliverable_md) &&
         (examKindOf(assessment) !== "files" ||
-          assessment.submission_mode === "app" ||
+          submitModeOf(assessment) === "app" ||
           !blank(assessment.where_to_submit)),
     ],
     ["Comment c’est noté", !blank(assessment.evaluated_md) || !!grid],
@@ -302,9 +302,12 @@ export default async function AssessmentPage({
     files: assessment.files,
     isOral: assessment.project_role === "oral",
     published: dayJExtras.published
-        ? espaceUpToDate(dayJExtras.published.get(assessmentId), assessment)
+        ? espaceUpToDate(dayJExtras.published.get(assessmentId), {
+          ...assessment,
+          submit_mode: submitModeOf(assessment),
+        })
         : undefined,
-      submissionMode: assessment.submission_mode,
+      submitMode: submitModeOf(assessment),
     qcm: dayJExtras.qcm.get(assessmentId),
   });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";

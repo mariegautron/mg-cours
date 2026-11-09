@@ -11,7 +11,12 @@ import { listModuleGroups } from "@/lib/students/queries";
 import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
 import { todayInParis } from "@/lib/modules/next-session";
 import { DayJBlock } from "@/components/assessments/day-j-block";
-import { dayJReadiness, espaceUpToDate, upcomingAssessments } from "@/lib/assessments/day-j";
+import {
+  dayJReadiness,
+  espaceUpToDate,
+  submitModeOf,
+  upcomingAssessments,
+} from "@/lib/assessments/day-j";
 import { loadDayJExtras } from "@/lib/assessments/day-j-queries";
 import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { Pill } from "@/components/dashboard/pill";
@@ -151,9 +156,9 @@ export default async function ModuleAssessmentsPage({
       files: a.files,
       isOral: a.project_role === "oral",
       published: extras.published
-        ? espaceUpToDate(extras.published.get(a.id), a)
+        ? espaceUpToDate(extras.published.get(a.id), { ...a, submit_mode: submitModeOf(a) })
         : undefined,
-      submissionMode: a.submission_mode,
+      submitMode: submitModeOf(a),
       qcm: extras.qcm.get(a.id),
     });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";

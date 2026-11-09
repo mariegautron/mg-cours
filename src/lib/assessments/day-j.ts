@@ -25,8 +25,8 @@ export interface DayJInput {
   examKind: string | null;
   type: string | null;
   whereToSubmit: string | null;
-  /** « app » : les étudiant·es rendent dans l'application, « Où rendre » est alors rempli. */
-  submissionMode?: string | null;
+  /** `submit_mode` « app » : les étudiant·es rendent dans l'application, « Où rendre » est rempli. */
+  submitMode?: string | null;
   files: unknown;
   isOral?: boolean;
   /** Sujet publié et à jour dans l'espace des étudiant·es ; `undefined` = inconnu. */
@@ -111,7 +111,7 @@ export function dayJReadiness(i: DayJInput): DayJ {
   if (!isQcm && !isOral && kind === "files") {
     add(
       "where",
-      i.submissionMode === "app" || !!i.whereToSubmit?.trim(),
+      i.submitMode === "app" || !!i.whereToSubmit?.trim(),
       "Où rendre",
       "Indique où rendre le travail.",
     );
@@ -153,6 +153,12 @@ export function dayJReadiness(i: DayJInput): DayJ {
  * L'évaluation publiée dans l'espace correspond-elle encore à l'évaluation ? Une modification du
  * titre, de la date, de « Où rendre », du mode de rendu ou du sujet demande une mise à jour.
  */
+/** Mode de dépôt (`submit_mode`, colonne absente des types générés). */
+export function submitModeOf(row: object): string | null {
+  const v = (row as { submit_mode?: unknown }).submit_mode;
+  return typeof v === "string" ? v : null;
+}
+
 export function espaceUpToDate(
   published:
     | {
@@ -167,7 +173,7 @@ export function espaceUpToDate(
     title: string;
     date: string | null;
     where_to_submit: string | null;
-    submission_mode?: string | null;
+    submit_mode?: string | null;
     objective: string | null;
     subject: string | null;
     deliverable_md: string | null;
@@ -176,7 +182,7 @@ export function espaceUpToDate(
 ): boolean {
   if (!published) return false;
   const sections = subjectSections(current).map((x) => ({ heading: x.heading, text: x.text }));
-  const mode = current.submission_mode === "app" ? "app" : "elsewhere";
+  const mode = current.submit_mode === "app" ? "app" : "elsewhere";
   return (
     published.title === current.title &&
     (published.date ?? null) === (current.date?.slice(0, 10) ?? null) &&

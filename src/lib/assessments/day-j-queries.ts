@@ -1,4 +1,4 @@
-import { dayJReadiness } from "@/lib/assessments/day-j";
+import { dayJReadiness, submitModeOf } from "@/lib/assessments/day-j";
 import { parseEspace, type EspaceEvaluation } from "@/lib/modules/espace";
 import { createClient } from "@/lib/supabase/server";
 
@@ -114,7 +114,7 @@ export async function listUpcomingAssessments(
       examKind: a.exam_kind,
       type: a.type,
       whereToSubmit: a.where_to_submit,
-      submissionMode: a.submission_mode,
+      submitMode: submitModeOf(a),
       files: a.files,
       isOral: a.project_role === "oral",
       qcm: z
