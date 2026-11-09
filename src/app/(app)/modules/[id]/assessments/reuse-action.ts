@@ -43,6 +43,11 @@ export async function reuseAssessment(moduleId: string, formData: FormData): Pro
       `/modules/${moduleId}/assessments/add?erreur=${encodeURIComponent(failure("reprendre l’évaluation"))}`,
     );
   }
+  // « Reprise : à relire » jusqu'au premier enregistrement (sans effet si la base n'est pas à jour).
+  await supabase
+    .from("assessment")
+    .update({ copied_from_id: source.id, needs_review: true })
+    .eq("id", created.id);
   const { copied } = await copyAssessmentFiles(
     supabase,
     auth.user.id,

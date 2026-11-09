@@ -48,16 +48,14 @@ function publicationInfo(
 
 export default async function ModuleOutlinePage({ params }: PageProps<"/modules/[id]/outline">) {
   const { id } = await params;
-  const [mod, documents, expectations, outline, courses, assessments] = await Promise.all(
-    [
-      getModule(id),
-      getModuleDocuments(id),
-      getModuleExpectations(id),
-      getOutline(id),
-      getModuleCourses(id),
-      listModuleAssessments(id),
-    ],
-  );
+  const [mod, documents, expectations, outline, courses, assessments] = await Promise.all([
+    getModule(id),
+    getModuleDocuments(id),
+    getModuleExpectations(id),
+    getOutline(id),
+    getModuleCourses(id),
+    listModuleAssessments(id),
+  ]);
   if (!mod) notFound();
   // Même calcul que la page Couverture et que le PDF : séances et évaluations (pas les ressources).
   const expectationCoverage = await getExpectationCoverageView(id);
@@ -98,6 +96,17 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
       units: expectations.filter((e) => e.kind === "unit").length,
     },
   });
+  // Évaluation reprise d'un autre module, pas encore relue : son sujet partirait tel quel.
+  const toReread = regular.filter((a) => a.needs_review);
+  if (toReread.length)
+    checks.push({
+      key: "reprise",
+      ok: false,
+      title: `${toReread.length} évaluation${toReread.length > 1 ? "s" : ""} reprise${toReread.length > 1 ? "s" : ""} d’un autre module, à relire`,
+      detail: toReread.map((a) => a.title).join(", "),
+      to: `/assessments/${toReread[0].id}/edit`,
+      toLabel: "Relire",
+    });
   const todo = checks.filter((c) => !c.ok).length;
 
   const generatedLabel =
