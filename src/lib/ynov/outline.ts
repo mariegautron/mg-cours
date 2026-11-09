@@ -6,7 +6,7 @@
  */
 
 import { formatTime } from "@/lib/modules/course-duration";
-import { publishableText } from "@/lib/ynov/private-text";
+import { pdfSafe, plainLine, publishableText } from "@/lib/ynov/private-text";
 import { schoolYear } from "@/lib/ynov/teacher-name";
 
 export const COURSE_TYPE_LABELS: Record<string, string> = {
@@ -145,18 +145,24 @@ export function buildOutlineContent(input: OutlineInput): OutlineContent {
   const assessments = (input.assessments ?? []).filter((a) => !a.makeup_of_id);
   const sessions = ordered.map<OutlineSession>((c, i) => ({
     number: i + 1,
-    title: c.title,
+    title: pdfSafe(plainLine(c.title)).text || c.title,
     typeLabel: COURSE_TYPE_LABELS[c.type] ?? c.type,
     sessionDate: c.session_date,
     startTime: formatTime(c.start_time ?? null) || null,
     endTime: formatTime(c.end_time ?? null) || null,
-    objectives: c.learning_objectives,
-    animation: publishableText(c.animation_notes).text || null,
-    assessment: evaluationMarkdown(
-      assessments.filter((a) => a.course_id && a.course_id === c.id),
-      c.assessment_notes,
-    ),
-    material: publishableText(c.material).text || null,
+    // Objectifs : sans ligne privée, sans puce ni markdown, sans caractère non imprimable.
+    objectives: c.learning_objectives
+      .flatMap((o) => publishableText(o).text.split("\n"))
+      .map((o) => pdfSafe(plainLine(o)).text)
+      .filter(Boolean),
+    animation: pdfSafe(publishableText(c.animation_notes).text).text || null,
+    assessment: pdfSafe(
+      evaluationMarkdown(
+        assessments.filter((a) => a.course_id && a.course_id === c.id),
+        c.assessment_notes,
+      ),
+    ).text,
+    material: pdfSafe(publishableText(c.material).text).text || null,
   }));
 
   const firstDate =
