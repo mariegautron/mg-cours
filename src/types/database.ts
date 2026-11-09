@@ -2600,6 +2600,7 @@ export type Database = {
       quiz_attempt: {
         Row: {
           answers: Json
+          clock_started_at: string | null
           auto_score: number | null
           calls_count: number
           calls_window_start: string | null
@@ -2633,6 +2634,7 @@ export type Database = {
         }
         Insert: {
           answers?: Json
+          clock_started_at?: string | null
           auto_score?: number | null
           calls_count?: number
           calls_window_start?: string | null
@@ -2666,6 +2668,7 @@ export type Database = {
         }
         Update: {
           answers?: Json
+          clock_started_at?: string | null
           auto_score?: number | null
           calls_count?: number
           calls_window_start?: string | null
@@ -3551,6 +3554,7 @@ export type Database = {
         Returns: Json
       }
       mg_quiz_session: { Args: { p_token_hash: string }; Returns: Json }
+      mg_quiz_clock: { Args: { p_token_hash: string }; Returns: Json }
       mg_quiz_start: { Args: { p_token_hash: string }; Returns: Json }
       mg_quiz_submit: {
         Args: { p_answers?: Json; p_token_hash: string }

@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 
 import { ActionError } from "@/components/action-error";
 import { startQuiz } from "@/app/q/[token]/actions";
+import { QuizRunner } from "@/components/quiz/quiz-runner";
+import type { PublicQuizState } from "@/lib/quiz/public";
 import { Button } from "@/components/ui/button";
 
 const dateTime = (iso: string) =>
@@ -34,11 +36,14 @@ export function QuizStart({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Copie commencée : les questions s'affichent tout de suite, sans recharger la page.
+  const [started, setStarted] = useState<PublicQuizState | null>(null);
 
   const start = () =>
     startTransition(async () => {
       const result = await startQuiz(token);
-      if (result.status === "in_progress" || result.status === "submitted") router.refresh();
+      if (result.status === "in_progress" && Array.isArray(result.questions)) setStarted(result);
+      else if (result.status === "in_progress" || result.status === "submitted") router.refresh();
       else if (result.status === "unavailable")
         setError("Le service ne répond pas. Réessayez dans un instant.");
       else
@@ -46,6 +51,20 @@ export function QuizStart({
           "Ce QCM n’est pas ouvert en ce moment : il est peut-être fermé ou pas encore ouvert. Rechargez la page.",
         );
     });
+
+  if (started) {
+    return (
+      <QuizRunner
+        token={token}
+        title={String(started.title ?? title)}
+        instructions={String(started.instructions ?? "")}
+        deadlineAt={typeof started.deadline_at === "string" ? started.deadline_at : null}
+        serverNow={String(started.server_now ?? new Date().toISOString())}
+        questions={started.questions as never}
+        initialAnswers={(started.answers ?? {}) as never}
+      />
+    );
+  }
 
   return (
     <section className="space-y-4">

@@ -371,28 +371,28 @@ export async function prepareLinks(
   formData: FormData,
 ): Promise<LinksState> {
   const send = formData.get("send") === "on";
-  const [quiz, assessment] = await Promise.all([
+  const supabase = await createClient();
+  // Lectures indépendantes en parallèle (la préparation prenait plus de 8 s pour une personne).
+  const [quiz, assessment, { data: auth }, rules] = await Promise.all([
     getQuizByAssessment(assessmentId),
     getAssessment(assessmentId),
+    supabase.auth.getUser(),
+    getSchoolRulesForModule(moduleId),
   ]);
-  // Réserve du QCM (US-157) : le tirage ne pioche que dans ses questions.
-  const bank = await loadBank(quiz?.id);
   if (!quiz || !assessment || assessment.module_id !== moduleId)
     return { errors: ["Ce QCM n’existe plus."] };
   if (quiz.rules.length === 0) return { errors: ["Ajoute d’abord au moins une règle de tirage."] };
-
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { errors: ["Ta session a expiré : reconnecte-toi puis réessaie."] };
 
-  const { eligible: students } = await passingStudents(
-    assessmentId,
-    gradingTargets(false, assessment.groups).flatMap((t) => t.students),
-  );
-  const { data: existing } = await supabase
-    .from("quiz_attempt")
-    .select("student_id")
-    .eq("quiz_id", quiz.id);
+  // Réserve du QCM (US-157) : le tirage ne pioche que dans ses questions.
+  const [bank, { eligible: students }, { data: existing }] = await Promise.all([
+    loadBank(quiz.id),
+    passingStudents(
+      assessmentId,
+      gradingTargets(false, assessment.groups).flatMap((t) => t.students),
+    ),
+    supabase.from("quiz_attempt").select("student_id").eq("quiz_id", quiz.id),
+  ]);
   const have = new Set((existing ?? []).map((a) => a.student_id));
   const todo = students.filter((s) => !have.has(s.id));
   if (todo.length === 0)
@@ -444,7 +444,6 @@ export async function prepareLinks(
   }
 
   const base = clientEnv.NEXT_PUBLIC_APP_URL;
-  const rules = await getSchoolRulesForModule(moduleId);
   const links: GeneratedLink[] = [];
   const errors: string[] = [];
   const notices: string[] = [];

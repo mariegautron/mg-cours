@@ -57,6 +57,8 @@ export default async function QuizLinksPage({
     : null;
   const inProgress = attempts.filter((a) => a.status === "in_progress").length;
   const done = attempts.filter((a) => a.status === "submitted").length;
+  // Lien préparé, copie pas encore ouverte (« Commencer » pas cliqué).
+  const notStarted = attempts.filter((a) => a.status === "ready").length;
   const card = "bg-card rounded-xl border p-5";
 
   return (
@@ -270,7 +272,9 @@ export default async function QuizLinksPage({
               Suivi des copies
             </h2>
             <span className="text-muted-foreground text-sm">
-              {inProgress} en cours, {done} terminé{done > 1 ? "s" : ""}, {missing} pas encore
+              {inProgress} en cours, {done} terminé{done > 1 ? "s" : ""}, {notStarted} pas encore
+              commencé{notStarted > 1 ? "s" : ""}
+              {missing > 0 ? `, ${missing} sans lien` : ""}
             </span>
           </div>
           {attempts.length === 0 ? (

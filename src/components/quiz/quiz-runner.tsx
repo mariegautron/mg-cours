@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ActionError } from "@/components/action-error";
-import { saveQuiz, submitQuiz } from "@/app/q/[token]/actions";
+import { beginQuizClock, saveQuiz, submitQuiz } from "@/app/q/[token]/actions";
 import { Markdown } from "@/components/markdown";
 import { QuestionView } from "@/components/questions/question-view";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,10 @@ export function QuizRunner({
   const [announcement, setAnnouncement] = useState("");
   // Écart entre l'horloge du serveur et celle de l'appareil : le chrono suit le serveur.
   const offset = useRef(0);
-  const deadline = deadlineAt ? new Date(deadlineAt).getTime() : null;
+  // Heure limite : celle du serveur, recalée quand les questions s'affichent (chrono qui ne mange
+  // plus le temps d'ouverture).
+  const [clock, setClock] = useState({ deadlineAt, serverNow });
+  const deadline = clock.deadlineAt ? new Date(clock.deadlineAt).getTime() : null;
   const [remaining, setRemaining] = useState<number | null>(null);
 
   const online = useOnline();
@@ -217,10 +220,22 @@ export function QuizRunner({
     }
   }, [token, router, dryRun]);
 
+  useEffect(() => {
+    if (dryRun || deadlineAt === null) return;
+    let cancelled = false;
+    void beginQuizClock(token).then((r) => {
+      if (!cancelled && r?.deadlineAt)
+        setClock({ deadlineAt: r.deadlineAt, serverNow: r.serverNow });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, dryRun, deadlineAt]);
+
   // Chrono : suit l'heure du serveur ; annonces polies à 5 min et 1 min ; remise automatique à 0.
   useEffect(() => {
     if (deadline === null) return;
-    offset.current = new Date(serverNow).getTime() - Date.now();
+    offset.current = new Date(clock.serverNow).getTime() - Date.now();
     const tick = () => {
       const left = Math.max(0, Math.floor((deadline - Date.now() - offset.current) / 1000));
       setRemaining(left);
@@ -230,7 +245,7 @@ export function QuizRunner({
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [deadline, serverNow]);
+  }, [deadline, clock.serverNow]);
 
   useEffect(() => {
     if (remaining === 0 && !submitted.current && !submitting) void submit();
