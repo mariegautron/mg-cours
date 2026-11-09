@@ -74,7 +74,12 @@ export function ShareLinkPanel({
 
   function run(fn: () => Promise<ShareState>) {
     setNote("");
-    start(async () => setState(await fn()));
+    start(async () => {
+      const res = await fn();
+      setState(res);
+      // « Publié le … » et « Le lien n'est plus à jour » viennent de la page : on la relit.
+      router.refresh();
+    });
   }
 
   async function copy(url: string) {
