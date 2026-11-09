@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 
 import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
 import type { DrawnQuestion } from "@/lib/quiz/types";
+import { readAnswer } from "@/lib/quiz/grading";
 import { createClient } from "@/lib/supabase/server";
 import { OpenReview, type ReviewCopy } from "@/components/assessments/open-review";
 import { loadOpenReviewContext, obj, readEntries } from "@/lib/assessments/open-review-server";
@@ -101,13 +102,23 @@ export default async function CorrectPage({
             points: q.points,
             expected: q.general_feedback,
           })),
+          // Réponse lisible quel que soit le type : texte libre, nombre, ou choix cochés.
           answers: Object.fromEntries(
-            a.drawn.map((_, i) => {
-              const raw = a.answers[String(i + 1)];
-              const text =
-                typeof raw === "object" && raw !== null && "text" in raw
-                  ? String((raw as { text: unknown }).text ?? "")
-                  : "";
+            a.drawn.map((q, i) => {
+              const raw =
+                a.answers[String(i + 1)] ?? a.answers[q.question_id] ?? a.answers[String(i)];
+              const ans = readAnswer(raw, q);
+              const text = !ans
+                ? ""
+                : "text" in ans
+                  ? ans.text
+                  : "number" in ans
+                    ? ans.number
+                    : ans.choices.length
+                      ? ans.choices
+                          .map((c) => `☑ ${q.choices[c]?.text ?? `choix ${c + 1}`}`)
+                          .join("\n")
+                      : "";
               return [String(i + 1), text];
             }),
           ),
@@ -138,6 +149,28 @@ export default async function CorrectPage({
           versions,
         };
       });
+      // Personnes visées sans copie (pas de lien préparé, rien rendu) : une ligne grise, jamais notée.
+      const withAttempt = new Set(ctx.attempts.map((a) => a.studentId));
+      const missing = new Map<string, string>();
+      for (const g of assessment.groups)
+        for (const m of g.members)
+          if (!withAttempt.has(m.id)) missing.set(m.id, `${m.first_name} ${m.last_name}`);
+      for (const [sid, name] of missing)
+        copies.push({
+          id: `none-${sid}`,
+          name,
+          submitted: false,
+          locked: false,
+          legacy: false,
+          writtenAt: null,
+          drawn: [],
+          answers: {},
+          entries: {},
+          globalComment: "",
+          criterionLetters: {},
+          versions: {},
+        });
+      copies.sort((x, y) => x.name.localeCompare(y.name, "fr"));
       return (
         <div className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">

@@ -598,8 +598,13 @@ export function OpenReview({
             <p className="text-muted-foreground text-xs">
               Pré-choisie seulement quand tous les paliers de ses questions sont identiques.
             </p>
-            {linkedCriteria
-              .filter((k) => selected.drawn.some((q) => (links[q.questionId] ?? []).includes(k.id)))
+            {criteria
+              // Tous les critères à noter : sans question rattachée, Marie choisit la lettre elle-même.
+              .filter(
+                (k) =>
+                  !k.isBonus ||
+                  selected.drawn.some((q) => (links[q.questionId] ?? []).includes(k.id)),
+              )
               .map((k) => {
                 const qs = selected.drawn.filter((q) => (links[q.questionId] ?? []).includes(k.id));
                 const suggested = suggestedCriterionLetter(
@@ -637,6 +642,11 @@ export function OpenReview({
                     {suggested && !chosen ? (
                       <span className="text-muted-foreground text-xs">proposée : {suggested}</span>
                     ) : null}
+                    {qs.length === 0 ? (
+                      <span className="text-muted-foreground text-xs">
+                        aucune question rattachée : à toi de choisir
+                      </span>
+                    ) : null}
                   </div>
                 );
               })}
@@ -660,8 +670,11 @@ export function OpenReview({
   });
   const readyRecaps = recaps.filter((r) => !r.locked && r.plan.blockers.length === 0);
 
-  function doWrite() {
-    startTransition(async () => {
+  // L'écriture ne dépend pas du rafraîchissement de la page : le bouton revient dès la réponse.
+  const [writing, setWriting] = useState(false);
+  async function doWrite() {
+    setWriting(true);
+    try {
       await f.flush();
       const res = await writeReviews(
         moduleId,
@@ -671,9 +684,13 @@ export function OpenReview({
       setWriteResult(res);
       if (!res.error) {
         setLockedIds((prev) => new Set([...prev, ...(res.written ?? [])]));
-        router.refresh();
+        startTransition(() => router.refresh());
       }
-    });
+    } catch {
+      setWriteResult({ error: "L’écriture n’a pas abouti : rien n’a changé, réessaie." });
+    } finally {
+      setWriting(false);
+    }
   }
 
   const status = f.hasConflict
@@ -801,12 +818,34 @@ export function OpenReview({
                   <ul className="text-muted-foreground">
                     {plan.perCriterion.map((line) => (
                       <li key={line.criterionId}>
-                        {line.label} : {line.letter} ·{" "}
+                        <span className="text-foreground">
+                          {line.label} : {line.letter}
+                        </span>
+                        {line.questions.length
+                          ? ` · ${line.questions
+                              .map((q) => `Q${q.position} ${fmt(q.points)}/${fmt(q.max)}`)
+                              .join(", ")}`
+                          : " · sans question rattachée"}
                         {line.questions
-                          .map((q) => `Q${q.position} ${fmt(q.points)}/${fmt(q.max)}`)
-                          .join(", ")}
+                          .filter((q) => q.comment.trim())
+                          .map((q) => (
+                            <p key={q.position} className="pl-3 text-xs">
+                              Q{q.position} : {q.comment.trim()}
+                            </p>
+                          ))}
                       </li>
                     ))}
+                    <li>
+                      <span className="text-foreground">Commentaire global : </span>
+                      {val(`${c.id}|global`).trim() || "aucun"}
+                    </li>
+                    {plan.notWritten.length ? (
+                      <li className="text-sun">
+                        Pas écrit : réponses {plan.notWritten.join(", ")} (non validées).
+                      </li>
+                    ) : (
+                      <li>Pas écrit : rien, toutes les réponses sont validées.</li>
+                    )}
                   </ul>
                 ) : !locked ? (
                   <ul className="text-sun">
@@ -833,10 +872,10 @@ export function OpenReview({
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
               type="button"
-              disabled={pending || f.dirty || f.hasConflict || readyRecaps.length === 0}
-              onClick={doWrite}
+              disabled={writing || f.dirty || f.hasConflict || readyRecaps.length === 0}
+              onClick={() => void doWrite()}
             >
-              {pending
+              {writing
                 ? "Écriture…"
                 : `Écrire ${readyRecaps.length} copie${readyRecaps.length > 1 ? "s" : ""}`}
             </Button>

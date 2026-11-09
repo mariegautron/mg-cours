@@ -160,9 +160,16 @@ export function planCopyWrite(input: {
   const perCriterion: WriteLine[] = [];
   for (const c of criteria) {
     const qs = drawn.filter((q) => (links[q.questionId] ?? []).includes(c.id));
-    if (qs.length === 0) continue;
+    // Un critère sans question rattachée reste à noter : Marie confirme sa lettre elle-même,
+    // sinon la copie serait incomplète (« en cours ») tout en paraissant écrite.
+    if (qs.length === 0 && c.isBonus) continue;
     const letter = criterionLetters[c.id] ?? "";
-    if (!isLetter(letter)) blockers.push(`Lettre à confirmer pour le critère « ${c.label} ».`);
+    if (!isLetter(letter))
+      blockers.push(
+        qs.length === 0
+          ? `Critère « ${c.label} » : aucune question rattachée, choisis sa lettre.`
+          : `Lettre à confirmer pour le critère « ${c.label} ».`,
+      );
     perCriterion.push({
       criterionId: c.id,
       label: c.label,
