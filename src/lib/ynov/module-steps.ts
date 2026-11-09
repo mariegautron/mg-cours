@@ -100,8 +100,11 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   const { courses, coverage, notes, adminDocs, invoice } = ctx;
 
   // Module déjà réalisé : progression envoyée = préparation faite ; facture émise = tout le reste.
-  const prepared = ctx.outlineSent || invoice !== null;
-  const delivered = invoice !== null;
+  // Vrais états des étapes, même pour un module terminé ou facturé : une facture déposée ne coche
+  // plus « Fait » sur la fiche, les séances, les notes ou les appréciations (seul l'envoi réel de
+  // la progression vaut pour les étapes de préparation qui la précèdent).
+  const prepared = ctx.outlineSent;
+  const delivered = false;
 
   const ficheDone = prepared || (ctx.hasFiche && ctx.expectationsCount > 0);
   const matchingDone =
