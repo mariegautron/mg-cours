@@ -183,3 +183,38 @@ export async function moveCourse(
   revalidatePath(`/modules/${moduleId}`);
   return { position: reordered.indexOf(courseId) + 1, total: ids.length };
 }
+
+/**
+ * « Attendus traités » d'une séance : remplace la liste des attendus du module reliés à cette
+ * séance (seuls les attendus du module sont acceptés). Sert à la couverture et au PDF.
+ */
+export async function setCourseExpectations(
+  moduleId: string,
+  courseId: string,
+  expectationIds: string[],
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const [{ data: course }, { data: expectations }] = await Promise.all([
+    supabase.from("course").select("id").eq("id", courseId).eq("module_id", moduleId).maybeSingle(),
+    supabase.from("module_expectation").select("id").eq("module_id", moduleId),
+  ]);
+  if (!course) return { error: NOT_FOUND.course };
+  const allowed = new Set((expectations ?? []).map((e) => e.id));
+  const wanted = [...new Set(expectationIds)].filter((id) => allowed.has(id));
+  const { error: delError } = await supabase
+    .from("course_expectation")
+    .delete()
+    .eq("course_id", courseId);
+  if (delError) return { error: failure("enregistrer") };
+  if (wanted.length) {
+    const { error } = await supabase
+      .from("course_expectation")
+      .insert(wanted.map((expectation_id) => ({ course_id: courseId, expectation_id })));
+    if (error) return { error: failure("enregistrer") };
+  }
+  revalidatePath(`/modules/${moduleId}/courses/${courseId}`);
+  revalidatePath(`/modules/${moduleId}/couverture`);
+  revalidatePath(`/modules/${moduleId}/outline`);
+  revalidatePath(`/modules/${moduleId}`);
+  return {};
+}

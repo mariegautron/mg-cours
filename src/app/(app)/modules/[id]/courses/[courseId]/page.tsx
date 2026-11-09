@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { CourseExpectationsPicker } from "@/components/modules/course-expectations-picker";
 import { notFound } from "next/navigation";
 import { ClipboardCheck, Play, NotebookPen, Pencil } from "lucide-react";
 
@@ -296,20 +298,12 @@ export default async function CoursePage({
             <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
               Attendus traités
             </h2>
-            {covered.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Aucun attendu relié à cette séance.</p>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
-                {covered.map((e) => (
-                  <li key={e.id}>
-                    <Pill className="min-h-9 py-1.5 !whitespace-normal">{e.label}</Pill>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link href={`/modules/${id}/matching`} className={`${BTN} mt-2`}>
-              Ajouter un attendu
-            </Link>
+            <CourseExpectationsPicker
+              moduleId={id}
+              courseId={courseId}
+              expectations={expectations.map((e) => ({ id: e.id, label: e.label }))}
+              initial={covered.map((e) => e.id)}
+            />
           </section>
 
           <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4 shadow-sm">

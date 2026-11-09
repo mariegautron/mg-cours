@@ -514,7 +514,7 @@ export default async function MatchingPage({
               {/* L'association attendu ↔ séance se fait dans l'écran Séances (« Attendus traités »). */}
               <p className="text-muted-foreground px-1 text-sm">
                 <Link href={`/modules/${mod.id}/courses`} className="underline underline-offset-2">
-                  Dire quelle séance traite cet attendu : dans l’écran Séances
+                  Dire quelle séance traite cet attendu : sur la fiche de la séance, bloc « Attendus traités »
                 </Link>
               </p>
             </section>

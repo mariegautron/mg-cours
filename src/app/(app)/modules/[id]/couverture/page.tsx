@@ -43,7 +43,7 @@ export default async function CoveragePage({ params }: PageProps<"/modules/[id]/
           className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
         >
           {summary.byNone} attendu{summary.byNone > 1 ? "s" : ""} sans cours ni évaluation : relie-
-          {summary.byNone > 1 ? "les" : "le"} à une séance (page des attendus) ou à une évaluation
+          {summary.byNone > 1 ? "les" : "le"} à une séance (fiche de la séance, « Attendus traités ») ou à une évaluation
           (page de l’évaluation, « Attendus évalués »).
         </p>
       ) : null}
