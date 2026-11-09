@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 
 import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
 
-import { groupResults, type SearchCandidate } from "@/lib/search/search";
+import {
+  groupResults,
+  normalize,
+  screenCandidates,
+  type SearchCandidate,
+} from "@/lib/search/search";
 import { schoolYearLabel } from "@/lib/modules/list-state";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,9 +27,37 @@ function sessionNumbers<C extends { id: string; module_id: string; position: num
     });
 }
 
+type StudentRow = {
+  scholar_group: string | null;
+  group_member: {
+    student_group: {
+      name: string;
+      module: { name: string; year: number; archived_at: string | null } | null;
+    } | null;
+  }[];
+};
+
+/** « M1 DEVFLSTK · Méthodologies Agile & Scrum · Groupe 3 » : promo, module en cours (ou le plus récent), groupe. */
+function studentContext(s: unknown): string {
+  const row = s as StudentRow;
+  const groups = (row.group_member ?? [])
+    .map((m) => m.student_group)
+    .filter((g): g is NonNullable<typeof g> => !!g?.module)
+    .sort(
+      (a, b) =>
+        Number(!!a.module!.archived_at) - Number(!!b.module!.archived_at) ||
+        b.module!.year - a.module!.year,
+    );
+  const best = groups[0];
+  return [row.scholar_group, best?.module?.name, best?.name].filter(Boolean).join(" · ");
+}
+
 /** Recherche globale : lecture seule, sous la session de Marie (RLS `owner_id = auth.uid()`). */
 export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams.get("q") ?? "";
+  const url = new URL(req.url);
+  const q = url.searchParams.get("q") ?? "";
+  // Module ouvert à l'écran (adresse /modules/{id}/…) : ses écrans passent dans « Aller à ».
+  const currentModuleId = url.searchParams.get("module");
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,10 +65,14 @@ export async function GET(req: Request) {
   if (!user) return NextResponse.json({ error: "Non connectée" }, { status: 401 });
 
   const [students, modules, resources, questions, courses, assessments, grids] = await Promise.all([
-    supabase.from("student").select("id, first_name, last_name, scholar_group"),
+    supabase
+      .from("student")
+      .select(
+        "id, first_name, last_name, scholar_group, group_member(student_group:student_group_id(name, module:module_id(name, year, archived_at)))",
+      ),
     supabase.from("module").select("id, name, ycode, year, archived_at"),
     supabase.from("resource").select("id, title").is("archived_at", null),
-    supabase.from("question").select("id, name").is("archived_at", null),
+    supabase.from("question").select("id, name, statement").is("archived_at", null),
     supabase
       .from("course")
       .select("id, title, position, module_id, module:module_id(name, archived_at)"),
@@ -43,11 +80,19 @@ export async function GET(req: Request) {
     supabase.from("grading_grid").select("id, name"),
   ]);
 
-  // Modules avec au moins une absence excusée (la page Rattrapages a quelque chose à montrer).
-  const { data: excused } = await supabase
-    .from("grade")
-    .select("assessment:assessment_id!inner(module_id)")
-    .eq("attendance", "absent_excused");
+  // Rattrapages : calcul coûteux (un décompte par module), fait seulement si la requête peut
+  // les viser (mot « rattrapage », absence excusée, ou nom d'un module).
+  const nq = normalize(q);
+  const wantsMakeups =
+    nq.length >= 2 &&
+    (["rattrapage", "absence", "excuse"].some((w) => w.startsWith(nq) || nq.includes(w)) ||
+      (modules.data ?? []).some((m) => normalize(m.name).includes(nq)));
+  const { data: excused } = !wantsMakeups
+    ? { data: [] }
+    : await supabase
+        .from("grade")
+        .select("assessment:assessment_id!inner(module_id)")
+        .eq("attendance", "absent_excused");
   const excusedModules = new Set(
     (excused ?? []).map((g) => (g.assessment as unknown as { module_id: string }).module_id),
   );
@@ -60,30 +105,37 @@ export async function GET(req: Request) {
     ).flat(),
   );
 
+  const currentModule = currentModuleId
+    ? ((modules.data ?? []).find((m) => m.id === currentModuleId) ?? null)
+    : null;
+
   const candidates: SearchCandidate[] = [
+    ...screenCandidates(currentModule ?? undefined),
     ...(students.data ?? []).map((s) => ({
       kind: "student" as const,
       id: s.id,
       label: `${s.first_name} ${s.last_name}`,
-      detail: s.scholar_group ?? undefined,
+      detail: studentContext(s) || undefined,
       terms: [`${s.last_name} ${s.first_name}`],
+      fuzzy: true,
     })),
     ...(modules.data ?? []).map((m) => ({
       kind: "module" as const,
       id: m.id,
       label: m.name,
-      detail: [schoolYearLabel(m.year), m.ycode].filter(Boolean).join(" · "),
+      detail: [schoolYearLabel(m.year), m.ycode, m.archived_at ? "Archivé" : null]
+        .filter(Boolean)
+        .join(" · "),
       terms: m.ycode ? [m.ycode] : [],
     })),
     // Espace étudiant·es : publier, partager, copier les liens (page « Espace étudiant·es » du module).
     ...(modules.data ?? [])
       .filter((m) => !m.archived_at)
       .map((m) => ({
-        kind: "module" as const,
+        kind: "goto" as const,
         id: `${m.id}-espace`,
-        label: "Espace étudiant·es",
-        detail: m.name,
-        terms: ["publier", "partager", "lien", "liens", "frise", "espace étudiant", m.name],
+        label: `Espace étudiant·es · ${m.name}`,
+        terms: ["publier", "partager", "lien", "liens", "frise", "espace étudiant"],
         href: `/modules/${m.id}/frise`,
       })),
     // Appréciations Hyperplanning : « appréciations » ouvre la liste du module.
@@ -145,7 +197,24 @@ export async function GET(req: Request) {
       terms: ["grille", "grilles", "critères"],
       href: `/assessments/grids/${g.id}/edit`,
     })),
-    ...(questions.data ?? []).map((x) => ({ kind: "question" as const, id: x.id, label: x.name })),
+    // Questions : le début de l'énoncé en titre, le code dessous.
+    ...(questions.data ?? []).map((x) => {
+      const statement = x.statement
+        .replace(/[#*_`>]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return {
+        kind: "question" as const,
+        id: x.id,
+        label: statement
+          ? statement.length > 80
+            ? `${statement.slice(0, 79)}…`
+            : statement
+          : x.name,
+        detail: x.name,
+        terms: [x.name],
+      };
+    }),
   ];
 
   return NextResponse.json({ groups: groupResults(candidates, q) });

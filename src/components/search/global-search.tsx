@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
+  ArrowRight,
   BookMarked,
   CalendarDays,
   CircleHelp,
@@ -15,6 +16,7 @@ import {
 import { Dialog } from "radix-ui";
 
 import {
+  GROUP_LIMIT,
   MIN_QUERY_LENGTH,
   normalize,
   type SearchGroup,
@@ -22,6 +24,7 @@ import {
 } from "@/lib/search/search";
 
 const ICONS: Record<SearchKind, typeof Search> = {
+  goto: ArrowRight,
   module: BookMarked,
   course: CalendarDays,
   student: GraduationCap,
@@ -34,6 +37,8 @@ const ICONS: Record<SearchKind, typeof Search> = {
 };
 
 const DEBOUNCE_MS = 200;
+/** Au-delà, « Toujours en cours… » avec un bouton pour relancer. */
+const SLOW_MS = 5000;
 
 /**
  * Recherche globale (US-117) : champ « Rechercher… » du menu et raccourci Ctrl K / ⌘K. Boîte de
@@ -52,7 +57,13 @@ export function GlobalSearch({
   className?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const moduleId = /^\/modules\/([0-9a-f-]{36})/.exec(pathname ?? "")?.[1] ?? null;
   const [open, setOpen] = useState(false);
+  // Catégories dépliées (« Voir les N autres ») et requête lente.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [slow, setSlow] = useState(false);
+  const [retry, setRetry] = useState(0);
   const [query, setQuery] = useState("");
   const [groups, setGroups] = useState<SearchGroup[]>([]);
   // `settled` : la réponse correspond à la requête affichée (évite « Aucun résultat » prématuré).
@@ -62,7 +73,11 @@ export function GlobalSearch({
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const flat = groups.flatMap((g) => g.results);
+  const shown = groups.map((g) => ({
+    ...g,
+    results: expanded.has(g.kind) ? g.results : g.results.slice(0, GROUP_LIMIT),
+  }));
+  const flat = shown.flatMap((g) => g.results);
   const trimmed = query.trim();
   const searchable = normalize(trimmed).length >= MIN_QUERY_LENGTH;
 
@@ -85,27 +100,37 @@ export function GlobalSearch({
 
   useEffect(() => {
     if (!searchable) return;
+    // Une requête à la fois : la précédente est annulée, seule la dernière réponse s'affiche.
     const controller = new AbortController();
+    let slowTimer: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(async () => {
+      slowTimer = setTimeout(() => setSlow(true), SLOW_MS);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
-          signal: controller.signal,
-        });
+        const params = new URLSearchParams({ q: trimmed });
+        if (moduleId) params.set("module", moduleId);
+        const res = await fetch(`/api/search?${params}`, { signal: controller.signal });
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as { groups: SearchGroup[] };
+        if (controller.signal.aborted) return;
         setGroups(data.groups);
+        setExpanded(new Set());
         setActive(0);
         setFailed(false);
         setSettled(trimmed);
       } catch (e) {
         if ((e as Error).name !== "AbortError") setFailed(true);
+      } finally {
+        clearTimeout(slowTimer);
+        if (!controller.signal.aborted) setSlow(false);
       }
     }, DEBOUNCE_MS);
     return () => {
       clearTimeout(timer);
+      clearTimeout(slowTimer);
       controller.abort();
+      setSlow(false);
     };
-  }, [trimmed, searchable]);
+  }, [trimmed, searchable, moduleId, retry]);
 
   const reset = (next: boolean) => {
     setOpen(next);
@@ -146,7 +171,9 @@ export function GlobalSearch({
         ? flat.length
           ? `${flat.length} résultat${flat.length > 1 ? "s" : ""}`
           : `Aucun résultat pour « ${trimmed} »`
-        : "Recherche en cours…";
+        : slow
+          ? "Toujours en cours… réessaie"
+          : "Recherche en cours…";
 
   let index = -1;
 
@@ -219,7 +246,7 @@ export function GlobalSearch({
             className="max-h-[50vh] overflow-y-auto p-2"
           >
             {showResults
-              ? groups.map((g) => (
+              ? shown.map((g) => (
                   <div key={g.kind} role="group" aria-label={g.title}>
                     <p
                       aria-hidden
@@ -253,6 +280,25 @@ export function GlobalSearch({
                         </div>
                       );
                     })}
+                    {g.total > g.results.length ? (
+                      g.moreHref ? (
+                        <button
+                          type="button"
+                          onClick={() => go(g.moreHref!)}
+                          className="text-primary hover:bg-accent min-h-11 w-full rounded-lg px-2 text-left text-sm font-medium underline-offset-2 hover:underline"
+                        >
+                          Voir les {g.total - g.results.length} autres
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setExpanded((prev) => new Set(prev).add(g.kind))}
+                          className="text-primary hover:bg-accent min-h-11 w-full rounded-lg px-2 text-left text-sm font-medium underline-offset-2 hover:underline"
+                        >
+                          Voir les {g.total - g.results.length} autres
+                        </button>
+                      )
+                    ) : null}
                   </div>
                 ))
               : null}
@@ -275,6 +321,17 @@ export function GlobalSearch({
                   }}
                 >
                   Effacer la recherche
+                </button>
+              </span>
+            ) : slow && !showResults ? (
+              <span className="flex flex-wrap items-center gap-3">
+                <span>{status}</span>
+                <button
+                  type="button"
+                  className="text-foreground focus-visible:ring-ring/50 min-h-11 rounded-md px-3 font-semibold underline underline-offset-2 focus-visible:ring-3"
+                  onClick={() => setRetry((n) => n + 1)}
+                >
+                  Réessayer
                 </button>
               </span>
             ) : (
