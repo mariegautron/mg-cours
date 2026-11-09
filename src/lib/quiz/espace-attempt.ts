@@ -21,22 +21,30 @@ export async function liveQuizForToken(
   if (!link) return null;
   const { data: quizzes } = await admin
     .from("quiz")
-    .select("id, title, closes_at, assessment!inner(module_id)")
+    .select("id, title, closes_at, assessment!inner(id, module_id, makeup_of_id)")
     .eq("assessment.module_id", link.module_id)
     .eq("status", "published");
   const open = (quizzes ?? []).find(
     (q) => !q.closes_at || new Date(q.closes_at).getTime() > Date.now(),
   );
   if (!open) return null;
-  const { data: att } = await admin
+  // Copie rendue sur ce QCM ou sur un QCM de la même famille (principal ou rattrapage) :
+  // une personne qui a passé le rattrapage n'est plus invitée à passer le QCM principal.
+  const a = open.assessment as unknown as { id: string; makeup_of_id: string | null };
+  const root = a.makeup_of_id ?? a.id;
+  const { data: atts } = await admin
     .from("quiz_attempt")
-    .select("submitted_at")
-    .eq("quiz_id", open.id)
+    .select("submitted_at, quiz!inner(assessment!inner(id, makeup_of_id))")
     .eq("student_id", link.student_id)
     .eq("status", "submitted")
     .is("revoked_at", null)
-    .limit(1);
-  return { title: open.title, closesAt: open.closes_at, submittedAt: att?.[0]?.submitted_at ?? null };
+    .order("submitted_at", { ascending: false });
+  const same = (atts ?? []).find((t) => {
+    const x = (t.quiz as unknown as { assessment: { id: string; makeup_of_id: string | null } })
+      .assessment;
+    return x.id === root || x.makeup_of_id === root;
+  });
+  return { title: open.title, closesAt: open.closes_at, submittedAt: same?.submitted_at ?? null };
 }
 
 /**
