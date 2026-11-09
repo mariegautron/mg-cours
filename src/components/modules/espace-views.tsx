@@ -15,7 +15,7 @@ import {
   type Espace,
   type EspaceEvaluation,
 } from "@/lib/modules/espace";
-import { lateLabel } from "@/lib/deposits/rules";
+import { lateLabel, parisDayTime } from "@/lib/deposits/rules";
 import { sessionHeading, type Frise } from "@/lib/modules/frise";
 import type { PublicSheet } from "@/lib/result-links/sheet";
 
@@ -134,13 +134,7 @@ function depositStatus(
 ): string | null {
   if (e.submit.mode !== "app") return null;
   if (deposit) {
-    const when = new Date(deposit.at).toLocaleString("fr-FR", {
-      timeZone: "Europe/Paris",
-      day: "numeric",
-      month: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const when = parisDayTime(deposit.at);
     return deposit.late > 0 ? `Rendu en retard (${lateLabel(deposit.late)})` : `Rendu le ${when}`;
   }
   if (due && due < today) {

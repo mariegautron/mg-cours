@@ -10,17 +10,10 @@ import {
 } from "@/app/espace/[token]/deposit-actions";
 import { Button } from "@/components/ui/button";
 import { ASSESSMENT_FILE_ACCEPT, ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
-import { lateLabel } from "@/lib/deposits/rules";
+import { lateLabel, parisDayTime } from "@/lib/deposits/rules";
 import { createClient } from "@/lib/supabase/client";
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-    day: "numeric",
-    month: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+const fmtDate = (iso: string) => parisDayTime(iso);
 
 const size = (n: number | null) =>
   n === null

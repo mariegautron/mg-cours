@@ -111,3 +111,17 @@ export function storageName(name: string): string {
     .slice(-100);
   return clean || "fichier";
 }
+
+/** « 8/11 à 0 h 18 » : jour et heure de Paris, à la française. */
+export function parisDayTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "numeric",
+    month: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("day")}/${get("month")} à ${Number(get("hour"))} h ${get("minute")}`;
+}

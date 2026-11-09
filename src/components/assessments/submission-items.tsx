@@ -23,7 +23,7 @@ import {
   validateFile,
   type SubmissionItemLike,
 } from "@/lib/projects/submission-items";
-import { lateLabel, lateMinutes } from "@/lib/deposits/rules";
+import { lateLabel, lateMinutes, parisDayTime } from "@/lib/deposits/rules";
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
 import { failure, SESSION_EXPIRED } from "@/lib/messages";
@@ -36,14 +36,7 @@ export interface SubmissionOwnerRow {
   versions?: number;
 }
 
-const fmtParis = (iso: string) =>
-  new Date(iso).toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-    day: "numeric",
-    month: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+const fmtParis = (iso: string) => parisDayTime(iso);
 
 /** Dépôt de l'étudiant·e (le plus récent), ou `null` si rien n'a été déposé par elle ou lui. */
 export function studentDeposit(items: SubmissionItemLike[]) {
