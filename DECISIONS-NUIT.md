@@ -8,6 +8,10 @@ Arnaud absent : chaque décision prise seule, l'option la plus prudente et réve
 | ------ | ------- | --------- |
 | `7317f78` (+ doc `b62703d`) | Règles de notation par école (rattrapages lot 6) | `20261126000000_school_grading_rules.sql` |
 | `617c161` | Chrono du QCM au premier affichage des questions (lot 4) | `20261126000001_quiz_clock_first_question.sql` |
+| `b3e4288` | Point d'étape + retrait des anciens Jalons | `20261126000002_progress_review.sql` |
+| `d2a8385` | Progression 1.7 « Reprise : à relire » / « Copiée de » | `20261126000003_assessment_copied_from.sql` |
+
+Reste (limite d'usage atteinte) : PARCOURS.md pas encore mis à jour pour ces 3 derniers commits ; suites des prompts de parcours non commencées.
 
 Ordre : appliquer les migrations avant (ou juste après) le push ; sans elles, l'appli garde les valeurs par défaut (YNOV) et l'ancien chrono, rien ne casse.
 
