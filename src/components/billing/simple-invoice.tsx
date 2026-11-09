@@ -41,6 +41,7 @@ export function SimpleInvoice({
   title,
   subtitle,
   href,
+  hasFile,
   children,
 }: {
   moduleId: string;
@@ -57,6 +58,8 @@ export function SimpleInvoice({
   title?: string;
   subtitle?: string;
   href?: string;
+  /** Un PDF de facture est déposé (sinon « Payée · PDF manquant »). */
+  hasFile?: boolean;
   children: ReactNode;
 }) {
   const [pending, start] = useTransition();
@@ -64,8 +67,23 @@ export function SimpleInvoice({
   const [dates, setDates] = useState({ sent: sentOn ?? today, paid: paidOn ?? today });
   const Icon = STATUS_ICON[status];
 
-  const toggle = (box: InvoiceBox, checked: boolean) =>
-    start(async () => setState(await setInvoiceStep(moduleId, box, checked, dates[box])));
+  // Les cases se cochent tout de suite (l'enregistrement suit) : plus d'attente de 5 s.
+  const [boxes, setBoxes] = useState({ sent, paid });
+  const [saved, setSaved] = useState(false);
+  const toggle = (box: InvoiceBox, checked: boolean) => {
+    setBoxes((b) =>
+      box === "sent"
+        ? { sent: checked, paid: checked ? b.paid : false }
+        : { sent: checked ? true : b.sent, paid: checked },
+    );
+    setSaved(false);
+    start(async () => {
+      const res = await setInvoiceStep(moduleId, box, checked, dates[box]);
+      setState(res);
+      if (res?.error) setBoxes({ sent, paid });
+      else setSaved(true);
+    });
+  };
 
   return (
     <section
@@ -88,7 +106,11 @@ export function SimpleInvoice({
         <p role="status">
           <Pill tone={status === "paid" ? "ok" : status === "to_deposit" ? "warn" : "wip"}>
             <Icon aria-hidden className="size-3.5" />
-            {status === "to_deposit" ? "Pas de facture déposée" : SIMPLE_STATUS_LABELS[status]}
+            {status === "to_deposit"
+              ? "Pas de facture déposée"
+              : status === "paid" && hasFile === false
+                ? "Payée · PDF manquant"
+                : SIMPLE_STATUS_LABELS[status]}
           </Pill>
         </p>
       </div>
@@ -102,12 +124,12 @@ export function SimpleInvoice({
 
       {children}
 
-      <fieldset className="space-y-3" disabled={pending}>
+      <fieldset className="space-y-3">
         <legend className="sr-only">Où en est ta facture</legend>
         {(
           [
-            { box: "sent", label: "Envoyée à l’école", checked: sent, date: sentOn },
-            { box: "paid", label: "Payée", checked: paid, date: paidOn },
+            { box: "sent", label: "Envoyée à l’école", checked: boxes.sent, date: sentOn },
+            { box: "paid", label: "Payée", checked: boxes.paid, date: paidOn },
           ] as const
         ).map(({ box, label, checked, date }) => (
           <div key={box} className="flex flex-wrap items-center gap-3">
@@ -145,6 +167,14 @@ export function SimpleInvoice({
             ) : null}
           </div>
         ))}
+        {boxes.paid && hasFile === false ? (
+          <p className="text-sun text-sm font-semibold">
+            Aucune facture déposée : dépose le PDF pour la retrouver.
+          </p>
+        ) : null}
+        <p role="status" className="text-muted-foreground min-h-5 text-sm">
+          {pending ? "Enregistrement…" : saved ? "Enregistré." : ""}
+        </p>
       </fieldset>
       {state?.error ? <ActionError error={state.error} /> : null}
     </section>

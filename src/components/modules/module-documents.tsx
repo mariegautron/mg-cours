@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Download, Eye } from "lucide-react";
@@ -20,7 +22,7 @@ import { agreementTitle, sortAgreements, type DocumentKind } from "@/lib/modules
 import { mimeOf, safeName } from "@/lib/storage/files";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/types/db";
-import { failure, SESSION_EXPIRED } from "@/lib/messages";
+import { SESSION_EXPIRED } from "@/lib/messages";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const EXTENSIONS = /\.(pdf|docx?|odt)$/i;
@@ -59,20 +61,23 @@ export function DocumentSlot({
     setUploading(file.name);
     setState({});
     const supabase = createClient();
+    // getUser() peut échouer sans que la session soit finie (réseau, verrou) : on relit la session
+    // locale avant de conclure à « session expirée ».
     const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) {
+    const user = auth.user ?? (await supabase.auth.getSession()).data.session?.user ?? null;
+    if (!user) {
       setUploading(null);
       return setState({ error: SESSION_EXPIRED });
     }
     const mime = mimeOf(file);
-    const path = `${auth.user.id}/${moduleId}/${crypto.randomUUID()}-${safeName(file.name)}`;
+    const path = `${user.id}/${moduleId}/${crypto.randomUUID()}-${safeName(file.name)}`;
 
     const { error: uploadError } = await supabase.storage
       .from("module-documents")
       .upload(path, file, { contentType: mime });
     if (uploadError) {
       setUploading(null);
-      return setState({ error: failure("déposer le fichier") });
+      return setState({ error: "Le fichier n’a pas pu être envoyé. Réessaie." });
     }
 
     const result = await registerModuleDocument(
@@ -228,13 +233,21 @@ export function ModuleDocuments({
         hint="Convention, avenants, convention de prestation : plusieurs fichiers possibles, avec un libellé et la date de signature. Attendue, mais ne bloque jamais la facture."
         documents={sortAgreements(documents.filter((d) => d.kind === "training_agreement"))}
       />
-      <DocumentSlot
-        moduleId={moduleId}
-        kind="external_invoice"
-        title="Facture émise hors application"
-        hint="PDF d’une facture faite avec un autre outil (ex. Henrri). Voir aussi la page Facturation."
-        documents={documents.filter((d) => d.kind === "external_invoice")}
-      />
+      {/* Un seul endroit pour déposer sa facture : la page Facture (mêmes fichiers). */}
+      <section className="rounded-lg border p-4 text-sm">
+        <h3 className="font-medium">Ma facture</h3>
+        <p className="text-muted-foreground">
+          {(() => {
+            const n = documents.filter((d) => d.kind === "external_invoice").length;
+            return n
+              ? `${n} fichier${n > 1 ? "s" : ""} déposé${n > 1 ? "s" : ""}.`
+              : "Pas encore de facture déposée.";
+          })()}{" "}
+          <Link href={`/modules/${moduleId}/billing`} className="underline underline-offset-2">
+            Voir la page Facture
+          </Link>
+        </p>
+      </section>
     </div>
   );
 }

@@ -18,10 +18,9 @@ import {
 } from "@/lib/invoice/simple";
 import { todayInParis } from "@/lib/modules/next-session";
 import { getModuleDocuments } from "@/lib/modules/queries";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Facturation" };
-
-const DETAIL_LIMIT = 12;
 
 const KPI: { status: SimpleInvoiceStatus; label: string }[] = [
   { status: "to_deposit", label: "À déposer" },
@@ -31,25 +30,44 @@ const KPI: { status: SimpleInvoiceStatus; label: string }[] = [
 ];
 
 /**
- * Facturation de tous les modules (maquette « FacSimple ») : chaque module porte le dépôt de sa
- * facture et deux cases, « Envoyée à l'école » et « Payée » ; le même bloc est en bas de la fiche
- * du module. Chaque case s'enregistre toute seule.
+ * Facturation de tous les modules (maquette « FacSimple ») : les modules aux cours faits (ou dont une
+ * facture est déposée), la dernière séance la plus ancienne d'abord, chacun replié sur une ligne ;
+ * dépliée, la ligne porte le dépôt de la facture et les cases « Envoyée » / « Payée ».
  */
-export default async function BillingPage() {
-  const [rows, withFile] = await Promise.all([listBillingOverview(), listModulesWithInvoiceFile()]);
+export default async function BillingPage({ searchParams }: PageProps<"/billing">) {
+  const all = (await searchParams).tous === "1";
+  const supabase = await createClient();
+  const [rows, withFile, { data: courses }] = await Promise.all([
+    listBillingOverview(),
+    listModulesWithInvoiceFile(),
+    supabase.from("course").select("module_id, session_date, completion"),
+  ]);
   const today = todayInParis();
   const statusOf = (r: (typeof rows)[number]) =>
     simpleInvoiceStatus({ hasFile: withFile.has(r.module.id), state: r.module.iceberg_state });
   const count = (status: SimpleInvoiceStatus) => rows.filter((r) => statusOf(r) === status).length;
-  // Les blocs détaillés (dépôt + cases) : les factures à suivre d'abord, au plus 12 ; les autres
-  // restent un clic plus loin, sur la facturation de leur module.
-  const ordered = [...rows].sort(
-    (a, b) => Number(statusOf(a) === "paid") - Number(statusOf(b) === "paid"),
-  );
-  const shown = ordered.slice(0, DETAIL_LIMIT);
-  const rest = ordered.slice(DETAIL_LIMIT);
+  // Cours faits et date de la dernière séance, par module.
+  const perModule = new Map<string, { total: number; done: number; last: string }>();
+  for (const c of courses ?? []) {
+    const cur = perModule.get(c.module_id) ?? { total: 0, done: 0, last: "" };
+    cur.total += 1;
+    if (c.completion === "done" || c.completion === "partial") cur.done += 1;
+    if (c.session_date && c.session_date > cur.last) cur.last = c.session_date;
+    perModule.set(c.module_id, cur);
+  }
+  const coursesDone = (id: string) => {
+    const p = perModule.get(id);
+    return !!p && p.total > 0 && p.done === p.total;
+  };
+  const listed = rows
+    .filter((r) => all || coursesDone(r.module.id) || withFile.has(r.module.id))
+    .sort((a, b) =>
+      (perModule.get(a.module.id)?.last || "9999").localeCompare(
+        perModule.get(b.module.id)?.last || "9999",
+      ),
+    );
   const details = await Promise.all(
-    shown.map(async (r) => {
+    listed.map(async (r) => {
       const [documents, tracking] = await Promise.all([
         getModuleDocuments(r.module.id),
         getInvoiceTracking(r.module.id),
@@ -92,83 +110,73 @@ export default async function BillingPage() {
               </li>
             ))}
           </ul>
-          <ul className="space-y-4">
-            {details.map(({ row: r, invoiceDocs, tracking, status }) => (
-              <li key={r.module.id} className="space-y-1">
-                <SimpleInvoice
-                  moduleId={r.module.id}
-                  title={r.module.name}
-                  href={`/modules/${r.module.id}/billing`}
-                  subtitle={`${r.module.school?.name ?? "École non renseignée"} · ${schoolYearOf(r.module.year)} · ${r.module.total_hours} h`}
-                  status={status}
-                  sent={isSent(r.module.iceberg_state)}
-                  paid={isPaid(r.module.iceberg_state)}
-                  sentOn={tracking.sentOn}
-                  paidOn={tracking.paidOn}
-                  datesAvailable={tracking.available}
-                  today={today}
-                >
-                  <DocumentSlot
-                    moduleId={r.module.id}
-                    kind="external_invoice"
-                    title="Ma facture (PDF)"
-                    hint="Dépose ici le PDF de ta facture."
-                    documents={invoiceDocs}
-                  />
-                </SimpleInvoice>
-                <div className="px-2 text-sm">
-                  <p className="font-medium">{r.next.label}</p>
-                  {r.kind === "blocked" ? (
-                    <ul className="text-muted-foreground list-disc pl-5">
-                      {r.reasons.map((reason) => (
-                        <li key={reason}>{reason}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {rest.length > 0 ? (
-            <section aria-labelledby="others" className="space-y-2">
-              <h2 id="others" className="text-lg font-semibold">
-                Autres modules ({rest.length})
-              </h2>
-              <ul className="divide-y rounded-xl border text-sm">
-                {rest.map((r) => (
-                  <li key={r.module.id}>
-                    <Link
-                      href={`/modules/${r.module.id}/billing`}
-                      className="hover:bg-accent flex flex-wrap items-center justify-between gap-2 p-3"
-                    >
-                      <span>
-                        {r.module.name}{" "}
-                        <span className="text-muted-foreground text-sm">
-                          · {schoolYearOf(r.module.year)}
-                        </span>
-                      </span>
-                      <Pill tone={statusOf(r) === "paid" ? "ok" : "wip"}>
-                        {SIMPLE_STATUS_LABELS[statusOf(r)]}
-                      </Pill>
-                    </Link>
-                    <div className="px-3 pb-3">
-                      <p className="font-medium">{r.next.label}</p>
-                      {r.kind === "blocked" ? (
-                        <ul className="text-muted-foreground list-disc pl-5">
-                          {r.reasons.map((reason) => (
-                            <li key={reason}>{reason}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-          <p className="text-muted-foreground text-sm">
-            Le même bloc apparaît en bas de la fiche de chaque module.
+          <p className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="text-muted-foreground">
+              {all
+                ? "Tous les modules."
+                : "Modules aux cours faits, ou dont la facture est déposée."}
+            </span>
+            <Link
+              href={all ? "/billing" : "/billing?tous=1"}
+              className="font-semibold underline underline-offset-2"
+            >
+              {all ? "Seulement ceux à facturer" : "Tous les modules"}
+            </Link>
           </p>
+          {details.length === 0 ? (
+            <EmptyState
+              compact
+              title="Rien à facturer pour l’instant"
+              description="Un module apparaît ici quand toutes ses séances sont faites."
+            />
+          ) : (
+            <ul className="divide-y rounded-xl border">
+              {details.map(({ row: r, invoiceDocs, tracking, status }) => (
+                <li key={r.module.id}>
+                  <details>
+                    <summary className="hover:bg-accent flex min-h-12 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+                      <strong>{r.module.name}</strong>
+                      <span className="text-muted-foreground text-sm">
+                        {r.module.school?.name ?? "École non renseignée"} ·{" "}
+                        {schoolYearOf(r.module.year)} · {r.module.total_hours} h
+                      </span>
+                      <Pill
+                        tone={status === "paid" ? "ok" : status === "to_deposit" ? "warn" : "wip"}
+                      >
+                        {status === "paid" && invoiceDocs.length === 0
+                          ? "Payée · PDF manquant"
+                          : SIMPLE_STATUS_LABELS[status]}
+                      </Pill>
+                      <span className="text-primary ml-auto text-sm font-semibold">Ouvrir</span>
+                    </summary>
+                    <div className="p-3">
+                      <SimpleInvoice
+                        moduleId={r.module.id}
+                        title={r.module.name}
+                        href={`/modules/${r.module.id}/billing`}
+                        status={status}
+                        hasFile={invoiceDocs.length > 0}
+                        sent={isSent(r.module.iceberg_state)}
+                        paid={isPaid(r.module.iceberg_state)}
+                        sentOn={tracking.sentOn}
+                        paidOn={tracking.paidOn}
+                        datesAvailable={tracking.available}
+                        today={today}
+                      >
+                        <DocumentSlot
+                          moduleId={r.module.id}
+                          kind="external_invoice"
+                          title="Ma facture (PDF)"
+                          hint="Dépose ici le PDF de ta facture."
+                          documents={invoiceDocs}
+                        />
+                      </SimpleInvoice>
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>

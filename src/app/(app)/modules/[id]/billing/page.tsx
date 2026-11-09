@@ -94,6 +94,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
           hasFile: documents.some((d) => d.kind === "external_invoice"),
           state: mod.iceberg_state,
         })}
+        hasFile={documents.some((d) => d.kind === "external_invoice")}
         sent={isSent(mod.iceberg_state)}
         paid={isPaid(mod.iceberg_state)}
         sentOn={tracking.sentOn}
