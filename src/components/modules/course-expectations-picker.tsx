@@ -10,7 +10,10 @@ export function CourseExpectationsPicker({
   courseId,
   expectations,
   initial,
+  suggested = [],
 }: {
+  /** Reliés à une ressource du déroulé : proposés, jamais cochés d'office. */
+  suggested?: string[];
   moduleId: string;
   courseId: string;
   expectations: { id: string; label: string }[];
@@ -45,7 +48,14 @@ export function CourseExpectationsPicker({
             disabled={pending}
             onChange={() => toggle(e.id)}
           />
-          <span>{e.label}</span>
+          <span>
+            {e.label}
+            {suggested.includes(e.id) && !chosen.has(e.id) ? (
+              <span className="text-primary block text-xs font-semibold">
+                Proposé : relié à une ressource du déroulé
+              </span>
+            ) : null}
+          </span>
         </label>
       ))}
       <p role="status" className="text-muted-foreground min-h-5 text-xs">

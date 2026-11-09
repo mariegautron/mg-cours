@@ -324,15 +324,35 @@ export default async function AssessmentPage({
     files: assessment.files,
     isOral: assessment.project_role === "oral",
     published: dayJExtras.published
-        ? espaceUpToDate(dayJExtras.published.get(assessmentId), {
+      ? espaceUpToDate(dayJExtras.published.get(assessmentId), {
           ...assessment,
           submit_mode: submitModeOf(assessment),
         })
-        : undefined,
-      submitMode: submitModeOf(assessment),
+      : undefined,
+    submitMode: submitModeOf(assessment),
     qcm: dayJExtras.qcm.get(assessmentId),
   });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
+  const evaluatedSection = (
+    <section aria-labelledby="at" className={card}>
+      <h2 id="at" className="font-heading mb-1.5 text-lg font-bold">
+        Attendus évalués
+      </h2>
+      <p className="text-muted-foreground mb-2 text-sm">Choisis ceux que l’épreuve vérifie.</p>
+      <AssessmentExpectations
+        moduleId={id}
+        assessmentId={assessmentId}
+        expectations={moduleExpectations.map((e) => ({ id: e.id, label: e.label }))}
+        initialIds={evaluatedExpectations.byAssessment.get(assessmentId) ?? []}
+        available={evaluatedExpectations.available}
+        suggestedIds={expectationsCitedByCriteria(
+          (assessment.grading_grid?.criteria ?? []).map((c) => c.reference),
+          moduleExpectations.map((e) => ({ id: e.id, label: e.label })),
+        )}
+      />
+    </section>
+  );
   const toneOf = { ok: "ok", warn: "warn", build: "warn" } as const;
 
   // Toutes les copies commencées ont une note : l'envoi des résultats passe en haut de la page.
@@ -419,8 +439,8 @@ export default async function AssessmentPage({
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
             <Pill>
-                Coefficient {assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT}
-              </Pill>
+              Coefficient {assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT}
+            </Pill>
             <Pill>Sur {assessment.maxScore}</Pill>
             <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
             {grid ? <Pill tone="key">{grid.name}</Pill> : null}
@@ -680,6 +700,7 @@ export default async function AssessmentPage({
               className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
             >
               {oralTiming}
+              {evaluatedSection}
               <section aria-labelledby="ce" className={card}>
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                   <h2 id="ce" className="font-heading text-xl font-bold">
@@ -930,7 +951,7 @@ export default async function AssessmentPage({
             aria-label="Préparation de l’évaluation"
             className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
           >
-              {oralTiming}
+            {oralTiming}
             <section aria-labelledby="gr" className={card}>
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                 <h2 id="gr" className="font-heading text-xl font-bold">
@@ -1017,25 +1038,7 @@ export default async function AssessmentPage({
               )}
             </section>
 
-            <section aria-labelledby="at" className={card}>
-              <h2 id="at" className="font-heading mb-1.5 text-lg font-bold">
-                Attendus évalués
-              </h2>
-              <p className="text-muted-foreground mb-2 text-sm">
-                Choisis ceux que l’épreuve vérifie.
-              </p>
-              <AssessmentExpectations
-                moduleId={id}
-                assessmentId={assessmentId}
-                expectations={moduleExpectations.map((e) => ({ id: e.id, label: e.label }))}
-                initialIds={evaluatedExpectations.byAssessment.get(assessmentId) ?? []}
-                available={evaluatedExpectations.available}
-                suggestedIds={expectationsCitedByCriteria(
-                  (assessment.grading_grid?.criteria ?? []).map((c) => c.reference),
-                  moduleExpectations.map((e) => ({ id: e.id, label: e.label })),
-                )}
-              />
-            </section>
+            {evaluatedSection}
 
             <section aria-labelledby="bonus" className={card}>
               <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">

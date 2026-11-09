@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CourseExpectationsPicker } from "@/components/modules/course-expectations-picker";
+import { getExpectationLinks } from "@/lib/modules/expectation-links";
 import { notFound } from "next/navigation";
 import { ClipboardCheck, Play, NotebookPen, Pencil } from "lucide-react";
 
@@ -116,6 +117,14 @@ export default async function CoursePage({
   const missing = uncoveredExpectations(expectations, byExpectation);
   const linked = assessments.filter((a) => a.course_id === courseId && !a.makeup_of_id);
   const resourceIds = new Set(ordered.map((r) => r.id));
+  // Attendus reliés aux ressources du déroulé : proposés (jamais cochés d'office).
+  const expectationLinks = await getExpectationLinks(id);
+  const suggestedExpectationIds = expectations
+    .filter((e) => !covered.some((c) => c.id === e.id))
+    .filter((e) =>
+      [...(expectationLinks.byExpectation.get(e.id) ?? [])].some((r) => resourceIds.has(r)),
+    )
+    .map((e) => e.id);
   const questionCount = new Set(
     links.pairs.filter((p) => resourceIds.has(p.resourceId)).map((p) => p.questionId),
   ).size;
@@ -303,6 +312,7 @@ export default async function CoursePage({
               courseId={courseId}
               expectations={expectations.map((e) => ({ id: e.id, label: e.label }))}
               initial={covered.map((e) => e.id)}
+              suggested={suggestedExpectationIds}
             />
           </section>
 
