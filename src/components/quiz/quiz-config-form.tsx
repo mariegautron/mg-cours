@@ -14,10 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QUESTION_TYPES, QUESTION_TYPE_LABELS, type QuestionType } from "@/lib/questions/types";
 import { RESULTS_MODES, RESULTS_MODE_LABELS, isoToParisLocal } from "@/lib/quiz/config";
-import { availablePerRule, quizTotalPoints } from "@/lib/quiz/draw";
+import { matchesRuleFilters, quizTotalPoints } from "@/lib/quiz/draw";
 import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
 
-type BankSummary = Pick<BankQuestion, "id" | "category" | "type" | "tags">;
+/** Résumé envoyé au navigateur : pas les choix, seulement si la question a une réponse définie. */
+type BankSummary = Pick<BankQuestion, "id" | "category" | "type" | "tags"> & { answerable: boolean };
 
 interface RuleState {
   key: number;
@@ -84,7 +85,11 @@ export function QuizConfigForm({
   );
   const [announce, setAnnounce] = useState("");
   const parsed = useMemo(() => rules.map(asRule), [rules]);
-  const available = useMemo(() => availablePerRule(bank as BankQuestion[], parsed), [bank, parsed]);
+  const available = useMemo(
+    () =>
+      parsed.map((r) => bank.filter((q) => q.answerable && matchesRuleFilters(q, r)).length),
+    [bank, parsed],
+  );
   const total = quizTotalPoints(
     parsed.filter((r) => Number.isFinite(r.count) && Number.isFinite(r.pointsEach)),
   );

@@ -15,7 +15,7 @@ import { QuizConfigForm } from "@/components/quiz/quiz-config-form";
 import { Button } from "@/components/ui/button";
 import { getAssessment } from "@/lib/assessments/queries";
 import { getQuizByAssessment, getQuizPool, listAttempts, loadBank } from "@/lib/quiz/queries";
-import { quizTotalPoints, shortages } from "@/lib/quiz/draw";
+import { hasDefinedAnswer, quizTotalPoints, shortages } from "@/lib/quiz/draw";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -208,7 +208,13 @@ export default async function QuizPage({
           moduleId={id}
           assessmentId={assessmentId}
           quiz={quiz}
-          bank={bank.map((q) => ({ id: q.id, category: q.category, type: q.type, tags: q.tags }))}
+          bank={bank.map((q) => ({
+            id: q.id,
+            category: q.category,
+            type: q.type,
+            tags: q.tags,
+            answerable: hasDefinedAnswer(q),
+          }))}
           categories={categories}
         />
         {hiddenReason ? (

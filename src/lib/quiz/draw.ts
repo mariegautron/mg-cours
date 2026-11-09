@@ -29,15 +29,24 @@ export function quizTotalPoints(rules: readonly Pick<DrawRule, "count" | "points
 export function hasDefinedAnswer(q: BankQuestion): boolean {
   if (q.type === "open") return true;
   if (q.type === "numerical") return q.numericValue !== null;
-  return q.choices.some((c) => c.fraction > 0);
+  // Donnée absente (question ancienne ou résumé sans choix) = liste vide, jamais un plantage.
+  return (q.choices ?? []).some((c) => c.fraction > 0);
+}
+
+/** Filtres de la règle seuls (catégorie, types, tags), sans regarder la réponse définie. */
+export function matchesRuleFilters(
+  q: Pick<BankQuestion, "category" | "type" | "tags">,
+  rule: DrawRule,
+): boolean {
+  if (rule.category && q.category !== rule.category) return false;
+  const types = rule.types ?? [];
+  if (types.length && !types.includes(q.type)) return false;
+  const tags = new Set((q.tags ?? []).map((t) => t.toLowerCase()));
+  return (rule.tags ?? []).every((t) => tags.has(t.toLowerCase()));
 }
 
 export function matchesRule(q: BankQuestion, rule: DrawRule): boolean {
-  if (!hasDefinedAnswer(q)) return false;
-  if (rule.category && q.category !== rule.category) return false;
-  if (rule.types.length && !rule.types.includes(q.type)) return false;
-  const tags = new Set(q.tags.map((t) => t.toLowerCase()));
-  return rule.tags.every((t) => tags.has(t.toLowerCase()));
+  return hasDefinedAnswer(q) && matchesRuleFilters(q, rule);
 }
 
 /** Combien de questions de la banque répondent à chaque règle (avant tout tirage). */
