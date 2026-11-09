@@ -133,7 +133,11 @@ async function createMakeup(
   revalidatePath(`/modules/${moduleId}/assessments/${originalId}`);
   revalidatePath(`/modules/${moduleId}/rattrapages`);
   // Retour sur la page Rattrapages : « Rattrapage créé », avec « Modifier le sujet » et « Donner le lien ».
-  redirect(`/modules/${moduleId}/rattrapages?cree=${makeupId}${quiz.quiz ? "&qcm=1" : ""}`);
+  redirect(
+    `/modules/${moduleId}/rattrapages?cree=${makeupId}${quiz.quiz ? "&qcm=1" : ""}${
+      existing ? `&ajout=${toAdd.length}` : ""
+    }`,
+  );
 }
 
 export async function prepareMakeup(moduleId: string, originalId: string): Promise<MakeupState> {

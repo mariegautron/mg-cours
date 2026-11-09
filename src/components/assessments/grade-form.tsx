@@ -328,8 +328,13 @@ export function GradeForm({
   }
   const dirty = snapshot !== saved;
   const online = useOnline();
+  // Une présence changée s'enregistre seule, même sans note (ex. excusé·e → présent·e).
   const ready =
-    absent || grid ? true : bonusScale ? scaleResult?.status === "ok" : directValue.trim() !== "";
+    absent || grid || (!isGroup && attendance !== attendanceBase)
+      ? true
+      : bonusScale
+        ? scaleResult?.status === "ok"
+        : directValue.trim() !== "";
 
   const dirtyRef = useRef(dirty);
   useEffect(() => {
@@ -1245,7 +1250,8 @@ export function GradeForm({
       </div>
       {ATTENDANCE_HINTS[attendance] ? (
         <p className="text-muted-foreground text-xs">
-          {ATTENDANCE_HINTS[attendance]} {attendance === "absent_excused" ? <MakeupLink href={makeupHref} /> : null}
+          {ATTENDANCE_HINTS[attendance]}{" "}
+          {attendance === "absent_excused" ? <MakeupLink href={makeupHref} /> : null}
         </p>
       ) : null}
     </fieldset>

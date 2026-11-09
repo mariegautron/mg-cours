@@ -26,6 +26,7 @@ export default async function MakeupsPage({
   const sp = await searchParams;
   const created = typeof sp.cree === "string" ? sp.cree : null;
   const createdQcm = sp.qcm === "1";
+  const added = typeof sp.ajout === "string" ? Number(sp.ajout) || 0 : null;
   const mod = await getModule(id);
   if (!mod) notFound();
 
@@ -56,7 +57,11 @@ export default async function MakeupsPage({
     <div className="max-w-6xl space-y-5">
       {created ? (
         <div role="status" className="border-mint/50 bg-mint/10 space-y-1 rounded-xl border p-4">
-          <p className="font-semibold">Rattrapage créé.</p>
+          <p className="font-semibold">
+            {added !== null
+              ? `${added} personne${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} au rattrapage.`
+              : "Rattrapage créé."}
+          </p>
           <p className="flex flex-wrap gap-3 text-sm">
             <Link
               href={`/modules/${id}/assessments/${created}/edit`}

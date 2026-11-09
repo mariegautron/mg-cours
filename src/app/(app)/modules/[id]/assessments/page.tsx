@@ -207,8 +207,8 @@ export default async function ModuleAssessmentsPage({
         >
           {unevaluatedGroups.map((g) => (
             <p key={g.id}>
-              <strong>{/^groupe\b/i.test(g.name) ? g.name : `Groupe ${g.name}`}</strong> n’est évalué nulle part. Coche-le dans une évaluation
-              (« Modifier »).
+              <strong>{/^groupe\b/i.test(g.name) ? g.name : `Groupe ${g.name}`}</strong> n’est
+              évalué nulle part. Coche-le dans une évaluation (« Modifier »).
             </p>
           ))}
         </div>
@@ -438,6 +438,30 @@ export default async function ModuleAssessmentsPage({
               <h2 id="mxt" className="font-heading mb-3 text-xl font-bold">
                 Séances et évaluations : où chacune tombe
               </h2>
+              {makeups.some((m) => m.date) ? (
+                <ul className="mb-3 space-y-1 text-sm">
+                  {makeups
+                    .filter((m) => m.date)
+                    .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? ""))
+                    .map((m) => (
+                      <li key={m.id}>
+                        <Link
+                          href={`/modules/${id}/assessments/${m.id}`}
+                          className="font-semibold underline-offset-2 hover:underline"
+                        >
+                          {m.title}
+                        </Link>{" "}
+                        ·{" "}
+                        {new Date(`${m.date!.slice(0, 10)}T12:00:00`).toLocaleDateString("fr-FR", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                        })}
+                        {" · rattrapage"}
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
               <div
                 role="region"
                 aria-label="Frise des séances et des évaluations, défilable"
