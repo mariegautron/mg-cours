@@ -47,12 +47,19 @@ function RatingBar({ item }: { item: RatingSummary }) {
 }
 
 /** Synthèse des réponses : points forts / à améliorer, barres, choix, puis les mots des étudiant·es. */
-export function FeedbackResults({ summary }: { summary: FeedbackSummary }) {
+export function FeedbackResults({
+  summary,
+  hasAnalysis = false,
+}: {
+  summary: FeedbackSummary;
+  /** Une « Analyse des réponses » rédigée est affichée au-dessus : pas de second résumé. */
+  hasAnalysis?: boolean;
+}) {
   const h = highlights(summary);
   const panel = "rounded-lg border p-4 space-y-2";
   return (
     <div className="space-y-8">
-      {h.strengths.length + h.improvements.length > 0 ? (
+      {!hasAnalysis && h.strengths.length + h.improvements.length > 0 ? (
         <section aria-labelledby="fh" className="space-y-3">
           <h3 id="fh" className="font-heading text-lg font-bold">
             En bref
@@ -90,83 +97,91 @@ export function FeedbackResults({ summary }: { summary: FeedbackSummary }) {
         </section>
       ) : null}
 
-      <section aria-labelledby="fn" className="space-y-1">
-        <h3 id="fn" className="font-heading text-lg font-bold">
-          Les notes
-        </h3>
-        {summary.ratings.map((s) => (
-          <ul key={s.section} className="divide-y">
-            {s.items.map((i) => (
-              <RatingBar key={i.id} item={i} />
-            ))}
-          </ul>
-        ))}
-        <p className="text-muted-foreground text-xs">
-          Barre : de 1 (clair) à 5 (foncé). Les chiffres donnent le nombre de réponses pour chaque
-          note.
-        </p>
-      </section>
-
-      <section aria-labelledby="fc" className="space-y-4">
-        <h3 id="fc" className="font-heading text-lg font-bold">
-          Les choix
-        </h3>
-        {summary.choices.map((c) => {
-          const total = c.options.reduce((n, o) => n + o.count, 0);
-          return (
-            <div key={c.id} className="space-y-2">
-              <h4 className="font-semibold">{c.label}</h4>
-              <ul className="space-y-2">
-                {c.options.map((o) => {
-                  const share = total ? Math.round((o.count / total) * 100) : 0;
-                  return (
-                    <li key={o.id} className="space-y-1">
-                      <div className="flex justify-between gap-2 text-sm">
-                        <span>{o.label}</span>
-                        <span className="tabular-nums">
-                          {o.count} · {share} %
-                        </span>
-                      </div>
-                      <div className="bg-muted h-2.5 overflow-hidden rounded-full" aria-hidden>
-                        <div className="bg-primary h-full" style={{ width: `${share}%` }} />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
-      </section>
-
-      <section aria-labelledby="ft" className="space-y-3">
-        <h3 id="ft" className="font-heading text-lg font-bold">
-          Leurs mots
-        </h3>
-        {summary.texts.map((t) => (
-          <details key={t.id} open={t.entries.length > 0} className="rounded-lg border">
-            <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-lg px-4 py-2 font-semibold focus-visible:ring-2 focus-visible:outline-none">
-              <span>{t.label}</span>
-              <span className="text-muted-foreground text-sm font-normal">
-                {t.entries.length} réponse{t.entries.length > 1 ? "s" : ""}
-              </span>
-            </summary>
-            {t.entries.length > 0 ? (
-              <ul className="space-y-3 px-4 pt-1 pb-4">
-                {t.entries.map((e, n) => (
-                  <li key={n}>
-                    <blockquote className="border-primary/50 border-l-4 pl-3 text-sm whitespace-pre-wrap">
-                      {e}
-                    </blockquote>
-                  </li>
+      {/* Réponses détaillées repliées : le résumé tient en un écran à 125 %. */}
+      <details className="rounded-lg border">
+        <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-lg px-4 py-2 font-semibold focus-visible:ring-2 focus-visible:outline-none">
+          Réponses détaillées (notes, choix, mots)
+        </summary>
+        <div className="space-y-8 px-4 pb-4">
+          <section aria-labelledby="fn" className="space-y-1">
+            <h3 id="fn" className="font-heading text-lg font-bold">
+              Les notes
+            </h3>
+            {summary.ratings.map((s) => (
+              <ul key={s.section} className="divide-y">
+                {s.items.map((i) => (
+                  <RatingBar key={i.id} item={i} />
                 ))}
               </ul>
-            ) : (
-              <p className="text-muted-foreground px-4 pb-4 text-sm">Pas de réponse écrite.</p>
-            )}
-          </details>
-        ))}
-      </section>
+            ))}
+            <p className="text-muted-foreground text-xs">
+              Barre : de 1 (clair) à 5 (foncé). Les chiffres donnent le nombre de réponses pour
+              chaque note.
+            </p>
+          </section>
+
+          <section aria-labelledby="fc" className="space-y-4">
+            <h3 id="fc" className="font-heading text-lg font-bold">
+              Les choix
+            </h3>
+            {summary.choices.map((c) => {
+              const total = c.options.reduce((n, o) => n + o.count, 0);
+              return (
+                <div key={c.id} className="space-y-2">
+                  <h4 className="font-semibold">{c.label}</h4>
+                  <ul className="space-y-2">
+                    {c.options.map((o) => {
+                      const share = total ? Math.round((o.count / total) * 100) : 0;
+                      return (
+                        <li key={o.id} className="space-y-1">
+                          <div className="flex justify-between gap-2 text-sm">
+                            <span>{o.label}</span>
+                            <span className="tabular-nums">
+                              {o.count} · {share} %
+                            </span>
+                          </div>
+                          <div className="bg-muted h-2.5 overflow-hidden rounded-full" aria-hidden>
+                            <div className="bg-primary h-full" style={{ width: `${share}%` }} />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </section>
+
+          <section aria-labelledby="ft" className="space-y-3">
+            <h3 id="ft" className="font-heading text-lg font-bold">
+              Leurs mots
+            </h3>
+            {summary.texts.map((t) => (
+              <details key={t.id} className="rounded-lg border">
+                <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-lg px-4 py-2 font-semibold focus-visible:ring-2 focus-visible:outline-none">
+                  <span>{t.label}</span>
+                  <span className="text-muted-foreground text-sm font-normal">
+                    {t.entries.length} réponse{t.entries.length > 1 ? "s" : ""}
+                  </span>
+                </summary>
+                {t.entries.length > 0 ? (
+                  <ul className="space-y-3 px-4 pt-1 pb-4">
+                    {t.entries.map((e, n) => (
+                      <li key={n}>
+                        <blockquote className="border-primary/50 border-l-4 pl-3 text-sm whitespace-pre-wrap">
+                          {e}
+                        </blockquote>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground px-4 pb-4 text-sm">Pas de réponse écrite.</p>
+                )}
+              </details>
+            ))}
+          </section>
+        </div>
+      </details>
     </div>
   );
 }

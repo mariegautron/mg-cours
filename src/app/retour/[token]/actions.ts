@@ -9,7 +9,9 @@ import { submitFeedback } from "@/lib/feedback/public";
 export async function sendFeedback(token: string, formData: FormData): Promise<void> {
   const answers = answersFromForm(formData);
   if (isEmptyAnswers(answers)) redirect(`/retour/${token}?problem=empty`);
-  const status = await submitFeedback(token, answers);
+  const respondent = String(formData.get("respondent") ?? "") || null;
+  const status = await submitFeedback(token, answers, respondent);
   if (status === "ok") redirect(`/retour/${token}?merci=1`);
+  if (status === "updated") redirect(`/retour/${token}?merci=1&maj=1`);
   redirect(`/retour/${token}?problem=${status}`);
 }

@@ -297,13 +297,13 @@ export function feedbackEmail(input: {
   teacherName: string;
 }): { subject: string; text: string } {
   const greeting = input.firstName.trim() ? `Bonjour ${input.firstName.trim()},` : "Bonjour,";
-  const signature = input.teacherName.trim() || "Votre enseignante";
+  const signature = input.teacherName.trim() || "Ton enseignante";
   return {
-    subject: `Votre avis sur le module « ${input.moduleName} »`,
+    subject: `Ton avis sur le module « ${input.moduleName} »`,
     text: [
       greeting,
       "",
-      `Le module « ${input.moduleName} » se termine. J’aimerais connaître votre avis pour l’améliorer : le questionnaire prend environ 5 minutes.`,
+      `Le module « ${input.moduleName} » se termine. J’aimerais connaître ton avis pour l’améliorer : le questionnaire prend environ 5 minutes.`,
       "",
       `Répondre au questionnaire : ${input.url}`,
       "",

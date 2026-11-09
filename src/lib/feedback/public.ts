@@ -23,17 +23,39 @@ export async function callFeedbackForm(token: string): Promise<FeedbackForm> {
   return { status: (await recordFailure(ip)) ? "throttled" : "invalid" };
 }
 
-/** Enregistre une réponse anonyme (jamais comptée dans la limite par IP). */
+/**
+ * Enregistre une réponse anonyme (jamais comptée dans la limite par IP). `respondent` : jeton
+ * aléatoire gardé par le navigateur (haché ici) ; un 2e envoi du même navigateur remplace le 1er.
+ * Sans la migration du 1er décembre, on retombe sur l'envoi simple.
+ */
 export async function submitFeedback(
   token: string,
   answers: FeedbackAnswers,
-): Promise<"ok" | "invalid" | "unavailable"> {
+  respondent?: string | null,
+): Promise<"ok" | "updated" | "invalid" | "unavailable"> {
   if (!isWellFormedToken(token)) return "invalid";
-  const { data, error } = await createAnonClient().rpc("mg_feedback_submit", {
-    p_link_hash: hashToken(token),
-    p_answers: answers as never,
-  });
+  const client = createAnonClient();
+  const respondentHash =
+    respondent && /^[A-Za-z0-9_-]{16,128}$/.test(respondent) ? hashToken(respondent) : null;
+  let data: unknown = null;
+  let error: unknown = { message: "sans jeton" };
+  if (respondentHash) {
+    ({ data, error } = await client.rpc(
+      "mg_feedback_submit" as never,
+      {
+        p_link_hash: hashToken(token),
+        p_answers: answers,
+        p_respondent_hash: respondentHash,
+      } as never,
+    ));
+  }
+  if (error) {
+    ({ data, error } = await client.rpc("mg_feedback_submit", {
+      p_link_hash: hashToken(token),
+      p_answers: answers as never,
+    }));
+  }
   if (error || !data || typeof data !== "object") return "unavailable";
   const status = (data as { status?: string }).status;
-  return status === "ok" ? "ok" : status === "invalid" ? "invalid" : "unavailable";
+  return status === "ok" || status === "updated" || status === "invalid" ? status : "unavailable";
 }

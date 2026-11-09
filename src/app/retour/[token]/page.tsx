@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { sendFeedback } from "@/app/retour/[token]/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkAnswered, RespondentField } from "@/components/feedback/respondent-field";
 import { INVALID_LINK_TEXT, INVALID_LINK_TITLE } from "@/lib/student-messages";
 import { callFeedbackForm } from "@/lib/feedback/public";
 import {
@@ -17,16 +18,16 @@ import {
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Votre avis sur le module",
+  title: "Ton avis sur le module",
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };
 
 const PROBLEMS: Record<string, string> = {
-  empty: "Répondez à au moins une question avant d’envoyer.",
+  empty: "Réponds à au moins une question avant d’envoyer.",
   invalid: "Ce lien n’est plus valable.",
   unavailable:
-    "L’envoi n’a pas fonctionné. Réessayez dans un instant : vos réponses sont conservées.",
+    "L’envoi n’a pas fonctionné. Réessaie dans un instant : tes réponses sont conservées.",
 };
 
 function Message({ title, children }: { title: string; children?: React.ReactNode }) {
@@ -41,7 +42,9 @@ function Message({ title, children }: { title: string; children?: React.ReactNod
 /** Questionnaire de retour, anonyme, ouvert par le lien de classe d'un module. */
 export default async function FeedbackPage({ params, searchParams }: PageProps<"/retour/[token]">) {
   const { token } = await params;
-  const { problem, merci } = await searchParams;
+  const { problem, merci, maj } = await searchParams;
+  // Clé du questionnaire côté navigateur (un fragment du lien, jamais renvoyé au serveur).
+  const linkKey = token.slice(0, 12);
   const res = await callFeedbackForm(token);
   const problemText = typeof problem === "string" ? (PROBLEMS[problem] ?? null) : null;
   const ratingValues = Array.from(
@@ -52,20 +55,24 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
   return (
     <main id="main" className="mx-auto w-full max-w-2xl flex-1 space-y-8 p-4 sm:p-6">
       {res.status === "ok" && merci ? (
-        <Message title="Merci !">
-          Votre réponse est bien enregistrée. Elle servira à améliorer « {res.moduleName} » pour la
-          suite.
-        </Message>
+        <>
+          <MarkAnswered linkKey={linkKey} />
+          <Message title="Merci !">
+            {maj === "1"
+              ? "Tu avais déjà répondu : tes réponses sont mises à jour (elles ne comptent qu’une fois)."
+              : `Ta réponse est bien enregistrée. Elle servira à améliorer « ${res.moduleName} » pour la suite.`}
+          </Message>
+        </>
       ) : res.status === "ok" ? (
         <>
           <header className="space-y-2">
             <p className="text-muted-foreground text-sm font-semibold">{res.moduleName}</p>
             <h1 className="font-heading text-3xl font-bold tracking-tight">
-              Votre avis sur le module
+              Ton avis sur le module
             </h1>
             <p className="text-muted-foreground">
-              Le questionnaire est anonyme et n’a aucun lien avec votre note. Il prend environ 5
-              minutes. Répondez à ce que vous voulez : un exemple précis m’aide plus qu’un avis général.
+              Le questionnaire est anonyme et n’a aucun lien avec ta note. Il prend environ 5
+              minutes. Réponds à ce que tu veux : un exemple précis m’aide plus qu’un avis général.
             </p>
           </header>
           {problemText ? (
@@ -77,6 +84,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             </p>
           ) : null}
           <form action={sendFeedback.bind(null, token)} className="space-y-10">
+            <RespondentField linkKey={linkKey} />
             {RATING_SECTIONS.map((section) => (
               <section key={section.id} aria-labelledby={`s-${section.id}`} className="space-y-4">
                 <h2 id={`s-${section.id}`} className="font-heading text-xl font-bold">
@@ -139,7 +147,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
                 Raconte-nous
               </h2>
               <p className="text-muted-foreground text-sm">
-                Pensez à un moment précis plutôt qu’à une impression générale : c’est ce qui m’aide
+                Pense à un moment précis plutôt qu’à une impression générale : c’est ce qui m’aide
                 le plus. Quelques mots suffisent, tout est facultatif.
               </p>
               {TEXT_QUESTIONS.map((q) => (
@@ -164,11 +172,11 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
           </form>
         </>
       ) : res.status === "invalid" ? (
-<Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
+        <Message title={INVALID_LINK_TITLE}>{INVALID_LINK_TEXT}</Message>
       ) : res.status === "throttled" ? (
-        <Message title="Trop d’essais">Patientez quelques minutes, puis réessayez.</Message>
+        <Message title="Trop d’essais">Patiente quelques minutes, puis réessaie.</Message>
       ) : (
-        <Message title="Indisponible pour le moment">Réessayez dans un instant.</Message>
+        <Message title="Indisponible pour le moment">Réessaie dans un instant.</Message>
       )}
     </main>
   );

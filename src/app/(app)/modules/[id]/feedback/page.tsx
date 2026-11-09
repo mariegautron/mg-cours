@@ -11,6 +11,7 @@ import {
 import { FeedbackResults } from "@/components/modules/feedback-results";
 import { FeedbackControls } from "@/components/modules/feedback-controls";
 import { Button } from "@/components/ui/button";
+import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { clientEnv } from "@/lib/env";
 import { feedbackUrl, parseAnswers, summarize } from "@/lib/feedback/questions";
 import { getModule } from "@/lib/modules/queries";
@@ -80,8 +81,13 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
               Donner accès au questionnaire
             </h2>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 space-y-2">
                 <FeedbackControls moduleId={id} url={url} sentAt={link?.sent_at ?? null} />
+                {url ? (
+                  <OpenInWindowButton href={`/present/modules/${id}/feedback`} variant="outline">
+                    Projeter le QR code
+                  </OpenInWindowButton>
+                ) : null}
               </div>
               {qr ? (
                 <div
@@ -103,7 +109,7 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
                 Rien pour l’instant. Les réponses arrivent ici.
               </p>
             ) : (
-              <FeedbackResults summary={summary} />
+              <FeedbackResults summary={summary} hasAnalysis={id === AGILE_FEEDBACK_MODULE_ID} />
             )}
           </section>
         </>
