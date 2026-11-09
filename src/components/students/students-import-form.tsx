@@ -245,15 +245,16 @@ function ImportPreview({
   const edit = (rowNumber: number, field: keyof RowEdit, value: string) =>
     setEdits((prev) => ({ ...prev, [rowNumber]: { ...prev[rowNumber], [field]: value } }));
 
-  const existing = new Set(previewState.existingEmails ?? []);
-  const enrolled = new Set(previewState.enrolledEmails ?? []);
+  // Lignes déjà en base (même e-mail ou même prénom et nom), repérées à l'analyse du fichier.
+  const existing = new Set(previewState.knownRows ?? []);
+  const enrolled = new Set(previewState.enrolledRows ?? []);
   const yearLabel = schoolYearLabel(previewState.year ?? currentSchoolYear());
   const valid = rows.filter((r) => r.errors.length === 0);
-  const newCount = valid.filter((r) => !r.email || !existing.has(r.email)).length;
+  const newCount = valid.filter((r) => !existing.has(r.rowNumber)).length;
   const enrollCount = valid.filter(
-    (r) => r.email && existing.has(r.email) && !enrolled.has(r.email),
+    (r) => existing.has(r.rowNumber) && !enrolled.has(r.rowNumber),
   ).length;
-  const doneCount = valid.filter((r) => r.email && enrolled.has(r.email)).length;
+  const doneCount = valid.filter((r) => enrolled.has(r.rowNumber)).length;
   const validCount = newCount + enrollCount;
   const errorCount = rows.length - valid.length;
   const ignored = headers.filter((_, i) => roles[i] === "ignore");
@@ -347,7 +348,7 @@ function ImportPreview({
           </thead>
           <tbody>
             {rows.map((r) => {
-              const isDuplicate = !!r.email && existing.has(r.email);
+              const isDuplicate = existing.has(r.rowNumber);
               const editable = r.errors.length > 0 || edits[r.rowNumber] !== undefined;
               const cell = (field: keyof RowEdit, label: string) =>
                 editable ? (
@@ -371,7 +372,7 @@ function ImportPreview({
                       <span className="text-destructive">{r.errors.join(", ")}</span>
                     ) : isDuplicate ? (
                       <span className="text-muted-foreground">
-                        {enrolled.has(r.email!)
+                        {enrolled.has(r.rowNumber)
                           ? `déjà inscrit·e à ${yearLabel}`
                           : `déjà en base : inscription à ${yearLabel}`}
                       </span>

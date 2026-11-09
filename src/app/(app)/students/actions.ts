@@ -173,10 +173,10 @@ export interface ImportPreviewState {
   nameOrder?: NameOrder;
   /** Année scolaire choisie pour l'import (année de rentrée). */
   year?: number;
-  /** e-mails déjà présents en base : ces étudiant·es seront inscrit·es à l'année, sans doublon. */
-  existingEmails?: string[];
-  /** e-mails déjà inscrits à cette année avec la même promotion : rien à faire. */
-  enrolledEmails?: string[];
+  /** Lignes déjà en base (même e-mail, ou même prénom et nom) : inscrites à l'année, sans doublon. */
+  knownRows?: number[];
+  /** Lignes déjà inscrites à cette année avec la même promotion : rien à faire. */
+  enrolledRows?: number[];
   /** US-77 : sens de la colonne « groupe », module cible et groupe global. */
   mode?: GroupColumnMode;
   moduleId?: string;
@@ -205,6 +205,45 @@ function readGroupTarget(formData: FormData): GroupTarget {
 function readYear(formData: FormData): number {
   const raw = Number(formData.get("year"));
   return Number.isInteger(raw) && raw >= 2000 && raw <= 2100 ? raw : currentSchoolYear();
+}
+
+/** Nom comparable : sans accents, casse, tirets ni espaces en trop (« Jean-Baptiste » = « jean baptiste »). */
+function nameKey(first: string, last: string): string {
+  const n = (x: string) =>
+    x
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  return `${n(first)}|${n(last)}`;
+}
+
+/**
+ * Fiches déjà en base pour chaque ligne : même e-mail, sinon même prénom et nom (une fiche dont
+ * l'e-mail a été changé n'est pas recréée). Un nom porté par plusieurs fiches n'est pas rapproché.
+ */
+async function matchExisting(
+  supabase: Supabase,
+  rows: ParsedStudentRow[],
+): Promise<Map<number, string>> {
+  const { data } = await supabase.from("student").select("id, email, first_name, last_name");
+  const byEmail = new Map<string, string>();
+  const byName = new Map<string, string | null>();
+  for (const s of data ?? []) {
+    if (s.email) byEmail.set(s.email.toLowerCase(), s.id);
+    const key = nameKey(s.first_name, s.last_name);
+    byName.set(key, byName.has(key) ? null : s.id);
+  }
+  const out = new Map<number, string>();
+  for (const r of rows) {
+    const id =
+      (r.email ? byEmail.get(r.email) : undefined) ??
+      byName.get(nameKey(r.firstName, r.lastName)) ??
+      null;
+    if (id) out.set(r.rowNumber, id);
+  }
+  return out;
 }
 
 /** Étape 1 : parse le fichier et renvoie un aperçu, sans rien écrire. */
@@ -258,32 +297,24 @@ export async function previewStudentsImport(
     );
   }
 
-  const emails = rows.map((r) => r.email).filter((e): e is string => !!e);
-  const { data: existing } =
-    emails.length > 0
-      ? await supabase.from("student").select("id, email").in("email", emails)
-      : { data: [] };
-
-  const existingRows = (existing ?? []).filter((e) => e.email);
-  const { data: enrolled } = existingRows.length
+  const known = await matchExisting(supabase, rows);
+  const knownIds = [...new Set(known.values())];
+  const { data: enrolled } = knownIds.length
     ? await supabase
         .from("student_year")
         .select("student_id, scholar_group")
         .eq("year", year)
-        .in(
-          "student_id",
-          existingRows.map((e) => e.id),
-        )
+        .in("student_id", knownIds)
     : { data: [] };
   const groupById = new Map((enrolled ?? []).map((e) => [e.student_id, e.scholar_group]));
-  const byEmail = new Map(rows.map((r) => [r.email, promotionOf(r, target.mode)]));
-  const enrolledEmails = existingRows
-    .filter((e) => {
-      if (!groupById.has(e.id)) return false;
-      const wanted = byEmail.get(e.email);
-      return !wanted || wanted === groupById.get(e.id);
+  const enrolledRows = rows
+    .filter((r) => {
+      const id = known.get(r.rowNumber);
+      if (!id || !groupById.has(id)) return false;
+      const wanted = promotionOf(r, target.mode);
+      return !wanted || wanted === groupById.get(id);
     })
-    .map((e) => e.email!);
+    .map((r) => r.rowNumber);
 
   return {
     rows,
@@ -291,8 +322,8 @@ export async function previewStudentsImport(
     roles,
     nameOrder,
     year,
-    existingEmails: existingRows.map((e) => e.email!),
-    enrolledEmails,
+    knownRows: [...known.keys()],
+    enrolledRows,
     mode: target.mode,
     moduleId: target.moduleId ?? undefined,
     moduleName,
@@ -339,15 +370,11 @@ export async function confirmStudentsImport(
   if (validRows.length === 0) return { error: "Aucune ligne valide à importer." };
 
   const supabase = await createClient();
-  const emails = validRows.map((r) => r.email).filter((e): e is string => !!e);
-  const { data: existing } =
-    emails.length > 0
-      ? await supabase.from("student").select("id, email").in("email", emails)
-      : { data: [] };
-  const idByEmail = new Map((existing ?? []).map((e) => [e.email, e.id]));
+  const known = await matchExisting(supabase, validRows);
+  const idOf = (r: ParsedStudentRow) => known.get(r.rowNumber)!;
 
-  const newRows = validRows.filter((r) => !r.email || !idByEmail.has(r.email));
-  const existingRows = validRows.filter((r) => r.email && idByEmail.has(r.email));
+  const newRows = validRows.filter((r) => !known.has(r.rowNumber));
+  const existingRows = validRows.filter((r) => known.has(r.rowNumber));
 
   // Nouveaux : création, puis inscription à l'année (l'ordre de retour suit celui de l'envoi).
   const enrollments: { student_id: string; year: number; scholar_group: string | null }[] = [];
@@ -380,7 +407,7 @@ export async function confirmStudentsImport(
   // Déjà en base : inscription à l'année choisie, sans écraser une promotion par du vide.
   let enrolled = 0;
   if (existingRows.length) {
-    const ids = existingRows.map((r) => idByEmail.get(r.email!)!);
+    const ids = existingRows.map(idOf);
     const { data: already } = await supabase
       .from("student_year")
       .select("student_id, scholar_group")
@@ -388,7 +415,7 @@ export async function confirmStudentsImport(
       .in("student_id", ids);
     const groupById = new Map((already ?? []).map((a) => [a.student_id, a.scholar_group]));
     for (const r of existingRows) {
-      const id = idByEmail.get(r.email!)!;
+      const id = idOf(r);
       const known = groupById.has(id);
       const promotion = promotionOf(r, target.mode);
       if (known && (!promotion || promotion === groupById.get(id))) continue;
@@ -438,7 +465,7 @@ export async function confirmStudentsImport(
 
     const studentByRow = new Map<number, string>();
     newRows.forEach((r, i) => studentByRow.set(r.rowNumber, createdIds[i]));
-    for (const r of existingRows) studentByRow.set(r.rowNumber, idByEmail.get(r.email!)!);
+    for (const r of existingRows) studentByRow.set(r.rowNumber, idOf(r));
 
     const links = plan.memberships.flatMap((m) => {
       const student_id = studentByRow.get(m.rowNumber);
