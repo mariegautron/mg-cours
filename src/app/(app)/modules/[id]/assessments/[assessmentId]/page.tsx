@@ -60,6 +60,7 @@ import {
   parseSubmissionMode,
 } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
+import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -401,7 +402,9 @@ export default async function AssessmentPage({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            <Pill>Coefficient {assessment.coefficient}</Pill>
+            <Pill>
+                Coefficient {assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT}
+              </Pill>
             <Pill>Sur {assessment.maxScore}</Pill>
             <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
             {grid ? <Pill tone="key">{grid.name}</Pill> : null}
