@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Copy, Wand2 } from "lucide-react";
 
 import {
+  detectTemplateParts,
   otherFormulation,
   saveAppreciation,
   setReported,
@@ -64,13 +65,26 @@ export function AppreciationEditor({
   const [text, setText] = useState(initial);
   const [saved, setSaved] = useState(initial);
   const [message, setMessage] = useState("");
-  const [sentences, setSentences] = useState<Sentences | null>(null);
+  const [sentences, setSentences] = useState<Partial<Sentences> | null>(null);
   const [basisNote, setBasisNote] = useState("");
   const [error, setError] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const status = appreciationStatus(text, max);
   const [saving, setSaving] = useState(false);
   const pending = saving || text.trim() !== saved;
+
+  // Après un rechargement, les phrases du gabarit encore présentes gardent « Autre formulation ».
+  useEffect(() => {
+    if (!initial.trim()) return;
+    let alive = true;
+    void detectTemplateParts(moduleId, studentId, initial).then((r) => {
+      if (alive && r.sentences) setSentences((s) => s ?? r.sentences);
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Prévient avant de quitter, recharger ou fermer tant que quelque chose n'est pas enregistré.
   useEffect(() => {
@@ -205,7 +219,7 @@ export function AppreciationEditor({
         </div>
         {sentences ? (
           <div role="group" aria-label="Autre formulation" className="flex flex-wrap gap-2">
-            {PARTS.map((part) => (
+            {PARTS.filter((part) => sentences[part]).map((part) => (
               <Button
                 key={part}
                 type="button"

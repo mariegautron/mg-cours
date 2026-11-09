@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import {
   buildTemplate,
   otherPhrase,
+  PARTS,
+  phraseKey,
   phrasePool,
   type CustomPhrases,
   type DraftBasis,
@@ -138,4 +140,26 @@ export async function otherFormulation(
   const pool = phrasePool(part, input, custom);
   if (pool.length === 0) return { error: "Aucune autre formulation disponible." };
   return otherPhrase(pool, current, others);
+}
+
+/**
+ * Après un rechargement : retrouve dans le texte les phrases issues du gabarit (même trous
+ * remplis), pour garder les boutons « Autre formulation ». `null` si aucune n'est reconnue.
+ */
+export async function detectTemplateParts(
+  moduleId: string,
+  studentId: string,
+  text: string,
+): Promise<{ sentences: Partial<Sentences> | null }> {
+  if (!text.trim()) return { sentences: null };
+  const { input, custom } = await templateContext(moduleId, studentId);
+  const found: Partial<Sentences> = {};
+  for (const part of PARTS) {
+    const hit = phrasePool(part, input, custom).find((p) => {
+      const key = phraseKey(p);
+      return key.length >= 8 && text.includes(key);
+    });
+    if (hit) found[part] = hit;
+  }
+  return { sentences: Object.keys(found).length ? found : null };
 }
