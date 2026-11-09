@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -61,6 +62,7 @@ export function RenduReview({
   const [criterionId, setCriterionId] = useState(criteria.find((c) => !c.isBonus)?.id ?? "");
   // Lettres posées depuis « Par critère » (copie → critère → lettre / version), par-dessus le chargement.
   const [edits, setEdits] = useState<Record<string, { letter: string; version: number }>>({});
+  const router = useRouter();
   const [gapsOpen, setGapsOpen] = useState(false);
   const [critMessage, setCritMessage] = useState("");
   const letterOf = (c: RenduCopy, critId: string) =>
@@ -83,6 +85,8 @@ export function RenduReview({
     }
     setEdits((e) => ({ ...e, [key]: { letter: next, version: res.version } }));
     setCritMessage(`Lettre de ${c.name} enregistrée.`);
+    // Relit les espaces : la copie affichera la lettre posée ici.
+    router.refresh();
   }
   const copy = copies[index];
   // Chaque copie a sa propre adresse (?copy=…) : un onglet par copie pour comparer.
@@ -353,7 +357,9 @@ export function RenduReview({
 
         <div className="min-w-0">
           <OralSpace
-            key={copy.id}
+            // Une lettre posée depuis « Par critère » : la page relue change les versions, l'espace
+            // est remonté avec l'état du serveur.
+            key={`${copy.id}:${Object.values(copy.init.versions).reduce((a, b) => a + b, 0)}`}
             moduleId={moduleId}
             assessmentId={assessmentId}
             subjectId={copy.id}
