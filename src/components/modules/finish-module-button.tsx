@@ -35,7 +35,7 @@ export function FinishModuleButton({
   id: string;
   name: string;
   askNote: boolean;
-  /** Texte du bouton (« Terminer et ranger », « Écrire mon retour »). */
+  /** Texte du bouton (« Terminer le module », « Écrire mon retour »). */
   label?: string;
   /** Bouton plein (carte « Ce module est terminé ») plutôt que discret. */
   prominent?: boolean;
@@ -50,7 +50,7 @@ export function FinishModuleButton({
     start(async () => {
       const result = await finishModule(id, askNote ? note : null);
       if (!result.ok || !result.finishedAt) {
-        setError(result.error ?? "On n’a pas pu ranger le module. Réessaie.");
+        setError(result.error ?? "On n’a pas pu terminer le module. Réessaie.");
         return;
       }
       const token = result.finishedAt!;

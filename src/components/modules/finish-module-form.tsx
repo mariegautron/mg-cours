@@ -11,7 +11,7 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { Textarea } from "@/components/ui/textarea";
 import { NOTE_MAX, UNDO_WINDOW_MS } from "@/lib/modules/archive-undo";
 
-/** « Ce que je retiens » + « Terminer et ranger » : même geste que la liste, avec « Annuler » 10 secondes. */
+/** « Ce que je retiens » + « Terminer le module » : même geste que la liste, avec « Annuler » 10 secondes. */
 export function FinishModuleForm({
   id,
   name,
@@ -32,7 +32,7 @@ export function FinishModuleForm({
     start(async () => {
       const result = await finishModule(id, askNote ? note : null);
       if (!result.ok || !result.finishedAt) {
-        setError(result.error ?? "On n’a pas pu ranger le module. Réessaie.");
+        setError(result.error ?? "On n’a pas pu terminer le module. Réessaie.");
         return;
       }
       const token = result.finishedAt;
@@ -50,7 +50,10 @@ export function FinishModuleForm({
             }),
         },
       });
-      router.push("/modules");
+      // Message « … est terminé · Annuler » affiché par la liste des modules (8 s).
+      router.push(
+        `/modules?termine=${id}&t=${encodeURIComponent(token)}&a=${archivedInstead ? 1 : 0}`,
+      );
     });
 
   return (

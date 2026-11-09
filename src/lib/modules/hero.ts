@@ -39,6 +39,7 @@ const HEADLINES: Record<StepKey, string> = {
   appreciations: "Écrire les appréciations",
   admin: "Cocher les documents administratifs",
   invoice: "Facturer le module",
+  finish: "Terminer le module",
 };
 
 const TEXTS: Record<StepKey, (s: ModuleStep) => string> = {
@@ -63,6 +64,8 @@ const TEXTS: Record<StepKey, (s: ModuleStep) => string> = {
     `${cap(s.summary)}. Une appréciation par étudiant·e, à reporter dans Hyperplanning.`,
   admin: (s) => `${cap(s.summary)}. Coche les documents administratifs reçus ou envoyés.`,
   invoice: (s) => `${cap(s.summary)}. La facture est la dernière étape du module.`,
+  finish: (s) =>
+    `${cap(s.summary)}. Coche ce qui reste dans la liste « Terminer le module », puis termine-le.`,
 };
 
 /** Libellé du bouton « passer à l'étape d'après ». */
@@ -100,11 +103,17 @@ export function buildHero(input: {
   if (input.closed || (journey.steps.length > 0 && journey.current === null)) {
     return {
       kind: "finished",
-      eyebrow: `${journey.steps.length || 10} étapes sur ${journey.steps.length || 10}`,
+      // Vrai décompte : un module terminé peut garder des étapes ouvertes.
+      eyebrow: (() => {
+        const open = journey.steps.filter((s) => s.state !== "done").length;
+        return open > 0
+          ? `${open} chose${open > 1 ? "s" : ""} encore ouverte${open > 1 ? "s" : ""}`
+          : `${journey.steps.length} étapes sur ${journey.steps.length}`;
+      })(),
       title: "Ce module est terminé",
       text: input.closed
         ? "Il est terminé : tout reste consultable (notes, résultats publiés, observations, facture, fil rouge)."
-        : "Cours faits, notes saisies, facture payée. Tu peux le ranger.",
+        : "Cours faits, notes saisies, facture payée. Tu peux le terminer.",
       primary: null,
       secondary: null,
       offerFinish: !input.closed,

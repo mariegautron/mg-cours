@@ -11,6 +11,9 @@ import type { Tables } from "@/types/db";
 import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import { invoiceBlockers, missingInvoiceData, REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import { moduleSteps, type ModuleSteps } from "@/lib/ynov/module-steps";
+import { finishChecklist } from "@/lib/modules/finish";
+import { agreementDeposited } from "@/lib/modules/documents";
+import { isPaid, isSent } from "@/lib/invoice/simple";
 import type { trameStatus } from "@/lib/ynov/trame";
 
 export interface JourneyData {
@@ -69,6 +72,18 @@ export function buildJourney(d: JourneyData): ModuleSteps {
     shared: d.shared,
     appreciations: d.appreciations,
     makeups: d.makeups,
+    finish: {
+      finished: !!(d.mod as { finished_at?: string | null }).finished_at,
+      remaining: finishChecklist({
+        courses: d.courses.map((c) => ({ completion: c.completion })),
+        notes: { entered: d.notes.enteredTotal, required: d.notes.requirement.total },
+        adminDocs: adminDocsDone,
+        invoiceSent: isSent(d.mod.iceberg_state),
+        invoicePaid: isPaid(d.mod.iceberg_state),
+        agreementDeposited: agreementDeposited(d.documents),
+        appreciations: d.appreciations,
+      }).filter((i) => !i.done && !i.optional).length,
+    },
     invoice: d.invoice?.status ?? null,
     billingReady: d.invoiceCtx
       ? invoiceBlockers(d.invoiceCtx).length + missingInvoiceData(d.invoiceCtx).length === 0

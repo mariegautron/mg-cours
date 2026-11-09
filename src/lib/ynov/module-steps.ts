@@ -21,7 +21,8 @@ export type StepKey =
   | "makeups"
   | "appreciations"
   | "admin"
-  | "invoice";
+  | "invoice"
+  | "finish";
 
 export interface ModuleStepsContext {
   moduleId: string;
@@ -45,6 +46,8 @@ export interface ModuleStepsContext {
   adminDocs: { done: number; total: number };
   /** Appréciations pour Hyperplanning (après les notes). */
   appreciations?: { written: number; total: number };
+  /** « Terminer le module » : lignes de la liste de contrôle encore ouvertes, et module terminé. */
+  finish?: { remaining: number; finished: boolean };
   /** Rattrapages des absences excusées : pas encore faits / au total. */
   makeups?: { pending: number; total: number };
   invoice: "draft" | "ready" | "sent" | "paid" | null;
@@ -284,6 +287,24 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       action: invoiceAction,
       badge: invoiceBadge,
     },
+    ...(ctx.finish
+      ? [
+          {
+            key: "finish" as const,
+            title: "Terminer le module",
+            state: (ctx.finish.finished
+              ? "done"
+              : ctx.finish.remaining === 0
+                ? "todo"
+                : "in_progress") as StepState,
+            summary: ctx.finish.finished
+              ? "module terminé"
+              : `${ctx.finish.remaining} chose${ctx.finish.remaining > 1 ? "s" : ""} restante${ctx.finish.remaining > 1 ? "s" : ""}`,
+            action: { label: "Terminer le module", href: `${base}/finish` },
+            badge: "terminer le module",
+          },
+        ]
+      : []),
   ];
 
   const numbered = steps.map((s, i) => ({ ...s, number: i + 1 }));

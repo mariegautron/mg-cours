@@ -37,6 +37,7 @@ import { schoolYearOf } from "@/lib/modules/list-state";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getOutline } from "@/lib/outline/queries";
+import { isPaid, isSent } from "@/lib/invoice/simple";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { trameStatus } from "@/lib/ynov/trame";
@@ -287,15 +288,28 @@ export default async function ModulePage({
                   <Stat label="Moyenne de la classe" value={meanLabel(mean) ?? "—"} />
                   <Stat label="Étudiant·es" value={String(members.size)} />
                   <Stat label="Heures faites" value={`${mod.total_hours} h`} />
-                  <Stat label="Facture" value={invoice ? INVOICE_LABEL[invoice.status] : "—"} />
+                  <Stat
+                    label="Facture"
+                    value={
+                      isPaid(mod.iceberg_state)
+                        ? "Payée"
+                        : isSent(mod.iceberg_state)
+                          ? "Envoyée"
+                          : invoice
+                            ? INVOICE_LABEL[invoice.status]
+                            : "À déposer"
+                    }
+                  />
                 </div>
               </Card>
-              <Card id="retour" title="Ton retour" aside={<Pill tone="warn">Privé</Pill>}>
+              <Card id="retour" title="Ce que tu as retenu" aside={<Pill tone="warn">Privé</Pill>}>
                 {retro ? (
                   <p className="text-sm whitespace-pre-wrap">{retro}</p>
                 ) : (
                   <p className="text-muted-foreground mb-3 text-sm">
-                    Ce que tu retiens de ce module, à écrire avant de le terminer.
+                    {mod.finished_at
+                      ? "Rien d’écrit."
+                      : "Ce que tu retiens de ce module, à écrire avant de le terminer."}
                   </p>
                 )}
                 {hero?.offerFinish ? (

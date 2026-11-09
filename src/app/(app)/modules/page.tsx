@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { FinishedNotice } from "@/components/modules/finished-notice";
+
 import { EmptyState } from "@/components/empty-state";
 import { Pill } from "@/components/dashboard/pill";
 import { ModuleRowActions } from "@/components/modules/module-row-actions";
@@ -49,6 +51,9 @@ const EMPTY: Record<ListFilter, { title: string; description: string }> = {
 
 export default async function ModulesPage({ searchParams }: PageProps<"/modules">) {
   const sp = await searchParams;
+  // Retour de « Terminer le module » : message avec « Annuler » pendant 8 s.
+  const finishedId = typeof sp.termine === "string" ? sp.termine : null;
+  const finishedToken = typeof sp.t === "string" ? sp.t : null;
   const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
   // Anciennes URL : ?filter=archived → Rangés ; ?filter=all → En cours.
   const rawFilter = str("filter");
@@ -62,6 +67,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
     listCourseProgress(),
     retrospectiveAvailable(),
   ]);
+  const finishedName = finishedId ? (all.find((m) => m.id === finishedId)?.name ?? null) : null;
   const rows = all.map((m) => {
     const courses = progress.get(m.id) ?? { done: 0, total: 0 };
     return { m, courses, state: moduleListState({ ...m, courses }) };
@@ -148,12 +154,20 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
 
   return (
     <div className="space-y-4">
+      {finishedId && finishedToken ? (
+        <FinishedNotice
+          id={finishedId}
+          name={finishedName ?? "Le module"}
+          token={finishedToken}
+          archivedInstead={sp.a === "1"}
+        />
+      ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Modules</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">
             Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Tu peux terminer ou
-            ranger un module depuis ici.
+            archiver un module depuis ici.
           </p>
         </div>
         <Link
