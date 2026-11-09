@@ -216,7 +216,9 @@ export function CorrectionOverview({
                       ) : null}
                       <td className="py-1 pr-3">
                         <Pill tone={TONE[r.state]}>
-                          {COPY_STATE_LABELS[r.state]}
+                          {r.attendance === "absent_excused"
+                            ? "Excusé·e · rattrapage à prévoir"
+                            : COPY_STATE_LABELS[r.state]}
                           {r.state === "in_progress" && r.scored !== null
                             ? ` · ${r.scored} sur ${r.total}`
                             : ""}

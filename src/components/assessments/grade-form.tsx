@@ -1,5 +1,6 @@
 "use client";
 
+import { MakeupLink } from "@/components/assessments/makeup-link";
 import { scaleToPoints, type ScaleBand } from "@/lib/assessments/score-scale";
 import { CriterionExpectations } from "@/components/assessments/criterion-expectations";
 import { checksKey, splitDescription } from "@/lib/assessments/expectations";
@@ -1178,7 +1179,10 @@ export function GradeForm({
         ))}
       </div>
       {ATTENDANCE_HINTS[attendance] ? (
-        <p className="text-muted-foreground text-xs">{ATTENDANCE_HINTS[attendance]}</p>
+        <p className="text-muted-foreground text-xs">
+          {ATTENDANCE_HINTS[attendance]}{" "}
+          {attendance === "absent_excused" ? <MakeupLink /> : null}
+        </p>
       ) : null}
     </fieldset>
   );
@@ -1511,7 +1515,8 @@ export function GradeForm({
         <div className="space-y-4">
           {absent ? (
             <p className="text-sm">
-              {ATTENDANCE_LABELS[attendance]}. {ATTENDANCE_HINTS[attendance]}
+              {ATTENDANCE_LABELS[attendance]}. {ATTENDANCE_HINTS[attendance]}{" "}
+              {attendance === "absent_excused" ? <MakeupLink /> : null}
             </p>
           ) : (
             <>
