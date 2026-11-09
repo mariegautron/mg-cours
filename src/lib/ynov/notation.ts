@@ -14,9 +14,42 @@
 export const GROUP_COEFFICIENT = 1;
 export const INDIVIDUAL_COEFFICIENT = 3;
 
-/** Coefficient de la règle (YNOV) selon que la note est de groupe ou individuelle. */
-export function coefficientFor(isGroupGrade: boolean): number {
-  return isGroupGrade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT;
+/** Palier d'heures → notes exigées (de groupe, individuelles). */
+export interface GradingBracket {
+  minHours: number;
+  maxHours: number;
+  group: number;
+  individual: number;
+}
+
+/**
+ * Règles de notation d'une école : paliers d'heures, coefficients, bonus de certification.
+ * Les valeurs YNOV sont celles par défaut (école sans réglage, module sans école).
+ */
+export interface GradingRules {
+  groupCoefficient: number;
+  individualCoefficient: number;
+  brackets: readonly GradingBracket[];
+  /** Les notes bonus (certification) peuvent remonter la moyenne, jamais la baisser. */
+  bonusAllowed: boolean;
+}
+
+export const YNOV_BRACKETS: readonly GradingBracket[] = [
+  { minHours: 4, maxHours: 16, group: 1, individual: 1 },
+  { minHours: 20, maxHours: 48, group: 2, individual: 1 },
+  { minHours: 52, maxHours: 70, group: 3, individual: 2 },
+];
+
+export const YNOV_GRADING: GradingRules = {
+  groupCoefficient: GROUP_COEFFICIENT,
+  individualCoefficient: INDIVIDUAL_COEFFICIENT,
+  brackets: YNOV_BRACKETS,
+  bonusAllowed: true,
+};
+
+/** Coefficient de la règle (YNOV par défaut) selon que la note est de groupe ou individuelle. */
+export function coefficientFor(isGroupGrade: boolean, rules: GradingRules = YNOV_GRADING): number {
+  return isGroupGrade ? rules.groupCoefficient : rules.individualCoefficient;
 }
 
 /** Barème YNOV / Hyperplanning : toutes les notes sont remontées sur 20. */
@@ -76,26 +109,16 @@ export interface NoteRequirement {
   exact: boolean;
 }
 
-interface Bracket {
-  minHours: number;
-  maxHours: number;
-  total: number;
-  group: number;
-  individual: number;
-}
-
-const BRACKETS: readonly Bracket[] = [
-  { minHours: 4, maxHours: 16, total: 2, group: 1, individual: 1 },
-  { minHours: 20, maxHours: 48, total: 3, group: 2, individual: 1 },
-  { minHours: 52, maxHours: 70, total: 5, group: 3, individual: 2 },
-] as const;
-
 /**
  * Renvoie le nombre minimum de notes requises pour un module donné.
  * Pour un volume hors paliers (ex. 18 h, 50 h, 90 h), on retient le palier le
  * plus proche et `exact` vaut `false`.
  */
-export function requiredNotes(totalHours: number): NoteRequirement {
+export function requiredNotes(
+  totalHours: number,
+  rules: GradingRules = YNOV_GRADING,
+): NoteRequirement {
+  const BRACKETS = rules.brackets.length ? rules.brackets : YNOV_BRACKETS;
   if (!Number.isFinite(totalHours) || totalHours <= 0) {
     return { total: 0, group: 0, individual: 0, exact: false };
   }
@@ -103,7 +126,7 @@ export function requiredNotes(totalHours: number): NoteRequirement {
   const match = BRACKETS.find((b) => totalHours >= b.minHours && totalHours <= b.maxHours);
   if (match) {
     return {
-      total: match.total,
+      total: match.group + match.individual,
       group: match.group,
       individual: match.individual,
       exact: true,
@@ -121,7 +144,7 @@ export function requiredNotes(totalHours: number): NoteRequirement {
   });
 
   return {
-    total: nearest.total,
+    total: nearest.group + nearest.individual,
     group: nearest.group,
     individual: nearest.individual,
     exact: false,
@@ -150,12 +173,15 @@ export interface WeightedResult {
  * (groupe ×1, individuel ×3), chaque note étant d'abord ramenée sur 20.
  * `points` = total des points au sens YNOV.
  */
-export function weightedAverage(grades: readonly GradeInput[]): WeightedResult {
+export function weightedAverage(
+  grades: readonly GradeInput[],
+  rules: GradingRules = YNOV_GRADING,
+): WeightedResult {
   let points = 0;
   let weight = 0;
 
   for (const g of grades) {
-    const coef = g.kind === "group" ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT;
+    const coef = coefficientFor(g.kind === "group", rules);
     points += toTwenty(g.value, g.max) * coef;
     weight += coef;
   }
@@ -183,10 +209,12 @@ export interface BonusResult extends WeightedResult {
 export function averageWithBonus(
   regular: readonly GradeInput[],
   bonus: readonly GradeInput[],
+  rules: GradingRules = YNOV_GRADING,
 ): BonusResult {
-  const base = weightedAverage(regular);
-  if (base.average === null || bonus.length === 0) return { ...base, bonusEffect: null };
-  const withBonus = weightedAverage([...regular, ...bonus]);
+  const base = weightedAverage(regular, rules);
+  if (base.average === null || bonus.length === 0 || !rules.bonusAllowed)
+    return { ...base, bonusEffect: null };
+  const withBonus = weightedAverage([...regular, ...bonus], rules);
   const better = (withBonus.average ?? 0) > base.average;
   const average = Math.min(20, better ? (withBonus.average ?? base.average) : base.average);
   return {
@@ -212,8 +240,9 @@ export interface NoteProgress {
 export function noteProgress(
   totalHours: number,
   entered: { group: number; individual: number },
+  rules: GradingRules = YNOV_GRADING,
 ): NoteProgress {
-  const requirement = requiredNotes(totalHours);
+  const requirement = requiredNotes(totalHours, rules);
   const missingGroup = Math.max(0, requirement.group - entered.group);
   const missingIndividual = Math.max(0, requirement.individual - entered.individual);
 

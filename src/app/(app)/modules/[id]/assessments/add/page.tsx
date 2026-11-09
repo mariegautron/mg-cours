@@ -22,6 +22,7 @@ import {
 } from "@/lib/assessments/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { PROJECT_ROLE_LABELS } from "@/lib/ynov/project-skeleton";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 
 export const metadata: Metadata = { title: "Ajouter une évaluation" };
 
@@ -39,11 +40,12 @@ export default async function AddAssessmentPage({
   const jalon = (await searchParams).jalon === "1";
   const mod = await getModule(id);
   if (!mod) notFound();
-  const [grids, assessments, progress, courses] = await Promise.all([
+  const [grids, assessments, progress, courses, { grading }] = await Promise.all([
     listGrids(),
     listModuleAssessments(id),
     moduleNoteProgress(id, mod.total_hours),
     getModuleCourses(id),
+    getSchoolRulesForModule(id),
   ]);
 
   const otherAssessments = (await listAllAssessments()).filter(
@@ -121,7 +123,9 @@ export default async function AddAssessmentPage({
                       <strong className="text-base">{a.title}</strong>
                       <div className="text-muted-foreground text-sm">
                         {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
-                        {a.is_group_grade ? "groupe ×1" : "individuelle ×3"}
+                        {a.is_group_grade
+                          ? `groupe ×${grading.groupCoefficient}`
+                          : `individuelle ×${grading.individualCoefficient}`}
                         {session ? ` · séance ${session}` : ""}
                       </div>
                     </div>

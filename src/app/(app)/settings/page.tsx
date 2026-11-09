@@ -23,7 +23,7 @@ import { getProfile, listAllSchools, listSchoolRules } from "@/lib/settings/quer
 export const metadata: Metadata = { title: "Réglages" };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
-  const { saved, retour } = await searchParams;
+  const { saved, retour, regles } = await searchParams;
   // Retour proposé seulement vers une page d'appréciations du module (jamais une adresse libre).
   const backTo =
     typeof retour === "string" &&
@@ -113,6 +113,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
                 <span className="inline-flex items-center gap-1">
                   <Check aria-hidden className="size-4" />
                   École « {saved} » enregistrée.
+                  {typeof regles === "string" ? (
+                    <>
+                      {" "}
+                      <a href={`#rules-${regles}`} className="underline underline-offset-2">
+                        Étape suivante : ses règles de notation
+                      </a>
+                    </>
+                  ) : null}
                 </span>
               ) : null}
             </p>
@@ -158,8 +166,8 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
                 Règles par école
               </h2>
               <p className="text-muted-foreground text-sm">
-                Ce qui change d’une école à l’autre : absence excusée, adresses des étudiant·es,
-                longueur des appréciations.
+                Ce qui change d’une école à l’autre : règles de notation, absence excusée, adresses
+                des étudiant·es, longueur des appréciations.
               </p>
             </div>
             {schools.length === 0 ? (
@@ -167,7 +175,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
                 Ajoute d’abord une école pour régler ses règles.
               </p>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 2xl:grid-cols-2">
                 {schools.map((s) => (
                   <SchoolRulesForm
                     key={s.id}
@@ -175,6 +183,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
                     schoolName={s.name}
                     rules={readSchoolRules(rules.bySchool.get(s.id) ?? null)}
                     available={rules.available}
+                    isNew={regles === s.id}
                   />
                 ))}
               </div>

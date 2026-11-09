@@ -96,7 +96,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
         onChange={() => setDirty(true)}
         className="space-y-6"
       >
-        <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+        <div className="grid gap-x-10 gap-y-6 2xl:grid-cols-2">
           <Group legend="Identité">
             <div className="space-y-2">
               <Label htmlFor="legalName">Nom / raison sociale</Label>

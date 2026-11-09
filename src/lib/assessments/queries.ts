@@ -7,15 +7,14 @@ import { loadRewriteKeys } from "@/lib/assessments/oral-space-server";
 import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
-import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
 import {
   criteriaTotal,
   effectiveMaxScore,
   noteProgress,
   averageWithBonus,
-  GROUP_COEFFICIENT,
-  INDIVIDUAL_COEFFICIENT,
+  coefficientFor,
   weightedAverage,
   type GradeInput,
   type NoteProgress,
@@ -378,7 +377,8 @@ export async function moduleNoteProgress(
   const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
   const group = counted.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
   const individual = counted.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
-  return noteProgress(totalHours, { group, individual });
+  const { grading } = await getSchoolRulesForModule(moduleId);
+  return noteProgress(totalHours, { group, individual }, grading);
 }
 
 /** Une note qui entre (ou pas) dans la moyenne du module, telle qu'elle est comptée. */
@@ -408,7 +408,7 @@ export interface StudentAverage {
   excluded: { assessmentId: string; title: string; reason: "incomplete" | "rewrite" }[];
 }
 
-/** Moyenne pondérée YNOV sur 20 (groupe ×1, individuel ×3) de chaque étudiant·e du module. */
+/** Moyenne pondérée sur 20 de chaque étudiant·e du module, coefficients de l'école (YNOV : groupe ×1, individuel ×3). */
 export async function moduleStudentAverages(moduleId: string): Promise<StudentAverage[]> {
   const supabase = await createClient();
   const [{ data: groups }, assessments] = await Promise.all([
@@ -433,7 +433,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
   }
 
   if (assessments.length === 0 || allStudents.size === 0) return [];
-  const absenceRule = await getAbsenceRuleForModule(moduleId);
+  const { absenceRule, grading } = await getSchoolRulesForModule(moduleId);
 
   const { data: grades } = await supabase
     .from("grade")
@@ -485,7 +485,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       value,
       max,
       kind,
-      coefficient: a.is_bonus ? 0 : kind === "group" ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT,
+      coefficient: a.is_bonus ? 0 : coefficientFor(kind === "group", grading),
       isBonus: a.is_bonus,
     });
     linesPerStudent.set(studentId, list);
@@ -495,9 +495,16 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     bonusPerStudent.set(student.id, []);
   }
 
+  const groupGradeOriginal = new Set(assessments.filter((a) => a.is_group_grade).map((a) => a.id));
   for (const assessment of assessments) {
     const rows = gradesByAssessment.get(assessment.id) ?? [];
-    const kind = assessment.is_group_grade ? "group" : "individual";
+    // Rattrapage d'un travail de groupe (règle « rattrapage individuel ») : même coefficient que
+    // la note de groupe qu'il remplace.
+    const kind =
+      assessment.is_group_grade ||
+      (assessment.makeup_of_id !== null && groupGradeOriginal.has(assessment.makeup_of_id))
+        ? "group"
+        : "individual";
     const max = assessment.maxScore;
     for (const row of rows) {
       // Une copie incomplète n'entre jamais dans une moyenne ; on dit pourquoi elle manque.
@@ -560,6 +567,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       const result = averageWithBonus(
         perStudent.get(student.id) ?? [],
         bonusPerStudent.get(student.id) ?? [],
+        grading,
       );
       const expected = assessments.filter(
         (a) =>

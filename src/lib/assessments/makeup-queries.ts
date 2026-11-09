@@ -2,7 +2,39 @@ import "server-only";
 
 import { makeupOverview, type MakeupGroup } from "@/lib/assessments/makeup-overview";
 import { listModuleAssessments } from "@/lib/assessments/queries";
+import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Membres excusé·es des travaux de groupe (clé : évaluation), quand l'école donne un rattrapage
+ * individuel ; `undefined` sinon (règle « garde la note du groupe »).
+ */
+export async function loadGroupExcused(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  moduleId: string,
+  groupAssessmentIds: readonly string[],
+): Promise<Map<string, string[]> | undefined> {
+  if ((await getAbsenceRuleForModule(moduleId)) !== "makeup") return undefined;
+  const out = new Map<string, string[]>();
+  if (groupAssessmentIds.length === 0) return out;
+  const { data: grades } = await supabase
+    .from("grade")
+    .select("id, assessment_id")
+    .in("assessment_id", groupAssessmentIds)
+    .not("student_group_id", "is", null);
+  const assessmentOf = new Map((grades ?? []).map((g) => [g.id, g.assessment_id] as const));
+  if (assessmentOf.size === 0) return out;
+  const { data: members } = await supabase
+    .from("group_grade_member")
+    .select("grade_id, student_id, attendance")
+    .in("grade_id", [...assessmentOf.keys()])
+    .eq("attendance", "absent_excused");
+  for (const m of members ?? []) {
+    const a = assessmentOf.get(m.grade_id);
+    if (a) out.set(a, [...(out.get(a) ?? []), m.student_id]);
+  }
+  return out;
+}
 
 /** Rattrapages d'un module (même calcul que la page Rattrapages). */
 export async function loadMakeupGroups(moduleId: string): Promise<MakeupGroup[]> {
@@ -24,6 +56,11 @@ export async function loadMakeupGroups(moduleId: string): Promise<MakeupGroup[]>
       : Promise.resolve({ data: [] as never[] }),
     supabase.from("student").select("id, first_name, last_name"),
   ]);
+  const groupExcused = await loadGroupExcused(
+    supabase,
+    moduleId,
+    assessments.filter((a) => a.is_group_grade && !a.makeup_of_id).map((a) => a.id),
+  );
   const enrolled = new Map<string, string[]>();
   for (const r of (enrolledRows ?? []) as { assessment_id: string; student_id: string }[]) {
     enrolled.set(r.assessment_id, [...(enrolled.get(r.assessment_id) ?? []), r.student_id]);
@@ -32,6 +69,7 @@ export async function loadMakeupGroups(moduleId: string): Promise<MakeupGroup[]>
     assessments,
     grades: (grades ?? []) as never,
     enrolled,
+    groupExcused,
     studentNames: new Map(
       (students ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`] as const),
     ),

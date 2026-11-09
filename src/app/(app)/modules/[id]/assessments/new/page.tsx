@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import { createAssessment } from "@/app/(app)/modules/[id]/assessments/actions";
 import { AssessmentForm } from "@/components/assessments/assessment-form";
 import { listGrids } from "@/lib/assessments/queries";
-import { rulesForSchool } from "@/lib/schools/rules";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { getModuleProject } from "@/lib/projects/queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
-function schoolCoefficients(mod: Awaited<ReturnType<typeof getModule>>) {
-  const { rules } = rulesForSchool(mod?.school?.name);
-  return { group: rules.groupCoefficient, individual: rules.individualCoefficient };
+async function schoolCoefficients(moduleId: string) {
+  const { grading } = await getSchoolRulesForModule(moduleId);
+  return { group: grading.groupCoefficient, individual: grading.individualCoefficient };
 }
 
 export const metadata: Metadata = { title: "Nouvelle évaluation" };
@@ -46,7 +46,7 @@ export default async function NewAssessmentPage({
         groups={groups}
         grids={grids}
         courses={courses}
-        coefficients={schoolCoefficients(await getModule(id))}
+        coefficients={await schoolCoefficients(id)}
         hasProject={!!project}
         initialMilestone={jalon === "1"}
         initialGridId={

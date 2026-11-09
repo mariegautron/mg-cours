@@ -3,6 +3,8 @@
  * modèle d'adresse e-mail, génération d'une adresse à partir du modèle.
  */
 
+import { YNOV_GRADING, type GradingBracket, type GradingRules } from "@/lib/ynov/notation";
+
 export type AbsenceRule = "keep_group_grade" | "makeup";
 
 export interface SchoolRules {
@@ -12,13 +14,74 @@ export interface SchoolRules {
   emailTemplate: string;
   /** Longueur maximale d'une appréciation (caractères). */
   appreciationMax: number;
+  /** Règles de notation (paliers d'heures, coefficients, bonus) ; YNOV par défaut. */
+  grading: GradingRules;
 }
 
 export const DEFAULT_SCHOOL_RULES: SchoolRules = {
   absenceRule: "keep_group_grade",
   emailTemplate: "",
   appreciationMax: 250,
+  grading: YNOV_GRADING,
 };
+
+const isCount = (n: unknown): n is number =>
+  typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 20;
+const isCoefficient = (n: unknown): n is number =>
+  typeof n === "number" && Number.isFinite(n) && n > 0 && n <= 20;
+
+/** Paliers lus en base (`[{min_hours, max_hours, group, individual}]`) ; `null` si un palier est invalide. */
+export function readBrackets(raw: unknown): GradingBracket[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const out: GradingBracket[] = [];
+  for (const b of raw) {
+    if (typeof b !== "object" || b === null) return null;
+    const r = b as Record<string, unknown>;
+    const min = r.min_hours;
+    const max = r.max_hours;
+    if (typeof min !== "number" || typeof max !== "number" || !(min > 0) || max < min) return null;
+    if (!isCount(r.group) || !isCount(r.individual)) return null;
+    out.push({ minHours: min, maxHours: max, group: r.group, individual: r.individual });
+  }
+  return out.sort((a, b) => a.minHours - b.minHours);
+}
+
+/** Paliers → forme stockée en base. */
+export function writeBrackets(brackets: readonly GradingBracket[]) {
+  return brackets.map((b) => ({
+    min_hours: b.minHours,
+    max_hours: b.maxHours,
+    group: b.group,
+    individual: b.individual,
+  }));
+}
+
+/** Colonnes de notation (ou absentes : base pas encore à jour) → règles de notation, YNOV par défaut. */
+export function readGradingRules(
+  row: {
+    group_coefficient?: number | string | null;
+    individual_coefficient?: number | string | null;
+    note_brackets?: unknown;
+    bonus_allowed?: boolean | null;
+  } | null,
+): GradingRules {
+  if (!row) return YNOV_GRADING;
+  const g = Number(row.group_coefficient);
+  const i = Number(row.individual_coefficient);
+  return {
+    groupCoefficient: isCoefficient(g) ? g : YNOV_GRADING.groupCoefficient,
+    individualCoefficient: isCoefficient(i) ? i : YNOV_GRADING.individualCoefficient,
+    brackets: readBrackets(row.note_brackets) ?? YNOV_GRADING.brackets,
+    bonusAllowed:
+      typeof row.bonus_allowed === "boolean" ? row.bonus_allowed : YNOV_GRADING.bonusAllowed,
+  };
+}
+
+/** Coefficient saisi (« 1 », « 1,5 ») ; `null` si invalide. */
+export function parseCoefficient(input: string): number | null {
+  const n = Number(input.trim().replace(",", "."));
+  return isCoefficient(n) ? Math.round(n * 100) / 100 : null;
+}
 
 export const ABSENCE_RULE_LABELS: Record<AbsenceRule, string> = {
   keep_group_grade: "Garde la note du groupe",
@@ -30,11 +93,13 @@ export const APPRECIATION_LIMIT = 2000;
 
 /** Ligne de `school_setting` (ou `null`) → règles complètes : toute valeur absente ou invalide retombe sur le défaut. */
 export function readSchoolRules(
-  row: {
-    absence_rule?: string | null;
-    email_template?: string | null;
-    appreciation_max?: number | null;
-  } | null,
+  row:
+    | ({
+        absence_rule?: string | null;
+        email_template?: string | null;
+        appreciation_max?: number | null;
+      } & Parameters<typeof readGradingRules>[0])
+    | null,
 ): SchoolRules {
   if (!row) return { ...DEFAULT_SCHOOL_RULES };
   const max = row.appreciation_max;
@@ -51,6 +116,7 @@ export function readSchoolRules(
       max <= APPRECIATION_LIMIT
         ? max
         : DEFAULT_SCHOOL_RULES.appreciationMax,
+    grading: readGradingRules(row),
   };
 }
 
@@ -139,4 +205,55 @@ export function parseAppreciationMax(
     };
   }
   return { ok: true, value: n };
+}
+
+/** Champs « Règles de notation » du formulaire d'une école → règles validées. */
+export function parseGradingForm(
+  form: Pick<FormData, "get" | "getAll">,
+): { ok: true; value: GradingRules } | { ok: false; error: string } {
+  const groupCoefficient = parseCoefficient(String(form.get("groupCoefficient") ?? ""));
+  const individualCoefficient = parseCoefficient(String(form.get("individualCoefficient") ?? ""));
+  if (groupCoefficient === null || individualCoefficient === null) {
+    return { ok: false, error: "Les coefficients sont des nombres entre 0 et 20 (ex. 1 ou 1,5)." };
+  }
+  const col = (name: string) => form.getAll(name).map((v) => String(v).trim());
+  const mins = col("bracketMin");
+  const maxs = col("bracketMax");
+  const groups = col("bracketGroup");
+  const individuals = col("bracketIndividual");
+  const raw: unknown[] = [];
+  for (let i = 0; i < mins.length; i++) {
+    const cells = [mins[i], maxs[i], groups[i], individuals[i]];
+    if (cells.every((c) => !c)) continue;
+    if (cells.some((c) => !c)) {
+      return {
+        ok: false,
+        error: `Palier ${i + 1} : remplis les quatre cases, ou vide-les toutes.`,
+      };
+    }
+    const [min, max, group, individual] = cells.map((c) => Number(c!.replace(",", ".")));
+    raw.push({ min_hours: min, max_hours: max, group, individual });
+  }
+  const brackets = readBrackets(raw);
+  if (!brackets) {
+    return {
+      ok: false,
+      error:
+        "Paliers : au moins un, heures « de » ≤ « à », nombres de notes entiers entre 0 et 20.",
+    };
+  }
+  for (let i = 1; i < brackets.length; i++) {
+    if (brackets[i].minHours <= brackets[i - 1].maxHours) {
+      return { ok: false, error: "Deux paliers se chevauchent : vérifie les heures." };
+    }
+  }
+  return {
+    ok: true,
+    value: {
+      groupCoefficient,
+      individualCoefficient,
+      brackets,
+      bonusAllowed: form.get("bonusAllowed") === "on",
+    },
+  };
 }

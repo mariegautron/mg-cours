@@ -23,6 +23,10 @@ export interface SchoolRulesRow {
   absence_rule: string;
   email_template: string;
   appreciation_max: number;
+  group_coefficient?: number | null;
+  individual_coefficient?: number | null;
+  note_brackets?: unknown;
+  bonus_allowed?: boolean | null;
 }
 
 /**
@@ -37,7 +41,8 @@ export async function listSchoolRules(): Promise<{
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("school_setting")
-      .select("school_id, absence_rule, email_template, appreciation_max");
+      // « * » : les colonnes de notation sont lues si la base est à jour, ignorées sinon.
+      .select("*");
     if (error || !data) return { available: false, bySchool: new Map() };
     return { available: true, bySchool: new Map(data.map((r) => [r.school_id, r])) };
   } catch {

@@ -235,6 +235,18 @@ export default async function ModulePage({
         </div>
       </header>
 
+      {!mod.school_id ? (
+        <p role="note" className="border-primary/50 bg-primary/10 rounded-2xl border p-3 text-sm">
+          École non choisie : règles de Nantes Ynov Campus appliquées par défaut.{" "}
+          <Link
+            href={`/modules/${mod.id}/edit`}
+            className="font-semibold underline underline-offset-2"
+          >
+            Choisir l’école
+          </Link>
+        </p>
+      ) : null}
+
       {ficheMessage ? (
         <p
           role="status"

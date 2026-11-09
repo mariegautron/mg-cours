@@ -8,6 +8,7 @@ import { getModule, getModuleCourses, getModuleResourcesFull } from "@/lib/modul
 import { isOptionalDeckTitle } from "@/lib/present/items";
 import { groupByKind, studentFacing } from "@/lib/resources/kind";
 import { requiredNotes } from "@/lib/ynov/notation";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 
 export async function generateMetadata({
   params,
@@ -68,7 +69,7 @@ export default async function PresentModulePage({ params }: PageProps<"/present/
       slides.push(listSlide(s, "À la fin du module, vous saurez…", objectives));
   }
 
-  const required = requiredNotes(mod.total_hours);
+  const required = requiredNotes(mod.total_hours, (await getSchoolRulesForModule(id)).grading);
   if (assessments.length || required.total) {
     const s = section("Évaluation");
     const items = [...assessments]

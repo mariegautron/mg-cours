@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { formatBankDetails } from "@/lib/settings/bank";
-import { parseAppreciationMax, validateEmailTemplate } from "@/lib/settings/school-rules";
+import {
+  parseAppreciationMax,
+  parseGradingForm,
+  validateEmailTemplate,
+  writeBrackets,
+} from "@/lib/settings/school-rules";
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure } from "@/lib/messages";
@@ -63,17 +68,24 @@ export async function createSchool(
   const d = parsed.data;
 
   const supabase = await createClient();
-  const { error } = await supabase.from("school").insert({
-    name: d.name,
-    siret: d.siret || null,
-    address: d.address || null,
-    billing_email: d.billingEmail || null,
-    pa_identifier: d.paIdentifier || null,
-  });
-  if (error) return { error: failure("enregistrer", { kept: true }) };
+  const { data: created, error } = await supabase
+    .from("school")
+    .insert({
+      name: d.name,
+      siret: d.siret || null,
+      address: d.address || null,
+      billing_email: d.billingEmail || null,
+      pa_identifier: d.paIdentifier || null,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { error: failure("enregistrer", { kept: true }) };
 
   revalidatePath("/settings");
-  redirect(`/settings?saved=${encodeURIComponent(d.name)}`);
+  // Étape suivante de « Nouvelle école » : ses règles de notation.
+  redirect(
+    `/settings?saved=${encodeURIComponent(d.name)}&regles=${created.id}#rules-${created.id}`,
+  );
 }
 
 export async function updateSchool(
@@ -112,7 +124,7 @@ export async function deleteSchool(id: string) {
 
 export interface SchoolRulesState {
   error?: string;
-  fieldErrors?: { emailTemplate?: string; appreciationMax?: string };
+  fieldErrors?: { emailTemplate?: string; appreciationMax?: string; grading?: string };
   message?: string;
   savedAt?: number;
 }
@@ -133,7 +145,9 @@ export async function saveSchoolRules(
   const fieldErrors: NonNullable<SchoolRulesState["fieldErrors"]> = {};
   if (!templateCheck.ok) fieldErrors.emailTemplate = templateCheck.error;
   if (!max.ok) fieldErrors.appreciationMax = max.error;
-  if (!templateCheck.ok || !max.ok) return { fieldErrors };
+  const grading = parseGradingForm(formData);
+  if (!grading.ok) fieldErrors.grading = grading.error;
+  if (!templateCheck.ok || !max.ok || !grading.ok) return { fieldErrors };
 
   const supabase = await createClient();
   const { data: school } = await supabase
@@ -149,16 +163,38 @@ export async function saveSchoolRules(
       absence_rule: rule,
       email_template: template,
       appreciation_max: max.value,
+      group_coefficient: grading.value.groupCoefficient,
+      individual_coefficient: grading.value.individualCoefficient,
+      note_brackets: writeBrackets(grading.value.brackets),
+      bonus_allowed: grading.value.bonusAllowed,
     },
     { onConflict: "school_id" },
   );
   if (error) {
+    // Base pas encore à jour pour les règles de notation : on garde au moins les autres réglages.
+    const { error: oldError } = await supabase.from("school_setting").upsert(
+      {
+        school_id: schoolId,
+        absence_rule: rule,
+        email_template: template,
+        appreciation_max: max.value,
+      },
+      { onConflict: "school_id" },
+    );
+    if (oldError) {
+      return {
+        error:
+          "Les règles par école ne peuvent pas encore être enregistrées : la mise à jour de la base n’est pas faite.",
+      };
+    }
+    revalidatePath("/settings");
     return {
-      error:
-        "Les règles par école ne peuvent pas encore être enregistrées : la mise à jour de la base n’est pas faite.",
+      message:
+        "Règles enregistrées, sauf les règles de notation : la mise à jour de la base n’est pas faite.",
+      savedAt: Date.now(),
     };
   }
-  revalidatePath("/settings");
+  revalidatePath("/", "layout");
   return { message: "Règles enregistrées.", savedAt: Date.now() };
 }
 

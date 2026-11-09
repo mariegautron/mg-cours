@@ -53,7 +53,7 @@ export function MakeupPanel({ moduleId, assessmentId, excused, makeup }: MakeupP
         <p className="text-muted-foreground text-sm">
           Copie le sujet en brouillon « à construire » : tu le modifies pour en faire un sujet
           similaire. Même grille, même coefficient, même barème. La note du rattrapage remplace
-          l’absence excusée ; elle ne compte pas comme une note de plus pour YNOV.
+          l’absence excusée ; elle ne compte pas comme une note de plus.
         </p>
       )}
       {!makeup || waiting > 0 ? (

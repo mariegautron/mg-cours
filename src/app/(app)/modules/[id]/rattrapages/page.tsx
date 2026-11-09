@@ -83,8 +83,10 @@ export default async function MakeupsPage({
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold">Rattrapages — {mod.name}</h1>
         <p role="status" className="text-muted-foreground">
-          {makeupSummary(groups)} Un rattrapage ne concerne que les évaluations individuelles : sa
-          note remplace l’absence excusée dans les moyennes.
+          {makeupSummary(groups)}{" "}
+          {rule === "makeup"
+            ? "Un rattrapage concerne les évaluations individuelles et, avec la règle de ton école, les travaux de groupe : sa note remplace l’absence excusée dans les moyennes."
+            : "Un rattrapage ne concerne que les évaluations individuelles : sa note remplace l’absence excusée dans les moyennes."}
         </p>
       </div>
 
@@ -93,7 +95,11 @@ export default async function MakeupsPage({
           {groups.length === 0 ? (
             <EmptyState
               title="Personne à rattraper"
-              description="Quand une personne est absente excusée à une évaluation individuelle, elle apparaît ici."
+              description={
+                rule === "makeup"
+                  ? "Quand une personne est absente excusée à une évaluation (individuelle ou de groupe), elle apparaît ici."
+                  : "Quand une personne est absente excusée à une évaluation individuelle, elle apparaît ici."
+              }
               actions={[{ label: "Voir les évaluations", href: `/modules/${id}/assessments` }]}
             />
           ) : (
@@ -178,14 +184,15 @@ export default async function MakeupsPage({
             </h2>
             <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
               <li>
-                Rattrapage <strong className="text-foreground">individuel seulement</strong>.
+                Un rattrapage se passe{" "}
+                <strong className="text-foreground">seul·e, sur un sujet individuel</strong>.
               </li>
               <li>Absent·e non prévenu·e : 0, sans rattrapage.</li>
               <li>
                 Sur un travail de groupe :{" "}
                 {rule === "makeup"
-                  ? "la personne n’a pas de note jusqu’au rattrapage (réglage de l’école)."
-                  : "la personne garde la note de groupe (réglage YNOV)."}
+                  ? "la personne excusée passe un rattrapage individuel ; pas de note avant (réglage de l’école)."
+                  : "la personne excusée garde la note de groupe (réglage de l’école)."}
               </li>
             </ul>
             <Button asChild variant="ghost" size="touch">

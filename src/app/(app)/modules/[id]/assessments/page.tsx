@@ -8,11 +8,11 @@ import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { listModuleGroups } from "@/lib/students/queries";
-import { rulesForSchool, weightingSentence } from "@/lib/schools/rules";
+import { weightingSentence } from "@/lib/schools/rules";
+import { getResolvedRulesForModule } from "@/lib/settings/rules-queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { examKindOf } from "@/lib/assessments/exam-kind";
-import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
 import { DayJBlock } from "@/components/assessments/day-j-block";
 import {
   dayJReadiness,
@@ -88,13 +88,16 @@ export default async function ModuleAssessmentsPage({
   const mod = await getModule(id);
   if (!mod) notFound();
 
-  const [assessments, progress, averages, courses, project] = await Promise.all([
+  const [assessments, progress, averages, courses, project, resolvedRules] = await Promise.all([
     listModuleAssessments(id),
     moduleNoteProgress(id, mod.total_hours),
     moduleStudentAverages(id),
     getModuleCourses(id),
     getModuleProject(id),
+    getResolvedRulesForModule(id),
   ]);
+  const coef = (isGroup: boolean) =>
+    isGroup ? resolvedRules.rules.groupCoefficient : resolvedRules.rules.individualCoefficient;
 
   const [expectations, evaluated] = await Promise.all([
     getModuleExpectations(id),
@@ -103,7 +106,6 @@ export default async function ModuleAssessmentsPage({
   const expectationCount = expectations.length;
 
   const regular = assessments.filter((a) => !a.makeup_of_id);
-  const resolvedRules = rulesForSchool(mod.school?.name);
   const planned = plannedProgress(progress.requirement, assessments);
   const makeups = assessments.filter((a) => a.makeup_of_id);
   const timeline = buildTimeline(
@@ -311,16 +313,17 @@ export default async function ModuleAssessmentsPage({
                         </Link>
                       </h3>
                       <span className="flex flex-wrap gap-1.5">
-                        <Pill>{a.is_group_grade ? "Groupe ×1" : "Individuelle ×3"}</Pill>
+                        <Pill>
+                          {a.is_group_grade ? "Groupe" : "Individuelle"} ×{coef(a.is_group_grade)}
+                        </Pill>
                         {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
                       </span>
                     </div>
                     <p className="text-muted-foreground mb-1 text-[0.8rem]">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
-                      {/* Même coefficient que le badge : celui de la règle YNOV, qui fait la moyenne. */}
-                      {a.type ? `${a.type} · ` : ""}coefficient{" "}
-                      {a.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT} ·{" "}
+                      {/* Même coefficient que le badge : celui de la règle de l'école, qui fait la moyenne. */}
+                      {a.type ? `${a.type} · ` : ""}coefficient {coef(a.is_group_grade)} ·{" "}
                       {a.groups.map((g) => g.name).join(", ") || "—"} · sur {a.maxScore}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}
                       {dueSessions.has(a.id) ? "" : ""}

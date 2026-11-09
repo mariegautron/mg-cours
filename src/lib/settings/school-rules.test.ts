@@ -8,6 +8,7 @@ import {
   slugName,
   validateEmailTemplate,
 } from "./school-rules";
+import { YNOV_GRADING } from "@/lib/ynov/notation";
 
 describe("readSchoolRules", () => {
   it("sans ligne : valeurs par défaut (garde la note du groupe, 250 caractères, pas de modèle)", () => {
@@ -16,6 +17,7 @@ describe("readSchoolRules", () => {
       absenceRule: "keep_group_grade",
       emailTemplate: "",
       appreciationMax: 250,
+      grading: YNOV_GRADING,
     });
   });
   it("lit une ligne complète", () => {
@@ -29,6 +31,7 @@ describe("readSchoolRules", () => {
       absenceRule: "makeup",
       emailTemplate: "{prenom}.{nom}@ynov.com",
       appreciationMax: 300,
+      grading: YNOV_GRADING,
     });
   });
   it("une valeur invalide retombe sur le défaut", () => {

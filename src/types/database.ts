@@ -3149,9 +3149,13 @@ export type Database = {
         Row: {
           absence_rule: string
           appreciation_max: number
+          bonus_allowed: boolean
           created_at: string
           email_template: string
+          group_coefficient: number
           id: string
+          individual_coefficient: number
+          note_brackets: Json
           owner_id: string
           school_id: string
           updated_at: string
@@ -3159,9 +3163,13 @@ export type Database = {
         Insert: {
           absence_rule?: string
           appreciation_max?: number
+          bonus_allowed?: boolean
           created_at?: string
           email_template?: string
+          group_coefficient?: number
           id?: string
+          individual_coefficient?: number
+          note_brackets?: Json
           owner_id?: string
           school_id: string
           updated_at?: string
@@ -3169,9 +3177,13 @@ export type Database = {
         Update: {
           absence_rule?: string
           appreciation_max?: number
+          bonus_allowed?: boolean
           created_at?: string
           email_template?: string
+          group_coefficient?: number
           id?: string
+          individual_coefficient?: number
+          note_brackets?: Json
           owner_id?: string
           school_id?: string
           updated_at?: string

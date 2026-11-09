@@ -25,7 +25,7 @@ const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 tex
 
 /**
  * US-88 : squelette proposé depuis les notes exigées, entièrement modifiable avant création.
- * Le compteur compare les évaluations du projet (déjà créées + proposées) aux notes YNOV exigées.
+ * Le compteur compare les évaluations du projet (déjà créées + proposées) aux notes exigées.
  */
 export function SkeletonEditor({
   moduleId,
@@ -147,7 +147,7 @@ export function SkeletonEditor({
       )}
 
       <p role="status" className="text-sm">
-        {balance.proposed.total}/{balance.required.total} notes YNOV exigées (
+        {balance.proposed.total}/{balance.required.total} notes exigées (
         {balance.proposed.group} de groupe, {balance.proposed.individual} individuelle
         {balance.proposed.individual > 1 ? "s" : ""}).
         {rows.length === 0 && balance.proposed.total >= balance.required.total

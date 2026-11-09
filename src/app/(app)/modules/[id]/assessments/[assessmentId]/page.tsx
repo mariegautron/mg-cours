@@ -60,7 +60,7 @@ import {
   parseSubmissionMode,
 } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
-import { GROUP_COEFFICIENT, INDIVIDUAL_COEFFICIENT } from "@/lib/ynov/notation";
+import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -150,6 +150,7 @@ export default async function AssessmentPage({
     courses,
     moduleExpectations,
     evaluatedExpectations,
+    { grading },
   ] = await Promise.all([
     getAssessment(assessmentId),
     getGradesByAssessment(assessmentId),
@@ -157,8 +158,13 @@ export default async function AssessmentPage({
     getModuleCourses(id),
     getModuleExpectations(id),
     listAssessmentExpectations([assessmentId]),
+    getSchoolRulesForModule(id),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
+  // Coefficient réellement utilisé par la moyenne : celui de la règle de l'école du module.
+  const ruleCoefficient = assessment.is_group_grade
+    ? grading.groupCoefficient
+    : grading.individualCoefficient;
 
   const memberNames = new Map(
     assessment.groups.flatMap((g) =>
@@ -216,7 +222,7 @@ export default async function AssessmentPage({
   // Absences excusées : où en est le rattrapage de chaque personne (même calcul que la page Rattrapages).
   const makeupGroup = (await loadMakeupGroups(id)).find((g) => g.assessment.id === assessmentId);
   const makeupGrades = makeupGroup?.makeup
-    ? (await getGradesByAssessment(makeupGroup.makeup.id, { skipRewrite: true }))
+    ? await getGradesByAssessment(makeupGroup.makeup.id, { skipRewrite: true })
     : [];
   const makeupFor = (studentId: string) => {
     const row = makeupGroup?.rows.find((r) => r.student.id === studentId);
@@ -432,7 +438,7 @@ export default async function AssessmentPage({
             {[
               assessment.project_role ? "Projet fil rouge" : null,
               assessment.type,
-              assessment.is_group_grade ? "groupe ×1" : "individuelle ×3",
+              `${assessment.is_group_grade ? "groupe" : "individuelle"} ×${ruleCoefficient}`,
               groupNames,
               course ? `rendu séance ${courseNumber}` : null,
               assessment.date ? new Date(assessment.date).toLocaleDateString("fr-FR") : null,
@@ -466,9 +472,7 @@ export default async function AssessmentPage({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            <Pill>
-              Coefficient {assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT}
-            </Pill>
+            <Pill>Coefficient {ruleCoefficient}</Pill>
             <Pill>Sur {assessment.maxScore}</Pill>
             <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
             {grid ? <Pill tone="key">{grid.name}</Pill> : null}
@@ -903,7 +907,7 @@ export default async function AssessmentPage({
                   deliverable: assessment.deliverable_md,
                   evaluated: assessment.evaluated_md,
                   maxScore: assessment.maxScore,
-                  coefficient: assessment.is_group_grade ? GROUP_COEFFICIENT : INDIVIDUAL_COEFFICIENT,
+                  coefficient: ruleCoefficient,
                   whereToSubmit: assessment.where_to_submit,
                 }).map((line) => (
                   <li key={line.label} className="flex flex-wrap items-start gap-3 py-2.5 text-sm">
