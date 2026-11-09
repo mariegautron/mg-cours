@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import {
   requestPasswordReset,
@@ -22,6 +22,17 @@ export function ResetRequestForm({ expired }: { expired: boolean }) {
     requestPasswordReset,
     {},
   );
+  // Adresse tapée sur la page de connexion, reprise ici.
+  const [email, setEmail] = useState("");
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("mg-reset-email");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lu après hydratation
+      if (saved) setEmail(saved);
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
   return (
     <Card className="halo w-full max-w-sm">
       <CardHeader>
@@ -42,7 +53,15 @@ export function ResetRequestForm({ expired }: { expired: boolean }) {
           <form onSubmit={keepFormValues(action)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="reset-email">Adresse e-mail</Label>
-              <Input id="reset-email" name="email" type="email" autoComplete="email" required />
+              <Input
+                id="reset-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             {state.error ? <ActionError error={state.error} /> : null}
             <PendingButton type="submit" className="w-full" pending={pending} pendingLabel="Envoi…">

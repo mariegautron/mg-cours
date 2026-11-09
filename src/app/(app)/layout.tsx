@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { AccountMenu } from "@/components/account-menu";
 import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
 import { ModuleNavProvider } from "@/components/modules/module-nav-context";
@@ -35,9 +36,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <SidebarInset className="bg-shell min-w-0">
             <header className="flex h-14 items-center gap-2 border-b px-4">
               <SidebarTrigger className="max-md:hidden" />
-              <span className="text-muted-foreground min-w-0 flex-1 truncate text-sm max-md:sr-only">
-                {user.email}
-              </span>
+              <div className="min-w-0 flex-1 max-md:hidden">
+                <AccountMenu email={user.email ?? ""} />
+              </div>
+              <span className="flex-1 md:hidden" />
               {/* Seule instance qui écoute Ctrl K ; le bouton n'est visible qu'au téléphone. */}
               <GlobalSearch variant="icon" hotkey className="md:hidden" />
               <ThemeToggle />

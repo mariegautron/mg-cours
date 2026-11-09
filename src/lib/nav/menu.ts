@@ -15,7 +15,8 @@ export function menuFormForWidth(width: number): MenuForm {
   return "full";
 }
 
-export type MenuKey = "dashboard" | "modules" | "students" | "library" | "assessments" | "settings";
+export type MenuKey =
+  "dashboard" | "modules" | "students" | "library" | "assessments" | "billing" | "settings";
 
 export interface MenuEntry {
   key: MenuKey;
@@ -29,6 +30,7 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
   { key: "students", href: "/students", label: "Étudiant·es" },
   { key: "library", href: "/resources", label: "Bibliothèque" },
   { key: "assessments", href: "/assessments", label: "Évaluations" },
+  { key: "billing", href: "/billing", label: "Facturation" },
   { key: "settings", href: "/settings", label: "Réglages" },
 ];
 

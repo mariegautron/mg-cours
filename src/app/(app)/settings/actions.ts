@@ -181,11 +181,23 @@ export async function changePassword(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  const current = String(formData.get("current") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
+  if (!current) return { error: "Tape ton mot de passe actuel." };
   if (password.length < 8) return { error: "Le mot de passe doit faire au moins 8 caractères." };
   if (password !== confirm) return { error: "Les deux mots de passe ne sont pas identiques." };
   const supabase = await createClient();
+  // Mot de passe actuel vérifié par une reconnexion avec l'e-mail du compte (session prise).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return { error: failure("changer ton mot de passe", { kept: false }) };
+  const { error: checkError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: current,
+  });
+  if (checkError) return { error: "Ce n’est pas ton mot de passe actuel." };
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: failure("changer ton mot de passe", { kept: false }) };
   return { saved: true };

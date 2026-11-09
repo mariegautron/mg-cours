@@ -17,6 +17,16 @@ export function AccountSection() {
     <div className="space-y-4">
       <form onSubmit={keepFormValues(action)} className="space-y-3" aria-label="Mot de passe">
         <div className="space-y-1">
+          <Label htmlFor="current-password">Mot de passe actuel</Label>
+          <Input
+            id="current-password"
+            name="current"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="new-password">Nouveau mot de passe</Label>
           <Input
             id="new-password"

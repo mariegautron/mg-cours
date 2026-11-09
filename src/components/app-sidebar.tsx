@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookMarked, ClipboardCheck, GraduationCap, Library, Settings, Sun } from "lucide-react";
+import {
+  BookMarked,
+  ClipboardCheck,
+  GraduationCap,
+  Library,
+  Receipt,
+  Settings,
+  Sun,
+} from "lucide-react";
 
 import { LogoMark, Mascot } from "@/components/mascot";
 import { ModuleSideNav } from "@/components/modules/module-side-nav";
@@ -37,6 +45,7 @@ const LOOK: Record<MenuKey, { icon: typeof Sun; tone: keyof typeof CHIP }> = {
   students: { icon: GraduationCap, tone: "sky" },
   library: { icon: Library, tone: "mint" },
   assessments: { icon: ClipboardCheck, tone: "sun" },
+  billing: { icon: Receipt, tone: "coral" },
   settings: { icon: Settings, tone: "violet" },
 };
 
@@ -72,6 +81,7 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={active}
+                        tooltip={item.label}
                         size="lg"
                         className="data-[active=true]:halo gap-3 rounded-xl transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center"
                       >

@@ -13,11 +13,14 @@ import { Label } from "@/components/ui/label";
 
 const initialState: LoginState = {};
 
+export const RESET_EMAIL_KEY = "mg-reset-email";
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
   const [state, formAction, pending] = useActionState(login, initialState);
   const [shown, setShown] = useState(false);
+  const [email, setEmail] = useState("");
 
   return (
     <Card className="halo w-full max-w-sm">
@@ -30,7 +33,15 @@ export function LoginForm() {
           <input type="hidden" name="next" value={next} />
           <div className="space-y-2">
             <Label htmlFor="email">Adresse e-mail</Label>
-            <Input id="email" name="email" type="email" autoComplete="email" required />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mot de passe</Label>
@@ -55,6 +66,14 @@ export function LoginForm() {
           </div>
           <Link
             href="/login/oubli"
+            onClick={() => {
+              // L'adresse déjà tapée est reprise sur « Mot de passe oublié » (sans la mettre dans l'URL).
+              try {
+                if (email.trim()) sessionStorage.setItem(RESET_EMAIL_KEY, email.trim());
+              } catch {
+                /* stockage indisponible : la page reste vide */
+              }
+            }}
             className="text-primary inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-2"
           >
             Mot de passe oublié ?
