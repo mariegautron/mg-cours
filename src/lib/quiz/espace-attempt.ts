@@ -44,7 +44,25 @@ export async function liveQuizForToken(
       .assessment;
     return x.id === root || x.makeup_of_id === root;
   });
-  return { title: open.title, closesAt: open.closes_at, submittedAt: same?.submitted_at ?? null };
+  if (same) return { title: open.title, closesAt: open.closes_at, submittedAt: same.submitted_at };
+  // Rattrapage noté directement (sans copie de QCM) : la personne a déjà sa note dans la famille.
+  const { data: family } = await admin
+    .from("assessment")
+    .select("id")
+    .or(`id.eq.${root},makeup_of_id.eq.${root}`);
+  // Seulement pour le QCM principal : un rattrapage ouvert reste affiché à qui doit le passer.
+  const ids = (family ?? []).map((f) => f.id).filter((x) => x !== a.id);
+  if (!a.makeup_of_id && ids.length) {
+    const { data: graded } = await admin
+      .from("grade")
+      .select("updated_at")
+      .eq("student_id", link.student_id)
+      .in("assessment_id", ids)
+      .not("value", "is", null)
+      .limit(1);
+    if (graded?.[0]) return null;
+  }
+  return { title: open.title, closesAt: open.closes_at, submittedAt: null };
 }
 
 /**
