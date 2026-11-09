@@ -73,7 +73,9 @@ export function pdfSafe(raw: string): { text: string; dropped: number } {
     else if (!/[\uFE0F\u200D]/u.test(ch)) dropped++;
   }
   // Pas de fusion des espaces : l'indentation des listes markdown compte.
-  return { text: text.replace(/[ \t]+$/gm, "").trim(), dropped };
+  // Un emoji retiré ne laisse pas d'espace devant une virgule, un point ou une parenthèse.
+  const cleaned = dropped ? text.replace(/[ \t]+([,.)])/g, "$1") : text;
+  return { text: cleaned.replace(/[ \t]+$/gm, "").trim(), dropped };
 }
 
 /** Une ligne en texte simple : sans puce de liste, ni titre, gras, italique ou séparateur markdown. */

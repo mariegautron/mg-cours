@@ -153,6 +153,8 @@ export function buildOutlineContent(input: OutlineInput): OutlineContent {
     // Objectifs : sans ligne privée, sans puce ni markdown, sans caractère non imprimable.
     objectives: c.learning_objectives
       .flatMap((o) => publishableText(o).text.split("\n"))
+      // Un titre markdown (« ## Objectifs ») n'est pas un objectif : retiré, pas mis en puce.
+      .filter((o) => !/^\s*(?:[-*+•]\s+)?#{1,6}\s/.test(o))
       .map((o) => pdfSafe(plainLine(o)).text)
       .filter(Boolean),
     animation: pdfSafe(publishableText(c.animation_notes).text).text || null,
