@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
+import { isOralAssessment } from "@/lib/assessments/oral";
 import { notFound } from "next/navigation";
 
 import { CriterionComparison } from "@/components/assessments/criterion-comparison";
@@ -131,6 +133,11 @@ export default async function CompareCriterionPage({
                       : copy.grade?.attendance === "absent_excused"
                         ? "excused"
                         : null,
+                // Note écrite : en lecture, comme sur l'écran de la copie.
+                locked: copy.grade?.value != null,
+                editHref: isOralAssessment(assessment)
+                  ? `${back}/oral`
+                  : `${back}/correct?copy=${copy.id}`,
               };
             })}
           />

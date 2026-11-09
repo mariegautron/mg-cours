@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { saveCriterionCell } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,10 @@ export interface ComparisonCopy {
   absent: boolean;
   /** Même vocabulaire que la page de correction. */
   absence?: "excused" | "unexcused" | null;
+  /** Note écrite : en lecture ici, comme sur l'écran de la copie (« Modifier » dans la copie). */
+  locked?: boolean;
+  /** Écran de la copie, pour la modifier. */
+  editHref?: string;
 }
 
 interface Draft {
@@ -101,6 +105,22 @@ export function CriterionComparison({
   const rows = sortCompareRows(analysis.rows, sort);
   const repeated = repeatedComments(analysis.rows);
   const copyById = new Map(copies.map((c) => [c.id, c]));
+  // Copie dont la note est écrite : en lecture, sauf si son brouillon est ouvert (« Modifier »
+  // cliqué dans la copie, gardé dans ce navigateur).
+  const [openDrafts, setOpenDrafts] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const open = new Set<string>();
+    for (const c of copies) {
+      try {
+        if (window.localStorage.getItem(`oral-draft:${assessmentId}:${c.id}`) === "1")
+          open.add(c.id);
+      } catch {
+        // stockage indisponible : la copie reste en lecture
+      }
+    }
+    queueMicrotask(() => setOpenDrafts(open));
+  }, [copies, assessmentId]);
+  const isLocked = (c: ComparisonCopy) => !!c.locked && !openDrafts.has(c.id);
 
   async function save(copy: ComparisonCopy, points: number | null, comment: string) {
     setDrafts((d) => ({ ...d, [copy.id]: { ...d[copy.id], points, comment, status: "saving" } }));
@@ -133,6 +153,8 @@ export function CriterionComparison({
   }
 
   function onRowKey(e: React.KeyboardEvent<HTMLTableRowElement>, copy: ComparisonCopy) {
+    // Une note écrite ne change jamais par une touche : il faut passer par « Modifier ».
+    if (isLocked(copy)) return;
     const target = e.target as HTMLElement;
     if (target instanceof HTMLInputElement && target.type !== "radio") return;
     if (e.altKey || e.ctrlKey || e.metaKey) return;
@@ -279,7 +301,21 @@ export function CriterionComparison({
                     </span>
                   </th>
                   <td className="py-2 pr-3">
-                    {r.absent ? (
+                    {isLocked(copy) ? (
+                      <span>
+                        <strong>{draft?.points != null ? fmt(draft.points) : "—"}</strong>
+                        <span className="text-muted-foreground block text-xs">
+                          note écrite ·{" "}
+                          {copy.editHref ? (
+                            <a href={copy.editHref} className="underline underline-offset-2">
+                              Modifier dans la copie
+                            </a>
+                          ) : (
+                            "modifier dans la copie"
+                          )}
+                        </span>
+                      </span>
+                    ) : r.absent ? (
                       <span className="text-muted-foreground">
                         {copies.find((c) => c.id === r.id)?.absence === "unexcused"
                           ? "Non prévenu·e : 0"
@@ -335,7 +371,7 @@ export function CriterionComparison({
                     <Input
                       aria-label={`Commentaire — ${r.title}`}
                       value={draft?.comment ?? ""}
-                      disabled={r.absent}
+                      disabled={r.absent || isLocked(copy)}
                       placeholder={r.points === null ? "Pas encore noté" : "Ajouter un mot…"}
                       autoComplete="off"
                       maxLength={4000}
