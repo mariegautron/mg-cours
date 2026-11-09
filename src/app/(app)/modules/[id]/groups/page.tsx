@@ -3,7 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus } from "lucide-react";
 
-import { ClassOverview, type OverviewRow } from "@/components/students/class-overview";
+import {
+  ClassOverview,
+  type GroupOverviewRow,
+  type OverviewRow,
+} from "@/components/students/class-overview";
+import { createClient } from "@/lib/supabase/server";
 import { appreciationStatus, STATUS_LABELS } from "@/lib/appreciations/appreciation";
 import { listAppreciations } from "@/lib/appreciations/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
@@ -56,6 +61,30 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       average: averageOf.get(m.id) ?? null,
       appreciation: STATUS_LABELS[status],
       appreciationTone: status === "written" ? "ok" : status === "too_long" ? "lock" : "warn",
+    };
+  });
+  // Une ligne par groupe : ses observations de groupe (même découpage par étiquette).
+  const supabase = await createClient();
+  const { data: groupObs } = groups.length
+    ? await supabase
+        .from("group_observation")
+        .select("student_group_id, tag")
+        .in(
+          "student_group_id",
+          groups.map((g) => g.id),
+        )
+    : { data: [] };
+  const groupRows: GroupOverviewRow[] = groups.map((g) => {
+    const mine = (groupObs ?? []).filter((o) => o.student_group_id === g.id);
+    const count = (...tags: string[]) => mine.filter((o) => tags.includes(o.tag)).length;
+    return {
+      id: g.id,
+      name: g.name,
+      participation: count("participation"),
+      question: count("relevant_question"),
+      difficulty: count("difficulty"),
+      other: count("other", "absent_late"),
+      total: mine.length,
     };
   });
   const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
@@ -131,7 +160,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           <p className="text-muted-foreground mb-2 text-sm">
             Tes observations privées, par personne. Clique un titre de colonne pour trier.
           </p>
-          <ClassOverview moduleId={id} rows={overview} />
+          <ClassOverview moduleId={id} rows={overview} groups={groupRows} />
         </section>
       ) : null}
 

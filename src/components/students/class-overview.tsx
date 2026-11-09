@@ -22,6 +22,16 @@ export interface OverviewRow {
   appreciationTone: "ok" | "warn" | "lock";
 }
 
+export interface GroupOverviewRow {
+  id: string;
+  name: string;
+  participation: number;
+  question: number;
+  difficulty: number;
+  other: number;
+  total: number;
+}
+
 type SortKey = "name" | "participation" | "question" | "difficulty" | "other" | "total" | "average";
 
 const COLUMNS: { key: SortKey; label: string }[] = [
@@ -34,7 +44,16 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 ];
 
 /** Vue de classe : une ligne par personne, une colonne par étiquette, tri au clic. Privée, jamais projetée. */
-export function ClassOverview({ moduleId, rows }: { moduleId: string; rows: OverviewRow[] }) {
+export function ClassOverview({
+  moduleId,
+  rows,
+  groups = [],
+}: {
+  moduleId: string;
+  rows: OverviewRow[];
+  /** Observations de groupe, une ligne par groupe sous les personnes. */
+  groups?: GroupOverviewRow[];
+}) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "name", dir: 1 });
   const sorted = [...rows].sort((a, b) => {
     if (sort.key === "name")
@@ -116,6 +135,31 @@ export function ClassOverview({ moduleId, rows }: { moduleId: string; rows: Over
             </tr>
           ))}
         </tbody>
+        {groups.length > 0 ? (
+          <tbody className="border-t-2">
+            {groups.map((g) => (
+              <tr key={g.id} className="bg-muted/30">
+                <th scope="row" className="py-2 pr-2 text-left font-medium">
+                  <Link
+                    href={`/modules/${moduleId}/groups/${g.id}`}
+                    className="underline underline-offset-2"
+                  >
+                    {g.name}
+                  </Link>
+                  <span className="text-muted-foreground text-xs"> · observations de groupe</span>
+                </th>
+                {COLUMNS.map((c) => (
+                  <td key={c.key} className="px-3 py-2 text-right tabular-nums">
+                    {c.key === "average"
+                      ? ""
+                      : g[c.key as Exclude<SortKey, "name" | "average">]}
+                  </td>
+                ))}
+                <td className="px-2 py-2" />
+              </tr>
+            ))}
+          </tbody>
+        ) : null}
       </table>
     </div>
   );
