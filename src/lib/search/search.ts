@@ -10,7 +10,8 @@ export type SearchKind =
   | "question"
   | "assessment"
   | "grid"
-  | "appreciation";
+  | "appreciation"
+  | "makeup";
 
 export interface SearchCandidate {
   kind: SearchKind;
@@ -48,6 +49,7 @@ export const GROUP_ORDER: { kind: SearchKind; title: string; base: string }[] = 
   { kind: "assessment", title: "Évaluations", base: "/modules" },
   { kind: "grid", title: "Grilles", base: "/assessments/grids" },
   { kind: "appreciation", title: "Appréciations", base: "/modules" },
+  { kind: "makeup", title: "Rattrapages", base: "/modules" },
   { kind: "student", title: "Étudiant·es", base: "/students" },
   { kind: "resource", title: "Bibliothèque", base: "/resources" },
   { kind: "question", title: "Questions", base: "/questions" },

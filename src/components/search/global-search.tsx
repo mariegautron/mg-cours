@@ -30,6 +30,7 @@ const ICONS: Record<SearchKind, typeof Search> = {
   assessment: ClipboardCheck,
   grid: ClipboardCheck,
   appreciation: PenLine,
+  makeup: CalendarDays,
 };
 
 const DEBOUNCE_MS = 200;

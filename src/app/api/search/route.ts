@@ -82,7 +82,7 @@ export async function GET(req: Request) {
     ...(modules.data ?? [])
       .filter((m) => !m.archived_at)
       .map((m) => ({
-        kind: "module" as const,
+        kind: "makeup" as const,
         id: `makeup-${m.id}`,
         label: `Rattrapages — ${m.name}`,
         detail: "absences excusées à rattraper",
