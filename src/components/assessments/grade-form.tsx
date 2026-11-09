@@ -208,6 +208,10 @@ export function GradeForm({
   // Présence (note individuelle) et ajustements par membre (note de groupe).
   const isGroup = members !== undefined;
   const [attendance, setAttendance] = useState<Attendance>(grade?.attendance ?? "present");
+  // Présence changée dans cet onglet depuis le dernier enregistrement confirmé : seule celle-ci est
+  // envoyée comme un changement (sinon le serveur garde celle enregistrée, posée peut-être ailleurs).
+  const [attendanceTouched, setAttendanceTouched] = useState(false);
+  const [sentAttendance, setSentAttendance] = useState<string | null>(null);
   const [attendanceBase, setAttendanceBase] = useState<string>(grade?.attendance ?? "present");
   // Présences des membres telles que connues par CET onglet (dernier chargement ou enregistrement) :
   // le serveur n'écrit que celles changées ici, sans écraser une saisie faite ailleurs.
@@ -292,7 +296,9 @@ export function GradeForm({
       if (state.base) setBase(state.base);
       if (state.attendanceBase && isAttendance(state.attendanceBase)) {
         // Présence gardée par le serveur (posée ailleurs) : l'onglet la reprend s'il ne l'a pas changée.
-        if (attendance === attendanceBase) setAttendance(state.attendanceBase);
+        if (!attendanceTouched) setAttendance(state.attendanceBase);
+        // La présence envoyée est enregistrée : plus rien d'en attente, sauf un nouveau clic depuis.
+        else if (attendance === sentAttendance) setAttendanceTouched(false);
         setAttendanceBase(state.attendanceBase);
       }
       if (state.memberBase) {
@@ -330,7 +336,7 @@ export function GradeForm({
   const online = useOnline();
   // Une présence changée s'enregistre seule, même sans note (ex. excusé·e → présent·e).
   const ready =
-    absent || grid || (!isGroup && attendance !== attendanceBase)
+    absent || grid || (!isGroup && attendanceTouched)
       ? true
       : bonusScale
         ? scaleResult?.status === "ok"
@@ -1242,7 +1248,10 @@ export function GradeForm({
               name="attendance"
               value={value}
               checked={attendance === value}
-              onChange={() => setAttendance(value)}
+              onChange={() => {
+                setAttendance(value);
+                setAttendanceTouched(true);
+              }}
             />
             {ATTENDANCE_LABELS[value]}
           </label>
@@ -1484,6 +1493,7 @@ export function GradeForm({
           return;
         }
         setSubmitted(snapshot);
+        setSentAttendance(attendance);
       }}
       onKeyDown={(e) => {
         // Une flèche sur un groupe de paliers déplace le focus sans choisir : un palier n'est posé
@@ -1524,7 +1534,12 @@ export function GradeForm({
       className="space-y-3"
     >
       <input type="hidden" name="base" value={JSON.stringify(base)} />
-      {!isGroup ? <input type="hidden" name="attendanceBase" value={attendanceBase} /> : null}
+      {!isGroup ? (
+        <>
+          <input type="hidden" name="attendanceBase" value={attendanceBase} />
+          <input type="hidden" name="attendanceChanged" value={attendanceTouched ? "1" : "0"} />
+        </>
+      ) : null}
       {isGroup ? (
         <input type="hidden" name="memberBase" value={JSON.stringify(memberBase)} />
       ) : null}

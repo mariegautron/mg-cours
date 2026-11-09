@@ -443,13 +443,14 @@ async function saveGrade(
     ? { assessment_id: assessmentId, student_id: target.studentId }
     : { assessment_id: assessmentId, student_group_id: target.studentGroupId };
   const { data: existing } = await supabase.from("grade").select("*").match(match).maybeSingle();
-  // Présence : inchangée dans cet onglet → on garde celle enregistrée (posée ailleurs, peut-être).
+  // Présence : pas touchée dans cet onglet → on garde celle enregistrée (posée ailleurs, peut-être).
+  const attendanceChanged = formData.get("attendanceChanged");
   if (
     target.studentId &&
     existing &&
-    isAttendance(attendanceBase) &&
-    attendance === attendanceBase &&
-    isAttendance(existing.attendance)
+    isAttendance(existing.attendance) &&
+    (attendanceChanged === "0" ||
+      (attendanceChanged === null && isAttendance(attendanceBase) && attendance === attendanceBase))
   ) {
     attendance = existing.attendance;
   }
