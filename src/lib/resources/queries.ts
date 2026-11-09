@@ -11,21 +11,28 @@ export interface ResourceWithUsage extends Tables<"resource"> {
   excerpt?: SearchExcerpt | null;
 }
 
-/** Nombre de modules distincts par ressource, via course_resource → course. */
+/**
+ * Nombre de modules distincts par ressource : retenue pour le module (module_resource) ou au
+ * déroulé d'une de ses séances (course_resource). Même calcul que « Où elle sert ».
+ */
 async function moduleUsage(): Promise<Map<string, number>> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("course_resource")
-    .select("resource_id, course:course_id(module_id)");
+  const [{ data: inCourses }, { data: retained }] = await Promise.all([
+    supabase.from("course_resource").select("resource_id, course:course_id(module_id)"),
+    supabase.from("module_resource").select("resource_id, module_id"),
+  ]);
 
   const byResource = new Map<string, Set<string>>();
-  for (const row of data ?? []) {
-    const moduleId = (row.course as { module_id: string } | null)?.module_id;
-    if (!moduleId) continue;
-    const set = byResource.get(row.resource_id) ?? new Set<string>();
+  const add = (resourceId: string, moduleId: string | undefined) => {
+    if (!moduleId) return;
+    const set = byResource.get(resourceId) ?? new Set<string>();
     set.add(moduleId);
-    byResource.set(row.resource_id, set);
+    byResource.set(resourceId, set);
+  };
+  for (const row of inCourses ?? []) {
+    add(row.resource_id, (row.course as { module_id: string } | null)?.module_id);
   }
+  for (const row of retained ?? []) add(row.resource_id, row.module_id);
   return new Map(Array.from(byResource, ([id, set]) => [id, set.size]));
 }
 
@@ -120,4 +127,78 @@ export async function listResourceVersions(
     .eq("resource_id", resourceId)
     .order("created_at", { ascending: false });
   return data ?? [];
+}
+
+export interface ResourceModuleUsage {
+  id: string;
+  name: string;
+  year: number;
+  archived: boolean;
+  /** Séances où la ressource est au déroulé (« Séance 2 · Titre »). */
+  sessions: { courseId: string; label: string }[];
+}
+
+/** « Où elle sert » : chaque module (retenue ou au déroulé) et, dessous, ses séances. */
+export async function getResourceUsage(id: string): Promise<ResourceModuleUsage[]> {
+  const supabase = await createClient();
+  const [{ data: inCourses }, { data: retained }] = await Promise.all([
+    supabase
+      .from("course_resource")
+      .select(
+        "course:course_id(id, title, position, module:module_id(id, name, year, archived_at))",
+      )
+      .eq("resource_id", id),
+    supabase
+      .from("module_resource")
+      .select("module:module_id(id, name, year, archived_at)")
+      .eq("resource_id", id),
+  ]);
+  type Mod = { id: string; name: string; year: number; archived_at: string | null };
+  const byModule = new Map<string, ResourceModuleUsage>();
+  const ensure = (m: Mod) => {
+    const known = byModule.get(m.id);
+    if (known) return known;
+    const entry = { id: m.id, name: m.name, year: m.year, archived: !!m.archived_at, sessions: [] };
+    byModule.set(m.id, entry);
+    return entry;
+  };
+  for (const row of retained ?? []) {
+    const m = row.module as Mod | null;
+    if (m) ensure(m);
+  }
+  for (const row of inCourses ?? []) {
+    const c = row.course as {
+      id: string;
+      title: string;
+      position: number;
+      module: Mod | null;
+    } | null;
+    if (!c?.module) continue;
+    ensure(c.module).sessions.push({ courseId: c.id, label: c.title });
+  }
+  // Numéro de séance : rang dans le module (comme la liste des séances).
+  const moduleIds = [...byModule.keys()];
+  if (moduleIds.length) {
+    const { data: all } = await supabase
+      .from("course")
+      .select("id, module_id, position, created_at")
+      .in("module_id", moduleIds)
+      .order("position")
+      .order("created_at");
+    const rank = new Map<string, number>();
+    const counter = new Map<string, number>();
+    for (const c of all ?? []) {
+      const n = (counter.get(c.module_id) ?? 0) + 1;
+      counter.set(c.module_id, n);
+      rank.set(c.id, n);
+    }
+    for (const m of byModule.values()) {
+      m.sessions = m.sessions
+        .sort((a, b) => (rank.get(a.courseId) ?? 0) - (rank.get(b.courseId) ?? 0))
+        .map((x) => ({ ...x, label: `Séance ${rank.get(x.courseId) ?? "?"} · ${x.label}` }));
+    }
+  }
+  return [...byModule.values()].sort(
+    (a, b) => b.year - a.year || a.name.localeCompare(b.name, "fr"),
+  );
 }

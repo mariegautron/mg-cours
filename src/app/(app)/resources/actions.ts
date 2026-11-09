@@ -412,3 +412,82 @@ export async function listSeedChoices(): Promise<{ id: string; title: string }[]
     .limit(100);
   return data ?? [];
 }
+
+/**
+ * « Dupliquer » : copie complète d'une ressource pour un module proche (contenu, fichiers copiés
+ * dans le stockage, tags, liens vers les mêmes questions), retenue pour le module choisi et ajoutée
+ * au déroulé de la séance d'origine s'il y en a une ; ouvre l'éditeur de la copie.
+ */
+export async function duplicateResource(
+  resourceId: string,
+  _prev: ResourceFormState,
+  formData: FormData,
+): Promise<ResourceFormState> {
+  const moduleId = String(formData.get("moduleId") ?? "");
+  const courseId = String(formData.get("courseId") ?? "");
+  const UUID = /^[0-9a-f-]{36}$/i;
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { error: SESSION_EXPIRED };
+  const { data: source } = await supabase
+    .from("resource")
+    .select("*")
+    .eq("id", resourceId)
+    .maybeSingle();
+  if (!source) return { error: NOT_FOUND.resource };
+
+  const { data: copy, error } = await supabase
+    .from("resource")
+    .insert({
+      title: `${source.title} (copie)`.slice(0, 200),
+      description: source.description,
+      content: source.content,
+      url: source.url,
+      kind: source.kind,
+      audience: source.audience,
+      category: source.category,
+      tags: source.tags,
+      status: source.status,
+      intent_note: source.intent_note,
+    })
+    .select("id")
+    .single();
+  if (error || !copy) return { error: failure("dupliquer la ressource") };
+
+  // Fichiers : vraie copie dans le dossier de la nouvelle ressource.
+  const storage = supabase.storage.from(RESOURCE_FILES_BUCKET);
+  const files: ResourceFile[] = [];
+  for (const f of parseResourceFiles(source.files)) {
+    const path = `${auth.user.id}/${copy.id}/${f.path.split("/").pop()}`;
+    const { error: copyError } = await storage.copy(f.path, path);
+    if (!copyError) files.push({ ...f, path });
+  }
+  // Les images du contenu se résolvent par nom dans le dossier de la ressource : mêmes noms ici.
+  if (files.length) await supabase.from("resource").update({ files }).eq("id", copy.id);
+
+  // Mêmes questions liées (mini-QCM).
+  const { data: links } = await supabase
+    .from("resource_question")
+    .select("question_id")
+    .eq("resource_id", resourceId);
+  if (links?.length) {
+    await supabase
+      .from("resource_question")
+      .insert(links.map((l) => ({ resource_id: copy.id, question_id: l.question_id })));
+  }
+
+  // Séance d'origine : seulement si elle appartient au module choisi.
+  let inCourse = false;
+  if (UUID.test(moduleId)) {
+    if (UUID.test(courseId)) {
+      inCourse = !(await addCourseResource(moduleId, courseId, copy.id)).error;
+    }
+    if (!inCourse) await retainResource(moduleId, copy.id);
+  }
+  revalidatePath("/resources");
+  redirect(
+    inCourse
+      ? `/resources/${copy.id}/edit?module=${moduleId}&course=${courseId}`
+      : `/resources/${copy.id}/edit`,
+  );
+}

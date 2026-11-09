@@ -16,13 +16,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { parseResourceFiles, resolveImageSrc } from "@/lib/resources/files";
 import { AUDIENCE_LABELS } from "@/lib/resources/kind";
-import { getResource, getResourceModules } from "@/lib/resources/queries";
+import { getResource, getResourceUsage } from "@/lib/resources/queries";
 import { setResourceQuestions } from "@/app/(app)/questions/link-actions";
 import { LinkPicker } from "@/components/questions/link-picker";
 import { listQuestionLinks } from "@/lib/questions/link-queries";
 import { linkedQuestionsTitle } from "@/lib/questions/links";
 import { listQuestions } from "@/lib/questions/queries";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
+import { DuplicateResource } from "@/components/resources/duplicate-resource";
+import { listActiveModules } from "@/lib/modules/queries";
 import { originQuery, readCourseOrigin } from "@/lib/resources/course-origin";
 
 export async function generateMetadata({
@@ -36,12 +38,13 @@ export async function generateMetadata({
 export default async function ResourcePage({ params, searchParams }: PageProps<"/resources/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const [resource, modules, links, bank, origin] = await Promise.all([
+  const [resource, modules, links, bank, origin, activeModules] = await Promise.all([
     getResource(id),
-    getResourceModules(id),
+    getResourceUsage(id),
     listQuestionLinks(),
     listQuestions(),
     readCourseOrigin(sp),
+    listActiveModules(),
   ]);
   const questionAdded = sp.question === "ajoutee";
   const fromCourse = origin ? `?${originQuery(origin.moduleId, origin.courseId)}` : "";
@@ -248,15 +251,41 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
             Où elle sert
           </h2>
           {modules.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Pas encore utilisée dans un module.</p>
+            <p className="text-muted-foreground text-sm">
+              Retenue pour aucun module, dans aucune séance.
+            </p>
           ) : (
             <ul className="divide-y text-sm">
               {modules.map((m) => (
-                <li key={m.id} className="flex flex-wrap justify-between gap-2 py-2">
-                  <Link href={`/modules/${m.id}`} className="underline underline-offset-2">
-                    {m.name}
-                  </Link>
-                  <span className="text-muted-foreground">{schoolYearOf(m.year)}</span>
+                <li key={m.id} className="py-2">
+                  <p className="flex flex-wrap justify-between gap-2">
+                    <Link href={`/modules/${m.id}`} className="underline underline-offset-2">
+                      {m.name}
+                    </Link>
+                    <span className="text-muted-foreground">
+                      {schoolYearOf(m.year)}
+                      {m.archived ? " · archivé" : ""}
+                    </span>
+                  </p>
+                  {m.sessions.length === 0 ? (
+                    <p className="text-muted-foreground text-xs">
+                      retenue, pas encore dans une séance
+                    </p>
+                  ) : (
+                    <ul className="text-muted-foreground mt-0.5 text-xs">
+                      {m.sessions.map((c) => (
+                        <li key={c.courseId}>
+                          au déroulé :{" "}
+                          <Link
+                            href={`/modules/${m.id}/courses/${c.courseId}`}
+                            className="underline underline-offset-2"
+                          >
+                            {c.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>
@@ -287,6 +316,12 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
                 Historique
               </Link>
             </Button>
+            <DuplicateResource
+              resourceId={resource.id}
+              modules={activeModules}
+              origin={origin}
+              open={sp.dupliquer === "1"}
+            />
             <ResourceActions id={resource.id} archived={!!resource.archived_at} />
           </div>
         </section>
