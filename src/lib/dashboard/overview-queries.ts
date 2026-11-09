@@ -279,11 +279,38 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
     });
   }
   const today = new Date().toISOString().slice(0, 10);
+  // QCM avec des copies rendues à relire : « À corriger » même si l'épreuve est datée du futur.
+  const { data: quizzes } = await supabase.from("quiz").select("id, assessment_id");
+  const { data: submittedAttempts } = quizzes?.length
+    ? await supabase
+        .from("quiz_attempt")
+        .select("quiz_id, result")
+        .eq("status", "submitted")
+        .in(
+          "quiz_id",
+          quizzes.map((q) => q.id),
+        )
+    : { data: [] };
+  const assessmentOfQuiz = new Map((quizzes ?? []).map((q) => [q.id, q.assessment_id]));
+  const qcmToReview = new Set(
+    (submittedAttempts ?? [])
+      .filter((a) =>
+        ((a.result as { review?: { earned: number | null }[] } | null)?.review ?? []).some(
+          (r) => r.earned === null,
+        ),
+      )
+      .map((a) => assessmentOfQuiz.get(a.quiz_id)),
+  );
   return (
     out
       // En cours, entamée, sans date (oral à noter) ou déjà passée. Une épreuve datée du futur attend.
       .filter(
-        (c) => c.remaining < c.total || c.inProgress > 0 || c.date === null || c.date <= today,
+        (c) =>
+          c.remaining < c.total ||
+          c.inProgress > 0 ||
+          c.date === null ||
+          c.date <= today ||
+          qcmToReview.has(c.assessmentId),
       )
       // Les évaluations en cours d'abord, puis par date d'épreuve (sans date en dernier).
       .sort(

@@ -7,6 +7,7 @@ import { closeQuizToResults } from "@/app/(app)/modules/[id]/assessments/[assess
 import { ActionError } from "@/components/action-error";
 import { Pill } from "@/components/dashboard/pill";
 import { AttemptActions } from "@/components/quiz/attempt-actions";
+import { LiveRefresh } from "@/components/quiz/live-refresh";
 import { QuizClosedBanner } from "@/components/quiz/quiz-closed-banner";
 import { quizAccess } from "@/lib/quiz/open-state";
 import { ClassLinkControls } from "@/components/quiz/class-link-controls";
@@ -77,6 +78,8 @@ export default async function QuizLinksPage({
           </p>
         </div>
 
+        {/* Suivi en direct : compteurs et tableau se mettent à jour sans recharger. */}
+        {quiz.status === "published" ? <LiveRefresh everyMs={10000} /> : null}
         <QuizClosedBanner
           access={quizAccess(quiz)}
           moduleId={id}

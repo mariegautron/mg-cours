@@ -198,9 +198,6 @@ export function GlobalSearch({
           >
             <Search aria-hidden className="size-4 shrink-0" />
             <span className="flex-1 text-left">Rechercher…</span>
-            <kbd className="text-xs" aria-hidden>
-              Ctrl K
-            </kbd>
             <span className="sr-only">(raccourci : Ctrl K ou ⌘ K)</span>
           </button>
         )}
