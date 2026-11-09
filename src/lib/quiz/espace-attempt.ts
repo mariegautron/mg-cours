@@ -9,7 +9,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
  */
 export async function liveQuizForToken(
   token: string,
-): Promise<{ title: string; closesAt: string | null; submittedAt: string | null } | null> {
+): Promise<{
+  title: string;
+  closesAt: string | null;
+  submittedAt: string | null;
+  /** Excusé·e au QCM principal avec un rattrapage prévu : « Rattrapage prévu » au lieu de « ouvert ». */
+  makeupPlanned?: boolean;
+} | null> {
   if (!isWellFormedToken(token)) return null;
   const admin = createAdminClient();
   const { data: link } = await admin
@@ -61,6 +67,16 @@ export async function liveQuizForToken(
       .not("value", "is", null)
       .limit(1);
     if (graded?.[0]) return null;
+    // Excusé·e au principal, rattrapage prévu mais pas encore noté.
+    const { data: excused } = await admin
+      .from("grade")
+      .select("id")
+      .eq("student_id", link.student_id)
+      .eq("assessment_id", a.id)
+      .eq("attendance", "absent_excused")
+      .limit(1);
+    if (excused?.[0])
+      return { title: open.title, closesAt: open.closes_at, submittedAt: null, makeupPlanned: true };
   }
   return { title: open.title, closesAt: open.closes_at, submittedAt: null };
 }

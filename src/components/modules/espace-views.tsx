@@ -38,6 +38,8 @@ export interface EspaceData {
   deposits?: Record<string, { at: string; late: number }>;
   /** Copie du QCM ouvert déjà rendue par cette personne (date de remise). */
   quizSubmittedAt?: string | null;
+  /** Excusé·e au QCM principal, rattrapage prévu : pas d'invitation à passer le QCM. */
+  quizMakeupPlanned?: boolean;
 }
 
 export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
@@ -192,9 +194,11 @@ export function AccueilView({ data }: { data: EspaceData }) {
           className="border-primary bg-primary/10 rounded-2xl border-2 p-5"
         >
           <h2 id="quiz" className="font-heading text-xl font-bold">
-            {data.quizSubmittedAt
-              ? "Ton évaluation individuelle est rendue"
-              : "Ton évaluation individuelle est ouverte"}
+            {data.quizMakeupPlanned
+              ? "Rattrapage prévu"
+              : data.quizSubmittedAt
+                ? "Ton évaluation individuelle est rendue"
+                : "Ton évaluation individuelle est ouverte"}
           </h2>
           <p className="mt-1">
             {espace.quiz.title}
@@ -202,7 +206,11 @@ export function AccueilView({ data }: { data: EspaceData }) {
               ? ` · jusqu’au ${parisLongDateTime(espace.quiz.closesAt)}`
               : ""}
           </p>
-          {data.quizSubmittedAt ? (
+          {data.quizMakeupPlanned ? (
+            <p className="mt-2">
+              Tu passeras l’évaluation en rattrapage : Marie te donnera la date et le lien.
+            </p>
+          ) : data.quizSubmittedAt ? (
             <p className="mt-2 font-semibold">
               Copie rendue le{" "}
               {parisLongDateTime(data.quizSubmittedAt)}

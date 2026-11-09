@@ -81,6 +81,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
         : null,
     };
     data.quizSubmittedAt = live?.submittedAt ?? null;
+    data.quizMakeupPlanned = !!live?.makeupPlanned;
   }
   const number = Number(arg);
 
