@@ -115,7 +115,9 @@ export function OralSpace({
     }
     for (const m of members) {
       values[`person:${m.id}`] = init.personNotes[m.id] ?? "";
-      values[`presence:${m.id}`] = init.attendance[m.id] ?? (init.fromExisting ? "present" : "");
+      // Oral déjà noté : une présence jamais posée vaut « présent » (même règle que le serveur).
+      values[`presence:${m.id}`] =
+        init.attendance[m.id] || (init.fromExisting || init.hasNote || init.written ? "present" : "");
     }
     for (const field of textFields(criteria))
       values[`text:${field.id}`] = init.texts[field.id]?.text ?? "";
@@ -238,6 +240,19 @@ export function OralSpace({
     });
   }
 
+  function discardDraft() {
+    if (
+      !window.confirm(
+        "Abandonner le brouillon ? Les lettres, notes et présences reviennent à l’état d’origine ; la note écrite et les résultats publiés ne bougent pas.",
+      )
+    )
+      return;
+    startDiscard(async () => {
+      await discardOralDraft(moduleId, assessmentId, subjectId);
+      window.location.reload();
+    });
+  }
+
   const writeLabel = isGroup ? "Écrire la note de groupe" : "Écrire les notes";
   const blocked =
     readOnly || missing.length > 0 || f.dirty || f.hasConflict || (replaces && !confirm);
@@ -292,8 +307,14 @@ export function OralSpace({
         </p>
         {noteAt ? (
           <p className="text-sm">
-            Note écrite le{" "}
-            {new Date(noteAt).toLocaleDateString("fr-FR", { day: "numeric", month: "numeric" })} à{" "}
+            {!readOnly && init.hasNote ? (
+              <span className="text-sky font-semibold">
+                Brouillon en cours, la note écrite reste celle du{" "}
+              </span>
+            ) : (
+              "Note écrite le "
+            )}
+            {new Date(noteAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} à{" "}
             {new Date(noteAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
             {" · "}
             <Link href={init.resultsHref} className="font-semibold underline underline-offset-2">
@@ -307,11 +328,17 @@ export function OralSpace({
           </Button>
         ) : null}
         {!readOnly && init.hasNote ? (
-          <span className="border-sky/60 text-sky rounded-full border px-2.5 text-xs font-bold">
-            Brouillon : rien ne change avant « Écrire la note »
-          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={pendingDiscard}
+            onClick={discardDraft}
+          >
+            Abandonner le brouillon
+          </Button>
         ) : null}
-        {written ? (
+        {written && (readOnly || !init.hasNote) ? (
           <span
             className={cn(
               "rounded-full border px-2.5 text-xs font-bold",
@@ -753,18 +780,7 @@ export function OralSpace({
               variant="outline"
               hidden={readOnly}
               disabled={pendingDiscard}
-              onClick={() => {
-                if (
-                  !window.confirm(
-                    "Abandonner le brouillon ? Les lettres, notes et présences reviennent à l’état d’origine ; la note écrite et les résultats publiés ne bougent pas.",
-                  )
-                )
-                  return;
-                startDiscard(async () => {
-                  await discardOralDraft(moduleId, assessmentId, subjectId);
-                  window.location.reload();
-                });
-              }}
+              onClick={discardDraft}
             >
               Abandonner le brouillon
             </Button>

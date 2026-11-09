@@ -243,8 +243,13 @@ export function OralTextsPanel({
                 type="button"
                 size="sm"
                 variant="outline"
-                disabled={readOnly}
-                onClick={() => void propose(field.id)}
+                aria-disabled={readOnly}
+                aria-describedby={readOnly ? `ro-${field.id}` : undefined}
+                title={readOnly ? "Clique sur Modifier pour changer cette note" : undefined}
+                className={readOnly ? "cursor-not-allowed opacity-50" : undefined}
+                onClick={() => {
+                  if (!readOnly) void propose(field.id);
+                }}
               >
                 Proposer
               </Button>
@@ -258,6 +263,11 @@ export function OralTextsPanel({
               >
                 {state === "validated" ? "Validé" : "Valider"}
               </Button>
+              {readOnly ? (
+                <span id={`ro-${field.id}`} className="text-muted-foreground text-xs">
+                  Clique sur Modifier pour changer cette note.
+                </span>
+              ) : null}
               {state === "to_review" ? (
                 <span className="text-coral text-xs">
                   Le texte ou la lettre a changé depuis la validation.
