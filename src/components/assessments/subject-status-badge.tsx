@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -26,6 +27,7 @@ export function SubjectStatusBadge({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [justReady, setJustReady] = useState(false);
 
   const change = (next: PrepStatus) =>
     start(async () => {
@@ -33,6 +35,7 @@ export function SubjectStatusBadge({
       if (res.error) setError(res.error);
       else {
         setError(null);
+        setJustReady(next === "ready");
         router.refresh();
       }
     });
@@ -58,6 +61,17 @@ export function SubjectStatusBadge({
           Remettre « À construire »<span className="sr-only"> : {title}</span>
         </Button>
       )}
+      {justReady && status === "ready" ? (
+        <span role="status" className="text-sm">
+          Visible après la mise à jour de l’espace.{" "}
+          <Link
+            href={`/modules/${moduleId}/frise`}
+            className="font-semibold underline underline-offset-2"
+          >
+            Mettre à jour maintenant
+          </Link>
+        </span>
+      ) : null}
       {error ? (
         <span role="alert" className="text-destructive text-sm">
           {error}
