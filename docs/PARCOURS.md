@@ -92,6 +92,7 @@ directes : les liens reçus par les étudiant·es.
   `group-wizard`, `import-groups`.
 - **À regarder en QA** : import CSV avec erreurs, doublons, groupes après arrivée tardive, trombinoscope projeté.
 - **Améliorations notées** :
+  - 9 nov. (retest v2) : réimport après changement d'e-mail, fiche reconnue par prénom et nom (voir dernier commit « Import de la liste »).
   - 9 nov. (retest « mise en place de la classe ») : import Hyperplanning tel quel (nom complet coupé, encodage, séparateurs, colonnes modifiables, lignes corrigeables), import depuis le module, arrivant·e créé·e et ajouté·e au groupe, encadré « Ta classe n'est pas encore en place », groupes projetés en fenêtre / Diapositives avec initiales distinctes, nom réel à l'étape 3 de l'assistant, retour sur la fiche créée (`3afdaf1`).
   - Reste (demande une migration) : inscription étudiant·e ↔ module (assistant et liste « Ajouter » limités aux inscrit·es, « Ta classe n'est pas encore là », import sans colonne groupe qui inscrit quand même) et « A quitté le module » (date, annulable, sorti·e des comptes).
   - Reste (touche « Où j'en suis », en cours sur l'autre fil) : étape « Ta classe » avant « Faire cours ».
@@ -184,7 +185,8 @@ directes : les liens reçus par les étudiant·es.
 - **À regarder en QA** : import de questions, QR en classe, une copie par étudiant·e, reprise après coupure,
   « À corriger » tant que la relecture n'est pas finie.
 - **Améliorations notées** :
-  - …
+  - 9 nov. (« QCM en classe » lot 3) : bandeau rouge « pas encore ouvert » + « Ouvrir maintenant » sur les liens et la projection, « Faire passer en classe (QR) », « Ferme à 18:00 », « Repasser en brouillon » désactivé avec sa raison (`0601d78`).
+  - Reste : suivi en direct sur « Donner accès », confirmation du nom, Résultats (Markdown, « Relire les copies »), « À corriger » avec les QCM, mode sans chrono, relecture des copies et mises en page du lot 5.
 
 ## P10 · Espace et liens étudiant·es
 
@@ -232,6 +234,8 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `dashboard`, `global-search`, `schedule`, `sidebar-nav`, `route-states`.
 - **À regarder en QA** : tableau de bord (à repenser plus tard), prochaine action, états vides, jalons.
 - **Améliorations notées** :
+  - 9 nov. (« piloter au quotidien » lot 1 et retest v2) : séances à clôturer, « Clôturer la séance » après l'heure de fin, « Terminer <module> », Edusign et boutons en ligne dans le bandeau (`443c4c5`) ; compteurs sur tous les modules en cours en une ligne, bandeau limité aux modules commencés, « Voir l'autre » (`d96e7e7`) ; export réparé en deux boutons, données puis fichiers construits par le navigateur (`1530a61`).
+  - Reste : « Prêt pour aujourd'hui ? » (déroulé vide), « Ajouter au déroulé d'aujourd'hui », tuile du jour, message de date d'évaluation, jalons dans « Évaluations à venir », retrait de « Ctrl K ».
   - 9 nov. (retest « recherche et compte ») : recherche « Aller à », une faute tolérée, contexte des étudiant·es, « Voir les N autres », lenteur (`6b4d8a5`) ; « Facturation » au menu (`d6e9c7d`) ; « À faire » complet, filtres de la liste Étudiant·es, onglet Modules vide sur une année (`caa8b1f`).
   - Reste : compteurs du haut sur tous les modules en cours, bandeau du prochain cours limité aux modules en cours, « Terminer » dans le menu ⋯ de la liste Modules (fichier en cours de modification sur l'autre fil).
 
