@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ATTENDANCE_LABELS,
   ATTENDANCE_VALUES,
+  groupAttendanceLabel,
   isAttendance,
   type Attendance,
 } from "@/lib/assessments/attendance";
@@ -439,7 +440,7 @@ export function OralSpace({
                     <option value="">À poser</option>
                     {ATTENDANCE_VALUES.map((a) => (
                       <option key={a} value={a}>
-                        {ATTENDANCE_LABELS[a]}
+                        {isGroup ? groupAttendanceLabel(a, schoolRule) : ATTENDANCE_LABELS[a]}
                       </option>
                     ))}
                   </select>
@@ -466,7 +467,7 @@ export function OralSpace({
                   <option value="">À poser</option>
                   {ATTENDANCE_VALUES.map((a) => (
                     <option key={a} value={a}>
-                      {ATTENDANCE_LABELS[a]}
+                      {isGroup ? groupAttendanceLabel(a, schoolRule) : ATTENDANCE_LABELS[a]}
                     </option>
                   ))}
                 </select>

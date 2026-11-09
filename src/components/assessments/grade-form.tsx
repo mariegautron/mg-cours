@@ -25,7 +25,11 @@ import {
   type Attendance,
   type MemberOverride,
 } from "@/lib/assessments/attendance";
-import { excusedGroupHint, groupMemberValue } from "@/lib/assessments/attendance";
+import {
+  excusedGroupHint,
+  groupAttendanceLabel,
+  groupMemberValue,
+} from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
   adoptComment,
@@ -961,7 +965,7 @@ export function GradeForm({
                         onChange={() => update(m.id, { attendance: value })}
                         className="sr-only"
                       />
-                      {ATTENDANCE_LABELS[value]}
+                      {groupAttendanceLabel(value, absenceRule)}
                     </label>
                   ))}
                 </div>

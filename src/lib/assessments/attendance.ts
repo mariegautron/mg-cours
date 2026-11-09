@@ -42,6 +42,22 @@ export function isDefaultOverride(o: MemberOverride): boolean {
 }
 
 /** Ce que devient une absence excusée sur une note de groupe, d'après la règle de l'école. */
+/**
+ * Présence d'un membre sur un travail de groupe : on garde l'info « absent·e » sans obliger à dire
+ * « excusé·e ». Même donnée qu'avant (« excusé·e » = garde la note du groupe ou rattrapage selon
+ * l'école ; « non prévenu·e » = 0), libellés selon ce qui arrive à la note.
+ */
+export function groupAttendanceLabel(
+  attendance: Attendance,
+  rule: "keep_group_grade" | "makeup",
+): string {
+  if (attendance === "present") return "Présent·e";
+  if (attendance === "absent_unexcused") return "Absent·e · 0";
+  return rule === "keep_group_grade"
+    ? "Absent·e · garde la note du groupe"
+    : "Absent·e · rattrapage";
+}
+
 export function excusedGroupHint(rule: "keep_group_grade" | "makeup"): string {
   return rule === "keep_group_grade"
     ? "Garde la note du groupe (règle de l’école)."
