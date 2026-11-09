@@ -408,10 +408,23 @@ export function OralSpace({
         ))}
       </fieldset>
 
-      <div className="grid gap-3 lg:grid-cols-[11rem_minmax(0,1fr)_16rem]" onKeyDown={onCardsKey}>
+      <div
+        // Rendu : la colonne est plus étroite (le rendu est à gauche) : critères en ligne, paliers
+        // pleine largeur, notes privées dessous.
+        className={cn(
+          "grid gap-3",
+          !isRendu && "lg:grid-cols-[11rem_minmax(0,1fr)_16rem]",
+        )}
+        onKeyDown={onCardsKey}
+      >
         {/* Critères */}
-        <nav aria-label="Critères" className="lg:self-start">
-          <ul className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+        <nav aria-label="Critères" className={cn(!isRendu && "lg:self-start")}>
+          <ul
+            className={cn(
+              "flex gap-1.5",
+              isRendu ? "flex-wrap" : "overflow-x-auto lg:flex-col lg:overflow-visible",
+            )}
+          >
             {criteria.map((c) => {
               const letter = letters[c.id];
               const on = c.id === current?.id;
@@ -455,7 +468,7 @@ export function OralSpace({
               ref={cardsRef}
               role="group"
               aria-label={`Paliers de ${current.label}`}
-              className="grid grid-cols-4 gap-1.5"
+              className={cn("grid gap-1.5", isRendu ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-4")}
             >
               {current.levels.length === 0 ? (
                 <p className="text-muted-foreground text-sm">

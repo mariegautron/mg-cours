@@ -95,7 +95,7 @@ export function ItemList({
               {i.kind === "link" ? "" : " · fichier"}
               {i.added_by === "student" && i.submitted_at
                 ? ` · déposé${i.submitted_by_name ? ` par ${i.submitted_by_name}` : " par l’étudiant·e"} le ${fmtParis(i.submitted_at)}`
-                : " · ajouté par toi"}
+                : ` · ajouté par toi le ${fmtParis(i.created_at)}`}
             </span>
           </span>
           <span className="flex gap-1">

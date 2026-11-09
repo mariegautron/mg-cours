@@ -110,7 +110,27 @@ export default async function CorrectPage({
       subjects,
     });
     if (oralCriteria.length > 0 && Object.keys(spaces).length > 0) {
-      const byOwner = groupByOwner(submissionData.items);
+      // Date et auteur·e de chaque dépôt (colonnes ajoutées par la migration du dépôt).
+      const nameOf = new Map(
+        assessment.groups.flatMap((g) =>
+          g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+        ),
+      );
+      const byOwner = groupByOwner(
+        submissionData.items.map((it) => {
+          const x = it as unknown as {
+            submitted_at?: string | null;
+            submitted_by_student_id?: string | null;
+          };
+          return {
+            ...it,
+            submitted_at: x.submitted_at ?? null,
+            submitted_by_name: x.submitted_by_student_id
+              ? (nameOf.get(x.submitted_by_student_id) ?? null)
+              : null,
+          };
+        }),
+      );
       const copies: RenduCopy[] = subjects.flatMap((sub) =>
         spaces[sub.id]
           ? [

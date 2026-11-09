@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { OralSpace, type OralSpaceInit } from "@/components/assessments/oral-space";
+import { SubmissionItems } from "@/components/assessments/submission-items";
 import { Button } from "@/components/ui/button";
 import type { OralCriterion } from "@/lib/assessments/oral-space";
 import { lateLabel, lateMinutes, parisDayTime } from "@/lib/deposits/rules";
@@ -108,59 +108,43 @@ export function RenduReview({
           <h2 id="rendu-title" className="font-heading text-lg font-bold">
             Rendu
           </h2>
-          {copy.items.length === 0 ? (
-            <div className="space-y-2 text-sm">
-              <p>Pas de rendu.</p>
-              <Link
-                href={`/modules/${moduleId}/assessments/${assessmentId}#rendus`}
-                className="font-semibold underline underline-offset-2"
-              >
-                Ajouter un rendu reçu ailleurs
-              </Link>
-            </div>
-          ) : (
-            <>
-              {deposit?.submitted_at ? (
-                <p className="text-muted-foreground text-sm">
-                  Déposé le {parisDayTime(deposit.submitted_at)}
-                  {deposit.submitted_by_name ? ` par ${deposit.submitted_by_name}` : ""}
-                  {late > 0 ? ` · en retard de ${lateLabel(late)}` : ""}
-                </p>
-              ) : null}
-              <ul className="list-disc space-y-1 pl-5 text-sm">
-                {copy.items.map((i) => (
-                  <li key={i.id}>
-                    <a
-                      href={i.kind === "link" && i.url ? i.url : fileHref(i)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 underline underline-offset-2"
-                    >
-                      {itemTitle(i)}
-                      <ExternalLink aria-hidden className="size-3.5" />
-                      <span className="sr-only"> (nouvel onglet)</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-              {preview ? (
-                isPdf(preview) ? (
-                  <iframe
-                    title={`Aperçu : ${itemTitle(preview)}`}
-                    src={fileHref(preview)}
-                    className="h-[70dvh] w-full rounded-lg border"
-                  />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={fileHref(preview)}
-                    alt={`Rendu : ${itemTitle(preview)}`}
-                    className="w-full rounded-lg border"
-                  />
-                )
-              ) : null}
-            </>
-          )}
+          {copy.items.length === 0 ? <p className="text-sm">Pas de rendu.</p> : null}
+          {deposit?.submitted_at ? (
+            <p className="text-muted-foreground text-sm">
+              Déposé le {parisDayTime(deposit.submitted_at)}
+              {deposit.submitted_by_name ? ` par ${deposit.submitted_by_name}` : ""}
+              {late > 0 ? ` · en retard de ${lateLabel(late)}` : ""}
+            </p>
+          ) : null}
+          {/* Liste, dépôt manuel et ajout d'un lien sans quitter la correction. */}
+          <SubmissionItems
+            moduleId={moduleId}
+            assessmentId={assessmentId}
+            deadline={deadline}
+            rows={[
+              {
+                owner: { kind: copy.isGroup ? "group" : "student", id: copy.id },
+                name: copy.name,
+                items: copy.items,
+              },
+            ]}
+          />
+          {preview ? (
+            isPdf(preview) ? (
+              <iframe
+                title={`Aperçu : ${itemTitle(preview)}`}
+                src={fileHref(preview)}
+                className="h-[70dvh] w-full rounded-lg border"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={fileHref(preview)}
+                alt={`Rendu : ${itemTitle(preview)}`}
+                className="w-full rounded-lg border"
+              />
+            )
+          ) : null}
         </section>
 
         <div className="min-w-0">
