@@ -85,7 +85,7 @@ export function statePill(
     case "finished":
       return { label: "Terminé", tone: "plain" };
     case "archived":
-      return { label: "Rangé", tone: "plain" };
+      return { label: "Archivé", tone: "plain" };
   }
 }
 
