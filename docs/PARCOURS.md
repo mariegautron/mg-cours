@@ -180,6 +180,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : rattrapage rendu = plus de QCM principal « ouvert » (`37569f7`).
   - 9 nov. : « E-mail de contact pour les étudiant·es » distinct de la facturation, migration `20261124000000_student_contact_email` à appliquer (`adc5fa4`).
   - 9 nov. : rattrapage noté directement = QCM principal masqué (`a8d9fd0`) ; heures du QCM « 11 h 07 » (`fe8a4f2`).
+  - 9 nov. : « Rattrapage prévu » pour une personne excusée au QCM principal (`f8a7940`).
   - Reste : « Retirer l'ancienne note ».
 
 ## P11 · (fusionné dans P3) Progression pédagogique et envoi à l'école
