@@ -19,6 +19,7 @@ import { dueLabel } from "@/lib/modules/espace";
 import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
 import { callStudentView } from "@/lib/modules/student-public";
+import { quizSubmittedAtForToken } from "@/lib/quiz/espace-attempt";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -68,6 +69,10 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
       }
     }
     data.deposits = deposits;
+  }
+  // QCM ouvert déjà rendu : le bandeau de l'accueil le dit au lieu d'inviter à le passer.
+  if (data.espace?.quiz && slug.length === 0) {
+    data.quizSubmittedAt = await quizSubmittedAtForToken(token);
   }
   const number = Number(arg);
 

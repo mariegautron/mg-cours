@@ -34,6 +34,8 @@ export interface EspaceData {
   publishedAt: string | null;
   /** Dépôts de cette personne (ou de son groupe), par évaluation : heure serveur et retard en minutes. */
   deposits?: Record<string, { at: string; late: number }>;
+  /** Copie du QCM ouvert déjà rendue par cette personne (date de remise). */
+  quizSubmittedAt?: string | null;
 }
 
 export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
@@ -193,7 +195,9 @@ export function AccueilView({ data }: { data: EspaceData }) {
           className="border-primary bg-primary/10 rounded-2xl border-2 p-5"
         >
           <h2 id="quiz" className="font-heading text-xl font-bold">
-            Ton évaluation individuelle est ouverte
+            {data.quizSubmittedAt
+              ? "Ton évaluation individuelle est rendue"
+              : "Ton évaluation individuelle est ouverte"}
           </h2>
           <p className="mt-1">
             {espace.quiz.title}
@@ -201,7 +205,17 @@ export function AccueilView({ data }: { data: EspaceData }) {
               ? ` · jusqu’au ${new Date(espace.quiz.closesAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Paris" })}`
               : ""}
           </p>
-          {espace.quiz.url ? (
+          {data.quizSubmittedAt ? (
+            <p className="mt-2 font-semibold">
+              Copie rendue le{" "}
+              {new Date(data.quizSubmittedAt).toLocaleString("fr-FR", {
+                dateStyle: "long",
+                timeStyle: "short",
+                timeZone: "Europe/Paris",
+              })}
+              .
+            </p>
+          ) : espace.quiz.url ? (
             <a
               href={espace.quiz.url}
               className="bg-primary text-primary-foreground focus-visible:ring-ring mt-3 inline-flex min-h-11 items-center rounded-lg px-4 font-semibold focus-visible:ring-2 focus-visible:outline-none"
