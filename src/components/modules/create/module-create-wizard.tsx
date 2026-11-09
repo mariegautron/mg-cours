@@ -315,16 +315,6 @@ export function ModuleCreateWizard({
                 <Row label="Référence bon de commande" htmlFor="purchaseOrderRef">
                   <Input id="purchaseOrderRef" name="purchaseOrderRef" />
                 </Row>
-                <Row label="Lien des slides (Figma)" htmlFor="slidesUrl">
-                  <Input
-                    id="slidesUrl"
-                    name="slidesUrl"
-                    type="url"
-                    placeholder="https://www.figma.com/…"
-                    aria-describedby={fe.slidesUrl ? "slidesUrl-error" : undefined}
-                  />
-                  <FieldError id="slidesUrl" errors={fe.slidesUrl} />
-                </Row>
                 <div className="space-y-2">
                   <Label htmlFor="studentIntro">Présentation aux étudiant·es</Label>
                   <Textarea

@@ -190,22 +190,8 @@ export function ModuleForm({
             />
           </div>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="slidesUrl">Lien des slides (Figma)</Label>
-            <Input
-              id="slidesUrl"
-              name="slidesUrl"
-              type="url"
-              placeholder="https://www.figma.com/…"
-              defaultValue={mod?.slides_url ?? ""}
-              aria-describedby={state.fieldErrors?.slidesUrl ? "slidesUrl-error" : undefined}
-            />
-            {state.fieldErrors?.slidesUrl ? (
-              <p id="slidesUrl-error" role="alert" className="text-destructive text-sm">
-                {state.fieldErrors.slidesUrl.join(" ")}
-              </p>
-            ) : null}
-          </div>
+          {/* Lien des slides : saisi avant l'appli, gardé tel quel (plus de saisie, les diapos se font dans l'app). */}
+          <input type="hidden" name="slidesUrl" value={mod?.slides_url ?? ""} />
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="studentIntro">Présentation aux étudiant·es</Label>

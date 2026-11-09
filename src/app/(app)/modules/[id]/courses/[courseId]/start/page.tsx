@@ -140,7 +140,7 @@ export default async function StartCoursePage({
         <p>
           <Button asChild variant="outline" size="touch">
             <a href={publicSlidesUrl(course.slides_url)!} target="_blank" rel="noopener noreferrer">
-              Ouvrir les slides de la séance<span className="sr-only"> (nouvel onglet)</span>
+              Slides d’origine de la séance<span className="sr-only"> (nouvel onglet)</span>
             </a>
           </Button>
         </p>
