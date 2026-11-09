@@ -66,6 +66,21 @@ export function RenduReview({
   const [edits, setEdits] = useState<Record<string, { letter: string; version: number }>>({});
   const router = useRouter();
   const [gapsOpen, setGapsOpen] = useState(false);
+  // Copies au brouillon ouvert (« Modifier » sur une note écrite, gardé dans ce navigateur).
+  const [drafts, setDrafts] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (view !== "criterion") return;
+    const open = new Set<string>();
+    for (const c of copies) {
+      try {
+        if (window.localStorage.getItem(`oral-draft:${assessmentId}:${c.id}`) === "1")
+          open.add(c.id);
+      } catch {
+        // stockage indisponible : la copie reste en lecture ici
+      }
+    }
+    queueMicrotask(() => setDrafts(open));
+  }, [view, copies, assessmentId]);
   const [critMessage, setCritMessage] = useState("");
   const letterOf = (c: RenduCopy, critId: string) =>
     edits[`${c.id}|${critId}`]?.letter ?? c.init.letters[critId] ?? "";
@@ -253,10 +268,13 @@ export function RenduReview({
                       {c.name}
                     </th>
                     <td className="p-2">
-                      {c.init.hasNote ? (
+                      {c.init.hasNote && !drafts.has(c.id) ? (
                         <span title="Note écrite : ouvre la copie et clique sur « Modifier »">
                           <strong>{letterOf(c, criterionId) || "—"}</strong>
-                          <span className="text-muted-foreground text-xs"> · note écrite</span>
+                          <span className="text-muted-foreground text-xs">
+                            {" "}
+                            · note écrite : « Modifier » dans la copie
+                          </span>
                         </span>
                       ) : (
                         <span

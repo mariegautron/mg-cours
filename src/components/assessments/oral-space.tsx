@@ -551,7 +551,7 @@ export function OralSpace({
               ref={cardsRef}
               role="group"
               aria-label={`Paliers de ${current.label}`}
-              className={cn("grid gap-1.5", isRendu ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-4")}
+              className={cn("grid gap-1.5", isRendu ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-4")}
             >
               {current.levels.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
