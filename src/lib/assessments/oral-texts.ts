@@ -246,8 +246,10 @@ export function proposeText(field: TextField, input: ProposalInput): Proposal {
         `Pour progresser : ${up.description}`,
         `palier ${LETTERS[LETTERS.indexOf(letter) - 1]} du critère`,
       );
+    // Les notes privées (critère, bloc-notes, personne) ne sont JAMAIS recopiées dans un texte
+    // destiné aux étudiant·es : elles restent des sources affichées à Marie, pas du texte.
     for (const l of lines(input.criterionNotes[c.id] ?? ""))
-      add(`À noter : ${toVous(l)}`, `notes du critère « ${c.label} » (reformulé au vouvoiement)`);
+      seg.push({ text: "", source: `tes notes du critère « ${c.label} » : « ${l} »` });
     for (const p of padSources(c, input.pad))
       seg.push({ text: "", source: `${p.source} : « ${p.text} »` });
   } else if (field.kind === "strengths") {
