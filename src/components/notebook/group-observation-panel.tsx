@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
+
+import { deleteGroupObservationById } from "@/app/(app)/modules/[id]/courses/[courseId]/notebook/actions";
 
 import { ActionError } from "@/components/action-error";
 import { ObservationItem } from "@/components/notebook/observation-item";
@@ -29,6 +31,8 @@ export function GroupObservationPanel({
   const [state, formAction, pending] = useActionState(action, {});
   const [openId, setOpenId] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<number | undefined>();
+  const [undone, setUndone] = useState<string | null>(null);
+  const [undoing, startUndo] = useTransition();
   if (state.savedAt && state.savedAt !== lastSaved) {
     setLastSaved(state.savedAt);
     setOpenId(null);
@@ -104,7 +108,23 @@ export function GroupObservationPanel({
         ))}
       </ul>
       <p role="status" className="text-muted-foreground min-h-5 text-sm">
-        {state.message ?? ""}
+        {undone && undone === state.observationId ? "Observation annulée." : (state.message ?? "")}
+        {state.observationId && undone !== state.observationId ? (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            disabled={undoing}
+            onClick={() =>
+              startUndo(async () => {
+                await deleteGroupObservationById(state.observationId!);
+                setUndone(state.observationId!);
+              })
+            }
+          >
+            Annuler
+          </Button>
+        ) : null}
       </p>
       {state.error ? <ActionError error={state.error} /> : null}
       {recent.length > 0 ? (

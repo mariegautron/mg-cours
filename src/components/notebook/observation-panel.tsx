@@ -347,7 +347,7 @@ export function ObservationPanel({
   return (
     <div className="space-y-3">
       {groupAction && groupList ? (
-        <GroupObservationPanel action={groupAction} groups={groupList} recent={groupRecent ?? []} />
+        <GroupObservationPanel action={groupAction} groups={groupList} recent={[]} />
       ) : null}
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-48 flex-1 space-y-1">
@@ -483,12 +483,30 @@ export function ObservationPanel({
       {recent ? (
         <details className="rounded-lg border">
           <summary className="min-h-11 cursor-pointer px-3 py-2 text-sm font-medium">
-            Notées pendant cette séance ({recent.length})
+            Notées pendant cette séance ({recent.length + (groupRecent?.length ?? 0)})
           </summary>
-          {recent.length === 0 ? (
+          {recent.length === 0 && !groupRecent?.length ? (
             <p className="text-muted-foreground px-3 pb-3 text-sm">Rien pour l’instant.</p>
           ) : (
             <ul className="divide-y text-sm">
+              {/* Observations de groupe : au même endroit, marquées « Groupe … », modifiables. */}
+              {(groupRecent ?? []).map((o) => (
+                <li key={`g-${o.id}`} className="p-3">
+                  <ObservationItem
+                    id={o.id}
+                    scope="group"
+                    studentId={o.student_group_id}
+                    tag={o.tag}
+                    note={o.note}
+                    heading={
+                      <span className="font-medium">
+                        Groupe{" "}
+                        {groupList?.find((g) => g.id === o.student_group_id)?.name ?? "—"}
+                      </span>
+                    }
+                  />
+                </li>
+              ))}
               {recent.map((o) => (
                 <li key={o.id} className="p-3">
                   <ObservationItem
