@@ -193,7 +193,7 @@ export default async function ModuleAssessmentsPage({
         >
           {unevaluatedGroups.map((g) => (
             <p key={g.id}>
-              <strong>Groupe {g.name}</strong> n’est évalué nulle part. Coche-le dans une évaluation
+              <strong>{/^groupe\b/i.test(g.name) ? g.name : `Groupe ${g.name}`}</strong> n’est évalué nulle part. Coche-le dans une évaluation
               (« Modifier »).
             </p>
           ))}

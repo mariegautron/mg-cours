@@ -77,7 +77,7 @@ export default async function AddAssessmentPage({
             Ajouter une évaluation — {mod.name}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Trois façons de faire, au choix. Les évaluations du module sont à gauche.
+            Quatre façons de faire, au choix. Les évaluations du module sont à gauche.
           </p>
         </div>
         <Button asChild variant="ghost">
@@ -138,9 +138,6 @@ export default async function AddAssessmentPage({
               })}
             </ul>
           )}
-          <p className="text-muted-foreground mt-2.5 text-[0.8rem]">
-            Le nombre de jalons, c’est simplement le nombre d’évaluations rattachées au module.
-          </p>
         </section>
 
         <div className="w-full min-w-0 space-y-4 lg:w-[38rem] lg:flex-none">

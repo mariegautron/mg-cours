@@ -30,8 +30,16 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
   const toDate = one("au");
   const all = await listAllAssessments();
   const toGrade = filtre === "a-noter";
+  // Deux modules du même nom (années différentes) restent distinguables : l'année suit le nom.
   const moduleOptions = [
-    ...new Map(all.filter((a) => a.module).map((a) => [a.module!.id, a.module!.name])).entries(),
+    ...new Map(
+      all
+        .filter((a) => a.module)
+        .map((a) => [
+          a.module!.id,
+          a.module!.year ? `${a.module!.name} · ${a.module!.year}` : a.module!.name,
+        ]),
+    ).entries(),
   ].sort((a, b) => a[1].localeCompare(b[1], "fr"));
   const assessments = all.filter(
     (a) =>
