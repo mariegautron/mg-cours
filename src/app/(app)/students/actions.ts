@@ -23,6 +23,7 @@ import {
 } from "@/lib/students/module-groups";
 import { readStudentForm } from "@/lib/students/schema";
 import { currentSchoolYear } from "@/lib/students/years";
+import { enroll } from "@/lib/students/enrollment";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
 
@@ -483,6 +484,8 @@ export async function confirmStudentsImport(
     const studentByRow = new Map<number, string>();
     newRows.forEach((r, i) => studentByRow.set(r.rowNumber, createdIds[i]));
     for (const r of existingRows) studentByRow.set(r.rowNumber, idOf(r));
+    // Import lancé avec un module : tout le monde y est inscrit, groupes ou non.
+    await enroll(supabase, target.moduleId, [...studentByRow.values()]);
 
     const links = plan.memberships.flatMap((m) => {
       const student_id = studentByRow.get(m.rowNumber);

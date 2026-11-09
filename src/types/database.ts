@@ -1815,6 +1815,36 @@ export type Database = {
           },
         ]
       }
+      module_student: {
+        Row: {
+          created_at: string
+          id: string
+          left_at: string | null
+          module_id: string
+          owner_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          left_at?: string | null
+          module_id: string
+          owner_id?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          left_at?: string | null
+          module_id?: string
+          owner_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       module_student_link: {
         Row: {
           created_at: string

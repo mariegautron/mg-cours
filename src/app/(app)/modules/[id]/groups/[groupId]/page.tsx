@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ObservationItem } from "@/components/notebook/observation-item";
 import { listGroupObservations } from "@/lib/notebook/queries";
 import { createClient } from "@/lib/supabase/server";
-import { getGroup, listModuleGroups, listStudents } from "@/lib/students/queries";
+import { getGroup, listStudents } from "@/lib/students/queries";
+import { listEnrollments } from "@/lib/students/enrollment";
 
 const GROUP_TYPE_LABELS: Record<string, string> = { tp: "TP", td: "TD", project: "Projet" };
 
@@ -21,14 +22,14 @@ export async function generateMetadata({
 
 export default async function GroupPage({ params }: PageProps<"/modules/[id]/groups/[groupId]">) {
   const { id, groupId } = await params;
-  const [group, students, observations, moduleGroups] = await Promise.all([
+  const [group, students, observations, enrolled] = await Promise.all([
     getGroup(groupId),
     listStudents(),
     listGroupObservations(groupId),
-    listModuleGroups(id),
+    listEnrollments(id),
   ]);
-  // Les personnes du module (dans au moins un de ses groupes) sont proposées en premier.
-  const moduleStudentIds = [...new Set(moduleGroups.flatMap((g) => g.members.map((m) => m.id)))];
+  // Les inscrit·es du module (pas parti·es) sont proposé·es en premier.
+  const moduleStudentIds = enrolled.rows.filter((e) => !e.leftAt).map((e) => e.studentId);
   if (!group || group.module_id !== id) notFound();
   const supabase = await createClient();
   const { data: rawGrades } = await supabase

@@ -274,14 +274,15 @@ function guessName(text: string): { firstName: string; lastName: string } {
 }
 
 /** Arrivant·e tardif·ve : fiche créée et ajoutée au groupe en un clic. */
-function NewMemberForm({
+export function NewMemberForm({
   moduleId,
   groupId,
   initial,
   onCreated,
 }: {
   moduleId: string;
-  groupId: string;
+  /** `null` : inscription au module seulement. */
+  groupId: string | null;
   initial: string;
   onCreated: (created: { id: string; name: string }) => void;
 }) {
@@ -299,7 +300,7 @@ function NewMemberForm({
       <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>
         <UserPlus aria-hidden />
         {initial.trim()
-          ? `Créer « ${initial.trim()} » et l’ajouter au groupe`
+          ? `Créer « ${initial.trim()} » et l’ajouter ${groupId ? "au groupe" : "au module"}`
           : "Ajouter une personne"}
       </Button>
     );
@@ -357,7 +358,7 @@ function NewMemberForm({
       {error ? <ActionError error={error} /> : null}
       <div className="flex gap-2">
         <PendingButton type="submit" size="sm" pending={pending} pendingLabel="Ajout…">
-          Créer et ajouter au groupe
+          {groupId ? "Créer et ajouter au groupe" : "Créer et inscrire au module"}
         </PendingButton>
         <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
           Annuler

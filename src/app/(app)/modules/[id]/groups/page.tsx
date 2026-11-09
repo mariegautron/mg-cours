@@ -24,12 +24,14 @@ import {
 } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
+import { listEnrollments } from "@/lib/students/enrollment";
+import { ModuleRoster, type RosterRow } from "@/components/students/module-roster";
 
 export const metadata: Metadata = { title: "Étudiant·es du module" };
 
 export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[id]/groups">) {
   const { id } = await params;
-  const [mod, groups, assessments, observations, appreciations, rules, averages] =
+  const [mod, groups, assessments, observations, appreciations, rules, averages, enrolled] =
     await Promise.all([
       getModule(id),
       listModuleGroups(id),
@@ -38,9 +40,33 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       listAppreciations(id),
       getSchoolRulesForModule(id),
       moduleStudentAverages(id),
+      listEnrollments(id),
     ]);
   if (!mod) notFound();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
+  // Inscrit·es (avec ou sans groupe) : noms des fiches qui ne sont dans aucun groupe.
+  const memberById = new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m]));
+  const outside = enrolled.rows.map((e) => e.studentId).filter((sid) => !memberById.has(sid));
+  const { data: outsideRows } = outside.length
+    ? await (
+        await createClient()
+      )
+        .from("student")
+        .select("id, first_name, last_name")
+        .in("id", outside)
+    : { data: [] };
+  const nameOf = new Map([
+    ...[...memberById.values()].map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+    ...(outsideRows ?? []).map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+  ]);
+  const roster: RosterRow[] = enrolled.rows
+    .map((e) => ({
+      id: e.studentId,
+      name: nameOf.get(e.studentId) ?? "Fiche supprimée",
+      groups: groups.filter((g) => g.members.some((m) => m.id === e.studentId)).map((g) => g.name),
+      leftAt: e.leftAt,
+    }))
+    .sort((a, b) => Number(!!a.leftAt) - Number(!!b.leftAt) || a.name.localeCompare(b.name, "fr"));
   const people = [...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values()];
   const averageOf = new Map(averages.map((a) => [a.student.id, a.average.average]));
   const overview: OverviewRow[] = people.map((m) => {
@@ -162,6 +188,8 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           </ul>
         )}
       </section>
+
+      <ModuleRoster moduleId={id} rows={roster} />
 
       {overview.length > 0 ? (
         <section aria-labelledby="overview" className="rounded-lg border p-4">

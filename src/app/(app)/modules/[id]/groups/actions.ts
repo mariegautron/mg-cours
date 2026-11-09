@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { readGroupForm } from "@/lib/students/schema";
+import { enroll } from "@/lib/students/enrollment";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
 
@@ -105,6 +106,7 @@ export async function addMembers(
     { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
   );
   if (error) return { error: failure("ajouter les membres") };
+  await enroll(supabase, moduleId, ids);
 
   revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
   revalidatePath(`/modules/${moduleId}`);
@@ -128,7 +130,8 @@ export async function removeMember(moduleId: string, groupId: string, studentId:
  */
 export async function createAndAddMember(
   moduleId: string,
-  groupId: string,
+  /** `null` : inscrit·e au module seulement (liste des inscrit·es), sans groupe. */
+  groupId: string | null,
   input: { firstName: string; lastName: string; email: string },
 ): Promise<{ error?: string; studentId?: string; name?: string }> {
   "use server";
@@ -140,12 +143,14 @@ export async function createAndAddMember(
 
   const supabase = await createClient();
   const [{ data: group }, { data: mod }] = await Promise.all([
-    supabase
-      .from("student_group")
-      .select("id")
-      .eq("id", groupId)
-      .eq("module_id", moduleId)
-      .maybeSingle(),
+    groupId
+      ? supabase
+          .from("student_group")
+          .select("id")
+          .eq("id", groupId)
+          .eq("module_id", moduleId)
+          .maybeSingle()
+      : Promise.resolve({ data: { id: "" } }),
     supabase.from("module").select("year").eq("id", moduleId).maybeSingle(),
   ]);
   if (!group || !mod) return { error: NOT_FOUND.group };
@@ -176,16 +181,46 @@ export async function createAndAddMember(
       );
   }
 
-  const { error } = await supabase
-    .from("group_member")
-    .upsert(
-      { student_group_id: groupId, student_id: studentId },
-      { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
-    );
-  if (error) return { error: failure("ajouter au groupe") };
+  if (groupId) {
+    const { error } = await supabase
+      .from("group_member")
+      .upsert(
+        { student_group_id: groupId, student_id: studentId },
+        { onConflict: "student_group_id,student_id", ignoreDuplicates: true },
+      );
+    if (error) return { error: failure("ajouter au groupe") };
+    revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
+  }
+  await enroll(supabase, moduleId, [studentId]);
 
-  revalidatePath(`/modules/${moduleId}/groups/${groupId}`);
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath("/students");
   return { studentId, name: `${firstName} ${lastName}` };
+}
+
+/** « A quitté le module » (date du jour) ou annulation : la personne reste, ses notes aussi. */
+export async function setLeftModule(
+  moduleId: string,
+  studentId: string,
+  left: boolean,
+): Promise<{ error?: string }> {
+  "use server";
+  const supabase = await createClient();
+  const { data: mod } = await supabase.from("module").select("id").eq("id", moduleId).maybeSingle();
+  if (!mod) return { error: NOT_FOUND.module };
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
+  const { error } = await supabase
+    .from("module_student")
+    .upsert(
+      { module_id: moduleId, student_id: studentId, left_at: left ? today : null },
+      { onConflict: "module_id,student_id" },
+    );
+  if (error) {
+    return {
+      error: "« A quitté le module » sera disponible après la mise à jour de la base de données.",
+    };
+  }
+  revalidatePath(`/modules/${moduleId}`, "layout");
+  revalidatePath(`/students/${studentId}`);
+  return {};
 }

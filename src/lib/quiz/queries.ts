@@ -1,5 +1,6 @@
 import { listQuestions } from "@/lib/questions/queries";
 import type { QuestionType } from "@/lib/questions/types";
+import { leftStudentIds } from "@/lib/students/enrollment";
 import { createClient } from "@/lib/supabase/server";
 import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
 import type { Tables } from "@/types/db";
@@ -145,15 +146,17 @@ export async function passingStudents<S extends { id: string }>(
   students: readonly S[],
 ): Promise<{ eligible: S[]; absent: number }> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("grade")
-    .select("student_id, attendance")
-    .eq("assessment_id", assessmentId);
+  const [{ data }, { data: assessment }] = await Promise.all([
+    supabase.from("grade").select("student_id, attendance").eq("assessment_id", assessmentId),
+    supabase.from("assessment").select("module_id").eq("id", assessmentId).maybeSingle(),
+  ]);
   const absent = new Set(
     (data ?? []).filter((g) => g.attendance !== "present" && g.student_id).map((g) => g.student_id),
   );
+  // Parti·e du module : ni tirage, ni lien, ni copie à corriger.
+  const left = assessment ? await leftStudentIds(assessment.module_id) : new Set<string>();
   return {
-    eligible: students.filter((s) => !absent.has(s.id)),
+    eligible: students.filter((s) => !absent.has(s.id) && !left.has(s.id)),
     absent: students.filter((s) => absent.has(s.id)).length,
   };
 }

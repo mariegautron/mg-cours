@@ -1,6 +1,7 @@
 import "server-only";
 
 import { listModuleAssessments } from "@/lib/assessments/queries";
+import { leftStudentIds } from "@/lib/students/enrollment";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AppreciationsData {
@@ -68,15 +69,17 @@ export interface AppreciationProgress {
 export async function getAppreciationProgress(moduleId: string): Promise<AppreciationProgress> {
   try {
     const supabase = await createClient();
-    const [{ data: members }, { data: rows }, assessments] = await Promise.all([
+    const [{ data: members }, { data: rows }, assessments, left] = await Promise.all([
       supabase
         .from("group_member")
         .select("student_id, student_group!inner(module_id)")
         .eq("student_group.module_id", moduleId),
       supabase.from("appreciation").select("student_id, text").eq("module_id", moduleId),
       listModuleAssessments(moduleId),
+      leftStudentIds(moduleId),
     ]);
-    const ids = new Set((members ?? []).map((m) => m.student_id));
+    // Une personne partie du module sort du compte (« Appréciations X / N »).
+    const ids = new Set((members ?? []).map((m) => m.student_id).filter((sid) => !left.has(sid)));
     const written = (rows ?? []).filter(
       (r) => r.text.trim() !== "" && ids.has(r.student_id),
     ).length;
