@@ -106,6 +106,7 @@ export function GradeForm({
   others = [],
   submissions,
   absenceRule = "keep_group_grade",
+  makeupHref = null,
   bonusScale = null,
   bonusEffectLine = null,
 }: {
@@ -153,6 +154,8 @@ export function GradeForm({
   bonusEffectLine?: string | null;
   /** Règle de l'école pour une absence excusée sur une note de groupe (US-162). */
   absenceRule?: "keep_group_grade" | "makeup";
+  /** Rattrapage déjà préparé pour cette personne : « Voir son rattrapage ». */
+  makeupHref?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // Plusieurs formulaires par page (un par groupe ou par membre) : identifiants uniques.
@@ -947,7 +950,7 @@ export function GradeForm({
                     <span className="text-muted-foreground">
                       {" "}
                       {st.attendance === "absent_unexcused"
-                        ? "· non prévenu·e : 0"
+                        ? "· absent·e : 0"
                         : st.attendance === "absent_excused"
                           ? finalValue === null
                             ? "· pas de note, rattrapage"
@@ -1242,7 +1245,7 @@ export function GradeForm({
       </div>
       {ATTENDANCE_HINTS[attendance] ? (
         <p className="text-muted-foreground text-xs">
-          {ATTENDANCE_HINTS[attendance]} {attendance === "absent_excused" ? <MakeupLink /> : null}
+          {ATTENDANCE_HINTS[attendance]} {attendance === "absent_excused" ? <MakeupLink href={makeupHref} /> : null}
         </p>
       ) : null}
     </fieldset>
@@ -1581,7 +1584,7 @@ export function GradeForm({
           {absent ? (
             <p className="text-sm">
               {ATTENDANCE_LABELS[attendance]}. {ATTENDANCE_HINTS[attendance]}{" "}
-              {attendance === "absent_excused" ? <MakeupLink /> : null}
+              {attendance === "absent_excused" ? <MakeupLink href={makeupHref} /> : null}
             </p>
           ) : (
             <>

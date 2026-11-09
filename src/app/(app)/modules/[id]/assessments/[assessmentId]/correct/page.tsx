@@ -8,6 +8,7 @@ import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { readAnswer } from "@/lib/quiz/grading";
 import { createClient } from "@/lib/supabase/server";
+import { makeupHrefs } from "@/lib/assessments/makeup-queries";
 import { RenduReview, type RenduCopy } from "@/components/assessments/rendu-review";
 import { buildSpaceInits } from "@/lib/assessments/space-init";
 import { examKindOf } from "@/lib/assessments/exam-kind";
@@ -70,6 +71,10 @@ export default async function CorrectPage({
     themes,
     submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
   });
+  // Copie excusée : « Voir son rattrapage » quand il est déjà préparé.
+  const makeupLinks = await makeupHrefs(id, assessmentId);
+  for (const item of sections.flatMap((sec) => sec.items))
+    (item as { makeupHref?: string | null }).makeupHref = makeupLinks.get(item.id) ?? null;
   // Note bonus : l'effet réel (enregistré) sur la moyenne de chaque personne, à côté du score.
   if (assessment.is_bonus) {
     const effectOf = new Map(

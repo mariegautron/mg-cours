@@ -43,3 +43,16 @@ export async function countPendingMakeups(moduleId: string): Promise<number> {
   const groups = await loadMakeupGroups(moduleId);
   return groups.flatMap((g) => g.rows).filter((r) => r.step !== "done").length;
 }
+
+/** Personnes excusées dont le rattrapage de cette évaluation est préparé → lien vers ce rattrapage. */
+export async function makeupHrefs(
+  moduleId: string,
+  assessmentId: string,
+): Promise<Map<string, string>> {
+  const group = (await loadMakeupGroups(moduleId)).find((g) => g.assessment.id === assessmentId);
+  const out = new Map<string, string>();
+  if (!group?.makeup) return out;
+  for (const r of group.rows)
+    out.set(r.student.id, `/modules/${moduleId}/assessments/${group.makeup.id}`);
+  return out;
+}

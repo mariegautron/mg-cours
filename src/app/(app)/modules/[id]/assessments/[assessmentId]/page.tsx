@@ -66,7 +66,7 @@ import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { assessmentFileUrl } from "@/lib/assessments/files";
 import { isOralAssessment } from "@/lib/assessments/oral";
-import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
+import { loadMakeupGroups, makeupHrefs } from "@/lib/assessments/makeup-queries";
 import { OralTimingForm } from "@/components/assessments/oral-timing-form";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
 import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
@@ -201,6 +201,10 @@ export default async function AssessmentPage({
     themes,
     submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
   });
+  // Copie excusée : « Voir son rattrapage » quand il est déjà préparé.
+  const makeupLinks = await makeupHrefs(id, assessmentId);
+  for (const item of sections.flatMap((sec) => sec.items))
+    (item as { makeupHref?: string | null }).makeupHref = makeupLinks.get(item.id) ?? null;
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
   const quizSubmitted = quiz
     ? new Set(

@@ -25,6 +25,8 @@ type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormSt
 export interface SessionItem {
   /** Clé de la copie (identifiant de l'étudiant·e ou du groupe). */
   id: string;
+  /** Absence excusée : rattrapage déjà préparé (lien), sinon `null`. */
+  makeupHref?: string | null;
   title: string;
   action: Action;
   grade?: Tables<"grade">;
@@ -420,6 +422,7 @@ export function GradingSession({
                   absenceRule={absenceRule}
                   bonusScale={bonusScale}
                   bonusEffectLine={item.bonusLine ?? null}
+                  makeupHref={item.makeupHref ?? null}
                   onStatus={onStatus}
                   register={register}
                   onNavigate={(direction) => {
