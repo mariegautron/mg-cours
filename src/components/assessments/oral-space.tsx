@@ -91,6 +91,7 @@ export function OralSpace({
   nextLabel,
   nextPending,
   afterOral = false,
+  variant = "oral",
 }: {
   moduleId: string;
   assessmentId: string;
@@ -108,7 +109,11 @@ export function OralSpace({
   nextPending?: boolean;
   /** Le groupe est passé : « Répartir mes notes » est actif. */
   afterOral?: boolean;
+  /** « rendu » : même espace pour corriger un rendu (fichiers ou liens), sans ce qui est propre à l'oral. */
+  variant?: "oral" | "rendu";
 }) {
+  const isRendu = variant === "rendu";
+  const noun = isRendu ? "cette copie" : "cet oral";
   const initial = useMemo(() => {
     const values: Record<string, string> = { pad: init.pad };
     for (const c of criteria) {
@@ -512,7 +517,7 @@ export function OralSpace({
         <aside aria-label="Notes privées" className="space-y-3 lg:self-start">
           <div className="space-y-1">
             <label htmlFor={`pad-${subjectId}`} className="text-sm font-medium">
-              Bloc-notes {isGroup ? "du groupe" : "de l’oral"}
+              Bloc-notes {isGroup ? "du groupe" : isRendu ? "de la copie" : "de l’oral"}
             </label>
             <p className="text-sun text-xs font-semibold">Pour toi seule, jamais envoyé</p>
             <Textarea
@@ -593,9 +598,9 @@ export function OralSpace({
           type="button"
           size="sm"
           variant="outline"
-          disabled={!afterOral && progress.state !== "complete"}
+          disabled={!afterOral && !isRendu && progress.state !== "complete"}
           title={
-            !afterOral && progress.state !== "complete"
+            !afterOral && !isRendu && progress.state !== "complete"
               ? "Actif une fois l’oral passé (ou toutes les lettres posées)."
               : undefined
           }
@@ -672,7 +677,7 @@ export function OralSpace({
         </div>
       ) : null}
 
-      <details className="bg-card rounded-2xl border p-3">
+      <details className="bg-card rounded-2xl border p-3" hidden={isRendu}>
         <summary className="min-h-9 cursor-pointer font-semibold">
           Déposer le support (PDF)
           {init.support.length > 0
@@ -743,7 +748,7 @@ export function OralSpace({
 
           {init.fromExisting || replaces ? (
             <fieldset className="space-y-1 text-sm">
-              <legend className="font-semibold">Règle d’absence pour cet oral</legend>
+              <legend className="font-semibold">Règle d’absence pour {noun}</legend>
               {init.fromExisting ? (
                 <label className="flex items-start gap-2">
                   <input
@@ -752,7 +757,7 @@ export function OralSpace({
                     checked={rule === "legacy"}
                     onChange={() => f.set("rule", "legacy", true)}
                   />
-                  <span>Règle d’origine de cet oral (par défaut)</span>
+                  <span>Règle d’origine de {noun} (par défaut)</span>
                 </label>
               ) : null}
               <label className="flex items-start gap-2">

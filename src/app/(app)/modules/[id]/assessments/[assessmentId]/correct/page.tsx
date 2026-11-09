@@ -8,6 +8,11 @@ import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { readAnswer } from "@/lib/quiz/grading";
 import { createClient } from "@/lib/supabase/server";
+import { RenduReview, type RenduCopy } from "@/components/assessments/rendu-review";
+import { buildSpaceInits } from "@/lib/assessments/space-init";
+import { examKindOf } from "@/lib/assessments/exam-kind";
+import { gradingTargets } from "@/lib/assessments/targets";
+import { deadlineOf } from "@/lib/deposits/rules";
 import { OpenReview, type ReviewCopy } from "@/components/assessments/open-review";
 import { loadOpenReviewContext, obj, readEntries } from "@/lib/assessments/open-review-server";
 import { GradingSession } from "@/components/assessments/grading-session";
@@ -76,6 +81,71 @@ export default async function CorrectPage({
   }
   const back = `/modules/${id}/assessments/${assessmentId}`;
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
+
+  // Rendu (fichiers ou liens) corrigé à la grille : le rendu à gauche, la grille en lettres à droite.
+  if (!quiz && examKindOf(assessment) === "files" && (assessment.grading_grid?.criteria ?? []).length) {
+    const rawGrades = await getGradesByAssessment(assessmentId, { skipRewrite: true });
+    const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
+    const subjects = assessment.is_group_grade
+      ? targets.map(({ group }) => ({
+          id: group.id,
+          name: group.name,
+          isGroup: true,
+          members: group.members.map((m) => ({ id: m.id, name: `${m.first_name} ${m.last_name}` })),
+        }))
+      : targets.flatMap(({ students }) =>
+          students.map((st) => ({
+            id: st.id,
+            name: `${st.first_name} ${st.last_name}`,
+            isGroup: false,
+            members: [{ id: st.id, name: `${st.first_name} ${st.last_name}` }],
+          })),
+        );
+    const { oralCriteria, spaces, schoolRule } = await buildSpaceInits({
+      id,
+      assessmentId,
+      assessment,
+      grades: rawGrades,
+      overrideRows,
+      subjects,
+    });
+    if (oralCriteria.length > 0 && Object.keys(spaces).length > 0) {
+      const byOwner = groupByOwner(submissionData.items);
+      const copies: RenduCopy[] = subjects.flatMap((sub) =>
+        spaces[sub.id]
+          ? [
+              {
+                id: sub.id,
+                name: sub.name,
+                isGroup: sub.isGroup,
+                members: spaces[sub.id].members,
+                init: spaces[sub.id].init,
+                items: byOwner.get(sub.id) ?? [],
+              },
+            ]
+          : [],
+      );
+      return (
+        <div className="mx-auto max-w-[96rem] space-y-3">
+          <Link href={back} className="text-sm underline underline-offset-2">
+            ← {assessment.title}
+          </Link>
+          <RenduReview
+            moduleId={id}
+            assessmentId={assessmentId}
+            title={assessment.title}
+            copies={copies}
+            criteria={oralCriteria}
+            autoValidatedIds={assessment.auto_validated_criterion_ids}
+            maxScore={assessment.max_score}
+            schoolRule={schoolRule ?? "keep_group_grade"}
+            deadline={deadlineOf(assessment.date, null)?.toISOString() ?? null}
+            initialId={typeof copy === "string" ? copy : undefined}
+          />
+        </div>
+      );
+    }
+  }
 
   // Questions ouvertes tirées au sort : l'écran de relecture remplace la correction par copie.
   if (quiz?.correction_mode === "open_questions") {
