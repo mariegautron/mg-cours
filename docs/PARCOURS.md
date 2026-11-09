@@ -89,7 +89,10 @@ directes : les liens reçus par les étudiant·es.
   `group-wizard`, `import-groups`.
 - **À regarder en QA** : import CSV avec erreurs, doublons, groupes après arrivée tardive, trombinoscope projeté.
 - **Améliorations notées** :
-  - …
+  - 9 nov. (retest « mise en place de la classe ») : import Hyperplanning tel quel (nom complet coupé, encodage, séparateurs, colonnes modifiables, lignes corrigeables), import depuis le module, arrivant·e créé·e et ajouté·e au groupe, encadré « Ta classe n'est pas encore en place », groupes projetés en fenêtre / Diapositives avec initiales distinctes, nom réel à l'étape 3 de l'assistant, retour sur la fiche créée (`3afdaf1`).
+  - Reste (demande une migration) : inscription étudiant·e ↔ module (assistant et liste « Ajouter » limités aux inscrit·es, « Ta classe n'est pas encore là », import sans colonne groupe qui inscrit quand même) et « A quitté le module » (date, annulable, sorti·e des comptes).
+  - Reste (touche « Où j'en suis », en cours sur l'autre fil) : étape « Ta classe » avant « Faire cours ».
+  - Reste (basse priorité) : trombinoscope, « À qui est cette photo ? » et raison d'une photo écartée.
 
 ## P5 · Faire cours (séance)
 
