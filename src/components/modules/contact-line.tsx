@@ -3,19 +3,19 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Adresse de contact affichée aux étudiant·es : l'e-mail de la fiche « Mon identité » (Réglages).
- * Rien n'est affiché sans adresse renseignée.
+ * Adresse de contact affichée aux étudiant·es : « E-mail de contact pour les étudiant·es »
+ * (Réglages), jamais l'e-mail de facturation. Rien n'est affiché sans adresse renseignée.
  */
 async function contactEmail(): Promise<string | null> {
   try {
     const admin = createAdminClient();
     const { data } = await admin
       .from("teacher_profile")
-      .select("email")
-      .not("email", "is", null)
+      .select("student_contact_email")
+      .not("student_contact_email", "is", null)
       .order("created_at")
       .limit(1);
-    const email = data?.[0]?.email?.trim();
+    const email = data?.[0]?.student_contact_email?.trim();
     return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
   } catch {
     return null;

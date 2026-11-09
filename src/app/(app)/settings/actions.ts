@@ -196,3 +196,23 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/** « E-mail de contact pour les étudiant·es » : seul ce champ est écrit (vide = aucun contact affiché). */
+export async function saveStudentContact(
+  _prev: SettingsFormState,
+  formData: FormData,
+): Promise<SettingsFormState> {
+  const email = String(formData.get("studentContactEmail") ?? "").trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { fieldErrors: { studentContactEmail: ["Adresse e-mail invalide."] } };
+  const supabase = await createClient();
+  const { data: existing } = await supabase.from("teacher_profile").select("id").maybeSingle();
+  if (!existing) return { error: "Remplis d’abord « Mon identité »." };
+  const { error } = await supabase
+    .from("teacher_profile")
+    .update({ student_contact_email: email || null })
+    .eq("id", existing.id);
+  if (error) return { error: failure("enregistrer", { kept: true }) };
+  revalidatePath("/settings");
+  return { saved: true };
+}

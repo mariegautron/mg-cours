@@ -3453,6 +3453,7 @@ export type Database = {
           owner_id: string
           phone: string | null
           siret: string | null
+          student_contact_email: string | null
           updated_at: string
           vat_exempt: boolean
           vat_number: string | null
@@ -3468,6 +3469,7 @@ export type Database = {
           owner_id?: string
           phone?: string | null
           siret?: string | null
+          student_contact_email?: string | null
           updated_at?: string
           vat_exempt?: boolean
           vat_number?: string | null
@@ -3483,6 +3485,7 @@ export type Database = {
           owner_id?: string
           phone?: string | null
           siret?: string | null
+          student_contact_email?: string | null
           updated_at?: string
           vat_exempt?: boolean
           vat_number?: string | null

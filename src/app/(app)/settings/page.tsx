@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
 import { PhraseManager } from "@/components/settings/phrase-manager";
+import { StudentContactForm } from "@/components/settings/student-contact-form";
 import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft";
 import { getStudent } from "@/lib/students/queries";
 import { listPhrases } from "@/lib/appreciations/queries";
@@ -79,6 +80,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               </p>
             </div>
             <ProfileForm profile={profile} />
+            <div className="mt-6">
+              <StudentContactForm value={profile?.student_contact_email ?? null} />
+            </div>
           </section>
 
           <section aria-labelledby="schools">

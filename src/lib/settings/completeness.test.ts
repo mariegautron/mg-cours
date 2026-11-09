@@ -15,6 +15,7 @@ const base: Tables<"teacher_profile"> = {
   bank_details: "IBAN : FR76 3000 6000 0112 3456 7890 189",
   email: "marie@local.test",
   phone: null,
+  student_contact_email: null,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };
