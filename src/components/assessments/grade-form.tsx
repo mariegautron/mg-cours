@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  isAttendance,
   ATTENDANCE_HINTS,
   ATTENDANCE_LABELS,
   ATTENDANCE_VALUES,
@@ -200,6 +201,7 @@ export function GradeForm({
   // Présence (note individuelle) et ajustements par membre (note de groupe).
   const isGroup = members !== undefined;
   const [attendance, setAttendance] = useState<Attendance>(grade?.attendance ?? "present");
+  const [attendanceBase, setAttendanceBase] = useState<string>(grade?.attendance ?? "present");
   // Présences des membres telles que connues par CET onglet (dernier chargement ou enregistrement) :
   // le serveur n'écrit que celles changées ici, sans écraser une saisie faite ailleurs.
   const [memberBase, setMemberBase] = useState<
@@ -281,6 +283,11 @@ export function GradeForm({
     setLastState(state);
     if (state.saved) {
       if (state.base) setBase(state.base);
+      if (state.attendanceBase && isAttendance(state.attendanceBase)) {
+        // Présence gardée par le serveur (posée ailleurs) : l'onglet la reprend s'il ne l'a pas changée.
+        if (attendance === attendanceBase) setAttendance(state.attendanceBase);
+        setAttendanceBase(state.attendanceBase);
+      }
       if (state.memberBase) {
         const next = state.memberBase;
         // Une présence changée ailleurs (et gardée par le serveur) remplace l'affichage ici,
@@ -1495,6 +1502,7 @@ export function GradeForm({
       className="space-y-3"
     >
       <input type="hidden" name="base" value={JSON.stringify(base)} />
+      {!isGroup ? <input type="hidden" name="attendanceBase" value={attendanceBase} /> : null}
       {isGroup ? (
         <input type="hidden" name="memberBase" value={JSON.stringify(memberBase)} />
       ) : null}

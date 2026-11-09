@@ -394,6 +394,8 @@ export interface GradeFormState {
   base?: GradeContent;
   /** Présences des membres après enregistrement (référence de l'onglet). */
   memberBase?: Record<string, { attendance: string; justification: string }>;
+  /** Présence enregistrée (note individuelle), référence de l'onglet. */
+  attendanceBase?: string;
 }
 
 async function saveGrade(
@@ -405,8 +407,9 @@ async function saveGrade(
   const predefinedCommentIds = formData.getAll("predefinedCommentIds").map(String);
   // Présence d'un·e étudiant·e (note individuelle) ; une note de groupe reste toujours « présent·e ».
   const rawAttendance = formData.get("attendance");
-  const attendance: Attendance =
+  let attendance: Attendance =
     target.studentId && isAttendance(rawAttendance) ? rawAttendance : "present";
+  const attendanceBase = formData.get("attendanceBase");
 
   const supabase = await createClient();
   const { data: assessment } = await supabase
@@ -438,6 +441,16 @@ async function saveGrade(
     ? { assessment_id: assessmentId, student_id: target.studentId }
     : { assessment_id: assessmentId, student_group_id: target.studentGroupId };
   const { data: existing } = await supabase.from("grade").select("*").match(match).maybeSingle();
+  // Présence : inchangée dans cet onglet → on garde celle enregistrée (posée ailleurs, peut-être).
+  if (
+    target.studentId &&
+    existing &&
+    isAttendance(attendanceBase) &&
+    attendance === attendanceBase &&
+    isAttendance(existing.attendance)
+  ) {
+    attendance = existing.attendance;
+  }
 
   // Deux onglets sur la même copie : seuls les champs modifiés dans CET onglet sont écrits.
   const base = parseGradeBase(formData.get("base"));
@@ -647,7 +660,13 @@ async function saveGrade(
 
   revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
   revalidatePath(`/modules/${moduleId}`);
-  return { saved: true, base: returnedBase, elsewhere, memberBase: memberBaseOut };
+  return {
+    saved: true,
+    base: returnedBase,
+    elsewhere,
+    memberBase: memberBaseOut,
+    attendanceBase: target.studentId ? attendance : undefined,
+  };
 }
 
 /** Membres connus de l'onglet ou présents dans la saisie. */
