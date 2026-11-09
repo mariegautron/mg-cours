@@ -257,6 +257,13 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           description="Enlève un filtre pour en voir plus."
           actions={[{ label: "Effacer les filtres", href: "/modules" }]}
         />
+      ) : shown.length === 0 && year && filter !== "archived" && counts.archived > 0 ? (
+        // Onglet filtré sur une année : dire ce qu'il y a ailleurs cette année-là.
+        <EmptyState
+          title={`${EMPTY[filter].title} en ${year}`}
+          description={`${counts.archived} module${counts.archived > 1 ? "s" : ""} archivé${counts.archived > 1 ? "s" : ""} cette année-là.`}
+          actions={[{ label: "Les voir", href: href("archived") }]}
+        />
       ) : shown.length === 0 ? (
         <EmptyState
           title={EMPTY[filter].title}

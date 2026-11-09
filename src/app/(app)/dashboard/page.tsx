@@ -140,7 +140,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         })),
     )
   ).filter((x) => x.pending > 0);
-  const todos = pickTodos(
+  const allTodos = pickTodos(
     buildTodos({
       today,
       makeups: makeupTodos,
@@ -176,7 +176,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               : [],
       ),
     }),
+    Number.POSITIVE_INFINITY,
   );
+  // Les 3 plus urgentes ; les autres se déplient (« Voir les N autres »).
+  const todos = allTodos.slice(0, 3);
+  const moreTodos = allTodos.slice(3);
   const { days, nextWeek } = weekDays(
     today,
     coursesWeek.filter((c) => c.module && !c.module.archived_at),
@@ -252,9 +256,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         À faire
       </h2>
       <p className="text-muted-foreground mb-1 text-sm">
-        {todos.length > 1
-          ? `${todos.length === 2 ? "Deux" : "Trois"} choses, par urgence.`
-          : "Par urgence."}
+        {allTodos.length > 1 ? `${allTodos.length} choses, par urgence.` : "Par urgence."}
       </p>
       {todos.length === 0 ? (
         <EmptyState
@@ -288,6 +290,29 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           ))}
         </ol>
       )}
+      {moreTodos.length > 0 ? (
+        <details className="border-t pt-2">
+          <summary className="text-primary min-h-11 cursor-pointer py-2 text-sm font-semibold">
+            Voir les {moreTodos.length} autre{moreTodos.length > 1 ? "s" : ""}
+          </summary>
+          <ol>
+            {moreTodos.map((t) => (
+              <li
+                key={t.key}
+                className="flex min-h-14 items-center justify-between gap-3 border-t py-2"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold">{t.title}</p>
+                  <p className="text-muted-foreground text-sm">{t.detail}</p>
+                </div>
+                <Link href={t.href} className={`${BTN} shrink-0`}>
+                  Ouvrir<span className="sr-only"> : {t.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
     </section>
   );
 
@@ -636,9 +661,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             tone="sun"
             icon={<ListChecks aria-hidden className="size-5" />}
             label="À faire"
-            value={String(todos.length)}
-            percent={percent(todos.length, 3)}
-            barLabel={`${todos.length} sur 3 au plus`}
+            value={String(allTodos.length)}
+            percent={percent(Math.min(allTodos.length, 3), 3)}
+            barLabel={`${allTodos.length} chose${allTodos.length > 1 ? "s" : ""} à faire`}
             detail={todos.length ? "par urgence, ci-dessous" : "rien d’urgent"}
           />
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Camera, Plus, Upload } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { AutoSubmitForm } from "@/components/auto-submit-form";
 import { StudentSearchInput } from "@/components/students/student-search-input";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +94,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
         </div>
       </div>
 
-      <form className="flex flex-wrap items-end gap-3" role="search">
+      <AutoSubmitForm className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <Label htmlFor="q">Recherche</Label>
           <StudentSearchInput defaultValue={q} />
@@ -149,7 +150,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
         <Button type="submit" variant="secondary" size="touch">
           Filtrer
         </Button>
-      </form>
+      </AutoSubmitForm>
 
       <nav aria-label="Affichage de la liste" className="flex gap-2">
         {(
