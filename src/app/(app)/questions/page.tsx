@@ -85,7 +85,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="touch" variant="secondary">
-            <Link href="/resources?family=quizzes">Préparer un QCM avec cette banque</Link>
+            <Link href="/assessments">Préparer un QCM noté (dans une évaluation)</Link>
           </Button>
           <Button asChild size="touch">
             <Link href="/questions/new">
@@ -109,10 +109,10 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
         </p>
       ) : null}
       <Link
-        href="/resources?family=quizzes"
+        href="/resources"
         className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
       >
-        ← Bibliothèque, famille QCM
+        ← Bibliothèque
       </Link>
 
       <nav aria-label="Thèmes" className="flex flex-wrap gap-2">
@@ -274,7 +274,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
               {shown.length < active.length ? ` sur ${active.length}` : ""}.
             </p>
             <Button asChild variant="ghost" size="touch">
-              <Link href="/resources?family=quizzes">Préparer un QCM avec cette banque</Link>
+              <Link href="/assessments">Préparer un QCM noté (dans une évaluation)</Link>
             </Button>
           </div>
         </section>

@@ -514,3 +514,71 @@ export async function findLibraryResources(
       ready: resource.status === "ready",
     }));
 }
+
+export interface SessionChoice {
+  moduleId: string;
+  moduleName: string;
+  year: number;
+  sessions: { id: string; label: string }[];
+}
+
+/** Séances des modules en cours, pour « Ajouter à une séance… » (doublon D28). */
+export async function listSessionChoices(): Promise<SessionChoice[]> {
+  const modules = await listActiveModules();
+  if (modules.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("course")
+    .select("id, module_id, title, position, session_date")
+    .in(
+      "module_id",
+      modules.map((m) => m.id),
+    )
+    .order("position");
+  return modules
+    .map((m) => ({
+      moduleId: m.id,
+      moduleName: m.name,
+      year: m.year,
+      sessions: (data ?? [])
+        .filter((c) => c.module_id === m.id)
+        .map((c, i) => ({
+          id: c.id,
+          label: `Séance ${i + 1} — ${c.title}${
+            c.session_date
+              ? ` (${new Date(`${c.session_date}T12:00:00`).toLocaleDateString("fr-FR")})`
+              : ""
+          }`,
+        })),
+    }))
+    .filter((m) => m.sessions.length > 0);
+}
+
+export interface AddToSessionState {
+  error?: string;
+  done?: string;
+}
+
+/**
+ * « Ajouter à une séance… » depuis la Bibliothèque : la ressource entre dans le déroulé de la
+ * séance choisie (en dernière place). Remplace « Ajouter au module » (doublon D28).
+ */
+export async function addResourceToSession(
+  resourceId: string,
+  _state: AddToSessionState,
+  formData: FormData,
+): Promise<AddToSessionState> {
+  const courseId = String(formData.get("courseId") ?? "");
+  if (!courseId) return { error: "Choisis une séance." };
+  const supabase = await createClient();
+  const { data: course } = await supabase
+    .from("course")
+    .select("id, module_id, title")
+    .eq("id", courseId)
+    .maybeSingle();
+  if (!course) return { error: NOT_FOUND.course };
+  const res = await addCourseResource(course.module_id, course.id, resourceId);
+  if (res.error) return { error: res.error };
+  revalidatePath("/resources");
+  return { done: `Ajoutée au déroulé de « ${course.title} ».` };
+}

@@ -9,9 +9,8 @@ import { Input } from "@/components/ui/input";
 import { AutoSubmitForm } from "@/components/auto-submit-form";
 import { StudentSearchInput } from "@/components/students/student-search-input";
 import { Label } from "@/components/ui/label";
-import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
-import { createDraftResource } from "@/app/(app)/resources/actions";
-import { AddToModule } from "@/components/resources/add-to-module";
+import { addResourceToSession, createDraftResource } from "@/app/(app)/resources/actions";
+import { AddToSession } from "@/components/resources/add-to-session";
 import {
   familyCounts,
   FAMILIES,
@@ -84,7 +83,7 @@ function ResourceRow({ r, parts = [] }: { r: ResourceWithUsage; parts?: Resource
           {r.status === "ready" ? "Prête" : STATUS_LABELS[r.status]}
         </Pill>
       </span>
-      <AddToModule resourceId={r.id} action={addResourceToModule.bind(null, r.id)} />
+      <AddToSession resourceId={r.id} action={addResourceToSession.bind(null, r.id)} />
       {parts.length ? (
         <details className="basis-full pl-4">
           <summary className="text-muted-foreground min-h-11 cursor-pointer py-2 text-sm font-semibold">
@@ -171,7 +170,8 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
 
       <nav aria-label="Familles de la bibliothèque" className="border-b">
         <ul className="flex flex-wrap gap-x-6">
-          {[undefined, ...FAMILIES].map((f) => {
+          {/* Plus d'onglet « QCM » (doublon D26) : les questions vivent dans la banque (« Questions »). */}
+          {[undefined, ...FAMILIES.filter((x) => x !== "quizzes")].map((f) => {
             const active = filters.family === f;
             return (
               <li key={f ?? "all"}>
@@ -228,8 +228,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
           <strong className="font-heading block text-2xl">{resources.length}</strong>
         </div>
         <p className="text-muted-foreground text-sm">
-          Cours {counts.courses} · Ateliers {counts.workshops} · Évaluations {counts.assessments} ·
-          QCM {counts.quizzes}
+          Cours {counts.courses} · Ateliers {counts.workshops} · Évaluations {counts.assessments}
         </p>
       </div>
 

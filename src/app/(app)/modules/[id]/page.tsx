@@ -423,10 +423,6 @@ export default async function ModulePage({
                       Voir la couverture
                     </Link>
                   </dd>
-                  <dt className="text-muted-foreground">Ressources retenues</dt>
-                  <dd>
-                    <strong>{retained.length}</strong>
-                  </dd>
                   <dt className="text-muted-foreground">Grilles prêtes</dt>
                   <dd>
                     <strong>

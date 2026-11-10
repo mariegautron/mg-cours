@@ -68,7 +68,7 @@ export function SessionWorkspace({
     deliverable: string;
     resources: WorkspaceResource[];
   };
-  /** Ressources retenues du module qui ne sont pas encore dans le déroulé de cette séance. */
+  /** Ressources déjà utilisées dans le module qui ne sont pas encore dans ce déroulé. */
   addable: WorkspaceResource[];
   planAvailable: boolean;
   /** Colonnes du déroulé structuré présentes en base (migration appliquée). */
@@ -271,7 +271,8 @@ export function SessionWorkspace({
         ) : null}
         {resources.length === 0 ? (
           <p className="text-muted-foreground rounded-xl border border-dashed p-4 text-sm">
-            Aucune ressource dans le déroulé. Ajoute une ressource retenue ou crée-en une.
+            Aucune ressource dans le déroulé. Ajoute une ressource du module ou de la bibliothèque,
+            ou crée-en une.
           </p>
         ) : (
           <ol className="flex flex-col gap-2">
@@ -476,21 +477,15 @@ export function SessionWorkspace({
         <details className="mt-3">
           <summary
             className={cn(BTN, "min-h-12 cursor-pointer list-none")}
-            aria-label="Ajouter une ressource retenue"
+            aria-label="Ajouter une ressource déjà utilisée dans le module"
           >
-            Ajouter une ressource retenue
+            Ajouter une ressource déjà utilisée dans le module
           </summary>
           <div className="bg-muted/30 mt-2 rounded-xl border p-3">
             {addable.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                Toutes les ressources retenues du module sont déjà dans le déroulé.{" "}
-                <Link
-                  href={`/modules/${moduleId}/matching`}
-                  className="underline underline-offset-2"
-                >
-                  Retenir d’autres ressources (rapprochement)
-                </Link>
-                .
+                Toutes les ressources du module sont déjà dans ce déroulé : cherche dans toute la
+                bibliothèque, plus bas.
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
@@ -522,7 +517,7 @@ export function SessionWorkspace({
           </summary>
           <div className="bg-muted/30 mt-2 rounded-xl border p-3">
             <LibrarySearch
-              label="Toute la bibliothèque : la ressource choisie est retenue pour le module et ajoutée au déroulé"
+              label="Toute la bibliothèque : la ressource choisie est ajoutée au déroulé"
               actionLabel="Ajouter"
               exclude={resources.map((r) => r.id)}
               onPick={(found) =>

@@ -7,7 +7,6 @@ import { notFound } from "next/navigation";
 import { ClipboardCheck, Play, Pencil } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
-import { RetainedResources } from "@/components/modules/retained-resources";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
 import { PruneEmptySessions } from "@/components/modules/prune-empty-sessions";
@@ -257,12 +256,8 @@ export default async function CoursePage({
             }}
           />
 
-          <details open className="bg-card rounded-3xl border p-4">
-            <summary className="cursor-pointer font-semibold">
-              Ressources retenues du module ({retained.length})
-            </summary>
-            <div className="mt-3 space-y-3">
-              <RetainedResources moduleId={id} resources={retained} />
+          <div className="bg-card rounded-3xl border p-4">
+            <div className="space-y-3">
               <p className="text-muted-foreground text-sm">
                 Les exports pour Moodle (cours en PDF, évaluations, progression) sont dans{" "}
                 <Link
@@ -274,7 +269,7 @@ export default async function CoursePage({
                 .
               </p>
             </div>
-          </details>
+          </div>
         </section>
 
         <aside

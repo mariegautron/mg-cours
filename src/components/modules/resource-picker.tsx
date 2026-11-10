@@ -88,7 +88,7 @@ export function ResourcePicker({
     const split = splitRetained(visible, retained);
     return [
       ...(split.retained.length
-        ? [{ key: "retained", label: "Retenues du module", items: split.retained }]
+        ? [{ key: "retained", label: "Déjà utilisées dans le module", items: split.retained }]
         : []),
       ...groupByKind(split.others),
     ];
@@ -208,7 +208,7 @@ export function ResourcePicker({
               onCheckedChange={(v) => set({ retainedOnly: v === true })}
             />
             <Label htmlFor={`${id}-retained`} className="font-normal">
-              Retenues du module
+              Déjà utilisées dans le module
             </Label>
           </div>
         ) : null}

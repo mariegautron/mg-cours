@@ -5,8 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { History } from "lucide-react";
 
-import { addResourceToModule } from "@/app/(app)/modules/[id]/retained/actions";
-import { AddToModule } from "@/components/resources/add-to-module";
+import { addResourceToSession } from "@/app/(app)/resources/actions";
+import { AddToSession } from "@/components/resources/add-to-session";
 import { Markdown, markdownOutline } from "@/components/markdown";
 import { AudienceBadge, KindBadge, StatusBadge } from "@/components/resources/resource-badges";
 import { resourceSlides } from "@/components/present/deck";
@@ -90,9 +90,9 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
           {resource.category ? <Badge variant="secondary">{resource.category}</Badge> : null}
         </div>
         {resource.archived_at ? null : (
-          <AddToModule
+          <AddToSession
             resourceId={resource.id}
-            action={addResourceToModule.bind(null, resource.id)}
+            action={addResourceToSession.bind(null, resource.id)}
           />
         )}
         {resource.intent_note ? (

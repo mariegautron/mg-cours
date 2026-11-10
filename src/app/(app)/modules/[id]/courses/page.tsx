@@ -3,20 +3,15 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
-import { RetainedResources } from "@/components/modules/retained-resources";
 import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
-import { getModule, getModuleCourses, getRetainedResources } from "@/lib/modules/queries";
+import { getModule, getModuleCourses } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Séances" };
 
 /** Ouvre la fiche de la séance à faire (du jour, sinon la prochaine, sinon la dernière) ; sans séance, propose d'en créer. */
 export default async function ModuleCoursesPage({ params }: PageProps<"/modules/[id]/courses">) {
   const { id } = await params;
-  const [mod, courses, retained] = await Promise.all([
-    getModule(id),
-    getModuleCourses(id),
-    getRetainedResources(id),
-  ]);
+  const [mod, courses] = await Promise.all([getModule(id), getModuleCourses(id)]);
   if (!mod) notFound();
   if (courses.length > 0) {
     // La fiche d'une séance porte déjà la liste des séances et toutes les actions : pas de page liste.
@@ -36,7 +31,6 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
           { label: "Importer le planning", href: `/modules/${id}/schedule` },
         ]}
       />
-      <RetainedResources moduleId={id} resources={retained} />
       <Link href={`/modules/${id}/import-courses`} className="text-sm underline underline-offset-2">
         Importer depuis un autre module
       </Link>

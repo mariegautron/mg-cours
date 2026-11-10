@@ -94,3 +94,44 @@ select count(*) as retenues,
          where cr.resource_id = mr.resource_id and c.module_id = mr.module_id
        )) as dans_aucun_deroule
 from public.module_resource mr;
+
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+-- Suite du lot 6 : archivage des morceaux Notion (migration 20261205000000_archive_morceaux_notion)
+-- À lancer AVANT puis APRÈS la migration.
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+
+-- 7) Morceaux Notion encore à archiver. AVANT : environ 220 ; APRÈS : 0.
+select count(*) as morceaux_a_archiver
+from public.resource r
+where r.archived_at is null
+  and r.title ~ '\s[—–]\s'
+  and exists (select 1 from public.import_ref i
+              where i.source = 'notion' and i.target_table = 'resource' and i.target_id = r.id)
+  and not exists (select 1 from public.course_resource cr where cr.resource_id = r.id);
+
+-- 8) Morceaux archivés par la migration. AVANT : 0 ; APRÈS : le nombre de la requête 7 d'avant.
+select count(*) as archives_par_la_migration
+from public.resource
+where archived_at = '2026-11-10 22:00:00+00';
+
+-- 9) Morceaux utilisés dans un déroulé : jamais archivés. AVANT et APRÈS : même nombre (23),
+--    « archives » = 0.
+select count(*) as morceaux_dans_un_deroule,
+       count(*) filter (where r.archived_at is not null) as archives
+from public.resource r
+where r.title ~ '\s[—–]\s'
+  and exists (select 1 from public.course_resource cr where cr.resource_id = r.id);
+
+-- 10) Le mini-QCM est intact (non archivé, toujours dans son déroulé).
+select title, archived_at is not null as archivee,
+       exists (select 1 from public.course_resource cr where cr.resource_id = r.id) as dans_un_deroule
+from public.resource r
+where r.kind = 'question_bank';
+
+-- 11) Empreinte des notes : identique AVANT et APRÈS.
+select m.name as module, count(g.value) as notes, coalesce(sum(g.value), 0) as somme_notes
+from public.module m
+left join public.assessment a on a.module_id = m.id
+left join public.grade g on g.assessment_id = a.id
+group by m.name
+order by m.name;
