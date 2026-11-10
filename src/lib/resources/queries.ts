@@ -50,7 +50,8 @@ export async function listResources(
     .select(searching ? "*" : RESOURCE_LIST_COLUMNS)
     .order("updated_at", { ascending: false });
 
-  if (!filters.archived) query = query.is("archived_at", null);
+  if (filters.archivedOnly) query = query.not("archived_at", "is", null);
+  else if (!filters.archived) query = query.is("archived_at", null);
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.tag) query = query.contains("tags", [filters.tag]);
   if (filters.kind === "none") query = query.is("kind", null);
@@ -201,4 +202,14 @@ export async function getResourceUsage(id: string): Promise<ResourceModuleUsage[
   return [...byModule.values()].sort(
     (a, b) => b.year - a.year || a.name.localeCompare(b.name, "fr"),
   );
+}
+
+/** Nombre de ressources archivées (onglet « Archivées » de la Bibliothèque). */
+export async function countArchivedResources(): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("resource")
+    .select("id", { count: "exact", head: true })
+    .not("archived_at", "is", null);
+  return count ?? 0;
 }

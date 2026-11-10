@@ -21,6 +21,8 @@ export interface ResourceListFilters {
   /** Prête ou « À construire ». */
   status?: ResourceStatus;
   archived?: boolean;
+  /** Onglet « Archivées » : seulement les ressources archivées (`?archived=only`). */
+  archivedOnly?: boolean;
   /** Famille de la bibliothèque (US-151) ; appliquée après la requête. */
   family?: ResourceFamily;
 }
@@ -47,6 +49,7 @@ export function readResourceFilters(sp: SearchParams): {
       audience: isResourceAudience(audience) ? audience : undefined,
       status: isResourceStatus(status) ? status : undefined,
       archived: sp.archived === "1",
+      archivedOnly: sp.archived === "only",
       family: isResourceFamily(str(sp.family)) ? (str(sp.family) as ResourceFamily) : undefined,
     },
     group: group === "category" || group === "kind" ? group : "none",

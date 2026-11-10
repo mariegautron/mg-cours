@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { AutoSubmitForm } from "@/components/auto-submit-form";
 import { StudentSearchInput } from "@/components/students/student-search-input";
 import { Label } from "@/components/ui/label";
-import { addResourceToSession, createDraftResource } from "@/app/(app)/resources/actions";
+import {
+  addResourceToSession,
+  createDraftResource,
+  unarchiveResource,
+} from "@/app/(app)/resources/actions";
 import { AddToSession } from "@/components/resources/add-to-session";
 import {
   familyCounts,
@@ -31,7 +35,12 @@ import {
 } from "@/lib/resources/kind";
 import { SEARCH_FIELD_LABELS } from "@/lib/resources/search";
 import { nestParts } from "@/lib/resources/parts";
-import { listResources, resourceFacets, type ResourceWithUsage } from "@/lib/resources/queries";
+import {
+  countArchivedResources,
+  listResources,
+  resourceFacets,
+  type ResourceWithUsage,
+} from "@/lib/resources/queries";
 
 export const metadata: Metadata = { title: "Bibliothèque" };
 
@@ -83,7 +92,15 @@ function ResourceRow({ r, parts = [] }: { r: ResourceWithUsage; parts?: Resource
           {r.status === "ready" ? "Prête" : STATUS_LABELS[r.status]}
         </Pill>
       </span>
-      <AddToSession resourceId={r.id} action={addResourceToSession.bind(null, r.id)} />
+      {r.archived_at ? (
+        <form action={unarchiveResource.bind(null, r.id)}>
+          <Button type="submit" size="sm" variant="secondary">
+            Désarchiver<span className="sr-only"> : {r.title}</span>
+          </Button>
+        </form>
+      ) : (
+        <AddToSession resourceId={r.id} action={addResourceToSession.bind(null, r.id)} />
+      )}
       {parts.length ? (
         <details className="basis-full pl-4">
           <summary className="text-muted-foreground min-h-11 cursor-pointer py-2 text-sm font-semibold">
@@ -105,13 +122,19 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
   const sp = await searchParams;
   const { filters, group } = readResourceFilters(sp);
 
-  const [listed, facets] = await Promise.all([listResources(filters), resourceFacets()]);
+  const [listed, facets, archivedCount] = await Promise.all([
+    listResources(filters),
+    resourceFacets(),
+    countArchivedResources(),
+  ]);
   const counts = familyCounts(listed);
   const resources = inFamily(listed, filters.family);
   // Les onglets gardent les autres filtres de l'URL.
   const familyHref = (family?: string) => {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(sp)) {
+      // Quitter l'onglet « Archivées » : on revient aux ressources actives.
+      if (k === "archived" && v === "only") continue;
       if (k !== "family" && typeof v === "string" && v) params.set(k, v);
     }
     if (family) params.set("family", family);
@@ -172,7 +195,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         <ul className="flex flex-wrap gap-x-6">
           {/* Plus d'onglet « QCM » (doublon D26) : les questions vivent dans la banque (« Questions »). */}
           {[undefined, ...FAMILIES.filter((x) => x !== "quizzes")].map((f) => {
-            const active = filters.family === f;
+            const active = !filters.archivedOnly && filters.family === f;
             return (
               <li key={f ?? "all"}>
                 <Link
@@ -186,6 +209,17 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
               </li>
             );
           })}
+          {/* Ressources archivées (dont les morceaux Notion jamais utilisés) : à retrouver et désarchiver. */}
+          <li>
+            <Link
+              href="/resources?archived=only"
+              aria-current={filters.archivedOnly ? "page" : undefined}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${filters.archivedOnly ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
+            >
+              Archivées
+              <span className="text-xs opacity-80">({archivedCount})</span>
+            </Link>
+          </li>
         </ul>
         {filters.family && FAMILY_LINKS[filters.family].length ? (
           <p className="text-muted-foreground py-2 text-sm">
