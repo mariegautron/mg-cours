@@ -36,6 +36,12 @@ export default async function AttemptPage({
   const answers = (attempt.answers ?? {}) as Record<string, unknown>;
   const manual = (attempt.manual_scores ?? {}) as Record<string, unknown>;
   const grade = gradeAttempt(drawn, answers, manual);
+  // Corrigé actuel de la banque pour les questions ouvertes (le tirage peut ne pas l'avoir gardé).
+  const openIds = drawn.filter((q) => q.type === "open").map((q) => q.question_id);
+  const { data: bankRows } = openIds.length
+    ? await supabase.from("question").select("id, general_feedback").in("id", openIds)
+    : { data: [] };
+  const expectedOf = new Map((bankRows ?? []).map((b) => [b.id, b.general_feedback]));
   const back = `/modules/${id}/assessments/${assessmentId}/quiz/links`;
   // Copies rendues, par ordre alphabétique : précédente / suivante.
   const { data: siblings } = await supabase
@@ -106,11 +112,27 @@ export default async function AttemptPage({
                 {q.type === "open" ? (
                   <>
                     <p className="text-sm font-medium">Réponse :</p>
-                    <p className="bg-muted/40 rounded p-2 text-sm whitespace-pre-wrap">
-                      {answer && "text" in answer && answer.text.trim()
-                        ? answer.text
-                        : "Pas de réponse."}
-                    </p>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <p className="bg-muted/40 rounded p-2 text-sm whitespace-pre-wrap">
+                        {answer && "text" in answer && answer.text.trim()
+                          ? answer.text
+                          : "Pas de réponse."}
+                      </p>
+                      {/* Réponse attendue (corrigé de la banque) à côté de la réponse libre. */}
+                      <div className="border-mint/60 bg-mint/10 rounded border p-2 text-sm">
+                        <p className="text-xs font-semibold">Réponse attendue</p>
+                        {(q.general_feedback || expectedOf.get(q.question_id) || "").trim() ? (
+                          <Markdown
+                            source={q.general_feedback || expectedOf.get(q.question_id) || ""}
+                            headingLevel={4}
+                          />
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Pas de corrigé dans la banque pour cette question.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </>
                 ) : q.type === "numerical" ? (
                   <p className="text-sm">

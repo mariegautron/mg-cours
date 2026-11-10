@@ -322,9 +322,6 @@ export default async function QuizLinksPage({
                     <th scope="col" className="p-2 font-medium">
                       Note
                     </th>
-                    <th scope="col" className="p-2 font-medium">
-                      Actions
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -352,8 +349,9 @@ export default async function QuizLinksPage({
                           </span>
                         ) : null}
                       </td>
-                      <td className="p-2">{attemptScoreLabel(a)}</td>
                       <td className="p-2">
+                        <span className="mb-1 block">{attemptScoreLabel(a)}</span>
+                        {/* Une action visible, les autres (tiers-temps compris) dans « ⋯ ». */}
                         <AttemptActions
                           moduleId={id}
                           assessmentId={assessmentId}
@@ -383,7 +381,7 @@ export default async function QuizLinksPage({
           <div className="flex flex-col gap-2">
             {quiz.status === "published" ? (
               <form action={closeQuizToResults.bind(null, id, assessmentId)}>
-                <Button type="submit" size="touch" className="w-full">
+                <Button type="submit" size="touch" className="h-auto w-full py-2 whitespace-normal">
                   Clôturer et voir les résultats
                 </Button>
               </form>

@@ -282,7 +282,7 @@ export default async function QuizPage({
               <PassInClassButton
                 moduleId={id}
                 assessmentId={assessmentId}
-                primary={quiz.status !== "draft"}
+                primary={quiz.status === "published" && toReview === 0}
               />
             ) : null}
             {quiz.rules.length > 0 ? (
@@ -300,7 +300,7 @@ export default async function QuizPage({
             <Button
               asChild
               size="touch"
-              variant={submitted > 0 ? "secondary" : "default"}
+              variant="outline"
               className="h-auto py-2 whitespace-normal"
             >
               <Link href={`${back}/quiz/links`}>Liens personnels et suivi des copies</Link>

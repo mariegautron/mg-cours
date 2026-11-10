@@ -52,7 +52,10 @@ export function sessionReadiness(i: ReadinessInput): Readiness {
           },
   );
 
-  if (i.resources.length === 0) {
+  // Séance prête sans ressource : « Déroulé vide » le dit déjà, pas de second point.
+  if (i.resources.length === 0 && i.prepStatus === "ready") {
+    // rien
+  } else if (i.resources.length === 0) {
     items.push({
       key: "resources",
       ok: false,
