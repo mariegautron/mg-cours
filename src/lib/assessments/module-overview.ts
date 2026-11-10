@@ -24,6 +24,13 @@ export interface TimelineAssessment {
   makeup: boolean;
   /** Type choisi (liste fermée) : sert à nommer la case de la frise. */
   type?: string | null;
+  /**
+   * Rattachée au projet fil rouge (`project_id`), même sans rôle : un point d'étape du projet n'a
+   * pas de rôle (jalon, oral, individuelle) mais fait partie du projet.
+   */
+  inProject?: boolean;
+  /** Point d'étape non noté : « sans note » au lieu du coefficient. */
+  ungraded?: boolean;
 }
 
 export type CellKind = "launch" | "work" | "due" | "oral" | "solo";
@@ -90,8 +97,8 @@ export function buildTimeline(
   let previousDue = -1;
   return regular.map((a): TimelineRow => {
     const r = due(a);
-    const place = a.role ? "Projet fil rouge" : "Hors projet";
-    const weight = a.isGroupGrade ? "groupe ×1" : "individuelle ×3";
+    const place = a.role || a.inProject ? "Projet fil rouge" : "Hors projet";
+    const weight = a.ungraded ? "sans note" : a.isGroupGrade ? "groupe ×1" : "individuelle ×3";
     const base = { assessmentId: a.id, title: a.title };
     if (r < 0) {
       return {

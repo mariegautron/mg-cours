@@ -131,6 +131,8 @@ export default async function ModuleAssessmentsPage({
       isGroupGrade: a.is_group_grade,
       type: a.type,
       makeup: false,
+      inProject: !!a.project_id,
+      ungraded: isUngradedReview(a),
     })),
   );
   const byId = new Map(assessments.map((a) => [a.id, a]));
