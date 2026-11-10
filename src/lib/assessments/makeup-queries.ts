@@ -59,7 +59,8 @@ export async function makeupHrefs(
 
 /**
  * Retire une personne des rattrapages d'une évaluation quand elle n'est plus excusée, tant que
- * sa note de rattrapage n'existe pas (une note déjà saisie n'est jamais effacée).
+ * sa note de rattrapage n'existe pas (une note déjà saisie n'est jamais effacée). Son lien de QCM
+ * de rattrapage non rendu est révoqué ; une copie déjà rendue est gardée.
  */
 export async function unenrollFromMakeups(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -83,5 +84,19 @@ export async function unenrollFromMakeups(
       .delete()
       .eq("assessment_id", m.id)
       .eq("student_id", studentId);
+    // QCM de rattrapage pas encore rendu : le lien est révoqué (plus de droit au rattrapage).
+    const { data: quiz } = await supabase
+      .from("quiz")
+      .select("id")
+      .eq("assessment_id", m.id)
+      .maybeSingle();
+    if (quiz)
+      await supabase
+        .from("quiz_attempt")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("quiz_id", quiz.id)
+        .eq("student_id", studentId)
+        .neq("status", "submitted")
+        .is("revoked_at", null);
   }
 }

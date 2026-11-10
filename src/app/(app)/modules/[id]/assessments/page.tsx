@@ -107,7 +107,14 @@ export default async function ModuleAssessmentsPage({
   ]);
   const expectationCount = expectations.length;
 
-  const regular = assessments.filter((a) => !a.makeup_of_id);
+  // Ordre de lecture : date la plus ancienne d'abord, puis titre (P1 avant P2, P10 après P9).
+  const regular = assessments
+    .filter((a) => !a.makeup_of_id)
+    .sort(
+      (x, y) =>
+        (x.date ?? "9999").localeCompare(y.date ?? "9999") ||
+        x.title.localeCompare(y.title, "fr", { numeric: true }),
+    );
   const planned = plannedProgress(progress.requirement, assessments);
   const makeups = assessments.filter((a) => a.makeup_of_id);
   const timeline = buildTimeline(
@@ -130,7 +137,14 @@ export default async function ModuleAssessmentsPage({
   const byId = new Map(assessments.map((a) => [a.id, a]));
   const ordered = timeline.map((row) => byId.get(row.assessmentId)!).filter(Boolean);
   const dueSessions = new Set(timeline.filter((r) => r.dueSession).map((r) => r.assessmentId));
-  const unplaced = regular.filter((a) => !timeline.some((r) => r.assessmentId === a.id));
+  // Hors séance : par date (la plus ancienne d'abord), puis par titre (P1 avant P2, P10 après P9).
+  const unplaced = regular
+    .filter((a) => !timeline.some((r) => r.assessmentId === a.id))
+    .sort(
+      (x, y) =>
+        (x.date ?? "9999").localeCompare(y.date ?? "9999") ||
+        x.title.localeCompare(y.title, "fr", { numeric: true }),
+    );
   const cards = [...ordered, ...unplaced];
   const moduleGroups = await listModuleGroups(id);
   const evaluatedGroupIds = new Set(regular.flatMap((a) => a.groups.map((g) => g.id)));

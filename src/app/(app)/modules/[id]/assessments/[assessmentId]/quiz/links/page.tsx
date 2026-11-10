@@ -56,10 +56,12 @@ export default async function QuizLinksPage({
   const svg = url
     ? await QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" })
     : null;
-  const inProgress = attempts.filter((a) => a.status === "in_progress").length;
+  // Une copie au lien révoqué ne compte ni en cours ni « pas encore commencée ».
+  const live = attempts.filter((a) => !a.revoked);
+  const inProgress = live.filter((a) => a.status === "in_progress").length;
   const done = attempts.filter((a) => a.status === "submitted").length;
   // Lien préparé, copie pas encore ouverte (« Commencer » pas cliqué).
-  const notStarted = attempts.filter((a) => a.status === "ready").length;
+  const notStarted = live.filter((a) => a.status === "ready").length;
   const card = "bg-card rounded-xl border p-5";
 
   return (
@@ -188,14 +190,17 @@ export default async function QuizLinksPage({
           </details>
         ) : (
           // Le suivi monte en premier ; QR et liens repliés, avec leur état en une ligne.
-          <details className={`${card} order-2`} open={attempts.length === 0}>
+          <details className={`${card} order-2`} open={attempts.length === 0 || missing > 0}>
             <summary className="min-h-8 cursor-pointer font-semibold">
               QR et liens personnels ·{" "}
               <span className="text-muted-foreground font-normal">
                 {url
                   ? `QR actif · ${info.claimed.length}/${attempts.length} entré·es`
                   : "pas de QR"}
-                {` · ${attempts.length} lien${attempts.length > 1 ? "s" : ""} prêt${attempts.length > 1 ? "s" : ""}`}
+                {` · ${live.length} lien${live.length > 1 ? "s" : ""} prêt${live.length > 1 ? "s" : ""}`}
+                {missing > 0
+                  ? ` · ${missing} personne${missing > 1 ? "s" : ""} sans lien : Préparer`
+                  : ""}
               </span>
             </summary>
             <div className="grid gap-4 pt-3 md:grid-cols-2 md:[&>section:first-child]:order-2">

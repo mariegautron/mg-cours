@@ -100,8 +100,10 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
 
             {s.attendance === "absent_excused" ? null : (
               <Text style={styles.total}>
-                Note : {s.value ?? "—"} / {s.maxScore}
-                {s.maxScore !== 20 && s.valueOn20 !== null ? ` (soit ${s.valueOn20}/20)` : ""}
+                Note : {s.value === null ? "—" : formatNumber(s.value)} / {formatNumber(s.maxScore)}
+                {s.maxScore !== 20 && s.valueOn20 !== null
+                  ? ` (soit ${formatNumber(s.valueOn20)}/20)`
+                  : ""}
               </Text>
             )}
             {s.bonusLine ? <Text style={styles.overflow}>{s.bonusLine}</Text> : null}

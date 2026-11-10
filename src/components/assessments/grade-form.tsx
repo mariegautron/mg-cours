@@ -1554,9 +1554,9 @@ export function GradeForm({
           </h3>
           {grade?.value !== undefined && grade?.value !== null ? (
             <p className="text-muted-foreground text-sm">
-              Note actuelle : {grade.value} / {maxScore}
+              Note actuelle : {formatNumber(grade.value)} / {formatNumber(maxScore)}
               {maxScore !== DEFAULT_MAX_SCORE
-                ? ` (soit ${toTwenty(grade.value, maxScore)}/20)`
+                ? ` (soit ${formatNumber(toTwenty(grade.value, maxScore))}/20)`
                 : ""}
             </p>
           ) : null}
@@ -1722,7 +1722,7 @@ export function GradeForm({
                   />
                   <p id={`${uid}-raw-note`} role="status" className="text-sm">
                     {scaleResult?.status === "ok" ? (
-                      <strong>Note bonus : {scaleResult.points} / 20</strong>
+                      <strong>Note bonus : {formatNumber(scaleResult.points)} / 20</strong>
                     ) : scaleResult?.status === "error" ? (
                       <span className="text-destructive">{scaleResult.message}</span>
                     ) : (
