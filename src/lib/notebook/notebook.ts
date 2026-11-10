@@ -17,6 +17,13 @@ export const OBSERVATION_TAGS = [
   { value: "other", label: "Autre" },
 ] as const satisfies readonly { value: ObservationTag; label: string }[];
 
+/**
+ * Étiquettes proposées pour une NOUVELLE observation. « Absent·e ou retard » n'est plus proposée
+ * (doublon D34 : les absences sont dans Edusign, sauf aux évaluations, où elles vont sur la copie).
+ * Les étiquettes déjà posées restent lisibles (`OBSERVATION_TAG_LABELS`).
+ */
+export const CHOOSABLE_OBSERVATION_TAGS = OBSERVATION_TAGS.filter((t) => t.value !== "absent_late");
+
 export const OBSERVATION_TAG_LABELS = Object.fromEntries(
   OBSERVATION_TAGS.map((t) => [t.value, t.label]),
 ) as Record<ObservationTag, string>;

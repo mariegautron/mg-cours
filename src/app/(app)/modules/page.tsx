@@ -282,27 +282,6 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           )}
         </div>
       )}
-
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/dashboard"
-          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
-        >
-          ← Aujourd’hui
-        </Link>
-        <Link
-          href="/assessments"
-          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
-        >
-          Évaluations
-        </Link>
-        <Link
-          href="/billing"
-          className="focus-visible:ring-ring hover:bg-accent inline-flex min-h-12 items-center rounded-xl border px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
-        >
-          Facturation
-        </Link>
-      </div>
     </div>
   );
 }

@@ -3,11 +3,8 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Check, Pencil, Plus } from "lucide-react";
 
-import { PhraseManager } from "@/components/settings/phrase-manager";
 import { StudentContactForm } from "@/components/settings/student-contact-form";
-import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft";
 import { getStudent } from "@/lib/students/queries";
-import { listPhrases } from "@/lib/appreciations/queries";
 import { SchoolRulesForm } from "@/components/settings/school-rules-form";
 import { ExportButton } from "@/components/settings/export-button";
 import { AccountSection } from "@/components/settings/account-section";
@@ -33,12 +30,10 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
   // Retour vers l'appréciation d'une personne : « ← Revenir à l'appréciation de Prénom ».
   const backStudentId = backTo?.split("/")[4] ?? null;
   const backStudent = backStudentId ? await getStudent(backStudentId) : null;
-  const appPhrases = appPhrasesPreview();
-  const [profile, schools, rules, phrases] = await Promise.all([
+  const [profile, schools, rules] = await Promise.all([
     getProfile(),
     listAllSchools(),
     listSchoolRules(),
-    listPhrases(),
   ]);
 
   const textSize = readTextSize((await cookies()).get(TEXT_SIZE_COOKIE)?.value);
@@ -190,39 +185,19 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             )}
           </section>
 
-          <section
-            aria-labelledby="appreciation-phrases"
-            id="appreciation-phrases"
-            className="scroll-mt-20 space-y-3"
-          >
-            <div>
-              <h2 id="appreciation-phrases" className="text-lg font-medium">
-                Mes formulations d’appréciation
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Tes phrases pour le gabarit, par partie. Elles passent avant celles de l’appli.
-              </p>
-            </div>
-            <PhraseManager phrases={phrases} />
-            <details className="rounded-lg border p-3 text-sm">
-              <summary className="cursor-pointer font-medium">
-                Les formulations de l’appli (en lecture), par partie
-              </summary>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Les tiennes passent avant. L’appli varie aussi le début de phrase (« Pendant les
-                séances, », « Pour aller plus loin, »…).
-              </p>
-              {PARTS.map((part) => (
-                <div key={part} className="mt-2">
-                  <h3 className="font-semibold">{PART_LABELS[part]}</h3>
-                  <ul className="text-muted-foreground list-disc pl-5">
-                    {appPhrases[part].map((p) => (
-                      <li key={p}>{p}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </details>
+          <section aria-labelledby="appreciation-phrases" className="space-y-2">
+            <h2 id="appreciation-phrases" className="text-lg font-medium">
+              Mes formulations d’appréciation
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Elles sont avec toutes tes phrases, dans la Bibliothèque.{" "}
+              <Link
+                href="/assessments/comments?type=appreciation"
+                className="underline underline-offset-2"
+              >
+                Ouvrir les phrases d’appréciation
+              </Link>
+            </p>
           </section>
         </div>
         <div className="min-w-0 flex-[2_1_0] space-y-10">

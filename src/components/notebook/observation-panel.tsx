@@ -24,7 +24,7 @@ import {
   observationAddedMessage,
   tagForKeyEvent,
 } from "@/lib/notebook/live";
-import { OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
+import { CHOOSABLE_OBSERVATION_TAGS, type ObservationTag } from "@/lib/notebook/notebook";
 import { cn } from "@/lib/utils";
 
 type Action = (state: NotebookState, formData: FormData) => Promise<NotebookState>;
@@ -247,7 +247,7 @@ export function ObservationPanel({
           <legend className="mb-2 text-sm font-medium">Étiquette pour {name}</legend>
           <div className="@container">
             <div className="grid grid-cols-1 gap-1.5 @md:grid-cols-2">
-              {OBSERVATION_TAGS.map((t, i) => (
+              {CHOOSABLE_OBSERVATION_TAGS.map((t, i) => (
                 <PendingButton
                   key={t.value}
                   type="submit"
@@ -500,8 +500,7 @@ export function ObservationPanel({
                     note={o.note}
                     heading={
                       <span className="font-medium">
-                        Groupe{" "}
-                        {groupList?.find((g) => g.id === o.student_group_id)?.name ?? "—"}
+                        Groupe {groupList?.find((g) => g.id === o.student_group_id)?.name ?? "—"}
                       </span>
                     }
                   />

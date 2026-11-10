@@ -17,7 +17,7 @@ import {
   loadFocusKpis,
   loadPreviousSession,
 } from "@/lib/dashboard/overview-queries";
-import { dayLine, dayTile, progressLabel, untilLabel } from "@/lib/dashboard/overview";
+import { dayLine, dayTile, untilLabel } from "@/lib/dashboard/overview";
 import { CopyMessageButton } from "@/components/projects/copy-message-button";
 import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
 import { copyText, dueToday } from "@/lib/projects/surprises";
@@ -449,13 +449,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     </section>
   ) : null;
 
-  const rank = (moduleId: string) => {
-    const p = progress.get(moduleId);
-    if (p && p.total && p.done > 0 && p.done < p.total) return 0;
-    if (moduleId === focusFrom?.id) return 1;
-    return 2;
-  };
-
   const correctCard =
     toCorrect.length > 0 ? (
       <section aria-labelledby="corr" className="bg-card rounded-3xl border p-5 shadow-sm">
@@ -489,50 +482,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     ) : null;
 
   const upcomingEvalsCard = <UpcomingAssessmentsCard items={upcomingEvals} />;
-
-  const modulesCard = (
-    <section aria-labelledby="mods" className="bg-card rounded-3xl border p-5 shadow-sm">
-      <h2 id="mods" className="font-heading mb-2 text-lg font-bold">
-        Tes modules en cours{runningModules.length > 0 ? ` (${runningModules.length})` : ""}
-      </h2>
-      {runningModules.length === 0 ? (
-        <p className="text-muted-foreground mb-2 text-sm">Aucun module en cours pour l’instant.</p>
-      ) : (
-        <ul className="mb-2 space-y-2">
-          {/* Le module réellement en cours (séances commencées, pas finies) passe avant ceux « à préparer ». */}
-          {[...runningModules]
-            .sort((a, b) => rank(a.id) - rank(b.id))
-            .slice(0, 3)
-            .map((m) => {
-              const p = progress.get(m.id);
-              return (
-                <li key={m.id}>
-                  <Link
-                    href={`/modules/${m.id}`}
-                    className="font-semibold underline-offset-2 hover:underline"
-                  >
-                    {m.name}
-                  </Link>
-                  {p && p.total ? (
-                    <p className="text-muted-foreground text-sm">
-                      {progressLabel(p.done, p.total)}
-                    </p>
-                  ) : null}
-                </li>
-              );
-            })}
-        </ul>
-      )}
-      {runningModules.length > 3 ? (
-        <p className="text-muted-foreground mb-2 text-sm">
-          + {runningModules.length - 3} autre{runningModules.length - 3 > 1 ? "s" : ""} en cours
-        </p>
-      ) : null}
-      <Link href="/modules" className={BTN}>
-        Voir tous les modules
-      </Link>
-    </section>
-  );
 
   const weekCard = (
     <WeekCard
@@ -670,7 +619,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             {upcomingEvalsCard}
             {weekCard}
             {resumeCard}
-            {modulesCard}
           </div>
         </div>
       </div>
@@ -729,9 +677,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               </strong>
             </>
           )}
-        </span>
-        <span>
-          À corriger : <strong className="text-foreground">{toCorrect.length}</strong>
         </span>
         <span>
           Appréciations à écrire :{" "}
@@ -810,7 +755,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           {upcomingEvalsCard}
           {weekCard}
           {resumeCard}
-          {modulesCard}
         </div>
       </div>
     </div>

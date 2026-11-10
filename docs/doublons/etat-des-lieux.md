@@ -31,8 +31,8 @@ D15, D19, D22, D24, D37, D38).
 | D5 | changé → **fait au lot 2** | Les deux blocs ne s'affichent plus en même temps (bandeau si tout est corrigé, bloc du bas sinon). Mais le bandeau n'existe que dans la mise en page « note de groupe » : une évaluation individuelle entièrement corrigée n'a, semble-t-il, aucun « Envoyer les résultats » (à vérifier à l'écran). |
 | D6 | reste → **fait au lot 1** | Le bloc « Rendus — … » (`Submissions`, table `project_submission`) était toujours au-dessus de « Rendus déposés ». |
 | D7 | reste → **fait au lot 2** | Deux mises en page (groupe l. 613-931, individuelle ensuite) : « Le cadre pour les étudiant·es » ×2, grille ×2, « Le jour J » ×2, « Phrases » ×2, « Modifier » ×3. |
-| D8 | reste | Phrases à quatre endroits : `/assessments/comments`, page `phrases` d'une évaluation, Réglages (`PhraseManager`), en-tête de la liste Évaluations (en plus de la Bibliothèque). |
-| D9 | reste | Bouton « Grilles » toujours dans l'en-tête d'Évaluations, en plus de la Bibliothèque. |
+| D8 | reste → **fait au lot 7** | Phrases à quatre endroits : `/assessments/comments`, page `phrases` d'une évaluation, Réglages (`PhraseManager`), en-tête de la liste Évaluations (en plus de la Bibliothèque). |
+| D9 | reste → **fait au lot 7** | Bouton « Grilles » toujours dans l'en-tête d'Évaluations, en plus de la Bibliothèque. |
 | D10 | reste → **fait au lot 2** | « Le bilan » d'Où j'en suis affiche toujours la « Moyenne de la classe ». Le calcul commun des moyennes n'a pas été vérifié. |
 | D11 | reste → **fait au lot 2** | Le compteur de notes est toujours à cinq endroits (pastille, « Le module en chiffres », page des groupes, page Évaluations, colonne de gauche d'« Ajouter une évaluation »). |
 
@@ -70,28 +70,71 @@ D15, D19, D22, D24, D37, D38).
 | D29 | reste → **fait en partie au lot 5** | `/resultats/[jeton]` et `/q/[jeton]` affichent leur propre page, sans renvoi vers l'espace ; « Publier et créer le lien de la classe » existe toujours. |
 | D30 | reste → **fait en partie au lot 5** | Liens perso créés à quatre endroits (Espace étudiant·es, fiche étudiant·e, Envoyer les résultats, Liens du QCM). |
 | D31 | reste | `results/preview` existe et est appelé depuis Résultats. |
-| D32 | reste | « Nouveau groupe » est un écran à part (`groups/new`), lié depuis la page des groupes et depuis le tableau de bord (« Constituer les groupes »). Le module a déjà son propre import (`groups/import`). |
-| D33 | reste | « Vue de classe » sur la page des groupes ; noms mélangés (« Journal d'observations », « Observations de cours »). |
-| D34 | reste | Étiquette « Absent·e ou retard » du Carnet (`lib/notebook/notebook.ts`). La présence de l'espace de l'oral est retirée au lot 1 (D1). |
+| D32 | reste → **fait au lot 7** | « Nouveau groupe » est un écran à part (`groups/new`), lié depuis la page des groupes et depuis le tableau de bord (« Constituer les groupes »). Le module a déjà son propre import (`groups/import`). |
+| D33 | reste → **fait au lot 7** | « Vue de classe » sur la page des groupes ; noms mélangés (« Journal d'observations », « Observations de cours »). |
+| D34 | reste → **fait au lot 7** (étiquette plus proposée ; anciennes lisibles) | Étiquette « Absent·e ou retard » du Carnet (`lib/notebook/notebook.ts`). La présence de l'espace de l'oral est retirée au lot 1 (D1). |
 
 ## F. Se repérer dans l'appli
 
 | Fiche | État | Ce qu'il en est |
 | ----- | ---- | --------------- |
-| D35 | reste | Liste globale : « Grilles », « Phrases » et le filtre « À noter ». |
-| D36 | reste | Bas de Modules : « ← Aujourd'hui », « Évaluations », « Facturation » ; pas d'onglet « À facturer ». |
-| D37 | changé | La plupart des pages n'ont plus qu'un retour, en haut. Restent : Rapprocher (deux retours), le bas de la séance, et Appréciations qui revient vers Évaluations. |
-| D38 | changé | La carte « Évaluations à venir » et la tuile « À faire » ont disparu. Restent : « Tes modules en cours », et « À corriger » compté deux fois (ligne de chiffres et carte). |
+| D35 | reste → **fait au lot 7** | Liste globale : « Grilles », « Phrases » et le filtre « À noter ». |
+| D36 | reste → **fait au lot 7** | Bas de Modules : « ← Aujourd'hui », « Évaluations », « Facturation » ; pas d'onglet « À facturer ». |
+| D37 | changé → **fait aux lots 6 et 7** | La plupart des pages n'ont plus qu'un retour, en haut. Restent : Rapprocher (deux retours), le bas de la séance, et Appréciations qui revient vers Évaluations. |
+| D38 | changé → **fait en partie au lot 7** | La carte « Évaluations à venir » et la tuile « À faire » ont disparu. Restent : « Tes modules en cours », et « À corriger » compté deux fois (ligne de chiffres et carte). |
 
 ## Code mort (section 4 du rapport)
 
 | Fichier | État |
 | ------- | ---- |
 | `lib/ynov/next-step.ts` | **pas mort** : importé par `lib/invoice/queries.ts`. À garder. |
-| `lib/modules/completion.ts` | mort (seul son test l'importe). |
-| `components/modules/course-list.tsx` | mort. |
-| `components/modules/expectations-summary.tsx` | mort. |
+| `lib/modules/completion.ts` | mort → **supprimé au lot 7** (avec son test). |
+| `components/modules/course-list.tsx` | mort → **supprimé au lot 7**. |
+| `components/modules/expectations-summary.tsx` | mort → **supprimé au lot 7**. |
 | `components/modules/schedule-editor.tsx` | **pas mort** : assistant, `ScheduleForm`, `ModuleForm`. À garder. |
 | `components/students/group-members.tsx` | **pas mort** : page d'un groupe, `ModuleRoster`. À garder. |
 | `components/modules/resource-picker.tsx` | **pas mort** : `CourseForm`. À garder. |
-| Route `/modules/[id]/build` | redirige toujours ; `build/actions.ts` n'est importé nulle part. |
+| Route `/modules/[id]/build` | redirige toujours ; `build/actions.ts` **supprimé au lot 6**. |
+
+## Bilan du chantier (10 novembre 2026, au soir)
+
+Commits sur `main` : lot 1 `08e27cf`, lot 2 `2f51fa5`, retouches `f21db7c`, lot 3 `26647f1`, lot 4
+`7b6dcc4` (+ 4b `55c48d4`, `a8b050f`), lot 5 `0febcdf`, lot 6 `06bc6c4` et `e8e2c75`, lot 7 (ce
+commit). Migrations appliquées en prod : `20261203000000_doublons_lot1`,
+`20261204000000_points_etape_projet`, `20261204000100_fil_rouge_oral_projet`,
+`20261205000000_archive_morceaux_notion`. Aucune table ni colonne supprimée, aucune note changée
+(empreintes avant/après identiques à chaque migration).
+
+### Fait
+
+D1 à D25, D27, D32 à D37 (avec les réserves ci-dessous), D26 et D28 pour l'interface, et le code mort
+réellement inutilisé (`completion.ts`, `course-list.tsx`, `expectations-summary.tsx`, `phase-list.tsx`,
+`phases.ts`, `unnote.ts`, `build/actions.ts`, composants du rapprochement). Les adresses retirées
+redirigent : `/compare`, `/jalons`, `/couverture`, `/matching`, `/groups/new`, `/phrases` d'une
+évaluation, `?filter=archived`.
+
+### Reste, et pourquoi
+
+- **D29 (en partie)** : les anciens liens `/resultats/…` et `/q/…` ne redirigent pas vers l'espace :
+  seul le haché du jeton d'espace est gardé, l'adresse de l'espace ne peut pas être reconstruite. Ils
+  marchent toujours, tels quels.
+- **D29, D30 (QCM)** : les liens de QCM perso et la partie « Par lien personnel » du QCM restent.
+  L'espace ne sait pas encore lancer un QCM (« Passer le QCM » renvoie au lien collé par Marie ou au
+  QR). À faire d'abord : « Passer le QCM » depuis l'espace.
+- **D31** : l'aperçu des résultats reste. « Voir comme un·e étudiant·e » n'affiche pas les notes. À
+  faire d'abord : les notes dans cet aperçu.
+- **D4 (en partie)** : `/correct` d'un QCM n'est pas redirigé vers le suivi : c'est encore là qu'on
+  pose une absence à un QCM.
+- **D1 (suite)** : `GradeForm`, `GradingSession`, `OralStage`, `OralPlan` restent : la correction
+  classique, les absences au QCM, la note bonus et les oraux sans créneau en dépendent.
+- **D22** : la vue Planning est gardée ; sa refonte est à cadrer avec Marie.
+- **D27 (suite)** : les suggestions de ressources dans le sélecteur « Attendus traités » de la séance
+  restent à faire.
+- **D38 (en partie)** : la carte « Évaluations à venir » reste : « Cette semaine » ne montre que les
+  séances ; y faire entrer les évaluations est un petit chantier à part. Faits : plus de « Tes modules
+  en cours », plus de « À corriger » compté deux fois.
+- **D26** : le mini-QCM « Gestion de projet » n'est pas converti en questions de la banque (texte de
+  35 000 caractères) ; à refaire à la main si besoin.
+- **Tests** : aucun test n'a été lancé ni réécrit (consigne). Des tests unitaires et e2e attendent
+  l'ancien comportement (squelette de projet, tableau de bord, Hyperplanning, comparaison de critères,
+  groupes, phrases).

@@ -211,7 +211,7 @@ export function AppreciationEditor({
             {text.trim() ? "Remplacer par le gabarit" : "Partir d’un gabarit"}
           </Button>
           <Link
-            href={`/settings?retour=${encodeURIComponent(`/modules/${moduleId}/appreciations/${studentId}`)}#appreciation-phrases`}
+            href={`/assessments/comments?type=appreciation&retour=${encodeURIComponent(`/modules/${moduleId}/appreciations/${studentId}`)}`}
             className="text-muted-foreground text-sm underline underline-offset-2"
           >
             Mes formulations

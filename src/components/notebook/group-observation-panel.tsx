@@ -10,7 +10,7 @@ import type { NotebookState } from "@/app/(app)/modules/[id]/courses/[courseId]/
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { OBSERVATION_TAGS } from "@/lib/notebook/notebook";
+import { CHOOSABLE_OBSERVATION_TAGS } from "@/lib/notebook/notebook";
 import type { GroupObservationRow } from "@/lib/notebook/queries";
 
 type Action = (state: NotebookState, formData: FormData) => Promise<NotebookState>;
@@ -83,7 +83,7 @@ export function GroupObservationPanel({
                     Étiquette pour le groupe {g.name}
                   </legend>
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    {OBSERVATION_TAGS.map((t) => (
+                    {CHOOSABLE_OBSERVATION_TAGS.map((t) => (
                       <Button
                         key={t.value}
                         type="submit"

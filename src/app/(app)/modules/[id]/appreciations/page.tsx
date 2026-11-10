@@ -13,6 +13,8 @@ import { getModule } from "@/lib/modules/queries";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
 import { listModuleGroups } from "@/lib/students/queries";
+import { ClassOverview } from "@/components/students/class-overview";
+import { loadClassOverview } from "@/lib/students/class-overview-queries";
 
 export const metadata: Metadata = { title: "Appréciations" };
 
@@ -46,6 +48,8 @@ export default async function AppreciationsPage({
     (r) => appreciationStatus(r.text, rules.appreciationMax) === "too_long",
   ).length;
   const written = rows.filter((r) => r.text.trim() !== "").length;
+  // « Observations » de la classe, par personne et par groupe : ici, où elles servent à écrire.
+  const { overview, groupRows } = await loadClassOverview(id);
 
   return (
     <div className="max-w-6xl space-y-5">
@@ -128,10 +132,22 @@ export default async function AppreciationsPage({
               </h2>
               <AppreciationExport moduleId={id} rows={rows} tooLong={tooLong} />
             </section>
-            <BackLink href={`/modules/${id}/assessments`}>← Retour</BackLink>
+            <BackLink href={`/modules/${id}/groups`}>← Étudiant·es et groupes</BackLink>
           </div>
         </div>
       )}
+
+      {overview.length > 0 ? (
+        <section aria-labelledby="observations" className="rounded-lg border p-4">
+          <h2 id="observations" className="mb-2 text-lg font-medium">
+            Observations
+          </h2>
+          <p className="text-muted-foreground mb-2 text-sm">
+            Tes observations privées, par personne. Clique un titre de colonne pour trier.
+          </p>
+          <ClassOverview moduleId={id} rows={overview} groups={groupRows} />
+        </section>
+      ) : null}
     </div>
   );
 }

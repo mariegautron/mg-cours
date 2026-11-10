@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhraseManager } from "@/components/settings/phrase-manager";
+import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft";
+import { listPhrases } from "@/lib/appreciations/queries";
 import { commentTags, listComments } from "@/lib/assessments/queries";
 
 export const metadata: Metadata = { title: "Phrases" };
@@ -23,6 +26,82 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
   const q = typeof sp.q === "string" ? sp.q : "";
   const category = typeof sp.category === "string" ? sp.category : "";
   const tag = typeof sp.tag === "string" ? sp.tag : "";
+  // Une seule page « Phrases » (doublon D8) : correction (banque insérable pendant la correction)
+  // ou appréciation (formulations du gabarit, insérables dans l'appréciation).
+  const appreciation = sp.type === "appreciation";
+  // Retour vers l'appréciation d'une personne (jamais une adresse libre).
+  const retour =
+    typeof sp.retour === "string" &&
+    /^\/modules\/[0-9a-f-]{36}\/appreciations(\/[0-9a-f-]{36})?$/.test(sp.retour)
+      ? sp.retour
+      : null;
+
+  const tabs = (
+    <nav aria-label="Sortes de phrases" className="border-b">
+      <ul className="flex flex-wrap gap-x-6">
+        {[
+          { key: false, label: "Correction", href: "/assessments/comments" },
+          {
+            key: true,
+            label: "Appréciation",
+            href: `/assessments/comments?type=appreciation${retour ? `&retour=${encodeURIComponent(retour)}` : ""}`,
+          },
+        ].map((t) => (
+          <li key={t.label}>
+            <Link
+              href={t.href}
+              aria-current={appreciation === t.key ? "page" : undefined}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${appreciation === t.key ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
+            >
+              {t.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+
+  if (appreciation) {
+    const phrases = await listPhrases();
+    const appPhrases = appPhrasesPreview();
+    return (
+      <div className="space-y-6">
+        {retour ? (
+          <Link href={retour} className="text-sm underline underline-offset-2">
+            ← Revenir à l’appréciation
+          </Link>
+        ) : null}
+        <div>
+          <h1 className="text-2xl font-semibold">Phrases</h1>
+          <p className="text-muted-foreground">
+            Tes formulations d’appréciation, par partie : elles passent avant celles de l’appli et
+            s’insèrent dans l’appréciation.
+          </p>
+        </div>
+        {tabs}
+        <PhraseManager phrases={phrases} />
+        <details className="rounded-lg border p-3 text-sm">
+          <summary className="cursor-pointer font-medium">
+            Les formulations de l’appli (en lecture), par partie
+          </summary>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Les tiennes passent avant. L’appli varie aussi le début de phrase (« Pendant les
+            séances, », « Pour aller plus loin, »…).
+          </p>
+          {PARTS.map((part) => (
+            <div key={part} className="mt-2">
+              <h2 className="font-semibold">{PART_LABELS[part]}</h2>
+              <ul className="text-muted-foreground list-disc pl-5">
+                {appPhrases[part].map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </details>
+      </div>
+    );
+  }
 
   const [comments, tags] = await Promise.all([listComments({ q, category, tag }), commentTags()]);
 
@@ -31,7 +110,9 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Phrases</h1>
-          <p className="text-muted-foreground">Bibliothèque réutilisable pour les appréciations.</p>
+          <p className="text-muted-foreground">
+            Phrases de correction, par critère : elles s’insèrent pendant la correction.
+          </p>
         </div>
         <Button asChild>
           <Link href="/assessments/comments/new">
@@ -40,6 +121,8 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
           </Link>
         </Button>
       </div>
+
+      {tabs}
 
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">

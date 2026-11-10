@@ -1370,7 +1370,7 @@ export function GradeForm({
         </div>
         <details>
           <summary className="cursor-pointer text-sm font-medium">
-            Observations de cours ({observations.length})
+            Observations ({observations.length})
           </summary>
           <ul className="mt-2 space-y-1 text-sm">
             {observations.map((o) => (

@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus } from "lucide-react";
 
-import {
-  ClassOverview,
-  type GroupOverviewRow,
-  type OverviewRow,
-} from "@/components/students/class-overview";
 import { createClient } from "@/lib/supabase/server";
-import { appreciationStatus, STATUS_LABELS } from "@/lib/appreciations/appreciation";
-import { listAppreciations } from "@/lib/appreciations/queries";
-import { listModuleObservations } from "@/lib/notebook/queries";
-import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { Button } from "@/components/ui/button";
-import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { listEnrollments } from "@/lib/students/enrollment";
@@ -27,13 +16,9 @@ export const metadata: Metadata = { title: "Étudiant·es du module" };
 
 export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[id]/groups">) {
   const { id } = await params;
-  const [mod, groups, observations, appreciations, rules, averages, enrolled] = await Promise.all([
+  const [mod, groups, enrolled] = await Promise.all([
     getModule(id),
     listModuleGroups(id),
-    listModuleObservations(id),
-    listAppreciations(id),
-    getSchoolRulesForModule(id),
-    moduleStudentAverages(id),
     listEnrollments(id),
   ]);
   if (!mod) notFound();
@@ -61,54 +46,6 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       leftAt: e.leftAt,
     }))
     .sort((a, b) => Number(!!a.leftAt) - Number(!!b.leftAt) || a.name.localeCompare(b.name, "fr"));
-  const people = [...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values()];
-  const averageOf = new Map(averages.map((a) => [a.student.id, a.average.average]));
-  const overview: OverviewRow[] = people.map((m) => {
-    const mine = observations.filter((o) => o.student_id === m.id);
-    const count = (...tags: string[]) => mine.filter((o) => tags.includes(o.tag)).length;
-    const status = appreciationStatus(
-      appreciations.byStudent.get(m.id) ?? "",
-      rules.appreciationMax,
-    );
-    return {
-      id: m.id,
-      firstName: m.first_name,
-      lastName: m.last_name,
-      participation: count("participation"),
-      question: count("relevant_question"),
-      difficulty: count("difficulty"),
-      other: count("other", "absent_late"),
-      total: mine.length,
-      average: averageOf.get(m.id) ?? null,
-      appreciation: STATUS_LABELS[status],
-      appreciationTone: status === "written" ? "ok" : status === "too_long" ? "lock" : "warn",
-    };
-  });
-  // Une ligne par groupe : ses observations de groupe (même découpage par étiquette).
-  const supabase = await createClient();
-  const { data: groupObs } = groups.length
-    ? await supabase
-        .from("group_observation")
-        .select("student_group_id, tag")
-        .in(
-          "student_group_id",
-          groups.map((g) => g.id),
-        )
-    : { data: [] };
-  const groupRows: GroupOverviewRow[] = groups.map((g) => {
-    const mine = (groupObs ?? []).filter((o) => o.student_group_id === g.id);
-    const count = (...tags: string[]) => mine.filter((o) => tags.includes(o.tag)).length;
-    return {
-      id: g.id,
-      name: g.name,
-      participation: count("participation"),
-      question: count("relevant_question"),
-      difficulty: count("difficulty"),
-      other: count("other", "absent_late"),
-      total: mine.length,
-    };
-  });
-
   return (
     <div className="max-w-6xl space-y-6">
       <section aria-labelledby="groups">
@@ -138,12 +75,6 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
             <Button asChild size="sm" variant="secondary">
               <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
             </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/groups/new`}>
-                <Plus aria-hidden />
-                Ajouter un groupe
-              </Link>
-            </Button>
           </div>
         </div>
         {groups.length === 0 ? (
@@ -152,7 +83,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
             title="Pas encore de groupes"
             description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes. Il faut des étudiant·es dans le module pour former des groupes."
             actions={[
-              { label: "Créer le premier groupe", href: `/modules/${mod.id}/groups/new` },
+              { label: "Constituer les groupes", href: `/modules/${mod.id}/groups/wizard` },
               { label: "Ajouter les étudiant·es", href: `/modules/${mod.id}/groups/import` },
             ]}
           />
@@ -196,18 +127,6 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       </section>
 
       <ModuleRoster moduleId={id} rows={roster} />
-
-      {overview.length > 0 ? (
-        <section aria-labelledby="overview" className="rounded-lg border p-4">
-          <h2 id="overview" className="mb-2 text-lg font-medium">
-            Vue de classe
-          </h2>
-          <p className="text-muted-foreground mb-2 text-sm">
-            Tes observations privées, par personne. Clique un titre de colonne pour trier.
-          </p>
-          <ClassOverview moduleId={id} rows={overview} groups={groupRows} />
-        </section>
-      ) : null}
     </div>
   );
 }

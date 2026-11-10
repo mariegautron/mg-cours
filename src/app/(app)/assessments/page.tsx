@@ -1,7 +1,7 @@
 import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClipboardList, MessageSquareText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -65,32 +65,7 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
               Ajouter (choisir le module)
             </Link>
           </Button>
-          <Button asChild variant="secondary">
-            <Link href="/assessments/grids">
-              <ClipboardList aria-hidden />
-              Grilles
-            </Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/assessments/comments">
-              <MessageSquareText aria-hidden />
-              Phrases
-            </Link>
-          </Button>
         </div>
-      </div>
-
-      <div role="group" aria-label="Filtre" className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant={toGrade ? "outline" : "default"}>
-          <Link href="/assessments" aria-current={toGrade ? undefined : "true"}>
-            Toutes ({all.length})
-          </Link>
-        </Button>
-        <Button asChild size="sm" variant={toGrade ? "default" : "outline"}>
-          <Link href="/assessments?filtre=a-noter" aria-current={toGrade ? "true" : undefined}>
-            À noter ({all.filter((a) => a.gradeCount === 0).length})
-          </Link>
-        </Button>
       </div>
 
       <form

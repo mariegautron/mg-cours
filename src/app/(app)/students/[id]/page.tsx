@@ -349,7 +349,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       <section aria-labelledby="observations" className={card}>
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
           <h2 id="observations" className="font-heading text-xl font-bold">
-            Journal d’observations
+            Observations
           </h2>
           <Pill tone="warn">Pour toi seule</Pill>
         </div>

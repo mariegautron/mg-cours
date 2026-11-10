@@ -1100,9 +1100,7 @@ export default async function AssessmentPage({
             noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
             correctHref={`/modules/${id}/assessments/${assessmentId}/correct`}
             phrasesHref={
-              (assessment.grading_grid?.criteria.length ?? 0) > 0
-                ? `/modules/${id}/assessments/${assessmentId}/phrases`
-                : null
+              (assessment.grading_grid?.criteria.length ?? 0) > 0 ? "/assessments/comments" : null
             }
             compareHref={
               (assessment.grading_grid?.criteria.length ?? 0) > 0

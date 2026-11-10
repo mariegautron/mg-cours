@@ -2,7 +2,11 @@
  * US-135 : noter un·e étudiant·e en direct, au clavier — logique pure (recherche, navigation,
  * raccourcis d'étiquette, formatage). Données privées : voir privacy.test.ts.
  */
-import { OBSERVATION_TAGS, OBSERVATION_TAG_LABELS, type ObservationTag } from "./notebook";
+import {
+  CHOOSABLE_OBSERVATION_TAGS,
+  OBSERVATION_TAG_LABELS,
+  type ObservationTag,
+} from "./notebook";
 import { normalize } from "@/lib/search/search";
 
 interface Named {
@@ -64,7 +68,7 @@ export function moveActive(index: number, key: string, count: number): number | 
 /** Raccourci d'étiquette : « 1 » à « 5 » dans l'ordre affiché. */
 export function tagForKey(key: string): ObservationTag | null {
   if (!/^[1-9]$/.test(key)) return null;
-  return OBSERVATION_TAGS[Number(key) - 1]?.value ?? null;
+  return CHOOSABLE_OBSERVATION_TAGS[Number(key) - 1]?.value ?? null;
 }
 
 /**

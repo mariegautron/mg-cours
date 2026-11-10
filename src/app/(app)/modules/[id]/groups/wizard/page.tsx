@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { createGroup } from "@/app/(app)/modules/[id]/groups/actions";
+import { GroupForm } from "@/components/students/group-form";
 import { GroupWizard } from "@/components/students/group-wizard";
+import { listModuleAssessments } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { listStudents } from "@/lib/students/queries";
@@ -55,21 +58,36 @@ export default async function GroupWizardPage({
     themeCount = count ?? 0;
   }
 
+  const assessments = (await listModuleAssessments(id)).filter((a) => !a.makeup_of_id);
+
   return (
-    <GroupWizard
-      moduleId={id}
-      moduleName={mod.name}
-      students={students
-        .filter((s) => everyone || activeIds.has(s.id))
-        .map((s) => ({
-          id: s.id,
-          first: s.first_name,
-          last: s.last_name,
-          photoPath: s.photo_path,
-        }))}
-      takenNames={(existing ?? []).map((g) => g.name)}
-      pastGroups={[...byGroup.values()]}
-      themeCount={themeCount}
-    />
+    <div className="space-y-6">
+      <GroupWizard
+        moduleId={id}
+        moduleName={mod.name}
+        students={students
+          .filter((s) => everyone || activeIds.has(s.id))
+          .map((s) => ({
+            id: s.id,
+            first: s.first_name,
+            last: s.last_name,
+            photoPath: s.photo_path,
+          }))}
+        takenNames={(existing ?? []).map((g) => g.name)}
+        pastGroups={[...byGroup.values()]}
+        themeCount={themeCount}
+      />
+      {/* « Nouveau groupe » : un bouton de l'assistant, plus un écran à part (doublon D32). */}
+      <details id="nouveau" className="rounded-lg border p-4">
+        <summary className="cursor-pointer font-semibold">Nouveau groupe, à la main</summary>
+        <div className="pt-3">
+          <GroupForm
+            action={createGroup.bind(null, id)}
+            moduleId={id}
+            assessments={assessments.map((a) => ({ id: a.id, title: a.title }))}
+          />
+        </div>
+      </details>
+    </div>
   );
 }

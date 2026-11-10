@@ -88,7 +88,10 @@ export function ObservationItem({
               defaultValue={tag}
               className="border-input bg-background h-10 w-full rounded-md border px-2"
             >
-              {OBSERVATION_TAGS.map((t) => (
+              {OBSERVATION_TAGS.filter(
+                // Ancienne étiquette « Absent·e ou retard » : gardée seulement si elle est déjà posée.
+                (t) => t.value !== "absent_late" || t.value === tag,
+              ).map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
                 </option>
