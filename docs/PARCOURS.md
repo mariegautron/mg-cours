@@ -189,7 +189,8 @@ directes : les liens reçus par les étudiant·es.
   « À corriger » tant que la relecture n'est pas finie.
 - **Améliorations notées** :
   - Nuit du 9 au 10 nov. : projection en nouvel onglet, « Ferme le … », compteur « pas encore » (`fbf5b61`) ; confirmation du nom, suivi en direct, Résultats réorganisés, « À corriger » avec les QCM (`63b27b4`) ; page QCM « Plus… » (`49b1f88`) ; relecture d'une copie (`20d5896`) ; suivi des copies en premier (`093d281`).
-  - Reste : mode « sans chrono » (avec le 1er fil, chrono du rattrapage), avancement « 7/15 », réponse attendue à côté des réponses libres, « Envoyer par e-mail » désactivé avec sa raison.
+  - 10 nov. : QCM chronométré ou non (migration `20261201000300`, voir le commit « QCM chronométré ou non »).
+  - Reste : avancement « 7/15 », réponse attendue à côté des réponses libres, « Envoyer par e-mail » désactivé avec sa raison.
   - 9 nov. (« QCM en classe » lot 3) : bandeau rouge « pas encore ouvert » + « Ouvrir maintenant » sur les liens et la projection, « Faire passer en classe (QR) », « Ferme à 18:00 », « Repasser en brouillon » désactivé avec sa raison (`0601d78`).
   - Reste : suivi en direct sur « Donner accès », confirmation du nom, Résultats (Markdown, « Relire les copies »), « À corriger » avec les QCM, mode sans chrono, relecture des copies et mises en page du lot 5.
 
