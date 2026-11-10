@@ -20,11 +20,14 @@ export function AttemptActions({
   assessmentId,
   attempt,
   quizClosed,
+  timed = true,
 }: {
   moduleId: string;
   assessmentId: string;
   attempt: AttemptSummary;
   quizClosed: boolean;
+  /** QCM chronométré : le tiers-temps n'a de sens qu'avec un chrono. */
+  timed?: boolean;
 }) {
   const a = attempt;
   const bind = <F extends (m: string, s: string, id: string, ...r: never[]) => unknown>(fn: F) =>
@@ -117,7 +120,7 @@ export function AttemptActions({
           </form>
         </details>
       ) : null}
-      {a.status !== "submitted" ? (
+      {timed && a.status !== "submitted" ? (
         <form action={bind(setTimeMultiplier)} className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
             <Label htmlFor={`mult-${a.id}`} className="text-xs">

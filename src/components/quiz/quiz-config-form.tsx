@@ -18,7 +18,9 @@ import { matchesRuleFilters, quizTotalPoints } from "@/lib/quiz/draw";
 import type { BankQuestion, DrawRule } from "@/lib/quiz/types";
 
 /** Résumé envoyé au navigateur : pas les choix, seulement si la question a une réponse définie. */
-type BankSummary = Pick<BankQuestion, "id" | "category" | "type" | "tags"> & { answerable: boolean };
+type BankSummary = Pick<BankQuestion, "id" | "category" | "type" | "tags"> & {
+  answerable: boolean;
+};
 
 interface RuleState {
   key: number;
@@ -84,10 +86,11 @@ export function QuizConfigForm({
       : [{ key: 0, category: "", tags: "", types: [], count: "5", pointsEach: "1" }],
   );
   const [announce, setAnnounce] = useState("");
+  // Chronométré ou non : une durée renseignée vaut « chronométré » (QCM existants inchangés).
+  const [timed, setTimed] = useState(quiz.duration_minutes !== null);
   const parsed = useMemo(() => rules.map(asRule), [rules]);
   const available = useMemo(
-    () =>
-      parsed.map((r) => bank.filter((q) => q.answerable && matchesRuleFilters(q, r)).length),
+    () => parsed.map((r) => bank.filter((q) => q.answerable && matchesRuleFilters(q, r)).length),
     [bank, parsed],
   );
   const total = quizTotalPoints(
@@ -142,19 +145,48 @@ export function QuizConfigForm({
         <Textarea id="instructions" name="instructions" rows={4} defaultValue={quiz.instructions} />
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="durationMinutes">Durée (minutes)</Label>
-          <Input
-            id="durationMinutes"
-            name="durationMinutes"
-            inputMode="numeric"
-            defaultValue={quiz.duration_minutes ?? ""}
-            aria-describedby="duration-hint"
-          />
-          <p id="duration-hint" className="text-muted-foreground text-xs">
-            Vide : pas de limite de temps.
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">Temps</legend>
+          <label className="flex min-h-9 items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="timing"
+              checked={timed}
+              onChange={() => setTimed(true)}
+              className="accent-primary size-4"
+            />
+            Chronométré
+          </label>
+          {timed ? (
+            <div className="flex items-center gap-2 pl-6">
+              <Input
+                id="durationMinutes"
+                name="durationMinutes"
+                inputMode="numeric"
+                defaultValue={quiz.duration_minutes ?? 30}
+                aria-label="Minutes par personne"
+                className="w-20"
+              />
+              <span className="text-sm">minutes par personne</span>
+            </div>
+          ) : (
+            <input type="hidden" name="durationMinutes" value="" />
+          )}
+          <label className="flex min-h-9 items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="timing"
+              checked={!timed}
+              onChange={() => setTimed(false)}
+              className="accent-primary size-4"
+            />
+            Sans chrono : jusqu’à la fermeture
+          </label>
+          <p className="text-muted-foreground text-xs">
+            Sans chrono, pas de décompte : « À rendre avant … », la copie se rend toute seule à la
+            fermeture. Le tiers-temps ne sert qu’en mode chronométré.
           </p>
-        </div>
+        </fieldset>
         <div className="space-y-2">
           <Label htmlFor="opensAt">Ouverture (heure de Paris)</Label>
           <Input

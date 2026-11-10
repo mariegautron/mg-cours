@@ -35,6 +35,7 @@ export function QuizRunner({
   initialAnswers,
   dryRun = false,
   exitHref,
+  timed = true,
 }: {
   token: string;
   title: string;
@@ -46,6 +47,8 @@ export function QuizRunner({
   /** Essai à blanc : rien n'est envoyé ni enregistré. */
   dryRun?: boolean;
   exitHref?: string;
+  /** Sans chrono : pas de décompte affiché, seulement « À rendre avant … » (rendu auto à la fermeture). */
+  timed?: boolean;
 }) {
   const [dryDone, setDryDone] = useState(false);
   const router = useRouter();
@@ -309,7 +312,16 @@ export function QuizRunner({
       <header className="bg-background sticky top-0 z-10 space-y-2 border-b py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="font-heading text-xl font-bold">QCM · {title}</h1>
-          {remaining !== null ? (
+          {remaining !== null && !timed && deadlineAt ? (
+            <p className="border-sky/45 bg-sky/12 text-sky rounded-full border px-3 py-1 text-sm font-bold">
+              À rendre avant{" "}
+              {new Date(deadlineAt).toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: "Europe/Paris",
+              })}
+            </p>
+          ) : remaining !== null ? (
             <p
               role="timer"
               className="border-sky/45 bg-sky/12 text-sky rounded-full border px-3 py-1 text-sm font-bold"

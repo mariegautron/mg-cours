@@ -103,6 +103,8 @@ export default async function QuizPage({ params }: PageProps<"/q/[token]">) {
                 serverNow={String(state.server_now)}
                 questions={state.questions as never}
                 initialAnswers={(state.answers ?? {}) as never}
+                // QCM sans chrono : « À rendre avant … » (sans l'info, décompte comme avant).
+                timed={state.timed !== false}
               />
             );
           case "submitted":

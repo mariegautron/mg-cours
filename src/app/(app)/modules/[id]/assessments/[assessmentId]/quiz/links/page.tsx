@@ -354,6 +354,7 @@ export default async function QuizLinksPage({
                           assessmentId={assessmentId}
                           attempt={a}
                           quizClosed={closed}
+                          timed={quiz.duration_minutes !== null}
                         />
                       </td>
                     </tr>
