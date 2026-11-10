@@ -12,7 +12,7 @@ export interface ReadinessInput {
 }
 
 export interface ReadinessItem {
-  key: "outline" | "resources" | "groups" | "photos";
+  key: "outline" | "resources" | "groups" | "students";
   ok: boolean;
   title: string;
   detail?: string;
@@ -94,25 +94,16 @@ export function sessionReadiness(i: ReadinessInput): Readiness {
         },
   );
 
-  const { total, withPhoto } = i.students;
-  if (total === 0) {
+  // Pas de point « photos » : Marie n'utilise pas de trombinoscope (décision d'Arnaud, 10 nov.).
+  // Seule une liste vide est signalée.
+  if (i.students.total === 0) {
     items.push({
-      key: "photos",
+      key: "students",
       ok: false,
       title: "Aucun·e étudiant·e dans les groupes",
-      detail: "Le trombinoscope et les notes ont besoin d’une liste.",
+      detail: "Les notes et les observations ont besoin d’une liste.",
       action: { label: "Voir les étudiant·es", href: "/students" },
     });
-  } else if (withPhoto < total) {
-    items.push({
-      key: "photos",
-      ok: false,
-      title: `${plural(total - withPhoto, "photo")} manquante${total - withPhoto > 1 ? "s" : ""} sur ${total}`,
-      detail: "Le trombinoscope aide à retrouver les prénoms.",
-      action: { label: "Importer le trombinoscope", href: "/students/photos" },
-    });
-  } else {
-    items.push({ key: "photos", ok: true, title: "Trombinoscope prêt" });
   }
 
   const readyCount = items.filter((x) => x.ok).length;

@@ -43,12 +43,13 @@ describe("sessionReadiness", () => {
     expect(x.action?.href).toBe("/modules/m1/groups/new");
     expect(item({ ...ready, groupCount: 1 }, "groups").title).toBe("1 groupe constitué");
   });
-  it("trombinoscope : personne, photos manquantes, complet", () => {
-    expect(item({ ...ready, students: { total: 0, withPhoto: 0 } }, "photos").ok).toBe(false);
-    const x = item({ ...ready, students: { total: 15, withPhoto: 12 } }, "photos");
-    expect(x.title).toBe("3 photos manquantes sur 15");
-    expect(x.action?.href).toBe("/students/photos");
-    expect(item(ready, "photos").ok).toBe(true);
+  it("pas de point photos ; une liste vide est signalée", () => {
+    expect(item({ ...ready, students: { total: 0, withPhoto: 0 } }, "students").ok).toBe(false);
+    expect(
+      sessionReadiness({ ...ready, students: { total: 15, withPhoto: 0 } }).items.some(
+        (x) => x.key === "students",
+      ),
+    ).toBe(false);
   });
   it("compte les points prêts", () => {
     const r = sessionReadiness({ ...ready, prepStatus: "draft", groupCount: 0 });
