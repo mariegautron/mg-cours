@@ -89,7 +89,7 @@ export function describeGroupPlan(plan: GroupImportPlan): string {
     );
   }
   const total = plan.memberships.length;
-  return `${parts.join(", ")} ; ${total} appartenance${total > 1 ? "s" : ""}.`;
+  return `${parts.join(", ")} ; ${total} personne${total > 1 ? "s" : ""} placée${total > 1 ? "s" : ""} dans un groupe.`;
 }
 
 export interface SearchableStudent {

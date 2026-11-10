@@ -66,7 +66,11 @@ export function StudentsImportForm({
             ? ` ${confirmState.enrolled} étudiant·e${confirmState.enrolled > 1 ? "s" : ""} déjà en base inscrit·e${confirmState.enrolled > 1 ? "s" : ""} à ${schoolYearLabel(confirmState.year ?? currentSchoolYear())}.`
             : ""}
           {confirmState.moduleName
-            ? ` ${confirmState.memberships ?? 0} appartenance${(confirmState.memberships ?? 0) > 1 ? "s" : ""} aux groupes de « ${confirmState.moduleName} »${confirmState.groupsCreated ? ` (${confirmState.groupsCreated} groupe${confirmState.groupsCreated > 1 ? "s" : ""} créé${confirmState.groupsCreated > 1 ? "s" : ""})` : ""}.`
+            ? ` Tout le monde est inscrit·e à « ${confirmState.moduleName} »${
+                confirmState.memberships
+                  ? ` : ${confirmState.memberships} placé·e${confirmState.memberships > 1 ? "s" : ""} dans un groupe${confirmState.groupsCreated ? ` (${confirmState.groupsCreated} groupe${confirmState.groupsCreated > 1 ? "s" : ""} créé${confirmState.groupsCreated > 1 ? "s" : ""})` : ""}`
+                  : " : les groupes se font ensuite"
+              }.`
             : ""}
         </p>
         {confirmState.moduleId ? (

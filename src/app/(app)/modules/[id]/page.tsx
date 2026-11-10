@@ -1,6 +1,7 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
+import { loadRoster } from "@/lib/students/enrollment";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, Presentation } from "lucide-react";
@@ -162,6 +163,7 @@ export default async function ModulePage({
     shared,
     appreciations,
     makeups: { pending: makeupsPending, total: makeupRows.length },
+    roster: await loadRoster(id),
   });
 
   // Fiches « à reporter » d'une clôture sans séance suivante : à signaler jusqu'à ce qu'elles aient une place.

@@ -5,6 +5,7 @@ import { PresentShell } from "@/components/present/present-shell";
 import { getModule } from "@/lib/modules/queries";
 import { projectedNames } from "@/lib/students/groups";
 import { listModuleGroups } from "@/lib/students/queries";
+import { leftStudentIds } from "@/lib/students/enrollment";
 
 export const metadata: Metadata = { title: "Les groupes — présentation" };
 
@@ -15,7 +16,16 @@ export default async function PresentGroupsPage({
 }: PageProps<"/present/modules/[id]/groups">) {
   const { id } = await params;
   const inWindow = (await searchParams).fenetre === "1";
-  const [mod, groups] = await Promise.all([getModule(id), listModuleGroups(id)]);
+  const [mod, allGroups, left] = await Promise.all([
+    getModule(id),
+    listModuleGroups(id),
+    leftStudentIds(id),
+  ]);
+  // Une personne partie du module n'est plus projetée dans son groupe.
+  const groups = allGroups.map((g) => ({
+    ...g,
+    members: g.members.filter((m) => !left.has(m.id)),
+  }));
   if (!mod) notFound();
   const names = projectedNames([
     ...new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m])).values(),

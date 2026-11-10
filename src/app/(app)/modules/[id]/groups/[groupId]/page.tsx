@@ -65,6 +65,7 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
         members={group.members}
         candidates={students}
         moduleStudentIds={moduleStudentIds}
+        leftIds={enrolled.rows.filter((e) => e.leftAt).map((e) => e.studentId)}
       />
 
       <section aria-labelledby="group-notes" className="bg-card space-y-2 rounded-xl border p-5">

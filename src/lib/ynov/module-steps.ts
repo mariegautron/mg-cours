@@ -9,6 +9,7 @@ import type { CoverageSummary } from "@/lib/modules/matching";
 
 export type StepState = "done" | "todo" | "in_progress" | "waiting";
 export type StepKey =
+  | "class"
   | "fiche"
   | "matching"
   | "sessions"
@@ -53,6 +54,8 @@ export interface ModuleStepsContext {
   invoice: "draft" | "ready" | "sent" | "paid" | null;
   /** L'espace étudiant·es est publié (lien de la classe actif). */
   shared?: boolean;
+  /** « Ta classe » : inscrit·es (non parti·es) et groupes du module. */
+  roster?: { students: number; groups: number };
   /** Aucun blocage de processus ni donnée de facturation manquante. */
   billingReady: boolean;
 }
@@ -223,6 +226,26 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       action: { label: "Publier l’espace étudiant·es", href: `${base}/frise` },
       badge: "partager l’espace aux étudiant·es",
     },
+    // « Ta classe » : la liste importée et les groupes faits, avant de faire cours.
+    ...(ctx.roster
+      ? [
+          {
+            key: "class" as const,
+            title: "Ta classe",
+            state: inProgress(
+              ctx.roster.students > 0 && ctx.roster.groups > 0,
+              ctx.roster.students > 0,
+            ),
+            summary: `${plural(ctx.roster.students, "inscrit·e", "inscrit·es")} · ${plural(ctx.roster.groups, "groupe")}`,
+            action:
+              ctx.roster.students === 0
+                ? { label: "Importer la liste", href: `${base}/groups/import` }
+                : { label: "Faire les groupes", href: `${base}/groups/wizard` },
+            badge:
+              ctx.roster.students === 0 ? "importer la liste de la classe" : "faire les groupes",
+          },
+        ]
+      : []),
     {
       key: "teach",
       title: "Faire cours",
@@ -253,9 +276,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
               ctx.makeups.pending < ctx.makeups.total,
             ),
             summary:
-              ctx.makeups.pending === 0
-                ? "rattrapages faits"
-                : `${ctx.makeups.pending} à faire`,
+              ctx.makeups.pending === 0 ? "rattrapages faits" : `${ctx.makeups.pending} à faire`,
             action: { label: "Voir les rattrapages", href: `${base}/rattrapages` },
             badge: `rattraper les absences excusées (${ctx.makeups.pending})`,
           },

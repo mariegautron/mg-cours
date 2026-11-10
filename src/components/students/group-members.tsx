@@ -24,6 +24,7 @@ export function GroupMembers({
   members,
   candidates,
   moduleStudentIds = [],
+  leftIds = [],
 }: {
   moduleId: string;
   groupId: string;
@@ -31,6 +32,8 @@ export function GroupMembers({
   candidates: Tables<"student">[];
   /** Personnes déjà dans un groupe du module : proposées d'abord. */
   moduleStudentIds?: string[];
+  /** Parti·es du module : grisé·es, « a quitté le module ». */
+  leftIds?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   // Bouton en cours : lui seul affiche l'attente ; les autres sont désactivés le temps de l'envoi
@@ -82,7 +85,9 @@ export function GroupMembers({
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <h3 className="mb-2 text-sm font-medium">Membres ({members.length})</h3>
+        <h3 className="mb-2 text-sm font-medium">
+          Membres ({members.filter((m) => !leftIds.includes(m.id)).length})
+        </h3>
         {members.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucun membre pour l’instant.</p>
         ) : (
@@ -92,8 +97,14 @@ export function GroupMembers({
                 key={m.id}
                 className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm"
               >
-                <Link href={`/students/${m.id}`} className="underline underline-offset-2">
+                <Link
+                  href={`/students/${m.id}`}
+                  className={`underline underline-offset-2 ${leftIds.includes(m.id) ? "opacity-60" : ""}`}
+                >
                   {m.first_name} {m.last_name}
+                  {leftIds.includes(m.id) ? (
+                    <span className="text-muted-foreground"> · a quitté le module</span>
+                  ) : null}
                 </Link>
                 <PendingButton
                   type="button"

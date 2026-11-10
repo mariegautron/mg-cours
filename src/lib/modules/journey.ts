@@ -32,6 +32,7 @@ export interface JourneyData {
   shared?: boolean;
   appreciations?: { written: number; total: number };
   makeups?: { pending: number; total: number };
+  roster?: { students: number; groups: number };
 }
 
 /** Contexte de `moduleSteps` à partir des données chargées de la fiche module. */
@@ -70,6 +71,7 @@ export function buildJourney(d: JourneyData): ModuleSteps {
       total: REQUIRED_ADMIN_DOCS.length,
     },
     shared: d.shared,
+    roster: d.roster,
     appreciations: d.appreciations,
     makeups: d.makeups,
     finish: {

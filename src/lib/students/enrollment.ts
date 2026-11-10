@@ -56,3 +56,16 @@ export async function enroll(
     { onConflict: "module_id,student_id", ignoreDuplicates: true },
   );
 }
+
+/** « Ta classe » : inscrit·es (non parti·es) et nombre de groupes du module. */
+export async function loadRoster(moduleId: string): Promise<{ students: number; groups: number }> {
+  const supabase = await createClient();
+  const [{ rows }, { count }] = await Promise.all([
+    listEnrollments(moduleId),
+    supabase
+      .from("student_group")
+      .select("id", { count: "exact", head: true })
+      .eq("module_id", moduleId),
+  ]);
+  return { students: rows.filter((r) => !r.leftAt).length, groups: count ?? 0 };
+}

@@ -45,7 +45,7 @@ describe("planGroupImport", () => {
       { name: "TP2", isNew: true, count: 1 },
     ]);
     expect(describeGroupPlan(plan)).toBe(
-      "1 groupe à créer (TP2), 1 existant (TP1) ; 3 appartenances.",
+      "1 groupe à créer (TP2), 1 existant (TP1) ; 3 personnes placées dans un groupe.",
     );
   });
 
