@@ -54,8 +54,6 @@ const TABLES = [
   "predefined_comment",
   "appreciation",
   "appreciation_phrase",
-  "checkpoint",
-  "checkpoint_result",
   "submission_item",
   "project_submission",
   "project_surprise",
