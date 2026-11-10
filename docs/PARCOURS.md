@@ -16,7 +16,7 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 | P5  | Faire cours (séance)                        | Marie    | 🔧 refactoré, reste le test en conditions réelles |
 | P6  | ~~Piloter le projet fil rouge~~ → fusionné dans P7 | —  | — |
 | P7  | Préparer les évaluations (fil rouge, individuelle, préparation du QCM, oral) | Marie | 🔧 retest en cours (9 nov.) |
-| P8  | Corriger et noter                           | Marie    | 🔧 retest en cours (9 nov.) |
+| P8  | Corriger et noter                           | Marie    | 🔧 doublons lot 1 à tester (10 nov.) |
 | P9  | QCM en ligne : passation et résultats (la préparation est dans P7) | Marie + étudiant·es | ⬜ |
 | P10 | Espace et liens étudiant·es                 | Étudiant·es | 🔧 retest en cours (9 nov.) |
 | P11 | ~~Progression pédagogique et envoi à l'école~~ → fusionné dans P3 | — | — |
@@ -150,7 +150,7 @@ directes : les liens reçus par les étudiant·es.
 
 - **But** : saisir les notes, comparer les copies, corriger l'oral, rédiger les retours. Les
   appréciations de fin de module et les observations d'étudiant·es sont dans P14.
-- **Écrans** : `assessments/[assessmentId]` (saisie), `/correct`, `/compare`, `/results`, `/oral`,
+- **Écrans** : `assessments/[assessmentId]` (saisie), `/correct` (`?vue=critere` : par critère), `/results`, `/oral`,
   `/phrases`, `/assessments/comments`, `modules/[id]/appreciations(/[studentId])`, `rattrapages`.
 - **e2e** : `grading-session`, `grade-compact`, `grade-compare`, `grade-levels`, `grade-similar`,
   `grade-feedback`, `oral`, `phrases`, `appreciations`, `assessment-bonus`, `makeup`.
@@ -173,6 +173,7 @@ directes : les liens reçus par les étudiant·es.
   - 9 nov. : rattrapages v3 : retour à « Présent·e » sans note, rattrapages datés dans « Cette semaine », champ date nommé, « Note remplacée : x/y » (`fb828d1`).
   - 9 nov. : rattrapages : inscription retirée quand on n'est plus excusé·e, retour à présent·e enregistré seul, « ajoutée(s) », rattrapages datés dans « où chacune tombe » (`f94e510`). Reste : lots 4 et 6 (migrations).
   - 9 nov. : rattrapages lot 6, règles de notation par école : coefficients, notes exigées par palier d'heures et bonus de certification réglables dans « Règles par école » (YNOV par défaut, aucune moyenne ne change), « Reprendre les règles de Nantes Ynov Campus », étape « Règles de notation » après « Nouvelle école », coefficient affiché = celui du calcul, « Absence excusée à un travail de groupe », avertissement « École non choisie » sur la fiche du module, rattrapage individuel d'un travail de groupe quand l'école a cette règle (même coefficient que la note de groupe), réglages lisibles à 125 %. Migration `20261126000000_school_grading_rules.sql` (`7317f78`).
+  - 10 nov. : doublons, lot 1. **D1** : la présence vit sur la copie seulement ; « Faire passer l'oral » et « Corriger un rendu » la lisent et l'écrivent sur la copie, tout de suite (plus de présence propre à l'espace, plus d'écrasement entre l'oral et la correction de groupe). « À réécrire » ne dépend plus que des lettres. La règle « Tout le groupe reçoit la note, absent·es compris » disparaît : une seule règle, celle de la copie et des résultats (excusé·e garde la note du groupe, non prévenu·e 0). « Effacer la note écrite » garde les absences. **D2** : « Comparer un critère » (`/compare`) retiré, l'adresse mène à la vue par critère de la correction (`/correct?vue=critere`) ; le bouton de la vue d'ensemble devient « Corriger par critère ». **D6** : bloc « Rendus — … » retiré de la page d'une évaluation, seul reste « Rendus déposés ». Migration `20261203000000_doublons_lot1.sql` (copies sans note pour les présences posées avant toute note, anciens rendus avec lien recopiés) et contrôle `docs/doublons/lot1-controle.sql`, à lancer par Arnaud. À retester : oral de groupe (absence posée dans l'oral puis vue en correction, et inversement), rendu, ancien lien `/compare`.
   - Note : « Résultats publiés pour une copie incomplète » vient d'un lien de résultats actif (« Publier » ou « Nouveau lien » sur la page Résultats).
 
 ## P9 · QCM en ligne : passation et résultats

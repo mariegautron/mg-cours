@@ -31,7 +31,6 @@ import { ExamKindForm } from "@/components/assessments/exam-kind-form";
 import { DownloadButton } from "@/components/download-button";
 import { correctionOverview } from "@/lib/assessments/overview";
 import { DeleteAssessmentButton } from "@/components/assessments/delete-buttons";
-import { Submissions } from "@/components/assessments/submissions";
 import { getQuizByAssessment, listAttempts } from "@/lib/quiz/queries";
 import { Markdown } from "@/components/markdown";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
@@ -70,31 +69,11 @@ import { isOralAssessment } from "@/lib/assessments/oral";
 import { loadMakeupGroups, makeupHrefs } from "@/lib/assessments/makeup-queries";
 import { OralTimingForm } from "@/components/assessments/oral-timing-form";
 import { canPresent, PREP_STATUS_LABELS, subjectSections } from "@/lib/assessments/subject";
-import { submissionSummary, type SubmissionRow } from "@/lib/projects/submission";
 import { createClient } from "@/lib/supabase/server";
 import { getModuleCourses, getModuleExpectations } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { listModuleObservations } from "@/lib/notebook/queries";
-
-type AssessmentGroups = NonNullable<Awaited<ReturnType<typeof getAssessment>>>["groups"];
-
-async function loadSubmissionRows(assessmentId: string, groups: AssessmentGroups) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("project_submission")
-    .select("student_group_id, received_on, url")
-    .eq("assessment_id", assessmentId);
-  return groups.map((g): SubmissionRow => {
-    const r = data?.find((x) => x.student_group_id === g.id);
-    return {
-      groupId: g.id,
-      groupName: g.name,
-      receivedOn: r?.received_on ?? null,
-      url: r?.url ?? null,
-    };
-  });
-}
 
 async function loadMakeupInfo(
   assessment: NonNullable<Awaited<ReturnType<typeof getAssessment>>>,
@@ -173,12 +152,10 @@ export default async function AssessmentPage({
     ),
   );
   const hasGrades = grades.some((g) => g.value !== null);
-  // Les six lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
-  const [overrideRows, themes, submissionRows, makeup, submissionData] = await Promise.all([
+  // Les lectures suivantes ne dépendent que de l'évaluation et des notes : en parallèle.
+  const [overrideRows, themes, makeup, submissionData] = await Promise.all([
     listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),
     themeTitleByGroup(assessment.project_id),
-    // Suivi des rendus (US-93) : seulement pour les évaluations d'un projet.
-    assessment.project_id ? loadSubmissionRows(assessmentId, assessment.groups) : [],
     // Rattrapage (US-96) : sur une évaluation individuelle, pour les absent·es excusé·es ; sur
     // un rattrapage, rappel de l'originale.
     loadMakeupInfo(assessment, assessmentId),
@@ -1218,15 +1195,6 @@ export default async function AssessmentPage({
         ) : null}
       </section>
 
-      {assessment.project_id && submissionRows.length > 0 ? (
-        <section aria-labelledby="submissions" className="space-y-3">
-          <h2 id="submissions" className="text-lg font-medium">
-            Rendus — {submissionSummary(submissionRows)}
-          </h2>
-          <Submissions moduleId={id} assessmentId={assessmentId} rows={submissionRows} />
-        </section>
-      ) : null}
-
       {submissionData.available && targets.length > 0 && examKindOf(assessment) !== "qcm" ? (
         <section aria-labelledby="rendus" className="space-y-3">
           <h2 id="rendus" className="text-lg font-medium">
@@ -1372,7 +1340,7 @@ export default async function AssessmentPage({
             }
             compareHref={
               (assessment.grading_grid?.criteria.length ?? 0) > 0
-                ? `/modules/${id}/assessments/${assessmentId}/compare`
+                ? `/modules/${id}/assessments/${assessmentId}/correct?vue=critere`
                 : null
             }
           />

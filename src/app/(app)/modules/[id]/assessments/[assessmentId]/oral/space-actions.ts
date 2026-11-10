@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { isAttendance, individualValueFor, type Attendance } from "@/lib/assessments/attendance";
 import {
-  effectiveAttendance,
+  decideFieldSave,
   isLetter,
   memberValues,
   missingForWrite,
@@ -12,7 +12,14 @@ import {
   scoresFromLetters,
   type WrittenSnapshot,
 } from "@/lib/assessments/oral-space";
-import { loadOralContext, seedFor } from "@/lib/assessments/oral-space-server";
+import {
+  copyAttendance,
+  loadOralContext,
+  seedFor,
+  type OralContext,
+} from "@/lib/assessments/oral-space-server";
+import { unenrollFromMakeups } from "@/lib/assessments/makeup-queries";
+import { computeTotals, gradingProgress } from "@/lib/assessments/scoring";
 import { failure, NOT_FOUND } from "@/lib/messages";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
@@ -42,7 +49,6 @@ function readField(space: Space, field: string): string {
   if (name === "note") return str(obj(space.criterion_notes)[key]);
   if (name === "pad") return space.pad;
   if (name === "person") return str(obj(space.person_notes)[key]);
-  if (name === "presence") return str(obj(space.attendance)[key]);
   if (name === "rule") return space.absence_rule;
   if (name === "text") return str(obj(obj(space.texts)[key]).text);
   if (name === "pcomment") return str(obj(obj(space.person_comments)[key]).text);
@@ -67,10 +73,6 @@ function patchFor(space: Space, field: string, value: string): Partial<Space> | 
     return { criterion_notes: withKey(space.criterion_notes, value.slice(0, 5000)) };
   if (name === "pad") return { pad: value.slice(0, 20000) };
   if (name === "person") return { person_notes: withKey(space.person_notes, value.slice(0, 5000)) };
-  if (name === "presence") {
-    if (value !== "" && !isAttendance(value)) return { error: "Présence inconnue." };
-    return { attendance: withKey(space.attendance, value) };
-  }
   if (name === "text" || name === "pcomment") {
     // Texte à valider : modifié à la main, il repasse « à valider » (un texte validé est comparé à son empreinte).
     const column = name === "text" ? "texts" : "person_comments";
@@ -112,7 +114,6 @@ async function ensureSpace(
         subject_id: subjectId,
         letters: seed.letters,
         criterion_notes: seed.criterion_notes,
-        attendance: seed.attendance,
         from_existing: seed.from_existing,
         absence_rule: seed.absence_rule,
       },
@@ -145,6 +146,16 @@ export async function saveOralField(
   force = false,
 ): Promise<SaveFieldResult> {
   const supabase = await createClient();
+  if (field.startsWith("presence:"))
+    return saveCopyPresence(
+      moduleId,
+      assessmentId,
+      subjectId,
+      field.slice("presence:".length),
+      value,
+      baseVersion,
+      force,
+    );
   return saveVersionedField<Space>({
     supabase,
     table: "oral_space",
@@ -156,6 +167,144 @@ export async function saveOralField(
     readField,
     patchFor: (row, f, v) => patchFor(row, f, v),
   });
+}
+
+/**
+ * Présence d'une personne, écrite directement sur la copie (seule source) : `grade.attendance`
+ * pour une note individuelle, `group_grade_member` pour une note de groupe. L'espace ne garde que
+ * la version du champ (deux onglets ouverts : rien n'est écrasé en silence). Sans copie, une copie
+ * vide (sans note) est créée pour porter la présence.
+ */
+async function saveCopyPresence(
+  moduleId: string,
+  assessmentId: string,
+  subjectId: string,
+  studentId: string,
+  value: string,
+  baseVersion: number,
+  force: boolean,
+): Promise<SaveFieldResult> {
+  if (!isAttendance(value)) return { ok: false, error: "Présence inconnue." };
+  const supabase = await createClient();
+  const found = await ensureSpace(supabase, assessmentId, subjectId);
+  if (!found) return { ok: false, error: "Introuvable." };
+  const { space, ctx } = found;
+  if (!ctx.members.some((m) => m.id === studentId))
+    return { ok: false, error: "Personne inconnue." };
+  const field = `presence:${studentId}`;
+  const versions = obj(space.field_versions);
+  const stored = typeof versions[field] === "number" ? (versions[field] as number) : 0;
+  const outcome = decideFieldSave(
+    { value: copyAttendance(ctx)[studentId] ?? "", version: stored },
+    { baseVersion: force ? stored : baseVersion, value },
+  );
+  if (outcome.kind === "conflict")
+    return { ok: false, conflict: true, version: outcome.version, theirs: outcome.theirs };
+  if (outcome.kind === "same") return { ok: true, version: outcome.version };
+  const written = await writeCopyPresence(supabase, ctx, subjectId, studentId, value);
+  if (written) return { ok: false, error: written };
+  await supabase
+    .from("oral_space")
+    .update({ field_versions: { ...versions, [field]: outcome.version } })
+    .eq("id", space.id);
+  revalidatePath(`/modules/${moduleId}/assessments/${assessmentId}`);
+  revalidatePath(`/modules/${moduleId}`);
+  return { ok: true, version: outcome.version };
+}
+
+/** Écrit une présence sur la copie. Renvoie un message d'erreur, ou `null`. */
+async function writeCopyPresence(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ctx: OralContext,
+  subjectId: string,
+  studentId: string,
+  attendance: Attendance,
+): Promise<string | null> {
+  const fail = failure("enregistrer", { kept: true });
+  const { assessment, grade } = ctx;
+  if (!assessment.is_group_grade) {
+    // Note individuelle : la note suit la présence (non prévenu·e 0, excusé·e sans note, présent·e
+    // la note de la grille si elle est complète), comme dans la correction.
+    const criteria = ctx.criteria.map((c) => ({
+      id: c.id,
+      weight: c.weight,
+      axisId: c.axisId,
+      isBonus: c.isBonus,
+    }));
+    const scores = Object.fromEntries(
+      Object.entries((grade?.scores ?? {}) as Record<string, unknown>).filter(
+        (e): e is [string, number] => typeof e[1] === "number",
+      ),
+    );
+    const auto = assessment.auto_validated_criterion_ids;
+    const full =
+      criteria.length > 0 && gradingProgress(criteria, scores, auto).state === "complete"
+        ? computeTotals(criteria, scores, {
+            autoValidatedIds: auto,
+            maxScore: assessment.max_score,
+          }).value
+        : criteria.length > 0
+          ? null
+          : (grade?.value ?? null);
+    const value = individualValueFor(attendance, full);
+    const res = grade
+      ? await supabase.from("grade").update({ attendance, value }).eq("id", grade.id)
+      : await supabase.from("grade").insert({
+          assessment_id: assessment.id,
+          student_id: studentId,
+          student_group_id: null,
+          is_group_grade: false,
+          value,
+          attendance,
+          scores: {},
+        });
+    if (res.error) return fail;
+    if (grade?.attendance === "absent_excused" && attendance !== "absent_excused")
+      await unenrollFromMakeups(supabase, assessment.id, studentId);
+    return null;
+  }
+  // Note de groupe : une ligne par membre qui n'est pas « présent·e » (le mot pour la personne est gardé).
+  let gradeId = grade?.id ?? null;
+  if (!gradeId) {
+    const { data, error } = await supabase
+      .from("grade")
+      .insert({
+        assessment_id: assessment.id,
+        student_id: null,
+        student_group_id: subjectId,
+        is_group_grade: true,
+        value: null,
+        attendance: "present",
+        scores: {},
+      })
+      .select("id")
+      .single();
+    if (error || !data) return fail;
+    gradeId = data.id;
+  }
+  const existing = ctx.overrides.find((o) => o.student_id === studentId);
+  if (attendance === "present" && !existing?.justification) {
+    const { error } = await supabase
+      .from("group_grade_member")
+      .delete()
+      .eq("grade_id", gradeId)
+      .eq("student_id", studentId);
+    return error ? fail : null;
+  }
+  const { error } = existing
+    ? await supabase
+        .from("group_grade_member")
+        .update({ attendance })
+        .eq("grade_id", gradeId)
+        .eq("student_id", studentId)
+    : await supabase.from("group_grade_member").insert({
+        grade_id: gradeId,
+        student_id: studentId,
+        attendance,
+        individual_factor: 1,
+        justification: null,
+      });
+  return error ? fail : null;
 }
 
 export interface WriteState {
@@ -184,20 +333,8 @@ export async function writeOralNote(
       (e): e is [string, string] => typeof e[1] === "string",
     ),
   );
-  // Mêmes présences que l'écran de l'oral (« présent » par défaut pour un oral repris).
-  const attendance = Object.fromEntries(
-    Object.entries(
-      effectiveAttendance(
-        Object.fromEntries(
-          Object.entries(obj(space.attendance)).filter(
-            (e): e is [string, string] => typeof e[1] === "string",
-          ),
-        ),
-        ctx.members.map((m) => m.id),
-        !!space.from_existing || !!space.written || (!!ctx.grade && ctx.grade.value !== null),
-      ),
-    ).filter((e): e is [string, Attendance] => isAttendance(e[1])),
-  );
+  // Présences : celles de la copie, seule source (posées dans l'espace ou en correction).
+  const attendance: Record<string, Attendance> = copyAttendance(ctx);
   const auto = ctx.assessment.auto_validated_criterion_ids;
   const missing = missingForWrite(ctx.criteria, letters, ctx.members, attendance, auto);
   if (missing.length > 0) return { error: missing.join(" ") };
@@ -209,7 +346,8 @@ export async function writeOralNote(
 
   const result = recap(ctx.criteria, letters, { autoValidatedIds: auto, maxScore: ctx.maxScore });
   const schoolRule = await getAbsenceRuleForModule(ctx.assessment.module_id);
-  const rule = space.absence_rule === "legacy" ? "legacy" : "group_all";
+  // Une seule règle, celle de la copie et des résultats (règle de l'école).
+  const rule = "legacy" as const;
   const perStudent = ctx.assessment.is_group_grade
     ? memberValues(result.total, result.maxScore, ctx.members, attendance, rule, schoolRule)
     : Object.fromEntries(
@@ -271,7 +409,6 @@ export async function writeOralNote(
 
   // Photo de l'état précédent : en cas d'échec, on le remet tel quel.
   const previousGrade = ctx.grade;
-  const previousOverrides = ctx.overrides;
   const restore = async () => {
     if (previousGrade) {
       await supabase
@@ -282,17 +419,6 @@ export async function writeOralNote(
           attendance: previousGrade.attendance,
         })
         .eq("id", previousGrade.id);
-      await supabase.from("group_grade_member").delete().eq("grade_id", previousGrade.id);
-      if (previousOverrides.length > 0)
-        await supabase.from("group_grade_member").insert(
-          previousOverrides.map((o) => ({
-            grade_id: o.grade_id,
-            student_id: o.student_id,
-            attendance: o.attendance,
-            individual_factor: o.individual_factor,
-            justification: o.justification,
-          })),
-        );
     }
   };
   const fail = async () => {
@@ -304,33 +430,8 @@ export async function writeOralNote(
     ? await supabase.from("grade").update(row).eq("id", previousGrade.id).select("id").single()
     : await supabase.from("grade").insert(row).select("id").single();
   if (saved.error || !saved.data) return await fail();
-  const gradeId = saved.data.id;
-
-  if (!individual) {
-    const { error: clearError } = await supabase
-      .from("group_grade_member")
-      .delete()
-      .eq("grade_id", gradeId);
-    if (clearError) return await fail();
-    // Règle d'origine : les absences du brouillon redeviennent des réglages individuels (le mot
-    // pour la personne est conservé). Règle « tout le groupe » : aucun réglage, même note pour tous.
-    if (rule === "legacy") {
-      const justification = new Map(previousOverrides.map((o) => [o.student_id, o]));
-      const lines = ctx.members
-        .filter((m) => (attendance[m.id] ?? "present") !== "present")
-        .map((m) => ({
-          grade_id: gradeId,
-          student_id: m.id,
-          attendance: attendance[m.id] as Attendance,
-          individual_factor: justification.get(m.id)?.individual_factor ?? 1,
-          justification: justification.get(m.id)?.justification ?? null,
-        }));
-      if (lines.length > 0) {
-        const { error: insertError } = await supabase.from("group_grade_member").insert(lines);
-        if (insertError) return await fail();
-      }
-    }
-  }
+  // Les présences des membres d'un groupe sont déjà sur la copie (`group_grade_member`) : rien à
+  // réécrire ici, la note de chaque personne en découle.
 
   const snapshot: WrittenSnapshot = {
     letters,
@@ -369,10 +470,9 @@ export async function discardOralDraft(
   const back = written
     ? {
         letters: written.letters,
-        attendance: written.attendance,
         absence_rule: written.absence_rule,
       }
-    : { letters: seed.letters, attendance: seed.attendance, absence_rule: seed.absence_rule };
+    : { letters: seed.letters, absence_rule: seed.absence_rule };
   const { error } = await supabase
     .from("oral_space")
     .update({
@@ -591,7 +691,24 @@ export async function clearWrittenNote(
     .eq("assessment_id", assessmentId)
     .eq(ctx.assessment.is_group_grade ? "student_group_id" : "student_id", subjectId);
   const ids = (rows ?? []).map((r) => r.id);
-  if (ids.length) {
+  // Une absence posée reste sur la copie (seule source de la présence) : la copie est vidée de sa
+  // note mais gardée. Sans absence, elle est retirée comme avant.
+  const att = copyAttendance(ctx);
+  const keepPresence = Object.values(att).some((a) => a !== "present");
+  if (ids.length && keepPresence) {
+    const { error } = await supabase
+      .from("grade")
+      .update({
+        value: null,
+        scores: {},
+        criterion_comments: {},
+        strengths: null,
+        progress: null,
+        feedback: null,
+      })
+      .in("id", ids);
+    if (error) return { error: failure("effacer la note") };
+  } else if (ids.length) {
     await supabase.from("group_grade_member").delete().in("grade_id", ids);
     const { error } = await supabase.from("grade").delete().in("id", ids);
     if (error) return { error: failure("effacer la note") };

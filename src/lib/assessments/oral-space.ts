@@ -244,17 +244,16 @@ export function effectiveAttendance(
   return out;
 }
 
-/** « À réécrire » : une lettre ou une présence a changé depuis la photo. Rien n'est modifié seul. */
+/**
+ * « À réécrire » : une lettre a changé depuis la photo. Rien n'est modifié seul. La présence n'en
+ * fait plus partie : elle est écrite tout de suite sur la copie (seule source).
+ */
 export function needsRewrite(
   written: WrittenSnapshot | null,
   letters: Record<string, string>,
-  attendance: Record<string, string | undefined>,
 ): boolean {
   if (!written) return false;
-  const att = Object.fromEntries(
-    Object.entries(attendance).filter((e): e is [string, string] => !!e[1]),
-  );
-  return !sameMap(written.letters, letters) || !sameMap(written.attendance, att);
+  return !sameMap(written.letters, letters);
 }
 
 export function parseWritten(raw: unknown): WrittenSnapshot | null {

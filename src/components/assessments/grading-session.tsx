@@ -70,6 +70,7 @@ export function GradingSession({
   absenceRule,
   bonusScale = null,
   initialId,
+  initialView,
   overviewHref = "#overview",
 }: {
   sections: SessionSection[];
@@ -91,6 +92,8 @@ export function GradingSession({
   bonusScale?: ScaleBand[] | null;
   /** Copie ouverte au départ (page de correction plein écran). */
   initialId?: string;
+  /** Vue « par critère » à l’ouverture (`?vue=critere`). */
+  initialView?: "copy" | "criterion";
   /** Lien « Vue d'ensemble » de la copie. */
   overviewHref?: string;
 }) {
@@ -99,7 +102,7 @@ export function GradingSession({
   const ids = items.map((i) => i.id);
   const [status, setStatus] = useState<Record<string, CopyStatus>>({});
   const controls = useRef(new Map<string, CopyControls>());
-  const [view, setView] = useState<"copy" | "criterion">("copy");
+  const [view, setView] = useState<"copy" | "criterion">(initialView ?? "copy");
   // Une copie à la fois (maquette CorrCopie) : les autres restent montées (saisie, enregistrement
   // automatique et garde anti-perte continuent), seulement masquées.
   const [current, setCurrent] = useState(
@@ -260,11 +263,6 @@ export function GradingSession({
                 Vue : par critère
               </Button>
             </div>
-            {overviewHref.startsWith("/") ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={`${overviewHref}/compare`}>Comparer un critère (touches 1 à 4)</a>
-              </Button>
-            ) : null}
             {view === "criterion" ? (
               <div className="flex flex-wrap items-end gap-2">
                 <div className="space-y-1">

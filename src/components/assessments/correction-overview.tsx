@@ -304,10 +304,10 @@ export function CorrectionOverview({
               </p>
               <Button asChild variant="secondary" size="touch" className="w-full">
                 <Link href={compareHref}>
-                  Comparer un critère
+                  Corriger par critère
                   <span className="sr-only">
                     {" "}
-                    entre les {noun === "groupe" ? "groupes" : "étudiant·es"}
+                    pour tous les {noun === "groupe" ? "groupes" : "étudiant·es"}
                   </span>
                 </Link>
               </Button>

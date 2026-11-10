@@ -224,15 +224,11 @@ export async function buildSpaceInits({
           criterionNotes: row ? asObj(row.criterion_notes) : seed.criterion_notes,
           pad: row?.pad ?? "",
           personNotes: row ? asObj(row.person_notes) : {},
-          // Présence posée dans l'espace, sinon celle de la note existante (absence enregistrée en
-          // correction comprise) : jamais « À poser » pour une présence déjà connue.
-          attendance: { ...seed.attendance, ...(row ? asObj(row.attendance) : {}) },
+          // Présence lue sur la copie, seule source (posée ici, en correction ou ailleurs).
+          attendance: seed.attendance,
           versions,
-          absenceRule: row
-            ? row.absence_rule === "legacy"
-              ? "legacy"
-              : "group_all"
-            : seed.absence_rule,
+          // Une seule règle : celle de la copie (règle de l'école).
+          absenceRule: "legacy",
           fromExisting: row ? row.from_existing : seed.from_existing,
           written: parseWritten(row?.written),
           writtenAt: row?.written_at ?? null,

@@ -42,6 +42,7 @@ export function RenduReview({
   schoolRule,
   deadline,
   initialId,
+  initialView,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -54,13 +55,15 @@ export function RenduReview({
   /** Date limite du dépôt (ISO) : le retard est affiché, sans effet sur la note. */
   deadline: string | null;
   initialId?: string;
+  /** « Par critère » à l’ouverture (`?vue=critere`, ancienne page « Comparer un critère »). */
+  initialView?: "copy" | "criterion";
 }) {
   const start = Math.max(
     0,
     copies.findIndex((c) => c.id === initialId),
   );
   const [index, setIndex] = useState(start);
-  const [view, setView] = useState<"copy" | "criterion">("copy");
+  const [view, setView] = useState<"copy" | "criterion">(initialView ?? "copy");
   const [criterionId, setCriterionId] = useState(criteria.find((c) => !c.isBonus)?.id ?? "");
   // Lettres posées depuis « Par critère » (copie → critère → lettre / version), par-dessus le chargement.
   const [edits, setEdits] = useState<Record<string, { letter: string; version: number }>>({});

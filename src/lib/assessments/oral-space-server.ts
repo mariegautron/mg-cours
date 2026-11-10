@@ -3,7 +3,6 @@ import "server-only";
 import { isAttendance, type Attendance, type MemberOverride } from "@/lib/assessments/attendance";
 import { parseCriterionComments } from "@/lib/assessments/feedback";
 import {
-  effectiveAttendance,
   lettersFromScores,
   needsRewrite,
   parseWritten,
@@ -125,11 +124,34 @@ export interface SpaceSeed {
 }
 
 /**
- * État de départ d'un espace. Un oral déjà noté reprend ses lettres, ses commentaires et ses
- * présences tels quels et garde sa règle d'absence d'origine ; un oral neuf démarre vide.
+ * Présences de l'espace, lues sur la copie (seule source) : `grade.attendance` pour une note
+ * individuelle, `group_grade_member` pour une note de groupe (pas de ligne = présent·e). Sans
+ * copie, aucune présence n'est connue : elles sont « à poser ».
+ */
+export function copyAttendance(
+  ctx: Pick<OralContext, "assessment" | "members" | "grade" | "overrides">,
+): Record<string, Attendance> {
+  const out: Record<string, Attendance> = {};
+  if (!ctx.grade) return out;
+  if (ctx.assessment.is_group_grade) {
+    const byStudent = new Map(ctx.overrides.map((o) => [o.student_id, o.attendance]));
+    for (const m of ctx.members) {
+      const a = byStudent.get(m.id);
+      out[m.id] = isAttendance(a) ? a : "present";
+    }
+  } else if (ctx.members[0]) {
+    out[ctx.members[0].id] = isAttendance(ctx.grade.attendance) ? ctx.grade.attendance : "present";
+  }
+  return out;
+}
+
+/**
+ * État de départ d'un espace. Un oral déjà noté reprend ses lettres et ses commentaires. Les
+ * présences viennent toujours de la copie (une absence posée avant la note comprise).
  */
 export function seedFor(ctx: OralContext): SpaceSeed {
   const { grade } = ctx;
+  const attendance = copyAttendance(ctx);
   if (
     !grade ||
     (grade.value === null && Object.keys((grade.scores ?? {}) as object).length === 0)
@@ -137,17 +159,10 @@ export function seedFor(ctx: OralContext): SpaceSeed {
     return {
       letters: {},
       criterion_notes: {},
-      attendance: {},
+      attendance,
       from_existing: false,
-      absence_rule: "group_all",
+      absence_rule: "legacy",
     };
-  }
-  const attendance: Record<string, Attendance> = {};
-  if (ctx.assessment.is_group_grade) {
-    const byStudent = new Map(ctx.overrides.map((o) => [o.student_id, o.attendance]));
-    for (const m of ctx.members) attendance[m.id] = byStudent.get(m.id) ?? "present";
-  } else if (ctx.members[0]) {
-    attendance[ctx.members[0].id] = isAttendance(grade.attendance) ? grade.attendance : "present";
   }
   return {
     letters: lettersFromScores(ctx.criteria, grade.scores),
@@ -165,10 +180,11 @@ export function seedFor(ctx: OralContext): SpaceSeed {
 export type { MemberOverride };
 
 /**
- * Oraux dont la note écrite est « à réécrire » : une lettre ou une présence a changé depuis
- * l'écriture. Clés `<évaluation>:<groupe ou personne>`. Ces copies comptent comme « en cours »
- * (hors moyennes, appréciations et publication) tant qu'elles ne sont pas réécrites. Les oraux
- * jamais écrits par l'espace (notes d'avant) ne sont jamais concernés : leur note ne bouge pas.
+ * Oraux dont la note écrite est « à réécrire » : une lettre a changé depuis l'écriture. Clés
+ * `<évaluation>:<groupe ou personne>`. Ces copies comptent comme « en cours » (hors moyennes,
+ * appréciations et publication) tant qu'elles ne sont pas réécrites. La présence n'entre plus en
+ * compte : elle vit sur la copie, qui est donc toujours à jour. Les oraux jamais écrits par
+ * l'espace (notes d'avant) ne sont jamais concernés : leur note ne bouge pas.
  */
 export async function loadRewriteKeys(
   supabase: Supabase,
@@ -177,7 +193,7 @@ export async function loadRewriteKeys(
   if (assessmentIds.length === 0) return new Set();
   const { data, error } = await supabase
     .from("oral_space")
-    .select("assessment_id, subject_id, letters, attendance, written, from_existing")
+    .select("assessment_id, subject_id, letters, written")
     .in("assessment_id", assessmentIds as string[])
     .not("written", "is", null);
   if (error || !data) return new Set();
@@ -193,12 +209,7 @@ export async function loadRewriteKeys(
   for (const row of data) {
     const written = parseWritten(row.written);
     if (!written) continue;
-    // Mêmes présences que l'écran de l'oral : la photo donne la liste des personnes.
-    const stored = asStrings(row.attendance);
-    const ids = [...new Set([...Object.keys(written.attendance ?? {}), ...Object.keys(stored)])];
-    // Une note est écrite : une présence jamais posée vaut « présent », comme à l'écran.
-    const attendance = effectiveAttendance(stored, ids, true);
-    if (needsRewrite(written, asStrings(row.letters), attendance))
+    if (needsRewrite(written, asStrings(row.letters)))
       keys.add(`${row.assessment_id}:${row.subject_id}`);
   }
   return keys;

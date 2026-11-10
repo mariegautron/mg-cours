@@ -131,7 +131,6 @@ export function OralSpace({
   variant?: "oral" | "rendu";
 }) {
   const isRendu = variant === "rendu";
-  const noun = isRendu ? "cette copie" : "cet oral";
   const initial = useMemo(() => {
     const values: Record<string, string> = { pad: init.pad };
     for (const c of criteria) {
@@ -206,7 +205,8 @@ export function OralSpace({
     const v = f.values[`presence:${m.id}`];
     attendance[m.id] = v && isAttendance(v) ? v : undefined;
   }
-  const rule = f.values.rule === "legacy" ? "legacy" : "group_all";
+  // Une seule règle : celle de la copie et des résultats (règle de l'école).
+  const rule = "legacy" as const;
 
   const current = criteria.find((c) => c.id === currentId) ?? criteria[0];
   const progress = draftProgress(criteria, letters, autoValidatedIds);
@@ -214,13 +214,7 @@ export function OralSpace({
   const result = recap(criteria, letters, { autoValidatedIds, maxScore });
   const after = memberValues(result.total, result.maxScore, members, attendance, rule, schoolRule);
   const lines = diffLines(members, init.before, after, attendance);
-  const liveRewrite = needsRewrite(
-    written,
-    letters,
-    Object.fromEntries(
-      Object.entries(attendance).filter((e): e is [string, Attendance] => e[1] !== undefined),
-    ),
-  );
+  const liveRewrite = needsRewrite(written, letters);
   // Tant que rien n'a été réécrit ici, l'état du serveur fait foi (même règle que partout).
   const rewrite = liveRewrite || serverRewrite;
   const replaces = init.hasNote;
@@ -295,7 +289,7 @@ export function OralSpace({
   function discardDraft() {
     if (
       !window.confirm(
-        "Abandonner le brouillon ? Les lettres, notes et présences reviennent à l’état d’origine ; la note écrite et les résultats publiés ne bougent pas.",
+        "Abandonner le brouillon ? Les lettres et les notes reviennent à l’état d’origine ; les présences (enregistrées sur la copie), la note écrite et les résultats publiés ne bougent pas.",
       )
     )
       return;
@@ -451,7 +445,9 @@ export function OralSpace({
                     onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
                     className="border-input bg-background min-h-9 rounded-md border px-1.5"
                   >
-                    <option value="">À poser</option>
+                    <option value="" disabled>
+                      À poser
+                    </option>
                     {ATTENDANCE_VALUES.map((a) => (
                       <option key={a} value={a}>
                         {isGroup ? groupAttendanceLabel(a, schoolRule) : ATTENDANCE_LABELS[a]}
@@ -478,7 +474,9 @@ export function OralSpace({
                   onChange={(e) => f.set(`presence:${m.id}`, e.target.value, true)}
                   className="border-input bg-background min-h-9 rounded-md border px-1.5"
                 >
-                  <option value="">À poser</option>
+                  <option value="" disabled>
+                    À poser
+                  </option>
                   {ATTENDANCE_VALUES.map((a) => (
                     <option key={a} value={a}>
                       {isGroup ? groupAttendanceLabel(a, schoolRule) : ATTENDANCE_LABELS[a]}
@@ -897,32 +895,6 @@ export function OralSpace({
             Total : {missing.length > 0 ? "—" : fmt(result.total)} / {fmt(result.maxScore)}
             {result.capped ? " (plafonné)" : ""}
           </p>
-
-          {init.fromExisting || replaces ? (
-            <fieldset className="space-y-1 text-sm">
-              <legend className="font-semibold">Règle d’absence pour {noun}</legend>
-              {init.fromExisting ? (
-                <label className="flex items-start gap-2">
-                  <input
-                    type="radio"
-                    name={`rule-${subjectId}`}
-                    checked={rule === "legacy"}
-                    onChange={() => f.set("rule", "legacy", true)}
-                  />
-                  <span>Règle d’origine de {noun} (par défaut)</span>
-                </label>
-              ) : null}
-              <label className="flex items-start gap-2">
-                <input
-                  type="radio"
-                  name={`rule-${subjectId}`}
-                  checked={rule === "group_all"}
-                  onChange={() => f.set("rule", "group_all", true)}
-                />
-                <span>Tout le groupe reçoit la note du groupe, absent·es compris</span>
-              </label>
-            </fieldset>
-          ) : null}
 
           {isGroup && missing.length === 0 ? (
             <div>

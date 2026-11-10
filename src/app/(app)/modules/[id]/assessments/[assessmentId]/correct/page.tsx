@@ -211,6 +211,7 @@ export default async function CorrectPage({
             schoolRule={schoolRule ?? "keep_group_grade"}
             deadline={deadlineOf(assessment.date, null)?.toISOString() ?? null}
             initialId={typeof copy === "string" ? copy : undefined}
+            initialView={vue === "critere" ? "criterion" : undefined}
           />
         </div>
       );
@@ -397,6 +398,7 @@ export default async function CorrectPage({
           absenceRule={absenceRule}
           bonusScale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
           initialId={typeof copy === "string" ? copy : undefined}
+          initialView={vue === "critere" ? "criterion" : undefined}
           overviewHref={back}
         />
       )}
