@@ -390,9 +390,21 @@ export async function prepareLinks(
       assessmentId,
       gradingTargets(false, assessment.groups).flatMap((t) => t.students),
     ),
-    supabase.from("quiz_attempt").select("student_id").eq("quiz_id", quiz.id),
+    supabase
+      .from("quiz_attempt")
+      .select("id, student_id, status, revoked_at")
+      .eq("quiz_id", quiz.id),
   ]);
-  const have = new Set((existing ?? []).map((a) => a.student_id));
+  // Lien révoqué sur une copie non rendue (ex. réinscrit·e au rattrapage) : la personne repart
+  // sur une copie neuve (même ligne, une par personne et par QCM).
+  const reusable = new Map(
+    (existing ?? [])
+      .filter((a) => a.revoked_at !== null && a.status !== "submitted")
+      .map((a) => [a.student_id, a.id] as const),
+  );
+  const have = new Set(
+    (existing ?? []).filter((a) => !reusable.has(a.student_id)).map((a) => a.student_id),
+  );
   const todo = students.filter((s) => !have.has(s.id));
   if (todo.length === 0)
     return {
@@ -450,20 +462,27 @@ export async function prepareLinks(
   const notEmailed: string[] = [];
 
   for (const d of drafts) {
-    const { data, error } = await supabase
-      .from("quiz_attempt")
-      .insert({
-        quiz_id: quiz.id,
-        student_id: d.student.id,
-        token_hash: hashToken(d.token),
-        drawn: d.draw.questions as never,
-        draw_seed: d.seed,
-        question_count: d.draw.questions.length,
-        total_points: d.draw.totalPoints,
-        reused_count: d.draw.reused,
-      })
-      .select("id")
-      .single();
+    const fresh = {
+      token_hash: hashToken(d.token),
+      drawn: d.draw.questions as never,
+      draw_seed: d.seed,
+      question_count: d.draw.questions.length,
+      total_points: d.draw.totalPoints,
+      reused_count: d.draw.reused,
+    };
+    const reuseId = reusable.get(d.student.id);
+    const { data, error } = reuseId
+      ? await supabase
+          .from("quiz_attempt")
+          .update({ ...fresh, ...NEW_COPY })
+          .eq("id", reuseId)
+          .select("id")
+          .single()
+      : await supabase
+          .from("quiz_attempt")
+          .insert({ quiz_id: quiz.id, student_id: d.student.id, ...fresh })
+          .select("id")
+          .single();
     const name = `${d.student.first_name} ${d.student.last_name}`;
     if (error || !data) {
       errors.push(`${name} : le lien n’a pas pu être créé (${error?.message}).`);
@@ -516,6 +535,27 @@ export async function prepareLinks(
   };
 }
 
+/** Remise à neuf d'une copie (aucune réponse, pas commencée, lien actif). */
+const NEW_COPY = {
+  status: "ready" as const,
+  revoked_at: null,
+  started_at: null,
+  deadline_at: null,
+  clock_started_at: null,
+  used_at: null,
+  sent_at: null,
+  answers: {},
+  late_answers: null,
+  last_saved_at: null,
+  submitted_at: null,
+  submitted_late: false,
+  auto_score: null,
+  score: null,
+  manual_scores: {},
+  result: null,
+  review_complete: false,
+};
+
 /** Nouveau lien pour une copie pas encore rendue (l'ancien est révoqué). */
 export async function regenerateLink(
   moduleId: string,
@@ -529,7 +569,7 @@ export async function regenerateLink(
   const supabase = await createClient();
   const { data: attempt } = await supabase
     .from("quiz_attempt")
-    .select("id, status, student:student_id(first_name, last_name, email)")
+    .select("id, status, revoked_at, deadline_at, student:student_id(first_name, last_name, email)")
     .eq("id", attemptId)
     .maybeSingle();
   if (!quiz || !attempt) return { errors: ["Cette copie n’existe plus."] };
@@ -546,9 +586,26 @@ export async function regenerateLink(
     email: string | null;
   };
   const token = generateToken();
+  // Copie révoquée : elle repart neuve. Chrono déjà écoulé : remis à zéro (les réponses déjà
+  // enregistrées restent). Sinon (lien perdu en cours d'épreuve) : la copie continue telle quelle.
+  const expired =
+    attempt.status === "in_progress" &&
+    !!attempt.deadline_at &&
+    new Date(attempt.deadline_at).getTime() < Date.now();
+  const reset = attempt.revoked_at
+    ? NEW_COPY
+    : expired
+      ? { status: "ready" as const, started_at: null, deadline_at: null, clock_started_at: null }
+      : {};
   const { error } = await supabase
     .from("quiz_attempt")
-    .update({ token_hash: hashToken(token), revoked_at: null, sent_at: null, used_at: null })
+    .update({
+      token_hash: hashToken(token),
+      revoked_at: null,
+      sent_at: null,
+      used_at: null,
+      ...reset,
+    })
     .eq("id", attemptId);
   if (error) return { errors: [`Le nouveau lien n’a pas pu être créé (${error.message}).`] };
 

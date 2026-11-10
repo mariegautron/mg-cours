@@ -49,7 +49,10 @@ export default async function QuizLinksPage({
     ),
     getClassLinkInfo(quiz.id),
   ]);
-  const withAttempt = new Set(attempts.map((a) => a.studentId));
+  // Un lien révoqué sur une copie non rendue ne compte pas : la personne est « sans lien ».
+  const withAttempt = new Set(
+    attempts.filter((a) => !a.revoked || a.status === "submitted").map((a) => a.studentId),
+  );
   const missing = students.filter((s) => !withAttempt.has(s.id)).length;
   const closed = quiz.status === "closed";
   const url = info.token ? classUrl(clientEnv.NEXT_PUBLIC_APP_URL, info.token) : null;
