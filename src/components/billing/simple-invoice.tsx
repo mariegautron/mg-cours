@@ -65,11 +65,21 @@ export function SimpleInvoice({
   const [pending, start] = useTransition();
   const [state, setState] = useState<BillingActionState | null>(null);
   const [dates, setDates] = useState({ sent: sentOn ?? today, paid: paidOn ?? today });
-  const Icon = STATUS_ICON[status];
 
   // Les cases se cochent tout de suite (l'enregistrement suit) : plus d'attente de 5 s.
   const [boxes, setBoxes] = useState({ sent, paid });
   const [saved, setSaved] = useState(false);
+  // Badge d'après les cases telles qu'affichées (décocher « Payée » le change tout de suite).
+  const shownStatus: SimpleInvoiceStatus = boxes.paid
+    ? "paid"
+    : boxes.sent
+      ? "sent"
+      : status === "paid" || status === "sent"
+        ? hasFile === false
+          ? "to_deposit"
+          : "to_send"
+        : status;
+  const Icon = STATUS_ICON[shownStatus];
   const toggle = (box: InvoiceBox, checked: boolean) => {
     setBoxes((b) =>
       box === "sent"
@@ -104,13 +114,15 @@ export function SimpleInvoice({
           {subtitle ? <p className="text-muted-foreground text-sm">{subtitle}</p> : null}
         </div>
         <p role="status">
-          <Pill tone={status === "paid" ? "ok" : status === "to_deposit" ? "warn" : "wip"}>
+          <Pill
+            tone={shownStatus === "paid" ? "ok" : shownStatus === "to_deposit" ? "warn" : "wip"}
+          >
             <Icon aria-hidden className="size-3.5" />
-            {status === "to_deposit"
+            {shownStatus === "to_deposit"
               ? "Pas de facture déposée"
-              : status === "paid" && hasFile === false
+              : shownStatus === "paid" && hasFile === false
                 ? "Payée · PDF manquant"
-                : SIMPLE_STATUS_LABELS[status]}
+                : SIMPLE_STATUS_LABELS[shownStatus]}
           </Pill>
         </p>
       </div>
