@@ -531,8 +531,15 @@ export default async function AssessmentPage({
               </Link>
             </Button>
           ) : null}
-          {isOral ? (
+          {readyToSend ? (
             <Button asChild>
+              <Link href={`/modules/${id}/assessments/${assessmentId}/results`}>
+                Envoyer les résultats
+              </Link>
+            </Button>
+          ) : null}
+          {isOral ? (
+            <Button asChild variant={readyToSend ? "secondary" : "default"}>
               <Link href={`/modules/${id}/assessments/${assessmentId}/oral`}>
                 <Mic aria-hidden />
                 Faire passer l’oral
@@ -540,7 +547,7 @@ export default async function AssessmentPage({
             </Button>
           ) : null}
           {quizReview ? (
-            <Button asChild>
+            <Button asChild variant={readyToSend ? "secondary" : "default"}>
               <Link href={`/modules/${id}/assessments/${assessmentId}/quiz/links#follow`}>
                 <ClipboardCheck aria-hidden />
                 Relire les copies
@@ -548,14 +555,16 @@ export default async function AssessmentPage({
             </Button>
           ) : null}
           {(assessment.grading_grid || quiz) && !oralCovers && !quizReview ? (
-            <Button asChild variant={isOral ? "secondary" : "default"}>
+            <Button asChild variant={isOral || readyToSend ? "secondary" : "default"}>
               <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
                 <ClipboardCheck aria-hidden />
                 {isUngradedReview(assessment)
                   ? "Commenter"
-                  : overview.done + overview.inProgress > 0
-                    ? "Continuer la correction"
-                    : "Corriger"}
+                  : readyToSend
+                    ? "Relire les copies"
+                    : overview.done + overview.inProgress > 0
+                      ? "Continuer la correction"
+                      : "Corriger"}
               </Link>
             </Button>
           ) : null}
@@ -641,27 +650,6 @@ export default async function AssessmentPage({
               Créer leurs liens d’espace
             </Link>
           </p>
-        ) : null}
-
-        {readyToSend ? (
-          <section
-            aria-labelledby="send-top"
-            className="bg-primary/10 border-primary/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5"
-          >
-            <div>
-              <h2 id="send-top" className="text-lg font-semibold">
-                Tout est corrigé : envoyer les résultats
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                Vérifie, puis publie : rien ne part sans ta confirmation.
-              </p>
-            </div>
-            <Button asChild size="touch">
-              <Link href={`/modules/${id}/assessments/${assessmentId}/results`}>
-                Envoyer les résultats
-              </Link>
-            </Button>
-          </section>
         ) : null}
       </div>
 

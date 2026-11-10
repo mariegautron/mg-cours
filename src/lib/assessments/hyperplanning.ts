@@ -2,7 +2,8 @@ import type { ResultSheet } from "@/lib/assessments/results";
 
 /**
  * Aide à la saisie dans Hyperplanning (US-100) : une ligne par étudiant·e avec la note sur 20 telle qu'elle
- * s'y saisit (virgule décimale, 2 décimales). Les absent·es excusé·es n'ont pas de note (rattrapage à venir).
+ * s'y saisit (virgule décimale, 2 décimales). Absent·e excusé·e : note du groupe sur un travail de
+ * groupe ; sur une évaluation individuelle, pas de note (rattrapage à venir).
  */
 export interface HyperplanningRow {
   lastName: string;
@@ -27,8 +28,11 @@ export function hyperplanningRows(sheets: readonly ResultSheet[]): Hyperplanning
         lastName: r.firstName ? r.name.slice(r.firstName.length + 1) : rest.join(" "),
         grade: sheet.valueOn20 === null ? null : fmt(sheet.valueOn20),
         remark:
+          // Travail de groupe : l'absent·e excusé·e garde la note du groupe, jamais de rattrapage.
           sheet.attendance === "absent_excused"
-            ? "Absent·e excusé·e : pas de note, rattrapage"
+            ? sheet.valueOn20 !== null
+              ? "Absent·e excusé·e : note du groupe"
+              : "Absent·e excusé·e : pas de note, rattrapage"
             : sheet.attendance === "absent_unexcused"
               ? "Absent·e non prévenu·e : 0"
               : null,
