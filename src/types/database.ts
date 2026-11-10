@@ -205,6 +205,7 @@ export type Database = {
       }
       assessment: {
         Row: {
+          review_graded: boolean
           copied_from_id: string | null
           needs_review: boolean
           review_criterion_ids: string[] | null
@@ -246,6 +247,7 @@ export type Database = {
           score_scale: Json | null
         }
         Insert: {
+          review_graded?: boolean
           copied_from_id?: string | null
           needs_review?: boolean
           review_criterion_ids?: string[] | null
@@ -287,6 +289,7 @@ export type Database = {
           score_scale?: Json | null
         }
         Update: {
+          review_graded?: boolean
           copied_from_id?: string | null
           needs_review?: boolean
           review_criterion_ids?: string[] | null

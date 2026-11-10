@@ -61,7 +61,7 @@ import {
 } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isProgressReview, isUngradedReview } from "@/lib/assessments/progress-review";
 import { formatNumber, groupByAxis } from "@/lib/assessments/scoring";
 import { excusedStudentIds } from "@/lib/assessments/makeup";
 import { gradingTargets } from "@/lib/assessments/targets";
@@ -449,7 +449,7 @@ export default async function AssessmentPage({
             {[
               assessment.project_role ? "Projet fil rouge" : null,
               assessment.type,
-              isProgressReview(assessment)
+              isUngradedReview(assessment)
                 ? "point d’étape · sans note"
                 : `${assessment.is_group_grade ? "groupe" : "individuelle"} ×${ruleCoefficient}`,
               groupNames,
@@ -521,7 +521,7 @@ export default async function AssessmentPage({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            {isProgressReview(assessment) ? (
+            {isUngradedReview(assessment) ? (
               <Pill tone="key">Point d’étape · sans note · hors moyenne</Pill>
             ) : (
               <>
@@ -534,7 +534,7 @@ export default async function AssessmentPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!assessment.is_group_grade && !isProgressReview(assessment) ? (
+          {!assessment.is_group_grade && !isUngradedReview(assessment) ? (
             <Button asChild variant="secondary">
               <Link href={`/modules/${id}/assessments/${assessmentId}/quiz`}>
                 <ListChecks aria-hidden />
@@ -554,11 +554,18 @@ export default async function AssessmentPage({
             <Button asChild>
               <Link href={`/modules/${id}/assessments/${assessmentId}/correct`}>
                 <ClipboardCheck aria-hidden />
-                {isProgressReview(assessment)
+                {isUngradedReview(assessment)
                   ? "Commenter"
                   : overview.done + overview.inProgress > 0
                     ? "Continuer la correction"
                     : "Corriger"}
+              </Link>
+            </Button>
+          ) : null}
+          {isProgressReview(assessment) && !isUngradedReview(assessment) ? (
+            <Button asChild variant="secondary">
+              <Link href={`/modules/${id}/assessments/${assessmentId}/correct?vue=etape`}>
+                Repères et retours
               </Link>
             </Button>
           ) : null}

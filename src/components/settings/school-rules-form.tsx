@@ -7,11 +7,7 @@ import { ActionError } from "@/components/action-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PendingButton } from "@/components/ui/pending-button";
-import {
-  ABSENCE_RULE_LABELS,
-  emailFromTemplate,
-  type SchoolRules,
-} from "@/lib/settings/school-rules";
+import { emailFromTemplate, type SchoolRules } from "@/lib/settings/school-rules";
 import { DEFAULT_SCHOOL_LABEL } from "@/lib/schools/rules";
 import { YNOV_GRADING, type GradingRules } from "@/lib/ynov/notation";
 
@@ -64,26 +60,16 @@ export function SchoolRulesForm({
           puis change ce qui diffère.
         </p>
       ) : null}
-      <fieldset className="space-y-1" disabled={!available}>
-        <legend className="mb-1 text-sm font-medium">Absence excusée à un travail de groupe</legend>
-        {(["keep_group_grade", "makeup"] as const).map((value) => (
-          <label key={value} className="flex min-h-11 items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="absenceRule"
-              value={value}
-              defaultChecked={rules.absenceRule === value}
-              className="accent-primary size-4"
-            />
-            {ABSENCE_RULE_LABELS[value]}
-          </label>
-        ))}
+      <div className="space-y-1">
+        <input type="hidden" name="absenceRule" value="keep_group_grade" />
+        <p className="text-sm font-medium">Absence excusée à un travail de groupe</p>
         <p className="text-muted-foreground text-xs">
-          À une évaluation individuelle, une absence excusée donne toujours droit à un rattrapage.
-          Une absence non prévenue vaut 0 par défaut ; sur un travail de groupe, tu peux choisir sur
-          la copie « Absent·e · garde la note du groupe ».
+          La personne garde la note du groupe, sans rattrapage. À une évaluation individuelle, une
+          absence excusée donne toujours droit à un rattrapage. Une absence non prévenue vaut 0 par
+          défaut ; sur un travail de groupe, tu peux choisir sur la copie « Absent·e · garde la note
+          du groupe ».
         </p>
-      </fieldset>
+      </div>
 
       <fieldset
         key={gradingKey}

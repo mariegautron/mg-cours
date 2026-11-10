@@ -8,7 +8,7 @@ import { cache } from "react";
 
 import { groupMemberValue, type MemberOverride } from "@/lib/assessments/attendance";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { createClient } from "@/lib/supabase/server";
 import {
   criteriaTotal,
@@ -376,7 +376,7 @@ export async function moduleNoteProgress(
   // Un rattrapage remplace l'absence excusée de l'original : il ne compte pas comme une note de plus.
   // Une note bonus (certification) ne compte pas dans les notes exigées d'après les heures.
   // Un point d'étape (sans note) ne compte jamais dans les notes exigées.
-  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isProgressReview(a));
+  const counted = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isUngradedReview(a));
   const group = counted.filter((a) => a.is_group_grade && a.gradeCount > 0).length;
   const individual = counted.filter((a) => !a.is_group_grade && a.gradeCount > 0).length;
   const { grading } = await getSchoolRulesForModule(moduleId);
@@ -497,16 +497,9 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     bonusPerStudent.set(student.id, []);
   }
 
-  const groupGradeOriginal = new Set(assessments.filter((a) => a.is_group_grade).map((a) => a.id));
   for (const assessment of assessments) {
     const rows = gradesByAssessment.get(assessment.id) ?? [];
-    // Rattrapage d'un travail de groupe (règle « rattrapage individuel ») : même coefficient que
-    // la note de groupe qu'il remplace.
-    const kind =
-      assessment.is_group_grade ||
-      (assessment.makeup_of_id !== null && groupGradeOriginal.has(assessment.makeup_of_id))
-        ? "group"
-        : "individual";
+    const kind = assessment.is_group_grade ? "group" : "individual";
     const max = assessment.maxScore;
     for (const row of rows) {
       // Une copie incomplète n'entre jamais dans une moyenne ; on dit pourquoi elle manque.
@@ -575,7 +568,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
         (a) =>
           !a.is_bonus &&
           !a.makeup_of_id &&
-          !isProgressReview(a) &&
+          !isUngradedReview(a) &&
           a.groups.some((g) => (studentsByGroup.get(g.id) ?? []).some((m) => m.id === student.id)),
       ).length;
       return {

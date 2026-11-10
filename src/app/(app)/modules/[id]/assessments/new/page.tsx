@@ -51,7 +51,7 @@ export default async function NewAssessmentPage({
         reviewTargets={await listReviewTargets(id)}
         hasProject={!!project}
         initialMilestone={jalon === "1"}
-        initialType={type === "etape" ? "Point d’étape (sans note)" : undefined}
+        initialType={type === "etape" ? "Point d’étape" : undefined}
         initialGridId={
           typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""
         }

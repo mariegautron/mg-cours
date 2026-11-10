@@ -10,7 +10,7 @@ import { readAnswer } from "@/lib/quiz/grading";
 import { createClient } from "@/lib/supabase/server";
 import { makeupHrefs } from "@/lib/assessments/makeup-queries";
 import { RenduReview, type RenduCopy } from "@/components/assessments/rendu-review";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isProgressReview, isUngradedReview } from "@/lib/assessments/progress-review";
 import { ProgressReviewPage } from "@/components/assessments/progress-review-page";
 import { buildSpaceInits } from "@/lib/assessments/space-init";
 import { examKindOf } from "@/lib/assessments/exam-kind";
@@ -60,7 +60,9 @@ export default async function CorrectPage({
   if (!assessment || assessment.module_id !== id) notFound();
 
   // Point d'étape : un rendu commenté sans note (repères par critère), jamais de note.
-  if (isProgressReview(assessment)) {
+  // Point d'étape noté : correction normale ; ses repères et retours sur `?vue=etape`.
+  const { vue } = await searchParams;
+  if (isUngradedReview(assessment) || (isProgressReview(assessment) && vue === "etape")) {
     return (
       <ProgressReviewPage
         moduleId={id}

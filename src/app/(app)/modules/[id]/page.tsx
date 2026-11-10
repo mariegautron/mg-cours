@@ -3,7 +3,7 @@ import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Presentation } from "lucide-react";
+import { Flag, Pencil, Presentation } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
@@ -34,7 +34,7 @@ import {
 } from "@/lib/modules/queries";
 import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 import { schoolYearOf } from "@/lib/modules/list-state";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getOutline } from "@/lib/outline/queries";
@@ -190,7 +190,7 @@ export default async function ModulePage({
   // Fiche du module : les évaluations des 60 prochains jours dans « À venir » ; la carte garde 14 jours.
   const moduleEvals = await listUpcomingAssessments(today, 60, id);
   const upcomingEvals = moduleEvals.filter((a) => daysBetween(today, a.date) <= 14);
-  const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isProgressReview(a));
+  const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isUngradedReview(a));
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
   const [mean, retro] = finishedView
@@ -224,6 +224,10 @@ export default async function ModulePage({
           <Link href={`/present/modules/${mod.id}`} className={BTN}>
             <Presentation aria-hidden className="mr-2 size-4" />
             Présenter le module
+          </Link>
+          <Link href={`/modules/${mod.id}/jalons`} className={BTN}>
+            <Flag aria-hidden className="mr-2 size-4" />
+            Jalons
           </Link>
           <Link href={`/modules/${mod.id}/edit`} className={BTN}>
             <Pencil aria-hidden className="mr-2 size-4" />

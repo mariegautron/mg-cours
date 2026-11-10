@@ -104,10 +104,9 @@ export function readSchoolRules(
   if (!row) return { ...DEFAULT_SCHOOL_RULES };
   const max = row.appreciation_max;
   return {
-    absenceRule:
-      row.absence_rule === "makeup" || row.absence_rule === "keep_group_grade"
-        ? row.absence_rule
-        : DEFAULT_SCHOOL_RULES.absenceRule,
+    // Excusé·e à un travail de groupe : garde toujours la note du groupe, pas de rattrapage
+    // (décision d'Arnaud, 10 nov. 2026). L'ancien réglage « rattrapage » n'est plus appliqué.
+    absenceRule: "keep_group_grade",
     emailTemplate: (row.email_template ?? "").trim(),
     appreciationMax:
       typeof max === "number" &&

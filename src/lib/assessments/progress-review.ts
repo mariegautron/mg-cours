@@ -28,11 +28,21 @@ export function isReviewMark(v: unknown): v is ReviewMark {
 }
 
 /** Type proposé dans « Ajouter une évaluation ». */
-export const PROGRESS_REVIEW_TYPE = "Point d’étape (sans note)";
+export const PROGRESS_REVIEW_TYPE = "Point d’étape";
 
 /** Une évaluation est un point d'étape d'après son type (« Point d'étape … »). */
 export function isProgressReview(a: { type?: string | null } | null | undefined): boolean {
   return !!a && kindOf(a.type) === "checkpoint";
+}
+
+/**
+ * Point d'étape NON noté : hors moyennes, hors notes exigées, pas de note. Un point d'étape « Noté »
+ * est une évaluation notée comme les autres (ses repères et retours en plus).
+ */
+export function isUngradedReview(
+  a: { type?: string | null; review_graded?: boolean | null } | null | undefined,
+): boolean {
+  return isProgressReview(a) && !a?.review_graded;
 }
 
 /** Critères de la grille repris par le point d'étape (`null` : toute la grille). */

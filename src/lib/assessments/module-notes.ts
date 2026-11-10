@@ -30,6 +30,7 @@ export interface PlannedLike {
   is_group_grade: boolean;
   /** « Point d'étape » : sans note, hors notes exigées. */
   type?: string | null;
+  review_graded?: boolean | null;
   is_bonus?: boolean | null;
   makeup_of_id?: string | null;
 }
@@ -51,7 +52,7 @@ export function plannedProgress(
   assessments: readonly PlannedLike[],
 ): PlannedProgress {
   const counted = assessments.filter(
-    (a) => !a.makeup_of_id && !a.is_bonus && kindOf(a.type) !== "checkpoint",
+    (a) => !a.makeup_of_id && !a.is_bonus && !(kindOf(a.type) === "checkpoint" && !a.review_graded),
   );
   const plannedGroup = counted.filter((a) => a.is_group_grade).length;
   const plannedIndividual = counted.length - plannedGroup;

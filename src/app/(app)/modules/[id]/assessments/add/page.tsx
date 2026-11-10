@@ -168,11 +168,12 @@ export default async function AddAssessmentPage({
                 className="bg-muted/40 rounded-2xl border p-4"
               >
                 <h3 id="create-review" className="text-lg font-bold">
-                  Point d’étape (sans note)
+                  Point d’étape
                 </h3>
                 <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
                   Un dépôt commenté par critère (en avance, sur la bonne voie, à revoir), rattaché à
-                  l’évaluation notée qui le prend en compte. Hors moyenne.
+                  l’évaluation notée qui le prend en compte. Non noté par défaut (hors moyenne), ou
+                  noté si tu coches « Noté ».
                 </p>
                 <Button asChild variant="outline">
                   <Link href={`/modules/${id}/assessments/new?type=etape`}>

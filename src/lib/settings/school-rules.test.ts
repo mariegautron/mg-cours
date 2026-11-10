@@ -28,7 +28,7 @@ describe("readSchoolRules", () => {
         appreciation_max: 300,
       }),
     ).toEqual({
-      absenceRule: "makeup",
+      absenceRule: "keep_group_grade",
       emailTemplate: "{prenom}.{nom}@ynov.com",
       appreciationMax: 300,
       grading: YNOV_GRADING,

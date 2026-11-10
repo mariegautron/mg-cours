@@ -9,7 +9,7 @@ import { Plus } from "lucide-react";
 
 import { listModuleGroups } from "@/lib/students/queries";
 import { weightingSentence } from "@/lib/schools/rules";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isProgressReview, isUngradedReview } from "@/lib/assessments/progress-review";
 import { countDoneReviews } from "@/lib/assessments/review-targets";
 import { getResolvedRulesForModule } from "@/lib/settings/rules-queries";
 import { todayInParis } from "@/lib/modules/next-session";
@@ -302,7 +302,7 @@ export default async function ModuleAssessmentsPage({
             <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...cards, ...makeups].map((a) => {
                 const oral = isOralAssessment(a);
-                const review = isProgressReview(a);
+                const review = isUngradedReview(a);
                 const frame = frameStatus({
                   hasDate: !!a.date || !!(a.course_id && courseDate.get(a.course_id)),
                   whereOk:
@@ -337,6 +337,9 @@ export default async function ModuleAssessmentsPage({
                           </Pill>
                         )}
                         {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
+                        {!review && isProgressReview(a) ? (
+                          <Pill tone="key">Point d’étape · noté</Pill>
+                        ) : null}
                       </span>
                     </div>
                     <p className="text-muted-foreground mb-1 text-[0.8rem]">

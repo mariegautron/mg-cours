@@ -80,10 +80,18 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** Ramène une note sur 20 (ex. 15/30 → 10). Arrondi au centième. */
+/** Arrondi au demi-point supérieur (13,1 → 13,5 ; 13,5 → 13,5 ; 13,6 → 14), sans bruit de calcul. */
+export function ceilHalf(n: number): number {
+  return Math.ceil(Math.round(n * 2 * 1e6) / 1e6) / 2;
+}
+
+/**
+ * Ramène une note sur 20 (ex. 15/30 → 10), arrondie au demi-point supérieur comme le fait Marie
+ * (décision d'Arnaud, 10 nov. 2026). C'est cette note sur 20 qui sert aux moyennes et à Hyperplanning.
+ */
 export function toTwenty(value: number, max: number = DEFAULT_MAX_SCORE): number {
   if (!(max > 0)) return value;
-  return round2((value * DEFAULT_MAX_SCORE) / max);
+  return ceilHalf((value * DEFAULT_MAX_SCORE) / max);
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
- * US-148 : écran « Rattrapages » du module. Fonction pure : pour chaque évaluation individuelle
- * (et chaque travail de groupe quand l'école donne un rattrapage individuel aux excusé·es ; jamais
- * un rattrapage), qui est absent·e excusé·e et où en est son rattrapage. La note de rattrapage remplace l'absence dans les moyennes (flux US-96).
+ * US-148 : écran « Rattrapages » du module. Fonction pure : pour chaque évaluation INDIVIDUELLE
+ * (jamais une note de groupe, jamais un rattrapage), qui est absent·e excusé·e et où en est son
+ * rattrapage. La note de rattrapage remplace l'absence dans les moyennes (flux US-96).
  */
 export type MakeupStep = "to_prepare" | "to_enroll" | "to_grade" | "done";
 
@@ -44,31 +44,22 @@ export function makeupOverview(input: {
   /** Étudiant·es inscrit·es à chaque rattrapage (clé : id du rattrapage). */
   enrolled: ReadonlyMap<string, readonly string[]>;
   studentNames: ReadonlyMap<string, string>;
-  /**
-   * Membres excusé·es des travaux de groupe (clé : id de l'évaluation), seulement quand l'école a la
-   * règle « rattrapage individuel » ; absent : les travaux de groupe ne se rattrapent pas.
-   */
-  groupExcused?: ReadonlyMap<string, readonly string[]>;
 }): MakeupGroup[] {
   const makeupOf = new Map(
     input.assessments.filter((a) => a.makeup_of_id).map((a) => [a.makeup_of_id as string, a]),
   );
   const groups: MakeupGroup[] = [];
   for (const a of input.assessments) {
-    if (a.makeup_of_id) continue;
-    if (a.is_group_grade && !input.groupExcused) continue;
-    const excused = a.is_group_grade
-      ? [...new Set(input.groupExcused?.get(a.id) ?? [])]
-      : [
-          ...new Set(
-            input.grades
-              .filter(
-                (g) =>
-                  g.assessment_id === a.id && g.attendance === "absent_excused" && g.student_id,
-              )
-              .map((g) => g.student_id as string),
-          ),
-        ];
+    if (a.is_group_grade || a.makeup_of_id) continue;
+    const excused = [
+      ...new Set(
+        input.grades
+          .filter(
+            (g) => g.assessment_id === a.id && g.attendance === "absent_excused" && g.student_id,
+          )
+          .map((g) => g.student_id as string),
+      ),
+    ];
     if (excused.length === 0) continue;
     const makeup = makeupOf.get(a.id) ?? null;
     const enrolled = new Set(makeup ? (input.enrolled.get(makeup.id) ?? []) : []);

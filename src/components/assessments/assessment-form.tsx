@@ -78,7 +78,7 @@ export function AssessmentForm({
   // Ancien libellé du point d'étape : repris sous le nouveau.
   const [typeText, setTypeText] = useState(
     kindOf(assessment?.type) === "checkpoint"
-      ? "Point d’étape (sans note)"
+      ? "Point d’étape"
       : (assessment?.type ?? initialType ?? ""),
   );
   const [dateText, setDateText] = useState(assessment?.date ?? "");
@@ -101,7 +101,10 @@ export function AssessmentForm({
   const frame = frameFor(typeText);
   const whereKind = kindOf(typeText);
   // Point d'étape : sans note, rattaché à l'évaluation notée qui le prend en compte.
-  const isReview = whereKind === "checkpoint";
+  const isCheckpoint = whereKind === "checkpoint";
+  // Case « Noté » (décochée par défaut) : un point d'étape noté est une évaluation notée normale.
+  const [reviewGraded, setReviewGraded] = useState(assessment?.review_graded ?? false);
+  const isReview = isCheckpoint && !reviewGraded;
   const [reviewForId, setReviewForId] = useState(assessment?.review_for_id ?? "");
   const reviewSelected = new Set(assessment?.review_criterion_ids ?? []);
   const warnings = frameWarnings({ type: typeText, date: dateText, durationMinutes: durationText });
@@ -359,9 +362,23 @@ export function AssessmentForm({
               onChange={(e) => setDurationText(e.target.value)}
             />
           </div>
-          {isReview ? (
+          {isCheckpoint ? (
             <div className="space-y-2 sm:col-span-2">
-              <input type="hidden" name="coefficient" value="1" />
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  name="reviewGraded"
+                  checked={reviewGraded}
+                  onChange={(e) => setReviewGraded(e.target.checked)}
+                />
+                Noté
+              </label>
+              <p className="text-muted-foreground text-sm">
+                {reviewGraded
+                  ? "Noté : barème, coefficient, moyennes et notes exigées comme une évaluation normale, avec en plus les repères et retours du point d’étape."
+                  : "Non noté : seulement des repères et des retours, hors moyenne et hors notes exigées."}
+              </p>
+              {isReview ? <input type="hidden" name="coefficient" value="1" /> : null}
               <Label htmlFor="reviewForId">Pris en compte dans</Label>
               <select
                 id="reviewForId"
@@ -384,9 +401,8 @@ export function AssessmentForm({
                 ))}
               </select>
               <p id="reviewForId-hint" className="text-muted-foreground text-sm">
-                Sans note, sans coefficient, hors moyenne. Il reprend la grille de l’évaluation
-                notée : coche ses critères plus bas. Ses retours s’affichent dans la correction de
-                cette évaluation.
+                Il reprend la grille de l’évaluation notée : coche ses critères plus bas. Ses
+                retours s’affichent dans la correction de cette évaluation.
               </p>
             </div>
           ) : null}
@@ -472,7 +488,7 @@ export function AssessmentForm({
               ))}
             </select>
           </div>
-          {isReview && gridCriteria.length > 0 ? (
+          {isCheckpoint && gridCriteria.length > 0 ? (
             <fieldset key={`review-${gridId}`} className="space-y-2 sm:col-span-2">
               <legend className="text-sm leading-none font-medium">
                 Critères commentés dans ce point d’étape

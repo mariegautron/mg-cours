@@ -7,7 +7,7 @@ import { getModuleCourses } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { listModuleGroups } from "@/lib/students/queries";
 import { toTwenty } from "@/lib/ynov/notation";
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 
 export interface FocusKpis {
   moduleId: string;
@@ -164,7 +164,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   const { data } = await supabase
     .from("assessment")
     .select(
-      "id, title, type, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
+      "id, title, type, review_graded, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
     )
     .is("makeup_of_id", null);
   const rows = (data ?? []).filter((a) => {
@@ -202,7 +202,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
   const handled = new Set<string>();
   const startedCopies = new Map<string, number>();
   // Point d'étape (sans note) : traité = retour terminé ; en cours = retour commencé.
-  const reviewIds = rows.filter((a) => isProgressReview(a)).map((a) => a.id);
+  const reviewIds = rows.filter((a) => isUngradedReview(a)).map((a) => a.id);
   if (reviewIds.length) {
     const { data: reviews } = await supabase
       .from("progress_review")
@@ -269,7 +269,7 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
     out.push({
       assessmentId: a.id,
       moduleId: a.module_id,
-      title: isProgressReview(a) ? `${a.title} · sans note` : a.title,
+      title: isUngradedReview(a) ? `${a.title} · sans note` : a.title,
       moduleName: (a.module as { name: string } | null)?.name ?? "",
       date: a.date,
       remaining: todo.length,

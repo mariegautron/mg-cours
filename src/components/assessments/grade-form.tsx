@@ -1555,7 +1555,9 @@ export function GradeForm({
           {grade?.value !== undefined && grade?.value !== null ? (
             <p className="text-muted-foreground text-sm">
               Note actuelle : {grade.value} / {maxScore}
-              {maxScore !== DEFAULT_MAX_SCORE ? ` (${toTwenty(grade.value, maxScore)}/20)` : ""}
+              {maxScore !== DEFAULT_MAX_SCORE || toTwenty(grade.value, maxScore) !== grade.value
+                ? ` (soit ${toTwenty(grade.value, maxScore)}/20)`
+                : ""}
             </p>
           ) : null}
           {subtitle ? <p className="text-muted-foreground text-sm">{subtitle}</p> : null}

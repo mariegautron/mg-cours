@@ -9,7 +9,6 @@ import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { Button } from "@/components/ui/button";
 import { MAKEUP_STEP_LABELS, makeupSummary } from "@/lib/assessments/makeup-overview";
 import { getModule } from "@/lib/modules/queries";
-import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { createClient } from "@/lib/supabase/server";
 import { listModuleAssessments } from "@/lib/assessments/queries";
@@ -48,7 +47,6 @@ export default async function MakeupsPage({
     (makeupGrades ?? []).find((x) => x.assessment_id === makeupId && x.student_id === studentId)
       ?.value ?? null;
 
-  const rule = await getAbsenceRuleForModule(id);
   const toOrganise = groups.flatMap((g) =>
     g.rows.filter((r) => r.step !== "done").map((r) => ({ title: g.assessment.title, row: r })),
   );
@@ -83,10 +81,8 @@ export default async function MakeupsPage({
       <div className="space-y-1">
         <h1 className="text-3xl font-semibold">Rattrapages — {mod.name}</h1>
         <p role="status" className="text-muted-foreground">
-          {makeupSummary(groups)}{" "}
-          {rule === "makeup"
-            ? "Un rattrapage concerne les évaluations individuelles et, avec la règle de ton école, les travaux de groupe : sa note remplace l’absence excusée dans les moyennes."
-            : "Un rattrapage ne concerne que les évaluations individuelles : sa note remplace l’absence excusée dans les moyennes."}
+          {makeupSummary(groups)} Un rattrapage ne concerne que les évaluations individuelles : sa
+          note remplace l’absence excusée dans les moyennes.
         </p>
       </div>
 
@@ -95,11 +91,7 @@ export default async function MakeupsPage({
           {groups.length === 0 ? (
             <EmptyState
               title="Personne à rattraper"
-              description={
-                rule === "makeup"
-                  ? "Quand une personne est absente excusée à une évaluation (individuelle ou de groupe), elle apparaît ici."
-                  : "Quand une personne est absente excusée à une évaluation individuelle, elle apparaît ici."
-              }
+              description="Quand une personne est absente excusée à une évaluation individuelle, elle apparaît ici."
               actions={[{ label: "Voir les évaluations", href: `/modules/${id}/assessments` }]}
             />
           ) : (
@@ -184,20 +176,14 @@ export default async function MakeupsPage({
             </h2>
             <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
               <li>
-                Un rattrapage se passe{" "}
-                <strong className="text-foreground">seul·e, sur un sujet individuel</strong>.
+                Rattrapage <strong className="text-foreground">individuel seulement</strong>.
               </li>
               <li>Absent·e non prévenu·e : 0, sans rattrapage.</li>
               <li>
-                Sur un travail de groupe :{" "}
-                {rule === "makeup"
-                  ? "la personne excusée passe un rattrapage individuel ; pas de note avant (réglage de l’école)."
-                  : "la personne excusée garde la note de groupe (réglage de l’école)."}
+                Sur un travail de groupe : la personne excusée garde la note du groupe, sans
+                rattrapage.
               </li>
             </ul>
-            <Button asChild variant="ghost" size="touch">
-              <Link href="/settings#school-rules">Changer le réglage de l’école</Link>
-            </Button>
           </section>
           {toOrganise.length > 0 ? (
             <section

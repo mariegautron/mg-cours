@@ -94,8 +94,13 @@ async function reviewColumns(
   formData: FormData,
   type: string | null | undefined,
   selfId: string | null,
-): Promise<{ review_for_id: string | null; review_criterion_ids: string[] | null }> {
-  if (!isProgressReview({ type })) return { review_for_id: null, review_criterion_ids: null };
+): Promise<{
+  review_for_id: string | null;
+  review_criterion_ids: string[] | null;
+  review_graded: boolean;
+}> {
+  if (!isProgressReview({ type }))
+    return { review_for_id: null, review_criterion_ids: null, review_graded: false };
   const forId = String(formData.get("reviewForId") ?? "");
   let reviewFor: string | null = null;
   if (/^[0-9a-f-]{36}$/i.test(forId) && forId !== selfId) {
@@ -108,7 +113,11 @@ async function reviewColumns(
     reviewFor = data?.id ?? null;
   }
   const picked = formData.getAll("reviewCriterionIds").map(String);
-  return { review_for_id: reviewFor, review_criterion_ids: picked.length ? picked : null };
+  return {
+    review_for_id: reviewFor,
+    review_criterion_ids: picked.length ? picked : null,
+    review_graded: formData.get("reviewGraded") === "on",
+  };
 }
 
 /**
@@ -255,7 +264,9 @@ export async function createAssessment(
     .insert({
       ...(milestone ?? {}),
       // Colonnes du point d'étape seulement quand elles servent (base pas encore à jour sinon).
-      ...(review.review_for_id || review.review_criterion_ids ? review : {}),
+      ...(review.review_for_id || review.review_criterion_ids || review.review_graded
+        ? review
+        : {}),
       module_id: moduleId,
       title: parsed.data.title,
       subject: parsed.data.subject || null,
@@ -350,7 +361,10 @@ export async function updateAssessment(
     .from("assessment")
     .update({
       ...(milestone ?? {}),
-      ...(hadReview ? review : {}),
+      // Seulement les colonnes présentes en base (migrations du point d'étape pas encore passées).
+      ...(hadReview
+        ? Object.fromEntries(Object.entries(review).filter(([k]) => before && k in before))
+        : {}),
       ...reviewed,
       title: parsed.data.title,
       subject: parsed.data.subject || null,

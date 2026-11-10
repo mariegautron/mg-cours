@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isProgressReview } from "@/lib/assessments/progress-review";
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { callStudentView } from "@/lib/modules/student-public";
 import { hashToken, isWellFormedToken } from "@/lib/quiz/token";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -101,9 +101,9 @@ export async function loadDepositContext(
     .eq(owner.kind === "group" ? "student_group_id" : "student_id", owner.id)
     .not("value", "is", null)
     .limit(1);
-  // Point d'étape : pas de note ; le dépôt se ferme quand le retour est terminé.
+  // Point d'étape non noté : pas de note ; le dépôt se ferme quand le retour est terminé.
   let reviewDone = false;
-  if (isProgressReview(row)) {
+  if (isUngradedReview(row)) {
     const { data: review } = await admin
       .from("progress_review")
       .select("state")

@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { copyAssessmentFiles } from "@/lib/assessments/copy-files";
-import { loadGroupExcused } from "@/lib/assessments/makeup-queries";
 import { redrawQuizForMakeup } from "@/lib/assessments/makeup-draw";
 import {
   excusedStudentIds,
@@ -45,19 +44,9 @@ async function createMakeup(
     .from("grade")
     .select("student_id, attendance")
     .eq("assessment_id", originalId);
-  // Travail de groupe : seulement si l'école donne un rattrapage individuel aux excusé·es.
-  const groupExcused = original.is_group_grade
-    ? await loadGroupExcused(supabase, moduleId, [originalId])
-    : undefined;
-  const excused = original.is_group_grade
-    ? [...new Set(groupExcused?.get(originalId) ?? [])]
-    : excusedStudentIds(grades ?? []);
+  const excused = excusedStudentIds(grades ?? []);
   // Préparé d'avance (US-144) : personne n'est encore absent·e, le sujet attend d'être utile.
-  const blocker = makeupBlocker(
-    original,
-    options.inAdvance ? 1 : excused.length,
-    groupExcused !== undefined,
-  );
+  const blocker = makeupBlocker(original, options.inAdvance ? 1 : excused.length);
   if (blocker) return { error: blocker };
 
   const { data: existing } = await supabase

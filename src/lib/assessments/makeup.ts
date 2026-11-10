@@ -29,12 +29,10 @@ export function excusedStudentIds(
 export function makeupBlocker(
   original: Pick<Tables<"assessment">, "is_group_grade" | "makeup_of_id">,
   excusedCount: number,
-  /** L'école donne un rattrapage individuel aux excusé·es d'un travail de groupe. */
-  groupMakeupAllowed = false,
 ): string | null {
   if (original.makeup_of_id) return "Cette évaluation est déjà un rattrapage.";
-  if (original.is_group_grade && !groupMakeupAllowed)
-    return "Sur un travail de groupe, l’école garde la note du groupe : il n’y a pas de rattrapage.";
+  if (original.is_group_grade)
+    return "Le rattrapage ne concerne que les sujets individuels : une note de groupe ne se rattrape pas.";
   if (excusedCount === 0)
     return "Personne n’est absent·e excusé·e sur cette évaluation : il n’y a rien à rattraper.";
   return null;
@@ -53,8 +51,6 @@ export function planMakeup(original: Tables<"assessment">): TablesInsert<"assess
     }),
     title: makeupTitle(original.title),
     makeup_of_id: original.id,
-    // Un rattrapage se passe seul·e, même pour un travail de groupe.
-    is_group_grade: false,
     prep_status: "to_build",
   };
 }
