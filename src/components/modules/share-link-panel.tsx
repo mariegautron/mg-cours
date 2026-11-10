@@ -68,7 +68,6 @@ export function ShareLinkPanel({
   const [options, setOptions] = useState<EspaceOptions>(active?.options ?? DEFAULT_ESPACE_OPTIONS);
   const [quizUrl, setQuizUrl] = useState(active?.quizUrl ?? "");
   const router = useRouter();
-  const [showUrl, setShowUrl] = useState(false);
   const [madeReady, setMadeReady] = useState<string[]>([]);
   const [pending, start] = useTransition();
 
@@ -80,15 +79,6 @@ export function ShareLinkPanel({
       // « Publié le … » et « Le lien n'est plus à jour » viennent de la page : on la relit.
       router.refresh();
     });
-  }
-
-  async function copy(url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      setNote("Lien copié.");
-    } catch {
-      setNote("Copie impossible : sélectionne le lien et copie-le.");
-    }
   }
 
   const choices: { key: keyof EspaceOptions; label: string; detail: string }[] = [
@@ -119,8 +109,9 @@ export function ShareLinkPanel({
         Publier pour les étudiant·es
       </h2>
       <p className="text-muted-foreground text-sm">
-        Un lien unique par module, en lecture seule : la frise, puis ce que tu coches ci-dessous.
-        Rien d’autre : ni noms, ni notes obtenues, ni corrigés, ni consignes privées.
+        Ce que tu coches ci-dessous part dans l’espace personnel de chaque étudiant·e (un seul lien
+        par personne, plus bas). Rien d’autre : ni noms des autres, ni corrigés, ni consignes
+        privées. Un lien de la classe déjà donné continue de marcher tel quel.
       </p>
       {!available ? (
         <p className="text-sm">
@@ -253,22 +244,9 @@ export function ShareLinkPanel({
                   run(() => publishModuleLink(moduleId, options, quizUrl.trim() || null))
                 }
               >
-                Publier et créer le lien de la classe
+                Publier dans les espaces
               </Button>
             )}
-            {active ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={pending}
-                onClick={() =>
-                  run(() => publishModuleLink(moduleId, options, quizUrl.trim() || null))
-                }
-              >
-                Créer un nouveau lien
-              </Button>
-            ) : null}
             {active ? (
               <Button
                 type="button"
@@ -283,49 +261,15 @@ export function ShareLinkPanel({
           </div>
         </>
       )}
-      {active && !state.url && !state.revoked ? (
+      {active && !state.revoked ? (
         <p className="text-muted-foreground text-sm">
-          Un lien est actif ({active.viewCount} consultation{active.viewCount > 1 ? "s" : ""}),
-          publié le {new Date(active.publishedAt).toLocaleDateString("fr-FR")}. « Mettre à jour »
-          garde la même adresse ; « Créer un nouveau lien » fait cesser l’ancien. « Mettre à jour
-          les cours publiés » publie aussi les notes des copies complètes ; une copie incomplète
-          n’est jamais publiée.
+          Publié le {new Date(active.publishedAt).toLocaleDateString("fr-FR")} ({active.viewCount}{" "}
+          consultation{active.viewCount > 1 ? "s" : ""} du lien de la classe, s’il a été donné). «
+          Mettre à jour les cours publiés » publie aussi dans les espaces les notes des copies
+          complètes ; une copie incomplète n’est jamais publiée.
         </p>
       ) : null}
-      {state.url ? (
-        <div className="space-y-2">
-          <label htmlFor="share-url" className="text-sm font-medium">
-            Lien à donner (visible une seule fois)
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="share-url"
-              readOnly
-              type={showUrl ? "text" : "password"}
-              value={state.url}
-              className="bg-background min-w-0 flex-1 rounded-md border px-2 py-1 text-sm"
-              onFocus={(e) => e.currentTarget.select()}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              aria-pressed={showUrl}
-              onClick={() => setShowUrl((v) => !v)}
-            >
-              {showUrl ? "Masquer" : "Afficher"}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => void copy(state.url!)}
-            >
-              Copier
-            </Button>
-          </div>
-        </div>
-      ) : null}
+      {/* Plus de lien de la classe à donner (doublon D29) : l'espace perso est le seul lien. */}
       <StudentLinksPanel
         moduleId={moduleId}
         available={studentLinks.available}
@@ -334,6 +278,11 @@ export function ShareLinkPanel({
         rows={studentLinks.rows}
       />
       {state.revoked ? <p className="text-sm">Lien dépublié : il n’affiche plus rien.</p> : null}
+      {state.url ? (
+        <p role="status" className="text-sm">
+          Publié dans les espaces : chaque étudiant·e le voit avec son lien personnel.
+        </p>
+      ) : null}
       {state.updated ? (
         <div role="status" className="space-y-2 text-sm">
           <p>

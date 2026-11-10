@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Link2 } from "lucide-react";
+import Link from "next/link";
+import { Link2 } from "lucide-react";
 
 import {
   publishResults,
-  regenerateResultLink,
   revokeResultLink,
   type PublishState,
 } from "@/app/(app)/modules/[id]/assessments/results-links-actions";
@@ -22,11 +22,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Confirm } from "@/components/modules/student-links-panel";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Pill } from "@/components/dashboard/pill";
-import { allLinksText, viewStatus, type ViewInfo } from "@/lib/result-links/sheet";
+import type { ViewInfo } from "@/lib/result-links/sheet";
 
 export interface PublishStudent {
   id: string;
@@ -38,9 +37,10 @@ export interface PublishStudent {
 }
 
 /**
- * Publication des résultats par lien personnel (US-147). Rien n'est publié sans confirmation. Les
- * liens ne s'affichent qu'une fois (seul leur haché est conservé) : copie-les tout de suite, ou
- * régénère-en un. Le suivi dit seulement si le lien a été ouvert (jamais d'adresse IP).
+ * Publication des résultats dans l'espace personnel de chaque étudiant·e (doublon D29 : l'espace est
+ * le seul lien). Rien n'est publié sans confirmation. Plus d'adresse de résultats à copier ni à
+ * régénérer ; « Retirer » enlève la note publiée de l'espace. Les anciens liens de résultats déjà
+ * donnés continuent de marcher.
  */
 export function PublishResults({
   moduleId,
@@ -58,7 +58,6 @@ export function PublishResults({
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [urls, setUrls] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -68,30 +67,13 @@ export function PublishResults({
       return;
     }
     setError(null);
-    if (state.created?.length) {
-      setUrls((u) => ({
-        ...u,
-        ...Object.fromEntries(state.created!.map((c) => [c.studentId, c.url])),
-      }));
-    }
     setMessage(ok);
     router.refresh();
   };
 
-  async function copy(text: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setMessage(`${label} copié.`);
-    } catch {
-      setMessage("Copie impossible depuis ce navigateur : sélectionne le lien à la main.");
-    }
-  }
-
-  const lines = students.flatMap((s) => (urls[s.id] ? [{ name: s.name, url: urls[s.id] }] : []));
   const published = students.filter((s) => s.link).length;
-  const viewed = students.filter((s) => s.link?.first_viewed_at).length;
   const withSpace = students.filter((s) => spaceStudentIds.includes(s.id)).length;
-  const allHaveSpace = students.length > 0 && withSpace === students.length;
+  const withoutSpace = students.length - withSpace;
 
   if (!available) {
     return (
@@ -100,7 +82,7 @@ export function PublishResults({
           Publier les résultats
         </h2>
         <p role="status" className="text-muted-foreground text-sm">
-          La publication par lien personnel sera disponible après la mise à jour de la base de
+          La publication dans les espaces sera disponible après la mise à jour de la base de
           données. L’envoi par e-mail ci-dessus reste possible.
         </p>
       </section>
@@ -115,33 +97,33 @@ export function PublishResults({
             Publier les résultats
           </h2>
           <p className="text-muted-foreground text-sm">
-            {allHaveSpace
-              ? "Les notes sont visibles dans l’espace de chacun·e : rien à renvoyer. Le lien de résultats ci-dessous est une option, pour les étudiant·es sans espace."
-              : withSpace > 0
-                ? `${withSpace} étudiant·e${withSpace > 1 ? "s ont" : " a"} un espace : leur note y est visible, rien à leur renvoyer. Le lien de résultats sert aux autres.`
-                : "Chaque étudiant·e reçoit un lien personnel et ne voit que son propre résultat."}{" "}
-            {published} lien{published > 1 ? "s" : ""} publié{published > 1 ? "s" : ""} sur{" "}
-            {students.length}
-            {published > 0
-              ? ` · ${viewed} personne${viewed > 1 ? "s" : ""} ${viewed > 1 ? "l’ont" : "l’a"} consulté`
-              : ""}
-            .
+            Chaque étudiant·e voit sa note dans son espace personnel, et seulement la sienne : rien
+            à lui renvoyer.{" "}
+            {withoutSpace > 0 ? (
+              <>
+                {withoutSpace} personne{withoutSpace > 1 ? "s n’ont" : " n’a"} pas encore d’espace :{" "}
+                <Link href={`/modules/${moduleId}/frise`} className="underline underline-offset-2">
+                  créer {withoutSpace > 1 ? "leurs liens" : "son lien"} dans Espace étudiant·es
+                </Link>
+                .{" "}
+              </>
+            ) : null}
+            {published} publié{published > 1 ? "s" : ""} sur {students.length}.
           </p>
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <PendingButton type="button" pending={pending} pendingLabel="Publication…">
               <Link2 aria-hidden />
-              Publier les résultats
+              Publier dans les espaces
             </PendingButton>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Publier les résultats ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Un lien personnel est créé pour chaque étudiant·e noté·e. Rien n’est envoyé : c’est
-                toi qui leur donnes leur lien. Une personne qui a déjà un lien le garde, avec ses
-                résultats mis à jour.
+                La note de chaque étudiant·e noté·e apparaît dans son espace personnel. Rien n’est
+                envoyé par e-mail. Une note déjà publiée est mise à jour.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -170,24 +152,6 @@ export function PublishResults({
       </p>
       {error ? <ActionError error={error} /> : null}
 
-      {lines.length > 0 && !allHaveSpace ? (
-        <div className="space-y-2 rounded-md border border-dashed p-3 text-sm">
-          <p>
-            <strong>Copie ces liens maintenant</strong> : ils ne s’affichent qu’une fois. Ils sont
-            personnels : ne les partage qu’avec chaque personne.
-          </p>
-          <Button
-            type="button"
-            size="touch"
-            variant="secondary"
-            onClick={() => void copy(allLinksText(lines), "Tous les liens")}
-          >
-            <Copy aria-hidden />
-            Tout copier
-          </Button>
-        </div>
-      ) : null}
-
       <ul className="divide-y text-sm">
         {students.map((s) => (
           <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
@@ -205,7 +169,11 @@ export function PublishResults({
               <div className="min-w-0">
                 <p className="font-medium">{s.name}</p>
                 <p className="text-muted-foreground">
-                  {s.link ? `Publié · ${viewStatus(s.link)}` : "Pas publié"}
+                  {!spaceStudentIds.includes(s.id)
+                    ? "Pas d’espace personnel"
+                    : s.link
+                      ? "Visible dans son espace"
+                      : "Pas publié"}
                 </p>
               </div>
             </div>
@@ -214,63 +182,26 @@ export function PublishResults({
                 ? "—"
                 : s.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
             </strong>
-            {s.link ? (
-              <Pill tone={s.link.first_viewed_at ? "ok" : "warn"}>
-                {s.link.first_viewed_at ? "Consulté" : "Pas encore consulté"}
-              </Pill>
-            ) : (
-              <Pill>Pas publié</Pill>
-            )}
+            {s.link ? <Pill tone="ok">Publié</Pill> : <Pill>Pas publié</Pill>}
             <div className="flex flex-wrap gap-2">
-              {urls[s.id] ? (
-                <Button
-                  type="button"
-                  size="touch"
-                  variant="outline"
-                  onClick={() => void copy(urls[s.id], `Lien de ${s.name}`)}
-                >
-                  <Copy aria-hidden />
-                  Copier le lien<span className="sr-only"> de {s.name}</span>
-                </Button>
-              ) : null}
               {s.link ? (
                 <>
                   <Confirm
                     variant="ghost"
                     trigger={
                       <>
-                        Régénérer<span className="sr-only"> le lien de {s.name}</span>
+                        Retirer<span className="sr-only"> la note publiée de {s.name}</span>
                       </>
                     }
-                    title={`Régénérer le lien de ${s.name} ?`}
-                    description={`L’ancien lien de ${s.name} cessera de fonctionner. Le nouveau ne s’affichera qu’une fois : copie-le tout de suite.`}
-                    action="Régénérer"
-                    disabled={pending}
-                    onConfirm={() =>
-                      start(async () =>
-                        apply(
-                          await regenerateResultLink(moduleId, assessmentId, s.id),
-                          `Nouveau lien pour ${s.name} : copie-le maintenant.`,
-                        ),
-                      )
-                    }
-                  />
-                  <Confirm
-                    variant="ghost"
-                    trigger={
-                      <>
-                        Révoquer<span className="sr-only"> le lien de {s.name}</span>
-                      </>
-                    }
-                    title={`Révoquer le lien de ${s.name} ?`}
-                    description={`Le lien de résultats de ${s.name} cessera de fonctionner.`}
-                    action="Révoquer"
+                    title={`Retirer la note publiée de ${s.name} ?`}
+                    description={`Sa note n’apparaîtra plus dans son espace (ni par un ancien lien de résultats).`}
+                    action="Retirer"
                     disabled={pending}
                     onConfirm={() =>
                       start(async () =>
                         apply(
                           await revokeResultLink(moduleId, assessmentId, s.id),
-                          `Lien de ${s.name} révoqué.`,
+                          `Note de ${s.name} retirée de son espace.`,
                         ),
                       )
                     }

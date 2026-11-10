@@ -67,8 +67,8 @@ D15, D19, D22, D24, D37, D38).
 
 | Fiche | État | Ce qu'il en est |
 | ----- | ---- | --------------- |
-| D29 | reste | `/resultats/[jeton]` et `/q/[jeton]` affichent leur propre page, sans renvoi vers l'espace ; « Publier et créer le lien de la classe » existe toujours. |
-| D30 | reste | Liens perso créés à quatre endroits (Espace étudiant·es, fiche étudiant·e, Envoyer les résultats, Liens du QCM). |
+| D29 | reste → **fait en partie au lot 5** | `/resultats/[jeton]` et `/q/[jeton]` affichent leur propre page, sans renvoi vers l'espace ; « Publier et créer le lien de la classe » existe toujours. |
+| D30 | reste → **fait en partie au lot 5** | Liens perso créés à quatre endroits (Espace étudiant·es, fiche étudiant·e, Envoyer les résultats, Liens du QCM). |
 | D31 | reste | `results/preview` existe et est appelé depuis Résultats. |
 | D32 | reste | « Nouveau groupe » est un écran à part (`groups/new`), lié depuis la page des groupes et depuis le tableau de bord (« Constituer les groupes »). Le module a déjà son propre import (`groups/import`). |
 | D33 | reste | « Vue de classe » sur la page des groupes ; noms mélangés (« Journal d'observations », « Observations de cours »). |
