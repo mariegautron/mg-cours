@@ -27,9 +27,10 @@ export function hyperplanningRows(sheets: readonly ResultSheet[]): Hyperplanning
         firstName: r.firstName ?? firstName,
         lastName: r.firstName ? r.name.slice(r.firstName.length + 1) : rest.join(" "),
         grade: sheet.valueOn20 === null ? null : fmt(sheet.valueOn20),
-        remark:
-          // Travail de groupe : l'absent·e excusé·e garde la note du groupe, jamais de rattrapage.
-          sheet.attendance === "absent_excused"
+        remark: sheet.makeupTitle
+          ? "Note du rattrapage"
+          : // Travail de groupe : l'absent·e excusé·e garde la note du groupe, jamais de rattrapage.
+            sheet.attendance === "absent_excused"
             ? sheet.valueOn20 !== null
               ? "Absent·e excusé·e : note du groupe"
               : "Absent·e excusé·e : pas de note, rattrapage"

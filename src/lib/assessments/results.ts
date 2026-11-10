@@ -86,6 +86,11 @@ export interface ResultSheet {
   comments: string[];
   /** Note bonus de certification : « +x,x point(s) sur la moyenne » (effet réel), ou absent. */
   bonusLine?: string | null;
+  /**
+   * Absence excusée remplacée par la note du rattrapage (évaluation individuelle) : titre du
+   * rattrapage. La note affichée est alors celle du rattrapage, comme dans les moyennes.
+   */
+  makeupTitle?: string | null;
 }
 
 interface Input {
@@ -146,14 +151,16 @@ export function buildResultSheets(input: Input): ResultSheet[] {
     groupId: string,
   ): ResultSheet => {
     const scores = (grade.scores ?? {}) as Record<string, number>;
-    // QCM + grille : si la grille est remplie, la note est celle de la grille, sur le barème de la grille.
-    const gridWins = !!input.hasQuiz && grade.value !== null && Object.keys(scores).length > 0;
+    // La note affichée est TOUJOURS la note enregistrée, sur le barème effectif de l'évaluation :
+    // même calcul que les moyennes, la correction et les rattrapages (ramenée sur 20, arrondie au
+    // demi-point supérieur). On ne la recalcule plus depuis la grille (un QCM à questions ouvertes
+    // garde dans `scores` des points sur le barème de la grille, d'où un 9/20 au lieu de 15/20).
     const totals = computeTotals(scoringCriteria, scores, {
       autoValidatedIds,
-      maxScore: gridWins ? null : assessment.max_score,
+      maxScore: assessment.max_score,
     });
-    const shownValue = gridWins ? totals.value : grade.value;
-    const shownMax = gridWins ? totals.maxScore : maxScore;
+    const shownValue = grade.value;
+    const shownMax = maxScore;
     // Le dépassement n'est affiché que si la note enregistrée est bien celle qu'on recalcule
     // (la grille a pu être modifiée depuis la saisie).
     const criterionComments = parseCriterionComments(grade.criterion_comments);

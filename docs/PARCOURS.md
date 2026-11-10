@@ -161,6 +161,7 @@ directes : les liens reçus par les étudiant·es.
   `grade-feedback`, `oral`, `phrases`, `appreciations`, `assessment-bonus`, `makeup`.
 - **À regarder en QA** : correction sur mobile, oral entre deux groupes, calculs de note, bonus, rattrapage, appréciations.
 - **Améliorations notées** :
+  - 10 nov. : notes cohérentes partout. « Envoyer les résultats », le CSV Hyperplanning, l'aperçu et les e-mails affichent la note enregistrée sur le barème de l'évaluation (même calcul que les moyennes et la correction) : un QCM à questions ouvertes noté 3/4 donne 15/20 (avant : 9/20, recalcul depuis la grille). Une absence excusée rattrapée affiche la note du rattrapage (« Note du rattrapage » dans Hyperplanning) au lieu de « — · pas de note, rattrapage ». Diagnostic en lecture seule : `docs/doublons/diag-notes-test.sql`.
   - 9 nov. : oral : aucune note privée recopiée par « Proposer » (`d93d214`) ; un seul état « à réécrire » partout (`97770fc`, `7e03333`) ; brouillon visible et conservé après « Modifier » (`fd9fc65`, `7e03333`).
   - 9 nov. : étude de cas : critère sans question = lettre choisie par Marie, plus de « écrite, verrouillée » sur une copie incomplète, réponses à choix affichées, copies non rendues en gris, récapitulatif complet (`f73b106`).
   - 9 nov. : « Faire passer l'oral » affiche la présence enregistrée en correction au lieu de « À poser » (`a5fa02c`). Une observation « [Oral] Absent. » ne pose pas la présence automatiquement (choix à faire par Marie).

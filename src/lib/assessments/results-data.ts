@@ -10,6 +10,7 @@ import { buildResultSheets, type ResultSheet } from "@/lib/assessments/results";
 import { getQuizByAssessment } from "@/lib/quiz/queries";
 import { parseWrittenReview } from "@/lib/assessments/open-review";
 import { createClient } from "@/lib/supabase/server";
+import { toTwenty } from "@/lib/ynov/notation";
 import { getModule } from "@/lib/modules/queries";
 import { themeTitleByGroup } from "@/lib/projects/queries";
 import { getAbsenceRuleForModule } from "@/lib/settings/rules-queries";
@@ -49,6 +50,9 @@ export async function loadResultSheets(
     themesByGroup,
     hasQuiz: !!quiz,
   });
+  // Absence excusée rattrapée (évaluation individuelle) : la note du rattrapage remplace l'absence,
+  // comme dans les moyennes et la page Rattrapages (« Note remplacée »).
+  if (!assessment.is_group_grade) await applyMakeupGrades(assessmentId, sheets);
   // Questions ouvertes : sous chaque critère, les questions tirées avec leur commentaire et leurs points
   // (photo écrite par Marie ; jamais l'attendu ni ses notes privées).
   await attachOpenQuestions(assessmentId, sheets);
@@ -104,5 +108,39 @@ async function attachOpenQuestions(assessmentId: string, sheets: ResultSheet[]) 
           comment: q.comment,
         }));
     }
+  }
+}
+
+/**
+ * Remplace, sur les fiches d'une évaluation individuelle, une absence excusée sans note par la note du
+ * rattrapage quand elle existe (même barème effectif que la page Rattrapages et les moyennes).
+ */
+async function applyMakeupGrades(assessmentId: string, sheets: ResultSheet[]) {
+  const supabase = await createClient();
+  const { data: makeup } = await supabase
+    .from("assessment")
+    .select("id, title")
+    .eq("makeup_of_id", assessmentId)
+    .maybeSingle();
+  if (!makeup) return;
+  const [full, grades] = await Promise.all([
+    getAssessment(makeup.id),
+    getGradesByAssessment(makeup.id),
+  ]);
+  if (!full) return;
+  const valueOf = new Map(
+    grades
+      .filter((g) => g.student_id && g.value !== null)
+      .map((g) => [g.student_id as string, g.value as number]),
+  );
+  for (const sheet of sheets) {
+    const id = sheet.recipients[0]?.id;
+    if (!id || sheet.attendance !== "absent_excused" || sheet.value !== null) continue;
+    const value = valueOf.get(id);
+    if (value === undefined) continue;
+    sheet.value = value;
+    sheet.maxScore = full.maxScore;
+    sheet.valueOn20 = toTwenty(value, full.maxScore);
+    sheet.makeupTitle = makeup.title;
   }
 }

@@ -44,7 +44,9 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
         ) : null}
         {sheet.attendance === "absent_excused" && sheet.value !== null ? (
           <p className={notice}>
-            Ton absence est excusée : tu gardes la note du groupe (règle de l’école).
+            {sheet.makeupTitle
+              ? `Ton absence est excusée : ta note est celle du rattrapage (« ${sheet.makeupTitle} »).`
+              : "Ton absence est excusée : tu gardes la note du groupe (règle de l’école)."}
           </p>
         ) : null}
         {absentExcusedNoNote ? (

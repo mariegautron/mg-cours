@@ -29,7 +29,9 @@ export function resultsEmailText(sheet: ResultSheet, firstName?: string): string
       lines.push("Absence non prévenue : la note est de 0 (règle de l’école).", "");
     if (sheet.attendance === "absent_excused")
       lines.push(
-        "Votre absence est excusée : vous gardez la note du groupe (règle de l’école).",
+        sheet.makeupTitle
+          ? `Votre absence est excusée : votre note est celle du rattrapage (« ${sheet.makeupTitle} »).`
+          : "Votre absence est excusée : vous gardez la note du groupe (règle de l’école).",
         "",
       );
     if (sheet.personalNote) lines.push(`Un mot pour vous : ${sheet.personalNote}`, "");
