@@ -1,5 +1,6 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { getModuleJourney } from "@/lib/modules/journey-queries";
+import { moduleLabels, relabelModules } from "@/lib/dashboard/module-labels";
 import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
@@ -82,6 +83,14 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listCourseProgress(),
     listToCorrect(),
   ]);
+  // Deux modules du même nom (copie d'une année sur l'autre) : l'année scolaire les distingue.
+  const labels = moduleLabels(await listModules({ includeArchived: true }));
+  for (const m of modules) m.name = labels.get(m.id) ?? m.name;
+  relabelModules(billing, labels);
+  relabelModules(coursesToday, labels);
+  relabelModules(coursesAfter, labels);
+  relabelModules(coursesWeek, labels);
+  relabelModules(toCorrect, labels);
   const resume = pickResume(resumeCandidates);
   // Une séance clôturée passe en « faite » : la carte principale montre la prochaine à faire.
   const todayAll = todaySessions(coursesToday, today);
@@ -111,7 +120,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
 
-  const upcomingEvals = await listUpcomingAssessments(today, 14);
+  const upcomingEvals = relabelModules(await listUpcomingAssessments(today, 14), labels);
   // Séances des 14 derniers jours jamais clôturées (modules en cours) : « Clôturer » d'abord.
   const twoWeeksAgo = new Date(Date.parse(`${today}T12:00:00Z`) - 14 * 86_400_000)
     .toISOString()
@@ -157,7 +166,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
   // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.
   const todayIds = new Set(sessions.map((c) => c.id));
-  const surprises = dueToday(await listSurprisesForCourses([...todayIds]), todayIds);
+  const surprises = relabelModules(
+    dueToday(await listSurprisesForCourses([...todayIds]), todayIds),
+    labels,
+  );
 
   const appreciationTodos = (
     await Promise.all(

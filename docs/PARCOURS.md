@@ -245,6 +245,7 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `dashboard`, `global-search`, `schedule`, `sidebar-nav`, `route-states`.
 - **À regarder en QA** : tableau de bord (à repenser plus tard), prochaine action, états vides, jalons.
 - **Améliorations notées** :
+  - 10 nov. : tableau de bord : deux modules du même nom (copie d'une année sur l'autre) s'affichent avec l'année scolaire (« Scrum (2025-2026) »), seulement en cas d'homonymie, dans toutes les listes du tableau de bord.
   - Nuit du 9 au 10 nov. : « Pas de séance cette semaine » (`f1eecca`) ; « À faire » avant le prochain cours, « Déroulé vide », message de date d'évaluation (`fbf5b61`) ; tuile du jour avec heure et séance (`49b1f88`).
   - Reste : « Ajouter au déroulé d'aujourd'hui » (le « non traité » est du texte libre : à préciser), jalons dans « Évaluations à venir » (1er fil, point d'étape).
   - 9 nov. (« piloter au quotidien » lot 1 et retest v2) : séances à clôturer, « Clôturer la séance » après l'heure de fin, « Terminer <module> », Edusign et boutons en ligne dans le bandeau (`443c4c5`) ; compteurs sur tous les modules en cours en une ligne, bandeau limité aux modules commencés, « Voir l'autre » (`d96e7e7`) ; export réparé en deux boutons, données puis fichiers construits par le navigateur (`1530a61`).
