@@ -3,7 +3,7 @@ import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Flag, Pencil, Presentation } from "lucide-react";
+import { Pencil, Presentation } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
@@ -224,10 +224,6 @@ export default async function ModulePage({
           <Link href={`/present/modules/${mod.id}`} className={BTN}>
             <Presentation aria-hidden className="mr-2 size-4" />
             Présenter le module
-          </Link>
-          <Link href={`/modules/${mod.id}/jalons`} className={BTN}>
-            <Flag aria-hidden className="mr-2 size-4" />
-            Jalons
           </Link>
           <Link href={`/modules/${mod.id}/edit`} className={BTN}>
             <Pencil aria-hidden className="mr-2 size-4" />

@@ -337,6 +337,7 @@ export default async function ModuleAssessmentsPage({
                           </Pill>
                         )}
                         {a.is_bonus ? <Pill tone="key">Bonus certification</Pill> : null}
+                        {a.needs_review ? <Pill tone="warn">Reprise : à relire</Pill> : null}
                         {!review && isProgressReview(a) ? (
                           <Pill tone="key">Point d’étape · noté</Pill>
                         ) : null}
