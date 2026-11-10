@@ -270,7 +270,7 @@ export function outlineChecks(input: OutlineCheckInput): OutlineCheck[] {
       ok: false,
       title: `${plural(expectations.uncovered, "attendu non couvert", "attendus non couverts")}`,
       detail: `${expectationsSummary(expectations.objectives, expectations.units)} · ni par une séance ni par une évaluation : le PDF l'écrira tel quel`,
-      to: "/couverture",
+      to: "/expectations#couverture",
       toLabel: "voir la couverture",
     });
   } else {

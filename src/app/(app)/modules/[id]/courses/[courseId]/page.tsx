@@ -4,10 +4,9 @@ import Link from "next/link";
 import { CourseExpectationsPicker } from "@/components/modules/course-expectations-picker";
 import { getExpectationLinks } from "@/lib/modules/expectation-links";
 import { notFound } from "next/navigation";
-import { ClipboardCheck, Play, NotebookPen, Pencil } from "lucide-react";
+import { ClipboardCheck, Play, Pencil } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
-import { DownloadButton } from "@/components/download-button";
 import { RetainedResources } from "@/components/modules/retained-resources";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
@@ -213,10 +212,6 @@ export default async function CoursePage({
               <Play aria-hidden className="mr-2 size-4" />
               Faire cours<span className="sr-only"> : {course.title}</span>
             </Link>
-            <Link href={`/modules/${id}/courses/${courseId}/notebook`} className={BTN}>
-              <NotebookPen aria-hidden className="mr-2 size-4" />
-              Carnet<span className="sr-only"> de séance : {course.title}</span>
-            </Link>
             {course.completion ? (
               <Link href={`/modules/${id}/courses/${courseId}/close`} className={BTN}>
                 <ClipboardCheck aria-hidden className="mr-2 size-4" />
@@ -264,60 +259,22 @@ export default async function CoursePage({
 
           <details open className="bg-card rounded-3xl border p-4">
             <summary className="cursor-pointer font-semibold">
-              Ressources retenues du module ({retained.length}) et cours en PDF
+              Ressources retenues du module ({retained.length})
             </summary>
             <div className="mt-3 space-y-3">
               <RetainedResources moduleId={id} resources={retained} />
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground text-sm">Cours en PDF pour Moodle :</span>
-                <DownloadButton
-                  href={`/api/modules/${id}/courses`}
-                  doneLabel="Cours téléchargés (un seul PDF)."
+              <p className="text-muted-foreground text-sm">
+                Les exports pour Moodle (cours en PDF, évaluations, progression) sont dans{" "}
+                <Link
+                  href={`/modules/${id}/documents#moodle`}
+                  className="underline underline-offset-2"
                 >
-                  Un seul PDF
-                </DownloadButton>
-                <DownloadButton
-                  href={`/api/modules/${id}/courses?format=zip`}
-                  kind="zip"
-                  doneLabel="Cours téléchargés (un PDF par séance)."
-                >
-                  Un PDF par séance (zip)
-                </DownloadButton>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground text-sm">
-                  Évaluations formatives pour Moodle (sujet, critères, correction type) :
-                </span>
-                <DownloadButton
-                  href={`/api/modules/${id}/evaluations`}
-                  kind="zip"
-                  doneLabel="Évaluations téléchargées (un dossier par évaluation)."
-                >
-                  Toutes les évaluations (zip)
-                </DownloadButton>
-                <DownloadButton
-                  href={`/api/modules/${id}/outline`}
-                  doneLabel="Progression pédagogique téléchargée."
-                >
-                  Progression pédagogique (PDF)
-                </DownloadButton>
-              </div>
+                  Documents
+                </Link>
+                .
+              </p>
             </div>
           </details>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-            <Link href={`/modules/${id}`} className={BTN}>
-              ← Retour au module
-            </Link>
-            {next ? (
-              <Link
-                href={`/modules/${id}/courses/${next.id}`}
-                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
-              >
-                Séance suivante →
-              </Link>
-            ) : null}
-          </div>
         </section>
 
         <aside

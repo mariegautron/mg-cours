@@ -70,6 +70,14 @@ export function JourneySteps({ journey }: { journey: ModuleSteps }) {
                   {hint}
                 </span>
               </Link>
+              {s.extra ? (
+                <Link
+                  href={s.extra.href}
+                  className="text-primary ml-[3.25rem] inline-flex min-h-8 items-center text-sm font-semibold underline underline-offset-2"
+                >
+                  {s.extra.label}
+                </Link>
+              ) : null}
             </li>
           );
         })}

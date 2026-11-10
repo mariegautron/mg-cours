@@ -417,7 +417,7 @@ export default async function ModulePage({
                       {expCoverage.summary.byNone} par aucun
                     </span>
                     <Link
-                      href={`/modules/${id}/couverture`}
+                      href={`/modules/${id}/expectations#couverture`}
                       className="text-primary text-xs underline underline-offset-2"
                     >
                       Voir la couverture

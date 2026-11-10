@@ -31,9 +31,6 @@ export default async function PlanningPage({ params }: PageProps<"/modules/[id]/
           <Button asChild variant="outline">
             <Link href={`/modules/${id}/frise`}>Frise du module</Link>
           </Button>
-          <Button asChild variant="ghost">
-            <Link href={`/modules/${id}`}>← Retour au module</Link>
-          </Button>
         </div>
       </div>
       <PlanningView days={days} moduleId={id} />

@@ -227,7 +227,10 @@ export default async function ModuleAssessmentsPage({
       </div>
 
       <p className="text-sm">
-        <Link href={`/modules/${id}/couverture`} className="underline underline-offset-2">
+        <Link
+          href={`/modules/${id}/expectations#couverture`}
+          className="underline underline-offset-2"
+        >
           Couverture des attendus (cours et évaluations)
         </Link>
       </p>

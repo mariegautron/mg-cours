@@ -54,14 +54,14 @@ D15, D19, D22, D24, D37, D38).
 
 | Fiche | État | Ce qu'il en est |
 | ----- | ---- | --------------- |
-| D21 | reste | La route `/build` redirige toujours (`build/actions.ts` n'est importé nulle part). L'éditeur de planning est déjà un seul composant (`ScheduleEditor`, `ScheduleForm` n'est qu'une enveloppe). Où j'en suis et Attendus envoient vers `/schedule`. |
-| D22 | changé | Le Planning a maintenant une entrée depuis Séances (`session-list.tsx`). Pas encore d'entrée depuis l'étape « Construire les séances » d'Où j'en suis. La refonte reste à cadrer avec Marie. |
-| D23 | reste | En bas de la séance : « ← Retour au module » et « Séance suivante → ». |
-| D24 | changé | « Ouvrir ma vue privée » et « Commencer » sont fusionnés (un seul geste ouvre les deux fenêtres). Restent : « Carnet » sur la séance (à côté de « Modifier la clôture ») et « Ouvrir mon carnet » sur le tableau de bord. |
-| D25 | reste | Le bloc Moodle est sur chaque séance ; second bouton de progression dans `outline-actions.tsx` ; Documents n'a pas de section « Pour Moodle ». |
-| D26 | reste | « Générer un QCM » (`quiz/generate`, liée trois fois), famille « quizzes » de la Bibliothèque, mini-QCM de séance. La famille « quizzes » renvoie peut-être déjà vers `/questions` (`family.ts`) : à vérifier. |
-| D27 | reste | `/expectations`, `/matching` et `/couverture` existent ; étape « Rapprocher les ressources » dans Où j'en suis ; la séance renvoie vers `/matching`. |
-| D28 | reste | `RetainedResources` (séance, Séances, nouvelle séance, modifier, Rapprocher, Où j'en suis), `retained/actions.ts` et « Ajouter au module… » de la Bibliothèque. |
+| D21 | reste → **fait au lot 6** | La route `/build` redirige toujours (`build/actions.ts` n'est importé nulle part). L'éditeur de planning est déjà un seul composant (`ScheduleEditor`, `ScheduleForm` n'est qu'une enveloppe). Où j'en suis et Attendus envoient vers `/schedule`. |
+| D22 | changé → **fait au lot 6** (refonte à cadrer) | Le Planning a maintenant une entrée depuis Séances (`session-list.tsx`). Pas encore d'entrée depuis l'étape « Construire les séances » d'Où j'en suis. La refonte reste à cadrer avec Marie. |
+| D23 | reste → **fait au lot 6** | En bas de la séance : « ← Retour au module » et « Séance suivante → ». |
+| D24 | changé → **fait au lot 6** | « Ouvrir ma vue privée » et « Commencer » sont fusionnés (un seul geste ouvre les deux fenêtres). Restent : « Carnet » sur la séance (à côté de « Modifier la clôture ») et « Ouvrir mon carnet » sur le tableau de bord. |
+| D25 | reste → **fait au lot 6** | Le bloc Moodle est sur chaque séance ; second bouton de progression dans `outline-actions.tsx` ; Documents n'a pas de section « Pour Moodle ». |
+| D26 | reste → **en attente des chiffres (lot 6)** | « Générer un QCM » (`quiz/generate`, liée trois fois), famille « quizzes » de la Bibliothèque, mini-QCM de séance. La famille « quizzes » renvoie peut-être déjà vers `/questions` (`family.ts`) : à vérifier. |
+| D27 | reste → **fait au lot 6** (suggestions dans la séance : à faire) | `/expectations`, `/matching` et `/couverture` existent ; étape « Rapprocher les ressources » dans Où j'en suis ; la séance renvoie vers `/matching`. |
+| D28 | reste → **en attente des chiffres (lot 6)** | `RetainedResources` (séance, Séances, nouvelle séance, modifier, Rapprocher, Où j'en suis), `retained/actions.ts` et « Ajouter au module… » de la Bibliothèque. |
 
 ## E. Étudiant·es et espace étudiant
 

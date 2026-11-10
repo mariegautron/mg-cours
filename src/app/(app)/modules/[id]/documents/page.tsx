@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 
+import { DownloadButton } from "@/components/download-button";
 import { ModuleDocuments } from "@/components/modules/module-documents";
 import { Button } from "@/components/ui/button";
 import { getModule, getModuleDocuments } from "@/lib/modules/queries";
@@ -33,6 +34,47 @@ export default async function ModuleDocumentsPage({
           </p>
         ) : null}
         <ModuleDocuments moduleId={mod.id} documents={documents} />
+      </section>
+
+      {/* Exports pour Moodle : une seule fois, ici (doublon D25), plus sur chaque séance. */}
+      <section aria-labelledby="moodle" className="space-y-3 rounded-lg border p-4">
+        <h2 id="moodle" className="text-lg font-medium">
+          Pour Moodle
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground text-sm">Cours en PDF :</span>
+          <DownloadButton
+            href={`/api/modules/${mod.id}/courses`}
+            doneLabel="Cours téléchargés (un seul PDF)."
+          >
+            Un seul PDF
+          </DownloadButton>
+          <DownloadButton
+            href={`/api/modules/${mod.id}/courses?format=zip`}
+            kind="zip"
+            doneLabel="Cours téléchargés (un PDF par séance)."
+          >
+            Un PDF par séance (zip)
+          </DownloadButton>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-muted-foreground text-sm">
+            Évaluations (sujet, critères, correction type) :
+          </span>
+          <DownloadButton
+            href={`/api/modules/${mod.id}/evaluations`}
+            kind="zip"
+            doneLabel="Évaluations téléchargées (un dossier par évaluation)."
+          >
+            Toutes les évaluations (zip)
+          </DownloadButton>
+          <DownloadButton
+            href={`/api/modules/${mod.id}/outline`}
+            doneLabel="Progression pédagogique téléchargée."
+          >
+            Progression pédagogique (PDF)
+          </DownloadButton>
+        </div>
       </section>
     </div>
   );

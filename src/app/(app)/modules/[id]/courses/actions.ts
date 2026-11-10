@@ -213,7 +213,7 @@ export async function setCourseExpectations(
     if (error) return { error: failure("enregistrer") };
   }
   revalidatePath(`/modules/${moduleId}/courses/${courseId}`);
-  revalidatePath(`/modules/${moduleId}/couverture`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
   revalidatePath(`/modules/${moduleId}/outline`);
   revalidatePath(`/modules/${moduleId}`);
   return {};
@@ -248,7 +248,7 @@ export async function linkExpectationToCourse(
       .insert({ course_id: courseId, expectation_id: expectationId });
     if (error) return { error: failure("enregistrer") };
   }
-  revalidatePath(`/modules/${moduleId}/couverture`);
+  revalidatePath(`/modules/${moduleId}/expectations`);
   revalidatePath(`/modules/${moduleId}/courses/${courseId}`);
   revalidatePath(`/modules/${moduleId}/outline`);
   return {};

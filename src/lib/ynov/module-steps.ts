@@ -68,6 +68,8 @@ export interface ModuleStep {
   /** Détail chiffré : « 6 attendus », « 3/6 faites »… */
   summary: string;
   action: { label: string; href: string };
+  /** Lien secondaire, sous l'étape (ex. « Voir le planning » pour « Construire les séances »). */
+  extra?: { label: string; href: string };
   /** Formulation pour le badge : « Prochaine étape : {badge} ». */
   badge: string;
 }
@@ -103,7 +105,7 @@ export function coverageSummary(c: CoverageSummary): string {
 
 export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   const base = `/modules/${ctx.moduleId}`;
-  const { courses, coverage, notes, adminDocs, invoice } = ctx;
+  const { courses, notes, adminDocs, invoice } = ctx;
 
   // Module déjà réalisé : progression envoyée = préparation faite ; facture émise = tout le reste.
   // Vrais états des étapes, même pour un module terminé ou facturé : une facture déposée ne coche
@@ -113,8 +115,6 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   const delivered = false;
 
   const ficheDone = prepared || (ctx.hasFiche && ctx.expectationsCount > 0);
-  const matchingDone =
-    prepared || (ctx.expectationsCount > 0 && coverage.total > 0 && coverage.uncovered === 0);
   const sessionsDone = prepared || courses.ready >= 1;
   const planningDone = prepared || (notes.required > 0 && ctx.plannedAssessments >= notes.required);
   const outlineDone = prepared || ctx.outlineGeneratedAt !== null;
@@ -163,14 +163,8 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       action: { label: "Lire les attendus de la fiche", href: `${base}/expectations` },
       badge: "lire les attendus de la fiche",
     },
-    {
-      key: "matching",
-      title: "Rapprocher les ressources",
-      state: inProgress(matchingDone, coverage.covered + coverage.toBuild > 0),
-      summary: ctx.expectationsCount > 0 ? coverageSummary(coverage) : "aucun attendu à rapprocher",
-      action: { label: "Rapprocher mes ressources", href: `${base}/matching` },
-      badge: "rapprocher les ressources des attendus",
-    },
+    // Doublon D27 : plus d'étape « Rapprocher les ressources » ; la couverture des attendus est dans
+    // la page Attendus (première étape), et une ressource se place dans le déroulé d'une séance.
     {
       key: "sessions",
       title: "Construire les séances",
@@ -183,6 +177,10 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
         courses.total > 0
           ? { label: "Préparer mes séances", href: `${base}/courses` }
           : { label: "Créer les séances", href: `${base}/schedule` },
+      // Le planning heure par heure sert pendant la préparation (doublon D22) : une vraie entrée.
+      ...(courses.total > 0
+        ? { extra: { label: "Voir le planning", href: `${base}/planning` } }
+        : {}),
       badge: courses.total > 0 ? "préparer les séances" : "créer les séances",
     },
     {

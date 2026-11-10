@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CustomExpectations } from "@/components/modules/custom-expectations";
+import { ExpectationCoverage } from "@/components/modules/expectation-coverage";
 import { SplitLongExpectations } from "@/components/modules/split-long-expectations";
 import { planExpectationSplits } from "@/lib/modules/expectations";
 import { ExpectationsEditor } from "@/components/modules/expectations-editor";
@@ -35,7 +36,7 @@ export default async function ExpectationsPage({
   const doc = documents.find((d) => d.kind === "school_expectations") ?? null;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-5xl space-y-6">
       <div>
         <Link href={`/modules/${mod.id}`} className="text-sm underline underline-offset-2">
           ← {mod.name}
@@ -48,10 +49,8 @@ export default async function ExpectationsPage({
 
       {saved ? (
         <p role="status" className="rounded-md border p-3 text-sm">
-          Attendus enregistrés.{" "}
-          <Link href={`/modules/${mod.id}/matching`} className="underline underline-offset-2">
-            Rapprocher avec les ressources
-          </Link>
+          Attendus enregistrés. Relie chacun à une séance ou une évaluation dans « Couverture »,
+          plus bas.
         </p>
       ) : null}
 
@@ -85,6 +84,13 @@ export default async function ExpectationsPage({
         available={!originError}
         items={custom.map((e) => ({ id: e.id, label: e.label }))}
       />
+
+      <section aria-labelledby="couverture" className="space-y-2 rounded-lg border p-4">
+        <h2 id="couverture" className="text-lg font-medium">
+          Couverture : quelles séances et évaluations traitent chaque attendu
+        </h2>
+        <ExpectationCoverage moduleId={mod.id} />
+      </section>
 
       <section aria-labelledby="planning" className="space-y-2 rounded-lg border p-4">
         <h2 id="planning" className="text-lg font-medium">

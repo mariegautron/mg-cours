@@ -5,7 +5,7 @@ import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { NotebookPen, PenLine, Play } from "lucide-react";
+import { PenLine, Play } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { TodayPrep } from "@/components/dashboard/today-prep";
@@ -619,13 +619,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   Ouvrir Edusign<span className="sr-only"> (nouvel onglet)</span>
                 </a>
               )}
-              <Link
-                href={`/modules/${hero.module.id}/courses/${hero.id}/notebook`}
-                className={`${BTN} min-h-12`}
-              >
-                <NotebookPen aria-hidden className="mr-2 size-4" />
-                Ouvrir mon carnet<span className="sr-only"> : {hero.title}</span>
-              </Link>
             </div>
           </div>
         </section>
