@@ -50,16 +50,15 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
   const proposed = project
     ? remainingSkeleton(
         projectSkeleton(mod.total_hours),
-        counted
-          .map((a) =>
-            a.project_role
-              ? a.project_role
-              : /oral/i.test(a.type ?? "")
-                ? ("oral" as const)
-                : a.is_group_grade
-                  ? ("milestone" as const)
-                  : ("individual" as const),
-          ),
+        counted.map((a) =>
+          a.project_role
+            ? a.project_role
+            : /oral/i.test(a.type ?? "")
+              ? ("oral" as const)
+              : a.is_group_grade
+                ? ("milestone" as const)
+                : ("individual" as const),
+        ),
       )
     : [];
 
@@ -77,9 +76,9 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
             Le projet fil rouge : {hasThemes ? "plusieurs thèmes" : "le brief"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Un projet suivi tout au long du module : jalons, oral de fin de projet et évaluation
-            individuelle sont des évaluations comme les autres, comptées dans les notes YNOV. Un
-            projet se réutilise d’un module à l’autre.
+            Un projet suivi tout au long du module : évaluations de projet, oral de fin de projet et
+            évaluation individuelle sont des évaluations comme les autres, comptées dans les notes
+            YNOV. Un projet se réutilise d’un module à l’autre.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -221,7 +220,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
               </h2>
               <p className="text-muted-foreground mb-3 text-sm">
                 Déduit des notes exigées pour {mod.total_hours} h : 1 évaluation individuelle, 1
-                oral, et un jalon pour chaque note restante. Modifie avant de créer.
+                oral, et une évaluation de projet pour chaque note restante. Modifie avant de créer.
               </p>
               <SkeletonEditor
                 resetKey={counted.map((a) => a.id).join(",")}

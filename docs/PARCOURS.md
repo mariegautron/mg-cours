@@ -138,6 +138,7 @@ directes : les liens reçus par les étudiant·es.
   `submission-items`, `individual-prep`.
 - **À regarder en QA** : grille → attendus, publication aux étudiant·es, suivi des rendus, évaluation sans groupe.
 - **Améliorations notées** :
+  - 10 nov. : doublons, lot 4 (D15). Une seule notion, « Point d'étape » (case « Noté » décochée par défaut, type gardé). Retirés : la case « Jalon du projet fil rouge » du formulaire d'évaluation (les évaluations déjà rattachées au projet le restent, notes comprises), la ligne « Jalons du projet : N » de la page Évaluations, le code « Noter la phase » (le bouton n'était plus affiché ; le brief n'est pas touché), le mot « Jalon » (une évaluation notée du projet s'appelle « Évaluation du projet »). Les anciennes adresses `/modules/…/jalons…` mènent aux évaluations du module. Pas de migration ; comptage en lecture seule : `docs/doublons/lot4-controle.sql`.
   - 9 nov. : page « QCM en ligne » qui plantait sur tous les QCM (`995d568`).
   - 9 nov. : « Prêt pour le jour J ? » : signaux justes (cadre « Complet », « Où rendre » selon le mode de dépôt, « QCM publié », fichiers facultatifs, « Pas rattachée à une séance », « Publié (à jour) » se décoche) (`1786459`, `55c6ede`) ; replié par défaut (`9302a81`).
   - 9 nov. : squelette du brief aligné sur « Prévues » (`041a0e0`) ; filtre Module avec l'année, « Groupe Groupe », textes (`172c770`) ; « Visible après la mise à jour » (`bd5d486`) ; reprendre un projet sur un module qui en a déjà un, avec confirmation (`22c78f2`).

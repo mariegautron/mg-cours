@@ -22,7 +22,7 @@ export default async function NewAssessmentPage({
   searchParams,
 }: PageProps<"/modules/[id]/assessments/new">) {
   const { id } = await params;
-  const { grille, jalon, type } = await searchParams;
+  const { grille, type } = await searchParams;
   const project = await getModuleProject(id);
   const [mod, groups, grids, courses] = await Promise.all([
     getModule(id),
@@ -50,7 +50,6 @@ export default async function NewAssessmentPage({
         coefficients={await schoolCoefficients(id)}
         reviewTargets={await listReviewTargets(id)}
         hasProject={!!project}
-        initialMilestone={jalon === "1"}
         initialType={type === "etape" ? "Point d’étape" : undefined}
         initialGridId={
           typeof grille === "string" && grids.some((g) => g.id === grille) ? grille : ""

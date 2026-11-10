@@ -28,7 +28,6 @@ import { Pill } from "@/components/dashboard/pill";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
-  jalonsCount,
   enteredLabel,
   plannedLabel,
   plannedMessage,
@@ -215,9 +214,9 @@ export default async function ModuleAssessmentsPage({
           </h1>
           <p role="status" className="text-muted-foreground mt-1">
             {requirementLabel(mod.total_hours, progress)}. {plannedLabel(planned)}.{" "}
-            {enteredLabel(progress)}. {plannedMessage(planned)} Jalons du projet :{" "}
-            {jalonsCount(assessments)}. Le projet fil rouge porte le brief et le contexte ; chaque
-            jalon porte ses attendus et sa grille. Clique une évaluation pour la préparer.
+            {enteredLabel(progress)}. {plannedMessage(planned)} Le projet fil rouge porte le brief
+            et le contexte ; chaque évaluation porte ses attendus et sa grille, et un point d’étape
+            (noté ou non) fait le point avec les groupes. Clique une évaluation pour la préparer.
           </p>
         </div>
         <Button asChild variant="ghost">
@@ -256,7 +255,7 @@ export default async function ModuleAssessmentsPage({
                 ? `${project.brief_md.trim() ? "Brief rédigé" : "Brief à rédiger"}${
                     project.themes.length ? ` · ${project.themes.length} thèmes au choix` : ""
                   }`
-                : "Commence par le projet : il organise les jalons. Tu peux aussi créer directement une évaluation."}
+                : "Commence par le projet : il porte le brief des évaluations. Tu peux aussi créer directement une évaluation."}
             </p>
           </div>
           <Pill tone={planned.missingGroup + planned.missingIndividual === 0 ? "ok" : "warn"}>
@@ -270,7 +269,7 @@ export default async function ModuleAssessmentsPage({
               </Link>
             </Button>
             <Button asChild>
-              <Link href={`/modules/${id}/assessments/add${project ? "?jalon=1" : ""}`}>
+              <Link href={`/modules/${id}/assessments/add`}>
                 <Plus aria-hidden />
                 Ajouter une évaluation
               </Link>
@@ -294,8 +293,8 @@ export default async function ModuleAssessmentsPage({
           title="Pas encore d’évaluation"
           description={
             project
-              ? "Le projet fil rouge existe : ajoute ses jalons, ou une évaluation à part."
-              : "Commence par le projet fil rouge : il organise les jalons. Tu peux aussi créer directement une évaluation."
+              ? "Le projet fil rouge existe : ajoute ses évaluations et ses points d’étape."
+              : "Commence par le projet fil rouge : il porte le brief des évaluations. Tu peux aussi créer directement une évaluation."
           }
           actions={[
             project
@@ -303,7 +302,7 @@ export default async function ModuleAssessmentsPage({
               : { label: "Créer le projet", href: `/modules/${id}/project` },
             {
               label: "Ajouter une évaluation",
-              href: `/modules/${id}/assessments/add${project ? "?jalon=1" : ""}`,
+              href: `/modules/${id}/assessments/add`,
             },
           ]}
         />
@@ -618,8 +617,8 @@ export default async function ModuleAssessmentsPage({
                 </table>
               </div>
               <p className="text-muted-foreground mt-3 text-[0.8rem]">
-                Un jalon de plus, ou une évaluation individuelle de plus, si tu veux plus de notes
-                que les {progress.requirement.total} exigées.
+                Une évaluation de groupe de plus, ou une évaluation individuelle de plus, si tu veux
+                plus de notes que les {progress.requirement.total} exigées.
               </p>
             </section>
           ) : null}

@@ -12,7 +12,9 @@ import { requiredNotes } from "./notation";
 export type ProjectRole = "milestone" | "oral" | "individual";
 
 export const PROJECT_ROLE_LABELS: Record<ProjectRole, string> = {
-  milestone: "Jalon",
+  // Doublon D15 : plus de mot « Jalon » (une seule notion, le point d'étape, noté ou non) ; une
+  // évaluation notée du projet reste une évaluation ordinaire.
+  milestone: "Évaluation du projet",
   oral: "Oral de fin de projet",
   individual: "Évaluation individuelle",
 };
@@ -33,7 +35,11 @@ export function projectSkeleton(totalHours: number): SkeletonItem[] {
   const groupMilestones = Math.min(milestones, Math.max(0, req.group - 1));
   const items: SkeletonItem[] = [];
   for (let i = 1; i <= milestones; i++) {
-    items.push({ role: "milestone", title: `Jalon ${i}`, isGroupGrade: i <= groupMilestones });
+    items.push({
+      role: "milestone",
+      title: `Évaluation de projet ${i}`,
+      isGroupGrade: i <= groupMilestones,
+    });
   }
   items.push({ role: "oral", title: "Oral de fin de projet", isGroupGrade: true });
   items.push({ role: "individual", title: "Évaluation individuelle", isGroupGrade: false });

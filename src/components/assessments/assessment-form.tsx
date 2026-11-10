@@ -43,8 +43,6 @@ export function AssessmentForm({
   courses = [],
   assessment,
   initialGridId = "",
-  hasProject = false,
-  initialMilestone = false,
   coefficients = { group: GROUP_COEFFICIENT, individual: INDIVIDUAL_COEFFICIENT },
   reviewTargets = [],
   initialType,
@@ -59,9 +57,8 @@ export function AssessmentForm({
   assessment?: AssessmentDetail;
   /** Grille choisie depuis la bibliothèque (US-126). */
   initialGridId?: string;
-  /** Le module a un projet fil rouge : la case « Jalon » est proposée. */
+  /** Hérité (ancienne case « Jalon du projet fil rouge », retirée) : ignoré. */
   hasProject?: boolean;
-  initialMilestone?: boolean;
   /** Coefficients de l'école du module (YNOV par défaut). */
   coefficients?: { group: number; individual: number };
   /** Évaluations notées du module auxquelles un point d'étape peut se rattacher. */
@@ -169,18 +166,6 @@ export function AssessmentForm({
           </div>
           {groupGrade ? <input type="hidden" name="isGroupGrade" value="on" /> : null}
         </fieldset>
-
-        {hasProject ? (
-          <label className="flex items-center gap-2 text-sm">
-            <input type="hidden" name="milestoneField" value="1" />
-            <input
-              type="checkbox"
-              name="isMilestone"
-              defaultChecked={assessment ? !!assessment.project_id : initialMilestone}
-            />
-            Jalon du projet fil rouge
-          </label>
-        ) : null}
 
         <fieldset className="space-y-4">
           <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>

@@ -18,10 +18,8 @@ const card = "bg-card rounded-3xl border p-5 shadow-sm";
  */
 export default async function AddAssessmentPage({
   params,
-  searchParams,
 }: PageProps<"/modules/[id]/assessments/add">) {
   const { id } = await params;
-  const jalon = (await searchParams).jalon === "1";
   const mod = await getModule(id);
   if (!mod) notFound();
   const grids = await listGrids();
@@ -65,9 +63,7 @@ export default async function AddAssessmentPage({
                   Sujet, grille, groupes, date : le formulaire complet.
                 </p>
                 <Button asChild>
-                  <Link href={`/modules/${id}/assessments/new${jalon ? "?jalon=1" : ""}`}>
-                    Créer une évaluation
-                  </Link>
+                  <Link href={`/modules/${id}/assessments/new`}>Créer une évaluation</Link>
                 </Button>
               </section>
               <section
@@ -148,9 +144,7 @@ export default async function AddAssessmentPage({
                           size="touch"
                           className="h-auto min-h-11 w-full justify-start py-2 text-left whitespace-normal"
                         >
-                          <Link
-                            href={`/modules/${id}/assessments/new?grille=${g.id}${jalon ? "&jalon=1" : ""}`}
-                          >
+                          <Link href={`/modules/${id}/assessments/new?grille=${g.id}`}>
                             {g.name}
                             <span className="text-muted-foreground font-normal">
                               {" "}

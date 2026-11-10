@@ -121,46 +121,6 @@ async function reviewColumns(
 }
 
 /**
- * Case « Jalon du projet fil rouge » : rattache l'évaluation au projet du module (ou l'en détache).
- * `null` : la case n'était pas dans le formulaire, rien ne change.
- */
-async function milestoneColumns(
-  supabase: Supabase,
-  moduleId: string,
-  formData: FormData,
-  assessmentId: string | null,
-) {
-  if (formData.get("milestoneField") !== "1") return null;
-  const { data: project } = await supabase
-    .from("module_project")
-    .select("id")
-    .eq("module_id", moduleId)
-    .maybeSingle();
-  if (!project) return null;
-  const on = formData.get("isMilestone") === "on";
-  if (!on) {
-    return assessmentId ? { project_id: null, project_role: null, project_position: null } : null;
-  }
-  if (assessmentId) {
-    const { data: current } = await supabase
-      .from("assessment")
-      .select("project_id")
-      .eq("id", assessmentId)
-      .maybeSingle();
-    if (current?.project_id === project.id) return null;
-  }
-  const { count } = await supabase
-    .from("assessment")
-    .select("id", { count: "exact", head: true })
-    .eq("project_id", project.id);
-  return {
-    project_id: project.id,
-    project_role: "milestone" as const,
-    project_position: (count ?? 0) + 1,
-  };
-}
-
-/**
  * Oral : sans heure de début saisie, les créneaux partent de l'heure de la séance rattachée (jamais
  * de l'heure actuelle). Une heure déjà saisie n'est jamais écrasée.
  */
@@ -257,12 +217,10 @@ export async function createAssessment(
     parsed.data.autoValidatedCriterionIds,
   );
 
-  const milestone = await milestoneColumns(supabase, moduleId, formData, null);
   const review = await reviewColumns(supabase, moduleId, formData, parsed.data.type, null);
   const { data, error } = await supabase
     .from("assessment")
     .insert({
-      ...(milestone ?? {}),
       // Colonnes du point d'étape seulement quand elles servent (base pas encore à jour sinon).
       ...(review.review_for_id || review.review_criterion_ids || review.review_graded
         ? review
@@ -347,7 +305,6 @@ export async function updateAssessment(
         .maybeSingle()
     : { data: null };
 
-  const milestone = await milestoneColumns(supabase, moduleId, formData, assessmentId);
   const review = await reviewColumns(supabase, moduleId, formData, parsed.data.type, assessmentId);
   const { data: before } = await supabase
     .from("assessment")
@@ -360,7 +317,6 @@ export async function updateAssessment(
   const { error } = await supabase
     .from("assessment")
     .update({
-      ...(milestone ?? {}),
       // Seulement les colonnes présentes en base (migrations du point d'étape pas encore passées).
       ...(hadReview
         ? Object.fromEntries(Object.entries(review).filter(([k]) => before && k in before))

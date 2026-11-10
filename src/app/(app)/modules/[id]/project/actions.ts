@@ -2,10 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { ASSESSMENT_FILES_BUCKET } from "@/lib/assessments/files";
-import { parseResourceFiles } from "@/lib/resources/files";
 import { drawThemes } from "@/lib/projects/draw";
-import { unnoteConfirmation, unnoteWordMatches } from "@/lib/projects/unnote";
 import { readProjectForm, readSkeletonJson, readThemesJson } from "@/lib/projects/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure, NOT_FOUND } from "@/lib/messages";
@@ -122,107 +119,6 @@ export async function createSkeleton(
   revalidatePath(`/modules/${moduleId}/assessments`);
   revalidatePath(`/modules/${moduleId}`);
   return { created: created.length };
-}
-
-export interface PhaseState {
-  error?: string;
-  done?: string;
-}
-
-/**
- * « Noter la phase » : crée l'évaluation (jalon de groupe) qui porte une phase du brief, rattachée
- * au projet et à tous les groupes du module, avec le livrable de la phase comme rendu attendu.
- */
-export async function notePhase(
-  moduleId: string,
-  phaseTitle: string,
-  deliverable: string,
-): Promise<PhaseState> {
-  const title = phaseTitle.replace(/\s+/g, " ").trim().slice(0, 200);
-  if (!title) return { error: "La phase n’a pas de titre." };
-  const supabase = await createClient();
-  const { data: project } = await supabase
-    .from("module_project")
-    .select("id")
-    .eq("module_id", moduleId)
-    .maybeSingle();
-  if (!project) return { error: "Enregistre d’abord le projet." };
-
-  const [{ data: groups }, { count: existing }] = await Promise.all([
-    supabase.from("student_group").select("id").eq("module_id", moduleId),
-    supabase
-      .from("assessment")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", project.id),
-  ]);
-  const { data: created, error } = await supabase
-    .from("assessment")
-    .insert({
-      module_id: moduleId,
-      title,
-      type: "projet",
-      is_group_grade: true,
-      project_id: project.id,
-      project_role: "milestone",
-      project_position: (existing ?? 0) + 1,
-      deliverable_md: deliverable.trim().slice(0, 20000) || null,
-    })
-    .select("id")
-    .single();
-  if (error || !created) return { error: failure("noter la phase") };
-  const groupIds = (groups ?? []).map((g) => g.id);
-  if (groupIds.length) {
-    const { error: groupsError } = await supabase
-      .from("assessment_group")
-      .insert(
-        groupIds.map((student_group_id) => ({ assessment_id: created.id, student_group_id })),
-      );
-    if (groupsError) {
-      await supabase.from("assessment").delete().eq("id", created.id);
-      return { error: failure("noter la phase") };
-    }
-  }
-  revalidatePath(`/modules/${moduleId}`, "layout");
-  return { done: `« ${title} » est maintenant une évaluation du projet.` };
-}
-
-/**
- * « Ne plus noter cette phase » : supprime l'évaluation (jalon) créée pour une phase. Les notes
- * déjà saisies ne partent que si le mot « supprimer » est retapé (recalculé ici : jamais pris du
- * navigateur). La phase repasse à « Sans note ».
- */
-export async function unnotePhase(
-  moduleId: string,
-  assessmentId: string,
-  typed: string,
-): Promise<PhaseState> {
-  const supabase = await createClient();
-  const { data: assessment } = await supabase
-    .from("assessment")
-    .select("id, module_id, title, project_id, project_role, files")
-    .eq("id", assessmentId)
-    .maybeSingle();
-  if (
-    !assessment ||
-    assessment.module_id !== moduleId ||
-    !assessment.project_id ||
-    assessment.project_role !== "milestone"
-  ) {
-    return { error: "Cette évaluation n’est pas une phase du projet." };
-  }
-  const { count } = await supabase
-    .from("grade")
-    .select("id", { count: "exact", head: true })
-    .eq("assessment_id", assessmentId);
-  if (unnoteConfirmation(count ?? 0) === "typed" && !unnoteWordMatches(typed)) {
-    return { error: "Retape « supprimer » pour confirmer." };
-  }
-  const { error } = await supabase.from("assessment").delete().eq("id", assessmentId);
-  if (error) return { error: failure("supprimer l’évaluation") };
-  const paths = parseResourceFiles(assessment.files).map((f) => f.path);
-  if (paths.length) await supabase.storage.from(ASSESSMENT_FILES_BUCKET).remove(paths);
-  revalidatePath(`/modules/${moduleId}`, "layout");
-  return { done: `« ${assessment.title} » n’est plus notée.` };
 }
 
 /** Supprime le projet ; les évaluations (et leurs notes) sont conservées, détachées du projet. */
