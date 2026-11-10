@@ -44,6 +44,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
     ]);
   if (!mod) notFound();
   const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
+  const leftIds = new Set(enrolled.rows.filter((e) => e.leftAt).map((e) => e.studentId));
   // Inscrit·es (avec ou sans groupe) : noms des fiches qui ne sont dans aucun groupe.
   const memberById = new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m]));
   const outside = enrolled.rows.map((e) => e.studentId).filter((sid) => !memberById.has(sid));
@@ -172,13 +173,26 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
                   className="hover:bg-accent focus-visible:ring-ring block rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <p className="font-medium">{g.name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {g.members.length} étudiant·e{g.members.length > 1 ? "s" : ""}
-                  </p>
+                  {(() => {
+                    // Les personnes parties ne comptent plus ; elles restent visibles, grisées.
+                    const active = g.members.filter((m) => !leftIds.has(m.id)).length;
+                    const gone = g.members.length - active;
+                    return (
+                      <p className="text-muted-foreground text-sm">
+                        {active} étudiant·e{active > 1 ? "s" : ""}
+                        {gone ? ` · ${gone} parti·e${gone > 1 ? "s" : ""}` : ""}
+                      </p>
+                    );
+                  })()}
                   {g.members.length > 0 ? (
                     <span className="mt-2 flex flex-wrap gap-1" aria-hidden>
                       {g.members.slice(0, 8).map((m) => (
-                        <StudentPhoto key={m.id} student={m} size="sm" />
+                        <span
+                          key={m.id}
+                          className={leftIds.has(m.id) ? "opacity-40 grayscale" : ""}
+                        >
+                          <StudentPhoto student={m} size="sm" />
+                        </span>
                       ))}
                     </span>
                   ) : null}
