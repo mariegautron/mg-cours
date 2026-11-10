@@ -56,3 +56,19 @@ export async function callStudentView(token: string, count = true): Promise<Stud
     results,
   };
 }
+
+/**
+ * Lien du questionnaire d'avis du module (le lien de classe, identique pour tout le monde) : le
+ * questionnaire reste anonyme. `null` sans questionnaire ouvert ou sans la migration.
+ */
+export async function studentFeedbackPath(token: string): Promise<string | null> {
+  if (!isWellFormedToken(token)) return null;
+  const { data, error } = await createAnonClient().rpc(
+    "mg_student_feedback_token" as never,
+    {
+      p_token_hash: hashToken(token),
+    } as never,
+  );
+  if (error || typeof data !== "string" || !data) return null;
+  return `/retour/${data}`;
+}

@@ -70,6 +70,9 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             <h1 className="font-heading text-3xl font-bold tracking-tight">
               Ton avis sur le module
             </h1>
+            <p className="font-semibold">
+              Ce questionnaire est anonyme : ton nom n’est jamais enregistré.
+            </p>
             <p className="text-muted-foreground">
               Le questionnaire est anonyme et n’a aucun lien avec ta note. Il prend environ 5
               minutes. Réponds à ce que tu veux : un exemple précis m’aide plus qu’un avis général.

@@ -18,7 +18,7 @@ import { DepositBox } from "@/components/modules/deposit-box";
 import { dueLabel } from "@/lib/modules/espace";
 import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
-import { callStudentView } from "@/lib/modules/student-public";
+import { callStudentView, studentFeedbackPath } from "@/lib/modules/student-public";
 import { liveQuizForToken } from "@/lib/quiz/espace-attempt";
 import { loadPublishedReview } from "@/lib/assessments/review-public";
 import { ReviewFeedback } from "@/components/modules/review-feedback";
@@ -91,7 +91,30 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   let body: React.ReactNode;
   if (slug.length === 0) {
     current = "accueil";
-    body = <AccueilView data={data} />;
+    // Même questionnaire que le lien envoyé à la classe : rien ne dit qui répond.
+    const feedback = await studentFeedbackPath(token);
+    body = (
+      <>
+        <AccueilView data={data} />
+        {feedback ? (
+          <section aria-labelledby="avis" className="bg-card mt-6 space-y-2 rounded-xl border p-5">
+            <h2 id="avis" className="font-heading text-lg font-bold">
+              Ton avis sur le module
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              5 minutes, aucun lien avec ta note. Ton nom n’est jamais enregistré.
+            </p>
+            <a
+              href={feedback}
+              rel="noreferrer"
+              className="bg-primary text-primary-foreground inline-flex min-h-11 items-center rounded-xl px-4 font-semibold"
+            >
+              Donner ton avis (anonyme)
+            </a>
+          </section>
+        ) : null}
+      </>
+    );
   } else if (section === "projet" && slug.length === 1) {
     current = "projet";
     body = data.espace ? <ProjetView espace={data.espace} /> : <Empty title="Projet" text="" />;
