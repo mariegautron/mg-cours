@@ -86,11 +86,13 @@ export function ceilHalf(n: number): number {
 }
 
 /**
- * Ramène une note sur 20 (ex. 15/30 → 10), arrondie au demi-point supérieur comme le fait Marie
- * (décision d'Arnaud, 10 nov. 2026). C'est cette note sur 20 qui sert aux moyennes et à Hyperplanning.
+ * Ramène une note sur 20 (ex. 15/30 → 10). Barème autre que 20 : arrondie au demi-point supérieur,
+ * comme le fait Marie (décision d'Arnaud, 10 nov. 2026). Barème déjà sur 20 : note gardée telle
+ * quelle (au centième). C'est cette note sur 20 qui sert aux moyennes et à Hyperplanning.
  */
 export function toTwenty(value: number, max: number = DEFAULT_MAX_SCORE): number {
   if (!(max > 0)) return value;
+  if (max === DEFAULT_MAX_SCORE) return round2(value);
   return ceilHalf((value * DEFAULT_MAX_SCORE) / max);
 }
 

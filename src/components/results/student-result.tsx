@@ -180,7 +180,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
           </p>
           <p className="text-muted-foreground mt-2 text-sm">
             {sheet.isGroupGrade ? "Note de groupe. " : ""}
-            {sheet.valueOn20 !== null && (sheet.maxScore !== 20 || sheet.valueOn20 !== sheet.value)
+            {sheet.maxScore !== 20 && sheet.valueOn20 !== null
               ? `Soit ${fmt(sheet.valueOn20)} / 20. `
               : ""}
             {sheet.overflow ? `Total avec bonus : ${sheet.overflow}. ` : ""}
