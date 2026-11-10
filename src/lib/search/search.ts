@@ -134,7 +134,12 @@ const SCREENS: { id: string; label: string; href: string; terms: string[] }[] = 
 /** Écrans du module ouvert. */
 const MODULE_SCREENS: { id: string; label: string; path: string; terms: string[] }[] = [
   { id: "rattrapages", label: "Rattrapages", path: "rattrapages", terms: ["absence excusee"] },
-  { id: "jalons", label: "Jalons", path: "jalons", terms: ["jalon", "projet"] },
+  {
+    id: "projet",
+    label: "Projet fil rouge",
+    path: "project",
+    terms: ["jalon", "projet", "point d etape"],
+  },
   { id: "couverture", label: "Couverture", path: "couverture", terms: ["attendus couverts"] },
   { id: "attendus", label: "Attendus", path: "expectations", terms: ["fiche ecole", "objectifs"] },
   {
