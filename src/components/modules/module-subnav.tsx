@@ -27,6 +27,8 @@ export function ModuleSubnav({
   const label = moduleSectionLabel(pathname, moduleId);
   if (!label) return null;
   const active = activeModuleNav(pathname, moduleId);
+  // Sur « Où j'en suis », la liste des étapes porte déjà l'étape courante et son bouton (D13).
+  const onJourney = pathname.replace(/\/$/, "") === `/modules/${moduleId}`;
 
   return (
     <div className="mb-6 space-y-3">
@@ -38,10 +40,10 @@ export function ModuleSubnav({
           <ol className="flex flex-wrap items-center gap-1">
             <li>
               <Link
-                href={archived ? "/modules?filter=archived" : "/modules"}
+                href={archived ? "/modules?filter=finished" : "/modules"}
                 className="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
               >
-                {archived ? "Modules archivés" : "Modules"}
+                {archived ? "Modules terminés" : "Modules"}
               </Link>
             </li>
             <li aria-hidden>
@@ -65,7 +67,7 @@ export function ModuleSubnav({
             </li>
           </ol>
         </nav>
-        {next?.kind === "action" ? (
+        {onJourney ? null : next?.kind === "action" ? (
           <Button asChild size="sm" variant="outline">
             <Link href={next.href}>Prochaine étape : {next.label}</Link>
           </Button>

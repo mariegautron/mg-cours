@@ -25,22 +25,28 @@ export function moduleListState(m: ListStateInput): ModuleListState {
   return "to_prepare";
 }
 
-export type ListFilter = "running" | "to_prepare" | "finished" | "archived";
+export type ListFilter = "running" | "to_prepare" | "finished";
 
+/**
+ * Un seul onglet pour les modules finis (doublon D16) : « Terminés » = modules terminés ou archivés
+ * (« Terminer le module » archive le module), avec « Rouvrir ».
+ */
 export const FILTERS: readonly { key: ListFilter; label: string }[] = [
   { key: "running", label: "En cours" },
   { key: "to_prepare", label: "À préparer" },
   { key: "finished", label: "Terminés" },
-  { key: "archived", label: "Archivés" },
 ];
 
+/** Ancienne adresse `?filter=archived` (onglet « Archivés ») : « Terminés ». */
 export function parseListFilter(value: unknown): ListFilter {
+  if (value === "archived") return "finished";
   return FILTERS.some((f) => f.key === value) ? (value as ListFilter) : "running";
 }
 
 /** Un module « cours faits » reste dans « En cours » tant qu'on ne l'a pas terminé. */
 export function inFilter(state: ModuleListState, filter: ListFilter): boolean {
   if (filter === "running") return state === "running" || state === "taught";
+  if (filter === "finished") return state === "finished" || state === "archived";
   return state === filter;
 }
 
@@ -48,8 +54,7 @@ export function filterCounts(states: readonly ModuleListState[]): Record<ListFil
   return {
     running: states.filter((s) => inFilter(s, "running")).length,
     to_prepare: states.filter((s) => s === "to_prepare").length,
-    finished: states.filter((s) => s === "finished").length,
-    archived: states.filter((s) => s === "archived").length,
+    finished: states.filter((s) => inFilter(s, "finished")).length,
   };
 }
 

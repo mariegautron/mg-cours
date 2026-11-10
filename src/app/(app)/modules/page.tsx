@@ -20,7 +20,6 @@ import {
   type ListFilter,
 } from "@/lib/modules/list-state";
 import { listModules } from "@/lib/modules/queries";
-import { retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Modules" };
@@ -41,11 +40,7 @@ const EMPTY: Record<ListFilter, { title: string; description: string }> = {
   finished: {
     title: "Aucun module terminé",
     description:
-      "« Terminer » range un module dans cette liste une fois les cours faits et les notes saisies.",
-  },
-  archived: {
-    title: "Aucun module rangé",
-    description: "« Archiver » masque un module sans rien effacer : tu le retrouves ici.",
+      "« Terminer le module » (dernière étape d’Où j’en suis) l’archive ici, sans rien effacer. Tu peux le rouvrir.",
   },
 };
 
@@ -55,17 +50,16 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
   const finishedId = typeof sp.termine === "string" ? sp.termine : null;
   const finishedToken = typeof sp.t === "string" ? sp.t : null;
   const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
-  // Anciennes URL : ?filter=archived → Rangés ; ?filter=all → En cours.
+  // Anciennes URL : ?filter=archived → Terminés ; ?filter=all → En cours.
   const rawFilter = str("filter");
   const filter = parseListFilter(rawFilter === "all" ? "running" : rawFilter);
   const schoolId = str("school");
   const year = str("year");
   const deleted = str("deleted");
 
-  const [all, progress, askNote] = await Promise.all([
+  const [all, progress] = await Promise.all([
     listModules({ includeArchived: true }),
     listCourseProgress(),
-    retrospectiveAvailable(),
   ]);
   const finishedName = finishedId ? (all.find((m) => m.id === finishedId)?.name ?? null) : null;
   const rows = all.map((m) => {
@@ -145,7 +139,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
               ) : null}
             </Link>
             <Pill tone={pill.tone}>{pill.label}</Pill>
-            <ModuleRowActions id={m.id} name={m.name} state={state} askNote={askNote} />
+            <ModuleRowActions id={m.id} name={m.name} state={state} />
           </li>
         );
       })}
@@ -166,8 +160,8 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Modules</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">
-            Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Tu peux terminer ou
-            archiver un module depuis ici.
+            Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Un module se
+            termine depuis sa dernière étape, « Terminer le module ».
           </p>
         </div>
         <Link
@@ -256,13 +250,6 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           title="Aucun module ne correspond"
           description="Enlève un filtre pour en voir plus."
           actions={[{ label: "Effacer les filtres", href: "/modules" }]}
-        />
-      ) : shown.length === 0 && year && filter !== "archived" && counts.archived > 0 ? (
-        // Onglet filtré sur une année : dire ce qu'il y a ailleurs cette année-là.
-        <EmptyState
-          title={`${EMPTY[filter].title} en ${year}`}
-          description={`${counts.archived} module${counts.archived > 1 ? "s" : ""} archivé${counts.archived > 1 ? "s" : ""} cette année-là.`}
-          actions={[{ label: "Les voir", href: href("archived") }]}
         />
       ) : shown.length === 0 ? (
         <EmptyState

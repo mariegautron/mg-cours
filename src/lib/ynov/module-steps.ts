@@ -295,7 +295,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
       title: "Documents administratifs",
       state: inProgress(adminDone, adminDocs.done > 0),
       summary: `${adminDocs.done}/${adminDocs.total}`,
-      action: { label: "Cocher les documents", href: `${base}/documents` },
+      action: { label: "Cocher les documents", href: `${base}/finish#admin-docs` },
       badge: "cocher les documents administratifs",
     },
     {

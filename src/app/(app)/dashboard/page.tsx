@@ -1,4 +1,5 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
+import { getModuleJourney } from "@/lib/modules/journey-queries";
 import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
@@ -32,7 +33,6 @@ import { formatWhen, pickResume, RESUME_LABELS } from "@/lib/dashboard/resume";
 import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { buildTodos, pickTodos, type TodoSources } from "@/lib/dashboard/todo";
-import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
 import { createClient } from "@/lib/supabase/server";
 import {
   formatSessionDay,
@@ -130,14 +130,30 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       session_date: c.session_date!,
       module: { id: c.module!.id, name: c.module!.name },
     }));
-  // Module en cours dont toutes les séances sont faites : « Terminer ».
-  const toFinish = modules
-    .filter((m) => activeIds.has(m.id))
-    .filter((m) => {
-      const p = progress.get(m.id);
-      return !!p && p.total > 0 && p.done === p.total;
-    })
-    .map((m) => ({ module: { id: m.id, name: m.name } }));
+  // « Ce qu'il reste à faire » d'un module en cours : son étape courante d'Où j'en suis (D12), même
+  // calcul que la fiche du module et la liste des modules. L'échéance de la progression donne
+  // l'urgence de l'étape « envoyer la progression ».
+  const alertDays = new Map(alerts.map((a) => [a.module.id, a.daysUntilDue]));
+  const steps = (
+    await Promise.all(
+      modules
+        .filter((m) => activeIds.has(m.id))
+        .map(async (m) => {
+          const current = (await getModuleJourney(m.id))?.current;
+          // « Faire cours » : la séance à préparer ou à clôturer le dit déjà, plus précisément.
+          if (!current || current.key === "teach") return null;
+          return {
+            module: { id: m.id, name: m.name },
+            key: current.key,
+            badge: current.badge,
+            summary: current.summary,
+            href: current.action.href,
+            urgency:
+              current.key === "send" || current.key === "outline" ? (alertDays.get(m.id) ?? 8) : 8,
+          };
+        }),
+    )
+  ).filter((x): x is NonNullable<typeof x> => x !== null);
   const preps = await Promise.all(sessions.map((c) => getSessionPrep(c.module.id, c.id)));
   // Imprévus du client à envoyer aujourd'hui (US-128) : séances du jour, pas encore envoyés.
   const todayIds = new Set(sessions.map((c) => c.id));
@@ -157,24 +173,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       ? [{ module: x.module, remaining: x.p.total - x.p.written }]
       : [],
   );
-  const makeupTodos = (
-    await Promise.all(
-      modules
-        .filter((m) => !m.archived_at && !m.finished_at)
-        .map(async (m) => ({
-          module: { id: m.id, name: m.name },
-          pending: await countPendingMakeups(m.id),
-        })),
-    )
-  ).filter((x) => x.pending > 0);
   const allTodos = pickTodos(
     buildTodos({
       today,
       toClose,
-      toFinish,
-      makeups: makeupTodos,
-      appreciations: appreciationTodos,
-      outlineAlerts: alerts,
+      steps,
       upcomingCourses: [...coursesToday, ...coursesAfter]
         .filter((c) => c.module && !c.module.archived_at)
         .map((c) => ({
@@ -195,15 +198,18 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           moduleName: a.moduleName,
           missingCount: a.missing.length,
         })),
-      billing: billing.flatMap<TodoSources["billing"][number]>((b) =>
-        b.kind === "ready"
-          ? [{ module: b.module, kind: "ready" as const }]
-          : b.kind === "invoiced" && b.invoice.status === "ready"
-            ? [{ module: b.module, kind: "toSend" as const }]
-            : b.kind === "invoiced" && b.invoice.status === "sent"
-              ? [{ module: b.module, kind: "toCollect" as const }]
-              : [],
-      ),
+      // Facture : seulement pour un module terminé ; en cours, c'est une étape (« Facturer »).
+      billing: billing
+        .filter((b) => !activeIds.has(b.module.id))
+        .flatMap<TodoSources["billing"][number]>((b) =>
+          b.kind === "ready"
+            ? [{ module: b.module, kind: "ready" as const }]
+            : b.kind === "invoiced" && b.invoice.status === "ready"
+              ? [{ module: b.module, kind: "toSend" as const }]
+              : b.kind === "invoiced" && b.invoice.status === "sent"
+                ? [{ module: b.module, kind: "toCollect" as const }]
+                : [],
+        ),
     }),
     Number.POSITIVE_INFINITY,
   );

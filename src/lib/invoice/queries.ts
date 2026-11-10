@@ -96,7 +96,11 @@ export type BillingRow =
 export async function listBillingOverview(): Promise<BillingRow[]> {
   const supabase = await createClient();
   const [modules, { data: invoices }, profile, { data: schoolRows }] = await Promise.all([
-    listModules(),
+    // Un module terminé est archivé (doublon D16) : il reste dans la facturation. Un module
+    // seulement archivé (sans « Terminer », avant ce changement) en reste exclu, comme avant.
+    listModules({ includeArchived: true }).then((all) =>
+      all.filter((m) => !m.archived_at || !!m.finished_at),
+    ),
     supabase.from("invoice").select("*"),
     getProfile(),
     supabase.from("school").select("*"),

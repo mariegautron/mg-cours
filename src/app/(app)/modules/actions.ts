@@ -309,9 +309,10 @@ function refreshModule(id: string) {
 }
 
 /**
- * Termine un module (maquette « Modules ») : il sort de « En cours » et passe dans « Terminés » ; la
- * facture reste à faire. Le mot « Ce que je retiens » est gardé au mieux. Sans la colonne
- * `finished_at` (migration pas appliquée), le module est rangé comme avant (US-160).
+ * Termine un module (maquette « Modules ») : il sort de « En cours », il est archivé et passe dans
+ * « Terminés » (un seul geste, doublon D16) ; la facture reste à faire. Le mot « Ce que je retiens »
+ * est gardé au mieux. Sans la colonne `finished_at` (migration pas appliquée), le module est
+ * seulement archivé (US-160).
  */
 export async function finishModule(id: string, note: string | null): Promise<FinishModuleResult> {
   const cleaned = cleanRetrospective(note);
@@ -322,7 +323,7 @@ export async function finishModule(id: string, note: string | null): Promise<Fin
   let archivedInstead = false;
   const first = await supabase
     .from("module")
-    .update({ finished_at: now })
+    .update({ finished_at: now, archived_at: now })
     .eq("id", id)
     .select("id")
     .maybeSingle();
@@ -353,6 +354,25 @@ export async function finishModule(id: string, note: string | null): Promise<Fin
   return { ok: true, finishedAt: now, archivedInstead };
 }
 
+/**
+ * « Ton retour » d'un module déjà terminé : il s'écrit seulement sur la page « Terminer le module »
+ * (doublon D18), sans le terminer une seconde fois.
+ */
+export async function saveRetrospective(id: string, note: string): Promise<FinishModuleResult> {
+  const cleaned = cleanRetrospective(note);
+  if ("error" in cleaned) return { error: cleaned.error };
+  const supabase = await createClient();
+  const { error } = cleaned.note
+    ? await supabase
+        .from("module_retrospective")
+        .upsert({ module_id: id, note: cleaned.note }, { onConflict: "module_id" })
+    : await supabase.from("module_retrospective").delete().eq("module_id", id);
+  if (error) return { error: failure("enregistrer ton retour") };
+  refreshModule(id);
+  revalidatePath(`/modules/${id}/finish`);
+  return { ok: true };
+}
+
 /** « Annuler » après « Terminer » : seulement dans le délai et pour ce geste-là. */
 export async function undoFinishModule(
   id: string,
@@ -374,7 +394,7 @@ export async function undoFinishModule(
     .update(
       archivedInstead
         ? { archived_at: RESTORED_ARCHIVED_AT }
-        : { finished_at: RESTORED_ARCHIVED_AT },
+        : { finished_at: RESTORED_ARCHIVED_AT, archived_at: RESTORED_ARCHIVED_AT },
     )
     .eq("id", id);
   if (error) return { error: failure("annuler") };
@@ -382,10 +402,13 @@ export async function undoFinishModule(
   return { ok: true };
 }
 
-/** Rouvre un module terminé : il redevient « en cours ». */
+/** Rouvre un module terminé ou archivé : il redevient « en cours ». */
 export async function reopenModule(id: string): Promise<FinishModuleResult> {
   const supabase = await createClient();
-  const { error } = await supabase.from("module").update({ finished_at: null }).eq("id", id);
+  const { error } = await supabase
+    .from("module")
+    .update({ finished_at: null, archived_at: null })
+    .eq("id", id);
   if (error) return { error: failure("rouvrir le module") };
   refreshModule(id);
   return { ok: true };

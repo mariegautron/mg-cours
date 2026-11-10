@@ -1,19 +1,19 @@
 /**
  * E20 / US-121 : « À faire » du tableau de bord Aujourd'hui. Fonctions pures : on transforme les
  * données déjà chargées en candidats, puis on garde les trois plus urgents.
+ *
+ * Doublon D12 : pour un module en cours, « ce qu'il reste à faire » vient d'une seule source,
+ * l'étape courante d'Où j'en suis (`lib/ynov/module-steps.ts`). Ici ne s'ajoutent que les tâches qui
+ * ne sont pas des étapes : séance à clôturer ou à préparer, évaluation à compléter, et la facture
+ * d'un module déjà terminé (archivé, il n'a plus d'étape courante).
  */
 export const TODO_LIMIT = 3;
 
 export type TodoKind =
   | "session_close"
-  | "outline_overdue"
-  | "outline_urgent"
   | "session_prep"
   | "assessment_prep"
-  | "makeups"
-  | "appreciations"
-  | "outline_soon"
-  | "module_finish"
+  | "module_step"
   | "invoice_send"
   | "invoice_ready"
   | "payment";
@@ -21,14 +21,9 @@ export type TodoKind =
 /** Ordre de départage à urgence égale (le plus pressant d'abord). */
 const KIND_ORDER: TodoKind[] = [
   "session_close",
-  "outline_overdue",
-  "outline_urgent",
   "session_prep",
   "assessment_prep",
-  "makeups",
-  "appreciations",
-  "outline_soon",
-  "module_finish",
+  "module_step",
   "invoice_send",
   "invoice_ready",
   "payment",
@@ -70,11 +65,18 @@ const inDays = (n: number) => (n === 0 ? "aujourd’hui" : n === 1 ? "demain" : 
 
 export interface TodoSources {
   today: string;
-  /** Progressions à surveiller (trame.ts). */
-  outlineAlerts: {
+  /**
+   * Étape courante d'Où j'en suis, pour chaque module en cours (même calcul que la fiche du module,
+   * le bouton « Prochaine étape » et la liste des modules). `urgency` : jours avant l'échéance
+   * quand l'étape en a une (progression à envoyer), sinon une valeur par défaut.
+   */
+  steps?: {
     module: { id: string; name: string };
-    level: "overdue" | "urgent" | "warning";
-    daysUntilDue: number;
+    key: string;
+    badge: string;
+    summary: string;
+    href: string;
+    urgency: number;
   }[];
   /** Séances datées à venir (aujourd'hui compris), avec leur état de préparation. */
   upcomingCourses: {
@@ -94,11 +96,8 @@ export interface TodoSources {
     moduleName: string;
     missingCount: number;
   }[];
+  /** Facture d'un module terminé (archivé : il n'a plus d'étape courante). */
   billing: { module: { id: string; name: string }; kind: "ready" | "toSend" | "toCollect" }[];
-  /** Modules dont toutes les notes sont saisies et qui ont des appréciations à écrire. */
-  appreciations?: { module: { id: string; name: string }; remaining: number }[];
-  /** Rattrapages pas encore faits, par module (avant les appréciations et l'envoi des notes). */
-  makeups?: { module: { id: string; name: string }; pending: number }[];
   /** Horizon des séances à préparer, en jours. */
   prepHorizonDays?: number;
   /** Séances passées (14 derniers jours) pas encore clôturées, modules en cours seulement. */
@@ -108,8 +107,6 @@ export interface TodoSources {
     session_date: string;
     module: { id: string; name: string };
   }[];
-  /** Modules en cours dont toutes les séances sont faites : bilan puis facture. */
-  toFinish?: { module: { id: string; name: string } }[];
 }
 
 const shortDay = (iso: string) =>
@@ -134,31 +131,14 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       urgency: -100 + d,
     });
   }
-  for (const m of src.toFinish ?? []) {
+  for (const st of src.steps ?? []) {
     out.push({
-      key: `finish-${m.module.id}`,
-      kind: "module_finish",
-      title: `Terminer ${m.module.name} : bilan puis facture`,
-      detail: "toutes les séances sont faites",
-      href: `/modules/${m.module.id}/finish`,
-      urgency: 5,
-    });
-  }
-  for (const a of src.outlineAlerts) {
-    const d = a.daysUntilDue;
-    out.push({
-      key: `outline-${a.module.id}`,
-      kind:
-        a.level === "overdue"
-          ? "outline_overdue"
-          : a.level === "urgent"
-            ? "outline_urgent"
-            : "outline_soon",
-      title: `Envoyer la progression de ${a.module.name}`,
-      detail: d < 0 ? `en retard de ${Math.abs(d)} j` : `échéance dans ${d} j`,
-      // Directement à l'étape d'envoi (« Marquer comme envoyée »).
-      href: `/modules/${a.module.id}/outline`,
-      urgency: d,
+      key: `step-${st.key}-${st.module.id}`,
+      kind: "module_step",
+      title: `${st.module.name} : ${st.badge}`,
+      detail: st.summary,
+      href: st.href,
+      urgency: st.urgency,
     });
   }
   const horizon = src.prepHorizonDays ?? 7;
@@ -185,26 +165,6 @@ export function buildTodos(src: TodoSources): TodoItem[] {
       detail: `${a.moduleName} · ${inDays(d)} · ${a.missingCount} point${a.missingCount > 1 ? "s" : ""} à compléter`,
       href: `/modules/${a.moduleId}/assessments`,
       urgency: d <= 1 ? d - 2 : d,
-    });
-  }
-  for (const m of src.makeups ?? []) {
-    out.push({
-      key: `makeups-${m.module.id}`,
-      kind: "makeups",
-      title: `${m.pending} rattrapage${m.pending > 1 ? "s" : ""} à faire`,
-      detail: m.module.name,
-      href: `/modules/${m.module.id}/rattrapages`,
-      urgency: 6,
-    });
-  }
-  for (const a of src.appreciations ?? []) {
-    out.push({
-      key: `appreciations-${a.module.id}`,
-      kind: "appreciations",
-      title: `Écrire les appréciations (${a.remaining} restante${a.remaining > 1 ? "s" : ""})`,
-      detail: a.module.name,
-      href: `/modules/${a.module.id}/appreciations`,
-      urgency: 7,
     });
   }
   for (const b of src.billing) {

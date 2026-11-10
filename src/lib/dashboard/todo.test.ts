@@ -16,10 +16,10 @@ describe("pickTodos", () => {
   it("garde les plus urgents, plafonnés à 3", () => {
     const all = [
       item("a", "payment", 20),
-      item("b", "outline_urgent", 5),
+      item("b", "module_step", 5),
       item("c", "invoice_send", 10),
       item("d", "session_prep", 1),
-      item("e", "outline_overdue", -3),
+      item("e", "session_close", -3),
     ];
     expect(pickTodos(all).map((i) => i.key)).toEqual(["e", "d", "b"]);
     expect(TODO_LIMIT).toBe(3);

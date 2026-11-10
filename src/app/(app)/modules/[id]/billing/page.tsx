@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { CircleCheck, CircleDashed } from "lucide-react";
 
 import { GenerateInvoiceButton, InvoiceActions } from "@/components/billing/invoice-actions";
-import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
 import { Celebration } from "@/components/celebration";
 import { Badge } from "@/components/ui/badge";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
@@ -12,7 +11,6 @@ import { SimpleInvoice } from "@/components/billing/simple-invoice";
 import { simpleInvoiceStatus, isPaid, isSent } from "@/lib/invoice/simple";
 import { getInvoiceTracking } from "@/lib/invoice/tracking-queries";
 import { todayInParis } from "@/lib/modules/next-session";
-import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { DocumentSlot } from "@/components/modules/module-documents";
 import { getModule, getModuleDocuments } from "@/lib/modules/queries";
 import { invoiceBlockers, missingInvoiceData, OUTLINE_NOT_SENT } from "@/lib/ynov/invoice";
@@ -77,15 +75,9 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
         </p>
       </div>
 
-      {(invoice?.status === "paid" || mod.iceberg_state === "paid") &&
-      !mod.archived_at &&
-      mod.finished_at ? (
-        // Fin du parcours iceberg : facture payée. Un état de fin sobre, avec la suite logique.
-        <Celebration
-          action={<ArchiveModuleButton id={id} archived={false} compact name={mod.name} />}
-        >
-          Module terminé. Tu peux l’archiver.
-        </Celebration>
+      {(invoice?.status === "paid" || mod.iceberg_state === "paid") && mod.finished_at ? (
+        // Fin du parcours iceberg : facture payée, module terminé (donc archivé).
+        <Celebration>Facture payée : le module est terminé et archivé.</Celebration>
       ) : null}
 
       <SimpleInvoice
@@ -219,10 +211,16 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
                     </li>
                   ))}
                 </ul>
-                <h3 id="billing-admin-docs" className="mt-4 mb-2 font-medium">
-                  Documents administratifs
-                </h3>
-                <AdminDocsChecklist moduleId={id} adminDocs={ctx.module.admin_docs} />
+                <p className="mt-4 text-sm">
+                  Documents administratifs (Hyperplanning, Moodle…) : à cocher dans{" "}
+                  <Link
+                    href={`/modules/${id}/finish#admin-docs`}
+                    className="underline underline-offset-2"
+                  >
+                    Terminer le module
+                  </Link>
+                  .
+                </p>
               </section>
 
               <section aria-labelledby="missing">

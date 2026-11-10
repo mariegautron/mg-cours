@@ -1,5 +1,4 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
-import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
 import type { Metadata } from "next";
 import { loadRoster } from "@/lib/students/enrollment";
 import Link from "next/link";
@@ -7,11 +6,7 @@ import { notFound } from "next/navigation";
 import { Pencil, Presentation } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
-import { ArchiveModuleButton } from "@/components/modules/archive-module-button";
-import { FinishModuleButton } from "@/components/modules/finish-module-button";
-import { JourneyHero } from "@/components/modules/journey-hero";
 import { JourneySteps } from "@/components/modules/journey-steps";
-import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { daysBetween } from "@/lib/dashboard/todo";
 import { formatSessionDay } from "@/lib/dashboard/today";
@@ -31,7 +26,7 @@ import {
   getModuleExpectations,
   getRetainedResources,
 } from "@/lib/modules/queries";
-import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retrospective-queries";
+import { getRetrospectiveNote } from "@/lib/modules/retrospective-queries";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
@@ -184,12 +179,10 @@ export default async function ModulePage({
     courses: { total: courses.length, done: doneCourses },
     closed,
   });
-  const askNote = hero?.offerFinish ? await retrospectiveAvailable() : false;
   const finishedView = hero?.kind === "finished";
   const upcoming = closed ? null : highlightedSession(courses, today);
-  // Fiche du module : les évaluations des 60 prochains jours dans « À venir » ; la carte garde 14 jours.
+  // Fiche du module : les évaluations des 60 prochains jours, dans « À venir » seulement (D14).
   const moduleEvals = await listUpcomingAssessments(today, 60, id);
-  const upcomingEvals = moduleEvals.filter((a) => daysBetween(today, a.date) <= 14);
   const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isUngradedReview(a));
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
@@ -273,26 +266,27 @@ export default async function ModulePage({
       ) : null}
 
       {mod.archived_at ? (
-        <p className="bg-muted rounded-2xl border border-dashed p-3 text-sm">
-          <strong>Module rangé</strong> le {new Date(mod.archived_at).toLocaleDateString("fr-FR")} :
-          il n’apparaît plus dans le tableau de bord ni dans la facturation. Tu peux le restaurer
-          depuis la liste des modules.{" "}
-          <ArchiveModuleButton id={mod.id} archived compact name={mod.name} />
-        </p>
+        <div className="bg-muted flex flex-wrap items-center gap-3 rounded-2xl border border-dashed p-3 text-sm">
+          <p>
+            <strong>Module archivé</strong> le{" "}
+            {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il est dans « Terminés » et
+            n’apparaît plus dans le tableau de bord. Tout reste consultable.
+          </p>
+          <ReopenModuleButton id={mod.id} name={mod.name} />
+        </div>
       ) : null}
 
       <div className="flex flex-wrap items-start gap-6 lg:flex-nowrap">
         <div className="min-w-0 flex-1 basis-full space-y-4 lg:basis-0">
-          {hero ? (
-            <JourneyHero hero={hero} moduleId={mod.id} moduleName={mod.name} askNote={askNote} />
-          ) : null}
           <JourneySteps journey={journey} />
         </div>
 
         <div className="w-full min-w-0 space-y-4 lg:w-96 lg:flex-none">
           {finishedView ? (
             <>
-              {mod.finished_at ? <ReopenModuleButton id={mod.id} name={mod.name} /> : null}
+              {mod.finished_at && !mod.archived_at ? (
+                <ReopenModuleButton id={mod.id} name={mod.name} />
+              ) : null}
               <Card id="bilan" title="Le bilan">
                 <div className="grid grid-cols-2 gap-2.5">
                   <Stat label="Étudiant·es" value={String(members.size)} />
@@ -317,17 +311,14 @@ export default async function ModulePage({
                 ) : (
                   <p className="text-muted-foreground mb-3 text-sm">
                     {mod.finished_at
-                      ? "Rien d’écrit."
-                      : "Ce que tu retiens de ce module, à écrire avant de le terminer."}
+                      ? "Rien d’écrit. Ton retour s’écrit sur la page « Terminer le module »."
+                      : "Ce que tu retiens de ce module, à écrire sur la page « Terminer le module »."}
                   </p>
                 )}
                 {hero?.offerFinish ? (
-                  <FinishModuleButton
-                    id={mod.id}
-                    name={mod.name}
-                    askNote={askNote}
-                    label="Écrire mon retour"
-                  />
+                  <Link href={`/modules/${mod.id}/finish`} className={BTN}>
+                    Terminer le module
+                  </Link>
                 ) : null}
               </Card>
               <Card id="consultable" title="Ce qui reste consultable">
@@ -351,13 +342,6 @@ export default async function ModulePage({
                     Voir les rattrapages
                   </Link>
                 </Card>
-              ) : null}
-              {upcomingEvals.length > 0 ? (
-                <UpcomingAssessmentsCard
-                  items={upcomingEvals}
-                  showModule={false}
-                  headingLevel={3}
-                />
               ) : null}
               <Card id="avenir" title="À venir">
                 {upcoming ? (
@@ -455,33 +439,10 @@ export default async function ModulePage({
                   </dd>
                 </dl>
               </Card>
-              <Card id="evals" title="Les évaluations">
-                <p className="text-muted-foreground mb-3 text-sm">
-                  Vois quand chaque évaluation croise tes séances.
-                </p>
-                <Link href={`/modules/${mod.id}/assessments`} className={BTN}>
-                  Ouvrir les évaluations
-                </Link>
-              </Card>
             </>
           )}
         </div>
       </div>
-
-      <section
-        aria-labelledby="zone-sensible"
-        className="border-destructive/40 space-y-2 rounded-2xl border p-5"
-      >
-        <h2 id="zone-sensible" className="font-heading text-lg font-bold">
-          Zone sensible
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Supprimer le module efface définitivement ses séances, évaluations, notes, groupes et
-          documents. Ta bibliothèque et tes étudiant·es ne sont pas touchés. Il faut retaper le nom
-          du module pour confirmer.
-        </p>
-        <DeleteModuleDialog id={mod.id} name={mod.name} />
-      </section>
     </div>
   );
 }

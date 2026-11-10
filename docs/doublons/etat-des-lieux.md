@@ -40,15 +40,15 @@ D15, D19, D22, D24, D37, D38).
 
 | Fiche | État | Ce qu'il en est |
 | ----- | ---- | --------------- |
-| D12 | changé | `finishChecklist` alimente maintenant `moduleSteps` (`lib/modules/journey.ts`) : Où j'en suis, la liste des modules et le bouton d'en-tête disent la même chose, et Terminer compte les appréciations. Reste : `lib/dashboard/todo.ts` garde son propre calcul (progression, appréciations, rattrapages, facture). |
-| D13 | reste | La prochaine étape est toujours dite trois fois sur Où j'en suis (bouton d'en-tête du layout, `JourneyHero`, pastille de la liste). |
-| D14 | reste | `UpcomingAssessmentsCard`, puis la carte « À venir », puis la carte « Les évaluations ». |
+| D12 | changé → **fait au lot 3** | `finishChecklist` alimente maintenant `moduleSteps` (`lib/modules/journey.ts`) : Où j'en suis, la liste des modules et le bouton d'en-tête disent la même chose, et Terminer compte les appréciations. Reste : `lib/dashboard/todo.ts` garde son propre calcul (progression, appréciations, rattrapages, facture). |
+| D13 | reste → **fait au lot 3** | La prochaine étape est toujours dite trois fois sur Où j'en suis (bouton d'en-tête du layout, `JourneyHero`, pastille de la liste). |
+| D14 | reste → **fait au lot 3** | `UpcomingAssessmentsCard`, puis la carte « À venir », puis la carte « Les évaluations ». |
 | D15 | changé | La page Jalons et les tables `checkpoint` ont disparu (commit `10f9ddb`) ; le point d'étape a la case « Noté ». Reste : la case « Jalon du projet fil rouge », la ligne « Jalons du projet : N » sur Évaluations, les « Jalon i » du squelette de projet, et les actions « Noter la phase » (le composant `PhaseList` n'est plus importé). |
-| D16 | reste | « Archiver » dans Documents et dans Facture, « Terminer » et « Archiver » dans la liste, onglets « Terminés » et « Rangés ». |
-| D17 | reste | « Supprimer » à trois endroits (Zone sensible d'Où j'en suis, Documents > Actions, liste) ; « Dupliquer pour l'année » dans Documents > Actions. |
-| D18 | reste | « Ce que je retiens » se saisit dans la liste et dans la carte d'Où j'en suis, en plus de la page Terminer ; les mots de séance sont recopiés dans Documents > Actions. |
-| D19 | changé | Le dépôt de facture a quitté Documents (renvoi vers Facture). Restent : `AdminDocsChecklist` dans Documents et dans Facture, et le bloc « Facturation » de Documents. |
-| D20 | reste | Trois entrées : Facture du module, renvoi de Documents, page Facturation (qui est maintenant aussi dans le menu). |
+| D16 | reste → **fait au lot 3** | « Archiver » dans Documents et dans Facture, « Terminer » et « Archiver » dans la liste, onglets « Terminés » et « Rangés ». |
+| D17 | reste → **fait au lot 3** | « Supprimer » à trois endroits (Zone sensible d'Où j'en suis, Documents > Actions, liste) ; « Dupliquer pour l'année » dans Documents > Actions. |
+| D18 | reste → **fait au lot 3** | « Ce que je retiens » se saisit dans la liste et dans la carte d'Où j'en suis, en plus de la page Terminer ; les mots de séance sont recopiés dans Documents > Actions. |
+| D19 | changé → **fait au lot 3** | Le dépôt de facture a quitté Documents (renvoi vers Facture). Restent : `AdminDocsChecklist` dans Documents et dans Facture, et le bloc « Facturation » de Documents. |
+| D20 | reste → **fait au lot 3** | Trois entrées : Facture du module, renvoi de Documents, page Facturation (qui est maintenant aussi dans le menu). |
 
 ## C. Préparer et faire cours
 

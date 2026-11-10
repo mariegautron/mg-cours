@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminDocsChecklist } from "@/components/modules/admin-docs-checklist";
 import { FinishModuleForm } from "@/components/modules/finish-module-form";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,11 @@ import { getRetrospectiveNote, retrospectiveAvailable } from "@/lib/modules/retr
 
 export const metadata: Metadata = { title: "Terminer le module" };
 
-/** Terminer le module (maquette « ModFin ») : ce qu'il reste, ce que je retiens, ranger. Rien n'est bloquant. */
+/**
+ * Terminer le module (maquette « ModFin ») : ce qu'il reste (appréciations et documents
+ * administratifs compris), ton retour, terminer (= archiver). Seul endroit pour ces gestes (D16-D19).
+ * Rien n'est bloquant.
+ */
 export default async function FinishModulePage({ params }: PageProps<"/modules/[id]/finish">) {
   const { id } = await params;
   const [mod, courses, ctx, askNote, note, documents] = await Promise.all([
@@ -61,10 +66,10 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     feedbackResponses: feedbackLink.data ? (feedbackCount.count ?? 0) : null,
     hrefs: {
       sessions: `/modules/${id}/courses`,
-      notes: `/modules/${id}/documents#admin-docs`,
+      notes: `/modules/${id}/finish#admin-docs`,
       appreciations: `/modules/${id}/appreciations`,
       makeups: `/modules/${id}/rattrapages`,
-      documents: `/modules/${id}/documents#admin-docs`,
+      documents: `/modules/${id}/finish#admin-docs`,
       invoice: `/modules/${id}/billing`,
       agreement: `/modules/${id}/documents#convention`,
       feedback: `/modules/${id}/feedback`,
@@ -106,11 +111,28 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
             </li>
           ))}
         </ul>
-        <div className="flex flex-wrap items-center gap-2 pt-2">
+        <section aria-labelledby="admin-docs" className="space-y-2 border-t pt-3">
+          <h2 id="admin-docs" className="font-heading text-xl font-bold">
+            Documents administratifs
+          </h2>
+          <AdminDocsChecklist
+            moduleId={mod.id}
+            adminDocs={(mod.admin_docs as Record<string, boolean>) ?? {}}
+          />
+        </section>
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
           <h2 className="font-heading text-xl font-bold">Ton retour, pour toi seule</h2>
           <Pill tone="lock">Privé</Pill>
         </div>
-        <FinishModuleForm id={mod.id} name={mod.name} askNote={askNote} initialNote={note ?? ""} />
+        {mod.finished_at && !askNote ? null : (
+          <FinishModuleForm
+            id={mod.id}
+            name={mod.name}
+            askNote={askNote}
+            initialNote={note ?? ""}
+            finished={!!mod.finished_at}
+          />
+        )}
       </section>
 
       <div className="min-w-0 flex-[2_1_0] space-y-4 lg:max-w-md">
@@ -122,8 +144,9 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
             Terminer
           </h2>
           <p className="text-muted-foreground text-sm">
-            Le module sort de la liste « en cours ». Tu le retrouves dans « Terminés », et tu peux
-            le rouvrir.
+            {mod.finished_at
+              ? "Ce module est terminé et archivé. Tu peux encore écrire ton retour ; pour le rouvrir, passe par la liste des modules (« Terminés »)."
+              : "Le module est archivé : il sort de « En cours » et du tableau de bord. Tu le retrouves dans « Terminés », et tu peux le rouvrir."}
           </p>
         </section>
         <section aria-labelledby="fb" className={`${card} space-y-2`}>
