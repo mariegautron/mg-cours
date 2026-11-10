@@ -119,28 +119,6 @@ export async function listCourseProgress(): Promise<Map<string, { done: number; 
   return map;
 }
 
-/** Moyenne de toutes les notes du module, ramenées sur 20 (bilan d'un module terminé). */
-export async function loadModuleMean(moduleId: string): Promise<number[]> {
-  const supabase = await createClient();
-  const assessments = await listModuleAssessments(moduleId);
-  // Une note bonus n'entre pas dans le bilan de la classe : elle ne sert qu'à remonter une moyenne.
-  const usable = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus);
-  const byId = new Map(usable.map((a) => [a.id, a.maxScore]));
-  const byAssessment = new Map(usable.map((a) => [a.id, a]));
-  if (byId.size === 0) return [];
-  const { data } = await supabase
-    .from("grade")
-    .select("assessment_id, value, scores, attendance")
-    .in("assessment_id", [...byId.keys()])
-    .not("value", "is", null);
-  return (data ?? [])
-    .filter((g) => {
-      const a = byAssessment.get(g.assessment_id);
-      return !!a && isGradeCounted(g, a.gridCriteria, a.auto_validated_criterion_ids);
-    })
-    .map((g) => toTwenty(Number(g.value), byId.get(g.assessment_id) ?? 20));
-}
-
 export interface ToCorrect {
   assessmentId: string;
   moduleId: string;

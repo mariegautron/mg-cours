@@ -2,7 +2,7 @@ import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { bonusLine, parseScale } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { QcmAnswersPanel } from "@/components/assessments/qcm-answers-panel";
 import type { DrawnQuestion } from "@/lib/quiz/types";
@@ -14,6 +14,8 @@ import { isProgressReview, isUngradedReview } from "@/lib/assessments/progress-r
 import { ProgressReviewPage } from "@/components/assessments/progress-review-page";
 import { buildSpaceInits } from "@/lib/assessments/space-init";
 import { examKindOf } from "@/lib/assessments/exam-kind";
+import { isOralAssessment } from "@/lib/assessments/oral";
+import { oralCoversAllGroups } from "@/lib/assessments/oral-slots";
 import { gradingTargets } from "@/lib/assessments/targets";
 import { deadlineOf } from "@/lib/deposits/rules";
 import { OpenReview, type ReviewCopy } from "@/components/assessments/open-review";
@@ -71,6 +73,19 @@ export default async function CorrectPage({
       />
     );
   }
+
+  // Oral : « Faire passer l'oral » sert aussi à corriger après coup (un seul chemin), dès que
+  // chaque groupe a son créneau. La vue « par critère » (`?vue=critere`) reste ici.
+  if (
+    isOralAssessment(assessment) &&
+    vue !== "critere" &&
+    (assessment.grading_grid?.criteria ?? []).length > 0 &&
+    (await oralCoversAllGroups(
+      assessmentId,
+      assessment.groups.map((g) => g.id),
+    ))
+  )
+    redirect(`/modules/${id}/assessments/${assessmentId}/oral`);
 
   const [overrideRows, themes, submissionData] = await Promise.all([
     listGroupGradeMembers(grades.filter((g) => g.student_group_id).map((g) => g.id)),

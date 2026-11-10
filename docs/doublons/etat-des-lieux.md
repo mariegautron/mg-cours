@@ -26,15 +26,15 @@ D15, D19, D22, D24, D37, D38).
 | ----- | ---- | --------------- |
 | D1 | reste → **fait au lot 1** | L'espace de l'oral gardait sa propre présence (`oral_space.attendance`), lue avant celle de la copie et réécrite sur la copie à « Écrire la note ». |
 | D2 | reste → **fait au lot 1** | La page `/compare` (`CriterionComparison`, en points) existait toujours, liée depuis la vue d'ensemble de la correction et depuis `GradingSession`. |
-| D3 | reste | Sur un oral, l'en-tête a toujours deux boutons principaux : « Faire passer l'oral » et « Corriger » (`[assessmentId]/page.tsx` l. 545-563). |
-| D4 | reste | « Corriger » sur un QCM ouvre `/correct` (`GradingSession` + `QcmAnswersPanel` en lecture seule), pas le suivi du QCM. |
-| D5 | changé | Les deux blocs ne s'affichent plus en même temps (bandeau si tout est corrigé, bloc du bas sinon). Mais le bandeau n'existe que dans la mise en page « note de groupe » : une évaluation individuelle entièrement corrigée n'a, semble-t-il, aucun « Envoyer les résultats » (à vérifier à l'écran). |
+| D3 | reste → **fait au lot 2** | Sur un oral, l'en-tête a toujours deux boutons principaux : « Faire passer l'oral » et « Corriger » (`[assessmentId]/page.tsx` l. 545-563). |
+| D4 | reste → **fait en partie au lot 2** | « Corriger » sur un QCM ouvre `/correct` (`GradingSession` + `QcmAnswersPanel` en lecture seule), pas le suivi du QCM. |
+| D5 | changé → **fait au lot 2** | Les deux blocs ne s'affichent plus en même temps (bandeau si tout est corrigé, bloc du bas sinon). Mais le bandeau n'existe que dans la mise en page « note de groupe » : une évaluation individuelle entièrement corrigée n'a, semble-t-il, aucun « Envoyer les résultats » (à vérifier à l'écran). |
 | D6 | reste → **fait au lot 1** | Le bloc « Rendus — … » (`Submissions`, table `project_submission`) était toujours au-dessus de « Rendus déposés ». |
-| D7 | reste | Deux mises en page (groupe l. 613-931, individuelle ensuite) : « Le cadre pour les étudiant·es » ×2, grille ×2, « Le jour J » ×2, « Phrases » ×2, « Modifier » ×3. |
+| D7 | reste → **fait au lot 2** | Deux mises en page (groupe l. 613-931, individuelle ensuite) : « Le cadre pour les étudiant·es » ×2, grille ×2, « Le jour J » ×2, « Phrases » ×2, « Modifier » ×3. |
 | D8 | reste | Phrases à quatre endroits : `/assessments/comments`, page `phrases` d'une évaluation, Réglages (`PhraseManager`), en-tête de la liste Évaluations (en plus de la Bibliothèque). |
 | D9 | reste | Bouton « Grilles » toujours dans l'en-tête d'Évaluations, en plus de la Bibliothèque. |
-| D10 | reste | « Le bilan » d'Où j'en suis affiche toujours la « Moyenne de la classe ». Le calcul commun des moyennes n'a pas été vérifié. |
-| D11 | reste | Le compteur de notes est toujours à cinq endroits (pastille, « Le module en chiffres », page des groupes, page Évaluations, colonne de gauche d'« Ajouter une évaluation »). |
+| D10 | reste → **fait au lot 2** | « Le bilan » d'Où j'en suis affiche toujours la « Moyenne de la classe ». Le calcul commun des moyennes n'a pas été vérifié. |
+| D11 | reste → **fait au lot 2** | Le compteur de notes est toujours à cinq endroits (pastille, « Le module en chiffres », page des groupes, page Évaluations, colonne de gauche d'« Ajouter une évaluation »). |
 
 ## B. Suivre son module
 

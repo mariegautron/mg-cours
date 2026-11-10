@@ -2,35 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Pill } from "@/components/dashboard/pill";
 import { SchoolGradeForm } from "@/components/assessments/school-grade-form";
 import { Button } from "@/components/ui/button";
-import {
-  enteredLabel,
-  plannedLabel,
-  plannedMessage,
-  plannedProgress,
-  requirementLabel,
-} from "@/lib/assessments/module-notes";
-import { buildTimeline } from "@/lib/assessments/module-overview";
 import { reuseAssessment } from "@/app/(app)/modules/[id]/assessments/reuse-action";
-import {
-  listAllAssessments,
-  listGrids,
-  listModuleAssessments,
-  moduleNoteProgress,
-} from "@/lib/assessments/queries";
-import { getModule, getModuleCourses } from "@/lib/modules/queries";
-import { PROJECT_ROLE_LABELS } from "@/lib/ynov/project-skeleton";
-import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
+import { listAllAssessments, listGrids } from "@/lib/assessments/queries";
+import { getModule } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Ajouter une évaluation" };
 
 const card = "bg-card rounded-3xl border p-5 shadow-sm";
 
 /**
- * Ajouter ou rattacher une évaluation (US-126, maquette « EvalAjouter ») : à gauche les évaluations
- * du module et les notes exigées, à droite les trois façons d'en ajouter une.
+ * Ajouter ou rattacher une évaluation (US-126, maquette « EvalAjouter ») : les façons d'en ajouter
+ * une. La liste des évaluations du module et les notes exigées sont dans la vue d'ensemble (doublon D11).
  */
 export default async function AddAssessmentPage({
   params,
@@ -40,32 +24,10 @@ export default async function AddAssessmentPage({
   const jalon = (await searchParams).jalon === "1";
   const mod = await getModule(id);
   if (!mod) notFound();
-  const [grids, assessments, progress, courses, { grading }] = await Promise.all([
-    listGrids(),
-    listModuleAssessments(id),
-    moduleNoteProgress(id, mod.total_hours),
-    getModuleCourses(id),
-    getSchoolRulesForModule(id),
-  ]);
+  const grids = await listGrids();
 
   const otherAssessments = (await listAllAssessments()).filter(
     (a) => a.module_id !== id && !a.makeup_of_id,
-  );
-  const regular = assessments.filter((a) => !a.makeup_of_id);
-  const planned = plannedProgress(progress.requirement, assessments);
-  const dueSession = new Map(
-    buildTimeline(
-      courses.map((c) => ({ id: c.id, title: c.title, date: c.session_date, toBuild: false })),
-      regular.map((a) => ({
-        id: a.id,
-        title: a.title,
-        courseId: a.course_id,
-        role: a.project_role,
-        isGroupGrade: a.is_group_grade,
-        type: a.type,
-        makeup: false,
-      })),
-    ).map((r) => [r.assessmentId, r.dueSession]),
   );
 
   return (
@@ -79,7 +41,8 @@ export default async function AddAssessmentPage({
             Ajouter une évaluation — {mod.name}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Quatre façons de faire, au choix. Les évaluations du module sont à gauche.
+            Quatre façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
+            d’ensemble.
           </p>
         </div>
         <Button asChild variant="ghost">
@@ -87,64 +50,8 @@ export default async function AddAssessmentPage({
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
-        <section aria-labelledby="in-module" className={`${card} w-full min-w-0 flex-1 lg:basis-0`}>
-          <h2 id="in-module" className="font-heading mb-3 text-xl font-bold">
-            Les évaluations du module
-          </h2>
-          <div className="bg-accent/40 border-primary/40 mb-2 rounded-2xl border p-3.5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <strong>Notes exigées par l’école : {progress.requirement.total}</strong>
-              <Pill tone={planned.missingGroup + planned.missingIndividual === 0 ? "ok" : "warn"}>
-                <span role="status">{plannedLabel(planned)}</span>
-              </Pill>
-            </div>
-            <p className="text-muted-foreground mt-0.5 text-[0.8rem]">
-              {requirementLabel(mod.total_hours, progress)}. {enteredLabel(progress)}.{" "}
-              {plannedMessage(planned)} Tu peux en prévoir plus ; chaque évaluation ajoutée compte
-              comme une note de plus.
-            </p>
-          </div>
-
-          {regular.length === 0 ? (
-            <p className="text-muted-foreground border-t pt-3 text-sm">
-              Aucune évaluation dans ce module pour l’instant.
-            </p>
-          ) : (
-            <ul>
-              {regular.map((a) => {
-                const session = dueSession.get(a.id);
-                return (
-                  <li
-                    key={a.id}
-                    className="flex min-h-[4.75rem] flex-wrap items-center gap-3 border-t py-3"
-                  >
-                    <div className="min-w-[min(14rem,100%)] flex-1">
-                      <strong className="text-base">{a.title}</strong>
-                      <div className="text-muted-foreground text-sm">
-                        {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
-                        {a.is_group_grade
-                          ? `groupe ×${grading.groupCoefficient}`
-                          : `individuelle ×${grading.individualCoefficient}`}
-                        {session ? ` · séance ${session}` : ""}
-                      </div>
-                    </div>
-                    <Pill tone={a.gradeCount > 0 ? "ok" : "warn"}>
-                      {a.gradeCount > 0 ? "Noté" : "À noter"}
-                    </Pill>
-                    <Button asChild variant="ghost">
-                      <Link href={`/modules/${id}/assessments/${a.id}`}>
-                        Ouvrir<span className="sr-only"> : {a.title}</span>
-                      </Link>
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <div className="w-full min-w-0 space-y-4 lg:w-[38rem] lg:flex-none">
+      <div className="max-w-[48rem]">
+        <div className="w-full min-w-0 space-y-4">
           <section aria-labelledby="ad" className={card}>
             <h2 id="ad" className="font-heading mb-3 text-2xl font-bold">
               Ajouter une évaluation

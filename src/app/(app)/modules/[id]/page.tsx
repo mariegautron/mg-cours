@@ -13,10 +13,8 @@ import { JourneyHero } from "@/components/modules/journey-hero";
 import { JourneySteps } from "@/components/modules/journey-steps";
 import { UpcomingAssessmentsCard } from "@/components/assessments/upcoming-assessments-card";
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
-import { loadModuleMean } from "@/lib/dashboard/overview-queries";
 import { daysBetween } from "@/lib/dashboard/todo";
 import { formatSessionDay } from "@/lib/dashboard/today";
-import { meanLabel } from "@/lib/dashboard/overview";
 import { formatTimeRange } from "@/lib/modules/course-duration";
 import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
@@ -195,9 +193,8 @@ export default async function ModulePage({
   const planned = assessments.filter((a) => !a.makeup_of_id && !a.is_bonus && !isUngradedReview(a));
   const gridsReady = planned.filter((a) => a.grading_grid_id).length;
   const members = new Set(groups.flatMap((g) => g.members.map((m) => m.id)));
-  const [mean, retro] = finishedView
-    ? await Promise.all([loadModuleMean(id), getRetrospectiveNote(id)])
-    : [[], null];
+  // La moyenne de la classe n'est plus redite ici : elle est dans la page Évaluations du module.
+  const retro = finishedView ? await getRetrospectiveNote(id) : null;
   const dueIn = trame.dueDate ? daysBetween(today, trame.dueDate.toISOString().slice(0, 10)) : null;
   const meta = [
     mod.school?.name ?? "École non renseignée",
@@ -298,7 +295,6 @@ export default async function ModulePage({
               {mod.finished_at ? <ReopenModuleButton id={mod.id} name={mod.name} /> : null}
               <Card id="bilan" title="Le bilan">
                 <div className="grid grid-cols-2 gap-2.5">
-                  <Stat label="Moyenne de la classe" value={meanLabel(mean) ?? "—"} />
                   <Stat label="Étudiant·es" value={String(members.size)} />
                   <Stat label="Heures faites" value={`${mod.total_hours} h`} />
                   <Stat
@@ -446,12 +442,6 @@ export default async function ModulePage({
                   <dt className="text-muted-foreground">Ressources retenues</dt>
                   <dd>
                     <strong>{retained.length}</strong>
-                  </dd>
-                  <dt className="text-muted-foreground">Évaluations prévues</dt>
-                  <dd>
-                    <strong>
-                      {planned.length} / {notes.requirement.total}
-                    </strong>
                   </dd>
                   <dt className="text-muted-foreground">Grilles prêtes</dt>
                   <dd>

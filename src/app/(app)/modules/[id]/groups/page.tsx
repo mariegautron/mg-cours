@@ -17,11 +17,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { Button } from "@/components/ui/button";
-import {
-  listModuleAssessments,
-  moduleNoteProgress,
-  moduleStudentAverages,
-} from "@/lib/assessments/queries";
+import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { listEnrollments } from "@/lib/students/enrollment";
@@ -31,19 +27,16 @@ export const metadata: Metadata = { title: "Étudiant·es du module" };
 
 export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[id]/groups">) {
   const { id } = await params;
-  const [mod, groups, assessments, observations, appreciations, rules, averages, enrolled] =
-    await Promise.all([
-      getModule(id),
-      listModuleGroups(id),
-      listModuleAssessments(id),
-      listModuleObservations(id),
-      listAppreciations(id),
-      getSchoolRulesForModule(id),
-      moduleStudentAverages(id),
-      listEnrollments(id),
-    ]);
+  const [mod, groups, observations, appreciations, rules, averages, enrolled] = await Promise.all([
+    getModule(id),
+    listModuleGroups(id),
+    listModuleObservations(id),
+    listAppreciations(id),
+    getSchoolRulesForModule(id),
+    moduleStudentAverages(id),
+    listEnrollments(id),
+  ]);
   if (!mod) notFound();
-  const notes = await moduleNoteProgress(id, mod.total_hours, assessments);
   const leftIds = new Set(enrolled.rows.filter((e) => e.leftAt).map((e) => e.studentId));
   // Inscrit·es (avec ou sans groupe) : noms des fiches qui ne sont dans aucun groupe.
   const memberById = new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m]));
@@ -115,7 +108,6 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
       total: mine.length,
     };
   });
-  const gradedAssessments = assessments.filter((a) => !a.makeup_of_id && a.gradeCount > 0).length;
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -216,32 +208,6 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           <ClassOverview moduleId={id} rows={overview} groups={groupRows} />
         </section>
       ) : null}
-
-      <section aria-labelledby="assessments" className="rounded-lg border p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 id="assessments" className="text-lg font-medium">
-              Évaluations
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              {assessments.length} évaluation{assessments.length > 1 ? "s" : ""}
-              {assessments.length ? ` (${gradedAssessments} avec des notes saisies)` : ""} ·{" "}
-              {notes.enteredTotal}/{notes.requirement.total} note
-              {notes.requirement.total > 1 ? "s" : ""} requise
-              {notes.requirement.total > 1 ? "s" : ""} obtenue
-              {notes.enteredTotal > 1 ? "s" : ""}.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/project`}>Projet fil rouge</Link>
-            </Button>
-            <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/assessments`}>Voir les évaluations</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
