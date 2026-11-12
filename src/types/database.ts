@@ -211,13 +211,11 @@ export type Database = {
           review_criterion_ids: string[] | null
           review_for_id: string | null
           auto_validated_criterion_ids: string[]
-          coefficient: number
           coefficient_override: number | null
           kind: Database["public"]["Enums"]["assessment_kind"] | null
           course_id: string | null
           exam_kind: string | null
           makeup_prepared: boolean
-          submission_mode: string | null
           subject_versions: string
           created_at: string
           date: string | null
@@ -255,13 +253,11 @@ export type Database = {
           review_criterion_ids?: string[] | null
           review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
-          coefficient?: number
           coefficient_override?: number | null
           kind?: Database["public"]["Enums"]["assessment_kind"] | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean
-          submission_mode?: string | null
           subject_versions?: string
           created_at?: string
           date?: string | null
@@ -299,13 +295,11 @@ export type Database = {
           review_criterion_ids?: string[] | null
           review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
-          coefficient?: number
           coefficient_override?: number | null
           kind?: Database["public"]["Enums"]["assessment_kind"] | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean
-          submission_mode?: string | null
           subject_versions?: string
           created_at?: string
           date?: string | null
@@ -628,7 +622,6 @@ export type Database = {
           prep_status: string
           retro_note: string | null
           session_date: string | null
-          slides: Json
           slides_url: string | null
           start_time: string | null
           title: string
@@ -655,7 +648,6 @@ export type Database = {
           prep_status?: string
           retro_note?: string | null
           session_date?: string | null
-          slides?: Json
           slides_url?: string | null
           start_time?: string | null
           title: string
@@ -682,7 +674,6 @@ export type Database = {
           prep_status?: string
           retro_note?: string | null
           session_date?: string | null
-          slides?: Json
           slides_url?: string | null
           start_time?: string | null
           title?: string
@@ -894,7 +885,6 @@ export type Database = {
           criterion_comments: Json
           feedback: string | null
           id: string
-          is_group_grade: boolean
           owner_id: string
           predefined_comment_ids: string[]
           progress: string | null
@@ -913,7 +903,6 @@ export type Database = {
           criterion_comments?: Json
           feedback?: string | null
           id?: string
-          is_group_grade?: boolean
           owner_id?: string
           predefined_comment_ids?: string[]
           progress?: string | null
@@ -932,7 +921,6 @@ export type Database = {
           criterion_comments?: Json
           feedback?: string | null
           id?: string
-          is_group_grade?: boolean
           owner_id?: string
           predefined_comment_ids?: string[]
           progress?: string | null
@@ -1290,7 +1278,6 @@ export type Database = {
           number: string
           owner_id: string
           paid_on: string | null
-          pdf_path: string | null
           purchase_order_ref: string | null
           recipient_email: string | null
           sent_at: string | null
@@ -1300,7 +1287,6 @@ export type Database = {
           updated_at: string
           vat_amount: number
           vat_rate: number
-          xml_path: string | null
         }
         Insert: {
           amount_ex_vat?: number
@@ -1314,7 +1300,6 @@ export type Database = {
           number: string
           owner_id?: string
           paid_on?: string | null
-          pdf_path?: string | null
           purchase_order_ref?: string | null
           recipient_email?: string | null
           sent_at?: string | null
@@ -1324,7 +1309,6 @@ export type Database = {
           updated_at?: string
           vat_amount?: number
           vat_rate?: number
-          xml_path?: string | null
         }
         Update: {
           amount_ex_vat?: number
@@ -1338,7 +1322,6 @@ export type Database = {
           number?: string
           owner_id?: string
           paid_on?: string | null
-          pdf_path?: string | null
           purchase_order_ref?: string | null
           recipient_email?: string | null
           sent_at?: string | null
@@ -1348,7 +1331,6 @@ export type Database = {
           updated_at?: string
           vat_amount?: number
           vat_rate?: number
-          xml_path?: string | null
         }
         Relationships: [
           {
@@ -1925,7 +1907,6 @@ export type Database = {
           id: string
           locked: boolean
           owner_id: string
-          proposals: Json | null
           questions: Json
           updated_at: string
           written: Json | null
@@ -1941,7 +1922,6 @@ export type Database = {
           id?: string
           locked?: boolean
           owner_id?: string
-          proposals?: Json | null
           questions?: Json
           updated_at?: string
           written?: Json | null
@@ -1957,7 +1937,6 @@ export type Database = {
           id?: string
           locked?: boolean
           owner_id?: string
-          proposals?: Json | null
           questions?: Json
           updated_at?: string
           written?: Json | null
@@ -2203,54 +2182,6 @@ export type Database = {
             columns: ["grid_criterion_id"]
             isOneToOne: false
             referencedRelation: "grid_criterion"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_submission: {
-        Row: {
-          assessment_id: string
-          created_at: string
-          id: string
-          owner_id: string
-          received_on: string
-          student_group_id: string
-          updated_at: string
-          url: string | null
-        }
-        Insert: {
-          assessment_id: string
-          created_at?: string
-          id?: string
-          owner_id?: string
-          received_on: string
-          student_group_id: string
-          updated_at?: string
-          url?: string | null
-        }
-        Update: {
-          assessment_id?: string
-          created_at?: string
-          id?: string
-          owner_id?: string
-          received_on?: string
-          student_group_id?: string
-          updated_at?: string
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_submission_assessment_id_fkey"
-            columns: ["assessment_id"]
-            isOneToOne: false
-            referencedRelation: "assessment"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_submission_student_group_id_fkey"
-            columns: ["student_group_id"]
-            isOneToOne: false
-            referencedRelation: "student_group"
             referencedColumns: ["id"]
           },
         ]
@@ -3325,8 +3256,6 @@ export type Database = {
           owner_id: string
           personal_notes: string | null
           photo_path: string | null
-          photo_url: string | null
-          scholar_group: string | null
           student_number: string | null
           updated_at: string
         }
@@ -3339,8 +3268,6 @@ export type Database = {
           owner_id?: string
           personal_notes?: string | null
           photo_path?: string | null
-          photo_url?: string | null
-          scholar_group?: string | null
           student_number?: string | null
           updated_at?: string
         }
@@ -3353,8 +3280,6 @@ export type Database = {
           owner_id?: string
           personal_notes?: string | null
           photo_path?: string | null
-          photo_url?: string | null
-          scholar_group?: string | null
           student_number?: string | null
           updated_at?: string
         }

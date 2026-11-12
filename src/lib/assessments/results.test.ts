@@ -87,7 +87,7 @@ describe("buildResultSheets", () => {
         is_group_grade: true,
         max_score: null,
       },
-      grades: [grade({ student_group_id: "grp", is_group_grade: true })],
+      grades: [grade({ student_group_id: "grp" })],
     });
     expect(sheets).toHaveLength(1);
     expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test", "Noa Test"]);
@@ -109,8 +109,8 @@ describe("buildResultSheets", () => {
         max_score: null,
       },
       grades: [
-        grade({ id: "x", student_group_id: "grp", is_group_grade: true }),
-        grade({ id: "y", student_group_id: "grp2", is_group_grade: true, value: 12 }),
+        grade({ id: "x", student_group_id: "grp" }),
+        grade({ id: "y", student_group_id: "grp2", value: 12 }),
       ],
     });
     expect(groupSheets.map((sh) => [sh.value, sh.recipients.map((r) => r.name)])).toEqual([
@@ -359,7 +359,7 @@ describe("buildResultSheets — commentaire structuré (US-85)", () => {
       ...base,
       criteria,
       assessment: { ...assessment, is_group_grade: true },
-      grades: [grade({ student_group_id: "grp", is_group_grade: true, ...structured })],
+      grades: [grade({ student_group_id: "grp", ...structured })],
     });
     expect(sheets).toHaveLength(1);
     expect(sheets[0].recipients.map((r) => r.name)).toEqual(["Lea Test", "Noa Test"]);
@@ -380,7 +380,6 @@ describe("buildResultSheets — absences et pondération individuelle (US-87)", 
   const groupGrade = grade({
     id: "gg",
     student_group_id: "grp",
-    is_group_grade: true,
     scores: { c1: 16 },
     value: 16,
   });
@@ -516,7 +515,7 @@ describe("buildResultSheets — thème du projet (US-89)", () => {
     const sheets = buildResultSheets({
       ...base,
       assessment,
-      grades: [grade({ student_group_id: "grp", is_group_grade: true })],
+      grades: [grade({ student_group_id: "grp" })],
       themesByGroup: { grp: "AssurLibre", autre: "JustiFacile" },
     });
     expect(sheets[0].theme).toBe("AssurLibre");
@@ -536,7 +535,7 @@ describe("buildResultSheets — thème du projet (US-89)", () => {
     const sheets = buildResultSheets({
       ...base,
       assessment,
-      grades: [grade({ student_group_id: "grp", is_group_grade: true })],
+      grades: [grade({ student_group_id: "grp" })],
     });
     expect(sheets[0].theme).toBeNull();
   });

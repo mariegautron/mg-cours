@@ -1,4 +1,8 @@
-# Lot 9 — candidats à la suppression (préparation, aucun drop)
+# Lot 9 — candidats à la suppression
+
+**12/11 : liste validée par Arnaud** (« oui ok avec la liste des suppressions »). Migration
+`supabase/migrations/20261214000000_schema_lot9_suppressions.sql` écrite, à appliquer après la
+sauvegarde (`sauvegarde-lot9.sql`) et le contrôle avant (`controle-lot9.sql`).
 
 État au 12 nov. 2026, après le commit de préparation du lot 9. Chiffres : prod du 12/11
 (diagnostic et contrôles des lots 0 à 8) ; à reconfirmer avec `docs/schema-bdd/lot9-candidats.sql`
