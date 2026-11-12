@@ -310,8 +310,8 @@ export function PrepPanel({
               <div className="rounded-xl border p-3.5">
                 <strong>La fenêtre projetée</strong>
                 <p className="text-muted-foreground mt-0.5 mb-2.5 text-sm">
-                  Ce que voient les étudiant·es. Glisse-la sur le vidéoprojecteur, puis clique sur
-                  « Plein écran ».
+                  Ce que voient les étudiant·es. Glisse-la sur le vidéoprojecteur, puis clique sur «
+                  Plein écran ».
                 </p>
                 <Button asChild variant="secondary">
                   <Link href={projectedHref} target={`mg-projection-${courseId}`}>
