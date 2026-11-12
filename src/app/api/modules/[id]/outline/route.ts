@@ -39,17 +39,22 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/out
     .replace(/^-|-$/g, "");
   const ycode = content.ycode ? `${content.ycode.replace(/[^a-zA-Z0-9_-]+/g, "")}-` : "";
 
-  const sent = new URL(req.url).searchParams.get("version") === "envoyee";
+  const params = new URL(req.url).searchParams;
+  const sent = params.get("version") === "envoyee";
+  // Aperçu intégré dans la page Progression : le PDF s'affiche au lieu de se télécharger.
+  const disposition = params.get("inline") === "1" ? "inline" : "attachment";
   if (sent) {
     if (!outline.pdf_path || !outline.sent_at)
       return new Response("Aucune version envoyée gardée", { status: 404 });
     const supabase = await createClient();
-    const { data, error } = await supabase.storage.from("module-documents").download(outline.pdf_path);
+    const { data, error } = await supabase.storage
+      .from("module-documents")
+      .download(outline.pdf_path);
     if (error || !data) return new Response("Version envoyée introuvable", { status: 404 });
     return new Response(new Uint8Array(await data.arrayBuffer()), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="progression-${ycode}${slug}-envoyee-${stamp(outline.sent_at)}.pdf"`,
+        "Content-Disposition": `${disposition}; filename="progression-${ycode}${slug}-envoyee-${stamp(outline.sent_at)}.pdf"`,
       },
     });
   }
@@ -58,7 +63,7 @@ export async function GET(req: Request, ctx: RouteContext<"/api/modules/[id]/out
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="progression-${ycode}${slug}-${stamp(outline.generated_at)}.pdf"`,
+      "Content-Disposition": `${disposition}; filename="progression-${ycode}${slug}-${stamp(outline.generated_at)}.pdf"`,
     },
   });
 }

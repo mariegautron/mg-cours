@@ -159,10 +159,11 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
         </div>
       )}
 
-      <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+      {/* 2 colonnes seulement avec assez de place (≥ 1 200 px utiles), sinon 1 : pas de défilement horizontal. */}
+      <div className="flex flex-wrap items-start gap-5 min-[1460px]:flex-nowrap">
         <section
           aria-labelledby="ver"
-          className="bg-card w-full min-w-0 rounded-3xl border p-5 shadow-sm lg:w-[35rem] lg:flex-none"
+          className="bg-card w-full min-w-0 rounded-3xl border p-4 min-[1460px]:w-[35rem] min-[1460px]:flex-none"
         >
           <h2 id="ver" className="font-heading mb-1 text-xl font-bold">
             Avant de générer
@@ -184,7 +185,9 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
                 <span
                   aria-hidden
                   className={`mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-[0.8rem] font-bold ${
-                    c.ok ? "bg-mint text-background" : "border-sun text-sun border-[1.5px]"
+                    c.ok
+                      ? "bg-status-ready text-status-ink"
+                      : "border-status-todo text-warning border-[1.5px]"
                   }`}
                 >
                   {c.ok ? <Check className="size-3.5" strokeWidth={3} /> : "!"}
@@ -212,7 +215,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
           </ul>
         </section>
 
-        <div className="w-full min-w-0 flex-1 lg:basis-0">
+        <div className="w-full min-w-0 flex-1 space-y-4 min-[1460px]:basis-0">
           <OutlineActions
             moduleId={mod.id}
             status={outline?.status ?? null}
@@ -228,6 +231,44 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
                 : null
             }
           />
+          {outline && !depositedOutline ? (
+            // Aperçu du PDF (lot 3) : il s'ouvre dans un onglet, sans téléchargement. (Un aperçu
+            // dans la page demande d'autoriser l'appli à s'afficher dans un cadre : voir DECISIONS-NUIT.)
+            <section aria-labelledby="apercu" className="bg-card rounded-3xl border p-4">
+              <h2 id="apercu" className="font-heading text-lg font-bold">
+                Aperçu du PDF
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {outline.generated_at
+                  ? `Généré le ${parisLongDateTime(outline.generated_at)}.`
+                  : "Pas encore généré."}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button asChild variant="secondary">
+                  <a
+                    href={`/api/modules/${mod.id}/outline?inline=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Voir la progression
+                    <span className="sr-only"> (PDF, nouvel onglet)</span>
+                  </a>
+                </Button>
+                {outline.pdf_path && outline.sent_at ? (
+                  <Button asChild variant="ghost">
+                    <a
+                      href={`/api/modules/${mod.id}/outline?version=envoyee&inline=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Voir la version envoyée le {parisLongDateTime(outline.sent_at)}
+                      <span className="sr-only"> (PDF, nouvel onglet)</span>
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>

@@ -181,3 +181,17 @@ Lot 1, ce qui est fait à ce stade :
   l'encadré « Avant le jour J »).
 - **Tablette (lot 4, point 21, fait au passage)** : le menu du module ne défile plus à
   l'horizontale ; 4 entrées visibles, les autres dans « Plus ».
+
+## Lot 3 : documents envoyés figés (partiel)
+
+- **Progression** : la version envoyée était déjà gardée (PDF figé dans le stockage, nom daté à la
+  minute) ; « Régénérer » après envoi demande maintenant une confirmation dans l'appli qui le
+  rappelle. Nouveau bloc « Aperçu du PDF » : « Voir la progression » et « Voir la version envoyée
+  le … », qui s'ouvrent dans un onglet (paramètre `inline=1` ajouté à la route), avec « Généré le
+  … à … ». Page en 1 colonne sous ~1 200 px utiles.
+- **À décider par Arnaud** : un aperçu *dans* la page (iframe) est bloqué par l'en-tête
+  `X-Frame-Options: DENY` de `next.config.ts`. Le passer à `SAMEORIGIN` autoriserait les cadres de
+  l'appli elle-même (et réparerait l'aperçu des rendus dans la correction, qui utilise déjà une
+  iframe et doit être vide aujourd'hui). Je ne l'ai pas changé : c'est un réglage de sécurité.
+- **Pas fait** : versions datées des résultats publiés et des appréciations reportées (il faudrait
+  une table d'historique, donc une migration, interdite cette nuit).
