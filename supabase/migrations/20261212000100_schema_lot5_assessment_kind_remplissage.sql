@@ -6,7 +6,8 @@
 --     1. type exactement « Note de l'école »                         → school_grade
 --     2. type contenant « point d'étape » / « étape »                → progress_review
 --     3. QCM (le sien ou celui de l'original) en correction « questions ouvertes »,
---        ou type contenant « question(s) ouverte(s) »                → open_questions
+--        ou type contenant « question(s) ouverte(s) »,
+--        ou titre contenant « étude de cas » (casse et accents ignorés) → open_questions
 --     4. exam_kind déjà choisi (qcm, oral, in_class, files)          → quiz, oral, in_class, files
 --     5. sinon d'après le texte du type (accents et casse ignorés) :
 --        qcm / quiz → quiz ; oral → oral ; en classe / sur table / écrit → in_class ;
@@ -31,6 +32,7 @@ set kind = (case
                    where q.assessment_id in (a.id, a.makeup_of_id)
                      and q.correction_mode = 'open_questions')
         or translate(lower(coalesce(a.type, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'questions? ouvertes?'
+        or translate(lower(coalesce(a.title, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'etude de cas'
         then 'open_questions'
       when a.exam_kind = 'qcm' then 'quiz'
       when a.exam_kind = 'oral' then 'oral'

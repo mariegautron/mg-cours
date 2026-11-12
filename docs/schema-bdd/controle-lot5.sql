@@ -17,6 +17,7 @@ select m.name as module, m.year, a.title, a.type, a.exam_kind, a.is_group_grade,
                         where q.assessment_id in (a.id, a.makeup_of_id)
                           and q.correction_mode = 'open_questions')
              or translate(lower(coalesce(a.type, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'questions? ouvertes?'
+             or translate(lower(coalesce(a.title, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'etude de cas'
              then 'open_questions'
            when a.exam_kind = 'qcm' then 'quiz'
            when a.exam_kind = 'oral' then 'oral'
@@ -42,6 +43,7 @@ select kind_propose, count(*) from (
                      where q.assessment_id in (a.id, a.makeup_of_id)
                        and q.correction_mode = 'open_questions')
           or translate(lower(coalesce(a.type, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'questions? ouvertes?'
+          or translate(lower(coalesce(a.title, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'etude de cas'
           then 'open_questions'
         when a.exam_kind = 'qcm' then 'quiz'
         when a.exam_kind = 'oral' then 'oral'
@@ -64,6 +66,7 @@ select a.id, a.title, to_jsonb(a) ->> 'kind' as kind_enregistre, case
                      where q.assessment_id in (a.id, a.makeup_of_id)
                        and q.correction_mode = 'open_questions')
           or translate(lower(coalesce(a.type, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'questions? ouvertes?'
+          or translate(lower(coalesce(a.title, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'etude de cas'
           then 'open_questions'
         when a.exam_kind = 'qcm' then 'quiz'
         when a.exam_kind = 'oral' then 'oral'
@@ -86,6 +89,7 @@ where exists (select 1 from information_schema.columns
                      where q.assessment_id in (a.id, a.makeup_of_id)
                        and q.correction_mode = 'open_questions')
           or translate(lower(coalesce(a.type, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'questions? ouvertes?'
+          or translate(lower(coalesce(a.title, '')), 'éèêëàâäîïôöûüç’', 'eeeeaaaiioouuc''') ~ 'etude de cas'
           then 'open_questions'
         when a.exam_kind = 'qcm' then 'quiz'
         when a.exam_kind = 'oral' then 'oral'
