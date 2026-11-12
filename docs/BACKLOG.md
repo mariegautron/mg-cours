@@ -457,9 +457,9 @@ Diagnostic en lecture seule (`supabase/snapshots/diagnostic-schema.sql`, `docs/s
 | 4 | Réglages de Nantes Ynov Campus en base, valeurs YNOV à l'identique ; message « École non choisie » (`e1597af`) | ✅ |
 | 6 | Doublons de sens : `isOutlineSent` unique, `prep-status` commun, date d'évaluation qui suit la séance, groupe/individuel figé après notes, `submit_mode` seul, promo via `student_year`, plus de `photo_url` ni de `grade.is_group_grade`, heures CM/TD/TP retirées des formulaires, `progression_pedagogique` hors du défaut de `admin_docs` (`a8e9f4b`) | ✅ |
 | 7 | Unicités : attendu par (module, type, libellé normalisé), rang de séance par module (différée) ; réordonnancement en deux temps (`f56a327`) | ✅ |
-| 5 | Enum `assessment_kind`, colonne `assessment.kind` remplie (étude de cas → `open_questions`) ; formulaire pas encore branché (`ef6f239`, `8b929b3`) | 🚧 colonne remplie, branchement à faire |
-| 8 | Facture | ⏳ |
-| 9 | Suppressions (anciennes politiques `*_owner`, colonnes mortes, `import_ref`…) : avec accord | ⏳ |
+| 5 | Enum `assessment_kind`, colonne `assessment.kind` remplie (étude de cas → `open_questions`) (`ef6f239`, `8b929b3`) ; formulaire et page d'une évaluation branchés sur `kind` (`78610ad`). Reste : faire lire `kind` à « Quelle épreuve ? », au cadre et au jour J (puis retirer `exam_kind`) | ✅ (suite au lot 9) |
+| 8 | Facture : source unique « envoyée / payée » (`invoiceProgress`), garde-fou de suppression d'une facture numérotée (migration `20261213000000`, appliquée le 12/11) (`5528831`) | ✅ |
+| 9 | Suppressions : préparation faite (`d320b7e`, `docs/schema-bdd/lot9-candidats.md` et `.sql`), drops en attente de la validation d'Arnaud colonne par colonne | 🚧 |
 
 ## E17 — Correctifs UX/UI avant lancement (audit senior du 29/09) ✅
 
