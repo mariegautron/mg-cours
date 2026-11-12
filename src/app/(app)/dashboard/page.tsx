@@ -224,10 +224,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           const progress = invoiceProgress(b.module);
           if (progress === "paid") return [];
           if (progress === "sent") return [{ module: b.module, kind: "toCollect" as const }];
-          if (b.kind === "ready") return [{ module: b.module, kind: "ready" as const }];
           if (b.kind === "invoiced" && b.invoice.status === "ready")
             return [{ module: b.module, kind: "toSend" as const }];
-          return [];
+          // Ni envoyée ni payée : Marie facture hors de l'appli (dépôt du PDF, puis « Envoyée ») ;
+          // les blocages de l'ancienne facture électronique ne cachent plus la carte.
+          return [{ module: b.module, kind: "ready" as const }];
         }),
     }),
     Number.POSITIVE_INFINITY,

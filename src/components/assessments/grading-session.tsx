@@ -99,6 +99,8 @@ export function GradingSession({
 }) {
   const uid = useId();
   const items = sections.flatMap((s) => s.items);
+  // Copies qui ont déjà une note (compteur « noté x sur y » quand aucun rendu n'est attendu).
+  const noted = items.filter((i) => i.grade?.value !== null && i.grade?.value !== undefined).length;
   const ids = items.map((i) => i.id);
   const [status, setStatus] = useState<Record<string, CopyStatus>>({});
   const controls = useRef(new Map<string, CopyControls>());
@@ -409,11 +411,11 @@ export function GradingSession({
                   subtitle={
                     item.members
                       ? null
-                      : `Rendu ${position + 1} sur ${items.length}${
-                          received === undefined
-                            ? ""
-                            : ` · ${received === 0 ? "rien reçu" : `${received} élément${received > 1 ? "s" : ""} reçu${received > 1 ? "s" : ""}`}`
-                        }`
+                      : received === undefined
+                        ? // Aucun rendu attendu (note de l'école, oral, écrit en classe, QCM) :
+                          // la position de la copie et les notes déjà saisies.
+                          `Copie ${position + 1} sur ${items.length} · noté ${noted} sur ${items.length}`
+                        : `Rendu ${position + 1} sur ${items.length} · ${received === 0 ? "rien reçu" : `${received} élément${received > 1 ? "s" : ""} reçu${received > 1 ? "s" : ""}`}`
                   }
                   submissions={item.qcm ? undefined : item.submissions}
                   others={others}

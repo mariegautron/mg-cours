@@ -187,7 +187,7 @@ export function buildTodos(src: TodoSources): TodoItem[] {
         ...base,
         kind: "invoice_ready",
         title: `Facturer ${b.module.name}`,
-        detail: "module prêt à facturer",
+        detail: "dépose la facture, puis coche « Envoyée »",
         urgency: 12,
       });
     else
