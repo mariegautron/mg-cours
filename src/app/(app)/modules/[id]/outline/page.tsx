@@ -131,9 +131,6 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
             Vérifie que tout est prêt, génère le PDF, envoie-le à l’école, puis dis-le-moi.
           </p>
         </div>
-        <Button asChild variant="ghost">
-          <Link href={`/modules/${mod.id}`}>← Retour au module</Link>
-        </Button>
       </div>
 
       {banner ? (

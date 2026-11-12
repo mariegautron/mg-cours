@@ -39,6 +39,9 @@ import { isPaid, isSent } from "@/lib/invoice/simple";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { listModuleGroups } from "@/lib/students/queries";
 import { trameStatus } from "@/lib/ynov/trame";
+import { DisclosureMenu } from "@/components/ui/disclosure-menu";
+import { HiddenFromTodayToggle } from "@/components/modules/hidden-from-today-toggle";
+import { isHiddenFromToday } from "@/lib/dashboard/module-labels";
 
 export async function generateMetadata({
   params,
@@ -221,6 +224,9 @@ export default async function ModulePage({
             <Pencil aria-hidden className="mr-2 size-4" />
             Modifier
           </Link>
+          <DisclosureMenu label="Plus" srLabel="d’actions sur le module" panelClassName="right-0">
+            <HiddenFromTodayToggle moduleId={mod.id} hidden={isHiddenFromToday(mod.admin_docs)} />
+          </DisclosureMenu>
         </div>
       </header>
 

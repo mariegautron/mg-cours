@@ -227,3 +227,26 @@ Lot 1, ce qui est fait à ce stade :
   fixés en bas de l'écran.
 - **Pas fait** : 26 (compteur près de la limite dans chaque zone de texte : il faudrait rendre le
   composant `Textarea` contrôlé partout) ; paliers des grilles en texte simple côté étudiant·e.
+
+## Lot 6 : constats du 9 novembre
+
+- **28. Masquer d'Aujourd'hui** : bouton dans « Plus » de la page du module (« Masquer
+  d'Aujourd'hui » / « Afficher dans Aujourd'hui », message avec « Annuler »). Un module masqué ne
+  compte plus sur le tableau de bord : séances faites, prochaine séance, À corriger, À faire,
+  évaluations à venir, reprise. **Rangé provisoirement dans `module.admin_docs`
+  (`hidden_from_today`)** car aucune migration n'est permise cette nuit ; à déplacer dans une vraie
+  colonne au prochain lot de schéma. Je n'ai masqué aucun module : à toi ou Marie de cocher.
+- **29. Une seule source pour « Prochaine étape »** : la pastille n'apparaît plus en haut des
+  sous-pages du module (lot 2). **Pas fait** : aligner l'alerte « progression en retard » du
+  tableau de bord sur le calcul du parcours du module (deux calculs différents aujourd'hui).
+- **30. Jalons** : la page Jalons n'existe plus (redirigée vers Évaluations) : rien à faire.
+- **31. En-tête unique des pages du module** : les « ← Retour au module » en double sont retirés
+  (Espace étudiant·es, Facture, Terminer, Progression, Évaluations) ; le fil d'Ariane suffit.
+  Le titre « Facturation » devient « Facture » (comme le menu).
+- **32. Filtres** : chaque module une fois, l'année scolaire entre parenthèses seulement quand deux
+  modules ont le même nom (filtre des évaluations et des étudiant·es).
+- **33. Évaluations du module** : « Évaluations (4) · dont 1 hors notes exigées » ; « Ajouter une
+  évaluation » passe en secondaire quand tout est prévu ; texte d'aide replié ; titre unique.
+- **34. Chargement** : Modules et Bibliothèque affichent leur titre et des cartes vides tout de
+  suite. **Pas fait** : accélérer les requêtes elles-mêmes.
+- **35 et 36** : faits au lot 0.

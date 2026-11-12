@@ -1,7 +1,12 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
 import { invoiceProgress } from "@/lib/invoice/simple";
 import { getModuleJourney } from "@/lib/modules/journey-queries";
-import { moduleLabels, relabelModules } from "@/lib/dashboard/module-labels";
+import {
+  moduleLabels,
+  relabelModules,
+  dropHiddenModules,
+  isHiddenFromToday,
+} from "@/lib/dashboard/module-labels";
 import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
@@ -87,6 +92,21 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listCourseProgress(),
     listToCorrect(),
   ]);
+  // Modules masqués d'Aujourd'hui (modules de test…) : ils ne comptent nulle part sur cette page.
+  const hiddenIds = new Set(
+    modules.filter((m) => isHiddenFromToday(m.admin_docs)).map((m) => m.id),
+  );
+  for (let i = modules.length - 1; i >= 0; i--)
+    if (hiddenIds.has(modules[i].id)) modules.splice(i, 1);
+  for (const list of [
+    coursesToday,
+    coursesAfter,
+    coursesWeek,
+    toCorrect,
+    resumeCandidates,
+    billing,
+  ])
+    if (Array.isArray(list)) dropHiddenModules(list as object[], hiddenIds);
   // Deux modules du même nom (copie d'une année sur l'autre) : l'année scolaire les distingue.
   const labels = moduleLabels(await listModules({ includeArchived: true }));
   for (const m of modules) m.name = labels.get(m.id) ?? m.name;
@@ -128,7 +148,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
 
-  const upcomingEvals = relabelModules(await listUpcomingAssessments(today, 14), labels);
+  const upcomingEvals = dropHiddenModules(
+    relabelModules(await listUpcomingAssessments(today, 14), labels),
+    hiddenIds,
+  );
   // Séances des 14 derniers jours jamais clôturées (modules en cours) : « Clôturer » d'abord.
   const twoWeeksAgo = new Date(Date.parse(`${today}T12:00:00Z`) - 14 * 86_400_000)
     .toISOString()

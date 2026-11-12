@@ -215,20 +215,19 @@ export default async function ModuleAssessmentsPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-3xl">
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Évaluations
-          </p>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Évaluations</h1>
           <p role="status" className="text-muted-foreground mt-1">
             {requirementLabel(mod.total_hours, progress)}. {plannedLabel(planned)}.{" "}
-            {enteredLabel(progress)}. {plannedMessage(planned)} Le projet fil rouge porte le brief
-            et le contexte ; chaque évaluation porte ses attendus et sa grille, et un point d’étape
-            (noté ou non) fait le point avec les groupes. Clique une évaluation pour la préparer.
+            {enteredLabel(progress)}. {plannedMessage(planned)}
           </p>
+          {/* Phrase d'aide repliable (lot 4, point 16). */}
+          <details className="text-muted-foreground mt-1 text-sm">
+            <summary className="min-h-11 cursor-pointer py-2">Comment c’est organisé ?</summary>
+            Le projet fil rouge porte le brief et le contexte ; chaque évaluation porte ses attendus
+            et sa grille, et un point d’étape (noté ou non) fait le point avec les groupes. Clique
+            une évaluation pour la préparer.
+          </details>
         </div>
-        <Button asChild variant="ghost">
-          <Link href={`/modules/${id}`}>← Retour au module</Link>
-        </Button>
       </div>
 
       <p className="text-sm">
@@ -275,7 +274,8 @@ export default async function ModuleAssessmentsPage({
                 {project ? "Modifier le brief" : "Créer le projet"}
               </Link>
             </Button>
-            <Button asChild>
+            {/* Tout est prévu : « Ajouter » devient secondaire (l'étape suivante est ailleurs). */}
+            <Button asChild variant={planned.planned >= planned.required ? "outline" : "default"}>
               <Link href={`/modules/${id}/assessments/add`}>
                 <Plus aria-hidden />
                 Ajouter une évaluation
@@ -318,6 +318,12 @@ export default async function ModuleAssessmentsPage({
           <section aria-labelledby="assessments-list">
             <h2 id="assessments-list" className="font-heading mb-3 text-xl font-bold">
               Évaluations ({assessments.length})
+              {assessments.length > planned.planned ? (
+                <span className="text-muted-foreground ml-2 font-sans text-sm font-normal">
+                  dont {assessments.length - planned.planned} hors notes exigées (rattrapages,
+                  points d’étape, bonus…)
+                </span>
+              ) : null}
             </h2>
             <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...cards, ...makeups].map((a) => {

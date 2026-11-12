@@ -1,4 +1,3 @@
-import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Camera, Plus, Upload } from "lucide-react";
@@ -19,6 +18,7 @@ import { plural } from "@/lib/plural";
 import { schoolYearLabel } from "@/lib/students/groups";
 import { listScholarGroups, listStudentYears, listStudents } from "@/lib/students/queries";
 import { promotionToShow } from "@/lib/students/years";
+import { moduleLabels } from "@/lib/dashboard/module-labels";
 
 export const metadata: Metadata = { title: "Étudiant·es" };
 
@@ -142,7 +142,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             <option value="">Tous</option>
             {modules.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} ({schoolYearOf(m.year)})
+                {moduleLabels(modules).get(m.id) ?? m.name}
               </option>
             ))}
           </select>

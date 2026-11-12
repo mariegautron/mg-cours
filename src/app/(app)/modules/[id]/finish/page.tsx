@@ -169,9 +169,6 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
             gardent leur lien personnel.
           </p>
         </section>
-        <Button asChild variant="ghost" size="touch">
-          <Link href={`/modules/${mod.id}`}>← Retour au module</Link>
-        </Button>
       </div>
     </div>
   );

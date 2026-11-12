@@ -48,3 +48,36 @@ export function relabelModules<T extends object>(
   }
   return items;
 }
+
+/** Clé de `module.admin_docs` qui masque un module d'Aujourd'hui (réglage provisoire, sans migration). */
+export const HIDDEN_FROM_TODAY_KEY = "hidden_from_today";
+
+export function isHiddenFromToday(adminDocs: unknown): boolean {
+  return (
+    !!adminDocs &&
+    typeof adminDocs === "object" &&
+    (adminDocs as Record<string, unknown>)[HIDDEN_FROM_TODAY_KEY] === true
+  );
+}
+
+/**
+ * Retire sur place d'une liste les éléments d'un module masqué d'Aujourd'hui (`module: { id }`,
+ * `moduleId` ou `module_id`). Renvoie la liste.
+ */
+export function dropHiddenModules<T extends object>(items: T[], hidden: ReadonlySet<string>): T[] {
+  if (hidden.size === 0) return items;
+  for (let i = items.length - 1; i >= 0; i--) {
+    const x = items[i] as {
+      id?: unknown;
+      module?: { id?: unknown } | null;
+      moduleId?: unknown;
+      module_id?: unknown;
+    };
+    const id =
+      (x.module && typeof x.module === "object" ? x.module.id : undefined) ??
+      x.moduleId ??
+      x.module_id;
+    if (typeof id === "string" && hidden.has(id)) items.splice(i, 1);
+  }
+  return items;
+}

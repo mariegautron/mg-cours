@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { kindOf } from "@/lib/assessments/individual";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import { listAllAssessments } from "@/lib/assessments/queries";
+import { moduleLabels } from "@/lib/dashboard/module-labels";
 
 const SELECT = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
 
@@ -31,17 +32,22 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
   const toDate = one("au");
   const all = await listAllAssessments();
   const toGrade = filtre === "a-noter";
-  // Deux modules du même nom (années différentes) restent distinguables : l'année suit le nom.
-  const moduleOptions = [
+  // Chaque module une seule fois ; l'année scolaire entre parenthèses seulement quand deux
+  // modules portent le même nom (lot 6, point 32).
+  const uniqueModules = [
     ...new Map(
       all
         .filter((a) => a.module)
         .map((a) => [
           a.module!.id,
-          a.module!.year ? `${a.module!.name} · ${a.module!.year}` : a.module!.name,
+          { id: a.module!.id, name: a.module!.name, year: a.module!.year ?? null },
         ]),
-    ).entries(),
-  ].sort((a, b) => a[1].localeCompare(b[1], "fr"));
+    ).values(),
+  ];
+  const labelOf = moduleLabels(uniqueModules);
+  const moduleOptions = uniqueModules
+    .map((m) => [m.id, labelOf.get(m.id) ?? m.name] as const)
+    .sort((a, b) => a[1].localeCompare(b[1], "fr"));
   const assessments = all.filter(
     (a) =>
       (!toGrade || a.gradeCount === 0) &&
