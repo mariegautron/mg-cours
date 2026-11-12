@@ -23,7 +23,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
 
   return (
-    <Card className="halo w-full max-w-sm">
+    <Card className="card-featured w-full max-w-sm">
       <CardHeader>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Connexion</h1>
         <CardDescription>Connexion à ton espace pédagogique.</CardDescription>

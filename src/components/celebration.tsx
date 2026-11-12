@@ -12,7 +12,7 @@ export function Celebration({ children, action }: { children: ReactNode; action?
   return (
     <div
       data-slot="celebration"
-      className="bg-card halo flex flex-wrap items-center gap-3 rounded-xl border p-3"
+      className="bg-card card-featured flex flex-wrap items-center gap-3 rounded-xl border p-3"
     >
       <Mascot mood="party" float={false} className="size-14 shrink-0" />
       <p className="font-medium">{children}</p>

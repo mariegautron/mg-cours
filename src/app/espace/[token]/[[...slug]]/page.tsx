@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -18,24 +19,38 @@ import { DepositBox } from "@/components/modules/deposit-box";
 import { dueLabel } from "@/lib/modules/espace";
 import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
+import { APP_NAME } from "@/lib/brand";
 import { callStudentView, studentFeedbackPath } from "@/lib/modules/student-public";
 import { liveQuizForToken } from "@/lib/quiz/espace-attempt";
 import { loadPublishedReview } from "@/lib/assessments/review-public";
 import { ReviewFeedback } from "@/components/modules/review-feedback";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Mon espace",
-  robots: { index: false, follow: false },
-  referrer: "no-referrer",
-};
+// Un seul appel par requête, partagé entre l'aperçu du lien et la page.
+const loadView = cache((token: string, count: boolean) => callStudentView(token, count));
+
+/** Aperçu du lien personnel : le nom du module, « Marelle » en second ; jamais le prénom. */
+export async function generateMetadata({
+  params,
+}: PageProps<"/espace/[token]/[[...slug]]">): Promise<Metadata> {
+  const { token, slug = [] } = await params;
+  const res = await loadView(token, slug.length === 0);
+  const title = res.status === "ok" && res.content ? res.content.frise.moduleName : "Mon espace";
+  return {
+    title,
+    description: "Ton espace de cours : séances, documents, évaluations et résultats.",
+    openGraph: { title: `${title} · ${APP_NAME}`, siteName: APP_NAME },
+    robots: { index: false, follow: false },
+    referrer: "no-referrer",
+  };
+}
 
 /** Tableau de bord du cours d'une personne : une seule page à segments, jamais indexée. */
 export default async function EspacePage({ params }: PageProps<"/espace/[token]/[[...slug]]">) {
   const { token, slug = [] } = await params;
   const [section, arg] = slug;
   // La consultation n'est comptée qu'à l'accueil.
-  const res = await callStudentView(token, slug.length === 0);
+  const res = await loadView(token, slug.length === 0);
   if (res.status !== "ok") return <EspaceError status={res.status} tone="tu" />;
 
   if (!res.content) {
@@ -61,7 +76,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     publishedAt: res.content.publishedAt,
     deposits: undefined,
   };
-  // État des dépôts (heure serveur) pour les évaluations rendues dans MG COURS.
+  // État des dépôts (heure serveur) pour les évaluations rendues dans Marelle.
   if (data.espace && ["accueil", "evaluation"].includes(section ?? "accueil")) {
     const deposits: NonNullable<EspaceData["deposits"]> = {};
     for (const ev of data.espace.evaluations) {

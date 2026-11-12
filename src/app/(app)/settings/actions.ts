@@ -13,6 +13,7 @@ import {
 import { readProfileForm, readSchoolForm } from "@/lib/settings/schema";
 import { createClient } from "@/lib/supabase/server";
 import { failure } from "@/lib/messages";
+import { DENSITY_COOKIE, readDensity } from "@/lib/settings/density";
 import { readTextSize, TEXT_SIZE_COOKIE } from "@/lib/settings/text-size";
 
 export interface SettingsFormState {
@@ -207,6 +208,16 @@ export interface AccountState {
 export async function saveTextSize(size: string): Promise<void> {
   const { cookies } = await import("next/headers");
   (await cookies()).set(TEXT_SIZE_COOKIE, readTextSize(size), {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+}
+
+/** Densité de l'affichage (« Compacte » par défaut) : un cookie, lu par le layout racine. */
+export async function saveDensity(density: string): Promise<void> {
+  const { cookies } = await import("next/headers");
+  (await cookies()).set(DENSITY_COOKIE, readDensity(density), {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",

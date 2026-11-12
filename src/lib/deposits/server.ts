@@ -26,7 +26,7 @@ export type DepositContextResult = { ok: true; ctx: DepositContext } | { ok: fal
 
 /**
  * Vérifie, côté serveur, TOUT ce qui autorise un dépôt : jeton d'espace valide (non révoqué), évaluation
- * publiée dans l'espace de cette personne, rendu « dans MG COURS », et la personne appartient bien au
+ * publiée dans l'espace de cette personne, rendu « dans Marelle », et la personne appartient bien au
  * groupe visé. Le client à droits complets n'est utilisé qu'APRÈS ces contrôles, jamais avec un
  * identifiant venu du navigateur sans vérification.
  */

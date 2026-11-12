@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 function Empty({
   className,
   children,
-  mascot = "thinking",
+  mascot = "sleepy",
   ...props
 }: React.ComponentProps<"div"> & { mascot?: MascotMood | false }) {
   return (
     <div
       data-slot="empty"
       className={cn(
-        "bg-shell flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-8 text-center text-balance",
+        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-6 text-center text-balance",
         className,
       )}
       {...props}

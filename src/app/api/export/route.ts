@@ -273,7 +273,7 @@ export async function GET() {
   return deliverExport({
     bytes: zip,
     contentType: "application/zip",
-    filename: `mg-cours-mes-donnees-${today}.zip`,
+    filename: `marelle-mes-donnees-${today}.zip`,
     moduleId: "compte",
     kind: "mes-donnees",
   });

@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 
 import { buildGridHandout } from "@/lib/assessments/grid-handout";
 import { getGrid } from "@/lib/assessments/queries";
+import { fileSlug } from "@/lib/modules/espace";
 import { GridHandoutDocument } from "@/lib/pdf/grid";
 
 export const runtime = "nodejs";
@@ -16,7 +17,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/grids/[id]/pdf"
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="grille.pdf"',
+      "Content-Disposition": `attachment; filename="grille-${fileSlug(grid.name, "evaluation")}.pdf"`,
       "Cache-Control": "private, no-store",
     },
   });

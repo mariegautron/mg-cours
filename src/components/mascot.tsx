@@ -1,123 +1,244 @@
 import { cn } from "@/lib/utils";
 
-export type MascotMood = "happy" | "thinking" | "party" | "alert";
+/**
+ * Humeurs de Margot. Les anciennes valeurs (« happy », « thinking », « party », « alert ») restent
+ * acceptées pour ne rien casser : « party » est la version contente, « sleepy » la version endormie.
+ */
+export type MascotMood = "happy" | "thinking" | "party" | "alert" | "sleepy";
+
+type Look = {
+  eyeRy: number;
+  pupilR: number;
+  wingRot: number;
+  /** Couleur de la case de marelle sous Margot (jetons de statut). */
+  caseColor: string;
+  caseNumber: string;
+  label: string;
+};
+
+const LOOKS: Record<"contente" | "pensive" | "endormie" | "alerte", Look> = {
+  contente: {
+    eyeRy: 7,
+    pupilR: 3.5,
+    wingRot: -14,
+    caseColor: "var(--status-ready)",
+    caseNumber: "3",
+    label: "Margot, la pie de Marelle, contente : tout est prêt",
+  },
+  pensive: {
+    eyeRy: 5,
+    pupilR: 3,
+    wingRot: 0,
+    caseColor: "var(--status-todo)",
+    caseNumber: "2",
+    label: "Margot, la pie de Marelle, pensive : il manque quelque chose",
+  },
+  endormie: {
+    eyeRy: 1.2,
+    pupilR: 0,
+    wingRot: 4,
+    caseColor: "var(--status-idle)",
+    caseNumber: "1",
+    label: "Margot, la pie de Marelle, endormie : rien ici pour l'instant",
+  },
+  alerte: {
+    eyeRy: 8,
+    pupilR: 2.5,
+    wingRot: -32,
+    caseColor: "var(--status-blocking)",
+    caseNumber: "4",
+    label: "Margot, la pie de Marelle, en alerte : attention",
+  },
+};
+
+function lookOf(mood: MascotMood) {
+  if (mood === "thinking") return { key: "pensive" as const, look: LOOKS.pensive };
+  if (mood === "alert") return { key: "alerte" as const, look: LOOKS.alerte };
+  if (mood === "sleepy") return { key: "endormie" as const, look: LOOKS.endormie };
+  return { key: "contente" as const, look: LOOKS.contente };
+}
 
 /**
- * « Plume », la chouette de MG COURS. Illustration décorative (aria-hidden) : elle ne porte
- * jamais d'information seule — le texte voisin dit toujours la même chose.
- * Couleurs héritées des tokens du thème (clair/sombre) ; l'animation `animate-float`
- * est neutralisée par prefers-reduced-motion.
+ * « Margot », la pie de Marelle : l'unique composant mascotte de l'appli (une image, une taille,
+ * un texte alternatif). Pour changer son dessin, c'est ici et nulle part ailleurs.
+ *
+ * Décorative par défaut (aria-hidden) : le texte voisin dit toujours la même chose. Quand elle
+ * porte une information, passer `informative` : elle prend alors `role="img"` et un texte
+ * alternatif « Margot, la pie de Marelle… ».
+ * Couleurs : jetons du thème (contour = texte, aile = accent, case = statut). L'animation
+ * `animate-float` est coupée par prefers-reduced-motion (globals.css).
  */
 export function Mascot({
   mood = "happy",
   className,
-  float = true,
+  float = false,
+  informative = false,
 }: {
   mood?: MascotMood;
   className?: string;
   float?: boolean;
+  informative?: boolean;
 }) {
-  const pupil =
-    mood === "thinking"
-      ? { dx: 3, dy: -3 }
-      : mood === "alert"
-        ? { dx: 0, dy: 0 }
-        : { dx: 0, dy: 1 };
-  const pupilR = mood === "alert" ? 3.5 : 6;
+  const { key, look } = lookOf(mood);
+  const a11y = informative
+    ? ({ role: "img", "aria-label": look.label } as const)
+    : ({ "aria-hidden": true } as const);
 
   return (
     <svg
-      viewBox="0 0 120 120"
-      aria-hidden="true"
+      viewBox="0 0 160 160"
       focusable="false"
+      {...a11y}
       className={cn("size-28", float && "animate-float", className)}
     >
-      {/* ombre */}
-      <ellipse cx="60" cy="112" rx="26" ry="4" fill="currentColor" opacity="0.12" />
-      {/* pieds */}
-      <ellipse cx="48" cy="107" rx="8" ry="4" fill="var(--sun)" />
-      <ellipse cx="72" cy="107" rx="8" ry="4" fill="var(--sun)" />
-      {/* aigrettes */}
-      <path d="M30 34 L40 14 L52 30 Z" fill="var(--violet)" />
-      <path d="M90 34 L80 14 L68 30 Z" fill="var(--violet)" />
-      {/* corps */}
-      <ellipse cx="60" cy="66" rx="40" ry="42" fill="var(--violet)" />
-      <ellipse cx="60" cy="78" rx="25" ry="27" fill="var(--card)" opacity="0.92" />
-      {/* ailes */}
-      <ellipse cx="22" cy="72" rx="8" ry="18" fill="var(--violet)" transform="rotate(12 22 72)" />
-      <ellipse cx="98" cy="72" rx="8" ry="18" fill="var(--violet)" transform="rotate(-12 98 72)" />
-      {/* joues */}
-      <circle cx="34" cy="70" r="5" fill="var(--coral)" opacity="0.55" />
-      <circle cx="86" cy="70" r="5" fill="var(--coral)" opacity="0.55" />
-      {/* yeux */}
-      <circle cx="44" cy="54" r="14" fill="#fff" />
-      <circle cx="76" cy="54" r="14" fill="#fff" />
-      <circle cx={44 + pupil.dx} cy={55 + pupil.dy} r={pupilR} fill="#1b1533" />
-      <circle cx={76 + pupil.dx} cy={55 + pupil.dy} r={pupilR} fill="#1b1533" />
-      <circle cx={46 + pupil.dx} cy={52 + pupil.dy} r="2" fill="#fff" />
-      <circle cx={78 + pupil.dx} cy={52 + pupil.dy} r="2" fill="#fff" />
-      {/* bec */}
-      <path d="M60 62 L53 73 L67 73 Z" fill="var(--sun)" />
-      {/* toque de diplômée */}
-      <path d="M28 24 L60 10 L92 24 L60 38 Z" fill="#1b1533" />
-      <path d="M44 32 V42 Q60 50 76 42 V32 L60 38 Z" fill="#2a2150" />
-      <path d="M92 24 V38" stroke="var(--sun)" strokeWidth="2" />
-      <circle cx="92" cy="40" r="3" fill="var(--sun)" />
-
-      {mood === "thinking" ? (
+      <rect
+        x="22"
+        y="116"
+        width="96"
+        height="34"
+        rx="10"
+        fill={look.caseColor}
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+      />
+      <text
+        x="34"
+        y="141"
+        fontFamily="var(--font-heading), sans-serif"
+        fontWeight="800"
+        fontSize="20"
+        fill="#14141F"
+      >
+        {look.caseNumber}
+      </text>
+      <path
+        d="M64 98 L16 122 L24 132 L74 108 Z"
+        fill="var(--margot-wing)"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="80"
+        y1="108"
+        x2="78"
+        y2="118"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <line
+        x1="92"
+        y1="108"
+        x2="94"
+        y2="118"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <ellipse
+        cx="88"
+        cy="88"
+        rx="31"
+        ry="24"
+        fill="#14141F"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+      />
+      <ellipse
+        cx="97"
+        cy="96"
+        rx="18"
+        ry="13"
+        fill="#FFFFFF"
+        stroke="var(--margot-outline)"
+        strokeWidth="2.5"
+      />
+      <g transform={`rotate(${look.wingRot} 84 84)`}>
+        <path
+          d="M60 80 Q86 64 108 84 Q88 100 62 94 Z"
+          fill="var(--margot-wing)"
+          stroke="var(--margot-outline)"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M70 85 Q86 78 99 86"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      </g>
+      <circle
+        cx="110"
+        cy="58"
+        r="19"
+        fill="#14141F"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+      />
+      <path
+        d="M126 54 L146 60 L126 66 Z"
+        fill="var(--status-todo)"
+        stroke="var(--margot-outline)"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <ellipse cx="114" cy="53" rx="7" ry={look.eyeRy} fill="#FFFFFF" />
+      {look.pupilR > 0 ? <circle cx="116" cy="53" r={look.pupilR} fill="#14141F" /> : null}
+      <circle cx="104" cy="66" r="4" fill="#FFB3C7" />
+      {key === "endormie" ? (
         <text
-          x="92"
-          y="18"
-          fontSize="22"
-          fontWeight="700"
-          fill="var(--sky)"
-          fontFamily="sans-serif"
+          x="128"
+          y="34"
+          fontFamily="var(--font-heading), sans-serif"
+          fontWeight="800"
+          fontSize="16"
+          fill="var(--margot-outline)"
         >
-          ?
+          z z
         </text>
       ) : null}
-      {mood === "alert" ? (
+      {key === "alerte" ? (
         <text
-          x="96"
-          y="20"
-          fontSize="24"
-          fontWeight="700"
-          fill="var(--coral)"
-          fontFamily="sans-serif"
+          x="134"
+          y="38"
+          fontFamily="var(--font-heading), sans-serif"
+          fontWeight="800"
+          fontSize="26"
+          fill="var(--status-blocking)"
         >
           !
         </text>
       ) : null}
-      {mood === "party" ? (
-        <g>
-          <circle cx="16" cy="20" r="3" fill="var(--coral)" />
-          <circle cx="104" cy="14" r="3" fill="var(--mint)" />
-          <rect
-            x="8"
-            y="46"
-            width="6"
-            height="3"
-            rx="1"
-            fill="var(--sun)"
-            transform="rotate(30 8 46)"
-          />
-          <rect
-            x="108"
-            y="40"
-            width="6"
-            height="3"
-            rx="1"
-            fill="var(--sky)"
-            transform="rotate(-25 108 40)"
-          />
-          <circle cx="112" cy="70" r="2.5" fill="var(--violet)" />
-        </g>
+      {key === "pensive" ? (
+        <text
+          x="132"
+          y="38"
+          fontFamily="var(--font-heading), sans-serif"
+          fontWeight="800"
+          fontSize="24"
+          fill="var(--margot-wing)"
+        >
+          ?
+        </text>
+      ) : null}
+      {key === "contente" ? (
+        <path
+          d="M132 24 l4 8 l8 -12"
+          fill="none"
+          stroke="var(--status-ready)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ) : null}
     </svg>
   );
 }
 
-/** Marque compacte pour la barre latérale. */
+/** Marque compacte (logo) : la tête de Margot, à côté du mot « marelle ». Décorative. */
 export function LogoMark({
   className,
   style,
@@ -133,13 +254,55 @@ export function LogoMark({
       focusable="false"
       className={cn("size-8", className)}
     >
-      <rect width="32" height="32" rx="9" fill="var(--violet)" />
-      <path d="M6 12 L16 7 L26 12 L16 17 Z" fill="#1b1533" />
-      <circle cx="12" cy="21" r="3.6" fill="#fff" />
-      <circle cx="20" cy="21" r="3.6" fill="#fff" />
-      <circle cx="12.4" cy="21.4" r="1.6" fill="#1b1533" />
-      <circle cx="20.4" cy="21.4" r="1.6" fill="#1b1533" />
-      <path d="M16 22.5 L14.4 25.2 L17.6 25.2 Z" fill="var(--sun)" />
+      <rect
+        x="1"
+        y="1"
+        width="30"
+        height="30"
+        rx="9"
+        fill="var(--card)"
+        stroke="var(--margot-outline)"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M6 21 Q14 14 22 20 Q15 25 7 24 Z"
+        fill="var(--margot-wing)"
+        stroke="var(--margot-outline)"
+        strokeWidth="1.2"
+      />
+      <circle
+        cx="18"
+        cy="13"
+        r="6.5"
+        fill="#14141F"
+        stroke="var(--margot-outline)"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M24 11.5 L29 13 L24 14.5 Z"
+        fill="var(--status-todo)"
+        stroke="var(--margot-outline)"
+        strokeWidth="1"
+      />
+      <circle cx="19.5" cy="11.5" r="2" fill="#FFFFFF" />
+      <circle cx="20" cy="11.5" r="1" fill="#14141F" />
     </svg>
+  );
+}
+
+/** Logo complet : tête de Margot + « marelle » en minuscules (Bricolage Grotesque 800). */
+export function Wordmark({ size = "md", className }: { size?: "md" | "lg"; className?: string }) {
+  return (
+    <span className={cn("flex items-center", size === "lg" ? "gap-3" : "gap-2.5", className)}>
+      <LogoMark className={size === "lg" ? "size-10" : undefined} />
+      <span
+        className={cn(
+          "font-heading leading-none font-extrabold tracking-tight lowercase",
+          size === "lg" ? "text-3xl" : "text-xl",
+        )}
+      >
+        Marelle
+      </span>
+    </span>
   );
 }

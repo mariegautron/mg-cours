@@ -61,7 +61,7 @@ function Choice<T extends string>({
 /**
  * « Quelle épreuve ? » (maquette IndPrep) : type d'épreuve, versions du sujet, sujet de rattrapage
  * préparé d'avance. Chaque choix s'enregistre tout seul. L'arrivée des rendus se règle dans
- * « Rendre dans MG COURS ou ailleurs » (`submit_mode`, seule source depuis le lot 6 du schéma).
+ * « Rendre dans Marelle ou ailleurs » (`submit_mode`, seule source depuis le lot 6 du schéma).
  */
 export function ExamKindForm({
   moduleId,
@@ -145,8 +145,8 @@ export function ExamKindForm({
       />
       {state.kind === "files" ? (
         <p className="text-muted-foreground text-sm">
-          Fichiers, ou liens GitHub, Figma ou autre : où ils arrivent se règle plus bas, dans
-          « Les étudiant·es rendent ».
+          Fichiers, ou liens GitHub, Figma ou autre : où ils arrivent se règle plus bas, dans « Les
+          étudiant·es rendent ».
         </p>
       ) : null}
       <label className="flex min-h-12 items-start gap-3">

@@ -33,7 +33,7 @@ export function safeName(name: string): string {
 
 export const README = (date: string, skipped: string[]) =>
   [
-    `MG COURS · export de mes données du ${date}`,
+    `Marelle · export de mes données du ${date}`,
     "",
     "tableurs/ : un fichier par sujet (étudiant·es, notes, appréciations, présences, modules,",
     "  séances), à ouvrir avec Excel ou LibreOffice.",

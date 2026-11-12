@@ -45,7 +45,7 @@ export function ExportButton() {
           blob,
           filenameFromDisposition(
             res.headers.get("Content-Disposition"),
-            "mg-cours-mes-donnees.zip",
+            "marelle-mes-donnees.zip",
           ),
         );
         size = blob.size;
@@ -104,7 +104,7 @@ export function ExportButton() {
       const today = new Date().toISOString().slice(0, 10);
       save(
         new Blob([zip as BlobPart], { type: "application/zip" }),
-        `mg-cours-mes-fichiers-${today}.zip`,
+        `marelle-mes-fichiers-${today}.zip`,
       );
       setMessage(
         `Fichiers téléchargés (${mo(zip.byteLength)} Mo${missed.length ? `, ${missed.length} non inclus` : ""}).`,

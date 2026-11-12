@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# MG COURS — guide de contribution
+# Marelle (ex-MG COURS) — guide de contribution
 
 Application web personnelle de **Marie Gautron** (enseignante, plusieurs écoles) :
 centraliser ressources / modules / cours / étudiants / évaluations, générer trames

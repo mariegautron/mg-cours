@@ -9,6 +9,7 @@ import { SchoolRulesForm } from "@/components/settings/school-rules-form";
 import { ExportButton } from "@/components/settings/export-button";
 import { AccountSection } from "@/components/settings/account-section";
 import { AppearanceForm } from "@/components/settings/appearance-form";
+import { DENSITY_COOKIE, readDensity } from "@/lib/settings/density";
 import { readTextSize, TEXT_SIZE_COOKIE } from "@/lib/settings/text-size";
 import { readSchoolRules } from "@/lib/settings/school-rules";
 import { DeleteSchoolButton } from "@/components/settings/delete-school-button";
@@ -36,7 +37,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
     listSchoolRules(),
   ]);
 
-  const textSize = readTextSize((await cookies()).get(TEXT_SIZE_COOKIE)?.value);
+  const cookieStore = await cookies();
+  const textSize = readTextSize(cookieStore.get(TEXT_SIZE_COOKIE)?.value);
+  const density = readDensity(cookieStore.get(DENSITY_COOKIE)?.value);
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -63,7 +66,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             <p className="text-muted-foreground text-sm">
               Choisis l’affichage qui te repose les yeux. Chaque choix s’applique tout de suite.
             </p>
-            <AppearanceForm textSize={textSize} />
+            <AppearanceForm textSize={textSize} density={density} />
           </section>
 
           <section aria-labelledby="profile">

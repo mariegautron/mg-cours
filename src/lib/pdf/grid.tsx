@@ -2,6 +2,7 @@ import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import type { GridHandout, HandoutCriterion } from "@/lib/assessments/grid-handout";
 import { formatNumber } from "@/lib/assessments/scoring";
+import { APP_NAME } from "@/lib/brand";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: "Helvetica", color: "#111" },
@@ -25,6 +26,7 @@ const styles = StyleSheet.create({
   levelPoints: { width: 44, fontFamily: "Helvetica-Bold" },
   total: { marginTop: 12, fontSize: 13, fontFamily: "Helvetica-Bold" },
   note: { marginTop: 4, color: "#555", fontSize: 9 },
+  footer: { position: "absolute", bottom: 20, left: 40, right: 40, fontSize: 8, color: "#777" },
 });
 
 const fmtDate = (iso: string | null) =>
@@ -99,6 +101,9 @@ export function GridHandoutDocument({ handout }: { handout: GridHandout }) {
             Les bonus s’ajoutent au total, dans la limite de 20 sur 20.
           </Text>
         ) : null}
+        <Text style={styles.footer} fixed>
+          Généré avec {APP_NAME}
+        </Text>
       </Page>
     </Document>
   );

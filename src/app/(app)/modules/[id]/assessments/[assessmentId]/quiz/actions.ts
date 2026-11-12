@@ -29,6 +29,7 @@ import { getClassLinkInfo } from "@/lib/quiz/class-queries";
 import { generateToken, hashToken, quizUrl } from "@/lib/quiz/token";
 import type { DrawnQuestion } from "@/lib/quiz/types";
 import { createClient } from "@/lib/supabase/server";
+import { appSender } from "@/lib/brand";
 
 const path = (moduleId: string, assessmentId: string) =>
   `/modules/${moduleId}/assessments/${assessmentId}/quiz`;
@@ -350,7 +351,7 @@ async function sendInvite(
       reason: "l’envoi d’e-mails n’est pas configuré (RESEND_API_KEY et RESEND_FROM manquent)",
     };
   const { error } = await new Resend(RESEND_API_KEY).emails.send({
-    from: RESEND_FROM,
+    from: appSender(RESEND_FROM),
     to: [to],
     subject: inviteSubject(ctx.quizTitle),
     text: inviteText(ctx),

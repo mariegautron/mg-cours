@@ -37,7 +37,7 @@ export function TodayPrep({
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <section aria-labelledby={`${id}-last`} className="bg-card rounded-3xl border p-5 shadow-sm">
+      <section aria-labelledby={`${id}-last`} className="bg-card rounded-3xl border p-4">
         <h3 id={`${id}-last`} className="font-heading mb-2 text-lg font-bold">
           Ce qu’on avait dit la dernière fois<span className="sr-only"> — {title}</span>
         </h3>
@@ -70,7 +70,7 @@ export function TodayPrep({
         )}
       </section>
 
-      <section aria-labelledby={`${id}-ready`} className="bg-card rounded-3xl border p-5 shadow-sm">
+      <section aria-labelledby={`${id}-ready`} className="bg-card rounded-3xl border p-4">
         <h3 id={`${id}-ready`} className="font-heading mb-1 text-lg font-bold">
           Prêt pour aujourd’hui ?<span className="sr-only"> — {title}</span>
         </h3>
@@ -111,10 +111,7 @@ export function TodayPrep({
         </ul>
       </section>
 
-      <section
-        aria-labelledby={`${id}-students`}
-        className="bg-card rounded-3xl border p-5 shadow-sm"
-      >
+      <section aria-labelledby={`${id}-students`} className="bg-card rounded-3xl border p-4">
         <h3 id={`${id}-students`} className="font-heading mb-2 text-lg font-bold">
           Tes étudiant·es<span className="sr-only"> — {title}</span>
         </h3>

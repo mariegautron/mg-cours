@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <SidebarProvider>
           <RailSync />
           <AppSidebar />
-          <SidebarInset className="bg-shell min-w-0">
+          <SidebarInset className="min-w-0">
             <header className="flex h-14 items-center gap-2 border-b px-4">
               <SidebarTrigger className="max-md:hidden" />
               <div className="min-w-0 flex-1 max-md:hidden">

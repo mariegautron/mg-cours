@@ -56,9 +56,10 @@ import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/
 export const metadata: Metadata = { title: "Tableau de bord" };
 
 const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-[10px] border border-btn-border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
 
-const TODO_TONES = ["bg-primary/20 text-primary", "bg-sun/20 text-sun", "bg-mint/20 text-mint"];
+// Icônes monochromes : la couleur sert l'action et les statuts, rien d'autre.
+const TODO_TONES = ["bg-muted text-primary", "bg-muted text-primary", "bg-muted text-primary"];
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const passwordChanged = (await searchParams).password === "changed";
@@ -317,7 +318,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const nextUntil = upcoming ? daysBetween(today, upcoming.session_date!) : null;
 
   const todoCard = (
-    <section aria-labelledby="todo" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="todo" className="bg-card rounded-3xl border p-4">
       <h2 id="todo" className="font-heading text-xl font-bold">
         À faire
       </h2>
@@ -383,7 +384,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   );
 
   const doneTodayCard = doneToday.length ? (
-    <section aria-labelledby="done-today" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="done-today" className="bg-card rounded-3xl border p-4">
       <h2 id="done-today" className="font-heading text-lg font-bold">
         Faite{doneToday.length > 1 ? "s" : ""} aujourd’hui
       </h2>
@@ -404,7 +405,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ) : null;
 
   const surprisesCard = surprises.length ? (
-    <section aria-labelledby="surprises" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="surprises" className="bg-card rounded-3xl border p-4">
       <h2 id="surprises" className="font-heading mb-2 text-xl font-bold">
         Imprévu{surprises.length > 1 ? "s" : ""} à envoyer
       </h2>
@@ -432,11 +433,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ) : null;
 
   const resumeCard = resume ? (
-    <section aria-labelledby="resume" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="resume" className="bg-card rounded-3xl border p-4">
       <div className="flex items-center gap-3">
         <span
           aria-hidden
-          className="bg-coral/15 text-coral flex size-11 shrink-0 items-center justify-center rounded-2xl"
+          className="bg-muted text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl"
         >
           <PenLine className="size-5" />
         </span>
@@ -459,7 +460,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const correctCard =
     toCorrect.length > 0 ? (
-      <section aria-labelledby="corr" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <section aria-labelledby="corr" className="bg-card rounded-3xl border p-4">
         <h2 id="corr" className="font-heading mb-2 text-lg font-bold">
           À corriger
         </h2>
@@ -508,7 +509,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     return (
       <div className="space-y-5">
         {passwordChanged ? (
-          <p role="status" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+          <p role="status" className="text-success text-sm font-semibold">
             Mot de passe changé. Tu es connectée.
           </p>
         ) : null}
@@ -524,7 +525,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         <section
           aria-labelledby="seance"
-          className="bg-primary/15 border-primary/60 rounded-3xl border p-5 sm:p-6"
+          className="bg-card card-featured rounded-3xl border p-4 sm:p-5"
         >
           <div className="min-w-0">
             <p className="text-primary mb-1.5 text-[0.8rem] font-bold tracking-wider uppercase">
@@ -552,7 +553,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                     ? `/modules/${hero.module.id}/courses/${hero.id}/close`
                     : `/modules/${hero.module.id}/courses/${hero.id}/start`
                 }
-                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
               >
                 {heroEnded ? null : <Play aria-hidden className="size-4" />}
                 {heroEnded ? "Clôturer la séance" : "Commencer le cours"}
@@ -594,7 +595,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         {doneTodayCard}
 
         {sessions.length > 1 ? (
-          <section aria-labelledby="after" className="bg-card rounded-3xl border p-5 shadow-sm">
+          <section aria-labelledby="after" className="bg-card rounded-3xl border p-4">
             <h2 id="after" className="font-heading text-lg font-bold">
               Ensuite aujourd’hui
             </h2>
@@ -645,7 +646,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   return (
     <div className="space-y-5">
       {passwordChanged ? (
-        <p role="status" className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+        <p role="status" className="text-success text-sm font-semibold">
           Mot de passe changé. Tu es connectée.
         </p>
       ) : null}
@@ -706,7 +707,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           {upcoming ? (
             <section
               aria-labelledby="next"
-              className="bg-card border-l-primary rounded-3xl border border-l-[6px] p-5 shadow-sm"
+              className="bg-card card-featured rounded-3xl border p-4"
             >
               <p className="mb-1.5 flex flex-wrap items-center gap-2.5">
                 <Pill tone="wip">{untilLabel(today, upcoming.session_date!)}</Pill>
@@ -730,7 +731,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               <div className="flex flex-wrap gap-2.5">
                 <Link
                   href={`/modules/${upcoming.module.id}/courses/${upcoming.id}#deroule`}
-                  className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+                  className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
                 >
                   Préparer la séance {upcoming.position}
                 </Link>

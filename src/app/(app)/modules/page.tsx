@@ -166,7 +166,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         </div>
         <Link
           href="/modules/new"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold shadow-lg focus-visible:ring-2 focus-visible:outline-none"
+          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
         >
           Créer un module
         </Link>

@@ -29,7 +29,7 @@ export function WeekCard({
   hrefs: (string | null)[];
 }) {
   return (
-    <section aria-labelledby="week" className="bg-card rounded-2xl border p-5 shadow-sm">
+    <section aria-labelledby="week" className="bg-card rounded-2xl border p-4">
       <h2 id="week" className="font-heading mb-3 text-lg font-bold">
         {title}
       </h2>

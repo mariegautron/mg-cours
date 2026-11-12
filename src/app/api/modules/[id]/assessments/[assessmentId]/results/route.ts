@@ -1,6 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 
 import { loadResultSheets } from "@/lib/assessments/results-data";
+import { fileSlug } from "@/lib/modules/espace";
 import { ResultsDocument } from "@/lib/pdf/results";
 
 export const runtime = "nodejs";
@@ -18,7 +19,7 @@ export async function GET(
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="resultats.pdf"',
+      "Content-Disposition": `attachment; filename="resultats-${fileSlug(sheets[0]?.title ?? "", "evaluation")}.pdf"`,
     },
   });
 }

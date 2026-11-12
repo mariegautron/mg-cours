@@ -18,6 +18,16 @@
   --color-success: var(--success);
   --color-sky: var(--sky);
   --color-glow: var(--glow);
+  --color-status-idle: var(--status-idle);
+  --color-status-todo: var(--status-todo);
+  --color-status-ready: var(--status-ready);
+  --color-status-published: var(--status-published);
+  --color-status-blocking: var(--status-blocking);
+  --color-status-ink: var(--status-ink);
+  --color-field: var(--field);
+  --color-btn-border: var(--btn-border);
+  --color-featured-border: var(--featured-border);
+  --color-private: var(--private);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,12 +61,21 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
+  /* Cartes arrondies à 16 px, boutons et champs à 10 px (DA « Studio de nuit »). */
+  --radius-2xl: 1rem;
+  --radius-3xl: 1rem;
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+/* Pas d'ombre portée sur les cartes : contour de 1 px seulement (les menus flottants gardent la leur). */
+@theme {
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+}
+
+:root,
+.theme-light {
   /* Thème clair (secondaire) — teintes violettes, contrastes AA vérifiés (≥ 6,3:1). */
   --background: oklch(0.985 0.008 285);
   --foreground: oklch(0.2 0.03 285);
@@ -81,7 +100,7 @@
   --chart-3: oklch(0.55 0.12 165);
   --chart-4: oklch(0.6 0.13 85);
   --chart-5: oklch(0.55 0.12 240);
-  --radius: 0.875rem;
+  --radius: 0.625rem;
   --sidebar: oklch(0.97 0.015 285);
   --sidebar-foreground: oklch(0.2 0.03 285);
   --sidebar-primary: oklch(0.48 0.2 285);
@@ -102,48 +121,80 @@
      Alias des accents ci-dessus, dont le contraste est déjà vérifié dans les deux thèmes. */
   --warning: var(--sun);
   --success: var(--mint);
+
+  /* Statuts (pastilles) : texte #0E0E11 sur la couleur, toujours avec une icône et un mot.
+     Mêmes valeurs dans les deux thèmes (texte sombre sur teinte claire ≥ 7:1). */
+  --status-idle: #b9b9c4;
+  --status-todo: #e8c26a;
+  --status-ready: #7fddb0;
+  --status-published: #9ccbff;
+  --status-blocking: #ff7a85;
+  --status-ink: #0e0e11;
+
+  --field: oklch(1 0 0);
+  --btn-border: oklch(0.8 0.02 285);
+  --featured-border: oklch(0.75 0.08 285);
+  --featured-inset: none;
+  --private: oklch(0.96 0.02 285);
+  --margot-outline: #14141f;
+  --margot-wing: oklch(0.6 0.16 285);
 }
 
-.dark {
-  /* Thème sombre (par défaut) — encre violette + accents vifs, AA vérifié (≥ 6,3:1). */
-  --background: oklch(0.16 0.03 285);
-  --foreground: oklch(0.97 0.01 285);
-  --card: oklch(0.21 0.035 285);
-  --card-foreground: oklch(0.97 0.01 285);
-  --popover: oklch(0.23 0.04 285);
-  --popover-foreground: oklch(0.97 0.01 285);
-  --primary: oklch(0.74 0.16 285);
-  --primary-foreground: oklch(0.16 0.04 285);
-  --secondary: oklch(0.28 0.05 285);
-  --secondary-foreground: oklch(0.97 0.01 285);
-  --muted: oklch(0.26 0.04 285);
-  --muted-foreground: oklch(0.74 0.035 285);
-  --accent: oklch(0.3 0.06 285);
-  --accent-foreground: oklch(0.97 0.01 285);
-  --destructive: oklch(0.72 0.19 25);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.74 0.16 285);
-  --chart-1: oklch(0.74 0.16 285);
-  --chart-2: oklch(0.76 0.16 25);
-  --chart-3: oklch(0.84 0.14 165);
-  --chart-4: oklch(0.89 0.15 95);
-  --chart-5: oklch(0.8 0.11 230);
-  --sidebar: oklch(0.19 0.04 285);
-  --sidebar-foreground: oklch(0.97 0.01 285);
-  --sidebar-primary: oklch(0.74 0.16 285);
-  --sidebar-primary-foreground: oklch(0.16 0.04 285);
-  --sidebar-accent: oklch(0.3 0.07 285);
-  --sidebar-accent-foreground: oklch(0.97 0.01 285);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.74 0.16 285);
+.dark,
+.theme-dark {
+  /* Thème sombre (par défaut) — « Studio de nuit · lavande » (Marelle, 8 nov. 2026).
+     Une seule source de jetons : aucune couleur en dur dans les composants.
+     Contrastes : texte #EDEDF0 sur carte 15:1, secondaire #9A9AA6 6,3:1, accent #B9A9FF 8,6:1
+     avec texte #0E0E11, contour de champ #6A6A78 3:1. */
+  --background: #0e0e11;
+  --foreground: #ededf0;
+  --card: #17171c;
+  --card-foreground: #ededf0;
+  --popover: #1f1f26;
+  --popover-foreground: #ededf0;
+  --primary: #b9a9ff;
+  --primary-foreground: #0e0e11;
+  --secondary: #1f1f26;
+  --secondary-foreground: #ededf0;
+  --muted: #1f1f26;
+  --muted-foreground: #9a9aa6;
+  --accent: #1f1f26;
+  --accent-foreground: #ededf0;
+  --destructive: #ff7a85;
+  --border: #26262e;
+  --input: #6a6a78;
+  --field: #1f1f26;
+  --btn-border: #34343f;
+  --ring: #b9a9ff;
+  --chart-1: #b9a9ff;
+  --chart-2: #ff7a85;
+  --chart-3: #7fddb0;
+  --chart-4: #e8c26a;
+  --chart-5: #9ccbff;
+  --sidebar: #0e0e11;
+  --sidebar-foreground: #ededf0;
+  --sidebar-primary: #b9a9ff;
+  --sidebar-primary-foreground: #0e0e11;
+  --sidebar-accent: #1f1f26;
+  --sidebar-accent-foreground: #ededf0;
+  --sidebar-border: #26262e;
+  --sidebar-ring: #b9a9ff;
 
-  --violet: oklch(0.74 0.16 285);
-  --coral: oklch(0.76 0.16 25);
-  --mint: oklch(0.84 0.14 165);
-  --sun: oklch(0.89 0.15 95);
-  --sky: oklch(0.8 0.11 230);
-  --glow: oklch(0.74 0.16 285 / 22%);
+  /* Carte mise en avant (une par écran) et zone privée. */
+  --featured-border: #3b3560;
+  --featured-inset: inset 0 1px 0 #2a2a33;
+  --private: #1b1a24;
+
+  /* Anciens accents : ramenés sur l'accent et les couleurs de statut, plus de tuiles vives. */
+  --violet: #b9a9ff;
+  --coral: #ff7a85;
+  --mint: #7fddb0;
+  --sun: #e8c26a;
+  --sky: #9ccbff;
+  --glow: transparent;
+
+  --margot-outline: #ededf0;
+  --margot-wing: #b9a9ff;
 }
 
 @layer base {
@@ -160,6 +211,11 @@
   h2,
   h3 {
     @apply font-heading tracking-tight;
+  }
+  /* Focus visible partout : anneau de 3 px à l'accent, décalé de 3 px (RGAA 10.7). */
+  :focus-visible {
+    outline: 3px solid var(--ring) !important;
+    outline-offset: 3px;
   }
 }
 
@@ -218,33 +274,42 @@
   .animate-pop-in {
     animation: pop-in 0.4s ease-out both;
   }
-  /* Halo lumineux discret derrière un élément actif ou un titre d'écran. */
+  /* Plus de halo ni de dégradé (DA « Studio de nuit ») : l'élément actif prend l'accent. */
   .halo {
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent),
-      0 8px 30px -8px var(--glow);
+    box-shadow: none;
   }
   .bg-shell {
-    background-image:
-      radial-gradient(
-        60rem 30rem at 85% -10%,
-        color-mix(in oklch, var(--violet) 14%, transparent),
-        transparent 60%
-      ),
-      radial-gradient(
-        40rem 24rem at -10% 110%,
-        color-mix(in oklch, var(--coral) 10%, transparent),
-        transparent 60%
-      );
+    background-image: none;
+  }
+  /* Carte mise en avant : une par écran, contour lavande sombre, reflet intérieur. */
+  .card-featured {
+    border-color: var(--featured-border);
+    box-shadow: var(--featured-inset);
   }
 }
 
-/* Taille du texte (réglage de Marie, cookie `text-size`) : tout est en rem, donc tout suit. */
+/* Taille du texte (réglage de Marie, cookie `text-size`) : tout est en rem, donc tout suit.
+   Densité (cookie `density`) : « Compacte » par défaut = corps 15 px au lieu de 16 ;
+   « Confortable » garde l'ancienne taille. Les deux réglages se combinent. */
 html[data-text-size="large"] {
   font-size: 112.5%;
 }
 html[data-text-size="xlarge"] {
   font-size: 125%;
+}
+html[data-density="compact"] {
+  font-size: 93.75%;
+}
+html[data-density="compact"][data-text-size="large"] {
+  font-size: 105.5%;
+}
+html[data-density="compact"][data-text-size="xlarge"] {
+  font-size: 117.25%;
+}
+/* Densité compacte : titre de page 22 px (l'id l'emporte sur les classes de taille des pages). */
+html[data-density="compact"] #contenu h1 {
+  font-size: 1.4667rem;
+  line-height: 1.2;
 }
 
 /* Focus et défilement jamais cachés par une barre d'actions collée en bas (RGAA 4.1 / WCAG 2.4.11). */

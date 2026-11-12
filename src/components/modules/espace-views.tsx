@@ -339,7 +339,7 @@ export function EvaluationView({
 }: {
   data: EspaceData;
   index: number;
-  /** Zone de dépôt (rendu « dans MG COURS »), calculée côté serveur par la page. */
+  /** Zone de dépôt (rendu « dans Marelle »), calculée côté serveur par la page. */
   deposit?: React.ReactNode;
 }) {
   const { base, espace, frise } = data;

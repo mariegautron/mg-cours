@@ -12,6 +12,7 @@ import { getTeacherName } from "@/lib/outline/queries";
 import { generateToken, hashToken } from "@/lib/quiz/token";
 import { createClient } from "@/lib/supabase/server";
 import { listModuleGroups } from "@/lib/students/queries";
+import { appSender } from "@/lib/brand";
 
 export interface FeedbackActionState {
   error?: string;
@@ -88,7 +89,7 @@ export async function sendFeedbackEmails(moduleId: string): Promise<FeedbackActi
     });
     try {
       const { error } = await resend.emails.send({
-        from: RESEND_FROM,
+        from: appSender(RESEND_FROM),
         to: [s.email!.trim()],
         subject: mail.subject,
         text: mail.text,

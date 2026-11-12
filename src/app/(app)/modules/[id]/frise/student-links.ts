@@ -17,6 +17,7 @@ import { notebookStudents } from "@/lib/notebook/notebook";
 import { generateToken, hashToken } from "@/lib/quiz/token";
 import { createClient } from "@/lib/supabase/server";
 import { listModuleGroups } from "@/lib/students/queries";
+import { appSender } from "@/lib/brand";
 
 export interface StudentLinksState {
   error?: string;
@@ -229,7 +230,7 @@ export async function sendStudentLinksEmail(
     });
     try {
       const { error } = await resend.emails.send({
-        from: RESEND_FROM,
+        from: appSender(RESEND_FROM),
         to: [student.email.trim()],
         subject: mail.subject,
         text: mail.text,

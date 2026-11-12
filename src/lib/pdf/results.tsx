@@ -2,10 +2,12 @@ import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import type { ResultCriterionLine, ResultSheet } from "@/lib/assessments/results";
 import { formatNumber } from "@/lib/assessments/scoring";
+import { APP_NAME } from "@/lib/brand";
 import { MarkdownPdf } from "@/lib/pdf/markdown-view";
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 11, fontFamily: "Helvetica", color: "#111" },
+  footer: { position: "absolute", bottom: 20, left: 40, right: 40, fontSize: 8, color: "#777" },
   title: { fontSize: 18, fontFamily: "Helvetica-Bold", marginBottom: 4 },
   sub: { color: "#555", marginBottom: 14 },
   who: { fontSize: 12, marginBottom: 12 },
@@ -175,6 +177,9 @@ export function ResultsDocument({ sheets }: { sheets: ResultSheet[] }) {
                 ))}
               </View>
             ) : null}
+            <Text style={styles.footer} fixed>
+              Généré avec {APP_NAME}
+            </Text>
           </Page>
         );
       })}

@@ -12,7 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 
-import { LogoMark, Mascot } from "@/components/mascot";
+import { LogoMark } from "@/components/mascot";
 import { ModuleSideNav } from "@/components/modules/module-side-nav";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
@@ -20,7 +20,6 @@ import { MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -30,23 +29,15 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-// Classes complètes (pas de concaténation) pour que Tailwind les détecte.
-const CHIP = {
-  violet: "bg-violet/15 text-violet",
-  coral: "bg-coral/15 text-coral",
-  mint: "bg-mint/15 text-mint",
-  sky: "bg-sky/15 text-sky",
-  sun: "bg-sun/15 text-sun",
-} as const;
-
-const LOOK: Record<MenuKey, { icon: typeof Sun; tone: keyof typeof CHIP }> = {
-  dashboard: { icon: Sun, tone: "violet" },
-  modules: { icon: BookMarked, tone: "coral" },
-  students: { icon: GraduationCap, tone: "sky" },
-  library: { icon: Library, tone: "mint" },
-  assessments: { icon: ClipboardCheck, tone: "sun" },
-  billing: { icon: Receipt, tone: "coral" },
-  settings: { icon: Settings, tone: "violet" },
+// Icônes monochromes (DA « Studio de nuit ») : plus de tuiles de couleur, l'élément actif prend l'accent.
+const LOOK: Record<MenuKey, { icon: typeof Sun }> = {
+  dashboard: { icon: Sun },
+  modules: { icon: BookMarked },
+  students: { icon: GraduationCap },
+  library: { icon: Library },
+  assessments: { icon: ClipboardCheck },
+  billing: { icon: Receipt },
+  settings: { icon: Settings },
 };
 
 export const NAV_ICONS = LOOK;
@@ -57,10 +48,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-3 px-3 pt-4 pb-2">
-        <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg px-1 py-1">
+        <Link
+          href="/dashboard"
+          aria-label="Marelle, aller à Aujourd'hui"
+          className="flex items-center gap-2.5 rounded-lg px-1 py-1"
+        >
           <LogoMark />
-          <span className="font-heading text-xl font-bold tracking-tight group-data-[collapsible=icon]:sr-only">
-            MG COURS
+          <span className="font-heading text-xl leading-none font-extrabold tracking-tight lowercase group-data-[collapsible=icon]:sr-only">
+            Marelle
           </span>
         </Link>
         <GlobalSearch className="group-data-[collapsible=icon]:hidden" />
@@ -83,18 +78,14 @@ export function AppSidebar() {
                         isActive={active}
                         tooltip={item.label}
                         size="lg"
-                        className="data-[active=true]:halo gap-3 rounded-xl transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center"
+                        className="data-active:text-primary h-11 gap-3 rounded-[10px] transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center [&_svg]:size-5"
                       >
                         <Link
                           href={item.href}
                           aria-label={item.label}
                           aria-current={active ? "page" : undefined}
                         >
-                          <span
-                            className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${CHIP[item.tone]}`}
-                          >
-                            <item.icon aria-hidden className="size-4" />
-                          </span>
+                          <item.icon aria-hidden className="size-5 shrink-0" />
                           <span className="font-medium group-data-[collapsible=icon]:sr-only">
                             {item.label}
                           </span>
@@ -110,9 +101,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="items-center pb-4">
-        <Mascot mood="happy" className="size-16 group-data-[collapsible=icon]:hidden" />
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

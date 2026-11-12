@@ -3,7 +3,8 @@
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
 import { useTheme } from "next-themes";
 
-import { saveTextSize } from "@/app/(app)/settings/actions";
+import { saveDensity, saveTextSize } from "@/app/(app)/settings/actions";
+import { DENSITIES, DENSITY_LABELS, type Density } from "@/lib/settings/density";
 import { TEXT_SIZE_LABELS, TEXT_SIZES, type TextSize } from "@/lib/settings/text-size";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +47,8 @@ function Choice({
   );
 }
 
-/** Apparence : thème (système / clair / sombre) et taille du texte. Chaque choix s'applique tout de suite. */
-export function AppearanceForm({ textSize }: { textSize: TextSize }) {
+/** Apparence : thème (système / clair / sombre), taille du texte et densité (compacte / confortable). Chaque choix s'applique tout de suite. */
+export function AppearanceForm({ textSize, density }: { textSize: TextSize; density: Density }) {
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -57,10 +58,22 @@ export function AppearanceForm({ textSize }: { textSize: TextSize }) {
   const [size, setSize] = useState<TextSize>(textSize);
   const [, startTransition] = useTransition();
   const [saved, setSaved] = useState("");
+  const [dens, setDens] = useState<Density>(density);
 
   useEffect(() => {
     document.documentElement.dataset.textSize = size;
   }, [size]);
+  useEffect(() => {
+    document.documentElement.dataset.density = dens;
+  }, [dens]);
+
+  function pickDensity(next: Density) {
+    setDens(next);
+    startTransition(async () => {
+      await saveDensity(next);
+      setSaved(`Densité : ${DENSITY_LABELS[next].toLowerCase()}.`);
+    });
+  }
 
   function pickSize(next: TextSize) {
     setSize(next);
@@ -96,6 +109,18 @@ export function AppearanceForm({ textSize }: { textSize: TextSize }) {
             label={TEXT_SIZE_LABELS[s]}
             checked={size === s}
             onChange={() => pickSize(s)}
+          />
+        ))}
+      </div>
+      <div role="radiogroup" aria-label="Densité de l’affichage" className="flex flex-wrap gap-2">
+        {DENSITIES.map((d) => (
+          <Choice
+            key={d}
+            name="density"
+            value={d}
+            label={DENSITY_LABELS[d]}
+            checked={dens === d}
+            onChange={() => pickDensity(d)}
           />
         ))}
       </div>

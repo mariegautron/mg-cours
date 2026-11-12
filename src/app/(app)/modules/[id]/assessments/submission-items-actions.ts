@@ -121,7 +121,7 @@ export async function deleteSubmissionItem(
   return { ok: true };
 }
 
-/** Réglages du dépôt par les étudiant·es : rendre dans MG COURS ou ailleurs, fichier / lien / les deux. */
+/** Réglages du dépôt par les étudiant·es : rendre dans Marelle ou ailleurs, fichier / lien / les deux. */
 export async function updateSubmitSettings(
   moduleId: string,
   assessmentId: string,
@@ -130,7 +130,7 @@ export async function updateSubmitSettings(
 ): Promise<SubmissionItemState> {
   const supabase = await createClient();
   if (mode === "app") {
-    // Rendre dans MG COURS exige une date limite (sinon aucun retard ne peut être signalé).
+    // Rendre dans Marelle exige une date limite (sinon aucun retard ne peut être signalé).
     const { data: row } = await supabase
       .from("assessment")
       .select("date, course:course_id(session_date)")

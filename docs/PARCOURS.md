@@ -1,4 +1,4 @@
-# Parcours principaux de MG COURS
+# Parcours principaux de Marelle (ex-MG COURS)
 
 Liste de référence pour la QA : un parcours = un objectif de Marie (ou d'un·e étudiant·e) de bout en
 bout. Pour chaque parcours : écrans, e2e existants, et un espace pour noter les améliorations

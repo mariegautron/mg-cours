@@ -1,4 +1,4 @@
-# MG COURS
+# Marelle (ex-MG COURS)
 
 Application web de gestion pédagogique et de facturation pour Marie Gautron
 (ressources, modules, cours, étudiants, évaluations, trames pédagogiques, factures YNOV).

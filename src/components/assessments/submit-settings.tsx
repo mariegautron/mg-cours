@@ -7,7 +7,7 @@ import { updateSubmitSettings } from "@/app/(app)/modules/[id]/assessments/submi
 import { Button } from "@/components/ui/button";
 
 /**
- * « Où rendre » : dans MG COURS (les étudiant·es déposent depuis leur espace, après « Mettre à jour les
+ * « Où rendre » : dans Marelle (les étudiant·es déposent depuis leur espace, après « Mettre à jour les
  * cours publiés ») ou ailleurs (Moodle…, texte ci-dessus). Le dépôt exige une date limite.
  */
 export function SubmitSettings({
@@ -39,7 +39,7 @@ export function SubmitSettings({
             checked={m === "app"}
             onChange={() => setM("app")}
           />
-          dans MG COURS
+          dans Marelle
         </label>
         <label className="flex items-center gap-2">
           <input

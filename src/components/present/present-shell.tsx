@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { LogoMark } from "@/components/mascot";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ProjectionThemeToggle } from "@/components/present/projection-theme";
 import {
   clampIndex,
   parsePosition,
@@ -386,7 +386,7 @@ export function PresentShell({
             <span className="sr-only"> (nouvelle fenêtre)</span>
           </Button>
         ) : null}
-        <ThemeToggle size="icon-touch" />
+        <ProjectionThemeToggle />
         <Button
           type="button"
           size="icon-touch"

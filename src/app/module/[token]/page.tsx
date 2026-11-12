@@ -1,24 +1,39 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { EspaceError, EspaceShell } from "@/components/modules/espace-shell";
 import { FriseStudent } from "@/components/modules/frise-view";
 import { dueLabel, nextEvaluationIndex } from "@/lib/modules/espace";
+import { APP_NAME } from "@/lib/brand";
 import { callModuleFrise } from "@/lib/modules/frise-public";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Le module en un coup d’œil",
-  robots: { index: false, follow: false },
-  referrer: "no-referrer",
-};
+// Un seul appel par requête, partagé entre l'aperçu du lien et la page (compte une consultation).
+const loadFrise = cache((token: string) => callModuleFrise(token));
+
+/** Aperçu du lien de la classe : le nom du module d'abord, « Marelle » en second. Rien de privé. */
+export async function generateMetadata({
+  params,
+}: PageProps<"/module/[token]">): Promise<Metadata> {
+  const { token } = await params;
+  const res = await loadFrise(token);
+  const title = res.status === "ok" ? res.frise.moduleName : "Le module en un coup d’œil";
+  return {
+    title,
+    description: "Le module en un coup d’œil : séances, cours et évaluations.",
+    openGraph: { title: `${title} · ${APP_NAME}`, siteName: APP_NAME },
+    robots: { index: false, follow: false },
+    referrer: "no-referrer",
+  };
+}
 
 const card =
   "bg-card focus-visible:ring-ring block min-h-11 rounded-2xl border p-4 focus-visible:ring-2 focus-visible:outline-none";
 
 export default async function SharedFrisePage({ params }: PageProps<"/module/[token]">) {
   const { token } = await params;
-  const res = await callModuleFrise(token);
+  const res = await loadFrise(token);
   if (res.status !== "ok") return <EspaceError status={res.status} />;
 
   const { frise, espace } = res;

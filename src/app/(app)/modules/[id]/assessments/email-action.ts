@@ -10,6 +10,7 @@ import { serverEnv } from "@/lib/env";
 import { EMAIL_NOT_ENABLED } from "@/lib/messages";
 import { ResultsDocument } from "@/lib/pdf/results";
 import { createClient } from "@/lib/supabase/server";
+import { appSender } from "@/lib/brand";
 
 /** Mémorise la date d'envoi (rappel « déjà envoyés le … » avant un nouvel envoi). */
 async function recordSent(moduleId: string, assessmentId: string) {
@@ -56,7 +57,7 @@ export async function sendResultsEmail(
     // Un message par personne : dans un groupe, les adresses des autres membres ne sont jamais visibles.
     for (const r of withEmail) {
       const { error } = await resend.emails.send({
-        from: RESEND_FROM,
+        from: appSender(RESEND_FROM),
         to: [r.email as string],
         subject: resultsEmailSubject(sheet),
         text: resultsEmailText(sheet, r.firstName),

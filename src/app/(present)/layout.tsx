@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ProjectionThemeProvider } from "@/components/present/projection-theme";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -14,5 +15,5 @@ export default async function PresentLayout({ children }: { children: React.Reac
 
   if (!user) redirect("/login");
 
-  return <div className="bg-background min-h-dvh">{children}</div>;
+  return <ProjectionThemeProvider>{children}</ProjectionThemeProvider>;
 }

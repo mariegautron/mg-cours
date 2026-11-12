@@ -34,7 +34,7 @@ export function ResetRequestForm({ expired }: { expired: boolean }) {
     }
   }, []);
   return (
-    <Card className="halo w-full max-w-sm">
+    <Card className="card-featured w-full max-w-sm">
       <CardHeader>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Mot de passe oublié</h1>
         <CardDescription>
@@ -84,7 +84,7 @@ export function ResetRequestForm({ expired }: { expired: boolean }) {
 export function NewPasswordForm() {
   const [state, action, pending] = useActionState<NewPasswordState, FormData>(setNewPassword, {});
   return (
-    <Card className="halo w-full max-w-sm">
+    <Card className="card-featured w-full max-w-sm">
       <CardHeader>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Nouveau mot de passe</h1>
         <CardDescription>Au moins 8 caractères. Tu seras connectée juste après.</CardDescription>

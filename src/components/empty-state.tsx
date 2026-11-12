@@ -17,7 +17,7 @@ export interface EmptyAction {
 }
 
 /**
- * État vide d'une liste ou d'un écran de données (US-120) : Plume décorative, un titre qui dit ce
+ * État vide d'une liste ou d'un écran de données (US-120) : Margot décorative, un titre qui dit ce
  * qui manque, une phrase au tutoiement qui dit pourquoi, et au plus deux boutons (le premier est
  * l'action principale). Ce n'est pas une erreur : jamais de rouge. `compact` pour une carte.
  */

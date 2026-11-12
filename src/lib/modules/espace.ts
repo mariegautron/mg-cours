@@ -34,7 +34,7 @@ export interface EspaceGrid {
 export interface EspaceEvaluation {
   /** Identifiant de l'évaluation : sert au dépôt (toujours revérifié côté serveur). */
   id: string;
-  /** Rendre dans MG COURS ? Sinon la consigne dit où rendre. */
+  /** Rendre dans Marelle ? Sinon la consigne dit où rendre. */
   submit: { mode: "app" | "elsewhere"; accepts: "file" | "link" | "both" };
   title: string;
   type: string | null;
@@ -80,6 +80,16 @@ export function selectDocuments(
   return files
     .filter((f) => !/^image\//i.test(f.mime) && DOCUMENT_EXTENSIONS.test(f.name))
     .map((f) => ({ name: f.name, path: f.path, mime: f.mime, size: f.size }));
+}
+
+/** Nom de fichier en minuscules tiré d'un titre (« Jalon 2 : Sprint Review » → « jalon-2-sprint-review »). */
+export function fileSlug(title: string, fallback = "document"): string {
+  const s = safeDownloadName(title)
+    .toLowerCase()
+    .replace(/[._]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return s || fallback;
 }
 
 /** Nom de fichier sûr pour l'en-tête Content-Disposition (ASCII, sans séparateur ni guillemet). */

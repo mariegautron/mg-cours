@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 
 const CHIP = {
-  violet: { chip: "bg-primary/15 text-primary", bar: "bg-primary" },
-  mint: { chip: "bg-mint/15 text-mint", bar: "bg-mint" },
-  sky: { chip: "bg-sky/15 text-sky", bar: "bg-sky" },
-  sun: { chip: "bg-sun/15 text-sun", bar: "bg-sun" },
+  // Pastille d'icône monochrome ; seule la barre garde la couleur de son statut.
+  violet: { chip: "bg-muted text-primary", bar: "bg-primary" },
+  mint: { chip: "bg-muted text-primary", bar: "bg-mint" },
+  sky: { chip: "bg-muted text-primary", bar: "bg-sky" },
+  sun: { chip: "bg-muted text-primary", bar: "bg-sun" },
 } as const;
 
 /** Tuile chiffrée de l'accueil : icône, libellé, grand chiffre, barre de progression, précision. */
@@ -28,7 +29,7 @@ export function KpiCard({
 }) {
   const t = CHIP[tone];
   return (
-    <section aria-label={label} className="bg-card rounded-2xl border p-4 shadow-sm">
+    <section aria-label={label} className="bg-card rounded-2xl border p-4">
       <div className="flex items-center gap-3">
         <span
           aria-hidden

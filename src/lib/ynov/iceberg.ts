@@ -31,7 +31,7 @@ export const ICEBERG_LABELS: Record<IcebergState, string> = {
   outline_sent: "Progression envoyée",
   subjects_on_moodle: "Sujets/grilles déposés sur Moodle",
   grades_in_hp: "Notes saisies sur Hyperplanning",
-  grades_in_mg: "Notes saisies dans MG COURS",
+  grades_in_mg: "Notes saisies dans Marelle",
   admin_docs_ok: "Documents administratifs OK",
   invoice_ready: "Facture à générer",
   invoice_sent: "Facture envoyée",

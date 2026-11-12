@@ -1,4 +1,31 @@
-# Design — « ludique & colorée », dark-first
+# Design — Marelle, « Studio de nuit · lavande » (depuis le 12 novembre 2026)
+
+Rebranding validé par Arnaud (8 novembre) : l'appli s'appelle **Marelle**, sa mascotte est
+**Margot la pie** (`src/components/mascot.tsx`, composant unique, 4 humeurs). Planche de référence :
+canvas « DA Marelle », variante « A · Studio lavande ». Sources : `docs/ux-ui-commun/`.
+
+- **Sombre par défaut** (interface de Marie et espace étudiant·e), bouton du thème clair conservé.
+  Les vues projetées ont leur propre réglage clair / sombre mémorisé (`projection-theme.tsx`).
+  Les PDF restent sur fond blanc, avec « Généré avec Marelle » en pied de page.
+- **Sobre, outil pro** : aucun halo, aucun dégradé, aucune grande tuile colorée. La couleur sert
+  l'action (accent lavande `#B9A9FF`) et les statuts, rien d'autre. Icônes du menu monochromes.
+- **Jetons** (une seule source, `src/app/globals.css`, bloc `.dark`) : fond `#0E0E11`, carte
+  `#17171C`, carte surélevée / champ / actif `#1F1F26`, texte `#EDEDF0`, secondaire `#9A9AA6`,
+  séparateur `#26262E`, contour de bouton secondaire `#34343F`, contour de champ `#6A6A78`,
+  carte mise en avant `.card-featured` (contour `#3B3560`, reflet intérieur).
+- **Statuts** (`--status-*`, texte `#0E0E11`, toujours icône + mot) : pas commencé `#B9B9C4`,
+  à compléter `#E8C26A`, prêt `#7FDDB0`, publié `#9CCBFF`, bloquant `#FF7A85`.
+- **Formes** : cartes 16 px, boutons et champs 10 px, contour 1 px, pas d'ombre portée. Boutons
+  dessinés à 36 px avec une zone cliquable de 44 px.
+- **Typo** : Bricolage Grotesque 800 (titres, chiffres, logo « marelle » en minuscules), Inter.
+- **Densité** : « Compacte » par défaut (corps 15 px, titre de page 22 px), « Confortable » dans
+  Réglages > Apparence. Budget : 3 écrans au plus à 1366 × 768, 4 à 125 %.
+- **Focus** : anneau de 3 px à l'accent, décalé de 3 px, partout.
+
+---
+
+## Historique : direction « ludique & colorée » (septembre 2026, remplacée)
+
 
 Direction validée par Marie : identité forte et joyeuse, **thème sombre par défaut** (clair au choix via le
 bouton du bandeau), **barre latérale gauche**, **coque expressive / données calmes**.
