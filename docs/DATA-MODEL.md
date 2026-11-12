@@ -46,8 +46,6 @@ erDiagram
 | `student_year`             | student_id, year (année de rentrée, 2025 → « 2025-26 »), scholar_group (promotion de l'année, nullable) — unique `student_id + year` (US-80b). `student.scholar_group` est déprécié : plus lu ni écrit                                                                                                           |
 | `student_group`            | module_id, name, type (`tp` \| `td` \| `project`)                                                                                                                                                                                                                                                                |
 | `group_member`             | student_group_id, student_id                                                                                                                                                                                                                                                                                     |
-| `checkpoint` | module_id, position, code (P1…), title, due_date, response_date, expected_md — jalon de suivi non noté d'un module (US-175), unique `module_id + code` |
-| `checkpoint_result` | checkpoint_id, student_id, status (`pending` \| `submitted` \| `validated` \| `refused`), feedback_md (retour écrit pour l'étudiant·e), private_note (jamais montrée), files (jsonb, forme de `resource.files`), submitted_at, decided_at — unique `checkpoint_id + student_id`, jamais dans une moyenne (US-175) |
 | `student_observation`      | module_id, course_id? (`on delete set null`), student_id, tag (`observation_tag`), note — observations privées prises en séance (US-65), jamais projetées, exportées ni envoyées                                                                                                                                 |
 | `assessment`               | auto_validated_criterion_ids uuid[] (critères validés d'office, US-82), module_id, title, type, coefficient, date, subject, is_group_grade, max_score (barème, vide = total grille sinon 20), results_sent_at (dernier envoi des résultats par e-mail)                                                           |
 | `module_project`           | module_id (unique), title, brief_md, client_context_md — projet fil rouge du module (US-88) ; les jalons / l'oral / l'évaluation individuelle sont des `assessment` rattachés (`assessment.project_id`, `project_role` enum `milestone` \| `oral` \| `individual`, `project_position`)                           |
@@ -61,12 +59,44 @@ erDiagram
 | `grade`                    | assessment_id, student_id?, group_id?, value, feedback, is_group_grade, attendance (`attendance_status` : `present` \\                                                                                                                                                                                           | `absent_unexcused` \\ | `absent_excused`), scores(jsonb), criterion_comments(jsonb `{critère: texte}`), strengths?, progress?, feedback? (commentaire libre) |
 | `group_grade_member`       | grade_id, student_id (paire unique), attendance, individual_factor (0–2, 1 = note du groupe), justification (obligatoire si facteur ≠ 1) — ajustements individuels d'une note de groupe (US-87)                                                                                                                  |
 | `predefined_comment`       | text, category (`positive` \| `negative` \| `advice`), tags[], subject? (matière), grid_criterion_id? (`on delete set null`) + criterion_label? (recopié), use_count, last_used_at — phrases réutilisables (US-84) ; `bump_comment_use(id)` incrémente l'usage                                                   |
-| `invoice`                  | module_id, number (`YYYY-NNN`), issued_on, amount_ex_vat, vat_rate, vat_amount, amount_inc_vat, status, purchase_order_ref, sent_at, paid_on, xml_file, pdf_file                                                                                                                                                 |
-| `pedagogical_outline`      | module_id, generated_at, content(jsonb), status, sent_at, pdf_file                                                                                                                                                                                                                                               |
-| `module_document`          | module_id, kind (`school_expectations` \| `outline_sent` \| `external_invoice`), name, path (bucket privé `module-documents`), size_bytes, mime                                                                                                                                                                  |
+| `invoice`                  | module_id, number (`YYYY-NNN`), issued_on, amount_ex_vat, vat_rate, vat_amount, amount_inc_vat, status, purchase_order_ref, sent_at, paid_on, snapshot (jsonb), pdf_path / xml_path (jamais remplis, cf. lot 0)                                                                                                                                                 |
+| `pedagogical_outline`      | module_id, generated_at, content(jsonb), status, sent_at, pdf_path                                                                                                                                                                                                                                               |
+| `module_document`          | module_id, kind (`school_expectations` \| `outline_sent` \| `external_invoice` \| `slides` \| `training_agreement`), name, path (bucket privé `module-documents`), size_bytes, mime                                                                                                                                                                  |
 | `resource_version`         | resource_id, title, description, content, url, category, tags (copie de l'état précédent, déclencheur `resource_snapshot`, 30 max)                                                                                                                                                                               |
 | `school`                   | name, siret, address, billing_email, pa_identifier                                                                                                                                                                                                                                                               |
 | `teacher_profile`          | legal_name, address, siret, vat_number, activity_number (NDA), bank_details, email                                                                                                                                                                                                                               |
+
+## Autres tables (résumé)
+
+| Table | Rôle |
+| --- | --- |
+| `school_setting` | réglages par école (unique `school_id`) : absence_rule, email_template, appreciation_max, group_coefficient, individual_coefficient, note_brackets (paliers d'heures), bonus_allowed |
+| `assessment_student` | étudiant·es visé·es par une évaluation individuelle / un rattrapage (`assessment.makeup_of_id`) |
+| `assessment_expectation` | attendus évalués par une évaluation (unique `assessment_id + module_expectation_id`) |
+| `expectation_resource` | lien explicite attendu ↔ ressource (unique `expectation_id + resource_id`) |
+| `expectation_dismissal` | ressource écartée pour un attendu (« Ce n'est pas la bonne ») |
+| `submission_item` | rendus déposés (fichier ou lien, par étudiant·e ou groupe), `replaced_at` pour l'historique |
+| `project_submission` | ancien suivi des rendus (vide en prod, remplacé par `submission_item`) |
+| `oral_slot` | ordre de passage des oraux (unique `assessment_id + student_group_id`) |
+| `oral_space` | espace de correction d'un oral (lettres, notes, présence en archive) ; `subject_id` = étudiant·e OU groupe selon l'évaluation |
+| `progress_review` | point d'étape (relecture non notée ou notée) ; `subject_id` = étudiant·e OU groupe |
+| `question`, `question_choice` | banque de questions de QCM |
+| `quiz`, `quiz_draw_rule`, `quiz_pool`, `quiz_attempt`, `quiz_claim`, `quiz_class_link` | QCM d'une évaluation, règles de tirage, passages (jeton haché), lien de classe |
+| `quiz_question_criterion` | critère(s) de grille d'une question de QCM ouvert |
+| `open_review` | relecture d'une copie de QCM à questions ouvertes |
+| `quiz_ip_failure` | compteur anti-abus par IP (technique) |
+| `resource_question` | questions rattachées à une fiche |
+| `course_plan` | déroulé d'une séance (livrable, ordre des ressources) |
+| `projection_event` | historique de ce qui a été projeté en séance |
+| `appreciation`, `appreciation_phrase` | appréciations par étudiant·e et module ; phrases réutilisables |
+| `group_observation` | observations par groupe (comme `student_observation`) |
+| `module_student`, `module_student_link` | inscrits d'un module ; lien personnel étudiant·e |
+| `module_feedback`, `module_feedback_link` | questionnaire de retour de fin de module |
+| `module_retrospective` | rétrospective privée d'un module |
+| `module_share_link`, `result_link` | pages publiques partagées (module, résultats) |
+| `project_surprise` | événement « surprise » envoyé pendant le projet |
+| `invoice_tracking` | facture déposée hors appli : envoyée le / payée le (unique `module_id`) |
+| `import_ref` | trace des imports Notion / Moodle (1 374 lignes, plus lue par l'appli) |
 
 ## Enums ressources
 
@@ -86,8 +116,18 @@ erDiagram
 ## Transverse
 
 - `id uuid primary key default gen_random_uuid()`
-- `owner_id uuid not null default auth.uid()` + **RLS** `owner_id = auth.uid()` (select/insert/update/delete)
-- `created_at` / `updated_at timestamptz` + trigger `updated_at`
+- `owner_id uuid not null default auth.uid()` + **RLS** activée + politique `mg_owner_all`
+  (rôle `authenticated`, `owner_id = (select auth.uid())`, select/insert/update/delete)
+- `created_at` / `updated_at timestamptz not null default now()` + déclencheur `set_updated_at`
+  (`extensions.moddatetime(updated_at)`)
+- Une nouvelle table appelle `select public.mg_apply_conventions(array['ma_table']);` qui pose
+  les trois (RLS, politique, déclencheur). La table doit avoir `owner_id` ET `updated_at`.
+- Exception assumée : `quiz_ip_failure` (compteur technique par IP, sans `owner_id`), RLS
+  activée sans politique, accessible au seul `service_role`.
+- Lot 1 du schéma (`20261206000000`) : `assessment_expectation`, `expectation_dismissal`,
+  `expectation_resource` et `quiz_question_criterion` ont reçu `updated_at` (+ politique et
+  déclencheur). Les anciennes politiques « `*_owner` » des trois premières sont gardées
+  (équivalentes) jusqu'au lot 9.
 - `required_notes(total_hours)` : fonction pure (TS) — cf. `src/lib/ynov/notation.ts`
 
 ## Simplifications assumées (cf. `DECISIONS.md`)
