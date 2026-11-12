@@ -357,10 +357,11 @@ export function GradeForm({
   useEffect(() => {
     onStatus?.(id, {
       corrected,
-      dirty,
+      // Une copie sans note (pas de grille) ne bloque pas la sortie : elle n'a rien à enregistrer.
+      dirty: dirty && ready,
       partial: partialScored >= 0 ? { scored: partialScored, total: partialTotal } : null,
     });
-  }, [id, corrected, dirty, partialScored, partialTotal, onStatus]);
+  }, [id, corrected, dirty, ready, partialScored, partialTotal, onStatus]);
 
   useEffect(() => {
     if (!register) return;
@@ -1177,7 +1178,10 @@ export function GradeForm({
                 size="sm"
                 variant="ghost"
                 className="mt-2"
-                onClick={() => setInputs((prev) => ({ ...prev, [c.id]: "" }))}
+                onClick={() => {
+                  setInputs((prev) => ({ ...prev, [c.id]: "" }));
+                  setAnnouncement(`Palier effacé pour « ${c.label} » : pas encore noté.`);
+                }}
               >
                 Effacer le palier<span className="sr-only"> de {c.label}</span>
               </Button>
@@ -1479,6 +1483,11 @@ export function GradeForm({
           >
             Réessayer
           </button>
+        </span>
+      ) : dirty && !ready ? (
+        // Sans grille, rien ne part tant qu'il n'y a pas de note : on le dit (plus de bouton Enregistrer).
+        <span className="border-status-todo bg-muted text-sun rounded-full border px-3 py-1 text-xs font-bold">
+          Note manquante : rien n’est enregistré
         </span>
       ) : dirty ? (
         <span className="border-status-todo bg-muted text-sun rounded-full border px-3 py-1 text-xs font-bold">

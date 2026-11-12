@@ -2,6 +2,7 @@ import { isSessionReady } from "@/lib/prep-status";
 import Link from "next/link";
 
 import { Pill } from "@/components/dashboard/pill";
+import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import {
@@ -139,9 +140,8 @@ export function SessionList({
       ) : null}
       <div className="mx-1.5 mt-3 flex flex-wrap items-start gap-2">
         {/* Un seul bouton d'ajout, avec ses trois façons de faire. */}
-        <details className="relative">
-          <summary className={cn(BTN, "cursor-pointer list-none")}>Ajouter une séance ▾</summary>
-          <ul className="bg-popover absolute z-20 mt-1 w-64 space-y-1 rounded-xl border p-2 shadow-md">
+        <DisclosureMenu label="Ajouter une séance">
+          <ul className="space-y-1">
             <li>
               <Link
                 href={`/modules/${moduleId}/courses/new`}
@@ -167,7 +167,7 @@ export function SessionList({
               </Link>
             </li>
           </ul>
-        </details>
+        </DisclosureMenu>
         {courses.length ? (
           <Link href={`/modules/${moduleId}/planning`} className={BTN}>
             Planning du module
@@ -185,16 +185,21 @@ export function SessionList({
   if (layout === "drawer") {
     const current = courses.findIndex((c) => c.id === currentId);
     return (
-      <details className="bg-card min-w-0 rounded-3xl border p-3">
-        <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
-          <span className="font-heading text-base font-bold">{heading}</span>
-          <span className="text-muted-foreground text-sm">
-            {current >= 0 ? `Séance ${current + 1} ouverte · ` : ""}
-            {summary}
-          </span>
-        </summary>
-        <div className="pt-2">{body}</div>
-      </details>
+      <section aria-labelledby="ls-drawer">
+        <h2 id="ls-drawer" className="sr-only">
+          {heading}
+        </h2>
+        <details className="bg-card min-w-0 rounded-3xl border p-3">
+          <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
+            <span className="font-heading text-base font-bold">{heading}</span>
+            <span className="text-muted-foreground text-sm">
+              {current >= 0 ? `Séance ${current + 1} ouverte · ` : ""}
+              {summary}
+            </span>
+          </summary>
+          <div className="pt-2">{body}</div>
+        </details>
+      </section>
     );
   }
 

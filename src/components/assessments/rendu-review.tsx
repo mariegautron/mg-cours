@@ -165,29 +165,73 @@ export function RenduReview({
             </Button>
           ))}
         </div>
-        <div className="ml-auto flex gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={index === 0}
-            onClick={() => go(-1)}
-          >
-            <ChevronLeft aria-hidden />
-            Précédente
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={index === copies.length - 1}
-            onClick={() => go(1)}
-          >
-            Suivante
-            <ChevronRight aria-hidden />
-          </Button>
-        </div>
+        <a
+          href={`/modules/${moduleId}/assessments/${assessmentId}`}
+          className="text-sm underline underline-offset-2"
+        >
+          Vue d’ensemble
+        </a>
       </div>
+      {/* Une seule navigation entre copies : précédente, toutes les copies (avec leur état), suivante. */}
+      <nav aria-label="Copies" className="flex flex-wrap items-center gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={index === 0}
+          onClick={() => {
+            setView("copy");
+            go(-1);
+          }}
+          aria-label={
+            index > 0 ? `Copie précédente : ${copies[index - 1].name}` : "Pas de copie avant"
+          }
+        >
+          <ChevronLeft aria-hidden />
+        </Button>
+        <ul className="flex flex-wrap items-center gap-1.5 text-sm">
+          {copies.map((c, k) => {
+            const on = k === index && view === "copy";
+            return (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  aria-current={on ? "true" : undefined}
+                  onClick={() => {
+                    setView("copy");
+                    setIndex(k);
+                  }}
+                  className={`inline-flex min-h-11 items-center gap-1 rounded-[10px] border px-2.5 ${
+                    on ? "border-primary text-primary font-semibold" : "hover:bg-muted"
+                  }`}
+                >
+                  {c.name}
+                  <span className="text-muted-foreground text-xs">
+                    {c.init.hasNote ? "· corrigée" : "· à corriger"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={index === copies.length - 1}
+          onClick={() => {
+            setView("copy");
+            go(1);
+          }}
+          aria-label={
+            index < copies.length - 1
+              ? `Copie suivante : ${copies[index + 1].name}`
+              : "Pas de copie après"
+          }
+        >
+          <ChevronRight aria-hidden />
+        </Button>
+      </nav>
 
       {view === "criterion" ? (
         <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-2xl border p-4">
@@ -415,8 +459,6 @@ export function RenduReview({
             maxScore={maxScore}
             schoolRule={schoolRule}
             init={copy.init}
-            onNext={index < copies.length - 1 ? () => go(1) : undefined}
-            nextLabel="Copie suivante"
             variant="rendu"
           />
         </div>

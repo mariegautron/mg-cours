@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { ClipboardCheck, Play, Pencil } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
+import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { CourseOrderButtons } from "@/components/modules/course-order-buttons";
 import { PruneEmptySessions } from "@/components/modules/prune-empty-sessions";
@@ -244,11 +245,12 @@ export default async function CoursePage({
                 <span className="sr-only"> de la séance {index + 1}</span>
               </Link>
             ) : null}
-            <details className="relative">
-              <summary className={`${BTN} cursor-pointer list-none`}>
-                Plus<span className="sr-only"> d’actions sur la séance {index + 1}</span> ▾
-              </summary>
-              <div className="bg-popover absolute z-20 mt-1 flex w-72 flex-col items-start gap-2 rounded-xl border p-3 shadow-md">
+            <DisclosureMenu
+              label="Plus"
+              srLabel={`d’actions sur la séance ${index + 1}`}
+              panelClassName="w-72 p-3"
+            >
+              <div className="flex flex-col items-start gap-2">
                 <CourseOrderButtons
                   moduleId={id}
                   courseId={courseId}
@@ -263,7 +265,7 @@ export default async function CoursePage({
                   onConfirm={deleteCourseAndBack.bind(null, id, courseId)}
                 />
               </div>
-            </details>
+            </DisclosureMenu>
           </div>
 
           <SessionWorkspace

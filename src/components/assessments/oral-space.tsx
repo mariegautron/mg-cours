@@ -655,9 +655,6 @@ export function OralSpace({
                 })
               )}
             </div>
-            <p className="text-muted-foreground text-xs">
-              Touches A à D, ou clic, Espace, Entrée. Les flèches déplacent seulement le focus.
-            </p>
             <div className="space-y-1">
               <label htmlFor={`note-${subjectId}-${current.id}`} className="text-sm font-medium">
                 Tes notes sur ce critère (pour toi seule)

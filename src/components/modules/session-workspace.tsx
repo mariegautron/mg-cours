@@ -129,6 +129,8 @@ export function SessionWorkspace({
     const next = dir === "up" ? moveUp(resources, index) : moveDown(resources, index);
     setResources(next);
     const pos = (dir === "up" ? index - 1 : index + 1) + 1;
+    // L'étape déplacée doit rester visible (déroulé replié au-delà de 5).
+    if (pos > 5) setShowAll(true);
     setAnnounce(
       `« ${resources[index].title} » est maintenant en position ${pos} sur ${resources.length}.`,
     );
@@ -152,6 +154,8 @@ export function SessionWorkspace({
   function add(r: WorkspaceResource) {
     if (adding) return;
     setAdding(r.id);
+    // La ressource ajoutée arrive en fin de déroulé : on le déplie pour la montrer.
+    if (resources.length >= 5) setShowAll(true);
     start(async () => {
       const res = await addCourseResource(moduleId, courseId, r.id);
       setAdding(null);

@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { saveAssessmentExpectations } from "@/app/(app)/modules/[id]/assessments/expectation-actions";
 import { ActionError } from "@/components/action-error";
 import { Button } from "@/components/ui/button";
+import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
 
 /**
@@ -35,6 +36,8 @@ export function AssessmentExpectations({
   const [error, setError] = useState<string | undefined>();
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // Enregistrement en cours : on prévient avant de quitter la page.
+  useUnsavedChangesGuard(pending);
 
   const missingSuggested = suggestedIds.filter((id) => !chosen.has(id));
 
@@ -44,6 +47,8 @@ export function AssessmentExpectations({
     start(async () => {
       const r = await saveAssessmentExpectations(moduleId, assessmentId, [...next]);
       setError(r.error);
+      // Échec : la case revient à ce qui est vraiment enregistré (rien ne reste coché à tort).
+      if (r.error) setChosen(new Set(saved));
       if (!r.error) {
         setSaved(new Set(next));
         setSavedAt(
@@ -85,6 +90,7 @@ export function AssessmentExpectations({
             onClick={() => setEditing((v) => !v)}
           >
             {editing ? "Terminé" : "Modifier"}
+            <span className="sr-only"> les attendus évalués</span>
           </Button>
         ) : null}
       </div>

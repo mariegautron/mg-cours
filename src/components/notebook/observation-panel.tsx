@@ -274,12 +274,6 @@ export function ObservationPanel({
                   aria-label={t.label}
                   className="w-full justify-start px-2 [&>span]:w-full [&>span]:justify-items-start"
                 >
-                  <kbd
-                    aria-hidden
-                    className="mr-1 inline-block w-4 shrink-0 text-center text-xs opacity-70"
-                  >
-                    {i + 1}
-                  </kbd>
                   {t.label}
                 </PendingButton>
               ))}

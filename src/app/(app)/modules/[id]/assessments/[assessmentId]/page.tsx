@@ -379,7 +379,11 @@ export default async function AssessmentPage({
   // la préparation (cadre, sujet, grille, attendus) se replie sous un sommaire (lot 0 E, points 35-36).
   const copiesFirst =
     targets.length > 0 &&
-    (hasGrades || (!!assessment.date && assessment.date.slice(0, 10) <= todayInParis()));
+    (hasGrades ||
+      (() => {
+        const day = assessment.date ?? course?.session_date ?? null;
+        return !!day && day.slice(0, 10) <= todayInParis();
+      })());
   // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
   const evaluatedSection = (
     <section aria-labelledby="at" className={card}>
@@ -654,22 +658,33 @@ export default async function AssessmentPage({
           </a>
         ) : null}
         {blocks.subject ? (
-          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+          <a
+            href="#subject"
+            className="text-primary inline-flex min-h-11 items-center underline-offset-2 hover:underline"
+          >
             Sujet
           </a>
         ) : null}
         {blocks.grid ? (
-          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+          <a
+            href="#gr"
+            className="text-primary inline-flex min-h-11 items-center underline-offset-2 hover:underline"
+          >
             Grille
           </a>
         ) : null}
         {blocks.expectations ? (
-          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+          <a
+            href="#at"
+            className="text-primary inline-flex min-h-11 items-center underline-offset-2 hover:underline"
+          >
             Attendus
           </a>
         ) : null}
       </nav>
 
+      {/* Le jour de l'oral : horaires et ordre de passage restent visibles, hors de la préparation. */}
+      {copiesFirst ? oralTiming : null}
       {copiesFirst ? copiesSection : null}
 
       <RepublishNotice

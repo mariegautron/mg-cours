@@ -325,7 +325,11 @@ export function GradingSession({
                     size="sm"
                     variant="ghost"
                     disabled={prev === null}
-                    onClick={() => prev && focusCopy(prev)}
+                    onClick={() => {
+                      if (!prev) return;
+                      if (view === "criterion") setView("copy");
+                      focusCopy(prev);
+                    }}
                     aria-label={prev ? `Copie précédente : ${titleOf(prev)}` : "Pas de copie avant"}
                   >
                     ←
@@ -345,7 +349,7 @@ export function GradingSession({
                               if (view === "criterion") setView("copy");
                               focusCopy(i.id);
                             }}
-                            className={`inline-flex min-h-9 items-center gap-1 rounded-[10px] border px-2.5 ${
+                            className={`inline-flex min-h-11 items-center gap-1 rounded-[10px] border px-2.5 ${
                               on ? "border-primary text-primary font-semibold" : "hover:bg-muted"
                             }`}
                           >
@@ -367,7 +371,11 @@ export function GradingSession({
                     size="sm"
                     variant="ghost"
                     disabled={next === null}
-                    onClick={() => next && focusCopy(next)}
+                    onClick={() => {
+                      if (!next) return;
+                      if (view === "criterion") setView("copy");
+                      focusCopy(next);
+                    }}
                     aria-label={next ? `Copie suivante : ${titleOf(next)}` : "Pas de copie après"}
                   >
                     →

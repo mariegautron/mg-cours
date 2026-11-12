@@ -117,3 +117,30 @@ Lot 1, ce qui est fait à ce stade :
 - **Dupliquer le module** : on choisit le nom de la copie (par défaut « Nom (2027) ») et l'année,
   puis une confirmation dans l'appli nomme la copie et ce qui part avec ; avertit si le nom est
   identique à l'original.
+
+## Relecture UX/UI du lot 0 (sous-agent) : corrigé
+
+- **Régression évitée** : sans grille, une copie sans note n'enregistrait jamais rien et bloquait
+  la sortie (plus de bouton « Enregistrer »). La barre dit maintenant « Note manquante : rien n'est
+  enregistré » et la garde avant de quitter ne se déclenche plus pour cette copie.
+- **Navigation unique aussi dans la correction en lettres** (rendus et oral) : « ← · copies avec
+  leur état · → » et « Vue d'ensemble » ; plus de « Copie suivante » en double dans l'espace oral.
+  Les flèches repassent en vue copie depuis « Par critère » ; liens de copie à 44 px.
+- Sommaire de l'évaluation : liens vers chaque bloc (Chrome ouvre la section repliée), cibles
+  44 px. Les copies remontent aussi quand l'évaluation n'est datée que par sa séance.
+- Le jour de l'oral, « Horaires de l'oral » reste visible au-dessus de la Préparation repliée.
+- Aides clavier encore visibles retirées (espace oral « Touches A à D », chiffres des types
+  d'observation).
+- « Effacer le palier » annonce « Palier effacé… » aux lecteurs d'écran.
+- Déroulé replié : il se déplie quand on déplace une étape au-delà de la 5e ou qu'on ajoute une
+  ressource.
+- Attendus évalués : en cas d'échec, les cases reviennent à l'état enregistré ; alerte avant de
+  quitter pendant l'enregistrement ; « Modifier » a un nom accessible distinct.
+- Menus « Plus » et « Ajouter une séance » : vrai bouton (`DisclosureMenu`) refermé par Échap,
+  clic à côté ou choix d'un lien ; contenu gardé monté pour ne pas fermer la confirmation de
+  suppression.
+- Liste des séances repliée : titre h2 (lecteurs d'écran).
+- **Pas fait** : commentaire modifiable dans « Par critère » de la correction en lettres (B pour
+  l'oral, demande d'écrire par `saveOralField` avec version) ; afficher l'ancienne note en points
+  quand elle ne tombe sur aucun palier (à vérifier sur l'oral SCRUM) ; « Ressources retenues »
+  repliées (écran Modifier la séance, lot 4).
