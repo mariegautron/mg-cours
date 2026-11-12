@@ -303,15 +303,6 @@ export function ModuleCreateWizard({
                 <Row label="Tarif horaire HT (€)" htmlFor="hourlyRate">
                   <Input id="hourlyRate" name="hourlyRate" type="number" step="0.01" />
                 </Row>
-                <Row label="Heures FFP / cours" htmlFor="hoursLecture">
-                  <Input id="hoursLecture" name="hoursLecture" type="number" step="0.5" />
-                </Row>
-                <Row label="Heures TDP / TD" htmlFor="hoursTd">
-                  <Input id="hoursTd" name="hoursTd" type="number" step="0.5" />
-                </Row>
-                <Row label="Heures TP" htmlFor="hoursTp">
-                  <Input id="hoursTp" name="hoursTp" type="number" step="0.5" />
-                </Row>
                 <Row label="Référence bon de commande" htmlFor="purchaseOrderRef">
                   <Input id="purchaseOrderRef" name="purchaseOrderRef" />
                 </Row>

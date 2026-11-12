@@ -3,6 +3,8 @@
  * boutons), appliquer l'ordre voulu à des ressources, statut d'une séance en mots.
  */
 
+import { isSessionReady } from "@/lib/prep-status";
+
 /** Déplace l'élément d'un rang à un autre ; liste inchangée si les rangs sont hors bornes. */
 export function reorder<T>(items: readonly T[], from: number, to: number): T[] {
   if (from < 0 || from >= items.length || to < 0 || to >= items.length || from === to) {
@@ -53,7 +55,7 @@ export function sessionStatus(course: {
   completion: string | null;
 }): SessionStatus {
   if (course.completion === "done" || course.completion === "partial") return "done";
-  return course.prep_status === "ready" ? "ready" : "to_prepare";
+  return isSessionReady(course) ? "ready" : "to_prepare";
 }
 
 export const DELIVERABLE_MAX = 2000;

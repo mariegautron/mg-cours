@@ -231,7 +231,7 @@ export async function createAssessment(
       type: parsed.data.type || null,
       exam_kind: examKindForType(parsed.data.type),
       ...coefficientColumns(parsed.data),
-      date: parsed.data.date,
+      date: await dateFollowingCourse(supabase, parsed.data.courseId, parsed.data.date),
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
@@ -311,6 +311,20 @@ export async function updateAssessment(
     .select("*")
     .eq("id", assessmentId)
     .maybeSingle();
+  // Groupe ↔ individuel : impossible une fois des notes saisies (les copies existantes visent des
+  // groupes OU des personnes, elles deviendraient incohérentes).
+  if (before && before.is_group_grade !== parsed.data.isGroupGrade && !origin) {
+    const { count } = await supabase
+      .from("grade")
+      .select("id", { count: "exact", head: true })
+      .eq("assessment_id", assessmentId);
+    if ((count ?? 0) > 0) {
+      return {
+        error:
+          "Cette évaluation a déjà des notes : elle ne peut plus passer de groupe à individuelle (ou l’inverse).",
+      };
+    }
+  }
   // Une note bonus reste individuelle (contrainte assessment_makeup_bonus_individual_ck).
   if (before?.is_bonus && parsed.data.isGroupGrade && !origin) {
     return { error: "Une note bonus est individuelle : retire d’abord le bonus." };
@@ -331,7 +345,7 @@ export async function updateAssessment(
       type: parsed.data.type || null,
       exam_kind: examKindForType(parsed.data.type),
       ...coefficientColumns(parsed.data),
-      date: parsed.data.date,
+      date: await dateFollowingCourse(supabase, parsed.data.courseId, parsed.data.date),
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
       is_group_grade: parsed.data.isGroupGrade,
@@ -578,7 +592,6 @@ async function saveGrade(
     assessment_id: assessmentId,
     student_id: target.studentId,
     student_group_id: target.studentGroupId,
-    is_group_grade: target.studentId === null,
     value,
     attendance,
     scores,
@@ -856,6 +869,25 @@ function coefficientColumns(d: { type?: string; coefficient: number }) {
   return d.type?.trim() === SCHOOL_GRADE_TYPE
     ? { coefficient: d.coefficient, coefficient_override: d.coefficient }
     : { coefficient_override: null };
+}
+
+/**
+ * Une évaluation rattachée à une séance datée prend la date de la séance (lot 6 du schéma). Sans
+ * séance, ou séance sans date : la date saisie. Les évaluations déjà enregistrées ne sont pas
+ * corrigées tant qu'on ne les réenregistre pas.
+ */
+async function dateFollowingCourse(
+  supabase: Supabase,
+  courseId: string | null,
+  date: string | null,
+): Promise<string | null> {
+  if (!courseId) return date;
+  const { data } = await supabase
+    .from("course")
+    .select("session_date")
+    .eq("id", courseId)
+    .maybeSingle();
+  return data?.session_date ?? date;
 }
 
 export interface SchoolGradeState {

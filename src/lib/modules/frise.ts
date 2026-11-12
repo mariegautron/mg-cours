@@ -4,6 +4,8 @@
  * jamais d'étudiant·e, de note, de ressource ni de montant.
  */
 
+import { isSubjectToBuild } from "@/lib/prep-status";
+
 export interface FriseCourseInput {
   title: string;
   session_date: string | null;
@@ -119,7 +121,7 @@ export function buildFrise(input: {
       role: a.project_role ?? null,
       // Le rendu attendu ne sort que d'un sujet prêt ou fourni : un sujet « à construire » reste privé.
       deliverable:
-        a.prep_status && a.prep_status !== "to_build" ? firstLine(a.deliverable_md) : null,
+        !isSubjectToBuild(a) ? firstLine(a.deliverable_md) : null,
     }))
     .sort((a, b) => (a.sessionNumber ?? 999) - (b.sessionNumber ?? 999));
   const hasProject = regular.some((a) => a.project_id);

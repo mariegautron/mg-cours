@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import { listModuleAssessments, moduleNoteProgress } from "@/lib/assessments/queries";
 import { getInvoiceByModule, loadInvoiceContext } from "@/lib/invoice/queries";
 import { getModuleCoverage } from "@/lib/modules/coverage-queries";
@@ -55,9 +56,7 @@ export const getModuleJourney = cache(async (id: string) => {
       mod.first_session_date,
       mod.iceberg_state,
       new Date(),
-      outline?.status === "sent" ||
-        outline?.status === "validated" ||
-        documents.some((x) => x.kind === "outline_sent"),
+      isOutlineSent({ outline, documents, adminDocs: mod.admin_docs }),
     ),
     invoice,
     invoiceCtx,

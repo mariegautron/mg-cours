@@ -125,37 +125,6 @@ export function ModuleForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="hoursLecture">Heures FFP / cours</Label>
-            <Input
-              id="hoursLecture"
-              name="hoursLecture"
-              type="number"
-              step="0.5"
-              defaultValue={mod?.hours_lecture ?? ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hoursTd">Heures TDP / TD</Label>
-            <Input
-              id="hoursTd"
-              name="hoursTd"
-              type="number"
-              step="0.5"
-              defaultValue={mod?.hours_td ?? ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hoursTp">Heures TP</Label>
-            <Input
-              id="hoursTp"
-              name="hoursTp"
-              type="number"
-              step="0.5"
-              defaultValue={mod?.hours_tp ?? ""}
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="firstSessionDate">Date de la 1re séance</Label>
             <Input
               id="firstSessionDate"

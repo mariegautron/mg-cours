@@ -1,6 +1,7 @@
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { getExpectationCoverageView } from "@/lib/modules/expectation-coverage-queries";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import { createClient } from "@/lib/supabase/server";
 import { displayTeacherName } from "@/lib/ynov/teacher-name";
 import { buildOutlineContent, type OutlineContent } from "@/lib/ynov/outline";
@@ -43,4 +44,38 @@ export async function buildCurrentOutline(moduleId: string): Promise<OutlineCont
       assessmentTitles: r.assessments.map((a) => a.title),
     })),
   });
+}
+
+/**
+ * Modules dont la progression est envoyée (voir `isOutlineSent`), en deux requêtes pour toute la
+ * liste. Protégé : une erreur laisse le module « non envoyé » (l'alerte reste visible).
+ */
+export async function listOutlineSentModuleIds(
+  modules: readonly { id: string; admin_docs?: unknown }[],
+): Promise<Set<string>> {
+  const ids = modules.map((m) => m.id);
+  if (ids.length === 0) return new Set();
+  const supabase = await createClient();
+  const [{ data: outlines }, { data: docs }] = await Promise.all([
+    supabase.from("pedagogical_outline").select("module_id, status, sent_at").in("module_id", ids),
+    supabase
+      .from("module_document")
+      .select("module_id, kind")
+      .eq("kind", "outline_sent")
+      .in("module_id", ids),
+  ]);
+  const outlineOf = new Map((outlines ?? []).map((o) => [o.module_id, o]));
+  const sent = new Set<string>();
+  for (const m of modules) {
+    if (
+      isOutlineSent({
+        outline: outlineOf.get(m.id) ?? null,
+        documents: (docs ?? []).filter((d) => d.module_id === m.id),
+        adminDocs: m.admin_docs,
+      })
+    ) {
+      sent.add(m.id);
+    }
+  }
+  return sent;
 }

@@ -1,3 +1,4 @@
+import { isSessionReady } from "@/lib/prep-status";
 import Link from "next/link";
 
 import { Pill } from "@/components/dashboard/pill";
@@ -35,7 +36,7 @@ export function SessionList({
   // prête : la ressource ne pourra pas être projetée.
   const toBuild = (c: CourseWithResources) =>
     c.resources.filter((r) => r.status !== "ready").length;
-  const ready = courses.filter((c) => c.prep_status === "ready" && toBuild(c) === 0).length;
+  const ready = courses.filter((c) => isSessionReady(c) && toBuild(c) === 0).length;
   // Repère de la séance à faire (du jour ou prochaine), pour la retrouver en consultant une autre.
   const today = todayInParis();
   const focus = sessionToTeach(courses, today);
@@ -101,7 +102,7 @@ export function SessionList({
                     tone={
                       c.completion
                         ? "ok"
-                        : c.prep_status === "ready" && toBuild(c) > 0
+                        : isSessionReady(c) && toBuild(c) > 0
                           ? "warn"
                           : (STATUS_TONES[c.prep_status] ?? "plain")
                     }
@@ -109,7 +110,7 @@ export function SessionList({
                   >
                     {c.completion ? "Faite" : statusLabel(c.prep_status)}
                   </Pill>
-                  {!c.completion && c.prep_status === "ready" && toBuild(c) > 0 ? (
+                  {!c.completion && isSessionReady(c) && toBuild(c) > 0 ? (
                     <span className="text-sun text-right text-[0.7rem] leading-tight font-semibold">
                       {toBuild(c)} ressource{toBuild(c) > 1 ? "s" : ""} à construire
                     </span>

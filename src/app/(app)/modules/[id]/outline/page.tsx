@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import Link from "next/link";
 
 import { parisLongDateTime } from "@/lib/deposits/rules";
@@ -64,9 +65,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     mod.first_session_date,
     mod.iceberg_state,
     new Date(),
-    outline?.status === "sent" ||
-      outline?.status === "validated" ||
-      documents.some((d) => d.kind === "outline_sent"),
+    isOutlineSent({ outline, documents, adminDocs: mod.admin_docs }),
   );
   const depositedOutline = documents.find((d) => d.kind === "outline_sent") ?? null;
   const banner = deadlineBanner(

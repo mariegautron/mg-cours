@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { promotionToShow, type StudentYear } from "@/lib/students/years";
 import { countPendingMakeups } from "@/lib/assessments/makeup-queries";
 
 import {
@@ -29,7 +30,8 @@ function sessionNumbers<C extends { id: string; module_id: string; position: num
 }
 
 type StudentRow = {
-  scholar_group: string | null;
+  /** Promotion par année scolaire (`student.scholar_group`, déprécié, n'est plus lu). */
+  student_year: StudentYear[] | null;
   group_member: {
     student_group: {
       name: string;
@@ -50,7 +52,8 @@ function studentContext(s: unknown): string {
         b.module!.year - a.module!.year,
     );
   const best = groups[0];
-  return [row.scholar_group, best?.module?.name, best?.name].filter(Boolean).join(" · ");
+  const promo = promotionToShow(row.student_year ?? [])?.group;
+  return [promo, best?.module?.name, best?.name].filter(Boolean).join(" · ");
 }
 
 /** Recherche globale : lecture seule, sous la session de Marie (RLS `owner_id = auth.uid()`). */
@@ -69,7 +72,7 @@ export async function GET(req: Request) {
     supabase
       .from("student")
       .select(
-        "id, first_name, last_name, scholar_group, group_member(student_group:student_group_id(name, module:module_id(name, year, archived_at)))",
+        "id, first_name, last_name, student_year(year, scholar_group), group_member(student_group:student_group_id(name, module:module_id(name, year, archived_at)))",
       ),
     supabase.from("module").select("id, name, ycode, year, archived_at"),
     supabase.from("resource").select("id, title").is("archived_at", null),

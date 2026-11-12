@@ -1,3 +1,4 @@
+import { isSessionReady, isSubjectToBuild } from "@/lib/prep-status";
 import { appliedCoefficient } from "@/lib/ynov/notation";
 import { isOralAssessment } from "@/lib/assessments/oral";
 import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
@@ -123,7 +124,7 @@ export default async function ModuleAssessmentsPage({
       id: c.id,
       title: c.title,
       date: c.session_date,
-      toBuild: c.prep_status !== "ready",
+      toBuild: !isSessionReady(c),
     })),
     regular.map((a) => ({
       id: a.id,
@@ -391,7 +392,7 @@ export default async function ModuleAssessmentsPage({
                     <StatusRow
                       label="Cadre pour les étudiant·es"
                       status={
-                        a.prep_status === "to_build" && frame.tone === "ok"
+                        isSubjectToBuild(a) && frame.tone === "ok"
                           ? { tone: "warn", label: "Rédigé, à passer en Prête" }
                           : frame
                       }
@@ -545,7 +546,7 @@ export default async function ModuleAssessmentsPage({
                             id: c.id,
                             title: c.title,
                             date: c.session_date,
-                            toBuild: c.prep_status !== "ready",
+                            toBuild: !isSessionReady(c),
                           },
                           i + 1,
                         );
@@ -574,7 +575,7 @@ export default async function ModuleAssessmentsPage({
                           id: c.id,
                           title: c.title,
                           date: c.session_date,
-                          toBuild: c.prep_status !== "ready",
+                          toBuild: !isSessionReady(c),
                         });
                         return (
                           <td

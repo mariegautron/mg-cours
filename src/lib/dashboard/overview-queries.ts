@@ -33,7 +33,7 @@ export async function loadFocusKpis(moduleId: string, moduleName: string): Promi
   ]);
 
   const members = new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m]));
-  const withPhoto = [...members.values()].filter((m) => m.photo_path || m.photo_url).length;
+  const withPhoto = [...members.values()].filter((m) => m.photo_path).length;
 
   const lastGraded = [...assessments]
     .filter((a) => !a.makeup_of_id && a.gradeCount > 0)

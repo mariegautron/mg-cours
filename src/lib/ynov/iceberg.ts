@@ -48,7 +48,7 @@ export function isAtLeast(state: IcebergState, target: IcebergState): boolean {
 }
 
 /** La trame a été marquée envoyée dès que le module a dépassé `outline_sent`. */
-export function isOutlineSent(state: IcebergState): boolean {
+export function icebergOutlineSent(state: IcebergState): boolean {
   return isAtLeast(state, "outline_sent");
 }
 

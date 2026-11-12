@@ -57,7 +57,6 @@ import {
   examKindOf,
   individualFrame,
   parseSubjectVersions,
-  parseSubmissionMode,
 } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
@@ -673,7 +672,6 @@ export default async function AssessmentPage({
                 initial={{
                   kind: examKindOf(assessment),
                   versions: parseSubjectVersions(assessment.subject_versions),
-                  mode: parseSubmissionMode(assessment.submission_mode),
                   makeupPrepared: !!assessment.makeup_prepared,
                 }}
               />
@@ -835,7 +833,8 @@ export default async function AssessmentPage({
                 <ul className="divide-y">
                   {individualFrame({
                     kind: examKindOf(assessment),
-                    mode: parseSubmissionMode(assessment.submission_mode),
+                    // submit_mode fait foi (submission_mode n'est plus lu, lot 6 du schéma).
+                    mode: submitModeOf(assessment) === "app" ? "app" : "manual",
                     courseNumber: course ? courseNumber : null,
                     date: assessment.date,
                     deliverable: assessment.deliverable_md,

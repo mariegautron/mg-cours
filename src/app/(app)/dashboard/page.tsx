@@ -47,6 +47,7 @@ import { formatTimeRange } from "@/lib/modules/course-duration";
 import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
+import { listOutlineSentModuleIds } from "@/lib/outline/queries";
 import { inFilter, moduleListState } from "@/lib/modules/list-state";
 import { getProfile } from "@/lib/settings/queries";
 import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/trame";
@@ -116,7 +117,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const farFirst = sessions.length ? null : nextSession(coursesAfter, today);
   const farPrep =
     farFirst && farFirst.id !== upcoming?.id && !started(farFirst.module.id) ? farFirst : null;
-  const alerts = outlineAlerts(modules);
+  // « Progression envoyée » : la même définition partout (isOutlineSent), pas l'état iceberg.
+  const outlineSentIds = await listOutlineSentModuleIds(modules);
+  const alerts = outlineAlerts(
+    modules.map((m) => ({ ...m, outline_sent: outlineSentIds.has(m.id) })),
+  );
   const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
 

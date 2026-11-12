@@ -1,4 +1,6 @@
+import { isSessionReady } from "@/lib/prep-status";
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import type { Metadata } from "next";
 import { loadRoster } from "@/lib/students/enrollment";
 import Link from "next/link";
@@ -131,9 +133,7 @@ export default async function ModulePage({
     mod.first_session_date,
     mod.iceberg_state,
     new Date(),
-    outline?.status === "sent" ||
-      outline?.status === "validated" ||
-      documents.some((d) => d.kind === "outline_sent"),
+    isOutlineSent({ outline, documents, adminDocs: mod.admin_docs }),
   );
   const coverage = await getModuleCoverage(id, expectations, retained);
   const expCoverage = await getExpectationCoverageView(id);
@@ -169,7 +169,7 @@ export default async function ModulePage({
   const doneCourses = courses.filter(
     (c) => c.completion === "done" || c.completion === "partial",
   ).length;
-  const readyCourses = courses.filter((c) => c.prep_status === "ready").length;
+  const readyCourses = courses.filter((c) => isSessionReady(c)).length;
   const firstDated = courses.find((c) => c.session_date) ?? courses[0] ?? null;
   const hero = buildHero({
     moduleId: mod.id,

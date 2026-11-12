@@ -274,8 +274,8 @@ export function AssessmentForm({
               ) : null}
               {dateMismatch ? (
                 <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                  La date ({formatFr(dateText)}) ne correspond pas à la séance choisie (
-                  {formatFr(selectedCourseDate ?? "")}). Corrige l’une des deux avant de projeter.
+                  La date ({formatFr(dateText)}) ne correspond pas à la séance choisie : en
+                  enregistrant, elle prendra celle de la séance ({formatFr(selectedCourseDate ?? "")}).
                 </p>
               ) : null}
             </div>
@@ -326,7 +326,14 @@ export function AssessmentForm({
               type="date"
               value={dateText}
               onChange={(e) => setDateText(e.target.value)}
+              readOnly={!!selectedCourseDate}
+              aria-describedby={selectedCourseDate ? "date-hint" : undefined}
             />
+            {selectedCourseDate ? (
+              <p id="date-hint" className="text-muted-foreground text-sm">
+                Date de la séance choisie : elle suit la séance si celle-ci change de date.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="durationMinutes">

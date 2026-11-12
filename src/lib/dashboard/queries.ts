@@ -70,7 +70,7 @@ export async function getSessionPrep(moduleId: string, courseId: string): Promis
   const index = courses.findIndex((c) => c.id === courseId);
   const course = courses[index];
   const students = new Map(groups.flatMap((g) => g.members).map((m) => [m.id, m]));
-  const withPhoto = [...students.values()].filter((m) => m.photo_path || m.photo_url).length;
+  const withPhoto = [...students.values()].filter((m) => m.photo_path).length;
   return {
     number: index + 1,
     total: courses.length,

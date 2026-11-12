@@ -1,3 +1,4 @@
+import { isSubjectToBuild } from "@/lib/prep-status";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -147,7 +148,7 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
                   </p>
                 </div>
                 <span className="flex flex-wrap gap-1.5">
-                  <Badge variant={a.prep_status === "to_build" ? "outline" : "secondary"}>
+                  <Badge variant={isSubjectToBuild(a) ? "outline" : "secondary"}>
                     Sujet : {PREP_STATUS_LABELS[a.prep_status]}
                   </Badge>
                   <Badge

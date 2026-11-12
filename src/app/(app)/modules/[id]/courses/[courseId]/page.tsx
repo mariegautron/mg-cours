@@ -1,3 +1,4 @@
+import { isSubjectToBuild } from "@/lib/prep-status";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -303,8 +304,8 @@ export default async function CoursePage({
                     {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
                   </p>
                   <p className="my-1.5 flex flex-wrap gap-1.5">
-                    <Pill tone={a.prep_status === "to_build" ? "warn" : "ok"}>
-                      {a.prep_status === "to_build" ? "Sujet à construire" : "Sujet prêt"}
+                    <Pill tone={isSubjectToBuild(a) ? "warn" : "ok"}>
+                      {isSubjectToBuild(a) ? "Sujet à construire" : "Sujet prêt"}
                     </Pill>
                     <Pill tone={a.grading_grid_id ? "ok" : "warn"}>
                       {a.grading_grid_id ? "Grille prête" : "Grille à créer"}

@@ -8,10 +8,8 @@ import { ActionError } from "@/components/action-error";
 import {
   EXAM_KINDS,
   SUBJECT_VERSIONS,
-  SUBMISSION_MODES,
   type ExamKind,
   type SubjectVersions,
-  type SubmissionMode,
 } from "@/lib/assessments/exam-kind";
 import { cn } from "@/lib/utils";
 
@@ -61,8 +59,9 @@ function Choice<T extends string>({
 }
 
 /**
- * « Quelle épreuve ? » (maquette IndPrep) : type d'épreuve, versions du sujet, arrivée des rendus,
- * sujet de rattrapage préparé d'avance. Chaque choix s'enregistre tout seul.
+ * « Quelle épreuve ? » (maquette IndPrep) : type d'épreuve, versions du sujet, sujet de rattrapage
+ * préparé d'avance. Chaque choix s'enregistre tout seul. L'arrivée des rendus se règle dans
+ * « Rendre dans MG COURS ou ailleurs » (`submit_mode`, seule source depuis le lot 6 du schéma).
  */
 export function ExamKindForm({
   moduleId,
@@ -78,7 +77,6 @@ export function ExamKindForm({
   initial: {
     kind: ExamKind;
     versions: SubjectVersions;
-    mode: SubmissionMode | null;
     makeupPrepared: boolean;
   };
   /** Les colonnes existent en base (migration appliquée). */
@@ -146,19 +144,10 @@ export function ExamKindForm({
         onChange={(versions) => save({ ...state, versions }, { subjectVersions: versions })}
       />
       {state.kind === "files" ? (
-        <>
-          <Choice
-            name="submission-mode"
-            legend="Comment les rendus arrivent"
-            options={SUBMISSION_MODES}
-            value={state.mode}
-            disabled={pending}
-            onChange={(mode) => save({ ...state, mode }, { submissionMode: mode })}
-          />
-          <p className="text-muted-foreground text-sm">
-            Fichiers, ou liens GitHub, Figma ou autre. Tu peux mélanger d’une personne à l’autre.
-          </p>
-        </>
+        <p className="text-muted-foreground text-sm">
+          Fichiers, ou liens GitHub, Figma ou autre : où ils arrivent se règle plus bas, dans
+          « Les étudiant·es rendent ».
+        </p>
       ) : null}
       <label className="flex min-h-12 items-start gap-3">
         <input

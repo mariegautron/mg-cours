@@ -1,4 +1,4 @@
-import { isOutlineSent, type IcebergState } from "./iceberg";
+import { icebergOutlineSent, type IcebergState } from "./iceberg";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -44,7 +44,7 @@ export function trameStatus(
    */
   outlineSent?: boolean,
 ): TrameStatus {
-  if (outlineSent ?? isOutlineSent(icebergState)) {
+  if (outlineSent ?? icebergOutlineSent(icebergState)) {
     return {
       dueDate: firstSessionDate ? trameDueDate(firstSessionDate) : null,
       daysUntilDue: null,
@@ -79,12 +79,22 @@ const ALERT_LEVELS: readonly TrameAlertLevel[] = ["overdue", "urgent", "warning"
  * la plus pressante à la moins pressante. Une liste vide = rien à signaler.
  */
 export function outlineAlerts<
-  M extends { first_session_date: string | null; iceberg_state: IcebergState },
+  M extends {
+    first_session_date: string | null;
+    iceberg_state: IcebergState;
+    /** Envoi réel (`isOutlineSent`) ; absent : l'état iceberg fait foi. */
+    outline_sent?: boolean;
+  },
 >(modules: M[], today: Date = new Date()): OutlineAlert<M>[] {
   return modules
     .map((module) => ({
       module,
-      status: trameStatus(module.first_session_date, module.iceberg_state, today),
+      status: trameStatus(
+        module.first_session_date,
+        module.iceberg_state,
+        today,
+        module.outline_sent,
+      ),
     }))
     .filter(({ status }) => ALERT_LEVELS.includes(status.level))
     .map(({ module, status }) => ({

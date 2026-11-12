@@ -44,9 +44,7 @@ function toRow(input: ReturnType<typeof readModuleForm>["data"]) {
     ycode: input.ycode || null,
     total_hours: input.totalHours,
     hourly_rate: input.hourlyRate,
-    hours_lecture: input.hoursLecture,
-    hours_td: input.hoursTd,
-    hours_tp: input.hoursTp,
+    // Heures CM / TD / TP : plus saisies (lot 6 du schéma), colonnes gardées, jamais écrasées.
     start_date: input.startDate,
     first_session_date: input.firstSessionDate,
     end_date: input.endDate,

@@ -7,6 +7,8 @@
  * ne sont pas des étapes : séance à clôturer ou à préparer, évaluation à compléter, et la facture
  * d'un module déjà terminé (archivé, il n'a plus d'étape courante).
  */
+
+import { isSessionReady } from "@/lib/prep-status";
 export const TODO_LIMIT = 3;
 
 export type TodoKind =
@@ -143,7 +145,7 @@ export function buildTodos(src: TodoSources): TodoItem[] {
   }
   const horizon = src.prepHorizonDays ?? 7;
   for (const c of src.upcomingCourses) {
-    if (!c.session_date || c.prep_status === "ready") continue;
+    if (!c.session_date || isSessionReady(c)) continue;
     const d = daysBetween(src.today, c.session_date);
     if (d < 0 || d > horizon) continue;
     out.push({

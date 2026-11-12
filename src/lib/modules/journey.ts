@@ -1,4 +1,6 @@
+import { isSessionReady } from "@/lib/prep-status";
 import type { AssessmentWithMeta } from "@/lib/assessments/queries";
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import type { NoteProgress } from "@/lib/ynov/notation";
 import type { InvoiceContext } from "@/lib/ynov/invoice";
 import type { CoverageSummary } from "@/lib/modules/matching";
@@ -47,17 +49,17 @@ export function buildJourney(d: JourneyData): ModuleSteps {
     coverage: d.coverage,
     courses: {
       total: d.courses.length,
-      ready: d.courses.filter((c) => c.prep_status === "ready").length,
+      ready: d.courses.filter((c) => isSessionReady(c)).length,
       // Clôture du carnet : une séance clôturée « faite » ou « partielle » a bien eu lieu.
       done: d.courses.filter((c) => c.completion === "done" || c.completion === "partial").length,
     },
     outlineGeneratedAt: d.outline?.generated_at ?? null,
-    // L'envoi réel : progression marquée envoyée / validée, ou PDF déposé (pas l'état iceberg,
-    // qu'une facture cochée fait avancer).
-    outlineSent:
-      d.outline?.status === "sent" ||
-      d.outline?.status === "validated" ||
-      d.documents.some((x) => x.kind === "outline_sent"),
+    // L'envoi réel (pas l'état iceberg, qu'une facture cochée fait avancer) : voir isOutlineSent.
+    outlineSent: isOutlineSent({
+      outline: d.outline,
+      documents: d.documents,
+      adminDocs: d.mod.admin_docs,
+    }),
     outlineDueDate: d.trame.dueDate ? d.trame.dueDate.toISOString() : null,
     notes: {
       entered: d.notes.enteredTotal,

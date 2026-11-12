@@ -2,6 +2,7 @@
  * Écran « Séances » refait sur la maquette (Seances) : liste étroite + séance ouverte. Fonctions
  * pures : libellés de la liste, durée, sous-titre d'une ressource du déroulé, navigation entre séances.
  */
+import { isSessionReady } from "@/lib/prep-status";
 import { PREP_STATUS_LABELS, type PrepStatus } from "@/lib/modules/schema";
 
 /** « 12/10 · 08–12 h » ; vide sans date. */
@@ -70,7 +71,7 @@ export function pickCourse<
   const upcoming = list
     .filter((c) => c.session_date && c.session_date >= today)
     .sort((a, b) => a.session_date!.localeCompare(b.session_date!))[0];
-  return upcoming ?? list.find((c) => c.prep_status !== "ready") ?? list[0];
+  return upcoming ?? list.find((c) => !isSessionReady(c)) ?? list[0];
 }
 
 /** Sous-titre d'une ressource du déroulé : diapositives, corrigé, état. */

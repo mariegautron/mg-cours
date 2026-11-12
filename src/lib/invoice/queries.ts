@@ -1,4 +1,5 @@
 import { moduleNoteProgress } from "@/lib/assessments/queries";
+import { isOutlineSent } from "@/lib/modules/outline-sent";
 import { getModule, listModules, type ModuleWithSchool } from "@/lib/modules/queries";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/settings/queries";
@@ -30,7 +31,11 @@ async function buildInvoiceContext(
       : mod.school_id
         ? supabase.from("school").select("*").eq("id", mod.school_id).maybeSingle()
         : Promise.resolve({ data: null }),
-    supabase.from("pedagogical_outline").select("status").eq("module_id", mod.id).maybeSingle(),
+    supabase
+      .from("pedagogical_outline")
+      .select("status, sent_at")
+      .eq("module_id", mod.id)
+      .maybeSingle(),
     supabase
       .from("module_document")
       .select("id")
@@ -49,8 +54,11 @@ async function buildInvoiceContext(
       purchase_order_ref: mod.purchase_order_ref,
       iceberg_state: mod.iceberg_state,
       // Envoi réel (pas l'iceberg, qu'une facture déposée ou cochée fait avancer).
-      outline_sent:
-        outline?.status === "sent" || outline?.status === "validated" || !!sentDoc?.length,
+      outline_sent: isOutlineSent({
+        outline,
+        documents: sentDoc?.length ? [{ kind: "outline_sent" }] : [],
+        adminDocs: mod.admin_docs,
+      }),
       admin_docs: (mod.admin_docs as Record<string, boolean>) ?? {},
       end_date: mod.end_date,
       first_session_date: mod.first_session_date,

@@ -5,10 +5,8 @@ import { revalidatePath } from "next/cache";
 import {
   parseExamKind,
   parseSubjectVersions,
-  parseSubmissionMode,
   type ExamKind,
   type SubjectVersions,
-  type SubmissionMode,
 } from "@/lib/assessments/exam-kind";
 import { failure, NOT_FOUND } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
@@ -33,7 +31,6 @@ export async function saveIndividualPrep(
   patch: {
     examKind?: ExamKind;
     subjectVersions?: SubjectVersions;
-    submissionMode?: SubmissionMode;
     makeupPrepared?: boolean;
   },
 ): Promise<PrepState> {
@@ -45,11 +42,6 @@ export async function saveIndividualPrep(
   }
   if (patch.subjectVersions !== undefined) {
     update.subject_versions = parseSubjectVersions(patch.subjectVersions);
-  }
-  if (patch.submissionMode !== undefined) {
-    const v = parseSubmissionMode(patch.submissionMode);
-    if (!v) return { error: "Mode d’arrivée inconnu." };
-    update.submission_mode = v;
   }
   if (patch.makeupPrepared !== undefined) update.makeup_prepared = !!patch.makeupPrepared;
   if (Object.keys(update).length === 0) return {};

@@ -114,6 +114,11 @@ export async function updateCourse(
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("course")
+    .select("session_date")
+    .eq("id", courseId)
+    .maybeSingle();
   const { error } = await supabase
     .from("course")
     .update({
@@ -133,6 +138,16 @@ export async function updateCourse(
     .eq("id", courseId);
 
   if (error) return { error: failure("enregistrer", { kept: true }) };
+
+  // La séance change de date : ses évaluations rattachées la suivent (lot 6 du schéma). Une date
+  // effacée ne vide pas celle des évaluations.
+  if (parsed.data.sessionDate && parsed.data.sessionDate !== before?.session_date) {
+    await supabase
+      .from("assessment")
+      .update({ date: parsed.data.sessionDate })
+      .eq("course_id", courseId)
+      .eq("module_id", moduleId);
+  }
 
   await syncResources(supabase, courseId, parsed.data.resourceIds);
 

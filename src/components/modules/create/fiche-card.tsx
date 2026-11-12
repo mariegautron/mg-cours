@@ -27,9 +27,6 @@ const FIELD_IDS = {
   level: "level",
   year: "year",
   totalHours: "totalHours",
-  hoursLecture: "hoursLecture",
-  hoursTd: "hoursTd",
-  hoursTp: "hoursTp",
 } as const;
 
 /** Ce que la lecture a trouvé, en une liste de lignes cochées. */
