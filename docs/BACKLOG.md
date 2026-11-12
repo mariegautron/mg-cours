@@ -459,7 +459,7 @@ Diagnostic en lecture seule (`supabase/snapshots/diagnostic-schema.sql`, `docs/s
 | 7 | Unicités : attendu par (module, type, libellé normalisé), rang de séance par module (différée) ; réordonnancement en deux temps (`f56a327`) | ✅ |
 | 5 | Enum `assessment_kind`, colonne `assessment.kind` remplie (étude de cas → `open_questions`) (`ef6f239`, `8b929b3`) ; formulaire et page d'une évaluation branchés sur `kind` (`78610ad`). Reste : faire lire `kind` à « Quelle épreuve ? », au cadre et au jour J (puis retirer `exam_kind`) | ✅ (suite au lot 9) |
 | 8 | Facture : source unique « envoyée / payée » (`invoiceProgress`), garde-fou de suppression d'une facture numérotée (migration `20261213000000`, appliquée le 12/11) (`5528831`) | ✅ |
-| 9 | Suppressions : préparation faite (`d320b7e`, `docs/schema-bdd/lot9-candidats.md` et `.sql`), drops en attente de la validation d'Arnaud colonne par colonne | 🚧 |
+| 9 | Suppressions validées par Arnaud et appliquées le 12/11 (migration `20261214000000`, `1c194ab`) : 3 politiques `*_owner`, 9 colonnes mortes, table `project_submission` ; sauvegarde CSV dans `~/sauvegarde-lot9` (PC d'Arnaud). Gardés : `exam_kind`, `subject_versions`, `makeup_prepared`, `pedagogical_outline.pdf_path`, `import_ref`, heures CM/TD/TP. Reste : faire lire `kind` partout puis retirer `exam_kind` ; décider pour `import_ref` | ✅ |
 
 ## E17 — Correctifs UX/UI avant lancement (audit senior du 29/09) ✅
 
