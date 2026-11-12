@@ -311,6 +311,10 @@ export async function updateAssessment(
     .select("*")
     .eq("id", assessmentId)
     .maybeSingle();
+  // Une note bonus reste individuelle (contrainte assessment_makeup_bonus_individual_ck).
+  if (before?.is_bonus && parsed.data.isGroupGrade && !origin) {
+    return { error: "Une note bonus est individuelle : retire d’abord le bonus." };
+  }
   const hadReview = !!before && ("review_for_id" in before || "review_criterion_ids" in before);
   // Reprise d'un autre module : enregistrée une fois par Marie, elle n'est plus « à relire ».
   const reviewed = before && "needs_review" in before ? { needs_review: false } : {};
