@@ -188,8 +188,23 @@ export async function moveCourse(
   if (!ids.includes(courseId)) return { error: NOT_FOUND.course };
 
   const reordered = moveInOrder(ids, courseId, direction);
+  // Rang unique par module (lot 7) : chaque mise à jour est sa propre transaction, donc on passe
+  // d'abord par des rangs négatifs provisoires (déjà dans le nouvel ordre, sans collision
+  // possible), puis on pose les rangs définitifs 1..N. Un échec à mi-chemin garde l'ordre voulu.
+  const finalRanks = renumber(reordered);
+  const total = finalRanks.length;
+  const step1 = await Promise.all(
+    finalRanks.map(({ id, position }) =>
+      supabase
+        .from("course")
+        .update({ position: position - total - 1 })
+        .eq("id", id)
+        .eq("module_id", moduleId),
+    ),
+  );
+  if (step1.some((r) => r.error)) return { error: failure("déplacer la séance") };
   const results = await Promise.all(
-    renumber(reordered).map(({ id, position }) =>
+    finalRanks.map(({ id, position }) =>
       supabase.from("course").update({ position }).eq("id", id).eq("module_id", moduleId),
     ),
   );

@@ -1,5 +1,6 @@
 import { extractText } from "unpdf";
 
+import { dedupeExpectations } from "@/lib/modules/custom-expectations";
 import { parseExpectationsFromFiche, type ExpectationDraft } from "@/lib/modules/expectations";
 import {
   moduleFichePath,
@@ -62,8 +63,9 @@ export async function importFicheForModule(
   const drafts = await draftsFromPdf(new Uint8Array(await file.arrayBuffer()));
   if (!drafts.length) return "review";
 
+  // Unicité par module (lot 7) : une fiche qui répète un attendu ne le crée qu'une fois.
   const { error } = await supabase.from("module_expectation").insert(
-    drafts.map((d, position) => ({
+    dedupeExpectations(drafts).map((d, position) => ({
       module_id: moduleId,
       kind: d.kind,
       label: d.label,

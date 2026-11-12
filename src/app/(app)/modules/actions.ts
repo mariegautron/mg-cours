@@ -1,5 +1,6 @@
 "use server";
 
+import { nextPosition } from "@/lib/modules/reorder";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -64,13 +65,15 @@ async function insertScheduleCourses(
   moduleId: string,
   rows: ScheduleRow[],
   existingCount: number,
+  /** Premier rang libre (rang unique par module, lot 7) : après le plus grand rang existant. */
+  firstPosition: number = existingCount + 1,
 ) {
   const plan = planSessions(rows, existingCount);
   const { error } = await supabase.from("course").insert(
-    plan.sessions.map((s) => ({
+    plan.sessions.map((s, i) => ({
       module_id: moduleId,
       title: s.title,
-      position: s.number,
+      position: firstPosition + i,
       session_date: s.date,
       start_time: s.startTime,
       end_time: s.endTime,
@@ -147,12 +150,19 @@ export async function addScheduleToModule(
     .maybeSingle();
   if (!mod || mod.owner_id !== auth.user.id) return { error: NOT_FOUND.module };
 
-  const { count } = await supabase
+  const { data: existing } = await supabase
     .from("course")
-    .select("id", { count: "exact", head: true })
+    .select("position")
     .eq("module_id", moduleId);
+  const positions = (existing ?? []).map((c) => c.position);
 
-  const { plan, error } = await insertScheduleCourses(supabase, moduleId, rows, count ?? 0);
+  const { plan, error } = await insertScheduleCourses(
+    supabase,
+    moduleId,
+    rows,
+    positions.length,
+    nextPosition(positions),
+  );
   if (error) return { error: failure("créer les séances", { kept: true }) };
 
   if (confirmedDates) {

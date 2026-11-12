@@ -49,3 +49,28 @@ export function originSummary(items: readonly WithOrigin[]): string {
   if (custom.length) parts.push(`${custom.length} ajouté${custom.length > 1 ? "s" : ""} par toi`);
   return parts.join(", ");
 }
+
+/** Message de l'unicité `module_expectation (module_id, kind, lower(btrim(label)))` (lot 7). */
+export const EXPECTATION_EXISTS = "Cet attendu existe déjà.";
+
+/** Clé d'unicité d'un attendu dans son module : même type, même libellé (casse et espaces ignorés). */
+export function expectationKey(e: { kind: string; label: string }): string {
+  return `${e.kind}:${e.label.trim().toLowerCase()}`;
+}
+
+/** Garde le premier de chaque attendu en double (même clé), dans l'ordre. */
+export function dedupeExpectations<T extends { kind: string; label: string }>(
+  items: readonly T[],
+): T[] {
+  const seen = new Set<string>();
+  return items.filter((e) => {
+    const k = expectationKey(e);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+/** Erreur Postgres d'unicité (23505). */
+export const isUniqueViolation = (error: { code?: string } | null | undefined): boolean =>
+  error?.code === "23505";

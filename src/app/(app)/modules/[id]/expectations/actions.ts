@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 import { extractText } from "unpdf";
 import { z } from "zod";
 
-import { cleanCustomLabel, nextExpectationPosition } from "@/lib/modules/custom-expectations";
+import {
+  cleanCustomLabel,
+  EXPECTATION_EXISTS,
+  expectationKey,
+  isUniqueViolation,
+  nextExpectationPosition,
+} from "@/lib/modules/custom-expectations";
 import {
   draftsFromText,
   planExpectationSplits,
@@ -101,6 +107,10 @@ export async function saveExpectations(
     return { error: "Les attendus sont illisibles." };
   }
 
+  // Unicité par module (lot 7) : même type et même libellé, casse et espaces ignorés.
+  const keys = rows.map(expectationKey);
+  if (new Set(keys).size !== keys.length) return { error: EXPECTATION_EXISTS };
+
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { error: SESSION_EXPIRED };
@@ -143,6 +153,7 @@ export async function saveExpectations(
       r.id && existingIds.has(r.id)
         ? await supabase.from("module_expectation").update(values).eq("id", r.id)
         : await supabase.from("module_expectation").insert({ module_id: moduleId, ...values });
+    if (isUniqueViolation(error)) return { error: EXPECTATION_EXISTS };
     if (error) return { error: failure("enregistrer", { kept: true }) };
   }
 
@@ -191,11 +202,13 @@ export async function splitLongExpectations(moduleId: string): Promise<SplitLong
         .from("module_expectation")
         .update({ label: plan.parts[0], position: position++ })
         .eq("id", row.id);
+      if (isUniqueViolation(error)) return { ok: false, error: EXPECTATION_EXISTS };
       if (error) return { ok: false, error: failure("découper", { kept: true }) };
       for (const label of plan.parts.slice(1)) {
         const { error: insertError } = await supabase
           .from("module_expectation")
           .insert({ module_id: moduleId, kind: "objective", label, position: position++ });
+        if (isUniqueViolation(insertError)) return { ok: false, error: EXPECTATION_EXISTS };
         if (insertError) return { ok: false, error: failure("découper", { kept: true }) };
       }
     } else {
@@ -248,6 +261,7 @@ export async function addCustomExpectation(
     origin: "custom",
     position: nextExpectationPosition((positions ?? []).map((p) => p.position)),
   });
+  if (isUniqueViolation(error)) return { error: EXPECTATION_EXISTS };
   if (error) return { error: failure("ajouter l’attendu", { kept: true }) };
   revalidatePath(`/modules/${moduleId}`);
   revalidatePath(`/modules/${moduleId}/expectations`);
@@ -272,6 +286,7 @@ export async function updateCustomExpectation(
     .eq("module_id", moduleId)
     .eq("origin", "custom")
     .select("id");
+  if (isUniqueViolation(error)) return { error: EXPECTATION_EXISTS };
   if (error) return { error: failure("modifier l’attendu", { kept: true }) };
   if (!data?.length) return { error: "Cet attendu n’existe plus." };
   revalidatePath(`/modules/${moduleId}`);
