@@ -1,4 +1,5 @@
 import { isSessionReady, isSubjectToBuild } from "@/lib/prep-status";
+import { kindOption, type AssessmentKind } from "@/lib/assessments/kind";
 import { appliedCoefficient } from "@/lib/ynov/notation";
 import { isOralAssessment } from "@/lib/assessments/oral";
 import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
@@ -100,6 +101,9 @@ export default async function ModuleAssessmentsPage({
     getResolvedRulesForModule(id),
   ]);
   // Coefficient appliqué : imposé par l'école s'il existe, sinon la règle groupe / individuel.
+  // Libellé du type unique (lot 5) ; l'ancien texte seulement si `kind` est vide.
+  const typeLabelOf = (a: { kind: AssessmentKind | null; type: string | null }) =>
+    a.kind ? kindOption(a.kind).label : a.type;
   const coef = (a: { is_group_grade: boolean; coefficient_override: number | null }) =>
     appliedCoefficient(a.is_group_grade, a.coefficient_override, resolvedRules.rules);
 
@@ -374,7 +378,7 @@ export default async function ModuleAssessmentsPage({
                               ? `pour ${titleOf.get(a.review_for_id)}`
                               : "pas encore rattaché"
                           } · `
-                        : `${a.type ? `${a.type} · ` : ""}coefficient ${coef(a)} · `}
+                        : `${typeLabelOf(a) ? `${typeLabelOf(a)} · ` : ""}coefficient ${coef(a)} · `}
                       {a.groups.map((g) => g.name).join(", ") || "—"}
                       {review ? "" : ` · sur ${a.maxScore}`}
                       {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}

@@ -1,5 +1,5 @@
 import { appliedCoefficient } from "@/lib/ynov/notation";
-import { assessmentKindOf, kindBlocks } from "@/lib/assessments/kind";
+import { assessmentKindOf, kindBlocks, kindOption } from "@/lib/assessments/kind";
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
@@ -183,6 +183,10 @@ export default async function AssessmentPage({
       />
     );
   }
+  // Type d'évaluation unique (lot 5) : seuls les blocs utiles à ce type sont affichés (une Note de
+  // l'école : la saisie des notes, le coefficient imposé et l'essentiel).
+  const kindNow = assessmentKindOf(assessment);
+  const blocks = kindBlocks(kindNow);
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
   const observations = toObservationLines(moduleObservations);
@@ -193,7 +197,11 @@ export default async function AssessmentPage({
     overrideRows,
     observations,
     themes,
-    submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
+    // Bande « Rendu » de la copie : seulement quand un rendu est attendu (type de l'évaluation).
+    submissions:
+      submissionData.available && blocks.submissions
+        ? groupByOwner(submissionData.items)
+        : undefined,
   });
   // Copie excusée : « Voir son rattrapage » quand il est déjà préparé.
   const makeupLinks = await makeupHrefs(id, assessmentId);
@@ -253,7 +261,7 @@ export default async function AssessmentPage({
         // fichiers et liens déposés quand ils sont lisibles.
         received: quizSubmitted
           ? quizSubmitted.has(item.id)
-          : !assessment.is_group_grade && submissionData.available
+          : !assessment.is_group_grade && submissionData.available && blocks.submissions
             ? (item.submissions?.length ?? 0) > 0
             : undefined,
         attendance: item.grade?.attendance ?? null,
@@ -366,10 +374,6 @@ export default async function AssessmentPage({
     qcm: dayJExtras.qcm.get(assessmentId),
   });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
-  // Type d'évaluation unique (lot 5) : seuls les blocs utiles à ce type sont affichés (une Note de
-  // l'école : la saisie des notes, le coefficient imposé et l'essentiel).
-  const kindNow = assessmentKindOf(assessment);
-  const blocks = kindBlocks(kindNow);
   // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
   const evaluatedSection = (
     <section aria-labelledby="at" className={card}>
@@ -440,7 +444,8 @@ export default async function AssessmentPage({
           <p className="text-muted-foreground mt-1">
             {[
               assessment.project_role ? "Projet fil rouge" : null,
-              assessment.type,
+              // Libellé du type unique ; l'ancien texte seulement si `kind` est vide.
+              assessment.kind ? kindOption(kindNow).label : assessment.type,
               isUngradedReview(assessment)
                 ? "point d’étape · sans note"
                 : `${assessment.is_group_grade ? "groupe" : "individuelle"} ×${ruleCoefficient}`,

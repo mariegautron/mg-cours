@@ -1,4 +1,5 @@
 import { moduleStudentAverages } from "@/lib/assessments/queries";
+import { assessmentKindOf, kindBlocks } from "@/lib/assessments/kind";
 import { bonusLine, parseScale } from "@/lib/assessments/score-scale";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -99,7 +100,11 @@ export default async function CorrectPage({
     overrideRows,
     observations: toObservationLines(moduleObservations),
     themes,
-    submissions: submissionData.available ? groupByOwner(submissionData.items) : undefined,
+    // Bande « Rendu » seulement quand un rendu est attendu (type de l'évaluation, lot 5).
+    submissions:
+      submissionData.available && kindBlocks(assessmentKindOf(assessment)).submissions
+        ? groupByOwner(submissionData.items)
+        : undefined,
   });
   // Copie excusée : « Voir son rattrapage » quand il est déjà préparé.
   const makeupLinks = await makeupHrefs(id, assessmentId);

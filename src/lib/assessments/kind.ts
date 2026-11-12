@@ -159,8 +159,12 @@ export function kindBlocks(kind: AssessmentKind) {
     subject: !school,
     /** « Où rendre » (rien à rendre pour un oral, un QCM ou une note de l'école). */
     deposit: !school && kind !== "oral" && kind !== "quiz" && kind !== "open_questions",
-    /** Rendus déposés (dépôts des étudiant·es, ajouts à la main). */
-    submissions: !school && kind !== "quiz",
+    /**
+     * Un rendu est attendu : section « Rendus déposés », bande « Rendu » de la copie, « Non rendus ».
+     * Pas pour un oral, un écrit en classe, un QCM (sa « copie rendue » est suivie à part) ni une
+     * note de l'école.
+     */
+    submissions: kind === "files" || kind === "progress_review" || kind === "other",
     /** Attendus évalués. */
     expectations: !school,
     /** QCM en ligne (« Autre » garde tout). */

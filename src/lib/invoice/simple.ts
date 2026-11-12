@@ -56,17 +56,21 @@ export function stateAfterToggle(
   return isSent(state) ? "invoice_ready" : state;
 }
 
-/** Dates enregistrées après un changement : décocher efface la date (et celle de paiement avec l'envoi). */
+/**
+ * Dates enregistrées après un changement. Décocher ne les efface plus (retest du 12/11 : décocher
+ * puis recocher remplaçait la vraie date par celle du jour) : une date ne compte que si sa case
+ * est cochée, et le champ « Date » la repropose au moment de recocher. Cocher enregistre la date
+ * choisie (par défaut, la date déjà connue) ; « Payée » garde la date d'envoi connue.
+ */
 export function datesAfterToggle(
   dates: { sentOn: string | null; paidOn: string | null },
   box: InvoiceBox,
   checked: boolean,
   date: string,
 ): { sentOn: string | null; paidOn: string | null } {
-  if (box === "sent") {
-    return checked ? { ...dates, sentOn: date } : { sentOn: null, paidOn: null };
-  }
-  return checked ? { sentOn: dates.sentOn ?? date, paidOn: date } : { ...dates, paidOn: null };
+  if (!checked) return dates;
+  if (box === "sent") return { ...dates, sentOn: date };
+  return { sentOn: dates.sentOn ?? date, paidOn: date };
 }
 
 /** Date AAAA-MM-JJ valide, sinon `fallback` (date du jour par défaut). */

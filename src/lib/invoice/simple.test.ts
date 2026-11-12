@@ -57,18 +57,18 @@ describe("datesAfterToggle", () => {
       paidOn: "2026-06-28",
     });
   });
-  it("décocher efface la date ; décocher envoyée efface aussi celle du paiement", () => {
+  it("décocher garde les dates (elles ne comptent que case cochée)", () => {
     expect(
       datesAfterToggle({ sentOn: "2026-06-03", paidOn: "2026-06-28" }, "paid", false, "x"),
     ).toEqual({
       sentOn: "2026-06-03",
-      paidOn: null,
+      paidOn: "2026-06-28",
     });
     expect(
       datesAfterToggle({ sentOn: "2026-06-03", paidOn: "2026-06-28" }, "sent", false, "x"),
     ).toEqual({
-      sentOn: null,
-      paidOn: null,
+      sentOn: "2026-06-03",
+      paidOn: "2026-06-28",
     });
   });
 });

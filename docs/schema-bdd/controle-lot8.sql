@@ -27,7 +27,7 @@ from public.module m
 left join public.invoice_tracking it on it.module_id = m.id
 order by m.year, m.name;
 
-\echo '== 5. Incohérences à regarder : date de paiement sans état « payée », ou l''inverse'
+\echo '== 5. Dates gardées alors que la case est décochée (normal depuis le 12/11 : décocher garde la date)'
 select m.name, m.year, m.iceberg_state, it.sent_on, it.paid_on
 from public.module m
 left join public.invoice_tracking it on it.module_id = m.id
