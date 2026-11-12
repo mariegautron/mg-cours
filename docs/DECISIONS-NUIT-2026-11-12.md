@@ -164,3 +164,20 @@ Lot 1, ce qui est fait à ce stade :
   appliqué au retour d'expérience avant de dupliquer un module.
 - **Pas fait dans ce lot** : menu « Plus » au-delà de 3 actions secondaires partout (fait sur la
   séance), retour unique « ← page parente » partout (fait sur l'évaluation, repris au lot 4/6).
+
+## Lot 2 : signaux justes
+
+- **9 et 10** (cadre « Complet » avec « ! À rendre », « Où rendre » alors que le dépôt dans l'appli
+  est réglé, couverture des attendus différente entre écrans et PDF) : déjà corrigés par des
+  sessions précédentes ; j'ai vérifié que le cadre combine bien ses contrôles, que « Où rendre »
+  est satisfait par le dépôt dans l'appli et que « Avant de générer » et le PDF lisent la même
+  source (`getExpectationCoverageView`). Rien changé.
+- **11. Prochaine étape** : l'étape « Fiche de l'école et attendus » est faite dès qu'il y a des
+  attendus, même sans PDF de fiche déposé (test mis à jour, non lancé). Le bouton « Prochaine
+  étape » ne s'affiche plus en haut des sous-pages du module : seulement sur « Où j'en suis » et
+  Aujourd'hui.
+- **12. Prêt pour le jour J ?** : statut avec le composant `Status` (« Prête » ou « 3 à
+  compléter »), manques en premier. Un seul « Prête · Remettre À construire » sur la page (celui de
+  l'encadré « Avant le jour J »).
+- **Tablette (lot 4, point 21, fait au passage)** : le menu du module ne défile plus à
+  l'horizontale ; 4 entrées visibles, les autres dans « Plus ».

@@ -78,8 +78,8 @@ describe("moduleSteps — fiche seule", () => {
     expect(r.current?.action.label).toBe("Rapprocher mes ressources");
     expect(r.badge).toBe("Prochaine étape : rapprocher les ressources des attendus");
   });
-  it("attendus saisis sans fiche déposée : pas encore fait", () => {
-    expect(moduleSteps({ ...empty, expectationsCount: 2 }).steps[0].state).toBe("in_progress");
+  it("attendus saisis sans fiche déposée : l'étape est faite (lot 2, point 11)", () => {
+    expect(moduleSteps({ ...empty, expectationsCount: 2 }).steps[0].state).toBe("done");
   });
   it("un seul attendu : singulier", () => {
     expect(keyed({ ...empty, hasFiche: true, expectationsCount: 1 }, "fiche").summary).toBe(

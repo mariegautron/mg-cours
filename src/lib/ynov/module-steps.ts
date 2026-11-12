@@ -114,7 +114,8 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
   const prepared = ctx.outlineSent;
   const delivered = false;
 
-  const ficheDone = prepared || (ctx.hasFiche && ctx.expectationsCount > 0);
+  // Des attendus enregistrés suffisent : la fiche PDF déposée n'est pas exigée (lot 2, point 11).
+  const ficheDone = prepared || ctx.expectationsCount > 0;
   const sessionsDone = prepared || courses.ready >= 1;
   const planningDone = prepared || (notes.required > 0 && ctx.plannedAssessments >= notes.required);
   const outlineDone = prepared || ctx.outlineGeneratedAt !== null;

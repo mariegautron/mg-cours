@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import { activeModuleNav, moduleNavItems, moduleSectionLabel } from "@/lib/modules/nav";
 import type { NextStepButton } from "@/lib/modules/journey";
 
 /**
- * Coque des sous-pages d'un module : fil d'Ariane, « Prochaine étape » et liens vers les six
- * zones du module. Absente sur la fiche, qui a déjà son en-tête et ses onglets.
+ * Coque des sous-pages d'un module : fil d'Ariane et liens vers les zones du module. Absente sur la fiche, qui a déjà son en-tête et ses onglets.
  */
 export function ModuleSubnav({
   moduleId,
@@ -27,8 +26,12 @@ export function ModuleSubnav({
   const label = moduleSectionLabel(pathname, moduleId);
   if (!label) return null;
   const active = activeModuleNav(pathname, moduleId);
-  // Sur « Où j'en suis », la liste des étapes porte déjà l'étape courante et son bouton (D13).
-  const onJourney = pathname.replace(/\/$/, "") === `/modules/${moduleId}`;
+  // `next` reste reçu (compatibilité) mais n'est plus affiché ici.
+  void next;
+  const items = moduleNavItems(moduleId);
+  // Tablette : 4 entrées visibles, les autres dans « Plus » (plus de défilement horizontal).
+  const shown = items.slice(0, 4);
+  const more = items.slice(4);
 
   return (
     <div className="mb-6 space-y-3">
@@ -67,33 +70,52 @@ export function ModuleSubnav({
             </li>
           </ol>
         </nav>
-        {onJourney ? null : next?.kind === "action" ? (
-          <Button asChild size="sm" variant="outline">
-            <Link href={next.href}>Prochaine étape : {next.label}</Link>
-          </Button>
-        ) : next ? (
-          <p className="text-sm font-medium">{next.label}</p>
-        ) : null}
+        {/* « Prochaine étape » : seulement sur « Où j'en suis » et Aujourd'hui (lot 2, point 11). */}
       </div>
 
       {/* Le menu latéral porte ces liens dès l'ordinateur ; la tablette (rail d'icônes) garde la barre. */}
       <nav
         aria-label="Sections du module (liens)"
-        className="-mx-1 overflow-x-auto px-1 max-md:hidden lg:hidden"
+        className="flex flex-wrap items-end gap-1 border-b max-md:hidden lg:hidden"
       >
-        <ul className="flex w-max min-w-full gap-1 border-b">
-          {moduleNavItems(moduleId).map((item) => (
+        <ul className="flex flex-wrap gap-1">
+          {shown.map((item) => (
             <li key={item.key}>
               <Link
                 href={item.href}
                 aria-current={item.key === active ? "page" : undefined}
-                className="text-muted-foreground hover:text-foreground aria-[current=page]:border-primary aria-[current=page]:text-foreground focus-visible:ring-ring -mb-px inline-flex min-h-11 items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset aria-[current=page]:font-semibold"
+                className="text-muted-foreground hover:text-foreground aria-[current=page]:border-primary aria-[current=page]:text-foreground -mb-px inline-flex min-h-11 items-center border-b-2 border-transparent px-3 text-sm font-medium whitespace-nowrap aria-[current=page]:font-semibold"
               >
                 {item.label}
               </Link>
             </li>
           ))}
         </ul>
+        {more.length > 0 ? (
+          <DisclosureMenu
+            label={
+              more.some((i) => i.key === active)
+                ? `Plus · ${more.find((i) => i.key === active)?.label}`
+                : "Plus"
+            }
+            className="mb-1 border-transparent"
+            panelClassName="right-0"
+          >
+            <ul className="space-y-1">
+              {more.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    href={item.href}
+                    aria-current={item.key === active ? "page" : undefined}
+                    className="hover:bg-muted aria-[current=page]:text-primary flex min-h-11 items-center rounded-lg px-3 text-sm"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </DisclosureMenu>
+        ) : null}
       </nav>
     </div>
   );
