@@ -18,6 +18,7 @@ import { parseCarryOver } from "@/lib/present/carry-over";
 import { keptForMeKeys, plannedSections } from "@/lib/present/plan";
 import { minutesInParis } from "@/lib/present/sync";
 import { studentFacing } from "@/lib/resources/kind";
+import { sessionHeading } from "@/lib/plural";
 
 export const metadata: Metadata = { title: "Clôturer la séance" };
 
@@ -124,7 +125,7 @@ export default async function CourseClosePage({
         {following ? (
           <>
             <p className="text-muted-foreground text-sm">
-              Séance {position + 2} · {following.title}
+              {sessionHeading(position + 2, following.title)}
             </p>
             <Button asChild variant="secondary" size="touch">
               <Link href={`/modules/${id}/courses/${following.id}/start`}>

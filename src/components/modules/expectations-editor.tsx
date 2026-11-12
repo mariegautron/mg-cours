@@ -265,8 +265,8 @@ export function ExpectationsEditor({
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Aucune fiche déposée. Dépose-la dans « Attendus de l’école » (onglet Administratif) ou
-            colle son texte ci-dessous.
+            Aucune fiche déposée. Dépose-la dans « Attendus de l’école » (onglet Documents) ou colle
+            son texte ci-dessous.
           </p>
         )}
         <div className="space-y-2">

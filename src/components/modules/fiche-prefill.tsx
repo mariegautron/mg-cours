@@ -114,7 +114,7 @@ export function FichePrefill({
     const saved = kept
       ? " La fiche sera conservée avec le module et ses attendus seront lus."
       : keepFile
-        ? " La fiche n’a pas pu être mise de côté : dépose-la ensuite dans l’onglet Administratif."
+        ? " La fiche n’a pas pu être mise de côté : dépose-la ensuite dans l’onglet Documents."
         : "";
     const forIntro = (["description", "objectives", "prerequisites"] as const)
       .filter((k) => result.data?.[k])
@@ -143,7 +143,7 @@ export function FichePrefill({
           sont trouvés.{" "}
           {keepFile
             ? "Le fichier est conservé avec le module (« Attendus de l’école ») et ses attendus sont lus à l’enregistrement."
-            : "Le fichier n’est pas conservé : dépose-le ensuite dans l’onglet Administratif."}
+            : "Le fichier n’est pas conservé : dépose-le ensuite dans l’onglet Documents."}
         </p>
       </div>
       {stored ? (

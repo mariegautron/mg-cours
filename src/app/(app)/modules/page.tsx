@@ -75,7 +75,11 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
     (r) => (!schoolId || r.m.school_id === schoolId) && (!year || schoolYearOf(r.m.year) === year),
   );
   const counts = filterCounts(scoped.map((r) => r.state));
-  const shown = scoped.filter((r) => inFilter(r.state, filter));
+  // Vue par défaut (sans filtre dans l'adresse) : les modules en cours ET à préparer, pour qu'un
+  // module tout juste créé soit visible tout de suite (lot 5, point 25).
+  const shown = scoped.filter(
+    (r) => inFilter(r.state, filter) || (!rawFilter && r.state === "to_prepare"),
+  );
 
   // « Prochaine étape » : le parcours du module (non rangé).
   const journeys = new Map(

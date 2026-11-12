@@ -210,3 +210,20 @@ Lot 1, ce qui est fait à ce stade :
 - **21. Tablette** : fait au lot 2 (menu du module avec « Plus »).
 - **Pas fait** : 19 (grilles repliées, éditeur en tableau critères × paliers) : refonte de l'éditeur
   trop risquée sans pouvoir la tester à l'écran.
+
+## Lot 5 : vocabulaire et finitions (partiel)
+
+- **22. Lexique** : « onglet Administratif » → « onglet Documents » ; « Phrases » →
+  « Phrases de commentaire » (page, menu de la bibliothèque, lien de la correction). « Nouvelle
+  phrase » était déjà le seul libellé (pas de « Nouveau commentaire »).
+- **23. Typographie** : heures « 15 h 12 » partout où l'appli affiche « Enregistré à… » (fonction
+  `frTime`, heure de Paris). **Pas fait** : passe globale des espaces insécables avant « : ; ? ! »
+  et des accords (trop de textes, risque de casser des chaînes testées).
+- **24. Titres de séance par défaut** : « Séance 1 » au lieu de « Séance 1 · Séance 1 »
+  (tableau de bord, clôture, séances vides) via `sessionHeading`.
+- **25. Liste des modules** : la vue par défaut montre aussi les modules « À préparer » : un module
+  tout juste créé est visible tout de suite.
+- **27. Espace étudiant·e au téléphone** : en-tête d'une ligne (« Mon espace · Module »), onglets
+  fixés en bas de l'écran.
+- **Pas fait** : 26 (compteur près de la limite dans chaque zone de texte : il faudrait rendre le
+  composant `Textarea` contrôlé partout) ; paliers des grilles en texte simple côté étudiant·e.

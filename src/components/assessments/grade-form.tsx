@@ -65,6 +65,7 @@ import {
 import { DEFAULT_MAX_SCORE, toTwenty } from "@/lib/ynov/notation";
 import { submissionSummary, type SubmissionLine } from "@/lib/projects/submission-items";
 import type { Tables } from "@/types/db";
+import { frTime } from "@/lib/fr-time";
 
 type Action = (state: GradeFormState, formData: FormData) => Promise<GradeFormState>;
 
@@ -327,7 +328,7 @@ export function GradeForm({
         setMemberBase(next);
       }
       setSaved(submitted);
-      setSavedAt(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
+      setSavedAt(frTime());
     }
   }
   const dirty = snapshot !== saved;

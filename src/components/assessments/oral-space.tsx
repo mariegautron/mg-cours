@@ -49,6 +49,7 @@ import {
 } from "@/lib/assessments/progress-review";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/use-confirm";
+import { frTime } from "@/lib/fr-time";
 
 export interface OralSpaceInit {
   letters: Record<string, string>;
@@ -268,7 +269,7 @@ export function OralSpace({
       const res = await writeOralNote(moduleId, assessmentId, subjectId, confirm);
       if (res.error) setWriteState({ error: res.error });
       else {
-        const at = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        const at = frTime();
         setWriteState({ written: true, at });
         setWritten({
           letters: { ...letters },
@@ -370,7 +371,7 @@ export function OralSpace({
               "Note écrite le "
             )}
             {new Date(noteAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })} à{" "}
-            {new Date(noteAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            {frTime(noteAt)}
             {" · "}
             <Link href={init.resultsHref} className="font-semibold underline underline-offset-2">
               Voir les résultats

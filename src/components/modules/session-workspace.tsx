@@ -31,6 +31,7 @@ import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/modules/schema";
 import { cn } from "@/lib/utils";
 import { LibrarySearch } from "@/components/resources/library-search";
 import { CourseParts, type CoursePartsInfo } from "@/components/modules/course-parts";
+import { frTime } from "@/lib/fr-time";
 
 export interface WorkspaceResource {
   id: string;
@@ -115,11 +116,7 @@ export function SessionWorkspace({
             : undefined,
         });
         setError(res.error);
-        setSaved(
-          res.error
-            ? ""
-            : `Enregistré à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
-        );
+        setSaved(res.error ? "" : `Enregistré à ${frTime()}`);
       });
     }, 700);
     return () => clearTimeout(timer);

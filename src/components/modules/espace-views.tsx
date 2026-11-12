@@ -85,12 +85,19 @@ export function EspaceLayout({
       </a>
       <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6 [@media(max-height:500px)]:py-2">
         <div className="lg:sticky lg:top-6">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Mon espace</p>
-          <p className="font-heading mt-1 text-lg leading-tight font-bold [@media(max-height:500px)]:mt-0 [@media(max-height:500px)]:text-base">
+          <p className="text-primary text-xs font-bold tracking-widest uppercase max-lg:hidden">
+            Mon espace
+          </p>
+          {/* Téléphone : en-tête d'une ligne ; les onglets sont fixés en bas de l'écran (lot 5, 27). */}
+          <p className="font-heading mt-1 text-lg leading-tight font-bold max-lg:mt-0 max-lg:truncate max-lg:text-base [@media(max-height:500px)]:mt-0 [@media(max-height:500px)]:text-base">
+            <span className="lg:hidden">Mon espace · </span>
             {frise.moduleName}
           </p>
-          <nav aria-label="Espace étudiant·e" className="mt-4 [@media(max-height:500px)]:mt-2">
-            <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
+          <nav
+            aria-label="Espace étudiant·e"
+            className="max-lg:bg-background mt-4 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:mt-0 max-lg:border-t max-lg:px-1 max-lg:pb-[env(safe-area-inset-bottom)]"
+          >
+            <ul className="flex flex-wrap gap-2 max-lg:flex-nowrap max-lg:justify-around max-lg:gap-0 lg:flex-col lg:gap-1">
               {items
                 .filter((i) => i.show)
                 .map((i) => (
@@ -98,7 +105,7 @@ export function EspaceLayout({
                     <Link
                       href={i.href}
                       aria-current={i.key === current ? "page" : undefined}
-                      className={`focus-visible:ring-ring flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${
+                      className={`focus-visible:ring-ring flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none max-lg:min-h-12 max-lg:px-2 max-lg:text-xs ${
                         i.key === current ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                       }`}
                     >
@@ -122,7 +129,7 @@ export function EspaceLayout({
         <main id="contenu" tabIndex={-1} className="p-4 outline-none lg:p-10">
           {children}
         </main>
-        <div className="text-muted-foreground space-y-1 border-t px-4 py-3 text-xs lg:px-10">
+        <div className="text-muted-foreground space-y-1 border-t px-4 py-3 text-xs max-lg:pb-24 lg:px-10">
           <ContactLine tone="tu" />
           <p>Ce lien est personnel : ne le partage pas.</p>
         </div>

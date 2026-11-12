@@ -313,7 +313,7 @@ export function CorrectionOverview({
               </Button>
               {phrasesHref ? (
                 <Button asChild variant="ghost" size="touch" className="mt-2 w-full">
-                  <Link href={phrasesHref}>Phrases</Link>
+                  <Link href={phrasesHref}>Phrases de commentaire</Link>
                 </Button>
               ) : null}
             </section>

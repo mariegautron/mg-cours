@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
 import type { Tables } from "@/types/db";
 import { keepFormValues } from "@/lib/use-kept-form";
+import { frTime } from "@/lib/fr-time";
 
 type Action = (state: ResourceFormState, formData: FormData) => Promise<ResourceFormState>;
 
@@ -136,9 +137,7 @@ export function ResourceForm({
     const timer = setTimeout(() => {
       try {
         localStorage.setItem(draftKey, JSON.stringify({ title, content }));
-        setDraftNote(
-          `Brouillon enregistré sur cet appareil à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`,
-        );
+        setDraftNote(`Brouillon enregistré sur cet appareil à ${frTime()}.`);
       } catch {
         setDraftNote("Enregistrement automatique indisponible : pense à enregistrer.");
       }

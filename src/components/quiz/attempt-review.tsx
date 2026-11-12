@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AUTOSAVE_DELAY_MS } from "@/lib/assessments/session";
+import { frTime } from "@/lib/fr-time";
 
 export interface ReviewQuestion {
   position: number;
@@ -86,7 +87,7 @@ export function AttemptReview({
       setState((s) => ({ ...s, ...res }));
       if (!res.error) {
         setSaved(sent);
-        setSavedAt(new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }));
+        setSavedAt(frTime());
       }
     });
   }

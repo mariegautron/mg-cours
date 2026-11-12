@@ -7,6 +7,7 @@ import { saveAssessmentExpectations } from "@/app/(app)/modules/[id]/assessments
 import { ActionError } from "@/components/action-error";
 import { Button } from "@/components/ui/button";
 import { useUnsavedChangesGuard } from "@/lib/use-unsaved-guard";
+import { frTime } from "@/lib/fr-time";
 import { evaluatedLabel } from "@/lib/assessments/evaluated-expectations";
 
 /**
@@ -51,11 +52,7 @@ export function AssessmentExpectations({
       if (r.error) setChosen(new Set(saved));
       if (!r.error) {
         setSaved(new Set(next));
-        setSavedAt(
-          new Date()
-            .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-            .replace(":", " h "),
-        );
+        setSavedAt(frTime());
       }
     });
   }

@@ -242,7 +242,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
         {[
           { label: "Questions", href: "/questions" },
           { label: "Grilles", href: "/assessments/grids" },
-          { label: "Phrases", href: "/assessments/comments" },
+          { label: "Phrases de commentaire", href: "/assessments/comments" },
         ].map((l) => (
           <Link
             key={l.href}

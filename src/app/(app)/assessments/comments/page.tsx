@@ -13,7 +13,7 @@ import { appPhrasesPreview, PARTS, PART_LABELS } from "@/lib/appreciations/draft
 import { listPhrases } from "@/lib/appreciations/queries";
 import { commentTags, listComments } from "@/lib/assessments/queries";
 
-export const metadata: Metadata = { title: "Phrases" };
+export const metadata: Metadata = { title: "Phrases de commentaire" };
 
 const CATEGORY_LABELS: Record<string, string> = {
   positive: "Positif",
@@ -72,7 +72,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
           </Link>
         ) : null}
         <div>
-          <h1 className="text-2xl font-semibold">Phrases</h1>
+          <h1 className="text-2xl font-semibold">Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Tes formulations d’appréciation, par partie : elles passent avant celles de l’appli et
             s’insèrent dans l’appréciation.
@@ -109,7 +109,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Phrases</h1>
+          <h1 className="text-2xl font-semibold">Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Phrases de correction, par critère : elles s’insèrent pendant la correction.
           </p>

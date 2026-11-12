@@ -10,6 +10,7 @@ import { ActionError } from "@/components/action-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { sessionHeading } from "@/lib/plural";
 
 /**
  * « Supprimer les séances vides sans date » : aperçu des séances concernées, puis suppression en
@@ -49,9 +50,7 @@ export function PruneEmptySessions({
         </p>
         <ul className="list-disc space-y-0.5 pl-5 text-sm">
           {sessions.map((s) => (
-            <li key={s.id}>
-              Séance {s.position} · {s.title}
-            </li>
+            <li key={s.id}>{sessionHeading(s.position, s.title)}</li>
           ))}
         </ul>
         <div className="space-y-1">

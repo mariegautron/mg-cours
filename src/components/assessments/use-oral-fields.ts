@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { saveOralField } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/oral/space-actions";
 import type { SaveFieldResult } from "@/lib/assessments/versioned-save-types";
+import { frTime } from "@/lib/fr-time";
 
 const AUTOSAVE_MS = 2000;
 const RETRY_MS = 5000;
@@ -69,9 +70,7 @@ export function useVersionedFields(save: FieldSaver, init: FieldsInit) {
           savedRef.current = { ...savedRef.current, [field]: sent };
           setSaved(savedRef.current);
           setFailed(false);
-          setSavedAt(
-            new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-          );
+          setSavedAt(frTime());
           const { [field]: _gone, ...rest } = conflictsRef.current;
           void _gone;
           conflictsRef.current = rest;

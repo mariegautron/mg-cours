@@ -52,6 +52,7 @@ import { listOutlineSentModuleIds } from "@/lib/outline/queries";
 import { inFilter, moduleListState } from "@/lib/modules/list-state";
 import { getProfile } from "@/lib/settings/queries";
 import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/trame";
+import { sessionHeading } from "@/lib/plural";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
@@ -719,7 +720,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                 </span>
               </p>
               <h2 id="next" className="font-heading text-2xl font-bold sm:text-3xl">
-                Séance {upcoming.position} · {upcoming.title}
+                {sessionHeading(upcoming.position, upcoming.title)}
               </h2>
               <p className="text-muted-foreground mt-1 mb-4">
                 {upcoming.module.name}
