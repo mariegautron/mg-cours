@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { plural } from "@/lib/plural";
 import { Pill } from "@/components/dashboard/pill";
 import { LinkExpectationCourse } from "@/components/modules/link-expectation-course";
 import { COVERAGE_STATE_LABELS } from "@/lib/modules/expectation-coverage";
@@ -22,7 +23,7 @@ export async function ExpectationCoverage({ moduleId }: { moduleId: string }) {
   return (
     <div className="space-y-3">
       <p role="status" className="text-sm font-medium">
-        {summary.total} attendus : {summary.byCourse} par un cours, {summary.byAssessment} par une
+        {plural(summary.total, "attendu")} : {summary.byCourse} par un cours, {summary.byAssessment} par une
         évaluation, {summary.byNone} par aucun.
       </p>
       {summary.byNone > 0 ? (

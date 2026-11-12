@@ -408,6 +408,7 @@ export function AssessmentForm({
               <p id="coefficient-hint" className="text-muted-foreground text-sm">
                 Il remplace la règle (×{ruleCoefficient}) pour cette note seulement.
               </p>
+              <FieldError id="coefficient" errors={fe.coefficient} />
             </div>
           ) : (
             <div className="space-y-2">

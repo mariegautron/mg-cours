@@ -198,6 +198,9 @@ export async function createAssessment(
 ): Promise<AssessmentFormState> {
   const parsed = readAssessmentForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
+  if (schoolCoefficientTooHigh(parsed.data)) {
+    return { fieldErrors: { coefficient: ["Le coefficient imposé est entre 0,1 et 20."] } };
+  }
 
   const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
@@ -272,6 +275,9 @@ export async function updateAssessment(
 ): Promise<AssessmentFormState> {
   const parsed = readAssessmentForm(formData);
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
+  if (schoolCoefficientTooHigh(parsed.data)) {
+    return { fieldErrors: { coefficient: ["Le coefficient imposé est entre 0,1 et 20."] } };
+  }
 
   const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
@@ -865,6 +871,11 @@ export async function deleteAssessmentFile(assessmentId: string, path: string) {
  * (`coefficient_override`). Toute autre évaluation suit la règle de l'école (groupe / individuel) :
  * rien n'est imposé. `assessment.coefficient` n'est plus écrit que pour la note de l'école.
  */
+/** Coefficient imposé hors de la limite de la base (`coefficient_override` <= 20). */
+function schoolCoefficientTooHigh(d: { type?: string; coefficient: number }) {
+  return d.type?.trim() === SCHOOL_GRADE_TYPE && d.coefficient > 20;
+}
+
 function coefficientColumns(d: { type?: string; coefficient: number }) {
   return d.type?.trim() === SCHOOL_GRADE_TYPE
     ? { coefficient: d.coefficient, coefficient_override: d.coefficient }

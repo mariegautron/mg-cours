@@ -6,13 +6,18 @@
 export type IndividualKind =
   "delivery" | "quiz" | "open_questions" | "in_class" | "oral" | "checkpoint" | "other";
 
-/** Les cinq types d'épreuve : liste fermée. */
+/**
+ * Les types d'épreuve : liste fermée. « Note de l'école » en dernier (rare) : même texte que
+ * `SCHOOL_GRADE_TYPE` (src/lib/assessments/module-notes.ts), qui fait apparaître le champ
+ * « Coefficient imposé par l'école » et enregistre `coefficient_override`.
+ */
 export const TYPE_PRESETS = [
   "Rendu de fichiers ou de liens",
   "Questions ouvertes tirées au sort",
   "QCM",
   "Oral (groupe ou individuel)",
   "Point d’étape",
+  "Note de l'école",
 ] as const;
 
 /** Type d'épreuve (`exam_kind`) déduit du type choisi : un seul choix pour Marie. */
