@@ -27,6 +27,18 @@ export function simpleInvoiceStatus(input: {
 export const isSent = (state: IcebergState) => isAtLeast(state, "invoice_sent");
 export const isPaid = (state: IcebergState) => isAtLeast(state, "paid");
 
+/**
+ * Où en est la facture d'un module : LA source unique de « envoyée » / « payée » (lot 8 du
+ * schéma), lue partout (fiche du module, Où j'en suis, Prochaine étape, Facturation, tableau de
+ * bord). C'est l'état du module, que les cases « Envoyée » / « Payée » font avancer ; les dates
+ * vivent à part (`invoice_tracking`) et l'ancienne table `invoice` (Factur-X, vide) ne décide plus.
+ */
+export function invoiceProgress(mod: { iceberg_state: IcebergState }): "paid" | "sent" | null {
+  if (isPaid(mod.iceberg_state)) return "paid";
+  if (isSent(mod.iceberg_state)) return "sent";
+  return null;
+}
+
 export type InvoiceBox = "sent" | "paid";
 
 /**

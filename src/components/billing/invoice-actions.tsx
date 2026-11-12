@@ -208,11 +208,11 @@ export function InvoiceActions({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        {status === "ready" ? (
+        {status === "draft" ? (
           <ConfirmDeleteButton
             itemName={`la facture ${number}`}
             title={`Supprimer la facture ${number} ?`}
-            description="La facture n’a pas été envoyée : elle sera supprimée et son numéro pourra être réattribué. Tu pourras la générer à nouveau."
+            description="Ce brouillon sera supprimé. Tu pourras générer la facture à nouveau."
             onConfirm={() => run("delete", deleteInvoice)}
           />
         ) : null}

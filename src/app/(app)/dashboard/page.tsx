@@ -1,4 +1,5 @@
 import { getAppreciationProgress } from "@/lib/appreciations/queries";
+import { invoiceProgress } from "@/lib/invoice/simple";
 import { getModuleJourney } from "@/lib/modules/journey-queries";
 import { moduleLabels, relabelModules } from "@/lib/dashboard/module-labels";
 import { seeOthers } from "@/lib/plural";
@@ -218,15 +219,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       // Facture : seulement pour un module terminé ; en cours, c'est une étape (« Facturer »).
       billing: billing
         .filter((b) => !activeIds.has(b.module.id))
-        .flatMap<TodoSources["billing"][number]>((b) =>
-          b.kind === "ready"
-            ? [{ module: b.module, kind: "ready" as const }]
-            : b.kind === "invoiced" && b.invoice.status === "ready"
-              ? [{ module: b.module, kind: "toSend" as const }]
-              : b.kind === "invoiced" && b.invoice.status === "sent"
-                ? [{ module: b.module, kind: "toCollect" as const }]
-                : [],
-        ),
+        // « Envoyée » / « Payée » : la même source que partout (invoiceProgress, lot 8).
+        .flatMap<TodoSources["billing"][number]>((b) => {
+          const progress = invoiceProgress(b.module);
+          if (progress === "paid") return [];
+          if (progress === "sent") return [{ module: b.module, kind: "toCollect" as const }];
+          if (b.kind === "ready") return [{ module: b.module, kind: "ready" as const }];
+          if (b.kind === "invoiced" && b.invoice.status === "ready")
+            return [{ module: b.module, kind: "toSend" as const }];
+          return [];
+        }),
     }),
     Number.POSITIVE_INFINITY,
   );

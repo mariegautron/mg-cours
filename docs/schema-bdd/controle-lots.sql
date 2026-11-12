@@ -14,3 +14,5 @@
 \ir controle-lot7.sql
 \echo '########## LOT 5 ##########'
 \ir controle-lot5.sql
+\echo '########## LOT 8 ##########'
+\ir controle-lot8.sql

@@ -191,12 +191,15 @@ export async function markExternalInvoicePaid(moduleId: string): Promise<Billing
   return { ok: true };
 }
 
-/** Supprime une facture non envoyée (une facture envoyée est définitive). */
+/**
+ * Supprime une facture encore brouillon. Une facture numérotée (prête, envoyée ou payée) est
+ * définitive : la numérotation ne doit pas avoir de trou (lot 8 ; la base refuse aussi).
+ */
 export async function deleteInvoice(moduleId: string): Promise<BillingActionState> {
   const invoice = await getInvoiceByModule(moduleId);
   if (!invoice) return { error: NOT_FOUND.invoice };
-  if (invoice.status !== "ready") {
-    return { error: "Une facture envoyée ne peut pas être supprimée." };
+  if (invoice.status !== "draft") {
+    return { error: "Une facture numérotée ne peut pas être supprimée." };
   }
   const supabase = await createClient();
   const { error } = await supabase.from("invoice").delete().eq("id", invoice.id);

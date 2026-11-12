@@ -75,7 +75,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
         </p>
       </div>
 
-      {(invoice?.status === "paid" || mod.iceberg_state === "paid") && mod.finished_at ? (
+      {isPaid(mod.iceberg_state) && mod.finished_at ? (
         // Fin du parcours iceberg : facture payée, module terminé (donc archivé).
         <Celebration>Facture payée : le module est terminé et archivé.</Celebration>
       ) : null}

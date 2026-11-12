@@ -259,6 +259,12 @@ export async function deleteModule(id: string, typedName: string): Promise<Delet
   }
 
   const { error } = await supabase.from("module").delete().eq("id", id);
+  // Garde-fou de la base (lot 8) : une facture numérotée ne disparaît jamais, même avec son module.
+  if (error?.message.includes("facture numérotée")) {
+    return {
+      error: "Ce module a une facture numérotée : il ne peut pas être supprimé. Termine-le.",
+    };
+  }
   if (error) return { error: failure("supprimer le module") };
 
   // La base est à jour : un échec de nettoyage du stockage ne doit pas défaire la suppression.

@@ -3,6 +3,7 @@
  * notes, documents administratifs, données de facturation) et non depuis un état iceberg saisi.
  * Fonctions pures.
  */
+import { invoiceProgress } from "@/lib/invoice/simple";
 import {
   invoiceBlockers,
   missingInvoiceData,
@@ -43,6 +44,12 @@ function actionFor(reason: string): string {
  * données de facturation à compléter, sinon génération de la facture.
  */
 export function nextStep(ctx: InvoiceContext, invoice: { status: InvoiceStatus } | null): NextStep {
+  // Source unique (lot 8) : les cases « Envoyée » / « Payée » du module priment sur la table invoice.
+  const progress = invoiceProgress(ctx.module);
+  if (progress === "paid") return { label: "Facture payée", done: true, reasons: [] };
+  if (progress === "sent") {
+    return { label: `${PREFIX}suivre le paiement de la facture`, done: false, reasons: [] };
+  }
   if (invoice) {
     if (invoice.status === "paid") return { label: "Facture payée", done: true, reasons: [] };
     if (invoice.status === "sent") {
