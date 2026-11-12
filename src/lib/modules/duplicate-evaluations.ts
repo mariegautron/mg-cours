@@ -25,7 +25,6 @@ export function planAssessmentCopy(
     module_id: ctx.moduleId,
     title: source.title,
     type: source.type,
-    coefficient: source.coefficient,
     // Coefficient imposé par l'école (vide en général) : recopié seulement s'il existe.
     ...(source.coefficient_override != null
       ? { coefficient_override: source.coefficient_override }

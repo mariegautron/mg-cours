@@ -57,7 +57,6 @@ const TABLES = [
   "appreciation",
   "appreciation_phrase",
   "submission_item",
-  "project_submission",
   "project_surprise",
   "project_theme",
   "project_theme_assignment",

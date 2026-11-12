@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/db";
 
 export interface SubmissionItemsData {
-  /** La table existe : sinon on retombe sur le lien unique par groupe (project_submission). */
+  /** La table `submission_item` existe (sinon : pas de rendus déposés). */
   available: boolean;
   items: Tables<"submission_item">[];
   /** Versions remplacées par un nouveau dépôt (visibles par Marie seulement). */

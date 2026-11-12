@@ -62,12 +62,12 @@ export function planMakeup(original: Tables<"assessment">): TablesInsert<"assess
 export function makeupInvariants(
   original: Pick<
     Tables<"assessment">,
-    "grading_grid_id" | "coefficient" | "max_score" | "auto_validated_criterion_ids"
+    "grading_grid_id" | "coefficient_override" | "max_score" | "auto_validated_criterion_ids"
   >,
 ) {
   return {
     grading_grid_id: original.grading_grid_id,
-    coefficient: original.coefficient,
+    coefficient_override: original.coefficient_override ?? null,
     max_score: original.max_score,
     auto_validated_criterion_ids: original.auto_validated_criterion_ids,
     is_group_grade: false,

@@ -15,7 +15,7 @@ const source = {
   module_id: "m1",
   title: "Jalon 1",
   type: "Projet",
-  coefficient: 2,
+  coefficient_override: 2,
   subject: "Consigne",
   objective: "Objectif",
   deliverable_md: "Rendu",
@@ -47,7 +47,7 @@ describe("planAssessmentCopy", () => {
     expect(row).toMatchObject({
       module_id: "m2",
       title: "Jalon 1",
-      coefficient: 2,
+      coefficient_override: 2,
       subject: "Consigne",
       grading_grid_id: "g1",
       auto_validated_criterion_ids: ["c1"],

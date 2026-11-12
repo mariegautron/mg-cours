@@ -98,7 +98,7 @@ export function AssessmentForm({
   // Seule une « Note de l'école » porte un coefficient imposé (coefficient_override) ; ailleurs,
   // c'est toujours la règle de l'école (groupe / individuel) qui s'applique.
   const [coefficientText, setCoefficientText] = useState(
-    String(assessment?.coefficient_override ?? assessment?.coefficient ?? 1),
+    String(assessment?.coefficient_override ?? 1),
   );
   const selectedCourseDate = courses.find((c) => c.id === courseId)?.session_date?.slice(0, 10);
   const dateMismatch = !!(selectedCourseDate && dateText && dateText !== selectedCourseDate);

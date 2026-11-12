@@ -314,7 +314,7 @@ export async function updateAssessment(
   const { data: origin } = makeupRow?.makeup_of_id
     ? await supabase
         .from("assessment")
-        .select("grading_grid_id, coefficient, max_score, auto_validated_criterion_ids")
+        .select("grading_grid_id, coefficient_override, max_score, auto_validated_criterion_ids")
         .eq("id", makeupRow.makeup_of_id)
         .maybeSingle()
     : { data: null };
@@ -878,7 +878,7 @@ export async function deleteAssessmentFile(assessmentId: string, path: string) {
 /**
  * Seule une « Note de l'école » garde un coefficient saisi : il est imposé par l'école
  * (`coefficient_override`). Toute autre évaluation suit la règle de l'école (groupe / individuel) :
- * rien n'est imposé. `assessment.coefficient` n'est plus écrit que pour la note de l'école.
+ * rien n'est imposé. `assessment.coefficient` n'est plus ni lu ni écrit (lot 9, préparation).
  */
 /** Coefficient imposé hors de la limite de la base (`coefficient_override` <= 20). */
 function schoolCoefficientTooHigh(d: { type?: string; kind?: string | null; coefficient: number }) {
@@ -907,7 +907,7 @@ function kindColumns(d: { kind?: string | null; isGroupGrade: boolean }) {
 
 function coefficientColumns(d: { type?: string; kind?: string | null; coefficient: number }) {
   return isSchoolGrade(d)
-    ? { coefficient: d.coefficient, coefficient_override: d.coefficient }
+    ? { coefficient_override: d.coefficient }
     : { coefficient_override: null };
 }
 
@@ -962,7 +962,6 @@ export async function createSchoolGrade(
       title: check.title,
       type: SCHOOL_GRADE_TYPE,
       kind: "school_grade",
-      coefficient: check.coefficient,
       coefficient_override: check.coefficient,
       is_group_grade: false,
       max_score: 20,

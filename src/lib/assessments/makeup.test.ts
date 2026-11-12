@@ -16,7 +16,7 @@ const original = {
   module_id: "m1",
   title: "Évaluation individuelle",
   type: "Individuelle",
-  coefficient: 3,
+  coefficient_override: 3,
   subject: "Corrige ce code.",
   objective: "Objectif",
   deliverable_md: null,
@@ -76,7 +76,7 @@ describe("planMakeup", () => {
       module_id: "m1",
       title: "Rattrapage — Évaluation individuelle",
       makeup_of_id: "a1",
-      coefficient: 3,
+      coefficient_override: 3,
       grading_grid_id: "g1",
       max_score: null,
       is_group_grade: false,
@@ -98,9 +98,9 @@ describe("planMakeup", () => {
 
 describe("makeupInvariants", () => {
   it("impose grille, coefficient, barème et note individuelle de l'original", () => {
-    expect(makeupInvariants({ ...original, coefficient: 3, max_score: 20 })).toEqual({
+    expect(makeupInvariants({ ...original, coefficient_override: 3, max_score: 20 })).toEqual({
       grading_grid_id: "g1",
-      coefficient: 3,
+      coefficient_override: 3,
       max_score: 20,
       auto_validated_criterion_ids: ["c1"],
       is_group_grade: false,

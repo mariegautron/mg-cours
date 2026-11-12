@@ -22,7 +22,6 @@ export function isEmptyUndatedSession(
   ctx: EmptySessionContext,
 ): boolean {
   const plan = ctx.plans.get(course.id);
-  const slides = Array.isArray(course.slides) ? course.slides.length : 0;
   return (
     course.session_date === null &&
     course.start_time === null &&
@@ -37,7 +36,6 @@ export function isEmptyUndatedSession(
     !filled(course.next_time) &&
     !filled(course.retro_note) &&
     !filled(course.slides_url) &&
-    slides === 0 &&
     !filled(plan?.deliverable) &&
     (plan?.resourceOrder.length ?? 0) === 0 &&
     !ctx.assessmentCourseIds.has(course.id) &&
