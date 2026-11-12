@@ -35,9 +35,7 @@ export default async function AddAssessmentPage({
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
             Évaluations
           </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            Ajouter une évaluation — {mod.name}
-          </h1>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Ajouter une évaluation</h1>
           <p className="text-muted-foreground mt-1">
             Quatre façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
             d’ensemble.

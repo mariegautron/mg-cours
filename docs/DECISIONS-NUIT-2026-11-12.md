@@ -195,3 +195,18 @@ Lot 1, ce qui est fait à ce stade :
   iframe et doit être vide aujourd'hui). Je ne l'ai pas changé : c'est un réglage de sécurité.
 - **Pas fait** : versions datées des résultats publiés et des appréciations reportées (il faudrait
   une table d'historique, donc une migration, interdite cette nuit).
+
+## Lot 4 : longueur des pages et 125 % (partiel)
+
+- **15. Menu latéral** : grande mascotte retirée (rebranding), menu sans pied fixe donc il défile
+  entièrement ; nom du module ouvert sur 2 lignes et en entier au survol.
+- **16. En-têtes compacts** : le nom du module est retiré des titres de 8 pages (Évaluations,
+  Appréciations, Facture, Rattrapages, Nouvelle séance, Nouvelle / Ajouter une évaluation, Aperçu
+  de l'espace) ; il reste dans le fil d'Ariane (ajouté pour « Aperçu de l'espace »). Titres à
+  22 px en densité compacte. **Pas fait** : phrase d'aide repliable sur toutes les pages.
+- **17** : fait au lot 0. **18. Modifier la séance** : objectifs, animation, évaluation, matériel
+  en haut ; la bibliothèque de ressources repliée en bas (« Ressources de la séance · 4 retenues »).
+- **20** : page Séance (lot 0) et Progression (lot 3) en moins de colonnes sous ~1 200 px utiles.
+- **21. Tablette** : fait au lot 2 (menu du module avec « Plus »).
+- **Pas fait** : 19 (grilles repliées, éditeur en tableau critères × paliers) : refonte de l'éditeur
+  trop risquée sans pouvoir la tester à l'écran.

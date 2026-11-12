@@ -156,12 +156,6 @@ export function CourseForm({
         />
       </div>
 
-      <ResourcePicker
-        resources={resources}
-        retainedIds={retainedIds}
-        initialSelected={course?.resources.map((r) => r.id) ?? []}
-      />
-
       <div className="space-y-2">
         <Label htmlFor="animationNotes">Modalités d’animation</Label>
         <Textarea
@@ -184,6 +178,24 @@ export function CourseForm({
         <Label htmlFor="material">Matériel nécessaire</Label>
         <Textarea id="material" name="material" rows={2} defaultValue={course?.material ?? ""} />
       </div>
+
+      {/* Champs exigés par l'école d'abord ; la bibliothèque de ressources, longue, est repliée
+          (ses cases restent dans le formulaire et sont enregistrées). */}
+      <details className="rounded-2xl border p-3">
+        <summary className="font-heading min-h-11 cursor-pointer py-2 font-bold">
+          Ressources de la séance
+          <span className="text-muted-foreground ml-2 font-sans text-sm font-normal">
+            {course?.resources.length ?? 0} retenue{(course?.resources.length ?? 0) > 1 ? "s" : ""}
+          </span>
+        </summary>
+        <div className="pt-2">
+          <ResourcePicker
+            resources={resources}
+            retainedIds={retainedIds}
+            initialSelected={course?.resources.map((r) => r.id) ?? []}
+          />
+        </div>
+      </details>
 
       {state.error ? <ActionError error={state.error} /> : null}
 

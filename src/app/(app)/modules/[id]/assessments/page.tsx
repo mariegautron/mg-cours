@@ -218,9 +218,7 @@ export default async function ModuleAssessmentsPage({
           <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
             Évaluations
           </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            Évaluations — {mod.name}
-          </h1>
+          <h1 className="font-heading text-3xl font-bold tracking-tight">Évaluations</h1>
           <p role="status" className="text-muted-foreground mt-1">
             {requirementLabel(mod.total_hours, progress)}. {plannedLabel(planned)}.{" "}
             {enteredLabel(progress)}. {plannedMessage(planned)} Le projet fil rouge porte le brief

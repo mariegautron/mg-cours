@@ -54,7 +54,7 @@ export default async function AppreciationsPage({
   return (
     <div className="max-w-6xl space-y-5">
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold">Appréciations — {mod.name}</h1>
+        <h1 className="text-3xl font-semibold">Appréciations</h1>
         <p className="text-muted-foreground">
           Une appréciation par étudiant·e, écrite par toi, à coller dans Hyperplanning. {written}{" "}
           écrite{written > 1 ? "s" : ""} sur {students.length}.

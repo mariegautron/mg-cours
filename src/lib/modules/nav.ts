@@ -53,6 +53,7 @@ const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
   feedback: { key: "feedback", label: "Avis des étudiant·es" },
   finish: { key: "journey", label: "Terminer le module" },
   edit: { key: null, label: "Modifier" },
+  apercu: { key: "space", label: "Aperçu de l’espace" },
 };
 
 function section(pathname: string, moduleId: string) {

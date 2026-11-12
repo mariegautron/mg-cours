@@ -79,7 +79,7 @@ export default async function MakeupsPage({
         </div>
       ) : null}
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold">Rattrapages — {mod.name}</h1>
+        <h1 className="text-3xl font-semibold">Rattrapages</h1>
         <p role="status" className="text-muted-foreground">
           {makeupSummary(groups)} Un rattrapage ne concerne que les évaluations individuelles : sa
           note remplace l’absence excusée dans les moyennes.

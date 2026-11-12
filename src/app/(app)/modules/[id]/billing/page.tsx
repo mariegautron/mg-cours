@@ -67,7 +67,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Facturation — {mod.name}</h1>
+        <h1 className="text-2xl font-semibold">Facturation</h1>
         <p className="text-muted-foreground">
           <Link href={`/modules/${id}`} className="underline underline-offset-2">
             Retour au module

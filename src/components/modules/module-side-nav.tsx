@@ -40,7 +40,11 @@ export function ModuleSideNav({
       }
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="text-primary min-w-0 truncate px-2 py-1 text-[0.8rem] font-bold">
+        {/* Nom complet sur 2 lignes (et au survol), plus de nom tronqué (lot 4, point 15). */}
+        <span
+          title={open.name}
+          className="text-primary line-clamp-2 min-w-0 px-2 py-1 text-[0.8rem] font-bold break-words"
+        >
           {open.name}
         </span>
         <button

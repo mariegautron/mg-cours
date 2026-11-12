@@ -18,7 +18,7 @@ export default async function NewCoursePage({ params }: PageProps<"/modules/[id]
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nouvelle séance — {mod.name}</h1>
+      <h1 className="text-2xl font-semibold">Nouvelle séance</h1>
       <CourseForm
         action={createCourse.bind(null, id)}
         moduleId={id}
