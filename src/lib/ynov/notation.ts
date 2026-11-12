@@ -52,6 +52,21 @@ export function coefficientFor(isGroupGrade: boolean, rules: GradingRules = YNOV
   return isGroupGrade ? rules.groupCoefficient : rules.individualCoefficient;
 }
 
+/**
+ * Coefficient réellement appliqué à une évaluation : celui imposé par l'école
+ * (`assessment.coefficient_override`, « Note de l'école ») s'il existe, sinon celui de la règle
+ * (groupe / individuel). `assessment.coefficient` n'est plus jamais lu pour calculer ou afficher.
+ */
+export function appliedCoefficient(
+  isGroupGrade: boolean,
+  override: number | null | undefined,
+  rules: GradingRules = YNOV_GRADING,
+): number {
+  return typeof override === "number" && Number.isFinite(override) && override > 0
+    ? override
+    : coefficientFor(isGroupGrade, rules);
+}
+
 /** Barème YNOV / Hyperplanning : toutes les notes sont remontées sur 20. */
 export const DEFAULT_MAX_SCORE = 20;
 
@@ -167,6 +182,8 @@ export interface GradeInput {
   kind: "group" | "individual";
   /** Barème de la note (20 par défaut). */
   max?: number;
+  /** Coefficient imposé par l'école ; sinon celui de la règle selon `kind`. */
+  coefficient?: number;
 }
 
 export interface WeightedResult {
@@ -191,7 +208,7 @@ export function weightedAverage(
   let weight = 0;
 
   for (const g of grades) {
-    const coef = coefficientFor(g.kind === "group", rules);
+    const coef = appliedCoefficient(g.kind === "group", g.coefficient, rules);
     points += toTwenty(g.value, g.max) * coef;
     weight += coef;
   }

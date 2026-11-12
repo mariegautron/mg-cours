@@ -15,7 +15,7 @@ import {
   effectiveMaxScore,
   noteProgress,
   averageWithBonus,
-  coefficientFor,
+  appliedCoefficient,
   weightedAverage,
   type GradeInput,
   type NoteProgress,
@@ -391,7 +391,7 @@ export interface AverageLine {
   value: number;
   max: number;
   kind: "group" | "individual";
-  /** Coefficient YNOV (groupe ×1, individuel ×3) ; 0 pour une note bonus. */
+  /** Coefficient appliqué (imposé par l'école, sinon règle groupe / individuel) ; 0 pour une note bonus. */
   coefficient: number;
   isBonus: boolean;
 }
@@ -479,6 +479,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     value: number,
     max: number,
     kind: "group" | "individual",
+    coefficient: number,
   ) => {
     const list = linesPerStudent.get(studentId) ?? [];
     list.push({
@@ -487,7 +488,7 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
       value,
       max,
       kind,
-      coefficient: a.is_bonus ? 0 : coefficientFor(kind === "group", grading),
+      coefficient: a.is_bonus ? 0 : coefficient,
       isBonus: a.is_bonus,
     });
     linesPerStudent.set(studentId, list);
@@ -501,6 +502,11 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
     const rows = gradesByAssessment.get(assessment.id) ?? [];
     const kind = assessment.is_group_grade ? "group" : "individual";
     const max = assessment.maxScore;
+    const coefficient = appliedCoefficient(
+      assessment.is_group_grade,
+      assessment.coefficient_override,
+      grading,
+    );
     for (const row of rows) {
       // Une copie incomplète n'entre jamais dans une moyenne ; on dit pourquoi elle manque.
       const isRewrite = rewrite.has(`${assessment.id}:${row.student_group_id ?? row.student_id}`);
@@ -543,16 +549,16 @@ export async function moduleStudentAverages(moduleId: string): Promise<StudentAv
             absenceRule,
           );
           if (value !== null) {
-            perStudent.get(s.id)?.push({ value, kind, max });
-            addLine(s.id, assessment, value, max, kind);
+            perStudent.get(s.id)?.push({ value, kind, max, coefficient });
+            addLine(s.id, assessment, value, max, kind, coefficient);
           }
         }
       } else if (row.student_id) {
         // Note bonus : mise de côté, elle ne fait que remonter la moyenne (« jamais pénalisante »).
         (assessment.is_bonus ? bonusPerStudent : perStudent)
           .get(row.student_id)
-          ?.push({ value: row.value, kind, max });
-        addLine(row.student_id, assessment, row.value, max, kind);
+          ?.push({ value: row.value, kind, max, coefficient });
+        addLine(row.student_id, assessment, row.value, max, kind, coefficient);
       }
     }
   }

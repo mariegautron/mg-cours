@@ -3,6 +3,8 @@ import { zipSync, strToU8 } from "fflate";
 import { README, toCsv } from "@/lib/export/csv";
 import { deliverExport } from "@/lib/pdf/export-delivery";
 import { createClient } from "@/lib/supabase/server";
+import { readGradingRules } from "@/lib/settings/school-rules";
+import { appliedCoefficient } from "@/lib/ynov/notation";
 import type { Database } from "@/types/database";
 
 export const runtime = "nodejs";
@@ -120,6 +122,20 @@ export async function GET() {
     return s ? `${str(s.first_name)} ${str(s.last_name)}` : "";
   };
   const moduleName = (id: unknown) => str(modules.get(str(id))?.name);
+  // Coefficient appliqué (imposé par l'école, sinon règle de l'école du module) : jamais
+  // `assessment.coefficient`, qui n'est plus tenu à jour.
+  const settingsBySchool = new Map(
+    (data["school_setting"] ?? []).map((r) => [str(r.school_id), r]),
+  );
+  const appliedCoef = (a: Row | undefined) => {
+    if (!a) return null;
+    const schoolId = str(modules.get(str(a.module_id))?.school_id);
+    const rules = readGradingRules(
+      (settingsBySchool.get(schoolId) ?? null) as Parameters<typeof readGradingRules>[0],
+    );
+    const override = a.coefficient_override == null ? null : Number(a.coefficient_override);
+    return appliedCoefficient(a.is_group_grade === true, override, rules);
+  };
   const yearOf = (id: unknown) => {
     const y = Number(modules.get(str(id))?.year);
     return Number.isFinite(y) && y > 0 ? `${y}-${y + 1}` : "";
@@ -211,7 +227,7 @@ export async function GET() {
         yearOf(a?.module_id),
         str(a?.title),
         str(groups.get(str(g.student_group_id))?.name),
-        num(a?.coefficient),
+        num(appliedCoef(a)),
         num(g.value),
         num(a?.max_score) ?? 20,
         str(g.strengths),

@@ -1,3 +1,4 @@
+import { appliedCoefficient } from "@/lib/ynov/notation";
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
@@ -142,10 +143,12 @@ export default async function AssessmentPage({
     getSchoolRulesForModule(id),
   ]);
   if (!assessment || assessment.module_id !== id) notFound();
-  // Coefficient réellement utilisé par la moyenne : celui de la règle de l'école du module.
-  const ruleCoefficient = assessment.is_group_grade
-    ? grading.groupCoefficient
-    : grading.individualCoefficient;
+  // Coefficient réellement utilisé par la moyenne : imposé par l'école, sinon la règle du module.
+  const ruleCoefficient = appliedCoefficient(
+    assessment.is_group_grade,
+    assessment.coefficient_override,
+    grading,
+  );
 
   const memberNames = new Map(
     assessment.groups.flatMap((g) =>

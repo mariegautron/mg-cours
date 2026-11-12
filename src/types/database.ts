@@ -212,6 +212,7 @@ export type Database = {
           review_for_id: string | null
           auto_validated_criterion_ids: string[]
           coefficient: number
+          coefficient_override: number | null
           course_id: string | null
           exam_kind: string | null
           makeup_prepared: boolean
@@ -254,6 +255,7 @@ export type Database = {
           review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
           coefficient?: number
+          coefficient_override?: number | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean
@@ -296,6 +298,7 @@ export type Database = {
           review_for_id?: string | null
           auto_validated_criterion_ids?: string[]
           coefficient?: number
+          coefficient_override?: number | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean

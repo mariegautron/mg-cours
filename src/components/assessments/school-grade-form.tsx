@@ -31,7 +31,7 @@ export function SchoolGradeForm({ moduleId }: { moduleId: string }) {
         />
       </div>
       <div className="space-y-1">
-        <Label htmlFor="school-coef">Coefficient</Label>
+        <Label htmlFor="school-coef">Coefficient imposé par l’école</Label>
         <Input
           id="school-coef"
           name="coefficient"

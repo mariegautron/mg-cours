@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
 import { kindOf } from "@/lib/assessments/individual";
+import { SCHOOL_GRADE_TYPE } from "@/lib/assessments/module-notes";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import type { Tables } from "@/types/db";
 import {
@@ -85,13 +86,11 @@ export function AssessmentForm({
   const coefficientFor = (isGroup: boolean) =>
     isGroup ? coefficients.group : coefficients.individual;
   const ruleCoefficient = coefficientFor(groupGrade);
+  // Seule une « Note de l'école » porte un coefficient imposé (coefficient_override) ; ailleurs,
+  // c'est toujours la règle de l'école (groupe / individuel) qui s'applique.
   const [coefficientText, setCoefficientText] = useState(
-    String(assessment?.coefficient ?? coefficientFor(assessment?.is_group_grade ?? false)),
+    String(assessment?.coefficient_override ?? assessment?.coefficient ?? 1),
   );
-  const coefficientContradicts =
-    Number.isFinite(Number(coefficientText)) &&
-    Number(coefficientText) !== ruleCoefficient &&
-    coefficientText.trim() !== "";
   const selectedCourseDate = courses.find((c) => c.id === courseId)?.session_date?.slice(0, 10);
   const dateMismatch = !!(selectedCourseDate && dateText && dateText !== selectedCourseDate);
   const formatFr = (d: string) => new Date(d).toLocaleDateString("fr-FR");
@@ -142,10 +141,7 @@ export function AssessmentForm({
                 type="radio"
                 name="isGroupGradeChoice"
                 checked={groupGrade}
-                onChange={() => {
-                  setGroupGrade(true);
-                  setCoefficientText(String(coefficientFor(true)));
-                }}
+                onChange={() => setGroupGrade(true)}
               />
               {isReview
                 ? "De groupe (un retour par groupe coché)"
@@ -156,10 +152,7 @@ export function AssessmentForm({
                 type="radio"
                 name="isGroupGradeChoice"
                 checked={!groupGrade}
-                onChange={() => {
-                  setGroupGrade(false);
-                  setCoefficientText(String(coefficientFor(false)));
-                }}
+                onChange={() => setGroupGrade(false)}
               />
               {isReview ? "Individuel" : `Note individuelle (×${coefficientFor(false)})`}
             </label>
@@ -391,28 +384,33 @@ export function AssessmentForm({
               </p>
             </div>
           ) : null}
-          <div className={isReview ? "hidden" : "space-y-2"}>
-            <Label htmlFor="coefficient">Coefficient</Label>
-            <Input
-              id="coefficient"
-              name="coefficient"
-              type="number"
-              step="0.1"
-              value={coefficientText}
-              onChange={(e) => setCoefficientText(e.target.value)}
-              aria-describedby="coefficient-hint"
-            />
-            <p id="coefficient-hint" className="text-muted-foreground text-sm">
-              Règle appliquée : {groupGrade ? "note de groupe" : "note individuelle"} ×
-              {ruleCoefficient}.
-            </p>
-            {coefficientContradicts ? (
-              <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                Attention : ce coefficient ne suit pas la règle (×{ruleCoefficient}). Tu peux le
-                garder si c’est voulu.
+          {isReview ? null : typeText.trim() === SCHOOL_GRADE_TYPE ? (
+            <div className="space-y-2">
+              <Label htmlFor="coefficient">Coefficient imposé par l’école</Label>
+              <Input
+                id="coefficient"
+                name="coefficient"
+                type="number"
+                step="0.1"
+                min="0.1"
+                required
+                value={coefficientText}
+                onChange={(e) => setCoefficientText(e.target.value)}
+                aria-describedby="coefficient-hint"
+              />
+              <p id="coefficient-hint" className="text-muted-foreground text-sm">
+                Il remplace la règle (×{ruleCoefficient}) pour cette note seulement.
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Coefficient</p>
+              <p className="text-muted-foreground text-sm">
+                ×{ruleCoefficient} : {groupGrade ? "note de groupe" : "note individuelle"}, règle
+                de l’école.
+              </p>
+            </div>
+          )}
           <div className={isReview ? "hidden" : "space-y-2 sm:col-span-2"}>
             <Label htmlFor="maxScore">Barème (note sur)</Label>
             <p id="maxScore-hint" className="text-muted-foreground text-sm">

@@ -230,7 +230,7 @@ export async function createAssessment(
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,
       exam_kind: examKindForType(parsed.data.type),
-      coefficient: parsed.data.coefficient,
+      ...coefficientColumns(parsed.data),
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
@@ -330,7 +330,7 @@ export async function updateAssessment(
       subject: parsed.data.subject || null,
       type: parsed.data.type || null,
       exam_kind: examKindForType(parsed.data.type),
-      coefficient: parsed.data.coefficient,
+      ...coefficientColumns(parsed.data),
       date: parsed.data.date,
       duration_minutes: parsed.data.durationMinutes,
       grading_grid_id: parsed.data.gradingGridId,
@@ -847,6 +847,17 @@ export async function deleteAssessmentFile(assessmentId: string, path: string) {
   revalidatePath(`/modules/${assessment.module_id}/assessments/${assessmentId}`);
 }
 
+/**
+ * Seule une « Note de l'école » garde un coefficient saisi : il est imposé par l'école
+ * (`coefficient_override`). Toute autre évaluation suit la règle de l'école (groupe / individuel) :
+ * rien n'est imposé. `assessment.coefficient` n'est plus écrit que pour la note de l'école.
+ */
+function coefficientColumns(d: { type?: string; coefficient: number }) {
+  return d.type?.trim() === SCHOOL_GRADE_TYPE
+    ? { coefficient: d.coefficient, coefficient_override: d.coefficient }
+    : { coefficient_override: null };
+}
+
 export interface SchoolGradeState {
   error?: string;
 }
@@ -879,6 +890,7 @@ export async function createSchoolGrade(
       title: check.title,
       type: SCHOOL_GRADE_TYPE,
       coefficient: check.coefficient,
+      coefficient_override: check.coefficient,
       is_group_grade: false,
       max_score: 20,
       prep_status: "provided",
