@@ -1,4 +1,5 @@
 import { appliedCoefficient } from "@/lib/ynov/notation";
+import { assessmentKindOf, kindBlocks } from "@/lib/assessments/kind";
 import { IncompletePublishedWarning } from "@/components/assessments/incomplete-published-warning";
 import { incompleteCopies, publishedIncomplete } from "@/lib/assessments/incomplete";
 import { activeSpaceStudentIds } from "@/lib/modules/frise-queries";
@@ -53,11 +54,7 @@ import {
   getGradesByAssessment,
   listGroupGradeMembers,
 } from "@/lib/assessments/queries";
-import {
-  examKindOf,
-  individualFrame,
-  parseSubjectVersions,
-} from "@/lib/assessments/exam-kind";
+import { examKindOf, individualFrame, parseSubjectVersions } from "@/lib/assessments/exam-kind";
 import { frameStatus } from "@/lib/assessments/module-overview";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { isProgressReview, isUngradedReview } from "@/lib/assessments/progress-review";
@@ -369,6 +366,10 @@ export default async function AssessmentPage({
     qcm: dayJExtras.qcm.get(assessmentId),
   });
   const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  // Type d'évaluation unique (lot 5) : seuls les blocs utiles à ce type sont affichés (une Note de
+  // l'école : la saisie des notes, le coefficient imposé et l'essentiel).
+  const kindNow = assessmentKindOf(assessment);
+  const blocks = kindBlocks(kindNow);
   // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
   const evaluatedSection = (
     <section aria-labelledby="at" className={card}>
@@ -525,7 +526,7 @@ export default async function AssessmentPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {!assessment.is_group_grade && !isUngradedReview(assessment) ? (
+          {blocks.quiz && !assessment.is_group_grade && !isUngradedReview(assessment) ? (
             <Button asChild variant="secondary">
               <Link href={`/modules/${id}/assessments/${assessmentId}/quiz`}>
                 <ListChecks aria-hidden />
@@ -589,7 +590,7 @@ export default async function AssessmentPage({
         </div>
       </div>
 
-      {!assessment.makeup_of_id ? (
+      {!assessment.makeup_of_id && blocks.dayJ ? (
         <section aria-label="Avant le jour J" className={`${card} space-y-2`}>
           <div className="flex flex-wrap items-center gap-2">
             <SubjectStatusBadge
@@ -657,7 +658,7 @@ export default async function AssessmentPage({
 
       <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
         <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
-          {!assessment.is_group_grade ? (
+          {!assessment.is_group_grade && blocks.examKind ? (
             <section aria-labelledby="ty" className={`${card} space-y-3`}>
               <h2 id="ty" className="font-heading text-xl font-bold">
                 Quelle épreuve ?
@@ -677,8 +678,27 @@ export default async function AssessmentPage({
               />
             </section>
           ) : null}
+          {kindNow === "school_grade" ? (
+            <section aria-labelledby="ng" className={`${card} space-y-2`}>
+              <h2 id="ng" className="font-heading text-xl font-bold">
+                Note de l’école
+              </h2>
+              <p className="text-sm">
+                Coefficient imposé par l’école : <strong>×{ruleCoefficient}</strong>. Note sur{" "}
+                {formatNumber(assessment.maxScore)}, saisie directement plus bas, sans sujet ni
+                grille.
+              </p>
+              <Link
+                href={`/modules/${id}/assessments/${assessmentId}/edit`}
+                className="text-primary text-sm font-semibold underline-offset-2 hover:underline"
+              >
+                Changer le coefficient
+              </Link>
+            </section>
+          ) : null}
           <section
             aria-labelledby="gr"
+            hidden={!blocks.grid}
             className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -805,7 +825,7 @@ export default async function AssessmentPage({
             )}
           </section>
 
-          <section aria-labelledby="ce" className={card}>
+          <section aria-labelledby="ce" className={card} hidden={!blocks.dayJ}>
             <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
               <h2 id="ce" className="font-heading text-xl font-bold">
                 Le cadre pour les étudiant·es
@@ -907,7 +927,7 @@ export default async function AssessmentPage({
           className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
         >
           {oralTiming}
-          {evaluatedSection}
+          {blocks.expectations ? evaluatedSection : null}
           {assessment.is_group_grade ? (
             <section aria-labelledby="ae" className={card}>
               <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
@@ -921,7 +941,7 @@ export default async function AssessmentPage({
                 <Markdown source={assessment.evaluated_md ?? ""} />
               )}
             </section>
-          ) : (
+          ) : blocks.makeupAndBonus ? (
             <section aria-labelledby="bonus" className={card}>
               <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">
                 Note bonus
@@ -933,11 +953,11 @@ export default async function AssessmentPage({
                 scale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
               />
             </section>
-          )}
+          ) : null}
         </aside>
       </div>
 
-      <section aria-labelledby="subject" className={`${card} space-y-4`}>
+      <section aria-labelledby="subject" className={`${card} space-y-4`} hidden={!blocks.subject}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="subject" className="font-heading text-xl font-bold">
             Sujet
@@ -980,7 +1000,10 @@ export default async function AssessmentPage({
         ) : null}
       </section>
 
-      {submissionData.available && targets.length > 0 && examKindOf(assessment) !== "qcm" ? (
+      {submissionData.available &&
+      targets.length > 0 &&
+      blocks.submissions &&
+      examKindOf(assessment) !== "qcm" ? (
         <section aria-labelledby="rendus" className="space-y-3">
           <h2 id="rendus" className="text-lg font-medium">
             Rendus déposés

@@ -14,15 +14,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { AssessmentDetail, GridWithCriteria } from "@/lib/assessments/queries";
 import { kindOf } from "@/lib/assessments/individual";
-import { SCHOOL_GRADE_TYPE } from "@/lib/assessments/module-notes";
+import {
+  ASSESSMENT_KINDS,
+  assessmentKindOf,
+  kindBlocks,
+  kindOption,
+  typeTextForKind,
+  type AssessmentKind,
+} from "@/lib/assessments/kind";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import type { Tables } from "@/types/db";
-import {
-  canPrepareMakeupInAdvance,
-  frameFor,
-  frameWarnings,
-  TYPE_PRESETS,
-} from "@/lib/assessments/individual";
+import { canPrepareMakeupInAdvance, frameFor, frameWarnings } from "@/lib/assessments/individual";
 import { keepFormValues } from "@/lib/use-kept-form";
 
 type Action = (state: AssessmentFormState, formData: FormData) => Promise<AssessmentFormState>;
@@ -72,13 +74,20 @@ export function AssessmentForm({
   const [state, formAction, pending] = useActionState(action, {});
   const fe = state.fieldErrors ?? {};
   const [gridId, setGridId] = useState(assessment?.grading_grid_id ?? initialGridId);
-  // Cadre selon le type (US-144) : libellé de la date, durée attendue, points à vérifier.
-  // Ancien libellé du point d'étape : repris sous le nouveau.
-  const [typeText, setTypeText] = useState(
-    kindOf(assessment?.type) === "checkpoint"
-      ? "Point d’étape"
-      : (assessment?.type ?? initialType ?? ""),
+  // Type d'évaluation unique (lot 5) : choisi en premier, il règle groupe / individuel par défaut
+  // et les blocs affichés. `type` (texte) suit le choix, en gardant un libellé déjà cohérent.
+  const [kind, setKind] = useState<AssessmentKind | null>(
+    assessment
+      ? assessmentKindOf(assessment)
+      : initialType
+        ? assessmentKindOf({ type: initialType })
+        : null,
   );
+  const option = kind ? kindOption(kind) : null;
+  const blocks = kindBlocks(kind ?? "other");
+  const legacyType = kindOf(assessment?.type) === "checkpoint" ? "Point d’étape" : assessment?.type;
+  // Cadre selon le type (US-144) : libellé de la date, durée attendue, points à vérifier.
+  const typeText = kind ? typeTextForKind(kind, legacyType ?? initialType) : (legacyType ?? "");
   const [dateText, setDateText] = useState(assessment?.date ?? "");
   const [durationText, setDurationText] = useState(String(assessment?.duration_minutes ?? ""));
   const [courseId, setCourseId] = useState(assessment?.course_id ?? "");
@@ -97,7 +106,7 @@ export function AssessmentForm({
   const frame = frameFor(typeText);
   const whereKind = kindOf(typeText);
   // Point d'étape : sans note, rattaché à l'évaluation notée qui le prend en compte.
-  const isCheckpoint = whereKind === "checkpoint";
+  const isCheckpoint = kind === "progress_review";
   // Case « Noté » (décochée par défaut) : un point d'étape noté est une évaluation notée normale.
   const [reviewGraded, setReviewGraded] = useState(assessment?.review_graded ?? false);
   const isReview = isCheckpoint && !reviewGraded;
@@ -121,6 +130,42 @@ export function AssessmentForm({
         className="max-w-xl space-y-6"
       >
         <UnsavedChangesGuard />
+        <fieldset className="space-y-2">
+          <legend className="text-base font-medium">Type d’évaluation</legend>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {ASSESSMENT_KINDS.map((k) => (
+              <li key={k.value}>
+                <label
+                  className={`has-[:focus-visible]:ring-ring flex h-full cursor-pointer gap-3 rounded-xl border-[1.5px] p-3 text-sm has-[:focus-visible]:ring-2 ${
+                    kind === k.value ? "border-primary bg-primary/10" : "bg-muted/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="kindChoice"
+                    value={k.value}
+                    checked={kind === k.value}
+                    required
+                    onChange={() => {
+                      setKind(k.value);
+                      // Groupe / individuel par défaut, sauf une évaluation déjà notée (figé).
+                      if (k.individualOnly) setGroupGrade(false);
+                      else if (!assessment) setGroupGrade(k.defaultGroup);
+                    }}
+                    className="accent-primary mt-0.5 size-4 flex-none"
+                  />
+                  <span>
+                    <span className="block font-semibold">{k.label}</span>
+                    <span className="text-muted-foreground block">{k.hint}</span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          {kind ? <input type="hidden" name="kind" value={kind} /> : null}
+          <input type="hidden" name="type" value={typeText} />
+        </fieldset>
+
         <div className="space-y-2">
           <Label htmlFor="title">Titre</Label>
           <Input
@@ -133,7 +178,7 @@ export function AssessmentForm({
           <FieldError id="title" errors={fe.title} />
         </div>
 
-        <fieldset className="space-y-2">
+        <fieldset className="space-y-2" hidden={!!option?.individualOnly}>
           <legend className="text-base font-medium">Type de note</legend>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
@@ -160,7 +205,7 @@ export function AssessmentForm({
           {groupGrade ? <input type="hidden" name="isGroupGrade" value="on" /> : null}
         </fieldset>
 
-        <fieldset className="space-y-4">
+        <fieldset className="space-y-4" hidden={!blocks.subject}>
           <legend className="text-base font-medium">Sujet fourni aux étudiant·es</legend>
           <p className="text-muted-foreground text-sm">
             Rien de ce qui touche à tes notes ou au carnet n’apparaît dans le sujet. Les fichiers
@@ -229,7 +274,7 @@ export function AssessmentForm({
             <FieldError id="evaluatedMd" errors={fe.evaluatedMd} />
           </div>
 
-          {whereKind !== "oral" && whereKind !== "quiz" ? (
+          {blocks.deposit ? (
             <div className="space-y-2">
               <Label htmlFor="whereToSubmit">Où rendre</Label>
               <Input
@@ -275,7 +320,8 @@ export function AssessmentForm({
               {dateMismatch ? (
                 <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
                   La date ({formatFr(dateText)}) ne correspond pas à la séance choisie : en
-                  enregistrant, elle prendra celle de la séance ({formatFr(selectedCourseDate ?? "")}).
+                  enregistrant, elle prendra celle de la séance (
+                  {formatFr(selectedCourseDate ?? "")}).
                 </p>
               ) : null}
             </div>
@@ -299,26 +345,6 @@ export function AssessmentForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <select
-              id="type"
-              name="type"
-              value={typeText}
-              onChange={(e) => setTypeText(e.target.value)}
-              className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-            >
-              <option value="">Choisis un type…</option>
-              {typeText && !(TYPE_PRESETS as readonly string[]).includes(typeText) ? (
-                <option value={typeText}>{typeText} (ancien type)</option>
-              ) : null}
-              {TYPE_PRESETS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="date">{frame.dateLabel}</Label>
             <Input
               id="date"
@@ -335,7 +361,7 @@ export function AssessmentForm({
               </p>
             ) : null}
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2" hidden={!blocks.duration}>
             <Label htmlFor="durationMinutes">
               {whereKind === "oral" ? "Durée par groupe (minutes)" : "Durée (minutes)"}
             </Label>
@@ -391,7 +417,7 @@ export function AssessmentForm({
               </p>
             </div>
           ) : null}
-          {isReview ? null : typeText.trim() === SCHOOL_GRADE_TYPE ? (
+          {isReview ? null : blocks.imposedCoefficient ? (
             <div className="space-y-2">
               <Label htmlFor="coefficient">Coefficient imposé par l’école</Label>
               <Input
@@ -414,8 +440,8 @@ export function AssessmentForm({
             <div className="space-y-2">
               <p className="text-sm font-medium">Coefficient</p>
               <p className="text-muted-foreground text-sm">
-                ×{ruleCoefficient} : {groupGrade ? "note de groupe" : "note individuelle"}, règle
-                de l’école.
+                ×{ruleCoefficient} : {groupGrade ? "note de groupe" : "note individuelle"}, règle de
+                l’école.
               </p>
             </div>
           )}
@@ -462,7 +488,7 @@ export function AssessmentForm({
             </ul>
             <FieldError id="studentGroupIds" errors={fe.studentGroupIds} />
           </fieldset>
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2 sm:col-span-2" hidden={!blocks.grid}>
             <Label htmlFor="gradingGridId">Grille de correction (optionnel)</Label>
             <select
               id="gradingGridId"
@@ -504,7 +530,7 @@ export function AssessmentForm({
               </ul>
             </fieldset>
           ) : null}
-          {!isReview && gridCriteria.length > 0 ? (
+          {!isReview && blocks.grid && gridCriteria.length > 0 ? (
             <fieldset key={gridId} className="space-y-2 sm:col-span-2">
               <legend className="text-sm leading-none font-medium">
                 Critères validés d’office pour cette évaluation
@@ -532,7 +558,10 @@ export function AssessmentForm({
           ) : null}
         </div>
 
-        <div className="space-y-1 rounded-md border border-dashed p-3 text-sm">
+        <div
+          className="space-y-1 rounded-md border border-dashed p-3 text-sm"
+          hidden={!blocks.dayJ}
+        >
           <p className="text-muted-foreground">{frame.hint}</p>
           {warnings.length > 0 ? (
             <ul role="status" className="list-disc pl-5">
@@ -563,7 +592,10 @@ export function AssessmentForm({
           <FieldError id="experienceNote" errors={fe.experienceNote} />
         </fieldset>
 
-        {!assessment && !isReview && canPrepareMakeupInAdvance(groupGrade, false) ? (
+        {!assessment &&
+        !isReview &&
+        blocks.makeupAndBonus &&
+        canPrepareMakeupInAdvance(groupGrade, false) ? (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="prepareMakeup" />
             Préparer dès maintenant le sujet de rattrapage (même grille, même coefficient)

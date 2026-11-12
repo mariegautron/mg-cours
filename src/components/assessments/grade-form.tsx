@@ -866,22 +866,27 @@ export function GradeForm({
               : directValue.trim() === "")
         ? "pas encore notée"
         : null;
+  // Sans grille ni barème bonus, le total est la note saisie directement (jamais un faux 0 / 20
+  // calculé sur des critères qui n'existent pas).
+  const directTotal = !grid && !bonusScale ? Number(directValue.trim().replace(",", ".")) : NaN;
+  const shownValue = Number.isFinite(directTotal) ? directTotal : totals.value;
   const inProgressNote =
     grid && !absent && gp.state === "partial"
       ? `en cours (${gp.scored}/${gp.total} critères)`
       : null;
 
   // Pas de « Total : 0 / 20 » (ni de reste d'une ancienne note) quand la copie n'a pas de note.
-  const totalLine = totalEmpty ? null : (
-    <p className="text-muted-foreground text-sm" aria-live={compact ? "polite" : undefined}>
-      Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
-      {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}
-      {scaled || totals.capped
-        ? ` → ${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`
-        : ""}
-      {overflow ? ` (${overflow})` : ""}
-    </p>
-  );
+  const totalLine =
+    totalEmpty || !grid ? null : (
+      <p className="text-muted-foreground text-sm" aria-live={compact ? "polite" : undefined}>
+        Total : {formatNumber(totals.base)} / {formatNumber(totals.max)}
+        {totals.bonus > 0 ? ` + ${formatNumber(totals.bonus)} de bonus` : ""}
+        {scaled || totals.capped
+          ? ` → ${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`
+          : ""}
+        {overflow ? ` (${overflow})` : ""}
+      </p>
+    );
 
   // Saisie des critères non affichés (vue par critère, ou copie absente) : conservée et renvoyée.
   const hiddenCriteria = (exceptId: string | null) =>
@@ -947,7 +952,7 @@ export function GradeForm({
           {list.map((m) => {
             const st = memberState[m.id];
             const finalValue = groupMemberValue(
-              totals.value,
+              shownValue,
               maxScore,
               { attendance: st.attendance },
               absenceRule,
@@ -1280,7 +1285,7 @@ export function GradeForm({
           </>
         ) : (
           <>
-            {formatNumber(totals.value)}{" "}
+            {formatNumber(shownValue)}{" "}
             <span className="text-muted-foreground text-lg font-normal">
               / {formatNumber(totals.maxScore)}
             </span>
@@ -1291,7 +1296,7 @@ export function GradeForm({
         <p className="text-sun text-[0.8rem] font-semibold">{inProgressNote}</p>
       ) : null}
       {/* Rien à détailler (ni « 0 / 20 ») tant qu'aucun critère n'est noté. */}
-      <p className="text-muted-foreground text-[0.8rem]" hidden={!!totalEmpty}>
+      <p className="text-muted-foreground text-[0.8rem]" hidden={!!totalEmpty || !grid}>
         {showAxes
           ? groups
               .map((g) => `${g.axis?.label ?? "Autres"} ${subtotal(g.axis?.id ?? null)}`)
@@ -1832,7 +1837,7 @@ export function GradeForm({
       <div className="bg-background/95 sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 border-t py-2.5 backdrop-blur">
         <p className="text-sm" aria-live="polite">
           <strong className="font-heading text-lg">
-            {totalEmpty ? "—" : `${formatNumber(totals.value)} / ${formatNumber(totals.maxScore)}`}
+            {totalEmpty ? "—" : `${formatNumber(shownValue)} / ${formatNumber(totals.maxScore)}`}
           </strong>
           <span className="text-muted-foreground">
             {totalEmpty

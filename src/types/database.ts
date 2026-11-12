@@ -213,6 +213,7 @@ export type Database = {
           auto_validated_criterion_ids: string[]
           coefficient: number
           coefficient_override: number | null
+          kind: Database["public"]["Enums"]["assessment_kind"] | null
           course_id: string | null
           exam_kind: string | null
           makeup_prepared: boolean
@@ -256,6 +257,7 @@ export type Database = {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           coefficient_override?: number | null
+          kind?: Database["public"]["Enums"]["assessment_kind"] | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean
@@ -299,6 +301,7 @@ export type Database = {
           auto_validated_criterion_ids?: string[]
           coefficient?: number
           coefficient_override?: number | null
+          kind?: Database["public"]["Enums"]["assessment_kind"] | null
           course_id?: string | null
           exam_kind?: string | null
           makeup_prepared?: boolean
@@ -3678,6 +3681,15 @@ export type Database = {
       }
     }
     Enums: {
+      assessment_kind:
+        | "files"
+        | "quiz"
+        | "open_questions"
+        | "in_class"
+        | "oral"
+        | "progress_review"
+        | "school_grade"
+        | "other"
       assessment_prep_status: "to_build" | "ready" | "provided"
       attendance_status: "present" | "absent_unexcused" | "absent_excused"
       comment_category: "positive" | "negative" | "advice"
@@ -3874,6 +3886,16 @@ export const Constants = {
   },
   public: {
     Enums: {
+      assessment_kind: [
+        "files",
+        "quiz",
+        "open_questions",
+        "in_class",
+        "oral",
+        "progress_review",
+        "school_grade",
+        "other",
+      ],
       assessment_prep_status: ["to_build", "ready", "provided"],
       attendance_status: ["present", "absent_unexcused", "absent_excused"],
       comment_category: ["positive", "negative", "advice"],

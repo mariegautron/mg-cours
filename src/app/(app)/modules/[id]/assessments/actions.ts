@@ -1,5 +1,6 @@
 "use server";
 
+import { kindOption, type AssessmentKind } from "@/lib/assessments/kind";
 import { SCHOOL_GRADE_TYPE, validateSchoolGrade } from "@/lib/assessments/module-notes";
 import { prepareMakeupInAdvance } from "@/app/(app)/modules/[id]/assessments/makeup-action";
 import { revalidatePath } from "next/cache";
@@ -201,6 +202,9 @@ export async function createAssessment(
   if (schoolCoefficientTooHigh(parsed.data)) {
     return { fieldErrors: { coefficient: ["Le coefficient imposé est entre 0,1 et 20."] } };
   }
+  if (parsed.data.kind && kindOption(parsed.data.kind).individualOnly) {
+    parsed.data.isGroupGrade = false;
+  }
 
   const groupIds = parsed.data.studentGroupIds;
   const supabase = await createClient();
@@ -241,6 +245,7 @@ export async function createAssessment(
       max_score: parsed.data.maxScore,
       auto_validated_criterion_ids: autoValidated,
       ...subjectColumns(parsed.data),
+      ...kindColumns(parsed.data),
     })
     .select("id")
     .single();
@@ -277,6 +282,9 @@ export async function updateAssessment(
   if (!parsed.success) return { fieldErrors: flatten(parsed.error.flatten().fieldErrors) };
   if (schoolCoefficientTooHigh(parsed.data)) {
     return { fieldErrors: { coefficient: ["Le coefficient imposé est entre 0,1 et 20."] } };
+  }
+  if (parsed.data.kind && kindOption(parsed.data.kind).individualOnly) {
+    parsed.data.isGroupGrade = false;
   }
 
   const groupIds = parsed.data.studentGroupIds;
@@ -358,6 +366,7 @@ export async function updateAssessment(
       max_score: parsed.data.maxScore,
       auto_validated_criterion_ids: autoValidated,
       ...subjectColumns(parsed.data),
+      ...kindColumns(parsed.data),
       ...(origin ? makeupInvariants(origin) : {}),
     })
     .eq("id", assessmentId);
@@ -872,12 +881,32 @@ export async function deleteAssessmentFile(assessmentId: string, path: string) {
  * rien n'est imposé. `assessment.coefficient` n'est plus écrit que pour la note de l'école.
  */
 /** Coefficient imposé hors de la limite de la base (`coefficient_override` <= 20). */
-function schoolCoefficientTooHigh(d: { type?: string; coefficient: number }) {
-  return d.type?.trim() === SCHOOL_GRADE_TYPE && d.coefficient > 20;
+function schoolCoefficientTooHigh(d: { type?: string; kind?: string | null; coefficient: number }) {
+  return isSchoolGrade(d) && d.coefficient > 20;
 }
 
-function coefficientColumns(d: { type?: string; coefficient: number }) {
-  return d.type?.trim() === SCHOOL_GRADE_TYPE
+/** « Note de l'école » : choisie par le type unique (lot 5), ou ancien texte de `type`. */
+function isSchoolGrade(d: { type?: string; kind?: string | null }) {
+  return d.kind === "school_grade" || d.type?.trim() === SCHOOL_GRADE_TYPE;
+}
+
+/**
+ * Colonnes du type unique (lot 5) : `kind` écrit quand le formulaire l'envoie ; une Note de
+ * l'école, un QCM, des questions ouvertes ou un écrit en classe sont toujours individuels ; une
+ * Note de l'école n'a pas de sujet à construire.
+ */
+function kindColumns(d: { kind?: string | null; isGroupGrade: boolean }) {
+  if (!d.kind) return {};
+  const kind = d.kind as AssessmentKind;
+  return {
+    kind,
+    ...(kindOption(kind).individualOnly ? { is_group_grade: false } : {}),
+    ...(kind === "school_grade" ? { prep_status: "provided" as const } : {}),
+  };
+}
+
+function coefficientColumns(d: { type?: string; kind?: string | null; coefficient: number }) {
+  return isSchoolGrade(d)
     ? { coefficient: d.coefficient, coefficient_override: d.coefficient }
     : { coefficient_override: null };
 }
@@ -932,6 +961,7 @@ export async function createSchoolGrade(
       module_id: moduleId,
       title: check.title,
       type: SCHOOL_GRADE_TYPE,
+      kind: "school_grade",
       coefficient: check.coefficient,
       coefficient_override: check.coefficient,
       is_group_grade: false,

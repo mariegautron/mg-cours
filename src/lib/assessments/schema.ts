@@ -95,6 +95,20 @@ export const assessmentSchema = z.object({
     .optional()
     .or(z.literal("")),
   type: z.string().trim().max(100).optional().or(z.literal("")),
+  /** Type d'évaluation unique (lot 5) ; vide : ancien formulaire, `type` fait foi. */
+  kind: z
+    .enum([
+      "files",
+      "quiz",
+      "open_questions",
+      "in_class",
+      "oral",
+      "progress_review",
+      "school_grade",
+      "other",
+    ])
+    .nullable()
+    .default(null),
   coefficient: z.coerce.number().min(0.1).max(100).default(1),
   date: optionalDate,
   durationMinutes: optionalMinutes,
@@ -166,6 +180,7 @@ export function readAssessmentForm(formData: FormData) {
     title: formData.get("title") ?? "",
     subject: formData.get("subject") ?? "",
     type: formData.get("type") ?? "",
+    kind: String(formData.get("kind") ?? "") || null,
     coefficient: formData.get("coefficient") ?? "1",
     date: formData.get("date") ?? "",
     durationMinutes: formData.get("durationMinutes") ?? "",
