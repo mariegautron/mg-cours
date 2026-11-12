@@ -606,7 +606,8 @@ export function AssessmentForm({
       <div className="max-w-xl space-y-3">
         {state.error ? <ActionError error={state.error} /> : null}
 
-        <div className="flex gap-3">
+        {/* Barre d'actions collée en bas : Enregistrer reste visible dans un long formulaire. */}
+        <div className="bg-background/95 sticky bottom-0 z-10 flex gap-3 border-t py-2.5 backdrop-blur">
           <PendingButton
             type="submit"
             form="assessment-form"

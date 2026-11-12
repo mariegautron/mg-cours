@@ -194,7 +194,7 @@ export function ModuleForm({
           </fieldset>
         )}
 
-        <div className="flex gap-3">
+        <div className="bg-background/95 sticky bottom-0 z-10 flex gap-3 border-t py-2.5 backdrop-blur">
           <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
             Enregistrer
           </PendingButton>

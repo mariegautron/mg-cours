@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { PrivateZone } from "@/components/ui/private-zone";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -58,10 +59,7 @@ export function ModuleDangerZone({
   return (
     <div className="space-y-6">
       {experience.length || assessmentExperience.length ? (
-        <section aria-labelledby="experience" className="space-y-2 rounded-lg border p-4">
-          <h3 id="experience" className="font-medium">
-            Retour d’expérience de cette année
-          </h3>
+        <PrivateZone titleId="experience" title="Retour d’expérience de cette année">
           <p className="text-muted-foreground text-sm">
             Notes privées prises à la clôture des séances et sur les évaluations : à relire avant de
             reprendre le module. Elles ne sont pas copiées dans la nouvelle année.
@@ -82,7 +80,7 @@ export function ModuleDangerZone({
               </li>
             ))}
           </ul>
-        </section>
+        </PrivateZone>
       ) : null}
       <form ref={formRef} action={dupAction} className="flex flex-wrap items-end gap-3">
         <div className="space-y-2">

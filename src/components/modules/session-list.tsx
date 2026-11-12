@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Pill } from "@/components/dashboard/pill";
 import { DisclosureMenu } from "@/components/ui/disclosure-menu";
+import { Notice } from "@/components/ui/notice";
 import type { CourseWithResources } from "@/lib/modules/queries";
 import { sessionToTeach, todayInParis } from "@/lib/modules/next-session";
 import {
@@ -121,9 +122,9 @@ export function SessionList({
         })}
       </ol>
       {hoursMessage ? (
-        <p role="status" className="text-destructive mx-1.5 mt-2 text-[0.8rem]">
-          <span className="font-semibold">À vérifier :</span> {hoursMessage}
-        </p>
+        <Notice level="warning" title="À vérifier" className="mx-1.5 mt-2">
+          {hoursMessage}
+        </Notice>
       ) : null}
       {missing.length ? (
         <div className="bg-muted mx-1.5 mt-2.5 rounded-xl p-3 text-[0.8rem]">

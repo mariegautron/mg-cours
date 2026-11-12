@@ -20,6 +20,7 @@ import { hasDefinedAnswer, quizTotalPoints, shortages } from "@/lib/quiz/draw";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { Notice } from "@/components/ui/notice";
 
 export const metadata: Metadata = { title: "QCM" };
 
@@ -278,10 +279,12 @@ export default async function QuizPage({
                   >
                     Publier le QCM
                   </Button>
-                  <p id="publish-hint" role="status" className="text-sm">
-                    Corrige d’abord les règles de tirage :{" "}
-                    {rulesProblems[0] ?? "aucune règle valide."}
-                  </p>
+                  <div id="publish-hint">
+                    <Notice level="blocking" title="Tirage impossible">
+                      Corrige d’abord les règles de tirage :{" "}
+                      {rulesProblems[0] ?? "aucune règle valide."}
+                    </Notice>
+                  </div>
                 </>
               )
             ) : null}

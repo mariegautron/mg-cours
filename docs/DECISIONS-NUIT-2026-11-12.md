@@ -144,3 +144,23 @@ Lot 1, ce qui est fait à ce stade :
   l'oral, demande d'écrire par `saveOralField` avec version) ; afficher l'ancienne note en points
   quand elle ne tombe sur aucun palier (à vérifier sur l'oral SCRUM) ; « Ressources retenues »
   repliées (écran Modifier la séance, lot 4).
+
+## Lot 1 (suite)
+
+- **Statut** : composant `Status` (5 états, icône + mot) dans `pill.tsx` ; toutes les `Pill` de
+  statut ont désormais leur icône. Sur la page d'une évaluation, coefficient, barème et type de
+  note passent en texte gris séparé par « · », la grille devient un lien texte.
+- **Messages de confirmation** : en bas à droite, 4 s (réglage du `Toaster`). Je n'ai pas converti
+  tous les messages « Enregistré » en ligne vers ce format.
+- **Alerte à 3 niveaux** : composant `Notice` (info, attention, bloquant). Appliqué à l'écart
+  d'heures des séances (attention) et à la règle de tirage impossible du QCM (bloquant, le bouton
+  Publier reste grisé avec la raison).
+- **Barre d'actions collée en bas** : formulaire de l'évaluation et du module. (Grille, séance,
+  ressource, projet, correction l'avaient déjà.)
+- **Alerte avant de quitter** : la confirmation de navigation passe dans l'appli (« Quitter sans
+  enregistrer ? » / « Rester sur la page ») ; au rechargement ou à la fermeture de l'onglet, c'est
+  forcément la boîte du navigateur.
+- **Zone privée** : composant `PrivateZone` (fond `--private`, pastille « Pour toi seule »),
+  appliqué au retour d'expérience avant de dupliquer un module.
+- **Pas fait dans ce lot** : menu « Plus » au-delà de 3 actions secondaires partout (fait sur la
+  séance), retour unique « ← page parente » partout (fait sur l'évaluation, repris au lot 4/6).

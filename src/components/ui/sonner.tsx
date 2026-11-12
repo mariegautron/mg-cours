@@ -17,6 +17,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Messages de confirmation : en bas à droite, 4 s, annoncés aux lecteurs d'écran (lot 1).
+      position="bottom-right"
+      duration={4000}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

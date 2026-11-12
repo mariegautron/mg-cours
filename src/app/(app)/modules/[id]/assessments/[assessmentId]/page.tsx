@@ -558,18 +558,22 @@ export default async function AssessmentPage({
               Même grille, même coefficient : sa note remplace l’absence excusée.
             </p>
           ) : null}
-          <div className="mt-2 flex flex-wrap gap-2">
-            {isUngradedReview(assessment) ? (
-              <Pill tone="key">Point d’étape · sans note · hors moyenne</Pill>
-            ) : (
+          {/* Infos en texte gris séparé par « · » (pas des pastilles : ce ne sont pas des statuts). */}
+          <p className="text-muted-foreground mt-1 text-sm">
+            {isUngradedReview(assessment)
+              ? "Point d’étape · sans note · hors moyenne"
+              : `Coefficient ${ruleCoefficient} · sur ${assessment.maxScore} · ${
+                  assessment.is_group_grade ? "note de groupe" : "note individuelle"
+                }`}
+            {grid ? (
               <>
-                <Pill>Coefficient {ruleCoefficient}</Pill>
-                <Pill>Sur {assessment.maxScore}</Pill>
-                <Pill>{assessment.is_group_grade ? "Note de groupe" : "Note individuelle"}</Pill>
+                {" · grille "}
+                <a href="#gr" className="text-primary underline underline-offset-2">
+                  {grid.name}
+                </a>
               </>
-            )}
-            {grid ? <Pill tone="key">{grid.name}</Pill> : null}
-          </div>
+            ) : null}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {blocks.quiz && !assessment.is_group_grade && !isUngradedReview(assessment) ? (
