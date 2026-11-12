@@ -511,8 +511,7 @@ function ReviewPanel({
         </p>
       </div>
       <p className="text-muted-foreground text-sm">
-        Point d’étape sans note. Un repère par critère : touches A (en avance), V (sur la bonne
-        voie), R (à revoir) quand le critère a le focus. Les flèches n’enregistrent rien.
+        Point d’étape sans note. Un repère par critère : en avance, sur la bonne voie ou à revoir.
       </p>
 
       {criteria.map((c) => {

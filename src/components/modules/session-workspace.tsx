@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 
@@ -88,6 +90,8 @@ export function SessionWorkspace({
   const [saved, setSaved] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [announce, setAnnounce] = useState("");
+  // Déroulé de plus de 5 étapes : replié (« Voir les 8 autres »), la page reste courte.
+  const [showAll, setShowAll] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [, start] = useTransition();
   const first = useRef(true);
@@ -248,7 +252,7 @@ export function SessionWorkspace({
         </p>
       ) : null}
 
-      <section aria-labelledby="deroule" className="bg-card rounded-3xl border p-5 shadow-sm">
+      <section aria-labelledby="deroule" className="bg-card rounded-3xl border p-4">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 id="deroule" className="font-heading text-xl font-bold">
             Le déroulé de la séance
@@ -263,7 +267,7 @@ export function SessionWorkspace({
             className={cn(
               "mb-2 text-sm font-medium",
               duration.status === "over" && "text-warning",
-              duration.status === "ok" && "text-emerald-600 dark:text-emerald-400",
+              duration.status === "ok" && "text-success",
             )}
           >
             {duration.message}
@@ -279,6 +283,7 @@ export function SessionWorkspace({
             {resources.map((r, i) => (
               <li
                 key={r.id}
+                hidden={!showAll && i >= 5}
                 draggable
                 onDragStart={() => setDragIndex(i)}
                 onDragOver={(e) => e.preventDefault()}
@@ -474,6 +479,18 @@ export function SessionWorkspace({
             ))}
           </ol>
         )}
+        {resources.length > 5 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-2"
+            aria-expanded={showAll}
+            onClick={() => setShowAll((v) => !v)}
+          >
+            {showAll ? "Replier le déroulé" : `Voir les ${resources.length - 5} autres étapes`}
+          </Button>
+        ) : null}
         <details className="mt-3">
           <summary
             className={cn(BTN, "min-h-12 cursor-pointer list-none")}

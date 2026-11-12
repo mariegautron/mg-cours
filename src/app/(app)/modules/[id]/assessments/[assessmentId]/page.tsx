@@ -68,6 +68,7 @@ import { loadMakeupGroups, makeupHrefs } from "@/lib/assessments/makeup-queries"
 import { OralTimingForm } from "@/components/assessments/oral-timing-form";
 import { canPresent, subjectSections } from "@/lib/assessments/subject";
 import { createClient } from "@/lib/supabase/server";
+import { todayInParis } from "@/lib/modules/next-session";
 import { getModuleCourses, getModuleExpectations } from "@/lib/modules/queries";
 import { parseResourceFiles } from "@/lib/resources/files";
 import { themeTitleByGroup } from "@/lib/projects/queries";
@@ -373,7 +374,12 @@ export default async function AssessmentPage({
     submitMode: submitModeOf(assessment),
     qcm: dayJExtras.qcm.get(assessmentId),
   });
-  const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const card = "bg-card rounded-3xl border p-4";
+  // Une fois la date passée (ou des notes saisies), on vient pour les copies : elles passent en haut,
+  // la préparation (cadre, sujet, grille, attendus) se replie sous un sommaire (lot 0 E, points 35-36).
+  const copiesFirst =
+    targets.length > 0 &&
+    (hasGrades || (!!assessment.date && assessment.date.slice(0, 10) <= todayInParis()));
   // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
   const evaluatedSection = (
     <section aria-labelledby="at" className={card}>
@@ -428,18 +434,49 @@ export default async function AssessmentPage({
         .map((st) => `${st.first_name} ${st.last_name}`)
     : [];
 
+  const copiesSection = (
+    <section id="copies" aria-label="Copies" className="scroll-mt-4">
+      {targets.length === 0 ? (
+        <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
+      ) : (
+        <>
+          <CorrectionOverview
+            overview={overview}
+            maxScore={assessment.maxScore}
+            noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
+            correctHref={`/modules/${id}/assessments/${assessmentId}/correct`}
+            phrasesHref={
+              (assessment.grading_grid?.criteria.length ?? 0) > 0 ? "/assessments/comments" : null
+            }
+            compareHref={
+              (assessment.grading_grid?.criteria.length ?? 0) > 0
+                ? `/modules/${id}/assessments/${assessmentId}/correct?vue=critere`
+                : null
+            }
+          />
+        </>
+      )}
+    </section>
+  );
+
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
       {justSaved ? (
         <p
           role="status"
-          className="rounded-xl border border-emerald-600/40 bg-emerald-50 p-3 text-sm font-medium dark:bg-emerald-950/30"
+          className="border-success/40 text-success rounded-xl border p-3 text-sm font-medium"
         >
           Évaluation enregistrée.
         </p>
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
+          <Link
+            href={`/modules/${id}/assessments`}
+            className="text-muted-foreground hover:text-foreground text-sm underline-offset-2 hover:underline"
+          >
+            ← Les évaluations
+          </Link>
           <h1 className="font-heading text-3xl font-bold tracking-tight">{assessment.title}</h1>
           <p className="text-muted-foreground mt-1">
             {[
@@ -589,9 +626,6 @@ export default async function AssessmentPage({
               Modifier
             </Link>
           </Button>
-          <Button asChild variant="ghost">
-            <Link href={`/modules/${id}/assessments`}>← Les évaluations</Link>
-          </Button>
         </div>
       </div>
 
@@ -608,6 +642,35 @@ export default async function AssessmentPage({
           <DayJBlock dayJ={dayJTop} titleId="dayj-top" />
         </section>
       ) : null}
+
+      {/* Sommaire : chaque bloc à un clic, sans défiler. */}
+      <nav aria-label="Sommaire de l’évaluation" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        {targets.length > 0 ? (
+          <a
+            href="#copies"
+            className="text-primary font-semibold underline-offset-2 hover:underline"
+          >
+            Copies
+          </a>
+        ) : null}
+        {blocks.subject ? (
+          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+            Sujet
+          </a>
+        ) : null}
+        {blocks.grid ? (
+          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+            Grille
+          </a>
+        ) : null}
+        {blocks.expectations ? (
+          <a href="#preparation" className="text-primary underline-offset-2 hover:underline">
+            Attendus
+          </a>
+        ) : null}
+      </nav>
+
+      {copiesFirst ? copiesSection : null}
 
       <RepublishNotice
         moduleId={id}
@@ -661,485 +724,502 @@ export default async function AssessmentPage({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
-        <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
-          {!assessment.is_group_grade && blocks.examKind ? (
-            <section aria-labelledby="ty" className={`${card} space-y-3`}>
-              <h2 id="ty" className="font-heading text-xl font-bold">
-                Quelle épreuve ?
-              </h2>
-              <ExamKindForm
-                moduleId={id}
-                assessmentId={assessmentId}
-                available={"exam_kind" in assessment}
-                quizHref={`/modules/${id}/assessments/${assessmentId}/quiz`}
-                typeLabel={assessment.type ?? ""}
-                editHref={`/modules/${id}/assessments/${assessmentId}/edit`}
-                initial={{
-                  kind: examKindOf(assessment),
-                  versions: parseSubjectVersions(assessment.subject_versions),
-                  makeupPrepared: !!assessment.makeup_prepared,
-                }}
-              />
-            </section>
-          ) : null}
-          {kindNow === "school_grade" ? (
-            <section aria-labelledby="ng" className={`${card} space-y-2`}>
-              <h2 id="ng" className="font-heading text-xl font-bold">
-                Note de l’école
-              </h2>
-              <p className="text-sm">
-                Coefficient imposé par l’école : <strong>×{ruleCoefficient}</strong>. Note sur{" "}
-                {formatNumber(assessment.maxScore)}, saisie directement plus bas, sans sujet ni
-                grille.
-              </p>
-              <Link
-                href={`/modules/${id}/assessments/${assessmentId}/edit`}
-                className="text-primary text-sm font-semibold underline-offset-2 hover:underline"
+      <details id="preparation" open={!copiesFirst} className="group/prep space-y-4">
+        <summary className="hover:bg-muted font-heading flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2 text-lg font-bold">
+          Préparation
+          <span className="text-muted-foreground font-sans text-sm font-normal">
+            {[
+              blocks.examKind && !assessment.is_group_grade ? "épreuve" : null,
+              blocks.grid ? (grid ? "grille" : "pas de grille") : null,
+              blocks.dayJ ? "cadre" : null,
+              blocks.subject ? "sujet" : null,
+              blocks.expectations ? "attendus" : null,
+              blocks.submissions ? "rendus" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+        </summary>
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
+            <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
+              {!assessment.is_group_grade && blocks.examKind ? (
+                <section aria-labelledby="ty" className={`${card} space-y-3`}>
+                  <h2 id="ty" className="font-heading text-xl font-bold">
+                    Quelle épreuve ?
+                  </h2>
+                  <ExamKindForm
+                    moduleId={id}
+                    assessmentId={assessmentId}
+                    available={"exam_kind" in assessment}
+                    quizHref={`/modules/${id}/assessments/${assessmentId}/quiz`}
+                    typeLabel={assessment.type ?? ""}
+                    editHref={`/modules/${id}/assessments/${assessmentId}/edit`}
+                    initial={{
+                      kind: examKindOf(assessment),
+                      versions: parseSubjectVersions(assessment.subject_versions),
+                      makeupPrepared: !!assessment.makeup_prepared,
+                    }}
+                  />
+                </section>
+              ) : null}
+              {kindNow === "school_grade" ? (
+                <section aria-labelledby="ng" className={`${card} space-y-2`}>
+                  <h2 id="ng" className="font-heading text-xl font-bold">
+                    Note de l’école
+                  </h2>
+                  <p className="text-sm">
+                    Coefficient imposé par l’école : <strong>×{ruleCoefficient}</strong>. Note sur{" "}
+                    {formatNumber(assessment.maxScore)}, saisie directement plus bas, sans sujet ni
+                    grille.
+                  </p>
+                  <Link
+                    href={`/modules/${id}/assessments/${assessmentId}/edit`}
+                    className="text-primary text-sm font-semibold underline-offset-2 hover:underline"
+                  >
+                    Changer le coefficient
+                  </Link>
+                </section>
+              ) : null}
+              <section
+                aria-labelledby="gr"
+                hidden={!blocks.grid}
+                className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
               >
-                Changer le coefficient
-              </Link>
-            </section>
-          ) : null}
-          <section
-            aria-labelledby="gr"
-            hidden={!blocks.grid}
-            className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="gr" className="font-heading text-xl font-bold">
-                Grille de correction
-              </h2>
-              {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
-            </div>
-            {grid ? (
-              <>
-                <p className="text-muted-foreground text-sm">
-                  Chaque critère a ses paliers. Les étudiant·es la reçoivent avant le travail.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {canPresent(assessment.prep_status) ? (
-                    <DownloadButton
-                      href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
-                      icon={<FileDown aria-hidden />}
-                      doneLabel="Grille téléchargée."
-                    >
-                      Grille pour les étudiant·es (PDF)
-                    </DownloadButton>
-                  ) : (
-                    <>
-                      <Button type="button" variant="ghost" disabled aria-describedby="pdf-hint">
-                        <FileDown aria-hidden />
-                        Grille pour les étudiant·es (PDF)
-                      </Button>
-                      <p id="pdf-hint" className="text-muted-foreground self-center text-sm">
-                        Passe le sujet en « Prête » pour la remettre aux étudiant·es.
-                      </p>
-                    </>
-                  )}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="gr" className="font-heading text-xl font-bold">
+                    Grille de correction
+                  </h2>
+                  {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
                 </div>
-                <details>
-                  <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
-                    Voir la grille détaillée (critères et paliers)
-                  </summary>
-                  <div className="space-y-2 pt-2">
-                    {gridGroups.map((g, gi) => (
-                      <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
-                        {g.axis ? (
-                          <div className="flex items-center justify-between gap-3 pt-1">
-                            <strong>Axe · {g.axis.label}</strong>
-                            <span className="text-muted-foreground text-sm">
-                              {formatNumber(
-                                g.criteria
-                                  .filter((c) => !c.is_bonus)
-                                  .reduce((n, c) => n + c.weight, 0),
-                              )}{" "}
-                              points
-                            </span>
-                          </div>
-                        ) : null}
-                        {g.criteria.map((c) => (
-                          <div key={c.id} className="rounded-2xl border p-3">
-                            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                              <strong>
-                                {c.label}
-                                {c.is_bonus ? " (bonus)" : ""}
-                              </strong>
-                              <span className="text-muted-foreground text-sm">
-                                {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            {c.levels.length > 0 ? (
-                              <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                                {c.levels.map((l) => (
-                                  <li key={l.id} className="bg-muted/40 rounded-xl p-2.5 text-sm">
-                                    <strong>
-                                      {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}
-                                    </strong>
-                                    <span className="text-muted-foreground block text-[0.8rem]">
-                                      {l.description}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-muted-foreground text-sm">
-                                Saisie libre des points, de 0 à {formatNumber(c.weight)}.
-                              </p>
-                            )}
+                {grid ? (
+                  <>
+                    <p className="text-muted-foreground text-sm">
+                      Chaque critère a ses paliers. Les étudiant·es la reçoivent avant le travail.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {canPresent(assessment.prep_status) ? (
+                        <DownloadButton
+                          href={`/api/modules/${id}/assessments/${assessmentId}/grid`}
+                          icon={<FileDown aria-hidden />}
+                          doneLabel="Grille téléchargée."
+                        >
+                          Grille pour les étudiant·es (PDF)
+                        </DownloadButton>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            disabled
+                            aria-describedby="pdf-hint"
+                          >
+                            <FileDown aria-hidden />
+                            Grille pour les étudiant·es (PDF)
+                          </Button>
+                          <p id="pdf-hint" className="text-muted-foreground self-center text-sm">
+                            Passe le sujet en « Prête » pour la remettre aux étudiant·es.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <details>
+                      <summary className="focus-visible:ring-ring flex min-h-11 cursor-pointer items-center rounded-sm text-sm font-medium focus-visible:ring-2 focus-visible:outline-none">
+                        Voir la grille détaillée (critères et paliers)
+                      </summary>
+                      <div className="space-y-2 pt-2">
+                        {gridGroups.map((g, gi) => (
+                          <div key={g.axis?.id ?? `loose-${gi}`} className="space-y-2">
+                            {g.axis ? (
+                              <div className="flex items-center justify-between gap-3 pt-1">
+                                <strong>Axe · {g.axis.label}</strong>
+                                <span className="text-muted-foreground text-sm">
+                                  {formatNumber(
+                                    g.criteria
+                                      .filter((c) => !c.is_bonus)
+                                      .reduce((n, c) => n + c.weight, 0),
+                                  )}{" "}
+                                  points
+                                </span>
+                              </div>
+                            ) : null}
+                            {g.criteria.map((c) => (
+                              <div key={c.id} className="rounded-2xl border p-3">
+                                <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                                  <strong>
+                                    {c.label}
+                                    {c.is_bonus ? " (bonus)" : ""}
+                                  </strong>
+                                  <span className="text-muted-foreground text-sm">
+                                    {formatNumber(c.weight)} point{c.weight > 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                                {c.levels.length > 0 ? (
+                                  <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                                    {c.levels.map((l) => (
+                                      <li
+                                        key={l.id}
+                                        className="bg-muted/40 rounded-xl p-2.5 text-sm"
+                                      >
+                                        <strong>
+                                          {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}
+                                        </strong>
+                                        <span className="text-muted-foreground block text-[0.8rem]">
+                                          {l.description}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-muted-foreground text-sm">
+                                    Saisie libre des points, de 0 à {formatNumber(c.weight)}.
+                                  </p>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
-                    ))}
-                  </div>
-                </details>
-                <div className="flex flex-wrap items-center gap-3 border-t pt-3">
-                  <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
-                    <span role="status">
-                      Total {formatNumber(gridTotal)} sur {formatNumber(assessment.maxScore)}
-                    </span>
-                  </Pill>
-                  <span className="text-muted-foreground text-sm">
-                    Un bonus est plafonné : la note ne dépasse jamais le barème.
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {gridModules > 1
-                    ? `Utilisée dans ${gridModules} modules : si tu la modifies, elle change pour tous.`
-                    : "Cette grille ne sert que dans ce module."}
-                </p>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-sm">
-                  Pas de grille pour l’instant : la note se saisit directement, sur{" "}
-                  {formatNumber(assessment.maxScore)}. Une grille donne des critères et des paliers
-                  à la correction, et se remet aux étudiant·es avant le travail.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild>
-                    <Link href="/assessments/grids/new">Créer la grille</Link>
-                  </Button>
-                  <Button asChild variant="ghost">
-                    <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
-                      Reprendre une grille existante
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section aria-labelledby="ce" className={card} hidden={!blocks.dayJ}>
-            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-              <h2 id="ce" className="font-heading text-xl font-bold">
-                Le cadre pour les étudiant·es
-              </h2>
-              <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
-                {frame.label}
-              </Pill>
-            </div>
-            {assessment.is_group_grade ? (
-              <ul className="mb-2 flex flex-wrap gap-1.5">
-                {frameChecks.map(([label, ok]) => (
-                  <li key={label}>
-                    <Pill tone={ok ? "ok" : "warn"}>
-                      {ok ? "✓" : "!"} {label}
-                      <span className="sr-only"> : {ok ? "renseigné" : "à renseigner"}</span>
-                    </Pill>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <>
-                <p className="text-muted-foreground mb-1 text-sm">
-                  Écrit au vouvoiement. Projeté en début d’épreuve.
-                </p>
-                <ul className="divide-y">
-                  {individualFrame({
-                    kind: examKindOf(assessment),
-                    // submit_mode fait foi (submission_mode n'est plus lu, lot 6 du schéma).
-                    mode: submitModeOf(assessment) === "app" ? "app" : "manual",
-                    courseNumber: course ? courseNumber : null,
-                    date: assessment.date,
-                    deliverable: assessment.deliverable_md,
-                    evaluated: assessment.evaluated_md,
-                    maxScore: assessment.maxScore,
-                    coefficient: ruleCoefficient,
-                    whereToSubmit: assessment.where_to_submit,
-                  }).map((line) => (
-                    <li
-                      key={line.label}
-                      className="flex flex-wrap items-start gap-3 py-2.5 text-sm"
-                    >
-                      <strong className="w-40 flex-none">{line.label}</strong>
-                      <span className="min-w-0 flex-1">{line.text || "À renseigner."}</span>
-                      <Pill tone={line.filled ? "ok" : "warn"}>
-                        {line.filled ? "Prérempli" : "À renseigner"}
+                    </details>
+                    <div className="flex flex-wrap items-center gap-3 border-t pt-3">
+                      <Pill tone={gridTotal === assessment.maxScore ? "ok" : "warn"}>
+                        <span role="status">
+                          Total {formatNumber(gridTotal)} sur {formatNumber(assessment.maxScore)}
+                        </span>
                       </Pill>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
+                      <span className="text-muted-foreground text-sm">
+                        Un bonus est plafonné : la note ne dépasse jamais le barème.
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {gridModules > 1
+                        ? `Utilisée dans ${gridModules} modules : si tu la modifies, elle change pour tous.`
+                        : "Cette grille ne sert que dans ce module."}
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-muted-foreground text-sm">
+                      Pas de grille pour l’instant : la note se saisit directement, sur{" "}
+                      {formatNumber(assessment.maxScore)}. Une grille donne des critères et des
+                      paliers à la correction, et se remet aux étudiant·es avant le travail.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild>
+                        <Link href="/assessments/grids/new">Créer la grille</Link>
+                      </Button>
+                      <Button asChild variant="ghost">
+                        <Link href={`/modules/${id}/assessments/${assessmentId}/edit`}>
+                          Reprendre une grille existante
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </section>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {canPresent(assessment.prep_status) ? (
-                <OpenInWindowButton href={`/present/modules/${id}/assessments/${assessmentId}`}>
-                  Présenter le sujet
-                </OpenInWindowButton>
-              ) : (
-                <Button type="button" variant="ghost" disabled aria-describedby="not-ready-hint">
-                  <Presentation aria-hidden />
-                  Présenter le sujet
-                </Button>
-              )}
+              <section aria-labelledby="ce" className={card} hidden={!blocks.dayJ}>
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="ce" className="font-heading text-xl font-bold">
+                    Le cadre pour les étudiant·es
+                  </h2>
+                  <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
+                    {frame.label}
+                  </Pill>
+                </div>
+                {assessment.is_group_grade ? (
+                  <ul className="mb-2 flex flex-wrap gap-1.5">
+                    {frameChecks.map(([label, ok]) => (
+                      <li key={label}>
+                        <Pill tone={ok ? "ok" : "warn"}>
+                          {ok ? "✓" : "!"} {label}
+                          <span className="sr-only"> : {ok ? "renseigné" : "à renseigner"}</span>
+                        </Pill>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <>
+                    <p className="text-muted-foreground mb-1 text-sm">
+                      Écrit au vouvoiement. Projeté en début d’épreuve.
+                    </p>
+                    <ul className="divide-y">
+                      {individualFrame({
+                        kind: examKindOf(assessment),
+                        // submit_mode fait foi (submission_mode n'est plus lu, lot 6 du schéma).
+                        mode: submitModeOf(assessment) === "app" ? "app" : "manual",
+                        courseNumber: course ? courseNumber : null,
+                        date: assessment.date,
+                        deliverable: assessment.deliverable_md,
+                        evaluated: assessment.evaluated_md,
+                        maxScore: assessment.maxScore,
+                        coefficient: ruleCoefficient,
+                        whereToSubmit: assessment.where_to_submit,
+                      }).map((line) => (
+                        <li
+                          key={line.label}
+                          className="flex flex-wrap items-start gap-3 py-2.5 text-sm"
+                        >
+                          <strong className="w-40 flex-none">{line.label}</strong>
+                          <span className="min-w-0 flex-1">{line.text || "À renseigner."}</span>
+                          <Pill tone={line.filled ? "ok" : "warn"}>
+                            {line.filled ? "Prérempli" : "À renseigner"}
+                          </Pill>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {canPresent(assessment.prep_status) ? (
+                    <OpenInWindowButton href={`/present/modules/${id}/assessments/${assessmentId}`}>
+                      Présenter le sujet
+                    </OpenInWindowButton>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled
+                      aria-describedby="not-ready-hint"
+                    >
+                      <Presentation aria-hidden />
+                      Présenter le sujet
+                    </Button>
+                  )}
+                </div>
+                {canPresent(assessment.prep_status) ? null : (
+                  <p id="not-ready-hint" className="text-muted-foreground mt-2 text-sm">
+                    Passe le sujet en « Prête » pour le présenter.
+                  </p>
+                )}
+                {course ? (
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Séance {courseNumber} — {course.title}
+                  </p>
+                ) : null}
+
+                <WhereToSubmit
+                  moduleId={id}
+                  assessmentId={assessmentId}
+                  initial={assessment.where_to_submit ?? ""}
+                />
+                <SubmitSettings
+                  moduleId={id}
+                  assessmentId={assessmentId}
+                  mode={
+                    (assessment as unknown as { submit_mode?: string }).submit_mode === "app"
+                      ? "app"
+                      : "elsewhere"
+                  }
+                  accepts={(() => {
+                    const v = (assessment as unknown as { submit_accepts?: string }).submit_accepts;
+                    return v === "file" || v === "link" ? v : "both";
+                  })()}
+                  hasDeadline={!!assessment.date || !!course?.session_date}
+                />
+              </section>
             </div>
-            {canPresent(assessment.prep_status) ? null : (
-              <p id="not-ready-hint" className="text-muted-foreground mt-2 text-sm">
-                Passe le sujet en « Prête » pour le présenter.
-              </p>
-            )}
-            {course ? (
-              <p className="text-muted-foreground mt-2 text-sm">
-                Séance {courseNumber} — {course.title}
+            <aside
+              aria-label="Préparation de l’évaluation"
+              className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
+            >
+              {oralTiming}
+              {blocks.expectations ? evaluatedSection : null}
+              {assessment.is_group_grade ? (
+                <section aria-labelledby="ae" className={card}>
+                  <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
+                    Ce qu’on évalue
+                  </h2>
+                  {blank(assessment.evaluated_md) ? (
+                    <p className="text-muted-foreground text-sm">
+                      Pas encore renseigné : dis dans le cadre ce qui sera évalué.
+                    </p>
+                  ) : (
+                    <Markdown source={assessment.evaluated_md ?? ""} />
+                  )}
+                </section>
+              ) : blocks.makeupAndBonus ? (
+                <section aria-labelledby="bonus" className={card}>
+                  <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">
+                    Note bonus
+                  </h2>
+                  <BonusSettings
+                    moduleId={id}
+                    assessmentId={assessmentId}
+                    isBonus={!!assessment.is_bonus}
+                    scale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
+                  />
+                </section>
+              ) : null}
+            </aside>
+          </div>
+
+          <section
+            aria-labelledby="subject"
+            className={`${card} space-y-4`}
+            hidden={!blocks.subject}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="subject" className="font-heading text-xl font-bold">
+                Sujet
+              </h2>
+            </div>
+
+            {subjectParts.length === 0 && files.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Aucun sujet rédigé : ouvre « Modifier » pour ajouter l’objectif, la consigne et le
+                rendu attendu.
               </p>
             ) : null}
 
-            <WhereToSubmit
-              moduleId={id}
-              assessmentId={assessmentId}
-              initial={assessment.where_to_submit ?? ""}
-            />
-            <SubmitSettings
-              moduleId={id}
-              assessmentId={assessmentId}
-              mode={
-                (assessment as unknown as { submit_mode?: string }).submit_mode === "app"
-                  ? "app"
-                  : "elsewhere"
-              }
-              accepts={(() => {
-                const v = (assessment as unknown as { submit_accepts?: string }).submit_accepts;
-                return v === "file" || v === "link" ? v : "both";
-              })()}
-              hasDeadline={!!assessment.date || !!course?.session_date}
-            />
+            {subjectParts.map((part) => (
+              <div key={part.key}>
+                <h3 className="mb-1 font-bold">{part.heading}</h3>
+                {part.markdown ? <Markdown source={part.text} /> : <p>{part.text}</p>}
+              </div>
+            ))}
+
+            {files.length > 0 ? (
+              <div>
+                <h3 className="mb-1 font-bold">Fichiers joints</h3>
+                <ul className="space-y-1 text-sm">
+                  {files.map((f) => (
+                    <li key={f.path}>
+                      <a
+                        href={assessmentFileUrl(assessmentId, f.name)}
+                        download
+                        className="inline-flex items-center gap-1 underline underline-offset-2"
+                      >
+                        <Download aria-hidden className="size-4" />
+                        {f.name}
+                        <span className="sr-only"> (télécharger)</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
-        </div>
-        <aside
-          aria-label="Préparation de l’évaluation"
-          className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none"
-        >
-          {oralTiming}
-          {blocks.expectations ? evaluatedSection : null}
-          {assessment.is_group_grade ? (
-            <section aria-labelledby="ae" className={card}>
-              <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
-                Ce qu’on évalue
+
+          {submissionData.available &&
+          targets.length > 0 &&
+          blocks.submissions &&
+          examKindOf(assessment) !== "qcm" ? (
+            <section aria-labelledby="rendus" className="space-y-3">
+              <h2 id="rendus" className="text-lg font-medium">
+                Rendus déposés
               </h2>
-              {blank(assessment.evaluated_md) ? (
-                <p className="text-muted-foreground text-sm">
-                  Pas encore renseigné : dis dans le cadre ce qui sera évalué.
-                </p>
-              ) : (
-                <Markdown source={assessment.evaluated_md ?? ""} />
-              )}
-            </section>
-          ) : blocks.makeupAndBonus ? (
-            <section aria-labelledby="bonus" className={card}>
-              <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">
-                Note bonus
-              </h2>
-              <BonusSettings
+              <p className="text-muted-foreground text-sm">
+                Les dépôts des étudiant·es arrivent ici ; tu peux aussi ajouter à la main des
+                fichiers ou liens par {assessment.is_group_grade ? "groupe" : "étudiant·e"} («
+                ajouté par toi »). Ils s’ouvrent aussi depuis la copie à corriger.
+              </p>
+              <SubmissionItems
                 moduleId={id}
                 assessmentId={assessmentId}
-                isBonus={!!assessment.is_bonus}
-                scale={assessment.is_bonus ? parseScale(assessment.score_scale) : null}
+                deadline={
+                  deadlineOf(
+                    assessment.date ?? course?.session_date ?? null,
+                    (
+                      assessment as unknown as { oral_start_time?: string | null }
+                    ).oral_start_time?.slice(0, 5) ?? null,
+                  )?.toISOString() ?? null
+                }
+                rows={(() => {
+                  const nameOf = new Map([
+                    ...targets.flatMap(({ students }) =>
+                      students.map((st) => [st.id, `${st.first_name} ${st.last_name}`] as const),
+                    ),
+                    ...assessment.groups.flatMap((g) =>
+                      g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
+                    ),
+                  ]);
+                  const withMeta = <T extends object>(it: T) => {
+                    const x = it as unknown as {
+                      submitted_at?: string | null;
+                      submitted_by_student_id?: string | null;
+                    };
+                    return {
+                      ...it,
+                      submitted_at: x.submitted_at ?? null,
+                      submitted_by_name: x.submitted_by_student_id
+                        ? (nameOf.get(x.submitted_by_student_id) ?? null)
+                        : null,
+                    };
+                  };
+                  // Anciennes versions par personne ou groupe, regroupées par envoi (la plus récente d'abord).
+                  const historyOf = new Map<
+                    string,
+                    Map<string, ReturnType<typeof withMeta<(typeof replacedRows)[number]>>[]>
+                  >();
+                  const replacedRows = submissionData.replaced ?? [];
+                  for (const r of replacedRows) {
+                    const key = r.group_id ?? r.student_id;
+                    const batch = (r as unknown as { batch_id?: string | null }).batch_id ?? r.id;
+                    if (!key) continue;
+                    const byBatch = historyOf.get(key) ?? new Map();
+                    byBatch.set(batch, [...(byBatch.get(batch) ?? []), withMeta(r)]);
+                    historyOf.set(key, byBatch);
+                  }
+                  const historyFor = (key: string) =>
+                    [...(historyOf.get(key)?.entries() ?? [])]
+                      .map(([batch, items]) => ({
+                        key: batch,
+                        at: items[0]?.submitted_at ?? items[0]?.created_at ?? null,
+                        by: items[0]?.submitted_by_name ?? null,
+                        items,
+                      }))
+                      .sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
+                  const versionsOf = new Map<string, Set<string>>();
+                  for (const r of submissionData.replaced ?? []) {
+                    const key = r.group_id ?? r.student_id;
+                    const batch = (r as unknown as { batch_id?: string | null }).batch_id;
+                    if (key && batch)
+                      versionsOf.set(key, (versionsOf.get(key) ?? new Set()).add(batch));
+                  }
+                  const byOwner = groupByOwner(
+                    submissionData.items.map((it) => {
+                      const x = it as unknown as {
+                        submitted_at?: string | null;
+                        submitted_by_student_id?: string | null;
+                      };
+                      return {
+                        ...it,
+                        submitted_at: x.submitted_at ?? null,
+                        submitted_by_name: x.submitted_by_student_id
+                          ? (nameOf.get(x.submitted_by_student_id) ?? null)
+                          : null,
+                      };
+                    }),
+                  );
+                  return assessment.is_group_grade
+                    ? targets.map(({ group }) => ({
+                        owner: { kind: "group" as const, id: group.id },
+                        name: group.name,
+                        items: byOwner.get(group.id) ?? [],
+                        versions: (versionsOf.get(group.id)?.size ?? 0) + 1,
+                        history: historyFor(group.id),
+                      }))
+                    : targets.flatMap(({ students }) =>
+                        students.map((s) => ({
+                          owner: { kind: "student" as const, id: s.id },
+                          name: `${s.first_name} ${s.last_name}`,
+                          items: byOwner.get(s.id) ?? [],
+                          versions: (versionsOf.get(s.id)?.size ?? 0) + 1,
+                          history: historyFor(s.id),
+                        })),
+                      );
+                })()}
               />
             </section>
           ) : null}
-        </aside>
-      </div>
-
-      <section aria-labelledby="subject" className={`${card} space-y-4`} hidden={!blocks.subject}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="subject" className="font-heading text-xl font-bold">
-            Sujet
-          </h2>
         </div>
-
-        {subjectParts.length === 0 && files.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Aucun sujet rédigé : ouvre « Modifier » pour ajouter l’objectif, la consigne et le rendu
-            attendu.
-          </p>
-        ) : null}
-
-        {subjectParts.map((part) => (
-          <div key={part.key}>
-            <h3 className="mb-1 font-bold">{part.heading}</h3>
-            {part.markdown ? <Markdown source={part.text} /> : <p>{part.text}</p>}
-          </div>
-        ))}
-
-        {files.length > 0 ? (
-          <div>
-            <h3 className="mb-1 font-bold">Fichiers joints</h3>
-            <ul className="space-y-1 text-sm">
-              {files.map((f) => (
-                <li key={f.path}>
-                  <a
-                    href={assessmentFileUrl(assessmentId, f.name)}
-                    download
-                    className="inline-flex items-center gap-1 underline underline-offset-2"
-                  >
-                    <Download aria-hidden className="size-4" />
-                    {f.name}
-                    <span className="sr-only"> (télécharger)</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </section>
-
-      {submissionData.available &&
-      targets.length > 0 &&
-      blocks.submissions &&
-      examKindOf(assessment) !== "qcm" ? (
-        <section aria-labelledby="rendus" className="space-y-3">
-          <h2 id="rendus" className="text-lg font-medium">
-            Rendus déposés
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Les dépôts des étudiant·es arrivent ici ; tu peux aussi ajouter à la main des fichiers
-            ou liens par {assessment.is_group_grade ? "groupe" : "étudiant·e"} (« ajouté par toi »).
-            Ils s’ouvrent aussi depuis la copie à corriger.
-          </p>
-          <SubmissionItems
-            moduleId={id}
-            assessmentId={assessmentId}
-            deadline={
-              deadlineOf(
-                assessment.date ?? course?.session_date ?? null,
-                (
-                  assessment as unknown as { oral_start_time?: string | null }
-                ).oral_start_time?.slice(0, 5) ?? null,
-              )?.toISOString() ?? null
-            }
-            rows={(() => {
-              const nameOf = new Map([
-                ...targets.flatMap(({ students }) =>
-                  students.map((st) => [st.id, `${st.first_name} ${st.last_name}`] as const),
-                ),
-                ...assessment.groups.flatMap((g) =>
-                  g.members.map((m) => [m.id, `${m.first_name} ${m.last_name}`] as const),
-                ),
-              ]);
-              const withMeta = <T extends object>(it: T) => {
-                const x = it as unknown as {
-                  submitted_at?: string | null;
-                  submitted_by_student_id?: string | null;
-                };
-                return {
-                  ...it,
-                  submitted_at: x.submitted_at ?? null,
-                  submitted_by_name: x.submitted_by_student_id
-                    ? (nameOf.get(x.submitted_by_student_id) ?? null)
-                    : null,
-                };
-              };
-              // Anciennes versions par personne ou groupe, regroupées par envoi (la plus récente d'abord).
-              const historyOf = new Map<
-                string,
-                Map<string, ReturnType<typeof withMeta<(typeof replacedRows)[number]>>[]>
-              >();
-              const replacedRows = submissionData.replaced ?? [];
-              for (const r of replacedRows) {
-                const key = r.group_id ?? r.student_id;
-                const batch = (r as unknown as { batch_id?: string | null }).batch_id ?? r.id;
-                if (!key) continue;
-                const byBatch = historyOf.get(key) ?? new Map();
-                byBatch.set(batch, [...(byBatch.get(batch) ?? []), withMeta(r)]);
-                historyOf.set(key, byBatch);
-              }
-              const historyFor = (key: string) =>
-                [...(historyOf.get(key)?.entries() ?? [])]
-                  .map(([batch, items]) => ({
-                    key: batch,
-                    at: items[0]?.submitted_at ?? items[0]?.created_at ?? null,
-                    by: items[0]?.submitted_by_name ?? null,
-                    items,
-                  }))
-                  .sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
-              const versionsOf = new Map<string, Set<string>>();
-              for (const r of submissionData.replaced ?? []) {
-                const key = r.group_id ?? r.student_id;
-                const batch = (r as unknown as { batch_id?: string | null }).batch_id;
-                if (key && batch)
-                  versionsOf.set(key, (versionsOf.get(key) ?? new Set()).add(batch));
-              }
-              const byOwner = groupByOwner(
-                submissionData.items.map((it) => {
-                  const x = it as unknown as {
-                    submitted_at?: string | null;
-                    submitted_by_student_id?: string | null;
-                  };
-                  return {
-                    ...it,
-                    submitted_at: x.submitted_at ?? null,
-                    submitted_by_name: x.submitted_by_student_id
-                      ? (nameOf.get(x.submitted_by_student_id) ?? null)
-                      : null,
-                  };
-                }),
-              );
-              return assessment.is_group_grade
-                ? targets.map(({ group }) => ({
-                    owner: { kind: "group" as const, id: group.id },
-                    name: group.name,
-                    items: byOwner.get(group.id) ?? [],
-                    versions: (versionsOf.get(group.id)?.size ?? 0) + 1,
-                    history: historyFor(group.id),
-                  }))
-                : targets.flatMap(({ students }) =>
-                    students.map((s) => ({
-                      owner: { kind: "student" as const, id: s.id },
-                      name: `${s.first_name} ${s.last_name}`,
-                      items: byOwner.get(s.id) ?? [],
-                      versions: (versionsOf.get(s.id)?.size ?? 0) + 1,
-                      history: historyFor(s.id),
-                    })),
-                  );
-            })()}
-          />
-        </section>
-      ) : null}
+      </details>
 
       {makeupPanel}
 
-      {targets.length === 0 ? (
-        <p className="text-muted-foreground">Aucun groupe visé : modifie l’évaluation.</p>
-      ) : (
-        <>
-          <CorrectionOverview
-            overview={overview}
-            maxScore={assessment.maxScore}
-            noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
-            correctHref={`/modules/${id}/assessments/${assessmentId}/correct`}
-            phrasesHref={
-              (assessment.grading_grid?.criteria.length ?? 0) > 0 ? "/assessments/comments" : null
-            }
-            compareHref={
-              (assessment.grading_grid?.criteria.length ?? 0) > 0
-                ? `/modules/${id}/assessments/${assessmentId}/correct?vue=critere`
-                : null
-            }
-          />
-        </>
-      )}
+      {copiesFirst ? null : copiesSection}
 
       <div className="border-t pt-4">
         <DeleteAssessmentButton moduleId={id} assessmentId={assessmentId} />

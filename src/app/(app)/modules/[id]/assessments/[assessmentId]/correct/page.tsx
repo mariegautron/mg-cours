@@ -123,9 +123,11 @@ export default async function CorrectPage({
   const quiz = assessment.is_group_grade ? null : await getQuizByAssessment(assessmentId);
 
   // Rendu (fichiers ou liens) corrigé à la grille : le rendu à gauche, la grille en lettres à droite.
+  // Oral : la même grille en lettres A à D (A = le plus haut), sans bloc « Rendu » (lot 0, point C).
+  const examKind = examKindOf(assessment);
   if (
     !quiz &&
-    examKindOf(assessment) === "files" &&
+    (examKind === "files" || examKind === "oral") &&
     (assessment.grading_grid?.criteria ?? []).length
   ) {
     const rawGrades = await getGradesByAssessment(assessmentId, { skipRewrite: true });
@@ -232,6 +234,7 @@ export default async function CorrectPage({
             deadline={deadlineOf(assessment.date, null)?.toISOString() ?? null}
             initialId={typeof copy === "string" ? copy : undefined}
             initialView={vue === "critere" ? "criterion" : undefined}
+            withRendu={examKind !== "oral"}
           />
         </div>
       );

@@ -95,8 +95,7 @@ export default async function ClassPage({
         defaultView="grid"
       />
       <p className="text-muted-foreground text-sm">
-        Clique une photo pour noter la personne : le formulaire de note s’ouvre sous la grille
-        (touches 1 à 5).
+        Clique une photo pour noter la personne : le formulaire de note s’ouvre sous la grille.
       </p>
     </div>
   );

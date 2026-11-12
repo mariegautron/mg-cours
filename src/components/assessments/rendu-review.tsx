@@ -43,6 +43,7 @@ export function RenduReview({
   deadline,
   initialId,
   initialView,
+  withRendu = true,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -57,6 +58,8 @@ export function RenduReview({
   initialId?: string;
   /** « Par critère » à l’ouverture (`?vue=critere`, ancienne page « Comparer un critère »). */
   initialView?: "copy" | "criterion";
+  /** Oral : aucun rendu, la grille en lettres prend toute la largeur (pas de bloc « Rendu »). */
+  withRendu?: boolean;
 }) {
   const start = Math.max(
     0,
@@ -316,7 +319,7 @@ export function RenduReview({
                           setView("copy");
                         }}
                       >
-                        Voir le rendu
+                        {withRendu ? "Voir le rendu" : "Voir la copie"}
                       </Button>
                     </td>
                   </tr>
@@ -329,10 +332,15 @@ export function RenduReview({
       <div
         hidden={view !== "copy"}
         className={
-          view === "copy" ? "grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "hidden"
+          view !== "copy"
+            ? "hidden"
+            : withRendu
+              ? "grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+              : "mx-auto max-w-4xl"
         }
       >
         <section
+          hidden={!withRendu}
           aria-labelledby="rendu-title"
           className="bg-card space-y-3 rounded-2xl border p-4 lg:sticky lg:top-16 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto"
         >

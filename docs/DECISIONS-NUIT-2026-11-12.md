@@ -45,3 +45,40 @@ aucune migration. Vérification : `tsc --noEmit` + ESLint/Prettier sur les fichi
   projet Supabase et Vercel, domaine `mg-cours.vercel.app`, sel technique des QCM, migrations,
   seed, scripts de migration Notion, titres de sources Notion citées dans la doc, historique du
   BACKLOG.
+
+## Lot 0 : écrire, trouver ses copies, noter juste
+
+- **A. Note du groupe** : « Un mot pour [prénom] » et « Un mot pour tout l'axe » deviennent des
+  zones de texte de 3 lignes qui s'agrandissent, pleine largeur. Le **Bilan** (points forts,
+  progrès, commentaire libre) passe sous la grille en pleine largeur ; la colonne de droite garde
+  total, présence et observations. Les onglets de critères passent à la ligne. « Pas encore noté »
+  n'est plus une tuile : c'est un texte sous les paliers, avec un bouton discret « Effacer le
+  palier » pour revenir à cet état (sinon on ne pouvait plus « dé-noter »).
+- **Zones de commentaire** : 4 lignes par défaut partout (`CommentField`, `Textarea` min. 4 lignes).
+- **B. Comparer un critère** : paliers à gauche, commentaire à droite sur 60 % de la largeur.
+- **C. Oral en lettres** : un oral avec grille passe désormais par la correction en lettres A à D
+  (celle des rendus), sans le bloc « Rendu » à gauche. Les notes déjà saisies en points sont
+  relues en lettres quand elles tombent pile sur un palier (logique existante `lettersFromScores`).
+- **D. Blocs selon le type** : la table `kindBlocks` existait déjà ; je n'ai rien ajouté.
+- **E/35/36. Page d'une évaluation** : sommaire en haut (Copies, Sujet, Grille, Attendus). Dès que
+  la date est passée ou qu'une note existe, le tableau des copies remonte sous l'en-tête et toute la
+  préparation (épreuve, grille, cadre, sujet, attendus, rendus) se replie dans « Préparation ».
+  « Attendus évalués » replié (« 3 attendus évalués · Modifier »), seulement les cochés, et chaque
+  case s'enregistre seule. **Pas fait** : passer en enregistrement automatique les autres blocs
+  (« Quelle épreuve ? », « Où rendre », réglages du dépôt, note bonus, horaires de l'oral) ; ils
+  gardent leur bouton. Retour « ← Les évaluations » remonté au-dessus du titre.
+- **F. Une seule façon d'enregistrer** : « Enregistrer tout » et « Enregistrer la note » retirés ;
+  l'état (« Enregistré à 15 h 12 », « Pas enregistré · Réessayer ») s'affiche dans la barre du bas.
+- **G. Une seule navigation** : « ← · Groupe 1 · Groupe 2 · … · → » en haut de la correction (avec
+  l'état de chaque copie), « Vue d'ensemble » dans la copie. « Aller à une copie » et les boutons
+  « Copie précédente / suivante » retirés.
+- **H. Aides clavier masquées** : correction, trombinoscope, point d'étape, observations,
+  projection (« touche F » → bouton « Plein écran »). Les raccourcis marchent toujours.
+- **A3 (barre du bas qui recouvre)** : pas touché ; la barre est collée dans le formulaire et
+  `scroll-padding-bottom` évite déjà de cacher le focus. À revérifier à l'écran.
+- **I. Page d'une séance** : sous ~1 400 px utiles (fenêtre < 1 680 px), « Les N séances » devient
+  une liste repliée en haut ; au-delà, elle reste en colonne. Attendus, évaluation liée et quiz
+  passent toujours sous la séance (2 colonnes). Actions : « Faire cours » en principal,
+  « Modifier » (+ « Modifier la clôture » si la séance est faite), le reste (ordre, suppression)
+  dans « Plus ». Les 3 boutons d'ajout de séance deviennent « Ajouter une séance ▾ ». Le déroulé
+  se replie au-delà de 5 étapes (« Voir les 8 autres étapes »).

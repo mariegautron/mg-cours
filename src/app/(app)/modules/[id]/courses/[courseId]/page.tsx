@@ -157,9 +157,11 @@ export default async function CoursePage({
 
   return (
     <div className="space-y-4">
-      {/* Sous 1280 px (portable à 125 %) : attendus, évaluation et quiz passent sous le déroulé. */}
-      <div className="flex flex-wrap items-stretch gap-4 xl:flex-nowrap">
+      {/* Colonne de travail d'au moins 560 px : sous ~1 400 px utiles, la liste des séances passe
+          en liste repliée en haut ; attendus, évaluation et quiz passent toujours sous la séance. */}
+      <div className="min-[1680px]:hidden">
         <SessionList
+          layout="drawer"
           moduleId={id}
           courses={courses}
           currentId={courseId}
@@ -167,8 +169,22 @@ export default async function CoursePage({
           missing={missing.map((e) => e.label)}
           hoursMessage={hours.consistent || totalPlannedHours(courses) === 0 ? null : hours.message}
         />
+      </div>
+      <div className="flex items-start gap-4">
+        <div className="hidden min-[1680px]:block">
+          <SessionList
+            moduleId={id}
+            courses={courses}
+            currentId={courseId}
+            totalHours={mod.total_hours}
+            missing={missing.map((e) => e.label)}
+            hoursMessage={
+              hours.consistent || totalPlannedHours(courses) === 0 ? null : hours.message
+            }
+          />
+        </div>
 
-        <section aria-labelledby="ws" className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
+        <section aria-labelledby="ws" className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-muted-foreground text-[0.8rem]">
@@ -207,10 +223,19 @@ export default async function CoursePage({
             </div>
           </div>
 
+          {/* Une action principale (Faire cours), deux secondaires, le reste dans « Plus ». */}
           <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/modules/${id}/courses/${courseId}/start`} className={BTN}>
+            <Link
+              href={`/modules/${id}/courses/${courseId}/start`}
+              className="bg-primary text-primary-foreground hover:bg-primary/85 inline-flex min-h-11 items-center justify-center rounded-[10px] px-4 text-sm font-semibold"
+            >
               <Play aria-hidden className="mr-2 size-4" />
               Faire cours<span className="sr-only"> : {course.title}</span>
+            </Link>
+            <Link href={`/modules/${id}/courses/${courseId}/edit`} className={BTN}>
+              <Pencil aria-hidden className="mr-2 size-4" />
+              Modifier
+              <span className="sr-only"> la séance {index + 1} (date, horaires, objectifs)</span>
             </Link>
             {course.completion ? (
               <Link href={`/modules/${id}/courses/${courseId}/close`} className={BTN}>
@@ -219,24 +244,26 @@ export default async function CoursePage({
                 <span className="sr-only"> de la séance {index + 1}</span>
               </Link>
             ) : null}
-            <Link href={`/modules/${id}/courses/${courseId}/edit`} className={BTN}>
-              <Pencil aria-hidden className="mr-2 size-4" />
-              Modifier
-              <span className="sr-only"> la séance {index + 1} (date, horaires, objectifs)</span>
-            </Link>
-            <CourseOrderButtons
-              moduleId={id}
-              courseId={courseId}
-              title={course.title}
-              index={index}
-              total={courses.length}
-            />
-            <ConfirmDeleteButton
-              itemName={`la séance ${index + 1}`}
-              title={`Supprimer la séance ${index + 1} ?`}
-              description="La séance et son déroulé sont supprimés. Les ressources restent dans la bibliothèque."
-              onConfirm={deleteCourseAndBack.bind(null, id, courseId)}
-            />
+            <details className="relative">
+              <summary className={`${BTN} cursor-pointer list-none`}>
+                Plus<span className="sr-only"> d’actions sur la séance {index + 1}</span> ▾
+              </summary>
+              <div className="bg-popover absolute z-20 mt-1 flex w-72 flex-col items-start gap-2 rounded-xl border p-3 shadow-md">
+                <CourseOrderButtons
+                  moduleId={id}
+                  courseId={courseId}
+                  title={course.title}
+                  index={index}
+                  total={courses.length}
+                />
+                <ConfirmDeleteButton
+                  itemName={`la séance ${index + 1}`}
+                  title={`Supprimer la séance ${index + 1} ?`}
+                  description="La séance et son déroulé sont supprimés. Les ressources restent dans la bibliothèque."
+                  onConfirm={deleteCourseAndBack.bind(null, id, courseId)}
+                />
+              </div>
+            </details>
           </div>
 
           <SessionWorkspace
@@ -271,78 +298,78 @@ export default async function CoursePage({
               </p>
             </div>
           </div>
+          <div
+            className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3"
+            role="group"
+            aria-label="Autour de la séance"
+          >
+            <section aria-labelledby="at" className="bg-card rounded-3xl border p-4">
+              <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
+                Attendus traités
+              </h2>
+              <CourseExpectationsPicker
+                moduleId={id}
+                courseId={courseId}
+                expectations={expectations.map((e) => ({ id: e.id, label: e.label }))}
+                initial={covered.map((e) => e.id)}
+                suggested={suggestedExpectationIds}
+              />
+            </section>
+
+            <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4">
+              <h2 id="ev" className="font-heading mb-1 text-base font-bold">
+                Évaluation liée
+              </h2>
+              {linked.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Aucune évaluation à cette séance.</p>
+              ) : (
+                linked.map((a) => (
+                  <div key={a.id} className="mb-2">
+                    <strong>{a.title}</strong>
+                    <p className="text-muted-foreground text-[0.8rem]">
+                      {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
+                    </p>
+                    <p className="my-1.5 flex flex-wrap gap-1.5">
+                      <Pill tone={isSubjectToBuild(a) ? "warn" : "ok"}>
+                        {isSubjectToBuild(a) ? "Sujet à construire" : "Sujet prêt"}
+                      </Pill>
+                      <Pill tone={a.grading_grid_id ? "ok" : "warn"}>
+                        {a.grading_grid_id ? "Grille prête" : "Grille à créer"}
+                      </Pill>
+                    </p>
+                    <Link href={`/modules/${id}/assessments/${a.id}`} className={BTN}>
+                      Ouvrir l’évaluation<span className="sr-only"> : {a.title}</span>
+                    </Link>
+                  </div>
+                ))
+              )}
+            </section>
+
+            <section aria-labelledby="qz" className="bg-card rounded-3xl border p-4">
+              <h2 id="qz" className="font-heading mb-1 text-base font-bold">
+                Quiz de fin de séance
+              </h2>
+              <p className="text-muted-foreground mb-1 text-sm">
+                Les questions viennent des ressources du déroulé de cette séance.
+              </p>
+              <p role="status" className="mb-2 text-sm font-medium">
+                {!links.available
+                  ? "Les questions liées seront disponibles après la mise à jour de la base de données."
+                  : ordered.length === 0
+                    ? "0 ressource dans le déroulé."
+                    : `${ordered.length} ressource${ordered.length > 1 ? "s" : ""}, ${questionCount} question${questionCount > 1 ? "s" : ""} liée${questionCount > 1 ? "s" : ""}.`}
+              </p>
+              <div className="flex flex-col gap-2">
+                <Link href="#deroule" className={BTN}>
+                  Ajouter une ressource au déroulé
+                </Link>
+                <Link href={`/modules/${id}/courses/${courseId}/questions`} className={BTN}>
+                  Lier des questions aux ressources de cette séance
+                </Link>
+              </div>
+            </section>
+          </div>
         </section>
-
-        <aside
-          className="w-full min-w-0 space-y-3 xl:w-72 xl:flex-none"
-          aria-label="Autour de la séance"
-        >
-          <section aria-labelledby="at" className="bg-card rounded-3xl border p-4 shadow-sm">
-            <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
-              Attendus traités
-            </h2>
-            <CourseExpectationsPicker
-              moduleId={id}
-              courseId={courseId}
-              expectations={expectations.map((e) => ({ id: e.id, label: e.label }))}
-              initial={covered.map((e) => e.id)}
-              suggested={suggestedExpectationIds}
-            />
-          </section>
-
-          <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4 shadow-sm">
-            <h2 id="ev" className="font-heading mb-1 text-base font-bold">
-              Évaluation liée
-            </h2>
-            {linked.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Aucune évaluation à cette séance.</p>
-            ) : (
-              linked.map((a) => (
-                <div key={a.id} className="mb-2">
-                  <strong>{a.title}</strong>
-                  <p className="text-muted-foreground text-[0.8rem]">
-                    {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
-                  </p>
-                  <p className="my-1.5 flex flex-wrap gap-1.5">
-                    <Pill tone={isSubjectToBuild(a) ? "warn" : "ok"}>
-                      {isSubjectToBuild(a) ? "Sujet à construire" : "Sujet prêt"}
-                    </Pill>
-                    <Pill tone={a.grading_grid_id ? "ok" : "warn"}>
-                      {a.grading_grid_id ? "Grille prête" : "Grille à créer"}
-                    </Pill>
-                  </p>
-                  <Link href={`/modules/${id}/assessments/${a.id}`} className={BTN}>
-                    Ouvrir l’évaluation<span className="sr-only"> : {a.title}</span>
-                  </Link>
-                </div>
-              ))
-            )}
-          </section>
-
-          <section aria-labelledby="qz" className="bg-card rounded-3xl border p-4 shadow-sm">
-            <h2 id="qz" className="font-heading mb-1 text-base font-bold">
-              Quiz de fin de séance
-            </h2>
-            <p className="text-muted-foreground mb-1 text-sm">
-              Les questions viennent des ressources du déroulé de cette séance.
-            </p>
-            <p role="status" className="mb-2 text-sm font-medium">
-              {!links.available
-                ? "Les questions liées seront disponibles après la mise à jour de la base de données."
-                : ordered.length === 0
-                  ? "0 ressource dans le déroulé."
-                  : `${ordered.length} ressource${ordered.length > 1 ? "s" : ""}, ${questionCount} question${questionCount > 1 ? "s" : ""} liée${questionCount > 1 ? "s" : ""}.`}
-            </p>
-            <div className="flex flex-col gap-2">
-              <Link href="#deroule" className={BTN}>
-                Ajouter une ressource au déroulé
-              </Link>
-              <Link href={`/modules/${id}/courses/${courseId}/questions`} className={BTN}>
-                Lier des questions aux ressources de cette séance
-              </Link>
-            </div>
-          </section>
-        </aside>
       </div>
       <PruneEmptySessions
         moduleId={id}

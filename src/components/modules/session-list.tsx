@@ -21,6 +21,7 @@ export function SessionList({
   totalHours,
   missing,
   hoursMessage = null,
+  layout = "column",
 }: {
   moduleId: string;
   courses: CourseWithResources[];
@@ -30,6 +31,11 @@ export function SessionList({
   missing: string[];
   /** Écart entre les heures planifiées et celles du module. */
   hoursMessage?: string | null;
+  /**
+   * « column » : colonne à gauche (grand écran) ; « drawer » : liste repliée en haut de la page, pour
+   * laisser au moins 560 px à la colonne de travail (portable à 125 %).
+   */
+  layout?: "column" | "drawer";
 }) {
   const minutes = courses.reduce((n, c) => n + (minutesBetween(c.start_time, c.end_time) ?? 0), 0);
   // Une séance « Prête » dont le déroulé garde une ressource « À construire » ne compte pas comme
@@ -48,18 +54,10 @@ export function SessionList({
     (focus && (!focus.session_date || focus.session_date >= today) ? focus.id : null);
   const BTN =
     "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
-  return (
-    <aside
-      aria-labelledby="ls"
-      className="bg-card w-full min-w-0 rounded-3xl border p-3.5 shadow-sm lg:w-80 lg:flex-none"
-    >
-      <h2 id="ls" className="font-heading mx-1.5 text-lg font-bold">
-        {courses.length > 1 ? `Les ${courses.length} séances` : "La séance"}
-      </h2>
-      <p className="text-muted-foreground mx-1.5 mb-2 text-[0.8rem]">
-        {minutes ? `${hoursLabel(minutes)} sur ${totalHours} h · ` : ""}
-        {ready} sur {courses.length} {courses.length > 1 ? "prêtes" : "prête"}
-      </p>
+  const heading = courses.length > 1 ? `Les ${courses.length} séances` : "La séance";
+  const summary = `${minutes ? `${hoursLabel(minutes)} sur ${totalHours} h · ` : ""}${ready} sur ${courses.length} ${courses.length > 1 ? "prêtes" : "prête"}`;
+  const body = (
+    <>
       <ol>
         {courses.map((c, i) => {
           const current = c.id === currentId;
@@ -139,16 +137,37 @@ export function SessionList({
           </p>
         </div>
       ) : null}
-      <div className="mx-1.5 mt-3 flex flex-wrap gap-2">
-        <Link href={`/modules/${moduleId}/courses/new`} className={BTN}>
-          Ajouter une séance
-        </Link>
-        <Link href={`/modules/${moduleId}/schedule`} className={BTN}>
-          Depuis un planning
-        </Link>
-        <Link href={`/modules/${moduleId}/import-courses`} className={BTN}>
-          Depuis un autre module
-        </Link>
+      <div className="mx-1.5 mt-3 flex flex-wrap items-start gap-2">
+        {/* Un seul bouton d'ajout, avec ses trois façons de faire. */}
+        <details className="relative">
+          <summary className={cn(BTN, "cursor-pointer list-none")}>Ajouter une séance ▾</summary>
+          <ul className="bg-popover absolute z-20 mt-1 w-64 space-y-1 rounded-xl border p-2 shadow-md">
+            <li>
+              <Link
+                href={`/modules/${moduleId}/courses/new`}
+                className="hover:bg-muted flex min-h-11 items-center rounded-lg px-3 text-sm"
+              >
+                Une séance vide
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`/modules/${moduleId}/schedule`}
+                className="hover:bg-muted flex min-h-11 items-center rounded-lg px-3 text-sm"
+              >
+                Depuis un planning
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`/modules/${moduleId}/import-courses`}
+                className="hover:bg-muted flex min-h-11 items-center rounded-lg px-3 text-sm"
+              >
+                Depuis un autre module
+              </Link>
+            </li>
+          </ul>
+        </details>
         {courses.length ? (
           <Link href={`/modules/${moduleId}/planning`} className={BTN}>
             Planning du module
@@ -160,6 +179,35 @@ export function SessionList({
           </Link>
         ) : null}
       </div>
+    </>
+  );
+
+  if (layout === "drawer") {
+    const current = courses.findIndex((c) => c.id === currentId);
+    return (
+      <details className="bg-card min-w-0 rounded-3xl border p-3">
+        <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
+          <span className="font-heading text-base font-bold">{heading}</span>
+          <span className="text-muted-foreground text-sm">
+            {current >= 0 ? `Séance ${current + 1} ouverte · ` : ""}
+            {summary}
+          </span>
+        </summary>
+        <div className="pt-2">{body}</div>
+      </details>
+    );
+  }
+
+  return (
+    <aside
+      aria-labelledby="ls"
+      className="bg-card w-full min-w-0 rounded-3xl border p-3.5 lg:w-80 lg:flex-none"
+    >
+      <h2 id="ls" className="font-heading mx-1.5 text-lg font-bold">
+        {heading}
+      </h2>
+      <p className="text-muted-foreground mx-1.5 mb-2 text-[0.8rem]">{summary}</p>
+      {body}
     </aside>
   );
 }

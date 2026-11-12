@@ -413,7 +413,7 @@ export function ObservationPanel({
       ) : null}
       <p id={`${filterId}-count`} className="text-muted-foreground text-xs" aria-live="polite">
         {visible.length} étudiant·e{visible.length > 1 ? "s" : ""}
-        {selectedName ? ` · sélection : ${selectedName} (Entrée pour noter, ↑ ↓ pour changer)` : ""}
+        {selectedName ? ` · sélection : ${selectedName}` : ""}
       </p>
 
       {/* Confirmation en surimpression : elle ne décale jamais la liste sous le curseur. */}

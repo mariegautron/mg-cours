@@ -55,7 +55,7 @@ export interface SessionSection {
 
 /**
  * Correction d'une évaluation sur une page : toutes les copies, avancement « 12/30 corrigées »,
- * enregistrement automatique par copie, « Enregistrer tout », avertissement avant de quitter, navigation
+ * enregistrement automatique par copie, avertissement avant de quitter, navigation
  * d'une copie à l'autre et vue « un critère pour toute la classe ».
  */
 export function GradingSession({
@@ -159,12 +159,6 @@ export function GradingSession({
   if (!complete && !wasIncomplete) setWasIncomplete(true);
   const celebrate = complete && wasIncomplete;
 
-  function saveAll() {
-    for (const copy of controls.current.values()) {
-      if (copy.isDirty()) copy.save();
-    }
-  }
-
   function focusCopy(id: string) {
     const focus = () => {
       const heading = document.getElementById(`copy-${id}-title`);
@@ -206,14 +200,12 @@ export function GradingSession({
             {progress.label}
             {progress.inProgress > 0 ? ` · ${progress.inProgress} en cours` : ""}
           </p>
+          {/* Une seule façon d'enregistrer : automatique, copie par copie (plus de « Enregistrer tout »). */}
           <p className="text-muted-foreground text-sm">
             {progress.dirty > 0
-              ? `${progress.dirty} copie${progress.dirty > 1 ? "s" : ""} à enregistrer`
+              ? `Enregistrement automatique en cours (${progress.dirty} copie${progress.dirty > 1 ? "s" : ""})`
               : "Tout est enregistré"}
           </p>
-          <Button type="button" size="sm" disabled={progress.dirty === 0} onClick={saveAll}>
-            Enregistrer tout
-          </Button>
         </div>
         {incomplete.length > 0 ? (
           <p className="text-sun text-sm">
@@ -320,47 +312,70 @@ export function GradingSession({
         ) : null}
 
         {items.length > 1 ? (
-          <details>
-            <summary className="min-h-8 cursor-pointer text-sm font-medium">
-              Aller à une copie ({items.length})
-            </summary>
-            <nav aria-label="Copies" className="mt-1">
-              <ul className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                {items.map((i) => {
-                  const done = status[i.id]?.corrected ?? (i.grade?.value ?? null) !== null;
-                  const partial = !done ? status[i.id]?.partial : null;
-                  return (
-                    <li key={i.id}>
-                      <a
-                        href={`#copy-${i.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          focusCopy(i.id);
-                        }}
-                        title={`${i.title} : ${
-                          done
-                            ? "corrigée"
-                            : partial
-                              ? `en cours (${partial.scored}/${partial.total} critères)`
-                              : "à corriger"
-                        }`}
-                        className="underline-offset-2 hover:underline"
-                      >
-                        {i.title}
-                      </a>
-                      <span className="text-muted-foreground">
-                        {done
-                          ? " (corrigée)"
-                          : partial
-                            ? ` (en cours ${partial.scored}/${partial.total})`
-                            : ""}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          </details>
+          <nav aria-label="Copies" className="flex flex-wrap items-center gap-1.5">
+            {/* Une seule navigation entre copies : précédente, toutes les copies, suivante. */}
+            {(() => {
+              const here = activeId ?? current;
+              const prev = neighborId(ids, here, -1);
+              const next = neighborId(ids, here, 1);
+              return (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={prev === null}
+                    onClick={() => prev && focusCopy(prev)}
+                    aria-label={prev ? `Copie précédente : ${titleOf(prev)}` : "Pas de copie avant"}
+                  >
+                    ←
+                  </Button>
+                  <ul className="flex flex-wrap items-center gap-1.5 text-sm">
+                    {items.map((i) => {
+                      const done = status[i.id]?.corrected ?? (i.grade?.value ?? null) !== null;
+                      const partial = !done ? status[i.id]?.partial : null;
+                      const on = i.id === here && !focused;
+                      return (
+                        <li key={i.id}>
+                          <a
+                            href={`#copy-${i.id}`}
+                            aria-current={on ? "true" : undefined}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (view === "criterion") setView("copy");
+                              focusCopy(i.id);
+                            }}
+                            className={`inline-flex min-h-9 items-center gap-1 rounded-[10px] border px-2.5 ${
+                              on ? "border-primary text-primary font-semibold" : "hover:bg-muted"
+                            }`}
+                          >
+                            {i.title}
+                            <span className="text-muted-foreground text-xs">
+                              {done
+                                ? "· corrigée"
+                                : partial
+                                  ? `· ${partial.scored}/${partial.total}`
+                                  : "· à corriger"}
+                            </span>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={next === null}
+                    onClick={() => next && focusCopy(next)}
+                    aria-label={next ? `Copie suivante : ${titleOf(next)}` : "Pas de copie après"}
+                  >
+                    →
+                  </Button>
+                </>
+              );
+            })()}
+          </nav>
         ) : null}
       </section>
 

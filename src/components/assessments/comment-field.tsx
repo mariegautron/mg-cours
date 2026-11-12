@@ -16,7 +16,7 @@ export function CommentField<T extends Phrase>({
   label,
   value,
   onChange,
-  rows = 2,
+  rows = 4,
   phrases,
   criteria,
   subject,

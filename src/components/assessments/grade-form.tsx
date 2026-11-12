@@ -13,9 +13,9 @@ import { ActionError } from "@/components/action-error";
 import { CommentField } from "@/components/assessments/comment-field";
 import type { GradeFormState } from "@/app/(app)/modules/[id]/assessments/actions";
 import { Button } from "@/components/ui/button";
-import { PendingButton } from "@/components/ui/pending-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   isAttendance,
@@ -100,8 +100,6 @@ export function GradeForm({
   onNavigate,
   hasPrev = false,
   hasNext = false,
-  prevLabel = null,
-  nextLabel = null,
   overviewHref = null,
   others = [],
   submissions,
@@ -466,38 +464,47 @@ export function GradeForm({
         {c.reference ? (
           <p className="text-muted-foreground text-xs">Référence : {c.reference}</p>
         ) : null}
-        <div className="space-y-0.5">
-          {c.levels.map((l) =>
-            option(
-              String(l.points),
-              selected?.id === l.id,
-              `${uid}-level_${l.id}`,
-              <>
-                <strong>{formatNumber(l.points)} pt</strong>
-                {l.description ? ` — ${l.description}` : ""}
-              </>,
-            ),
-          )}
-          {orphan !== null
-            ? option(
-                String(orphan),
-                true,
-                `${uid}-orphan_${c.id}`,
-                <>
-                  <strong>{formatNumber(orphan)} pt</strong> — saisie précédente, hors des paliers
-                  actuels
-                </>,
-              )
-            : null}
-          {option("", current.trim() === "", `${uid}-none_${c.id}`, "Pas encore noté")}
+        {/* Comparer un critère : paliers compacts à gauche, commentaire à droite (≥ 60 %). */}
+        <div
+          className={
+            focusCriterionId ? "grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "space-y-1"
+          }
+        >
+          <div className="space-y-1">
+            <div className="space-y-0.5">
+              {c.levels.map((l) =>
+                option(
+                  String(l.points),
+                  selected?.id === l.id,
+                  `${uid}-level_${l.id}`,
+                  <>
+                    <strong>{formatNumber(l.points)} pt</strong>
+                    {l.description ? ` — ${l.description}` : ""}
+                  </>,
+                ),
+              )}
+              {orphan !== null
+                ? option(
+                    String(orphan),
+                    true,
+                    `${uid}-orphan_${c.id}`,
+                    <>
+                      <strong>{formatNumber(orphan)} pt</strong> — saisie précédente, hors des
+                      paliers actuels
+                    </>,
+                  )
+                : null}
+              {option("", current.trim() === "", `${uid}-none_${c.id}`, "Pas encore noté")}
+            </div>
+            {base ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => insertBase(c, base)}>
+                Insérer dans le commentaire
+                <span className="sr-only"> la description du palier choisi pour {c.label}</span>
+              </Button>
+            ) : null}
+          </div>
+          <div className="min-w-0">{criterionComment(c)}</div>
         </div>
-        {base ? (
-          <Button type="button" size="sm" variant="outline" onClick={() => insertBase(c, base)}>
-            Insérer dans le commentaire
-            <span className="sr-only"> la description du palier choisi pour {c.label}</span>
-          </Button>
-        ) : null}
-        {criterionComment(c)}
         {similar.length > 0 ? (
           <div className="space-y-1 rounded-md border border-dashed p-2 text-sm">
             <p className="font-medium">Déjà noté chez les autres</p>
@@ -792,10 +799,6 @@ export function GradeForm({
           <Button type="button" size="sm" variant="secondary" onClick={fillMiddle}>
             Mettre les critères non notés au palier moyen
           </Button>
-          <p className="text-muted-foreground text-xs">
-            Au clavier : ↑ ↓ changent de critère, un chiffre choisit le palier (ses points), C ouvre
-            le commentaire, Alt + ← / → change de copie.
-          </p>
         </div>
         <ul ref={compactRef} onKeyDown={onCompactKeyDown} className="divide-y">
           {groups.flatMap((group) => {
@@ -817,12 +820,13 @@ export function GradeForm({
                   <Label htmlFor={`${uid}-axis-${axisId}`}>
                     Un mot pour tout l’axe « {group.axis?.label} »
                   </Label>
-                  <Input
+                  <Textarea
                     id={`${uid}-axis-${axisId}`}
                     name={`comment_${axisCommentKey(axisId)}`}
                     value={axisComment(criterionComments, axisId)}
                     maxLength={4000}
-                    autoComplete="off"
+                    rows={3}
+                    className="min-h-20 w-full"
                     onChange={(e) =>
                       setCriterionComments((prev) => ({
                         ...prev,
@@ -1001,12 +1005,13 @@ export function GradeForm({
                   <Label htmlFor={`${uid}-why_${m.id}`}>
                     Un mot pour {m.name} (facultatif, elle ou il le lira ; la note ne change pas)
                   </Label>
-                  <Input
+                  <Textarea
                     id={`${uid}-why_${m.id}`}
                     name={`member_${m.id}_justification`}
                     value={st.justification}
                     maxLength={1000}
-                    autoComplete="off"
+                    rows={3}
+                    className="min-h-20 w-full"
                     onChange={(e) => update(m.id, { justification: e.target.value })}
                   />
                 </div>
@@ -1162,20 +1167,21 @@ export function GradeForm({
                   <span className="text-sm">Saisie précédente, hors des paliers actuels</span>
                 </label>
               ) : null}
-              <label
-                className={`${card} ${current.trim() === "" ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
-              >
-                <input
-                  type="radio"
-                  name={name}
-                  value=""
-                  checked={current.trim() === ""}
-                  onChange={() => setInputs((prev) => ({ ...prev, [c.id]: "" }))}
-                  className="sr-only"
-                />
-                <span className="text-sm font-semibold">Pas encore noté</span>
-              </label>
             </div>
+            {/* « Pas encore noté » : l'état par défaut, dit en texte (plus une 5e tuile à côté des paliers). */}
+            {current.trim() === "" ? (
+              <p className="text-muted-foreground mt-2 text-sm">Pas encore noté</p>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mt-2"
+                onClick={() => setInputs((prev) => ({ ...prev, [c.id]: "" }))}
+              >
+                Effacer le palier<span className="sr-only"> de {c.label}</span>
+              </Button>
+            )}
             {base ? (
               <Button
                 type="button"
@@ -1569,32 +1575,11 @@ export function GradeForm({
           {theme ? <p className="text-sm">Thème : {theme}</p> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {onNavigate ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!hasPrev}
-                onClick={() => onNavigate(-1)}
-              >
-                {prevLabel ? `← ${prevLabel}` : "Copie précédente"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!hasNext}
-                onClick={() => onNavigate(1)}
-              >
-                {nextLabel ? `${nextLabel} →` : "Copie suivante"}
-              </Button>
-            </>
-          ) : null}
           {overviewHref ? (
             <Button asChild variant="outline">
               <a href={overviewHref}>Vue d’ensemble</a>
             </Button>
           ) : null}
-          {statusPill}
         </div>
       </div>
 
@@ -1674,11 +1659,7 @@ export function GradeForm({
                     </section>
                   ) : step ? (
                     <>
-                      <div
-                        role="group"
-                        aria-label="Critères"
-                        className="flex gap-2 overflow-x-auto pb-1"
-                      >
+                      <div role="group" aria-label="Critères" className="flex flex-wrap gap-2">
                         {ordered.map((c) => {
                           const pill = pointsPill(c);
                           const on = c.id === step.id;
@@ -1688,7 +1669,7 @@ export function GradeForm({
                               type="button"
                               aria-current={on ? "step" : undefined}
                               onClick={() => setStepId(c.id)}
-                              className={`focus-visible:ring-ring flex min-h-11 shrink-0 items-center gap-2 rounded-xl border-[1.5px] px-3 text-sm font-semibold whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
+                              className={`focus-visible:ring-ring flex min-h-11 max-w-full items-center gap-2 rounded-xl border-[1.5px] px-3 text-left text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${on ? "border-primary bg-primary/10" : "hover:bg-accent"}`}
                             >
                               {c.is_bonus ? "Bonus · " : ""}
                               {c.label}
@@ -1770,10 +1751,11 @@ export function GradeForm({
             >
               {totalCard}
               {attendanceFieldset}
-              {bilanCard}
               {observationsCard}
             </aside>
           </div>
+          {/* Bilan sous la grille, en pleine largeur : de la place pour écrire. */}
+          {bilanCard}
         </>
       )}
 
@@ -1853,14 +1835,8 @@ export function GradeForm({
               Note enregistrée. {title} est à jour.
             </span>
           ) : null}
-          <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
-            Enregistrer la note
-          </PendingButton>
-          {onNavigate ? (
-            <span className="text-muted-foreground hidden text-xs sm:inline">
-              Alt + ← / → : copie précédente / suivante
-            </span>
-          ) : null}
+          {/* Une seule façon d'enregistrer : automatique, état visible ci-contre. */}
+          {statusPill}
         </div>
       </div>
     </form>
