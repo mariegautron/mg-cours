@@ -26,6 +26,30 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 
 Les numéros restent stables (les prompts de test y font référence). P6 n'a plus de section propre.
 
+## Nuit du 12 au 13 novembre 2026 : rebranding Marelle et corrections UX/UI transverses
+
+Changements qui touchent plusieurs parcours (détail et choix : `docs/DECISIONS-NUIT-2026-11-12.md`).
+Commits de `34cfb0c` à la fin de la nuit, à retester visuellement en prod à 1366 × 768 et 125 %.
+
+- **Tous** : nouveau nom « Marelle », thème « Studio de nuit · lavande » (sombre par défaut),
+  densité compacte par défaut (Réglages > Apparence), Margot la pie, confirmations dans l'appli.
+- **P5** : page d'une séance (liste des séances repliée sous 1 400 px utiles, attendus sous la
+  séance, « Faire cours » en principal, « Plus »), Modifier la séance (bibliothèque repliée),
+  réglage clair / sombre propre à la projection.
+- **P7** : page d'une évaluation (sommaire, préparation repliée une fois la date passée, attendus
+  évalués repliés et enregistrés à chaque case), « Prêt pour le jour J ? » avec statut.
+- **P8** : correction (une seule navigation entre copies, enregistrement automatique seul, Bilan en
+  pleine largeur, « Un mot pour » en zone de texte, oral noté en lettres A à D).
+- **P3** : étape « attendus » faite sans PDF de fiche ; aperçu de la progression et de la version
+  envoyée ; confirmation avant de régénérer une progression envoyée.
+- **P9** : confirmation avant de publier le QCM, d'envoyer les liens par e-mail, de créer un
+  nouveau lien.
+- **P10** : espace étudiant·e au téléphone (en-tête d'une ligne, onglets en bas), aperçu des liens
+  avec le nom du module puis « Marelle ».
+- **P12** : Dupliquer le module (nom de la copie choisi, confirmation).
+- **P13** : « Masquer d'Aujourd'hui » sur un module, filtres sans doublons, liste des modules qui
+  montre les modules à préparer.
+
 ## Règle de QA : on teste le chemin
 
 Chaque test part d'un point d'entrée réel (connexion, tableau de bord, menu) et formule des
