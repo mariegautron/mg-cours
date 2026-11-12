@@ -444,6 +444,23 @@ Session de dépannage du 29/09. Un commit par point.
 | LOT4-DONNÉES | À faire en lot 4 (chacun : migration écrite + code tolérant + push + fichiers signalés) : (x) évaluation individuelle : type d'épreuve, versions A/B, arrivée des rendus, rattrapage préparé d'avance ; (viii) décision par point non traité à la clôture (reporter / laisser tomber), stockée à part de `not_covered` ; (ix) import PDF Hyperplanning (photos + noms, nouvelles fiches) ; (iii) bonus au-delà du barème (total officiel plafonné à 20, note brute + bonus stockés, visibles dans la copie, la vue d’ensemble et le PDF) ; (iv) appréciation de groupe + technos du groupe ; | 🕓 |
 | FILROUGE-BIS | À faire : page de détail par thème (maquette `FilrougeMulti` : nom, brief propre au thème, groupes sur ce thème, « Voir ce que voient ces groupes »). | 🕓 |
 
+## E27 — Schéma de la base (étape 3, 12/11/2026)
+
+Diagnostic en lecture seule (`supabase/snapshots/diagnostic-schema.sql`, `docs/schema-bdd/lot0-colonnes.md`), puis un lot par commit, chaque migration avec retour arrière en commentaire et contrôle en lecture seule (`docs/schema-bdd/controle-lotN.sql`, tous dans `controle-lots.sql`). Migrations `20261206000000` à `20261212000100` **appliquées en prod le 12/11** ; empreinte des notes identique avant / après.
+
+| Lot | Contenu | Statut |
+| --- | ------- | ------ |
+| 0 | Diagnostic du schéma et usage des colonnes peut-être mortes (`55e85ed`) | ✅ |
+| 1 | `updated_at`, politique `mg_owner_all` et déclencheur sur `assessment_expectation`, `expectation_dismissal`, `expectation_resource`, `quiz_question_criterion` (colonne manquante sous un déclencheur existant) ; `docs/DATA-MODEL.md` remis à jour (`1637cdc`) | ✅ |
+| 2 | Clés étrangères attendu écarté → attendu, critère → question ; contrôles note ≥ 0, coefficient > 0, rattrapage et bonus individuels, statut de préparation ; commentaires des colonnes polymorphes ; retour arrière `docs/schema-bdd/retour-lot2.sql` (`2b7483c`) | ✅ |
+| 3 | `assessment.coefficient_override` (vide) ; calcul et affichage au coefficient appliqué ; coefficient demandé seulement pour une Note de l'école (`8231775`) | ✅ |
+| 4 | Réglages de Nantes Ynov Campus en base, valeurs YNOV à l'identique ; message « École non choisie » (`e1597af`) | ✅ |
+| 6 | Doublons de sens : `isOutlineSent` unique, `prep-status` commun, date d'évaluation qui suit la séance, groupe/individuel figé après notes, `submit_mode` seul, promo via `student_year`, plus de `photo_url` ni de `grade.is_group_grade`, heures CM/TD/TP retirées des formulaires, `progression_pedagogique` hors du défaut de `admin_docs` (`a8e9f4b`) | ✅ |
+| 7 | Unicités : attendu par (module, type, libellé normalisé), rang de séance par module (différée) ; réordonnancement en deux temps (`f56a327`) | ✅ |
+| 5 | Enum `assessment_kind`, colonne `assessment.kind` remplie (étude de cas → `open_questions`) ; formulaire pas encore branché (`ef6f239`, `8b929b3`) | 🚧 colonne remplie, branchement à faire |
+| 8 | Facture | ⏳ |
+| 9 | Suppressions (anciennes politiques `*_owner`, colonnes mortes, `import_ref`…) : avec accord | ⏳ |
+
 ## E17 — Correctifs UX/UI avant lancement (audit senior du 29/09) ✅
 
 Source : page Notion « MG COURS — Audit UX/UI senior complet (29/09/2026) » et ses volets 2 (parcours,
