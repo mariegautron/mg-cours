@@ -13,8 +13,11 @@ export function Notice({
   title,
   className,
   children,
+  live = false,
 }: {
   level?: "info" | "warning" | "blocking";
+  /** Message apparu après une action : annoncé aux lecteurs d'écran. Sinon, texte fixe sans rôle. */
+  live?: boolean;
   title?: React.ReactNode;
   className?: string;
   children?: React.ReactNode;
@@ -33,7 +36,7 @@ export function Notice({
   const Icon = level === "blocking" ? OctagonAlert : TriangleAlert;
   return (
     <div
-      role={level === "blocking" ? "alert" : "status"}
+      role={live ? (level === "blocking" ? "alert" : "status") : undefined}
       className={cn(
         "bg-muted flex items-start gap-2 rounded-[10px] border p-3 text-sm",
         level === "blocking" ? "border-status-blocking" : "border-status-todo",

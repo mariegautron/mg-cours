@@ -104,7 +104,7 @@ export async function listResumeCandidates(): Promise<ResumeCandidate[]> {
       .select("id, title, position, updated_at, module:module_id(id, name, archived_at)")
       .neq("prep_status", "ready")
       .order("updated_at", { ascending: false })
-      .limit(5),
+      .limit(20),
   ]);
   return [
     ...(resources.data ?? []).map((r): ResumeCandidate => ({
@@ -129,6 +129,7 @@ export async function listResumeCandidates(): Promise<ResumeCandidate[]> {
         context: c.module!.name,
         href: `/modules/${c.module!.id}/courses/${c.id}/edit`,
         updatedAt: c.updated_at,
+        moduleId: c.module!.id,
       })),
   ];
 }

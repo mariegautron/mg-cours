@@ -250,3 +250,23 @@ Lot 1, ce qui est fait à ce stade :
 - **34. Chargement** : Modules et Bibliothèque affichent leur titre et des cartes vides tout de
   suite. **Pas fait** : accélérer les requêtes elles-mêmes.
 - **35 et 36** : faits au lot 0.
+
+## Relecture finale (sous-agent expert UX/UI + DA) : corrigé
+
+- **Bloquant corrigé** : les modules masqués d'Aujourd'hui sont retirés *avant* de couper les
+  listes (« À corriger » limité à 3, prochaines séances, reprise) ; sinon un module de test plein
+  de copies vidait la carte. La reprise connaît désormais le module de chaque séance. Masquage
+  calculé sur tous les modules (archivés compris) ; rattrapages de la semaine filtrés aussi.
+- **Bloquant corrigé** : liste des modules : nouvel onglet « En cours et à préparer » (vue par
+  défaut de `/modules`) ; « En cours », « À préparer » et « Terminés » gardent leur sens et leur
+  compteur exact (adresse `?filter=…`).
+- **Dupliquer le module** : la copie ne reprend plus les dates ni les horaires des séances (l'écran
+  l'annonçait déjà : « ni dates »). Le nom proposé suit l'année tant qu'il n'a pas été retouché ;
+  l'avertissement « même nom » marche aussi champ vide.
+- Calcul de « Prochaine étape » retiré des sous-pages du module (plus affiché : requêtes inutiles).
+- « Quitter sans enregistrer » vers un PDF (`/api/…`) : vraie navigation du navigateur.
+- « Ajouter une évaluation » reste principal quand le module n'a aucune note exigée.
+- Heures « 9 h 05 » avec espaces insécables. Bouton « Plus » à la taille des autres boutons.
+  Messages en bas à droite au-dessus des barres collées. `Notice` sans rôle annoncé par défaut
+  (seulement après une action). Onglet « Notes » court sur téléphone.
+- **Pas fait** : garder les onglets en haut dans l'aperçu de l'espace côté Marie (tablette).

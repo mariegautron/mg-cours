@@ -529,9 +529,10 @@ export async function duplicateModule(
         module_id: newModule.id,
         title: c.title,
         position: c.position,
-        session_date: c.session_date,
-        start_time: c.start_time,
-        end_time: c.end_time,
+        // Nouvelle année : ni dates ni horaires (comme l'annonce l'écran « Dupliquer »).
+        session_date: null,
+        start_time: null,
+        end_time: null,
         type: c.type,
         learning_objectives: c.learning_objectives,
         animation_notes: c.animation_notes,

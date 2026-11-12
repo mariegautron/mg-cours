@@ -12,6 +12,8 @@ export interface ResumeCandidate {
   href: string;
   /** Date ISO de la dernière modification. */
   updatedAt: string;
+  /** Module concerné (séance) : sert à retirer un module masqué d'Aujourd'hui. */
+  moduleId?: string;
 }
 
 /** Au-delà, ce n'est plus « là où tu t'étais arrêtée » : on ne propose rien. */

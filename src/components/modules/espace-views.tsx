@@ -109,7 +109,14 @@ export function EspaceLayout({
                         i.key === current ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                       }`}
                     >
-                      {i.label}
+                      {i.key === "notes" ? (
+                        <>
+                          <span className="lg:hidden">Notes</span>
+                          <span className="max-lg:hidden">{i.label}</span>
+                        </>
+                      ) : (
+                        i.label
+                      )}
                       {i.key === "notes" && results.length ? (
                         <span className="text-xs font-normal">{results.length}</span>
                       ) : null}

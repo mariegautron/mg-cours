@@ -86,15 +86,18 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     listBillingOverview(),
     getProfile(),
     listCoursesOn(today),
-    listCoursesAfter(today),
+    // Listes chargées sans coupe serrée : les modules masqués sont retirés AVANT de couper.
+    listCoursesAfter(today, 80),
     listCoursesBetween(week.from, week.to),
     listResumeCandidates(),
     listCourseProgress(),
-    listToCorrect(),
+    listToCorrect(Number.MAX_SAFE_INTEGER),
   ]);
   // Modules masqués d'Aujourd'hui (modules de test…) : ils ne comptent nulle part sur cette page.
+  // Calculé sur tous les modules, archivés compris (facture, rattrapages d'un module terminé).
+  const allModules = await listModules({ includeArchived: true });
   const hiddenIds = new Set(
-    modules.filter((m) => isHiddenFromToday(m.admin_docs)).map((m) => m.id),
+    allModules.filter((m) => isHiddenFromToday(m.admin_docs)).map((m) => m.id),
   );
   for (let i = modules.length - 1; i >= 0; i--)
     if (hiddenIds.has(modules[i].id)) modules.splice(i, 1);
@@ -107,8 +110,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     billing,
   ])
     if (Array.isArray(list)) dropHiddenModules(list as object[], hiddenIds);
+  toCorrect.splice(3);
   // Deux modules du même nom (copie d'une année sur l'autre) : l'année scolaire les distingue.
-  const labels = moduleLabels(await listModules({ includeArchived: true }));
+  const labels = moduleLabels(allModules);
   for (const m of modules) m.name = labels.get(m.id) ?? m.name;
   relabelModules(billing, labels);
   relabelModules(coursesToday, labels);
@@ -283,16 +287,17 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const supabaseWeek = await createClient();
   const { data: weekMakeups } = await supabaseWeek
     .from("assessment")
-    .select("id, title, date, module:module_id(archived_at, finished_at)")
+    .select("id, title, date, module_id, module:module_id(archived_at, finished_at)")
     .not("makeup_of_id", "is", null)
     .gte("date", days[0].date)
     .lte("date", days[days.length - 1].date);
   const makeupDays = new Map<string, number>();
   for (const a of (weekMakeups ?? []) as unknown as {
     date: string | null;
+    module_id: string;
     module: { archived_at: string | null } | null;
   }[]) {
-    if (!a.date || a.module?.archived_at) continue;
+    if (!a.date || a.module?.archived_at || hiddenIds.has(a.module_id)) continue;
     const d = a.date.slice(0, 10);
     makeupDays.set(d, (makeupDays.get(d) ?? 0) + 1);
   }

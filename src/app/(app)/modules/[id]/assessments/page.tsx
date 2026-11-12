@@ -275,7 +275,12 @@ export default async function ModuleAssessmentsPage({
               </Link>
             </Button>
             {/* Tout est prévu : « Ajouter » devient secondaire (l'étape suivante est ailleurs). */}
-            <Button asChild variant={planned.planned >= planned.required ? "outline" : "default"}>
+            <Button
+              asChild
+              variant={
+                planned.required > 0 && planned.planned >= planned.required ? "outline" : "default"
+              }
+            >
               <Link href={`/modules/${id}/assessments/add`}>
                 <Plus aria-hidden />
                 Ajouter une évaluation

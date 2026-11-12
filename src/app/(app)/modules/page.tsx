@@ -92,7 +92,8 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
 
   const href = (f: ListFilter, extra: { school?: string; year?: string } = {}) => {
     const params = new URLSearchParams();
-    if (f !== "running") params.set("filter", f);
+    // « En cours » a son adresse propre ; /modules sans filtre = en cours ET à préparer.
+    params.set("filter", f);
     const s = extra.school ?? schoolId;
     const y = extra.year ?? year;
     if (s) params.set("school", s);
@@ -177,14 +178,30 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
       </div>
 
       <nav aria-label="Filtrer les modules" className="flex flex-wrap items-center gap-2.5">
+        <Link
+          href={
+            schoolId || year
+              ? `/modules?${new URLSearchParams({ ...(schoolId ? { school: schoolId } : {}), ...(year ? { year } : {}) })}`
+              : "/modules"
+          }
+          aria-current={!rawFilter ? "page" : undefined}
+          className={cn(
+            CHIP,
+            !rawFilter
+              ? "bg-primary text-primary-foreground border-transparent"
+              : "bg-card hover:bg-accent",
+          )}
+        >
+          En cours et à préparer · {counts.running + counts.to_prepare}
+        </Link>
         {FILTERS.map((f) => (
           <Link
             key={f.key}
             href={href(f.key)}
-            aria-current={filter === f.key ? "page" : undefined}
+            aria-current={rawFilter && filter === f.key ? "page" : undefined}
             className={cn(
               CHIP,
-              filter === f.key
+              rawFilter && filter === f.key
                 ? "bg-primary text-primary-foreground border-transparent"
                 : "bg-card hover:bg-accent",
             )}
@@ -193,7 +210,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           </Link>
         ))}
         <form action="/modules" className="flex flex-wrap items-center gap-2.5">
-          {filter !== "running" ? <input type="hidden" name="filter" value={filter} /> : null}
+          {rawFilter ? <input type="hidden" name="filter" value={filter} /> : null}
           <label className="sr-only" htmlFor="school">
             École
           </label>

@@ -20,6 +20,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       // Messages de confirmation : en bas à droite, 4 s, annoncés aux lecteurs d'écran (lot 1).
       position="bottom-right"
       duration={4000}
+      // Au-dessus des barres d'actions collées en bas (≈ 64 px).
+      offset={{ bottom: 80, right: 16 }}
+      mobileOffset={{ bottom: 96 }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

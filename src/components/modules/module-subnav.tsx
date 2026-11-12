@@ -6,7 +6,6 @@ import { ChevronRight } from "lucide-react";
 
 import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import { activeModuleNav, moduleNavItems, moduleSectionLabel } from "@/lib/modules/nav";
-import type { NextStepButton } from "@/lib/modules/journey";
 
 /**
  * Coque des sous-pages d'un module : fil d'Ariane et liens vers les zones du module. Absente sur la fiche, qui a déjà son en-tête et ses onglets.
@@ -15,19 +14,15 @@ export function ModuleSubnav({
   moduleId,
   moduleName,
   archived,
-  next,
 }: {
   moduleId: string;
   moduleName: string;
   archived: boolean;
-  next: NextStepButton;
 }) {
   const pathname = usePathname();
   const label = moduleSectionLabel(pathname, moduleId);
   if (!label) return null;
   const active = activeModuleNav(pathname, moduleId);
-  // `next` reste reçu (compatibilité) mais n'est plus affiché ici.
-  void next;
   const items = moduleNavItems(moduleId);
   // Tablette : 4 entrées visibles, les autres dans « Plus » (plus de défilement horizontal).
   const shown = items.slice(0, 4);

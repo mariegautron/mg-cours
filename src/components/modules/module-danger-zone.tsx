@@ -101,7 +101,12 @@ export function ModuleDangerZone({
             name="year"
             type="number"
             value={copyYear}
-            onChange={(e) => setCopyYear(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              // Le nom proposé suit l'année tant qu'il n'a pas été modifié à la main.
+              if (copyName === `${name} (${copyYear})`) setCopyName(`${name} (${next})`);
+              setCopyYear(next);
+            }}
             className="w-28"
           />
         </div>
@@ -120,7 +125,7 @@ export function ModuleDangerZone({
                 Un nouveau module « {copyName.trim() || name} » ({copyYear}) est créé avec les
                 séances, les ressources, le projet et les évaluations. Ni notes, ni dates, ni
                 groupes. Le module actuel ne change pas.
-                {copyName.trim() === name
+                {(copyName.trim() || name) === name
                   ? " Attention : la copie porte le même nom que l’original."
                   : ""}
               </AlertDialogDescription>
