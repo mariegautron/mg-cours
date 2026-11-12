@@ -35,7 +35,10 @@ export default async function EditAssessmentPage({
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Modifier « {assessment.title} »</h1>
       {assessment.needs_review ? (
-        <p role="status" className="border-sun/60 bg-sun/10 max-w-xl rounded-xl border p-3 text-sm">
+        <p
+          role="status"
+          className="border-status-todo bg-muted max-w-xl rounded-xl border p-3 text-sm"
+        >
           <strong>Reprise : à relire.</strong> Cette évaluation vient d’un autre module : son sujet
           et « Ce qui est évalué » en parlent peut-être encore, et partiraient tels quels dans la
           progression. Relis-les puis clique sur « Enregistrer ».

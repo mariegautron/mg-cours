@@ -241,7 +241,10 @@ export function OpenReview({
 
   const conflict = (key: string) =>
     key in f.conflicts ? (
-      <div role="alert" className="border-sun/60 bg-sun/10 space-y-1 rounded-lg border p-2 text-sm">
+      <div
+        role="alert"
+        className="border-status-todo bg-muted space-y-1 rounded-lg border p-2 text-sm"
+      >
         <p className="font-semibold">Ce champ a changé dans un autre onglet.</p>
         <p>Ici : {f.values[key] || "(vide)"}</p>
         <p>Ailleurs : {f.conflicts[key] || "(vide)"}</p>
@@ -283,9 +286,9 @@ export function OpenReview({
           <span
             className={cn(
               "rounded-full border px-2.5 text-xs font-bold",
-              state === "validated" && "border-mint/60 text-mint",
-              state === "modified" && "border-sun/60 text-sun",
-              state === "pending" && "border-sky/60 text-sky",
+              state === "validated" && "border-status-ready text-mint",
+              state === "modified" && "border-status-todo text-sun",
+              state === "pending" && "border-status-published text-sky",
             )}
           >
             {ANSWER_STATE_LABELS[state]}
@@ -430,9 +433,7 @@ export function OpenReview({
                   {c.studentId ? (
                     <select
                       aria-label={`Présence de ${c.name}`}
-                      defaultValue={
-                        c.attendance && c.attendance !== "present" ? c.attendance : ""
-                      }
+                      defaultValue={c.attendance && c.attendance !== "present" ? c.attendance : ""}
                       className="border-input bg-background text-foreground min-h-9 rounded-md border px-2"
                       onChange={(e) => {
                         const value = e.target.value;

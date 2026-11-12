@@ -187,7 +187,6 @@ export function Mascot({
       />
       <ellipse cx="114" cy="53" rx="7" ry={look.eyeRy} fill="#FFFFFF" />
       {look.pupilR > 0 ? <circle cx="116" cy="53" r={look.pupilR} fill="#14141F" /> : null}
-      <circle cx="104" cy="66" r="4" fill="#FFB3C7" />
       {key === "endormie" ? (
         <text
           x="128"

@@ -23,14 +23,11 @@ export async function ExpectationCoverage({ moduleId }: { moduleId: string }) {
   return (
     <div className="space-y-3">
       <p role="status" className="text-sm font-medium">
-        {plural(summary.total, "attendu")} : {summary.byCourse} par un cours, {summary.byAssessment} par une
-        évaluation, {summary.byNone} par aucun.
+        {plural(summary.total, "attendu")} : {summary.byCourse} par un cours, {summary.byAssessment}{" "}
+        par une évaluation, {summary.byNone} par aucun.
       </p>
       {summary.byNone > 0 ? (
-        <p
-          role="alert"
-          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
-        >
+        <p role="alert" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           {summary.byNone} attendu{summary.byNone > 1 ? "s" : ""} sans cours ni évaluation : relie-
           {summary.byNone > 1 ? "les" : "le"} à une séance (fiche de la séance, « Attendus traités
           ») ou à une évaluation (page de l’évaluation, « Attendus évalués »).

@@ -186,7 +186,7 @@ export function ModuleCreateWizard({
               {i > 0 ? (
                 <span
                   aria-hidden
-                  className={`h-0.5 w-10 ${done || current ? "bg-mint/60" : "bg-border"}`}
+                  className={`h-0.5 w-10 ${done || current ? "bg-muted" : "bg-border"}`}
                 />
               ) : null}
               <span

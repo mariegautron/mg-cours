@@ -25,14 +25,14 @@ const shortDate = (iso: string) =>
 const hm = (t: string | null) => (t ? t.slice(0, 5) : "—");
 
 const LEGEND: { key: PlanningCategory; label: string; classes: string }[] = [
-  { key: "cours", label: "Cours", classes: "border-sky-500/60 bg-sky-500/15" },
+  { key: "cours", label: "Cours", classes: "border-status-published bg-muted" },
   {
     key: "pratique",
     label: "Exercice, atelier",
-    classes: "border-emerald-500/60 bg-emerald-500/15",
+    classes: "border-status-ready bg-muted",
   },
-  { key: "projet", label: "Projet fil rouge", classes: "border-violet-500/60 bg-violet-500/15" },
-  { key: "evaluation", label: "Évaluation", classes: "border-amber-500/70 bg-amber-500/20" },
+  { key: "projet", label: "Projet fil rouge", classes: "border-primary bg-muted" },
+  { key: "evaluation", label: "Évaluation", classes: "border-status-todo bg-muted" },
 ];
 const CLASSES = Object.fromEntries(LEGEND.map((l) => [l.key, l.classes])) as Record<string, string>;
 

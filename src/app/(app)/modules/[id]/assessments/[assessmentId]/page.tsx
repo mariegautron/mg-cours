@@ -510,7 +510,7 @@ export default async function AssessmentPage({
               role={assessment.needs_review ? "status" : undefined}
               className={
                 assessment.needs_review
-                  ? "border-sun/60 bg-sun/10 mt-2 rounded-xl border p-3 text-sm"
+                  ? "border-status-todo bg-muted mt-2 rounded-xl border p-3 text-sm"
                   : "text-muted-foreground mt-1 text-sm"
               }
             >
@@ -932,7 +932,7 @@ export default async function AssessmentPage({
                     {frameChecks.map(([label, ok]) => (
                       <li key={label}>
                         <Pill tone={ok ? "ok" : "warn"}>
-                          {ok ? "✓" : "!"} {label}
+                          {label}
                           <span className="sr-only"> : {ok ? "renseigné" : "à renseigner"}</span>
                         </Pill>
                       </li>

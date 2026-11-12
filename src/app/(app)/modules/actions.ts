@@ -465,11 +465,16 @@ export async function duplicateModule(
   const supabase = await createClient();
   const { data: source } = await supabase.from("module").select("*").eq("id", sourceId).single();
   if (!source) return { error: NOT_FOUND.module };
+  // Nom de la copie, choisi avant de dupliquer (sinon deux modules portent le même nom).
+  const newName =
+    String(formData.get("name") ?? "")
+      .trim()
+      .slice(0, 200) || source.name;
 
   const { data: newModule, error: moduleError } = await supabase
     .from("module")
     .insert({
-      name: source.name,
+      name: newName,
       school_id: source.school_id,
       level: source.level,
       year,

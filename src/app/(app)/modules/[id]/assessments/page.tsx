@@ -69,7 +69,7 @@ const CELL_STYLE: Record<CellKind, string> = {
   work: "bg-primary/15 border border-primary/40",
   due: "bg-primary text-primary-foreground font-bold",
   oral: "bg-primary text-primary-foreground font-bold",
-  solo: "bg-sky/20 border border-sky/50",
+  solo: "bg-muted border border-status-published",
 };
 
 const STATUS_TONE = { ok: "ok", warn: "warn", build: "warn" } as const;
@@ -243,10 +243,7 @@ export default async function ModuleAssessmentsPage({
       </p>
 
       {regular.length > 0 && unevaluatedGroups.length > 0 ? (
-        <div
-          role="alert"
-          className="rounded-2xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
-        >
+        <div role="alert" className="border-status-todo bg-muted rounded-2xl border p-3 text-sm">
           {unevaluatedGroups.map((g) => (
             <p key={g.id}>
               <strong>{/^groupe\b/i.test(g.name) ? g.name : `Groupe ${g.name}`}</strong> n’est

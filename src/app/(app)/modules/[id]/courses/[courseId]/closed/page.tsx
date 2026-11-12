@@ -24,10 +24,10 @@ import { closureRecap, type RecapState } from "@/lib/notebook/recap";
 export const metadata: Metadata = { title: "Séance clôturée" };
 
 const STATE: Record<RecapState, { label: string; Icon: typeof Check; tone: string }> = {
-  done: { label: "Fait", Icon: Check, tone: "bg-mint/20 text-mint" },
-  partial: { label: "En partie", Icon: Circle, tone: "bg-sun/20 text-sun" },
-  carried: { label: "Reporté", Icon: CornerDownRight, tone: "bg-sky/20 text-sky" },
-  todo: { label: "À faire", Icon: TriangleAlert, tone: "bg-sun/20 text-sun" },
+  done: { label: "Fait", Icon: Check, tone: "bg-muted text-mint" },
+  partial: { label: "En partie", Icon: Circle, tone: "bg-muted text-sun" },
+  carried: { label: "Reporté", Icon: CornerDownRight, tone: "bg-muted text-sky" },
+  todo: { label: "À faire", Icon: TriangleAlert, tone: "bg-muted text-sun" },
 };
 
 /**

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { setCorrectionMode } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/correct/open-actions";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/use-confirm";
 
 /**
  * Choix explicite de Marie : corriger ce QCM comme des questions ouvertes tirées au sort (relecture
@@ -19,6 +20,7 @@ export function CorrectionMode({
   assessmentId: string;
   mode: "classic" | "open_questions";
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export function CorrectionMode({
 
   return (
     <section aria-labelledby="corr-mode" className="bg-muted/40 space-y-2 rounded-xl border p-4">
+      {confirmDialog}
       <h2 id="corr-mode" className="font-heading text-lg font-bold">
         Façon de corriger
       </h2>
@@ -39,14 +42,15 @@ export function CorrectionMode({
         type="button"
         variant="outline"
         disabled={pending}
-        onClick={() => {
+        onClick={async () => {
           const target = open ? "classique" : "questions ouvertes";
-          if (
-            !window.confirm(
-              `Passer cette évaluation en correction « ${target} » ? Aucune note existante ne change.`,
-            )
-          )
-            return;
+          const ok = await confirm({
+            title: `Passer en correction « ${target} » ?`,
+            description:
+              "Cette évaluation change de façon de corriger. Aucune note existante ne change.",
+            confirmLabel: "Changer de façon de corriger",
+          });
+          if (!ok) return;
           start(async () => {
             const res = await setCorrectionMode(
               moduleId,

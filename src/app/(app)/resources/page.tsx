@@ -76,14 +76,14 @@ function ResourceRow({ r, parts = [] }: { r: ResourceWithUsage; parts?: Resource
         {r.excerpt ? (
           <span className="text-muted-foreground block text-xs">
             {SEARCH_FIELD_LABELS[r.excerpt.field]} : {r.excerpt.before}
-            <mark className="bg-yellow-200 text-black">{r.excerpt.match}</mark>
+            <mark className="bg-status-todo text-status-ink">{r.excerpt.match}</mark>
             {r.excerpt.after}
           </span>
         ) : null}
       </Link>
       <span className="flex flex-wrap items-center gap-1.5">
         {r.archived_at ? <Pill>Archivée</Pill> : null}
-        {r.audience === "teacher" ? <Pill tone="lock">Toi seule</Pill> : null}
+        {r.audience === "teacher" ? <Pill tone="plain">Toi seule</Pill> : null}
         {r.tags.slice(0, 2).map((t) => (
           <Pill key={t}>{t}</Pill>
         ))}

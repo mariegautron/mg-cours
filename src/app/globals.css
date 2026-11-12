@@ -2,7 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Variante « dark » : aussi sous `.theme-dark` (projection), jamais sous `.theme-light`. */
+@custom-variant dark (&:where(.dark *, .theme-dark *):not(:where(.theme-light, .theme-light *)));
 
 @theme inline {
   --color-background: var(--background);
@@ -93,7 +94,7 @@
   --accent-foreground: oklch(0.25 0.06 285);
   --destructive: oklch(0.5 0.22 27);
   --border: oklch(0.88 0.02 285);
-  --input: oklch(0.88 0.02 285);
+  --input: oklch(0.6 0.03 285);
   --ring: oklch(0.55 0.2 285);
   --chart-1: oklch(0.55 0.2 285);
   --chart-2: oklch(0.55 0.19 25);
@@ -132,7 +133,7 @@
   --status-ink: #0e0e11;
 
   --field: oklch(1 0 0);
-  --btn-border: oklch(0.8 0.02 285);
+  --btn-border: oklch(0.72 0.02 285);
   --featured-border: oklch(0.75 0.08 285);
   --featured-inset: none;
   --private: oklch(0.96 0.02 285);
@@ -207,10 +208,15 @@
   html {
     @apply font-sans;
   }
+  /* Titres en Bricolage Grotesque 800 (DA) : l'emporte sur les `font-bold` des pages. */
   h1,
   h2,
   h3 {
     @apply font-heading tracking-tight;
+  }
+  h1,
+  h2 {
+    font-weight: 800 !important;
   }
   /* Focus visible partout : anneau de 3 px à l'accent, décalé de 3 px (RGAA 10.7). */
   :focus-visible {
@@ -284,7 +290,9 @@
   /* Carte mise en avant : une par écran, contour lavande sombre, reflet intérieur. */
   .card-featured {
     border-color: var(--featured-border);
-    box-shadow: var(--featured-inset);
+    box-shadow:
+      var(--featured-inset),
+      0 0 0 1px var(--featured-border);
   }
 }
 

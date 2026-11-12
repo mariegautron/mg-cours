@@ -77,7 +77,7 @@ export default async function QuizLinksPage({
             </h1>
           </div>
           <p role="status">
-            <Pill tone={quiz.status === "published" ? "wip" : "plain"}>
+            <Pill tone={quiz.status === "published" ? "published" : "plain"}>
               {STATUS_LABEL[quiz.status]}
             </Pill>
           </p>

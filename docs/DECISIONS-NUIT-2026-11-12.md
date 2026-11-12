@@ -82,3 +82,38 @@ aucune migration. Vérification : `tsc --noEmit` + ESLint/Prettier sur les fichi
   « Modifier » (+ « Modifier la clôture » si la séance est faite), le reste (ordre, suppression)
   dans « Plus ». Les 3 boutons d'ajout de séance deviennent « Ajouter une séance ▾ ». Le déroulé
   se replie au-delà de 5 étapes (« Voir les 8 autres étapes »).
+
+## Relecture par un directeur artistique (sous-agent, demande d'Arnaud) et lot 1 (début)
+
+Arnaud a demandé deux relecteurs experts. Un directeur artistique a relu le rebranding ; un expert
+UX/UI a relu le lot 0. Les deux en lecture seule, sans build ni test. Retenu de la relecture DA :
+
+- Variante `dark:` corrigée pour la projection claire (`.theme-light`), sinon les classes `dark:`
+  restaient actives sur fond blanc.
+- Pastilles : `published` (bleu glacier, œil) et `lock` (bloquant, octogone) sont les vrais
+  statuts ; `wip` devient neutre (« Lecture en cours », compte à rebours). « Privé », « Toi
+  seule », étape facultative : neutres. Préparation de séance : pas commencé = gris, en cours = à
+  compléter. Composant `Status` (5 états) ajouté dans `pill.tsx` ; chaque statut a son icône.
+- Contour lavande de la carte mise en avant réellement visible (anneau), contours de champ et de
+  bouton du thème clair remontés à 3:1.
+- Couleurs Tailwind vives restantes (emerald, amber, yellow, sky…) remplacées par les jetons
+  (`text-success`, `text-warning`, `border-status-*`, `bg-muted`) : une trentaine de fichiers.
+  Teintes colorées des blocs (`bg-mint/15`, `bg-sun/15`…) ramenées à `bg-muted` + contour de statut.
+- Tuiles de « Cette semaine » neutres. Titres h1/h2 en 800. Voiles des fenêtres à 60 %. Champs
+  désactivés en gris neutre. Boutons `sm`/`xs` à 10 px avec zone cliquable de 44 px.
+- Favicon : tête de Margot (`src/app/icon.svg`) à la place du logo Next.js.
+- Connexion : Margot n'apparaît plus deux fois (seulement le logo).
+- **Pas fait** : charger Bricolage Grotesque dans l'image d'aperçu des liens (il faudrait embarquer
+  le fichier de police) ; restent des couleurs de texte `text-mint`/`text-sun` (81 usages) qui
+  pointent déjà vers les jetons de statut.
+
+Lot 1, ce qui est fait à ce stade :
+- **Confirmations dans l'appli** (`useConfirm`, `ConfirmSubmitButton`) : plus aucune boîte
+  `window.confirm` pour les actions qui ne se défont pas (nouveau lien de QCM, envoi des liens par
+  e-mail, publier le QCM, régénérer une progression déjà envoyée, changer de façon de corriger,
+  remplacer par un gabarit, abandonner un brouillon d'oral, effacer une note écrite, remplacer un
+  texte proposé). Restent natives : l'alerte « quitter avec des modifications » (le navigateur
+  l'impose au rechargement) et deux « abandonner les modifications » de formulaires.
+- **Dupliquer le module** : on choisit le nom de la copie (par défaut « Nom (2027) ») et l'année,
+  puis une confirmation dans l'appli nomme la copie et ce qui part avec ; avertit si le nom est
+  identique à l'original.

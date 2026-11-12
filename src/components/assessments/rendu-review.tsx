@@ -352,7 +352,7 @@ export function RenduReview({
           copy.init.startedAt &&
           !copy.init.hasNote &&
           deposit.submitted_at > copy.init.startedAt ? (
-            <p role="status" className="border-sun/60 bg-sun/10 rounded-lg border p-2 text-sm">
+            <p role="status" className="border-status-todo bg-muted rounded-lg border p-2 text-sm">
               <strong>
                 Nouveau dépôt le {parisDayTime(deposit.submitted_at)}, pendant ta correction.
               </strong>{" "}

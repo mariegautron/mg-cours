@@ -784,7 +784,7 @@ export function ResourceForm({
               </p>
             ) : null}
             {deckNotes.map((note) => (
-              <p key={note} className="rounded-md border border-amber-500/50 p-2 text-sm">
+              <p key={note} className="border-status-todo rounded-md border p-2 text-sm">
                 {note}
               </p>
             ))}
@@ -810,7 +810,7 @@ export function ResourceForm({
                     key={sl.number}
                     className={cn(
                       "bg-card rounded-md border p-3 text-sm",
-                      sl.warnings.length ? "border-amber-500/70" : "",
+                      sl.warnings.length ? "border-status-todo" : "",
                       board ? "aspect-video overflow-hidden" : "",
                     )}
                   >
@@ -830,7 +830,7 @@ export function ResourceForm({
                       </p>
                     ) : null}
                     {sl.warnings.map((w) => (
-                      <p key={w} className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                      <p key={w} className="text-warning mt-1 text-xs">
                         {w}
                       </p>
                     ))}

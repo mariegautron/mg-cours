@@ -17,9 +17,9 @@ import {
 } from "@/lib/assessments/overview";
 import { cn } from "@/lib/utils";
 
-const TONE: Record<CopyState, "ok" | "wip" | "warn"> = {
-  todo: "warn",
-  in_progress: "wip",
+const TONE: Record<CopyState, "idle" | "ok" | "warn"> = {
+  todo: "idle",
+  in_progress: "warn",
   done: "ok",
 };
 

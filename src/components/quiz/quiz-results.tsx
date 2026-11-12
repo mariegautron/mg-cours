@@ -51,7 +51,7 @@ export function QuizResults({ state }: { state: SubmittedState }) {
       <p className="text-muted-foreground text-sm font-semibold">{state.title}</p>
       <div className="space-y-3">
         <p role="status">
-          <span className="border-mint/45 bg-mint/12 text-mint inline-flex min-h-7 items-center rounded-full border px-3 text-sm font-bold">
+          <span className="border-status-ready bg-muted text-mint inline-flex min-h-7 items-center rounded-full border px-3 text-sm font-bold">
             Vos réponses sont envoyées
           </span>
         </p>

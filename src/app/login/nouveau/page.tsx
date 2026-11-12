@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { Mascot, Wordmark } from "@/components/mascot";
+import { Wordmark } from "@/components/mascot";
 import { NewPasswordForm } from "@/components/reset-password-forms";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +16,6 @@ export default async function NewPasswordPage() {
     <main className="flex min-h-dvh items-center justify-center p-6">
       <div className="flex w-full max-w-sm flex-col items-center gap-6">
         <Wordmark size="lg" />
-        <Mascot mood="happy" className="size-24" />
         <NewPasswordForm />
       </div>
     </main>

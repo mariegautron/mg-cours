@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { PendingButton } from "@/components/ui/pending-button";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 const initial: OutlineActionState = {};
 
@@ -100,7 +101,7 @@ export function OutlineActions({
           </h2>
           {deposited ? <Pill tone="ok">Progression envoyée</Pill> : null}
           {!deposited && status === "validated" ? <Pill tone="ok">Validée</Pill> : null}
-          {!deposited && status === "sent" ? <Pill tone="wip">Envoyée</Pill> : null}
+          {!deposited && status === "sent" ? <Pill tone="published">Envoyée</Pill> : null}
         </div>
         <div className="flex flex-wrap gap-5">
           <PagePreview />
@@ -123,25 +124,39 @@ export function OutlineActions({
             {!archived && (status === "sent" || status === "validated") ? (
               <p className="text-sun text-sm">
                 Tu as déjà envoyé une version
-                {sentVersion ? ` le ${sentVersion}` : ""} : régénérer ne remplace pas ce que l’école a
-                reçu.
+                {sentVersion ? ` le ${sentVersion}` : ""} : régénérer ne remplace pas ce que l’école
+                a reçu.
               </p>
             ) : null}
             {!archived ? (
               <form action={genAction}>
-                <PendingButton
-                  type="submit"
-                  variant={status ? "secondary" : "default"}
-                  className="w-full"
-                  pending={genPending}
-                  pendingLabel="Génération…"
-                >
-                  {hasDepositedOutline
-                    ? "1 · Générer une progression depuis les séances"
-                    : status
-                      ? "1 · Régénérer la progression"
-                      : "1 · Générer la progression"}
-                </PendingButton>
+                {sentVersion ? (
+                  // Une version a déjà été envoyée à l'école : on confirme avant de régénérer.
+                  <ConfirmSubmitButton
+                    variant="secondary"
+                    className="w-full"
+                    disabled={genPending}
+                    title="Régénérer la progression déjà envoyée ?"
+                    description={`Une nouvelle version est créée depuis les séances. Celle envoyée le ${sentVersion} reste ce que l’école a reçu.`}
+                    confirmLabel="Régénérer"
+                  >
+                    {genPending ? "Génération…" : "1 · Régénérer la progression"}
+                  </ConfirmSubmitButton>
+                ) : (
+                  <PendingButton
+                    type="submit"
+                    variant={status ? "secondary" : "default"}
+                    className="w-full"
+                    pending={genPending}
+                    pendingLabel="Génération…"
+                  >
+                    {hasDepositedOutline
+                      ? "1 · Générer une progression depuis les séances"
+                      : status
+                        ? "1 · Régénérer la progression"
+                        : "1 · Générer la progression"}
+                  </PendingButton>
+                )}
               </form>
             ) : null}
             {status ? (

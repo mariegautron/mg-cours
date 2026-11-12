@@ -99,7 +99,7 @@ export function ResourcePicker({
     return (
       <span className="text-muted-foreground basis-full pl-6 text-xs">
         {SEARCH_FIELD_LABELS[excerpt.field]} : {excerpt.before}
-        <mark className="bg-yellow-200 text-black">{excerpt.match}</mark>
+        <mark className="bg-status-todo text-status-ink">{excerpt.match}</mark>
         {excerpt.after}
       </span>
     );

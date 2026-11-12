@@ -124,7 +124,7 @@ export function AgreementExtras({
         </div>
       </details>
 
-      <p role="status" className="min-h-5 text-sm text-emerald-600 dark:text-emerald-400">
+      <p role="status" className="text-success min-h-5 text-sm">
         {message.ok ?? ""}
       </p>
       {message.error ? <ActionError error={message.error} /> : null}

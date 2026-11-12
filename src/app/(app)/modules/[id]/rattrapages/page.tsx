@@ -54,7 +54,7 @@ export default async function MakeupsPage({
   return (
     <div className="max-w-6xl space-y-5">
       {created ? (
-        <div role="status" className="border-mint/50 bg-mint/10 space-y-1 rounded-xl border p-4">
+        <div role="status" className="border-status-ready bg-muted space-y-1 rounded-xl border p-4">
           <p className="font-semibold">
             {added !== null
               ? `${added} personne${added > 1 ? "s" : ""} ajoutée${added > 1 ? "s" : ""} au rattrapage.`

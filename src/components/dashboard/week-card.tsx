@@ -4,10 +4,11 @@ import type { DayTile } from "@/lib/dashboard/overview";
 import { cn } from "@/lib/utils";
 
 const TILE = {
-  done: "bg-mint/14",
-  today: "bg-primary/22 outline-2 outline-primary",
-  upcoming: "bg-sun/16",
-  empty: "bg-foreground/5",
+  // Pas de tuiles colorées (DA) : fond neutre, l'état est porté par le symbole et le mot.
+  done: "bg-muted",
+  today: "bg-secondary outline-1 outline-featured-border",
+  upcoming: "border bg-transparent",
+  empty: "bg-transparent",
 } as const;
 
 const MARK = {

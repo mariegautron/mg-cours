@@ -1375,7 +1375,7 @@ export function GradeForm({
           <h2 id={`${uid}-obs`} className="font-heading text-base font-bold">
             Ton carnet
           </h2>
-          <span className="border-sun/45 bg-sun/12 text-sun rounded-full border px-2.5 text-xs font-bold">
+          <span className="border-status-todo bg-muted text-sun rounded-full border px-2.5 text-xs font-bold">
             Pour toi seule
           </span>
         </div>
@@ -1458,11 +1458,11 @@ export function GradeForm({
   const statusPill = (
     <span role="status" className="text-sm">
       {!online && dirty ? (
-        <span className="border-coral/45 bg-coral/12 text-coral rounded-full border px-3 py-1 text-xs font-bold">
+        <span className="border-status-blocking bg-muted text-coral rounded-full border px-3 py-1 text-xs font-bold">
           Hors connexion · 1 copie en attente
         </span>
       ) : pending ? (
-        <span className="border-sky/45 bg-sky/12 text-sky inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold">
+        <span className="border-status-published bg-muted text-sky inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold">
           <span
             aria-hidden
             className="size-3 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
@@ -1470,7 +1470,7 @@ export function GradeForm({
           Enregistrement…
         </span>
       ) : dirty && state.error ? (
-        <span className="border-sun/45 bg-sun/12 text-sun inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold">
+        <span className="border-status-todo bg-muted text-sun inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold">
           ! Pas enregistré
           <button
             type="button"
@@ -1481,11 +1481,11 @@ export function GradeForm({
           </button>
         </span>
       ) : dirty ? (
-        <span className="border-sun/45 bg-sun/12 text-sun rounded-full border px-3 py-1 text-xs font-bold">
+        <span className="border-status-todo bg-muted text-sun rounded-full border px-3 py-1 text-xs font-bold">
           Modifications non enregistrées
         </span>
       ) : savedAt ? (
-        <span className="border-mint/45 bg-mint/12 text-mint rounded-full border px-3 py-1 text-xs font-bold">
+        <span className="border-status-ready bg-muted text-mint rounded-full border px-3 py-1 text-xs font-bold">
           Enregistré à {savedAt}
         </span>
       ) : null}
@@ -1674,7 +1674,7 @@ export function GradeForm({
                               {c.is_bonus ? "Bonus · " : ""}
                               {c.label}
                               <span
-                                className={`rounded-full border px-2 text-xs font-bold ${pill.tone === "ok" ? "border-mint/45 text-mint" : pill.tone === "wip" ? "border-sky/45 text-sky" : "border-sun/45 text-sun"}`}
+                                className={`rounded-full border px-2 text-xs font-bold ${pill.tone === "ok" ? "border-status-ready text-mint" : pill.tone === "wip" ? "border-status-published text-sky" : "border-status-todo text-sun"}`}
                               >
                                 {pill.label}
                               </span>
@@ -1790,7 +1790,7 @@ export function GradeForm({
       </p>
 
       {state.conflict ? (
-        <div role="alert" className="border-sun/45 bg-sun/12 space-y-2 rounded-2xl border p-3">
+        <div role="alert" className="border-status-todo bg-muted space-y-2 rounded-2xl border p-3">
           <p className="text-sm font-semibold">Cette copie a été modifiée dans un autre onglet.</p>
           <p className="text-sm">
             Rien n’a été écrasé. Recharge la page pour voir la dernière version, puis refais ta

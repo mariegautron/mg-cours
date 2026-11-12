@@ -1,11 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { CopyPlus } from "lucide-react";
 
 import { ActionError } from "@/components/action-error";
 import { duplicateModule, type DuplicateState } from "@/app/(app)/modules/actions";
 import { DeleteModuleDialog } from "@/components/modules/delete-module-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +47,9 @@ export function ModuleDangerZone({
   /** Retours d'expérience privés des évaluations, à relire avant de dupliquer (US-98). */
   assessmentExperience?: AssessmentExperienceNote[];
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [copyName, setCopyName] = useState(`${name} (${year + 1})`);
+  const [copyYear, setCopyYear] = useState(String(year + 1));
   const [dupState, dupAction, dupPending] = useActionState(
     duplicateModule.bind(null, id),
     {} as DuplicateState,
@@ -70,15 +84,57 @@ export function ModuleDangerZone({
           </ul>
         </section>
       ) : null}
-      <form action={dupAction} className="flex flex-wrap items-end gap-3">
+      <form ref={formRef} action={dupAction} className="flex flex-wrap items-end gap-3">
         <div className="space-y-2">
-          <Label htmlFor="year">Dupliquer pour l’année</Label>
-          <Input id="year" name="year" type="number" defaultValue={year + 1} className="w-28" />
+          <Label htmlFor="dup-name">Nom de la copie</Label>
+          <Input
+            id="dup-name"
+            name="name"
+            value={copyName}
+            onChange={(e) => setCopyName(e.target.value)}
+            maxLength={200}
+            className="w-72 max-w-full"
+          />
         </div>
-        <Button type="submit" variant="secondary" disabled={dupPending}>
-          <CopyPlus aria-hidden />
-          {dupPending ? "Duplication…" : "Dupliquer le module"}
-        </Button>
+        <div className="space-y-2">
+          <Label htmlFor="year">Pour l’année</Label>
+          <Input
+            id="year"
+            name="year"
+            type="number"
+            value={copyYear}
+            onChange={(e) => setCopyYear(e.target.value)}
+            className="w-28"
+          />
+        </div>
+        {/* Confirmation dans l'appli : elle nomme la copie et ce qui part (ou pas) avec. */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="secondary" disabled={dupPending}>
+              <CopyPlus aria-hidden />
+              {dupPending ? "Duplication…" : "Dupliquer le module"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Dupliquer « {name} » ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Un nouveau module « {copyName.trim() || name} » ({copyYear}) est créé avec les
+                séances, les ressources, le projet et les évaluations. Ni notes, ni dates, ni
+                groupes. Le module actuel ne change pas.
+                {copyName.trim() === name
+                  ? " Attention : la copie porte le même nom que l’original."
+                  : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={() => formRef.current?.requestSubmit()}>
+                Dupliquer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {dupState.error ? <ActionError error={dupState.error} /> : null}
       </form>
       <p className="text-muted-foreground text-sm">

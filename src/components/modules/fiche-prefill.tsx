@@ -162,9 +162,7 @@ export function FichePrefill({
           <p
             role={message.kind === "error" ? "alert" : "status"}
             className={
-              message.kind === "error"
-                ? "text-destructive text-sm"
-                : "text-sm text-emerald-600 dark:text-emerald-400"
+              message.kind === "error" ? "text-destructive text-sm" : "text-success text-sm"
             }
           >
             {message.text}

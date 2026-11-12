@@ -82,7 +82,7 @@ export function StudentIntroSuggest({ fiche }: { fiche: FicheData | null }) {
           </div>
         </div>
       ) : null}
-      <div aria-live="polite" className="text-sm text-emerald-600 dark:text-emerald-400">
+      <div aria-live="polite" className="text-success text-sm">
         {message}
       </div>
     </div>

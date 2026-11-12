@@ -34,7 +34,7 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
       {saved ? (
         <p
           role="status"
-          className="rounded-xl border border-emerald-600/40 bg-emerald-50 p-3 text-sm font-medium dark:bg-emerald-950/30"
+          className="border-status-ready bg-muted rounded-xl border p-3 text-sm font-medium"
         >
           Grille enregistrée.
         </p>

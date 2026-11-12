@@ -101,11 +101,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
             </div>
             <p
               role="status"
-              className={
-                typeof saved === "string"
-                  ? "mb-3 text-sm text-emerald-600 dark:text-emerald-400"
-                  : "sr-only"
-              }
+              className={typeof saved === "string" ? "text-success mb-3 text-sm" : "sr-only"}
             >
               {typeof saved === "string" ? (
                 <span className="inline-flex items-center gap-1">

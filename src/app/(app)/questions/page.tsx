@@ -96,10 +96,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
         </div>
       </div>
       {toDefine > 0 || duplicates > 0 ? (
-        <p
-          role="status"
-          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
-        >
+        <p role="status" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           {toDefine > 0
             ? `${toDefine} question${toDefine > 1 ? "s" : ""} sans réponse définie (jamais tirée${toDefine > 1 ? "s" : ""}). `
             : ""}

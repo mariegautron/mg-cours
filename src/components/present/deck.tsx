@@ -69,7 +69,7 @@ const ROLE_FRAME: Record<SlideRole, string> = {
   definition: "border-primary bg-primary/10 rounded-3xl border-4 p-8",
   exemple: "border-primary/60 border-l-8 pl-8",
   exercice: "border-primary bg-primary/15 rounded-3xl border-2 border-dashed p-8",
-  attention: "rounded-3xl border-4 border-amber-500 bg-amber-500/10 p-8",
+  attention: "rounded-3xl border-4 border-status-todo bg-muted p-8",
   schema: "",
 };
 

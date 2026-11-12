@@ -19,6 +19,7 @@ import { getQuizByAssessment, getQuizPool, listAttempts, loadBank } from "@/lib/
 import { hasDefinedAnswer, quizTotalPoints, shortages } from "@/lib/quiz/draw";
 import { familyClosedReason } from "@/lib/quiz/visibility";
 import { createClient } from "@/lib/supabase/server";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 export const metadata: Metadata = { title: "QCM" };
 
@@ -255,9 +256,15 @@ export default async function QuizPage({
             {quiz.status === "draft" ? (
               validRules ? (
                 <form action={publishQuiz.bind(null, id, assessmentId)}>
-                  <Button type="submit" size="touch" className="w-full">
+                  <ConfirmSubmitButton
+                    size="touch"
+                    className="w-full"
+                    title={`Publier le QCM « ${assessment.title} » ?`}
+                    description="Les tirages sont figés et les liens deviennent utilisables par les étudiant·es."
+                    confirmLabel="Publier le QCM"
+                  >
                     Publier le QCM
-                  </Button>
+                  </ConfirmSubmitButton>
                 </form>
               ) : (
                 <>

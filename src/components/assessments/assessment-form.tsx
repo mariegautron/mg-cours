@@ -313,12 +313,12 @@ export function AssessmentForm({
               </select>
               <FieldError id="courseId" errors={fe.courseId} />
               {!courseId ? (
-                <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                <p role="status" className="text-warning text-sm font-medium">
                   Pas rattachée à une séance : absente de la frise des étudiant·es.
                 </p>
               ) : null}
               {dateMismatch ? (
-                <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                <p role="status" className="text-warning text-sm font-medium">
                   La date ({formatFr(dateText)}) ne correspond pas à la séance choisie : en
                   enregistrant, elle prendra celle de la séance (
                   {formatFr(selectedCourseDate ?? "")}).

@@ -85,7 +85,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
             À compléter pour pouvoir facturer : {completeness.missing.join(", ")}.
           </p>
         ) : (
-          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+          <p className="text-success mt-2 text-sm">
             Toutes les informations nécessaires à la facturation sont renseignées.
           </p>
         )}
@@ -253,7 +253,7 @@ export function ProfileForm({ profile }: { profile: Tables<"teacher_profile"> | 
           >
             Enregistrer les modifications
           </PendingButton>
-          <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+          <p role="status" className="text-success text-sm">
             {state.saved && !dirty ? (
               <span className="inline-flex items-center gap-1">
                 <Check aria-hidden className="size-4" />

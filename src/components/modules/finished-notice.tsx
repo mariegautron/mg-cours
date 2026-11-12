@@ -30,7 +30,7 @@ export function FinishedNotice({
   return (
     <div
       role="status"
-      className="border-mint/50 bg-mint/10 flex flex-wrap items-center gap-3 rounded-xl border p-3"
+      className="border-status-ready bg-muted flex flex-wrap items-center gap-3 rounded-xl border p-3"
     >
       <p className="text-sm">
         {message || (

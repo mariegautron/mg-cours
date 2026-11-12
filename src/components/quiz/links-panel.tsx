@@ -10,6 +10,7 @@ import {
 } from "@/app/(app)/modules/[id]/assessments/[assessmentId]/quiz/actions";
 import { Button } from "@/components/ui/button";
 import { linksCsv, PERSONAL_LINK_WARNING } from "@/lib/quiz/links";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 function LinksResult({ state }: { state: LinksState }) {
   const links = state.links ?? [];
@@ -53,7 +54,7 @@ function LinksResult({ state }: { state: LinksState }) {
         </p>
       ) : null}
       {state.notices?.length ? (
-        <div role="status" className="rounded-md border border-amber-500/50 p-3 text-sm">
+        <div role="status" className="border-status-todo rounded-md border p-3 text-sm">
           <p className="font-medium">
             Questions déjà vues (banque trop petite pour un tirage entièrement nouveau) :
           </p>
@@ -152,25 +153,18 @@ export function PrepareLinks({
           Prépare aussi les tirages de celles et ceux qui n’en ont pas, puis envoie le lien.
           L’e-mail part à ceux qui ont une adresse ; les autres gardent leur lien dans le CSV.
         </p>
-        <Button
-          type="submit"
-          name="send"
-          value="on"
+        <input type="hidden" name="send" value="on" />
+        <ConfirmSubmitButton
           size="touch"
           variant="secondary"
           disabled={pending || missing === 0}
-          onClick={(e) => {
-            if (
-              !window.confirm(
-                `Envoyer un e-mail à ${missing} personne${missing > 1 ? "s" : ""} ? Les tirages sont figés et les liens partent maintenant.`,
-              )
-            )
-              e.preventDefault();
-          }}
+          title={`Envoyer un e-mail à ${missing} personne${missing > 1 ? "s" : ""} ?`}
+          description="Les tirages sont figés et les liens partent maintenant, par e-mail, à celles et ceux qui ont une adresse."
+          confirmLabel="Envoyer les e-mails"
         >
           <Mail aria-hidden />
           Envoyer à {missing} personne{missing > 1 ? "s" : ""} par e-mail
-        </Button>
+        </ConfirmSubmitButton>
       </form>
       <LinksResult state={state} />
     </div>
@@ -198,9 +192,16 @@ export function RegenerateLink({
   return (
     <form action={action} className="space-y-1">
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+        <ConfirmSubmitButton
+          size="sm"
+          variant="secondary"
+          disabled={pending}
+          title={`Nouveau lien pour ${name} ?`}
+          description="L’ancien lien ne marchera plus. La copie n’est pas encore rendue : rien n’est perdu."
+          confirmLabel="Créer un nouveau lien"
+        >
           Nouveau lien<span className="sr-only"> pour {name}</span>
-        </Button>
+        </ConfirmSubmitButton>
         {hasEmail ? (
           <label className="flex items-center gap-1 text-xs">
             <input type="checkbox" name="send" />

@@ -140,13 +140,13 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
         <div
           role="status"
           className={`rounded-2xl border px-4 py-3.5 ${
-            banner.tone === "warn" ? "border-sun/45 bg-sun/12" : "bg-card"
+            banner.tone === "warn" ? "border-status-todo bg-muted" : "bg-card"
           }`}
         >
           <strong>{banner.strong}</strong> <span>{banner.rest}</span>
         </div>
       ) : (
-        <div role="status" className="border-mint/45 bg-mint/12 rounded-2xl border px-4 py-3.5">
+        <div role="status" className="border-status-ready bg-muted rounded-2xl border px-4 py-3.5">
           <strong>Progression pédagogique envoyée.</strong>{" "}
           <span>
             {outline?.sent_at

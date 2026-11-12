@@ -101,7 +101,7 @@ export default async function StartCoursePage({
       {classMissing ? (
         <section
           aria-labelledby="class-missing"
-          className="border-sun/60 bg-sun/10 space-y-2 rounded-xl border p-4"
+          className="border-status-todo bg-muted space-y-2 rounded-xl border p-4"
         >
           <h2 id="class-missing" className="font-heading text-lg font-bold">
             Ta classe n’est pas encore en place

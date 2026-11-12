@@ -60,10 +60,7 @@ export function UnsavedChangesGuard() {
 
   return (
     <span ref={marker}>
-      <span
-        role="status"
-        className={dirty ? "text-sm font-medium text-amber-700 dark:text-amber-400" : "sr-only"}
-      >
+      <span role="status" className={dirty ? "text-warning text-sm font-medium" : "sr-only"}>
         {dirty ? "Tu as des modifications non enregistrées." : ""}
       </span>
     </span>

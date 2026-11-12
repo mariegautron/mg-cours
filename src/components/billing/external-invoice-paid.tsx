@@ -17,7 +17,7 @@ export function ExternalInvoicePaid({ moduleId, paid }: { moduleId: string; paid
   if (paid) {
     return (
       <p className="flex items-center gap-2 text-sm">
-        <CircleCheck aria-hidden className="size-4 text-emerald-600 dark:text-emerald-400" />
+        <CircleCheck aria-hidden className="text-success size-4" />
         Module marqué comme payé.
       </p>
     );

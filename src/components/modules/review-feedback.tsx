@@ -2,9 +2,9 @@ import { REVIEW_MARK_LABELS, type ReviewMark } from "@/lib/assessments/progress-
 import type { PublishedReview } from "@/lib/assessments/review-public";
 
 const TONE: Record<ReviewMark, string> = {
-  ahead: "border-mint bg-mint/15",
-  on_track: "border-primary bg-primary/10",
-  review: "border-sun bg-sun/15",
+  ahead: "border-mint bg-muted",
+  on_track: "border-primary bg-muted",
+  review: "border-sun bg-muted",
 };
 
 /** Espace étudiant : « Point d'étape : retour de Marie » (sans note). */

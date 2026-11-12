@@ -4,10 +4,10 @@ import type { ClosingStatus, ProjectionRecap } from "@/lib/notebook/projection";
 
 const ICON: Record<ClosingStatus, { Icon: typeof Check; tone: string }> = {
   none: { Icon: CircleHelp, tone: "bg-muted text-muted-foreground" },
-  on_time: { Icon: Check, tone: "bg-mint/20 text-mint" },
-  late: { Icon: Clock, tone: "bg-sun/20 text-sun" },
-  early: { Icon: FastForward, tone: "bg-sky/20 text-sky" },
-  reordered: { Icon: ArrowDownUp, tone: "bg-violet/20 text-violet" },
+  on_time: { Icon: Check, tone: "bg-muted text-mint" },
+  late: { Icon: Clock, tone: "bg-muted text-sun" },
+  early: { Icon: FastForward, tone: "bg-muted text-sky" },
+  reordered: { Icon: ArrowDownUp, tone: "bg-muted text-violet" },
 };
 
 const time = (iso: string) =>

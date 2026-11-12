@@ -51,9 +51,9 @@ export interface ReviewCopy {
 }
 
 const MARK_TONE: Record<ReviewMark, string> = {
-  ahead: "border-mint bg-mint/15",
-  on_track: "border-primary bg-primary/10",
-  review: "border-sun bg-sun/15",
+  ahead: "border-mint bg-muted",
+  on_track: "border-primary bg-muted",
+  review: "border-sun bg-muted",
 };
 
 const isPdf = (i: SubmissionItemLike) => /\.pdf$/i.test(i.file_name ?? "");
@@ -350,7 +350,7 @@ function RenduColumn({
       copy.state !== "done" &&
       copy.state !== "published" &&
       deposit.submitted_at > copy.startedAt ? (
-        <p role="status" className="border-sun/60 bg-sun/10 rounded-lg border p-2 text-sm">
+        <p role="status" className="border-status-todo bg-muted rounded-lg border p-2 text-sm">
           <strong>
             Nouveau dépôt le {parisDayTime(deposit.submitted_at)}, pendant ton retour.
           </strong>{" "}
@@ -482,7 +482,10 @@ function ReviewPanel({
 
   const conflictBox = (field: string, label: string) =>
     field in f.conflicts ? (
-      <div role="alert" className="border-sun/60 bg-sun/10 space-y-1 rounded-lg border p-2 text-sm">
+      <div
+        role="alert"
+        className="border-status-todo bg-muted space-y-1 rounded-lg border p-2 text-sm"
+      >
         <p className="font-semibold">{label} a changé dans un autre onglet.</p>
         <p>
           <span className="font-medium">Ici :</span> {f.values[field] || "(vide)"}

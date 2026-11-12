@@ -27,6 +27,7 @@ import {
   type StoredTextState,
 } from "@/lib/assessments/oral-texts";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/use-confirm";
 
 type Fields = ReturnType<typeof useVersionedFields>;
 
@@ -40,10 +41,10 @@ export interface TextMeta {
 
 const STATE_TONE: Record<string, string> = {
   empty: "border-muted-foreground/40 text-muted-foreground",
-  proposed: "border-sky/60 text-sky",
-  to_validate: "border-sun/60 text-sun",
-  to_review: "border-coral/60 text-coral",
-  validated: "border-mint/60 text-mint",
+  proposed: "border-status-published text-sky",
+  to_validate: "border-status-todo text-sun",
+  to_review: "border-status-blocking text-coral",
+  validated: "border-status-ready text-mint",
 };
 
 /**
@@ -80,6 +81,7 @@ export function OralTextsPanel({
   pad: string;
   readOnly: boolean;
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [meta, setMeta] = useState<Record<string, TextMeta>>(initialMeta);
   const [message, setMessage] = useState<Record<string, string>>({});
   const list = textFields(criteria);
@@ -110,7 +112,11 @@ export function OralTextsPanel({
     const overwrite =
       current.trim() === "" ||
       meta[id]?.state === "proposed" ||
-      window.confirm("Remplacer le texte déjà écrit par la proposition ?");
+      (await confirm({
+        title: `Remplacer le texte « ${field.label} » ?`,
+        description: "Le texte déjà écrit est remplacé par la proposition.",
+        confirmLabel: "Remplacer",
+      }));
     if (!overwrite) return;
     await fields.flush();
     const res = await applyOralProposal(moduleId, assessmentId, subjectId, id, proposal, true);
@@ -152,6 +158,7 @@ export function OralTextsPanel({
       aria-labelledby={`texts-${subjectId}`}
       className="bg-card space-y-3 rounded-2xl border p-4"
     >
+      {confirmDialog}
       <h4
         id={`texts-${subjectId}`}
         tabIndex={-1}
@@ -199,7 +206,7 @@ export function OralTextsPanel({
                       hits.forEach((h, i) => {
                         parts.push(text.slice(at, h.start));
                         parts.push(
-                          <mark key={i} className="bg-sun/40 rounded px-0.5">
+                          <mark key={i} className="bg-muted rounded px-0.5">
                             {text.slice(h.start, h.end)}
                           </mark>,
                         );
@@ -214,7 +221,7 @@ export function OralTextsPanel({
             {`text:${field.id}` in fields.conflicts ? (
               <div
                 role="alert"
-                className="border-sun/60 bg-sun/10 space-y-1 rounded-lg border p-2 text-sm"
+                className="border-status-todo bg-muted space-y-1 rounded-lg border p-2 text-sm"
               >
                 <p>Ici : {text || "(vide)"}</p>
                 <p>Ailleurs : {fields.conflicts[`text:${field.id}`] || "(vide)"}</p>

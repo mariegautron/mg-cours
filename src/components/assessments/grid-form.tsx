@@ -242,10 +242,7 @@ export function GridForm({
     >
       <UnsavedChangesGuard />
       {inUse ? (
-        <div
-          role="note"
-          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
-        >
+        <div role="note" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           <p className="font-medium">
             Utilisée dans {usage!.assessments} évaluation{usage!.assessments > 1 ? "s" : ""}, dont{" "}
             {usage!.graded} avec des notes.

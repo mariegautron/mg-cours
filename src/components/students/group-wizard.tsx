@@ -243,7 +243,7 @@ export function GroupWizard({
             {i > 0 ? (
               <span
                 aria-hidden
-                className={`h-0.5 w-8 ${done || current ? "bg-mint/60" : "bg-border"}`}
+                className={`h-0.5 w-8 ${done || current ? "bg-muted" : "bg-border"}`}
               />
             ) : null}
             <span
@@ -613,7 +613,7 @@ export function GroupWizard({
               {groups.map((g, gi) => (
                 <li
                   key={g.id}
-                  className={`${card} space-y-2 p-4 ${g.locked ? "border-sun/60" : ""}`}
+                  className={`${card} space-y-2 p-4 ${g.locked ? "border-status-todo" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <Label htmlFor={`name-${g.id}`} className="sr-only">

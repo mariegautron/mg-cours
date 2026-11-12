@@ -119,7 +119,7 @@ export default async function AttemptPage({
                           : "Pas de réponse."}
                       </p>
                       {/* Réponse attendue (corrigé de la banque) à côté de la réponse libre. */}
-                      <div className="border-mint/60 bg-mint/10 rounded border p-2 text-sm">
+                      <div className="border-status-ready bg-muted rounded border p-2 text-sm">
                         <p className="text-xs font-semibold">Réponse attendue</p>
                         {(q.general_feedback || expectedOf.get(q.question_id) || "").trim() ? (
                           <Markdown

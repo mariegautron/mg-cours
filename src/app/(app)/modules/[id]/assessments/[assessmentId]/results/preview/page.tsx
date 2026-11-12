@@ -42,7 +42,7 @@ export default async function ResultsPreviewPage({
     <div className="mx-auto max-w-5xl space-y-4">
       <div
         role="note"
-        className="bg-sun/10 border-sun/50 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm"
+        className="bg-muted border-status-todo flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm"
       >
         <p>
           <strong>Aperçu.</strong> Voilà ce que {sheet.recipients[0].name} verra. Rien n’est envoyé

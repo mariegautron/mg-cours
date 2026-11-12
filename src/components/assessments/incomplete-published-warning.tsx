@@ -34,7 +34,7 @@ export function IncompletePublishedWarning({
     <section
       role="alert"
       aria-labelledby="inc-pub"
-      className="border-sun/50 bg-sun/10 space-y-2 rounded-xl border p-4"
+      className="border-status-todo bg-muted space-y-2 rounded-xl border p-4"
     >
       <h2 id="inc-pub" className="font-semibold">
         Résultats publiés pour une copie incomplète

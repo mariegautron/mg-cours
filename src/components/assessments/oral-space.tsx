@@ -48,6 +48,7 @@ import {
   type ReviewMark,
 } from "@/lib/assessments/progress-review";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/use-confirm";
 
 export interface OralSpaceInit {
   letters: Record<string, string>;
@@ -130,6 +131,7 @@ export function OralSpace({
   /** « rendu » : même espace pour corriger un rendu (fichiers ou liens), sans ce qui est propre à l'oral. */
   variant?: "oral" | "rendu";
 }) {
+  const [askConfirm, confirmDialog] = useConfirm();
   const isRendu = variant === "rendu";
   const initial = useMemo(() => {
     const values: Record<string, string> = { pad: init.pad };
@@ -286,13 +288,15 @@ export function OralSpace({
     });
   }
 
-  function discardDraft() {
-    if (
-      !window.confirm(
-        "Abandonner le brouillon ? Les lettres et les notes reviennent à l’état d’origine ; les présences (enregistrées sur la copie), la note écrite et les résultats publiés ne bougent pas.",
-      )
-    )
-      return;
+  async function discardDraft() {
+    const ok = await askConfirm({
+      title: `Abandonner le brouillon de ${subjectName} ?`,
+      description:
+        "Les lettres et les notes reviennent à l’état d’origine ; les présences (enregistrées sur la copie), la note écrite et les résultats publiés ne bougent pas.",
+      confirmLabel: "Abandonner le brouillon",
+      destructive: true,
+    });
+    if (!ok) return;
     startDiscard(async () => {
       await discardOralDraft(moduleId, assessmentId, subjectId);
       setEditing(false);
@@ -317,7 +321,10 @@ export function OralSpace({
 
   const conflictBox = (field: string, label: string) =>
     field in f.conflicts ? (
-      <div role="alert" className="border-sun/60 bg-sun/10 space-y-1 rounded-lg border p-2 text-sm">
+      <div
+        role="alert"
+        className="border-status-todo bg-muted space-y-1 rounded-lg border p-2 text-sm"
+      >
         <p className="font-semibold">{label} a changé dans un autre onglet.</p>
         <p>
           <span className="font-medium">Ici :</span> {f.values[field] || "(vide)"}
@@ -338,6 +345,7 @@ export function OralSpace({
 
   return (
     <div className="space-y-2">
+      {confirmDialog}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <h3
           id={`copy-${subjectId}-title`}
@@ -380,13 +388,15 @@ export function OralSpace({
             size="sm"
             variant="ghost"
             disabled={pendingDiscard}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Effacer la note écrite de ${subjectName} ? La copie redevient « à corriger » (tes lettres et notes privées restent). Ce qui a déjà été publié reste visible jusqu’au prochain « Mettre à jour ».`,
-                )
-              )
-                return;
+            onClick={async () => {
+              const ok = await askConfirm({
+                title: `Effacer la note écrite de ${subjectName} ?`,
+                description:
+                  "La copie redevient « à corriger » (tes lettres et notes privées restent). Ce qui a déjà été publié reste visible jusqu’au prochain « Mettre à jour ».",
+                confirmLabel: "Effacer la note",
+                destructive: true,
+              });
+              if (!ok) return;
               startDiscard(async () => {
                 const res = await clearWrittenNote(moduleId, assessmentId, subjectId);
                 if (res.error) setWriteState({ error: res.error });
@@ -412,7 +422,7 @@ export function OralSpace({
           <span
             className={cn(
               "rounded-full border px-2.5 text-xs font-bold",
-              rewrite ? "border-sun/60 text-sun" : "border-mint/60 text-mint",
+              rewrite ? "border-status-todo text-sun" : "border-status-ready text-mint",
             )}
           >
             {rewrite ? "Note à réécrire" : "Note écrite"}
@@ -574,7 +584,9 @@ export function OralSpace({
                     <span
                       className={cn(
                         "rounded-full border px-2 text-xs font-bold",
-                        isLetter(letter) ? "border-mint/50 text-mint" : "border-sun/50 text-sun",
+                        isLetter(letter)
+                          ? "border-status-ready text-mint"
+                          : "border-status-todo text-sun",
                       )}
                     >
                       {isLetter(letter) ? letter : "à noter"}

@@ -190,10 +190,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
       </h1>
 
       {quizOpen && espace?.quiz ? (
-        <section
-          aria-labelledby="quiz"
-          className="border-primary bg-primary/10 rounded-2xl border-2 p-5"
-        >
+        <section aria-labelledby="quiz" className="bg-card card-featured rounded-2xl border p-4">
           <h2 id="quiz" className="font-heading text-xl font-bold">
             {data.quizMakeupPlanned
               ? "Rattrapage prévu"
@@ -233,7 +230,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
       ) : null}
 
       {next && nextIndex !== null ? (
-        <section aria-labelledby="prochain" className="bg-card rounded-2xl border-2 p-6 shadow-sm">
+        <section aria-labelledby="prochain" className="bg-card rounded-2xl border p-4">
           <p className="text-primary text-xs font-bold tracking-widest uppercase">Prochain rendu</p>
           <h2 id="prochain" className="font-heading mt-1 text-2xl font-bold">
             {next.title}
@@ -782,7 +779,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                     </p>
 
                     {sheet.value !== null ? (
-                      <p className="bg-primary/15 mt-2 inline-flex items-baseline gap-1 rounded-2xl px-4 py-2">
+                      <p className="bg-muted mt-2 inline-flex items-baseline gap-1 rounded-2xl px-4 py-2">
                         <span className="font-heading text-5xl font-bold">{fmt(sheet.value)}</span>
                         <span className="text-foreground/80 text-xl font-semibold">
                           / {fmt(sheet.maxScore)}
@@ -811,9 +808,9 @@ export function NotesView({ data }: { data: EspaceData }) {
                           key={label}
                           className={
                             label === "Ce qui est réussi"
-                              ? "rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4"
+                              ? "border-status-ready bg-muted rounded-2xl border p-4"
                               : label === "Pour progresser"
-                                ? "rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4"
+                                ? "border-status-todo bg-muted rounded-2xl border p-4"
                                 : "bg-muted/30 rounded-2xl border p-4"
                           }
                         >

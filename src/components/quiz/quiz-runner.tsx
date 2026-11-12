@@ -301,10 +301,7 @@ export function QuizRunner({
   return (
     <div className="space-y-5">
       {dryRun ? (
-        <p
-          role="note"
-          className="rounded-xl border border-amber-500/60 bg-amber-50 p-3 text-sm dark:bg-amber-950/30"
-        >
+        <p role="note" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           <strong>Essai à blanc.</strong> Tu passes le QCM comme un·e étudiant·e ; rien n’est publié
           ni enregistré.
         </p>
@@ -313,7 +310,7 @@ export function QuizRunner({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="font-heading text-xl font-bold">QCM · {title}</h1>
           {remaining !== null && !timed && deadlineAt ? (
-            <p className="border-sky/45 bg-sky/12 text-sky rounded-full border px-3 py-1 text-sm font-bold">
+            <p className="border-status-published bg-muted text-sky rounded-full border px-3 py-1 text-sm font-bold">
               À rendre avant{" "}
               {new Date(deadlineAt).toLocaleTimeString("fr-FR", {
                 hour: "2-digit",
@@ -324,7 +321,7 @@ export function QuizRunner({
           ) : remaining !== null ? (
             <p
               role="timer"
-              className="border-sky/45 bg-sky/12 text-sky rounded-full border px-3 py-1 text-sm font-bold"
+              className="border-status-published bg-muted text-sky rounded-full border px-3 py-1 text-sm font-bold"
             >
               Temps restant : {formatRemaining(remaining)}
             </p>
@@ -345,7 +342,7 @@ export function QuizRunner({
         {announcement}
       </p>
       {saveState === "error" || !online ? (
-        <div role="alert" className="border-sun/60 bg-sun/12 rounded-xl border p-3 text-sm">
+        <div role="alert" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           <strong>Connexion perdue.</strong>
           <p className="text-muted-foreground">
             Vos réponses sont gardées sur votre téléphone et partiront dès le retour du réseau. Le
@@ -357,7 +354,7 @@ export function QuizRunner({
         </div>
       ) : null}
       {recovered !== null ? (
-        <p role="status" className="border-mint/50 bg-mint/12 rounded-xl border p-3 text-sm">
+        <p role="status" className="border-status-ready bg-muted rounded-xl border p-3 text-sm">
           <strong>Connexion rétablie.</strong> Vos {recovered} réponse{recovered > 1 ? "s" : ""} en
           attente ont été envoyées.
         </p>
@@ -420,7 +417,7 @@ export function QuizRunner({
                 i === current
                   ? "bg-primary text-primary-foreground border-transparent"
                   : answered(q.position)
-                    ? "bg-mint/15 border-mint/40"
+                    ? "bg-muted border-status-ready"
                     : "bg-muted/40",
               )}
             >

@@ -91,7 +91,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           {items.map((i) => (
             <li key={i.key} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="flex items-center gap-3">
-                <Pill tone={i.done ? "ok" : i.optional ? "lock" : "warn"}>
+                <Pill tone={i.done ? "ok" : i.optional ? "plain" : "warn"}>
                   {i.done ? "✓" : i.optional ? "·" : "!"}
                 </Pill>
                 <div>
@@ -105,7 +105,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
                   <div className="text-muted-foreground text-sm">{i.detail}</div>
                 </div>
               </div>
-              <Pill tone={i.done ? "ok" : i.optional ? "lock" : "warn"}>
+              <Pill tone={i.done ? "ok" : i.optional ? "plain" : "warn"}>
                 {i.done ? "Fait" : i.optional ? "Facultatif" : "À faire"}
               </Pill>
             </li>
@@ -122,7 +122,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
         </section>
         <div className="flex flex-wrap items-center gap-2 border-t pt-3">
           <h2 className="font-heading text-xl font-bold">Ton retour, pour toi seule</h2>
-          <Pill tone="lock">Privé</Pill>
+          <Pill tone="plain">Privé</Pill>
         </div>
         {mod.finished_at && !askNote ? null : (
           <FinishModuleForm

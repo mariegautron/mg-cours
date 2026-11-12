@@ -31,6 +31,7 @@ import {
   type Part,
   type Sentences,
 } from "@/lib/appreciations/draft";
+import { useConfirm } from "@/components/use-confirm";
 
 const AUTOSAVE_MS = 1200;
 
@@ -60,6 +61,7 @@ export function AppreciationEditor({
   prev?: { href: string; name: string } | null;
   next?: { href: string; name: string } | null;
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const router = useRouter();
   const name = `${firstName} ${lastName}`;
   const [text, setText] = useState(initial);
@@ -119,7 +121,15 @@ export function AppreciationEditor({
   }
 
   async function fromTemplate() {
-    if (text.trim() && !window.confirm("Remplacer ce que tu as écrit par le gabarit ?")) return;
+    if (
+      text.trim() &&
+      !(await confirm({
+        title: "Remplacer ton texte par le gabarit ?",
+        description: "Ce que tu as écrit dans cette appréciation est remplacé par le gabarit.",
+        confirmLabel: "Remplacer",
+      }))
+    )
+      return;
     setMessage("Gabarit en préparation…");
     const r = await startFromTemplate(moduleId, studentId);
     if (r.error || !r.text) {
@@ -190,6 +200,7 @@ export function AppreciationEditor({
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <section className="bg-card space-y-3 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 id="ed" className="font-heading text-2xl font-bold">

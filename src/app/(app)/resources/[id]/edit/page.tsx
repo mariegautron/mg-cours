@@ -43,7 +43,7 @@ export default async function EditResourcePage({
       {usage.length > 1 ? (
         <div
           role="note"
-          className="border-sun/60 bg-sun/10 space-y-2 rounded-xl border p-3 text-sm"
+          className="border-status-todo bg-muted space-y-2 rounded-xl border p-3 text-sm"
         >
           <p>
             <strong>Utilisée dans {usage.length} modules</strong> :{" "}

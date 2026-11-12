@@ -194,7 +194,7 @@ export function DocumentSlot({
 
       {state.error ? <ActionError error={state.error} /> : null}
       {state.saved ? (
-        <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+        <p role="status" className="text-success text-sm">
           Document déposé.
         </p>
       ) : null}

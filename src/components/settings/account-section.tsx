@@ -47,7 +47,7 @@ export function AccountSection() {
           />
         </div>
         {state.error ? <ActionError error={state.error} /> : null}
-        <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+        <p role="status" className="text-success text-sm">
           {state.saved ? "Mot de passe changé." : ""}
         </p>
         <PendingButton

@@ -433,7 +433,7 @@ export function PresenterView({
               {current?.notes?.length ? (
                 <aside
                   aria-label="Tes notes pour cette diapositive"
-                  className="bg-sun/10 border-sun/60 rounded-lg border p-3 text-sm"
+                  className="bg-muted border-status-todo rounded-lg border p-3 text-sm"
                 >
                   <p className="font-semibold">Tes notes · pour toi seule</p>
                   {current.notes.map((n, i) => (

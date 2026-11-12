@@ -44,9 +44,9 @@ export function statusLabel(status: string): string {
   return PREP_STATUS_LABELS[status as PrepStatus] ?? status;
 }
 
-export const STATUS_TONES: Record<string, "warn" | "wip" | "ok"> = {
-  todo: "warn",
-  in_progress: "wip",
+export const STATUS_TONES: Record<string, "idle" | "warn" | "ok"> = {
+  todo: "idle",
+  in_progress: "warn",
   ready: "ok",
 };
 

@@ -13,9 +13,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const BAND_STYLE: Record<BandKind, string> = {
-  launch: "border-primary bg-primary/15",
-  group: "border-sun bg-sun/15",
-  individual: "border-sky bg-sky/15",
+  launch: "border-primary bg-muted",
+  group: "border-sun bg-muted",
+  individual: "border-sky bg-muted",
 };
 
 const DOT_STYLE: Record<BandKind, string> = {

@@ -156,7 +156,7 @@ export function PhotosImportForm() {
                   key={r.name}
                   className={cn(
                     "bg-muted/40 flex flex-col gap-1 rounded-lg border p-2",
-                    r.status === "ambiguous" && "border-sun/60",
+                    r.status === "ambiguous" && "border-status-todo",
                   )}
                 >
                   <span
@@ -186,7 +186,7 @@ export function PhotosImportForm() {
 
       {state.error ? <ActionError error={state.error} /> : null}
       {state.message ? (
-        <p role="status" className="bg-mint/15 rounded-lg border p-3 text-sm font-medium">
+        <p role="status" className="bg-muted rounded-lg border p-3 text-sm font-medium">
           {state.message}{" "}
           <Link href="/students" className="underline underline-offset-2">
             Voir les étudiant·es

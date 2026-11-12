@@ -87,7 +87,7 @@ export function ResultsActions({
               </AlertDialogDescription>
             </AlertDialogHeader>
             {sentAt ? (
-              <p className="rounded-md border border-amber-500/50 p-2 text-sm">
+              <p className="border-status-todo rounded-md border p-2 text-sm">
                 <strong>Déjà envoyés le {dateTime(sentAt)}.</strong> Un nouvel envoi renverra un
                 e-mail à chaque destinataire.
               </p>

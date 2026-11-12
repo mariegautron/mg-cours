@@ -230,12 +230,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
         </form>
       </nav>
 
-      <p
-        role="status"
-        className={
-          deleted ? "text-sm font-semibold text-emerald-600 dark:text-emerald-400" : "sr-only"
-        }
-      >
+      <p role="status" className={deleted ? "text-success text-sm font-semibold" : "sr-only"}>
         {deleted ? `Module « ${deleted} » supprimé.` : ""}
       </p>
 
