@@ -15,7 +15,7 @@ colonne supprimée disparaît simplement de l'export.
 | `assessment.coefficient` | **Non** (ce commit : plus écrit pour la Note de l'école, plus recopié par la duplication ni le rattrapage, plus lu par le formulaire). Seul le nom du champ de formulaire « coefficient » reste (il alimente `coefficient_override`). | 32 lignes, toutes non nulles (défaut 1) ; 10 individuelles à 1 au lieu de 3, jamais lues | **Supprimer.** Rien à sauvegarder (valeur ignorée depuis le lot 3). |
 | `assessment.submission_mode` | Non (lot 6) | 4 / 32 | **Supprimer.** `submit_mode` fait foi. Les 4 valeurs peuvent être gardées dans la migration en commentaire (dont la contradictoire « app » / elsewhere). |
 | `assessment.exam_kind` | **Oui** : écrit à chaque enregistrement (déduit du type) ; lu par « Quelle épreuve ? », le cadre projeté, le jour J, le dépôt, et en secours de `kind` | 24 / 32 | **Garder pour l'instant.** À retirer seulement après avoir fait lire `kind` à ces écrans (prochain chantier) ; ensuite supprimer. |
-| `assessment.subject_versions` | **Oui** : choix « Un sujet pour tous / Deux versions A et B » de « Quelle épreuve ? » | 0 / 32 différent de « single » | **Décision produit** : la fonction n'a jamais servi. Si Marie n'en veut pas, retirer le choix puis la colonne ; sinon garder. |
+| `assessment.subject_versions` | **Oui** : choix « Un sujet pour tous / Deux versions A et B » de « Quelle épreuve ? » | 0 / 32 différent de « single » | **Garder** : décision d'Arnaud le 12/11 (« j'aime bien parfois proposer plusieurs sujets »). |
 | `assessment.makeup_prepared` | **Oui** : case « sujet de rattrapage préparé d'avance » de « Quelle épreuve ? » | 0 / 32 | **Garder** : décision d'Arnaud le 12/11 (« les rattrapages peuvent servir »). |
 | `grade.is_group_grade` | Non (lot 6 ; la cible vient de `student_id` / `student_group_id`) | à recompter (requête 1) ; les nouvelles copies de groupe l'ont à `false` | **Supprimer.** Aucune contrainte ne l'utilise. |
 | `student.scholar_group` | Non (lot 6 : la recherche lit `student_year`) | 86 / 105 ; **0** promotion sans équivalent dans `student_year` (contrôle lot 6, requête 6) | **Supprimer**, après la requête 2 de `lot9-candidats.sql` à 0. |
@@ -36,7 +36,8 @@ colonne supprimée disparaît simplement de l'export.
    `assessment.submission_mode`.
 3. Table `project_submission`.
 4. `student.scholar_group` (après la requête 2 à 0).
-5. Plus tard, après décision ou nouveau chantier : `subject_versions`, `exam_kind`, `import_ref`.
+5. Plus tard, après décision ou nouveau chantier : `exam_kind`, `import_ref`.
+   `subject_versions` est gardée (décision du 12/11).
    `makeup_prepared` est gardée (décision du 12/11).
 
 Avant chaque drop : régénérer les types (`pnpm db:types`) ou retirer la colonne de
