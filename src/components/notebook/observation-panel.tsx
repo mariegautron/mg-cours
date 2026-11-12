@@ -247,7 +247,7 @@ export function ObservationPanel({
           <legend className="mb-2 text-sm font-medium">Étiquette pour {name}</legend>
           <div className="@container">
             <div className="grid grid-cols-1 gap-1.5 @md:grid-cols-2">
-              {CHOOSABLE_OBSERVATION_TAGS.map((t, i) => (
+              {CHOOSABLE_OBSERVATION_TAGS.map((t) => (
                 <PendingButton
                   key={t.value}
                   type="submit"
