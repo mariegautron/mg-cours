@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,20 @@ export function AgendaList({
   };
 }) {
   const [f, setF] = useState(initial);
+  // L'adresse suit les filtres (sans recharger) : « Retour » et un lien partagé les retrouvent.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (f.toGrade) params.set("filtre", "a-noter");
+    if (f.module) params.set("module", f.module);
+    if (f.type) params.set("type", f.type);
+    if (f.sujet) params.set("sujet", f.sujet);
+    if (f.du) params.set("du", f.du);
+    if (f.au) params.set("au", f.au);
+    const qs = params.toString();
+    const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    if (url !== window.location.pathname + window.location.search)
+      window.history.replaceState(window.history.state, "", url);
+  }, [f]);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const todayIso = new Date().toISOString().slice(0, 10);
 

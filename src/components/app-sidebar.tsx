@@ -116,7 +116,14 @@ export function AppSidebar({
                                       here ? "text-foreground font-medium" : "text-muted-foreground"
                                     }`}
                                   >
-                                    <span className="line-clamp-2 min-w-0 break-words">
+                                    {/* Nom complet (plus de coupure) et année en tête : deux modules
+                                        aux noms proches se distinguent sans info-bulle. */}
+                                    <span className="min-w-0 py-1 break-words">
+                                      {m.year ? (
+                                        <span className="text-muted-foreground-2 mr-1 text-xs tabular-nums">
+                                          {m.year} ·
+                                        </span>
+                                      ) : null}
                                       {m.name}
                                     </span>
                                   </Link>
