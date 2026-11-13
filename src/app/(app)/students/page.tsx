@@ -65,7 +65,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">Étudiant·es</h1>
+          <h1>Étudiant·es</h1>
           <p className="text-muted-foreground">
             {plural(students.length, "personne", "personnes")}
             {scholarGroup ? ` dans ${scholarGroup}` : ""}. Un clic ouvre la fiche : notes,

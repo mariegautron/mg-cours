@@ -18,7 +18,7 @@ export default async function PreviewChooserPage({ params }: PageProps<"/modules
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-xl">Voir l’espace d’un·e étudiant·e</h1>
+      <h1>Voir l’espace d’un·e étudiant·e</h1>
       <p className="text-muted-foreground">
         Aperçu en lecture seule, avec ce qui serait publié si tu cliquais « Mettre à jour ». Rien
         n’est envoyé.

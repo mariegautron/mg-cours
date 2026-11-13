@@ -22,7 +22,7 @@ export default async function EditModulePage({ params }: PageProps<"/modules/[id
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl">Modifier « {mod.name} »</h1>
+      <h1>Modifier « {mod.name} »</h1>
       <ModuleForm action={updateModule.bind(null, id)} schools={schools} module={mod} />
 
       {/* Dupliquer et supprimer : une seule fois, ici (doublon D17). */}

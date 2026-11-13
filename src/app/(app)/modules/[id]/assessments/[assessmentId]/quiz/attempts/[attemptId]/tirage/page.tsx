@@ -35,7 +35,7 @@ export default async function DrawnQuestionsPage({
       >
         ← Suivi des copies
       </Link>
-      <h1 className="text-xl">
+      <h1>
         Questions tirées pour {student.first_name} {student.last_name}
       </h1>
       <p className="text-muted-foreground text-sm">

@@ -56,7 +56,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   if (!res.content) {
     return (
       <main className="mx-auto max-w-2xl space-y-2 p-6">
-        <h1 className="text-xl">Bonjour{res.firstName ? ` ${res.firstName}` : ""}</h1>
+        <h1>Bonjour{res.firstName ? ` ${res.firstName}` : ""}</h1>
         <p className="text-muted-foreground">
           L’espace de ce module n’est pas encore publié. Revenez bientôt.
         </p>

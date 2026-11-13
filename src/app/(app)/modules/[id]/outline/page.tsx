@@ -121,8 +121,8 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Documents</p>
-          <h1 className="text-xl">Progression pédagogique</h1>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Documents</p>
+          <h1>Progression pédagogique</h1>
           <p className="text-muted-foreground mt-1">
             Vérifie que tout est prêt, génère le PDF, envoie-le à l’école, puis dis-le-moi.
           </p>
@@ -177,7 +177,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
               <li key={c.key} className="flex items-start gap-3 border-t py-2.5">
                 <span
                   aria-hidden
-                  className={`mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-[13px] font-bold ${
+                  className={`mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-[0.8125rem] font-bold ${
                     c.ok
                       ? "bg-status-ready text-status-ink"
                       : "border-status-todo text-warning border-[1.5px]"

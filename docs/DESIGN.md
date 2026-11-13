@@ -3,8 +3,9 @@
 Couche de règles posée par-dessus « Studio de nuit · lavande » pour une interface plus pro.
 Jetons dans `src/app/globals.css`, composants de base dans `src/components/ui/` et `pill.tsx`.
 
-- **Texte** : 12 · 13 · 14 · 16 · 20 · 26 px, rien d'autre (`text-xs`, `text-[13px]`,
-  `text-sm`, `text-base`/`text-lg`, `text-xl`/`text-2xl`, `text-3xl`/`text-4xl`). Corps 14 px en
+- **Texte** : 12 · 13 · 14 · 16 · 20 · 26 px, rien d'autre (`text-xs`, `text-[0.8125rem]`,
+  `text-sm`, `text-base`, `text-xl`, h1). En rem pour suivre « Taille du texte ». La projection
+  garde les grandes tailles Tailwind. Corps 14 px en
   « Compacte » (défaut), 15 px en « Confortable » ; la racine reste à 16 px.
 - **Hiérarchie** : le h1 (26 px, Bricolage 700) est toujours le plus grand texte de la page.
   Titres de carte et de section : Inter 600, 14 px. Bricolage 700 seulement pour le logo, le h1, le

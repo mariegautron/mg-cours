@@ -84,11 +84,11 @@ export default async function StartCoursePage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">
             Séance {position + 1}
             {when ? ` · ${when}` : ""}
           </p>
-          <h1 className="text-xl">Avant de commencer</h1>
+          <h1>Avant de commencer</h1>
           <p className="text-muted-foreground mt-1">
             {course.title} · le cours se projette depuis l’app, découpé automatiquement. Le nombre
             de diapositives n’a pas d’importance.

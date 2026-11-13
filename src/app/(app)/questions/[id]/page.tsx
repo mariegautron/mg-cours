@@ -45,7 +45,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
       </nav>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">{q.name}</h1>
+          <h1>{q.name}</h1>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">{QUESTION_TYPE_LABELS[type]}</Badge>
             <Badge variant="outline">{q.category || "Sans catégorie"}</Badge>

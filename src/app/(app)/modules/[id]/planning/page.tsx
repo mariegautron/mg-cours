@@ -19,8 +19,8 @@ export default async function PlanningPage({ params }: PageProps<"/modules/[id]/
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">{data.name}</p>
-          <h1 className="text-xl">Le planning du module</h1>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">{data.name}</p>
+          <h1>Le planning du module</h1>
           <p className="text-muted-foreground mt-1">
             Les jours, les séances et leur déroulé heure par heure.
           </p>

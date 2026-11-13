@@ -60,8 +60,8 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
   return (
     <div className="max-w-5xl space-y-5">
       <header className="space-y-1">
-        <p className="text-muted-foreground text-[13px] font-medium">Fin de module</p>
-        <h1 className="text-xl">Retour des étudiant·es</h1>
+        <p className="text-muted-foreground text-[0.8125rem] font-medium">Fin de module</p>
+        <h1>Retour des étudiant·es</h1>
         <p className="text-muted-foreground">
           Un questionnaire anonyme pour savoir ce qui a marché et ce qu’il faut changer pour la
           prochaine promo. Les réponses n’ont aucun lien avec une personne.

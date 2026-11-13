@@ -186,7 +186,10 @@ export function SessionWorkspace({
 
       <div className="bg-card flex flex-wrap items-end justify-between gap-3 rounded-xl border p-4 shadow-sm">
         <div className="min-w-72 flex-1">
-          <label htmlFor="session-title" className="text-muted-foreground mb-1 block text-[13px]">
+          <label
+            htmlFor="session-title"
+            className="text-muted-foreground mb-1 block text-[0.8125rem]"
+          >
             Titre de la séance
           </label>
           <input
@@ -198,7 +201,7 @@ export function SessionWorkspace({
           />
         </div>
         <div>
-          <span id="status-label" className="text-muted-foreground mb-1 block text-[13px]">
+          <span id="status-label" className="text-muted-foreground mb-1 block text-[0.8125rem]">
             Statut de préparation
           </span>
           <div role="radiogroup" aria-labelledby="status-label" className="flex gap-1.5">
@@ -258,7 +261,7 @@ export function SessionWorkspace({
           <h2 id="deroule" className="text-sm font-semibold">
             Le déroulé de la séance
           </h2>
-          <span className="text-muted-foreground text-[13px]">
+          <span className="text-muted-foreground text-[0.8125rem]">
             Glisse pour changer l’ordre : c’est l’ordre du cours
           </span>
         </div>
@@ -310,9 +313,9 @@ export function SessionWorkspace({
                 <strong className="w-5">{i + 1}</strong>
                 <div className="min-w-40 flex-1">
                   <strong className="line-clamp-2 block break-words">{r.title}</strong>
-                  <span className="text-muted-foreground text-[13px]">{r.subtitle}</span>
+                  <span className="text-muted-foreground text-[0.8125rem]">{r.subtitle}</span>
                   {activitiesAvailable ? (
-                    <span className="text-muted-foreground block text-[13px]">
+                    <span className="text-muted-foreground block text-[0.8125rem]">
                       {describeActivity(r.activity, starts[i]) ?? "Pas encore de détails"}
                     </span>
                   ) : null}
@@ -511,7 +514,7 @@ export function SessionWorkspace({
                   <li key={r.id} className="flex flex-wrap items-center gap-3">
                     <div className="min-w-40 flex-1">
                       <strong className="line-clamp-2 block break-words">{r.title}</strong>
-                      <span className="text-muted-foreground text-[13px]">{r.subtitle}</span>
+                      <span className="text-muted-foreground text-[0.8125rem]">{r.subtitle}</span>
                     </div>
                     <Pill>{r.kindLabel}</Pill>
                     <button

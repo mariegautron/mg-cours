@@ -39,7 +39,7 @@ export default async function ConsignesPreviewPage({
         </Button>
       </div>
       <article className="bg-card space-y-4 rounded-xl border p-6">
-        <h1 className="text-xl">{assessment.title}</h1>
+        <h1>{assessment.title}</h1>
         <p className="text-muted-foreground text-sm">
           {assessment.is_group_grade ? "Oral de groupe" : "Oral individuel"}
           {assessment.date ? ` · ${new Date(assessment.date).toLocaleDateString("fr-FR")}` : ""}

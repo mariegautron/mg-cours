@@ -43,7 +43,7 @@ export function WeekCard({
               <span aria-hidden className={cn("block min-h-5 text-sm", MARK[t.state])}>
                 {t.mark}
               </span>
-              <span className="text-muted-foreground block min-h-9 text-[13px] leading-tight">
+              <span className="text-muted-foreground block min-h-9 text-[0.8125rem] leading-tight">
                 {t.caption}
               </span>
             </>

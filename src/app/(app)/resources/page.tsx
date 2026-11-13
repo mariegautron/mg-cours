@@ -173,7 +173,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">Bibliothèque</h1>
+          <h1>Bibliothèque</h1>
           <p className="text-muted-foreground">
             Ce que tu enseignes, rangé par nature. Chaque chose garde avec elle ce qui va avec.
           </p>

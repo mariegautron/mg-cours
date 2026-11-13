@@ -69,10 +69,8 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Évaluations</p>
-          <h1 className="text-xl">
-            Le projet fil rouge : {hasThemes ? "plusieurs thèmes" : "le brief"}
-          </h1>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Évaluations</p>
+          <h1>Le projet fil rouge : {hasThemes ? "plusieurs thèmes" : "le brief"}</h1>
           <p className="text-muted-foreground mt-1">
             Un projet suivi tout au long du module : évaluations de projet, oral de fin de projet et
             évaluation individuelle sont des évaluations comme les autres, comptées dans les notes
@@ -129,7 +127,7 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
                         <Pill>{i + 1}</Pill>
                         <span className="min-w-0 flex-1">
                           <strong>{a.title}</strong>
-                          <span className="text-muted-foreground block text-[13px]">
+                          <span className="text-muted-foreground block text-[0.8125rem]">
                             {PROJECT_ROLE_LABELS[a.project_role!]} ·{" "}
                             {a.is_group_grade ? "note de groupe" : "note individuelle"}
                             {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""}

@@ -75,15 +75,9 @@
   --radius-2xl: 12px;
   --radius-3xl: 12px;
   --radius-4xl: 6px;
-  /* Échelle de texte : 12 · 13 · 14 · 16 · 20 · 26 px, rien d'autre. */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.25rem;
-  --text-3xl: 1.625rem;
-  --text-4xl: 1.625rem;
+  /* Échelle de texte de l'appli : 12 · 13 · 14 · 16 · 20 · 26 px (text-xs, text-[0.8125rem],
+     text-sm, text-base, text-xl, h1). Les tailles par défaut de Tailwind restent intactes pour la
+     projection (diapositives, QCM projeté), qui a besoin de grands caractères. */
 }
 
 /* Pas d'ombre portée sur les cartes : contour de 1 px seulement (les menus flottants gardent la leur). */
@@ -249,7 +243,7 @@
   h1 {
     @apply font-heading tracking-tight;
     font-weight: 700;
-    font-size: var(--text-3xl);
+    font-size: 1.625rem;
     line-height: 1.2;
   }
   /* Icônes lucide : trait 1,75 partout. */
@@ -350,7 +344,7 @@ html[data-density="comfortable"] body {
 }
 /* Hiérarchie : le titre de page est toujours le plus grand texte (26 px, Bricolage 700). */
 #contenu h1 {
-  font-size: var(--text-3xl);
+  font-size: 1.625rem;
   line-height: 1.2;
 }
 /* Texte d'aide jamais sous 13 px : anciennes tailles libres ramenées dans l'échelle. */

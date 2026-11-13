@@ -36,7 +36,7 @@ export function ProjectionGuard({ children, home }: { children: React.ReactNode;
   if (state === "projected") {
     return (
       <section role="alert" className="mx-auto max-w-xl space-y-3 py-16 text-center">
-        <h1 className="text-xl">Cet écran reste sur ton portable</h1>
+        <h1>Cet écran reste sur ton portable</h1>
         <p className="text-muted-foreground">
           La correction n’est jamais projetée. Garde cette fenêtre pour la classe et ouvre la
           correction dans la fenêtre de ton portable.

@@ -95,7 +95,7 @@ export default async function QuizResultsPage({
   return (
     <div className="max-w-4xl space-y-4">
       <div className="space-y-1">
-        <h1 className="text-xl">Résultats du QCM</h1>
+        <h1>Résultats du QCM</h1>
         <p className="text-muted-foreground">
           {submitted.length} personne{submitted.length > 1 ? "s ont" : " a"} passé le QCM
           {average !== null && total !== null

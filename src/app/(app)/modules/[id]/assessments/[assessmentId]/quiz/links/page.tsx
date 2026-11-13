@@ -72,7 +72,7 @@ export default async function QuizLinksPage({
       <div className="flex min-w-0 flex-[3_1_0] flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="text-xl">Liens personnels et suivi des copies</h1>
+            <h1>Liens personnels et suivi des copies</h1>
           </div>
           <p role="status">
             <Pill tone={quiz.status === "published" ? "published" : "plain"}>

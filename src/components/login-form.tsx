@@ -25,7 +25,7 @@ export function LoginForm() {
   return (
     <Card className="card-featured w-full max-w-sm">
       <CardHeader>
-        <h1 className="text-xl">Connexion</h1>
+        <h1>Connexion</h1>
         <CardDescription>Connexion à ton espace pédagogique.</CardDescription>
       </CardHeader>
       <CardContent>

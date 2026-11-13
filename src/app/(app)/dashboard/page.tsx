@@ -364,7 +364,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               <div className="flex min-w-0 items-center gap-3">
                 <span
                   aria-hidden
-                  className="bg-muted text-muted-foreground flex size-[22px] shrink-0 items-center justify-center rounded-sm text-xs font-medium"
+                  className="bg-muted text-muted-foreground flex size-[1.375rem] shrink-0 items-center justify-center rounded-sm text-xs font-medium"
                 >
                   {i + 1}
                 </span>
@@ -531,7 +531,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           </p>
         ) : null}
         <header>
-          <h1 className="text-xl">Aujourd’hui · {dayText}</h1>
+          <h1>Aujourd’hui · {dayText}</h1>
           <p className="text-muted-foreground mt-1.5">
             Ta journée en un coup d’œil : la séance en cours, ce qu’il faut savoir avant d’entrer,
             ce qui vient après.
@@ -543,7 +543,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           className="bg-card card-featured rounded-xl border px-5 py-4 sm:p-5"
         >
           <div className="min-w-0">
-            <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
+            <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">
               {range ? `${range} · ` : ""}Séance {prep.number} sur {prep.total} · {hero.module.name}
             </p>
             <h2 id="seance" className="title-display text-xl">
@@ -682,7 +682,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       {/* Bande de chiffres : 4 cases égales dans un seul cadre (DA « Atelier »). */}
       <dl
         role="status"
-        className="bg-card grid grid-cols-2 divide-x divide-y rounded-xl border sm:grid-cols-4 sm:divide-y-0"
+        className="bg-border grid grid-cols-2 gap-px overflow-hidden rounded-xl border sm:grid-cols-4"
       >
         {[
           {
@@ -702,8 +702,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           },
           { label: "observations cette semaine", value: String(weekObservations) },
         ].map((k) => (
-          <div key={k.label} className="flex flex-col-reverse gap-1 px-4 py-3">
-            <dt className="text-muted-foreground text-[13px]">{k.label}</dt>
+          <div key={k.label} className="bg-card flex flex-col-reverse gap-1 px-4 py-3">
+            <dt className="text-muted-foreground text-[0.8125rem]">{k.label}</dt>
             <dd className="text-foreground text-xl font-semibold tabular-nums">{k.value}</dd>
           </div>
         ))}

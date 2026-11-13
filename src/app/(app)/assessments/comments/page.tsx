@@ -72,7 +72,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
           </Link>
         ) : null}
         <div>
-          <h1 className="text-xl">Phrases de commentaire</h1>
+          <h1>Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Tes formulations d’appréciation, par partie : elles passent avant celles de l’appli et
             s’insèrent dans l’appréciation.
@@ -109,7 +109,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl">Phrases de commentaire</h1>
+          <h1>Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Phrases de correction, par critère : elles s’insèrent pendant la correction.
           </p>

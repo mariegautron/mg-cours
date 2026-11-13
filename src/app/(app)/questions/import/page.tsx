@@ -13,7 +13,7 @@ export default function ImportQuestionsPage() {
           Banque de questions
         </Link>
       </nav>
-      <h1 className="text-xl">Importer des questions</h1>
+      <h1>Importer des questions</h1>
       <ImportForm />
     </div>
   );

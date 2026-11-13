@@ -51,7 +51,7 @@ export default async function GenerateQuizPage({
         >
           ← QCM de « {assessment.title} »
         </Link>
-        <h1 className="text-xl">Générer un QCM depuis des ressources</h1>
+        <h1>Générer un QCM depuis des ressources</h1>
         <p className="text-muted-foreground">
           Choisis les ressources, le nombre de questions, puis tire au sort ou compose à la main. Le
           QCM créé reste modifiable (consignes, durée, dates, règles).

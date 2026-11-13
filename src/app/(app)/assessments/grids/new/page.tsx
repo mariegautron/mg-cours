@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Nouvelle grille" };
 export default function NewGridPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-xl">Nouvelle grille de correction</h1>
+      <h1>Nouvelle grille de correction</h1>
       <GridForm action={createGrid} />
     </div>
   );

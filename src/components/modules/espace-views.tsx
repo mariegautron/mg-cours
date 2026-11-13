@@ -85,7 +85,9 @@ export function EspaceLayout({
       </a>
       <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6 [@media(max-height:500px)]:py-2">
         <div className="lg:sticky lg:top-6">
-          <p className="text-muted-foreground text-[13px] font-medium max-lg:hidden">Mon espace</p>
+          <p className="text-muted-foreground text-[0.8125rem] font-medium max-lg:hidden">
+            Mon espace
+          </p>
           {/* Téléphone : en-tête d'une ligne ; les onglets sont fixés en bas de l'écran (lot 5, 27). */}
           <p className="font-heading mt-1 text-lg leading-tight font-bold max-lg:mt-0 max-lg:truncate max-lg:text-base [@media(max-height:500px)]:mt-0 [@media(max-height:500px)]:text-base">
             <span className="lg:hidden">Mon espace · </span>
@@ -197,11 +199,11 @@ export function AccueilView({ data }: { data: EspaceData }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl">Bonjour{firstName ? ` ${firstName}` : ""}</h1>
+      <h1>Bonjour{firstName ? ` ${firstName}` : ""}</h1>
 
       {quizOpen && espace?.quiz ? (
         <section aria-labelledby="quiz" className="bg-card card-featured rounded-xl border p-4">
-          <h2 id="quiz" className="text-sm font-semibold">
+          <h2 id="quiz" className="title-display text-xl">
             {data.quizMakeupPlanned
               ? "Rattrapage prévu"
               : data.quizSubmittedAt
@@ -241,11 +243,11 @@ export function AccueilView({ data }: { data: EspaceData }) {
 
       {next && nextIndex !== null ? (
         <section aria-labelledby="prochain" className="bg-card rounded-xl border p-4">
-          <p className="text-muted-foreground text-[13px] font-medium">Prochain rendu</p>
-          <h2 id="prochain" className="mt-1 text-sm font-semibold">
+          <p className="text-muted-foreground text-[0.8125rem] font-medium">Prochain rendu</p>
+          <h2 id="prochain" className="title-display mt-1 text-xl">
             {next.title}
           </h2>
-          <p className="mt-1 text-lg">
+          <p className="mt-1 text-base">
             À rendre : <strong>{dueLabel(dateOfEvaluation(next, frise), next.time)}</strong>
             {next.whereToSubmit ? ` · ${next.whereToSubmit}` : ""}
           </p>
@@ -387,7 +389,7 @@ export function EvaluationView({
           </ul>
         </nav>
       ) : null}
-      <h1 className="text-xl">{e.title}</h1>
+      <h1>{e.title}</h1>
       {e.sections.length + (e.grid ? 1 : 0) > 1 ? (
         <nav aria-label="Sur cette page" className="mt-2">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -911,7 +913,7 @@ export function NotesView({ data }: { data: EspaceData }) {
 export function Empty({ title, text }: { title: string; text: string }) {
   return (
     <div className="max-w-2xl space-y-2">
-      <h1 className="text-xl">{title}</h1>
+      <h1>{title}</h1>
       <p className="text-muted-foreground">{text}</p>
     </div>
   );

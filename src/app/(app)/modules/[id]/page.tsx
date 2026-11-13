@@ -90,7 +90,7 @@ function Card({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-card rounded-xl border p-3.5">
-      <span className="text-muted-foreground block text-[13px]">{label}</span>
+      <span className="text-muted-foreground block text-[0.8125rem]">{label}</span>
       <b className="font-heading text-2xl">{value}</b>
     </div>
   );
@@ -204,10 +204,10 @@ export default async function ModulePage({
     <div className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">
             Module · {schoolYearOf(mod.year)}
           </p>
-          <h1 className="text-xl">{mod.name}</h1>
+          <h1>{mod.name}</h1>
           <p className="text-muted-foreground mt-1.5">{meta}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">

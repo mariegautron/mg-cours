@@ -38,14 +38,14 @@ export function KpiCard({
           {icon}
         </span>
         <div>
-          <p className="text-muted-foreground text-[13px]">{label}</p>
+          <p className="text-muted-foreground text-[0.8125rem]">{label}</p>
           <p className="font-heading text-3xl leading-none font-bold">{value}</p>
         </div>
       </div>
       <div aria-hidden className="bg-foreground/10 mt-3 mb-1.5 h-1.5 overflow-hidden rounded-full">
         <span className={cn("block h-full", t.bar)} style={{ width: `${percent}%` }} />
       </div>
-      <p className="text-muted-foreground text-[13px]">
+      <p className="text-muted-foreground text-[0.8125rem]">
         <span className="sr-only">{barLabel}. </span>
         {detail}
       </p>

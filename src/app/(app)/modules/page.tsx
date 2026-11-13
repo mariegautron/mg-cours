@@ -163,7 +163,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">Modules</h1>
+          <h1>Modules</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">
             Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Un module se
             termine depuis sa dernière étape, « Terminer le module ».

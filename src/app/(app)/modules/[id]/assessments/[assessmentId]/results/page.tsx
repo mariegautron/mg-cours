@@ -151,9 +151,7 @@ export default async function ResultsPage({
     <div className="max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-xl">
-            {allDone ? "Tout est corrigé : envoyer les résultats" : "Envoyer les résultats"}
-          </h1>
+          <h1>{allDone ? "Tout est corrigé : envoyer les résultats" : "Envoyer les résultats"}</h1>
           <p className="text-muted-foreground">
             {assessment.title}
             {people ? ` · ${people} personne${people > 1 ? "s" : ""}` : ""}. Vérifie, puis confirme

@@ -53,7 +53,7 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
     <div className="max-w-3xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">{group.name}</h1>
+          <h1>{group.name}</h1>
           <Badge variant="secondary">{GROUP_TYPE_LABELS[group.type] ?? group.type}</Badge>
         </div>
         <DeleteGroupButton moduleId={id} groupId={groupId} />

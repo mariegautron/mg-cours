@@ -16,7 +16,7 @@ export default async function EditCommentPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl">Modifier le commentaire</h1>
+      <h1>Modifier le commentaire</h1>
       <CommentForm action={updateComment.bind(null, commentId)} comment={comment} />
     </div>
   );

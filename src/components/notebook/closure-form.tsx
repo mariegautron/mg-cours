@@ -149,7 +149,7 @@ export function ClosureForm({
                                     return next;
                                   })
                                 }
-                                className={`focus-visible:ring-ring min-h-11 px-3 text-[13px] font-semibold focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset ${
+                                className={`focus-visible:ring-ring min-h-11 px-3 text-[0.8125rem] font-semibold focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset ${
                                   isSkipped === value
                                     ? "bg-primary text-primary-foreground"
                                     : "hover:bg-accent"

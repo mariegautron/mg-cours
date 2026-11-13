@@ -202,7 +202,7 @@ export function FriseStudent({
                   ) : null}
                 </div>
                 <div className="pb-5">
-                  <p className="text-muted-foreground text-[13px] font-semibold">
+                  <p className="text-muted-foreground text-[0.8125rem] font-semibold">
                     {shortDate(s.date)}
                     {s.period ? ` · ${PERIOD_LABELS[s.period]}` : ""}
                   </p>
@@ -226,7 +226,7 @@ export function FriseStudent({
                         <span
                           key={e.label}
                           className={cn(
-                            "inline-flex min-h-7 items-center rounded-full border px-2.5 text-[13px] font-bold",
+                            "inline-flex min-h-7 items-center rounded-full border px-2.5 text-[0.8125rem] font-bold",
                             PILL_STYLE[e.kind],
                           )}
                         >

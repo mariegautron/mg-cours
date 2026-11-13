@@ -33,7 +33,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl">Espace étudiant·es</h1>
+          <h1>Espace étudiant·es</h1>
           <p className="text-muted-foreground mt-1">
             Publie le contenu du module et donne à chacun·e son lien. La frise ci-dessous se
             projette aussi en classe.

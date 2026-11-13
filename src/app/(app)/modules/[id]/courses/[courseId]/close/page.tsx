@@ -149,7 +149,7 @@ export default async function CourseClosePage({
           </Link>{" "}
           · Séance {position + 1}
         </p>
-        <h1 className="text-xl">Clôturer la séance {position + 1}</h1>
+        <h1>Clôturer la séance {position + 1}</h1>
         <p className="text-muted-foreground">
           {course.title}
           {date ? ` · ${date}` : ""} · quatre questions, deux minutes, tes notes sont déjà là.

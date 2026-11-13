@@ -80,7 +80,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
   return (
     <div className="flex max-w-6xl flex-col gap-5 lg:flex-row lg:items-start">
       <section aria-labelledby="tm" className={`${card} min-w-0 flex-[3_1_0] space-y-3`}>
-        <p className="text-muted-foreground text-[13px] font-medium">Où j’en suis</p>
+        <p className="text-muted-foreground text-[0.8125rem] font-medium">Où j’en suis</p>
         <h1 id="tm">Terminer le module</h1>
         <p className="text-muted-foreground">
           Tout ce qu’il reste avant de le terminer. Rien n’est bloquant : tu peux revenir.

@@ -87,7 +87,7 @@ export function TodayPrep({
             >
               <span
                 aria-hidden
-                className={`mt-0.5 flex size-[22px] shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                className={`mt-0.5 flex size-[1.375rem] shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                   item.ok ? "bg-mint text-background" : "border-sun text-sun border-[1.5px]"
                 }`}
               >

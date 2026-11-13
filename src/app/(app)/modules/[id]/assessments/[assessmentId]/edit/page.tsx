@@ -33,7 +33,7 @@ export default async function EditAssessmentPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl">Modifier « {assessment.title} »</h1>
+      <h1>Modifier « {assessment.title} »</h1>
       {assessment.needs_review ? (
         <p
           role="status"

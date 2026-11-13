@@ -67,7 +67,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-xl">Facture</h1>
+        <h1>Facture</h1>
       </div>
 
       {isPaid(mod.iceberg_state) && mod.finished_at ? (

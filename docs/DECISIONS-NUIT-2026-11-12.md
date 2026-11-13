@@ -336,3 +336,16 @@ Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
 - **Pas fait** : la liste des évaluations en tableau (laissée au fil « Améliorer encore l'UX »
   qui refait la mise en page) ; espacements hors échelle hors des pages touchées ; textes en
   `text-[0.65rem]`/`[0.85rem]` restants dans des chaînes de modèle (outline-actions, ressources).
+- **Relecture du lot « Atelier » (sous-agent DA + UX), corrigé avant push** :
+  - la projection gardait sa taille : les tailles de texte Tailwind ne sont plus redéfinies
+    globalement (seul le h1 de l'appli est fixé à 26 px) ; diapositives et QCM projeté inchangés ;
+  - menu latéral : zone cliquable de 44 px réellement active ; sous-menu du module en lignes de
+    44 px, sans chevauchement ni double trait à gauche ;
+  - tailles en `px` passées en `rem` (13 px = `0.8125rem`, pastilles, menu) : elles suivent le
+    réglage « Taille du texte » ;
+  - espace étudiant : « Prochain rendu » et la carte QCM gardent un vrai titre (Bricolage 20 px) ;
+  - titres Markdown des fiches ramenés sous les titres de section ; titre des écrans vides en
+    Inter 600 ; bande de chiffres du tableau de bord sans quadrillage cassé sur téléphone ; h1
+    à la même taille sur toutes les pages publiques.
+  - **Plus tard** : boutons dessinés à la main de l'espace étudiant (« Passer le QCM », « Voir le
+    sujet », « Voir la grille ») à passer sur `buttonVariants`.

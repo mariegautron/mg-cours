@@ -496,7 +496,7 @@ export default async function AssessmentPage({
           >
             ← Les évaluations
           </Link>
-          <h1 className="text-xl">{assessment.title}</h1>
+          <h1>{assessment.title}</h1>
           <p className="text-muted-foreground mt-1">
             {[
               assessment.project_role ? "Projet fil rouge" : null,
@@ -910,7 +910,7 @@ export default async function AssessmentPage({
                                         <strong>
                                           {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}
                                         </strong>
-                                        <span className="text-muted-foreground block text-[13px]">
+                                        <span className="text-muted-foreground block text-[0.8125rem]">
                                           {l.description}
                                         </span>
                                       </li>

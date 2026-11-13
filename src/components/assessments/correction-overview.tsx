@@ -236,7 +236,7 @@ export function CorrectionOverview({
             aria-labelledby="go"
             className="bg-primary/10 border-primary/50 rounded-xl border p-5"
           >
-            <p className="text-muted-foreground text-[13px] font-medium">Prochaine copie</p>
+            <p className="text-muted-foreground text-[0.8125rem] font-medium">Prochaine copie</p>
             {next ? (
               <>
                 <h3 id="go" className="mt-1 text-sm font-semibold">

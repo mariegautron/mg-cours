@@ -28,7 +28,7 @@ export function DayJBlock({
     </Status>
   );
   const list = (
-    <ul className="space-y-0.5 text-[13px]">
+    <ul className="space-y-0.5 text-[0.8125rem]">
       {ordered.map((it) => (
         <li key={it.key}>
           {it.ok ? (

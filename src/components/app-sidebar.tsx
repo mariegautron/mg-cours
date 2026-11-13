@@ -78,7 +78,7 @@ export function AppSidebar() {
                         isActive={active}
                         tooltip={item.label}
                         size="lg"
-                        className="text-muted-foreground data-active:text-foreground data-active:[&_svg]:text-primary relative h-[34px] gap-2.5 rounded-lg text-sm font-medium transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-[''] [&_svg]:size-4"
+                        className="text-muted-foreground data-active:text-foreground data-active:[&_svg]:text-primary relative h-[2.125rem] gap-2.5 overflow-visible rounded-lg text-sm font-medium transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-[''] [&_svg]:size-4"
                       >
                         <Link
                           href={item.href}

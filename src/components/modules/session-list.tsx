@@ -90,11 +90,11 @@ export function SessionList({
                 <span className="flex flex-col items-end gap-1">
                   {!c.completion && c.session_date && c.session_date < today ? (
                     // Séance passée jamais clôturée : jamais « Prochaine ».
-                    <Pill tone="warn" className="min-h-[22px] px-2 text-xs">
+                    <Pill tone="warn" className="min-h-[1.375rem] px-2 text-xs">
                       À clôturer
                     </Pill>
                   ) : c.id === upcomingId ? (
-                    <Pill tone="key" className="min-h-[22px] px-2 text-xs">
+                    <Pill tone="key" className="min-h-[1.375rem] px-2 text-xs">
                       {c.session_date === today ? "Aujourd’hui" : "Prochaine"}
                     </Pill>
                   ) : null}
@@ -106,7 +106,7 @@ export function SessionList({
                           ? "warn"
                           : (STATUS_TONES[c.prep_status] ?? "plain")
                     }
-                    className="min-h-[22px] px-2 text-xs"
+                    className="min-h-[1.375rem] px-2 text-xs"
                   >
                     {c.completion ? "Faite" : statusLabel(c.prep_status)}
                   </Pill>
@@ -127,7 +127,7 @@ export function SessionList({
         </Notice>
       ) : null}
       {missing.length ? (
-        <div className="bg-muted mx-1.5 mt-2.5 rounded-xl p-3 text-[13px]">
+        <div className="bg-muted mx-1.5 mt-2.5 rounded-xl p-3 text-[0.8125rem]">
           <strong>
             {missing.length} attendu{missing.length > 1 ? "s" : ""} sans séance
           </strong>
@@ -212,7 +212,7 @@ export function SessionList({
       <h2 id="ls" className="mx-1.5 text-sm font-semibold">
         {heading}
       </h2>
-      <p className="text-muted-foreground mx-1.5 mb-2 text-[13px]">{summary}</p>
+      <p className="text-muted-foreground mx-1.5 mb-2 text-[0.8125rem]">{summary}</p>
       {body}
     </aside>
   );

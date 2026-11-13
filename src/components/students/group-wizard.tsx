@@ -293,7 +293,7 @@ export function GroupWizard({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Étudiant·es</p>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Étudiant·es</p>
           <h1 ref={heading} tabIndex={-1} className="outline-none">
             {titles[step][0]}
           </h1>
@@ -358,7 +358,7 @@ export function GroupWizard({
                   <strong>{describeSizes(sizesPreview) || "—"}</strong>.
                 </p>
               </div>
-              <p className="text-muted-foreground mt-2 text-[13px]">
+              <p className="text-muted-foreground mt-2 text-[0.8125rem]">
                 Tu peux aussi donner une taille (« groupes de 3 ») : je calcule le nombre de
                 groupes.
               </p>
@@ -518,7 +518,7 @@ export function GroupWizard({
                 </ul>
               </fieldset>
             ) : null}
-            <p className="text-muted-foreground border-t pt-3 text-[13px]">
+            <p className="text-muted-foreground border-t pt-3 text-[0.8125rem]">
               Les photos servent à t’y retrouver. Elles ne sont jamais projetées ni exportées.
             </p>
           </aside>
@@ -756,7 +756,7 @@ export function GroupWizard({
               Ajouter un groupe
             </Button>
           ) : null}
-          <p className="text-muted-foreground text-[13px]">
+          <p className="text-muted-foreground text-[0.8125rem]">
             Un groupe verrouillé, ou une personne verrouillée, ne bouge pas quand tu refais le
             tirage. Les photos ne sont jamais projetées.
           </p>
@@ -785,7 +785,7 @@ export function GroupWizard({
                     <h3 className="text-sm font-semibold break-words">
                       {g.name.trim() || `Groupe ${gi + 1}`}
                     </h3>
-                    <span className="text-muted-foreground text-[13px]">
+                    <span className="text-muted-foreground text-[0.8125rem]">
                       {g.members.length} personne{g.members.length > 1 ? "s" : ""}
                     </span>
                   </div>

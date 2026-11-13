@@ -38,8 +38,8 @@ export default async function CourseQuestionsPage({
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">{mod.name}</p>
-          <h1 className="text-xl">Questions de la séance : {course.title}</h1>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">{mod.name}</p>
+          <h1>Questions de la séance : {course.title}</h1>
           <p className="text-muted-foreground mt-1">
             Les questions se lient aux ressources. Le quiz de fin de séance reprend celles des
             ressources du déroulé de cette séance.

@@ -114,7 +114,7 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
                 className="hover:bg-accent focus-visible:ring-ring h-full min-h-11 w-full rounded-xl border p-3 text-left focus-visible:ring-2 focus-visible:outline-none"
               >
                 <span className="block font-bold">{m.label}</span>
-                <span className="text-muted-foreground text-[13px]">{m.hint}</span>
+                <span className="text-muted-foreground text-[0.8125rem]">{m.hint}</span>
               </button>
             </li>
           ))}
@@ -166,7 +166,7 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
                     <div className="min-w-0 flex-1">
                       <strong>{s.title || "Sans titre"}</strong>
                       {sectionSummary(s.body) && !isPlaceholderSection(s) ? (
-                        <div className="text-muted-foreground truncate text-[13px]">
+                        <div className="text-muted-foreground truncate text-[0.8125rem]">
                           {sectionSummary(s.body)}
                         </div>
                       ) : null}

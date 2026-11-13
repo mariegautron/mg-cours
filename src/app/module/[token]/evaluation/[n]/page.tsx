@@ -56,7 +56,7 @@ export default async function EspaceEvaluationPage({
           </ul>
         </nav>
       ) : null}
-      <h1 className="text-xl">{e.title}</h1>
+      <h1>{e.title}</h1>
       {e.type ? <p className="text-muted-foreground mt-1 text-sm">{e.type}</p> : null}
       <dl className="bg-card mt-4 grid gap-3 rounded-xl border p-4 sm:grid-cols-2">
         {facts.map(([label, value]) => (

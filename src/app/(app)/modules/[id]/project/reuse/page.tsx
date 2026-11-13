@@ -43,7 +43,7 @@ export default async function ReuseProjectPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       {projects.length === 0 || !chosen ? (
         <div className="bg-card max-w-xl space-y-3 rounded-xl border border-dashed p-6">
-          <h1 className="text-xl">Partir d’un projet existant</h1>
+          <h1>Partir d’un projet existant</h1>
           <p className="text-muted-foreground">
             Aucun autre projet fil rouge n’existe encore : tu peux écrire celui-ci directement.
           </p>
@@ -57,7 +57,7 @@ export default async function ReuseProjectPage({
             aria-labelledby="pe"
             className="bg-card w-full min-w-0 rounded-xl border p-5 shadow-sm lg:w-[26rem] lg:flex-none"
           >
-            <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Évaluations</p>
+            <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Évaluations</p>
             <h1 id="pe" className="mb-1">
               Partir d’un projet existant
             </h1>
@@ -75,7 +75,7 @@ export default async function ReuseProjectPage({
                       className="aria-[current=true]:bg-accent aria-[current=true]:border-primary/60 hover:bg-accent/60 block min-h-11 rounded-xl border border-transparent p-3"
                     >
                       <strong>{p.title}</strong>
-                      <span className="text-muted-foreground block text-[13px]">
+                      <span className="text-muted-foreground block text-[0.8125rem]">
                         {p.moduleName} ({schoolYearOf(p.year)})
                       </span>
                     </Link>
@@ -83,7 +83,7 @@ export default async function ReuseProjectPage({
                 );
               })}
             </ul>
-            <p className="text-muted-foreground mt-2.5 text-[13px]">
+            <p className="text-muted-foreground mt-2.5 text-[0.8125rem]">
               Les projets viennent de tes autres modules.
             </p>
             <Button asChild variant="ghost" className="mt-2">
@@ -114,13 +114,13 @@ export default async function ReuseProjectPage({
                   </span>
                   <div className="min-w-0 flex-1">
                     <strong>{r.title}</strong>
-                    <div className="text-muted-foreground text-[13px]">{r.hint}</div>
+                    <div className="text-muted-foreground text-[0.8125rem]">{r.hint}</div>
                   </div>
                   <Pill tone={r.kept ? "ok" : "warn"}>{r.kept ? "Gardé" : "À réécrire"}</Pill>
                 </li>
               ))}
             </ul>
-            <p className="text-muted-foreground mt-2.5 text-[13px]">
+            <p className="text-muted-foreground mt-2.5 text-[0.8125rem]">
               Jamais copiés :{" "}
               {NOT_COPIED_LABELS.slice(0, 4)
                 .map((l) => l.replace(/^Les /, "les ").replace(/^Le /, "le "))

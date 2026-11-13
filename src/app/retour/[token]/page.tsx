@@ -33,7 +33,7 @@ const PROBLEMS: Record<string, string> = {
 function Message({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h1 className="text-xl">{title}</h1>
+      <h1>{title}</h1>
       {children ? <p className="text-muted-foreground">{children}</p> : null}
     </section>
   );
@@ -67,7 +67,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
         <>
           <header className="space-y-2">
             <p className="text-muted-foreground text-sm font-semibold">{res.moduleName}</p>
-            <h1 className="text-xl">Ton avis sur le module</h1>
+            <h1>Ton avis sur le module</h1>
             <p className="font-semibold">
               Ce questionnaire est anonyme : ton nom n’est jamais enregistré.
             </p>

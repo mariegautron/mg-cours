@@ -342,7 +342,7 @@ export default async function CorrectPage({
       return (
         <div className="space-y-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h1 className="text-xl">Relire : {assessment.title}</h1>
+            <h1>Relire : {assessment.title}</h1>
             <p className="text-muted-foreground text-sm">
               Questions ouvertes tirées au sort. Tout s’enregistre au fur et à mesure.{" "}
               <Link href={back} className="underline underline-offset-2">
@@ -389,7 +389,7 @@ export default async function CorrectPage({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h1 className="text-xl">Corriger : {assessment.title}</h1>
+        <h1>Corriger : {assessment.title}</h1>
         <p className="text-muted-foreground text-sm">
           Tout s’enregistre au fur et à mesure.{" "}
           {assessment.is_group_grade ? "Note de groupe." : "Note individuelle."} Sur{" "}

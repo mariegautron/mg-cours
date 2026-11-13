@@ -32,8 +32,8 @@ export default async function AddAssessmentPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Évaluations</p>
-          <h1 className="text-xl">Ajouter une évaluation</h1>
+          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Évaluations</p>
+          <h1>Ajouter une évaluation</h1>
           <p className="text-muted-foreground mt-1">
             Quatre façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
             d’ensemble.

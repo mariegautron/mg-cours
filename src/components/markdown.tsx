@@ -118,9 +118,9 @@ function BlockView({
       const className = present
         ? `font-heading font-semibold leading-tight ${PRESENT_HEADING[Math.min(block.level, 3) - 1]}`
         : block.level === 1
-          ? "font-heading mt-2 text-xl font-bold"
+          ? "mt-2 text-base font-semibold"
           : block.level === 2
-            ? "font-heading mt-2 text-lg font-semibold"
+            ? "mt-2 text-sm font-semibold"
             : "font-semibold";
       return (
         <Tag id={id} className={id ? `${className} scroll-mt-20` : className}>

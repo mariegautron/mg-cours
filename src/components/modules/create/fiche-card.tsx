@@ -171,7 +171,7 @@ export function FicheCard({
               detail="nom, heures, attendus"
             />
           </ul>
-          <p className="text-muted-foreground mt-2 text-[13px]">
+          <p className="text-muted-foreground mt-2 text-[0.8125rem]">
             Rien n’est écrit avant ta confirmation.
           </p>
         </div>

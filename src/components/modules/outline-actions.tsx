@@ -265,7 +265,7 @@ export function OutlineActions({
             </Button>
           )}
         </div>
-        <p className="text-muted-foreground mt-2.5 text-[13px]">
+        <p className="text-muted-foreground mt-2.5 text-[0.8125rem]">
           {status === "validated"
             ? "Progression validée par l’école."
             : status === "sent" || hasDepositedOutline

@@ -20,7 +20,7 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl">Grilles de correction</h1>
+          <h1>Grilles de correction</h1>
           <p className="text-muted-foreground">Réutilisables dans plusieurs évaluations.</p>
         </div>
         <Button asChild>

@@ -55,7 +55,7 @@ export function QuizResults({ state }: { state: SubmittedState }) {
             Vos réponses sont envoyées
           </span>
         </p>
-        <h1 className="text-xl">Merci, c’est terminé</h1>
+        <h1>Merci, c’est terminé</h1>
         <p>
           Votre copie est rendue ({dateTime(state.submitted_at)}).
           {state.late ? " Elle a été rendue après l’heure limite." : ""}

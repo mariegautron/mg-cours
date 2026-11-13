@@ -44,7 +44,7 @@ export default async function QuizPage({
           {assessment.title}
         </Link>
       </nav>
-      <h1 className="text-xl">QCM{quiz ? ` — ${quiz.title}` : ""}</h1>
+      <h1>QCM{quiz ? ` — ${quiz.title}` : ""}</h1>
     </div>
   );
   const errorBox =

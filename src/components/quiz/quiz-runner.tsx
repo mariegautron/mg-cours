@@ -284,7 +284,7 @@ export function QuizRunner({
   if (dryDone) {
     return (
       <div className="space-y-3">
-        <h1 className="text-xl">Essai terminé</h1>
+        <h1>Essai terminé</h1>
         <p role="status">
           Voilà ce que verront les étudiant·es à la fin. Rien n’a été enregistré : aucune copie
           n’est comptée.
@@ -308,7 +308,7 @@ export function QuizRunner({
       ) : null}
       <header className="bg-background sticky top-0 z-10 space-y-2 border-b py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-xl">QCM · {title}</h1>
+          <h1>QCM · {title}</h1>
           {remaining !== null && !timed && deadlineAt ? (
             <p className="border-status-published bg-muted text-sky rounded-full border px-3 py-1 text-sm font-bold">
               À rendre avant{" "}

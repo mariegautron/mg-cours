@@ -188,10 +188,10 @@ export default async function CoursePage({
         <section aria-labelledby="ws" className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-muted-foreground text-[13px]">
+              <p className="text-muted-foreground text-[0.8125rem]">
                 Séance {index + 1} sur {courses.length} · {when}
               </p>
-              <p className="text-muted-foreground mb-1 text-[13px] font-medium">{mod.name}</p>
+              <p className="text-muted-foreground mb-1 text-[0.8125rem] font-medium">{mod.name}</p>
               <h1 id="ws">{course.title}</h1>
               {saved || added ? (
                 <p role="status" className="text-mint text-sm font-semibold">
@@ -324,7 +324,7 @@ export default async function CoursePage({
                 linked.map((a) => (
                   <div key={a.id} className="mb-2">
                     <strong>{a.title}</strong>
-                    <p className="text-muted-foreground text-[13px]">
+                    <p className="text-muted-foreground text-[0.8125rem]">
                       {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
                     </p>
                     <p className="my-1.5 flex flex-wrap gap-1.5">

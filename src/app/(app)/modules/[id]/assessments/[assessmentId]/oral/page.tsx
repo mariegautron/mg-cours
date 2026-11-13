@@ -137,7 +137,7 @@ export default async function OralPage({
         >
           ← {assessment.title}
         </Link>
-        <h1 className="text-xl">Faire passer l’oral</h1>
+        <h1>Faire passer l’oral</h1>
         <Link
           href={`/modules/${id}/assessments/${assessmentId}/consignes`}
           className="text-sm underline underline-offset-2"

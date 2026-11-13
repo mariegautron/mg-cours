@@ -18,11 +18,11 @@ export default async function NewQuestionPage({ searchParams }: PageProps<"/ques
     <div className="space-y-6">
       <div>
         {resource ? (
-          <p className="text-muted-foreground text-[13px] font-medium">
+          <p className="text-muted-foreground text-[0.8125rem] font-medium">
             Pour la ressource « {resource.title} »
           </p>
         ) : null}
-        <h1 className="text-xl">Nouvelle question</h1>
+        <h1>Nouvelle question</h1>
         {sp.ajoutee === "1" ? (
           <p role="status" className="text-mint text-sm font-semibold">
             Question ajoutée. Tu peux écrire la suivante.

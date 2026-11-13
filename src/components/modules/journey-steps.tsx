@@ -41,7 +41,7 @@ export function JourneySteps({ journey }: { journey: ModuleSteps }) {
                 <span
                   aria-hidden
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-[13px] font-bold",
+                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-[0.8125rem] font-bold",
                     s.state === "done" && "bg-mint text-background border-transparent",
                     isCurrent && "bg-primary text-primary-foreground border-transparent",
                     !isCurrent && s.state !== "done" && "text-muted-foreground",

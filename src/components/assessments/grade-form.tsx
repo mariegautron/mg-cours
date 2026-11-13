@@ -1304,10 +1304,10 @@ export function GradeForm({
         )}
       </p>
       {inProgressNote ? (
-        <p className="text-sun text-[13px] font-semibold">{inProgressNote}</p>
+        <p className="text-sun text-[0.8125rem] font-semibold">{inProgressNote}</p>
       ) : null}
       {/* Rien à détailler (ni « 0 / 20 ») tant qu'aucun critère n'est noté. */}
-      <p className="text-muted-foreground text-[13px]" hidden={!!totalEmpty || !grid}>
+      <p className="text-muted-foreground text-[0.8125rem]" hidden={!!totalEmpty || !grid}>
         {showAxes
           ? groups
               .map((g) => `${g.axis?.label ?? "Autres"} ${subtotal(g.axis?.id ?? null)}`)

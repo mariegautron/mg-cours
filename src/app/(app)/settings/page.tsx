@@ -51,7 +51,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               : "← Revenir aux appréciations"}
           </Link>
         ) : null}
-        <h1 className="text-xl">Réglages</h1>
+        <h1>Réglages</h1>
         <p className="text-muted-foreground">
           Ce que tu règles une fois. Chaque changement s’enregistre et te le dit.
         </p>

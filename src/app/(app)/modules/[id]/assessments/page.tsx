@@ -225,7 +225,7 @@ export default async function ModuleAssessmentsPage({
               {progress.enteredTotal} / {progress.requirement.total}
             </strong>
           </p>
-          <p className="text-muted-foreground-2 text-[13px]">
+          <p className="text-muted-foreground-2 text-[0.8125rem]">
             {requirementLabel(mod.total_hours, progress).includes("à confirmer")
               ? "Volume hors palier, à confirmer. "
               : ""}
@@ -279,7 +279,7 @@ export default async function ModuleAssessmentsPage({
         aria-labelledby="proj"
         className="bg-card flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border px-5 py-3"
       >
-        <span className="text-muted-foreground text-[13px]">Projet fil rouge</span>
+        <span className="text-muted-foreground text-[0.8125rem]">Projet fil rouge</span>
         <h2 id="proj" className="min-w-0 flex-1 text-sm font-medium">
           {project ? project.title : "Pas encore de projet"}
         </h2>
@@ -375,7 +375,7 @@ export default async function ModuleAssessmentsPage({
                         ) : null}
                       </span>
                     </div>
-                    <p className="text-muted-foreground mb-1 text-[13px]">
+                    <p className="text-muted-foreground mb-1 text-[0.8125rem]">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {/* Même coefficient que le badge : celui de la règle de l'école, qui fait la moyenne. */}
@@ -544,7 +544,7 @@ export default async function ModuleAssessmentsPage({
                 tabIndex={0}
                 className="focus-visible:ring-ring overflow-x-auto rounded-md focus-visible:ring-2 focus-visible:outline-none"
               >
-                <table className="w-full min-w-[44rem] border-separate border-spacing-x-2 border-spacing-y-1.5 text-[13px]">
+                <table className="w-full min-w-[44rem] border-separate border-spacing-x-2 border-spacing-y-1.5 text-[0.8125rem]">
                   <caption className="sr-only">
                     Quelles séances alimentent quels rendus, évaluation par évaluation
                   </caption>
@@ -635,7 +635,7 @@ export default async function ModuleAssessmentsPage({
                   </tbody>
                 </table>
               </div>
-              <p className="text-muted-foreground mt-3 text-[13px]">
+              <p className="text-muted-foreground mt-3 text-[0.8125rem]">
                 Une évaluation de groupe de plus, ou une évaluation individuelle de plus, si tu veux
                 plus de notes que les {progress.requirement.total} exigées.
               </p>

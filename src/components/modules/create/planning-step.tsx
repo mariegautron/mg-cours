@@ -125,7 +125,7 @@ export function PlanningStep({
                   {sessions.length > 1 ? "s" : ""}
                 </caption>
                 <thead>
-                  <tr className="text-muted-foreground text-left text-[13px]">
+                  <tr className="text-muted-foreground text-left text-[0.8125rem]">
                     <th scope="col" className="py-2 pr-3 font-semibold">
                       N°
                     </th>

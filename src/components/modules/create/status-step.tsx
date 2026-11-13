@@ -31,7 +31,7 @@ export function StatusStep({
         <span className="sr-only">
           {state === "done" ? " : fait" : state === "running" ? " : en cours" : " : à venir"}
         </span>
-        {detail ? <div className="text-muted-foreground text-[13px]">{detail}</div> : null}
+        {detail ? <div className="text-muted-foreground text-[0.8125rem]">{detail}</div> : null}
       </div>
     </li>
   );
