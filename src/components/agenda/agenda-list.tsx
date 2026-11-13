@@ -50,6 +50,7 @@ export function AgendaList({
 }) {
   const [f, setF] = useState(initial);
   // L'adresse suit les filtres (sans recharger) : « Retour » et un lien partagé les retrouvent.
+  // Après un « Retour », l'adresse est déjà la bonne : rien n'est ajouté à l'historique.
   useEffect(() => {
     const params = new URLSearchParams();
     if (f.toGrade) params.set("filtre", "a-noter");
@@ -60,9 +61,26 @@ export function AgendaList({
     if (f.au) params.set("au", f.au);
     const qs = params.toString();
     const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    // Une entrée d'historique par changement de filtre : « Retour » revient au filtre précédent.
     if (url !== window.location.pathname + window.location.search)
-      window.history.replaceState(window.history.state, "", url);
+      window.history.pushState(window.history.state, "", url);
   }, [f]);
+  // Retour / Avancer du navigateur : les filtres suivent l'adresse.
+  useEffect(() => {
+    const onPop = () => {
+      const p = new URLSearchParams(window.location.search);
+      setF({
+        module: p.get("module") ?? "",
+        type: p.get("type") ?? "",
+        sujet: p.get("sujet") ?? "",
+        du: p.get("du") ?? "",
+        au: p.get("au") ?? "",
+        toGrade: p.get("filtre") === "a-noter",
+      });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const todayIso = new Date().toISOString().slice(0, 10);
 
