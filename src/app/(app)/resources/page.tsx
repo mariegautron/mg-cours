@@ -47,7 +47,7 @@ export const metadata: Metadata = { title: "Bibliothèque" };
 /** Taille d'une page : « Afficher plus » en ajoute autant, rien n'est jamais masqué. */
 const PAGE_SIZE = 50;
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 const GROUPINGS: Record<ResourceGrouping, string> = {
   none: "Sans regroupement",
@@ -201,7 +201,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
                 <Link
                   href={familyHref(f)}
                   aria-current={active ? "page" : undefined}
-                  className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${active ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
+                  className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${active ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
                 >
                   {f ? FAMILY_LABELS[f] : "Toutes"}
                   {f ? <span className="text-xs opacity-80">({counts[f]})</span> : null}
@@ -214,7 +214,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
             <Link
               href="/resources?archived=only"
               aria-current={filters.archivedOnly ? "page" : undefined}
-              className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${filters.archivedOnly ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 border-b-[3px] text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${filters.archivedOnly ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
             >
               Archivées
               <span className="text-xs opacity-80">({archivedCount})</span>
@@ -278,7 +278,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
               key={c.label}
               href={statusHref(c.status)}
               aria-current={active ? "true" : undefined}
-              className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${active ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
+              className={`focus-visible:ring-ring relative inline-flex h-8 items-center rounded-lg border px-3 text-[0.8125rem] font-medium after:absolute after:inset-x-0 after:-inset-y-[6px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none ${active ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
             >
               {c.label}
             </Link>

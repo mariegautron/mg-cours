@@ -112,7 +112,7 @@ export function StudentsImportForm({
             id="year"
             name={fixedModule ? undefined : "year"}
             defaultValue={currentSchoolYear()}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             {schoolYearOptions().map((y) => (
               <option key={y} value={y}>

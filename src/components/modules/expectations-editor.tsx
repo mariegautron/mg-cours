@@ -45,7 +45,7 @@ export interface SavedExpectation {
   modality: Modality | null;
 }
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 /**
  * US-53 : attendus de la fiche YNOV — lus dans le PDF déposé ou dans un texte collé, puis

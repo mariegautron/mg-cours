@@ -24,7 +24,7 @@ import { failure } from "@/lib/messages";
 
 type PickerItem = LinkedResource & Partial<Pick<PickerSource, "description" | "tags">>;
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 /**
  * US-62 : liens ressources d'une séance sans quitter le formulaire — recherche, filtres (type,

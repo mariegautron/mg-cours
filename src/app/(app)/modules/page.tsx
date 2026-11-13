@@ -25,7 +25,8 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Modules" };
 
 const CHIP =
-  "focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-3.5 text-sm font-semibold whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none";
+  // Filtres compacts (32 px, retour d'Arnaud) ; la zone cliquable reste de 44 px.
+  "focus-visible:ring-ring relative inline-flex h-8 items-center rounded-lg border px-3 text-[0.8125rem] font-medium whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-[6px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none";
 
 const EMPTY: Record<ListFilter, { title: string; description: string }> = {
   running: {

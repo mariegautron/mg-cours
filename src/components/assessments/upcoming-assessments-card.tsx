@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
+import { Status } from "@/components/dashboard/pill";
 import type { UpcomingAssessment } from "@/lib/assessments/day-j-queries";
 
-/** « Évaluations à venir » : les 14 prochains jours, triées par date, avec ce qui manque. */
+/**
+ * « Évaluations à venir » : les 14 prochains jours, triées par date. Une ligne cliquable par
+ * évaluation (soulignement au survol seulement), ce qui manque en une phrase grise.
+ */
 export function UpcomingAssessmentsCard({
   items,
   showModule = true,
@@ -15,43 +20,37 @@ export function UpcomingAssessmentsCard({
   if (items.length === 0) return null;
   const H = headingLevel === 2 ? "h2" : "h3";
   return (
-    <section aria-labelledby="upc-eval" className="bg-card rounded-xl border p-5 shadow-sm">
-      <H id="upc-eval" className="font-heading mb-2 text-lg font-bold">
-        Évaluations à venir
+    <section aria-labelledby="upc-eval" className="bg-card rounded-xl border px-5 py-4">
+      <H id="upc-eval" className="mb-1 text-sm font-semibold">
+        Évaluations à venir{" "}
+        <span className="text-muted-foreground-2 font-normal">{items.length}</span>
       </H>
-      <ul className="space-y-3">
+      <ul>
         {items.map((a) => (
-          <li key={a.id} className="text-sm">
+          <li key={a.id} className="border-t first:border-t-0">
             <Link
               href={`/modules/${a.moduleId}/assessments/${a.id}#dayj-top`}
-              className="font-semibold underline-offset-2 hover:underline"
+              className="group hover:bg-muted/50 -mx-2 flex min-h-11 items-center gap-3 rounded-lg px-2 py-2"
             >
-              {a.title}
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium group-hover:underline">{a.title}</span>
+                <span className="text-muted-foreground block text-[0.8125rem]">
+                  {new Date(a.date).toLocaleDateString("fr-FR", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                  {showModule ? ` · ${a.moduleName}` : ""}
+                  {a.missing.length > 0
+                    ? ` · à compléter : ${a.missing.map((m) => m.label.toLowerCase()).join(", ")}`
+                    : ""}
+                </span>
+              </span>
+              <Status state={a.missing.length === 0 ? "ready" : "todo"}>
+                {a.missing.length === 0 ? "Prête" : `${a.missing.length} à compléter`}
+              </Status>
+              <ChevronRight aria-hidden className="text-muted-foreground size-4 shrink-0" />
             </Link>
-            <span className="text-muted-foreground">
-              {" "}
-              ·{" "}
-              {new Date(a.date).toLocaleDateString("fr-FR", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-              {showModule ? ` · ${a.moduleName}` : ""}
-            </span>
-            {a.missing.length === 0 ? (
-              <p className="text-muted-foreground">Tout est prêt.</p>
-            ) : (
-              <ul className="mt-0.5 space-y-0.5">
-                {a.missing.map((m) => (
-                  <li key={m.key}>
-                    <Link href={m.href} className="underline underline-offset-2">
-                      <span aria-hidden>! </span>
-                      {m.label} : {m.todo}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
           </li>
         ))}
       </ul>

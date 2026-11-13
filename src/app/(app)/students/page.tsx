@@ -105,7 +105,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             id="year"
             name="year"
             defaultValue={year ?? ""}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             <option value="">Toutes</option>
             {years.map((y) => (
@@ -121,7 +121,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             id="scholarGroup"
             name="scholarGroup"
             defaultValue={scholarGroup}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             <option value="">Toutes</option>
             {scholarGroups.map((g) => (
@@ -137,7 +137,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             id="moduleId"
             name="moduleId"
             defaultValue={moduleId}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             <option value="">Tous</option>
             {modules.map((m) => (
@@ -163,7 +163,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
             key={v}
             href={viewHref(v)}
             aria-current={view === v ? "page" : undefined}
-            className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${view === v ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+            className={`focus-visible:ring-ring relative inline-flex h-8 items-center rounded-lg border px-3 text-[0.8125rem] font-medium after:absolute after:inset-x-0 after:-inset-y-[6px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none ${view === v ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
           >
             {label}
           </Link>

@@ -38,11 +38,14 @@ export function DayJBlock({
               <span className="sr-only"> : prêt</span>
             </span>
           ) : it.optional ? (
-            <Link href={it.href} className="text-muted-foreground underline underline-offset-2">
+            <Link
+              href={it.href}
+              className="text-muted-foreground underline-offset-2 hover:underline"
+            >
               {it.label}
             </Link>
           ) : (
-            <Link href={it.href} className="underline underline-offset-2">
+            <Link href={it.href} className="underline-offset-2 hover:underline">
               <span aria-hidden>! </span>
               {it.label} : {it.todo}
             </Link>

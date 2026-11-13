@@ -16,7 +16,7 @@ import { QUESTION_TYPES, QUESTION_TYPE_LABELS } from "@/lib/questions/types";
 
 export const metadata: Metadata = { title: "Banque de questions" };
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 export default async function QuestionsPage({ searchParams }: PageProps<"/questions">) {
   const filters = readQuestionFilters(await searchParams);
@@ -126,7 +126,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
               key={c.value || "all"}
               href={chipHref(c.value)}
               aria-current={current ? "true" : undefined}
-              className={`focus-visible:ring-ring inline-flex min-h-11 items-center rounded-xl border-[1.5px] px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none ${current ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
+              className={`focus-visible:ring-ring relative inline-flex h-8 items-center rounded-lg border px-3 text-[0.8125rem] font-medium after:absolute after:inset-x-0 after:-inset-y-[6px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none ${current ? "bg-primary text-primary-foreground border-transparent" : "bg-muted/40"}`}
             >
               {c.label}
             </Link>

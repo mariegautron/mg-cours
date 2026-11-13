@@ -11,7 +11,7 @@ import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Play } from "lucide-react";
+import { ChevronRight, Play } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { TodayPrep } from "@/components/dashboard/today-prep";
@@ -357,24 +357,23 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       ) : (
         <ol>
           {todos.map((t, i) => (
-            <li
-              key={t.key}
-              className="flex min-h-16 items-center justify-between gap-3 border-t py-3 first:border-t-0"
-            >
-              <div className="flex min-w-0 items-center gap-3">
+            <li key={t.key} className="border-t first:border-t-0">
+              {/* Ligne entièrement cliquable (soulignement au survol seulement). */}
+              <Link
+                href={t.href}
+                className="group hover:bg-muted/50 -mx-2 flex min-h-14 items-center gap-3 rounded-lg px-2 py-2.5"
+              >
                 <span
                   aria-hidden
                   className="bg-muted text-muted-foreground flex size-[1.375rem] shrink-0 items-center justify-center rounded-sm text-xs font-medium"
                 >
                   {i + 1}
                 </span>
-                <div>
-                  <p className="font-semibold">{t.title}</p>
-                  <p className="text-muted-foreground text-sm">{t.detail}</p>
-                </div>
-              </div>
-              <Link href={t.href} className={`${BTN} shrink-0`}>
-                Ouvrir<span className="sr-only"> : {t.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium group-hover:underline">{t.title}</span>
+                  <span className="text-muted-foreground block text-[0.8125rem]">{t.detail}</span>
+                </span>
+                <ChevronRight aria-hidden className="text-muted-foreground size-4 shrink-0" />
               </Link>
             </li>
           ))}
@@ -387,16 +386,16 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           </summary>
           <ol>
             {moreTodos.map((t) => (
-              <li
-                key={t.key}
-                className="flex min-h-14 items-center justify-between gap-3 border-t py-2"
-              >
-                <div className="min-w-0">
-                  <p className="font-semibold">{t.title}</p>
-                  <p className="text-muted-foreground text-sm">{t.detail}</p>
-                </div>
-                <Link href={t.href} className={`${BTN} shrink-0`}>
-                  Ouvrir<span className="sr-only"> : {t.title}</span>
+              <li key={t.key} className="border-t">
+                <Link
+                  href={t.href}
+                  className="group hover:bg-muted/50 -mx-2 flex min-h-12 items-center gap-3 rounded-lg px-2 py-2"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium group-hover:underline">{t.title}</span>
+                    <span className="text-muted-foreground block text-[0.8125rem]">{t.detail}</span>
+                  </span>
+                  <ChevronRight aria-hidden className="text-muted-foreground size-4 shrink-0" />
                 </Link>
               </li>
             ))}
@@ -440,7 +439,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               <p className="text-muted-foreground text-sm">
                 <Link
                   href={`/modules/${s.moduleId}/project`}
-                  className="underline underline-offset-2"
+                  className="underline-offset-2 hover:underline"
                 >
                   {s.moduleName}
                 </Link>

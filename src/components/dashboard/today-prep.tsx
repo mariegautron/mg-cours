@@ -2,16 +2,16 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
+import { buttonVariants } from "@/components/ui/button";
 import { sessionReadiness } from "@/lib/dashboard/readiness";
 import type { SessionPrep } from "@/lib/dashboard/queries";
 import type { PreviousSession } from "@/lib/dashboard/overview-queries";
 import { formatSessionDay } from "@/lib/dashboard/today";
 
 const LINK =
-  "focus-visible:ring-ring text-primary inline-flex min-h-11 items-center rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none";
+  "focus-visible:ring-ring text-foreground inline-flex min-h-11 items-center rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none";
 
-const BTN =
-  "focus-visible:ring-ring inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none hover:bg-accent";
+const BTN = buttonVariants({ variant: "secondary" });
 
 /**
  * Jour de cours (maquette « Aujourd'hui ») : trois cartes — ce qu'on avait dit la dernière fois,

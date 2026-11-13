@@ -16,7 +16,7 @@ import {
 
 export const metadata: Metadata = { title: "Importer des séances" };
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 export default async function ImportCoursesPage({
   params,

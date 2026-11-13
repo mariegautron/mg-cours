@@ -349,3 +349,12 @@ Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
     à la même taille sur toutes les pages publiques.
   - **Plus tard** : boutons dessinés à la main de l'espace étudiant (« Passer le QCM », « Voir le
     sujet », « Voir la grille ») à passer sur `buttonVariants`.
+- **Retour d'Arnaud sur la prod (« tout est gros », boutons et filtres ; liens soulignés en
+  enfilade sur le tableau de bord)** :
+  - boutons à 32 px (petits à 28 px), champs et listes déroulantes à 32 px ; filtres en
+    « puces » compactes de 32 px, 13 px, arrondi 8 px (Modules, Bibliothèque, Étudiant·es) ; la
+    zone cliquable reste de 44 px (pseudo-élément) ;
+  - tableau de bord : « À faire » et « Évaluations à venir » deviennent des lignes entièrement
+    cliquables (fond au survol, chevron, titre souligné au survol seulement) avec ce qui manque en
+    une phrase grise ; plus de liens soulignés en enfilade (aussi dans « Prêt pour le jour J ? »).
+  - projection inchangée.

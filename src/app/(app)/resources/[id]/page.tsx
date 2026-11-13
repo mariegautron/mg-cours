@@ -58,7 +58,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
   const slideCount = teacherOnly ? 0 : resourceSlides(0, resource).length;
   const card = "bg-card rounded-xl border p-5";
   const tab =
-    "focus-visible:ring-ring inline-flex min-h-11 items-center border-b-[3px] border-transparent text-[0.95rem] font-semibold text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:outline-none";
+    "focus-visible:ring-ring inline-flex min-h-11 items-center border-b-[3px] border-transparent text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:outline-none";
   const modifiedOn = new Date(resource.updated_at).toLocaleDateString("fr-FR", {
     day: "2-digit",
     month: "2-digit",

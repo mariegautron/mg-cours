@@ -21,7 +21,7 @@ interface Row extends SkeletonItem {
   date: string;
 }
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 /**
  * US-88 : squelette proposé depuis les notes exigées, entièrement modifiable avant création.
@@ -147,8 +147,8 @@ export function SkeletonEditor({
       )}
 
       <p role="status" className="text-sm">
-        {balance.proposed.total}/{balance.required.total} notes exigées (
-        {balance.proposed.group} de groupe, {balance.proposed.individual} individuelle
+        {balance.proposed.total}/{balance.required.total} notes exigées ({balance.proposed.group} de
+        groupe, {balance.proposed.individual} individuelle
         {balance.proposed.individual > 1 ? "s" : ""}).
         {rows.length === 0 && balance.proposed.total >= balance.required.total
           ? " Toutes les évaluations exigées sont prévues."

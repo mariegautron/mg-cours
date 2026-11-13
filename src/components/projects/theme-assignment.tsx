@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { PendingButton } from "@/components/ui/pending-button";
 import { Label } from "@/components/ui/label";
 
-const SELECT_CLASS = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT_CLASS = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 export interface AssignmentGroup {
   id: string;

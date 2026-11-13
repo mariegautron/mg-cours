@@ -51,7 +51,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
             <Link
               href={t.href}
               aria-current={appreciation === t.key ? "page" : undefined}
-              className={`focus-visible:ring-ring inline-flex min-h-11 items-center border-b-[3px] text-[0.95rem] font-semibold focus-visible:ring-2 focus-visible:outline-none ${appreciation === t.key ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
+              className={`focus-visible:ring-ring inline-flex min-h-11 items-center border-b-[3px] text-sm font-medium focus-visible:ring-2 focus-visible:outline-none ${appreciation === t.key ? "border-primary text-foreground" : "text-muted-foreground hover:text-foreground border-transparent"}`}
             >
               {t.label}
             </Link>
@@ -135,7 +135,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
             id="category"
             name="category"
             defaultValue={category}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             <option value="">Toutes</option>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
@@ -151,7 +151,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
             id="tag"
             name="tag"
             defaultValue={tag}
-            className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+            className="border-input bg-field h-8 rounded-lg border px-2.5 text-sm"
           >
             <option value="">Tous</option>
             {tags.map((t) => (

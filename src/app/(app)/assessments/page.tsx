@@ -14,7 +14,7 @@ import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import { listAllAssessments } from "@/lib/assessments/queries";
 import { moduleLabels } from "@/lib/dashboard/module-labels";
 
-const SELECT = "border-input h-9 rounded-md border bg-transparent px-3 text-sm";
+const SELECT = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
 export const metadata: Metadata = { title: "Évaluations" };
 

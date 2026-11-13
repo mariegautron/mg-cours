@@ -17,7 +17,8 @@ Jetons dans `src/app/globals.css`, composants de base dans `src/components/ui/` 
 - **Couleurs** : contour `#2C2C36`, secondaire `#A3A3AE` (7:1), tertiaire `#8A8A96` (5,2:1,
   `text-muted-foreground-2`). La lavande ne sert qu'à l'action principale, à l'élément
   sélectionné (menu, onglet), au focus et aux liens dans un paragraphe.
-- **Bouton** : 36 px de haut (zone cliquable 44 px), 14 px 500. `default` (lavande pleine, une par
+- **Bouton** : 32 px de haut (28 px en petit ; zone cliquable 44 px), 14 px 500. Champs et
+  filtres à 32 px. Listes du tableau de bord : lignes cliquables, soulignement au survol seulement. `default` (lavande pleine, une par
   zone), `secondary` (fond `--secondary` + contour `--btn-border`), `ghost` (texte gris, actions de
   ligne), `destructive`, `link`. Pas de bouton dessiné à la main : `buttonVariants`.
 - **Pastille / statut** (`Pill`, `Status`) : 22 px, 6 px d'arrondi, texte 12 px 500, icône
