@@ -19,7 +19,7 @@ export default async function ModuleSchedulePage({ params }: PageProps<"/modules
         <Link href={`/modules/${mod.id}/courses`} className="text-sm underline underline-offset-2">
           ← {mod.name}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Ajouter des séances depuis un planning</h1>
+        <h1 className="mt-2">Ajouter des séances depuis un planning</h1>
         <p className="text-muted-foreground">
           {courses.length
             ? `Le module a déjà ${courses.length} séance${courses.length > 1 ? "s" : ""} : les nouvelles séances sont numérotées à leur suite.`

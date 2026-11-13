@@ -27,13 +27,13 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
   const studentLinks = await getStudentLinkInfo(id, notebookStudents(groups));
   if (!frise) notFound();
   const today = new Date().toISOString().slice(0, 10);
-  const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const card = "bg-card rounded-xl border p-5 shadow-sm";
 
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Espace étudiant·es</h1>
+          <h1 className="text-xl">Espace étudiant·es</h1>
           <p className="text-muted-foreground mt-1">
             Publie le contenu du module et donne à chacun·e son lien. La frise ci-dessous se
             projette aussi en classe.
@@ -59,7 +59,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
 
       <p
         role="status"
-        className="bg-card flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border px-4 py-3 text-sm"
+        className="bg-card flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 text-sm"
       >
         {share.active ? (
           <>
@@ -89,7 +89,7 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
       </p>
 
       <section aria-labelledby="frise-titre" className={card}>
-        <h2 id="frise-titre" className="font-heading mb-3 text-xl font-bold">
+        <h2 id="frise-titre" className="mb-3 text-sm font-semibold">
           La frise du module
         </h2>
         <FriseProjected frise={frise} embedded />
@@ -130,13 +130,13 @@ export default async function FrisePage({ params }: PageProps<"/modules/[id]/fri
           aria-labelledby="etu"
           className={`${card} w-full min-w-0 lg:w-[26rem] lg:flex-none`}
         >
-          <h2 id="etu" className="font-heading mb-1 text-xl font-bold">
+          <h2 id="etu" className="mb-1 text-sm font-semibold">
             Ce que voient les étudiant·es
           </h2>
           <p className="text-muted-foreground mb-3 text-sm">
             La page du lien, sur un téléphone : l’état au moment où tu crées le lien.
           </p>
-          <div className="bg-background rounded-2xl border p-4">
+          <div className="bg-background rounded-xl border p-4">
             <FriseStudent frise={frise} today={today} embedded />
           </div>
         </section>

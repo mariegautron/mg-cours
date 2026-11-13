@@ -8,7 +8,7 @@ export function RouteNotFound() {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-12 text-center">
       <Mascot mood="thinking" className="size-24" />
-      <h1 className="text-2xl font-semibold">Cette page n’existe pas</h1>
+      <h1 className="text-xl">Cette page n’existe pas</h1>
       <p className="text-muted-foreground">
         Le lien est peut-être ancien. Reviens à ton tableau de bord.
       </p>

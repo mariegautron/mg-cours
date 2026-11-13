@@ -10,8 +10,8 @@ const TONE: Record<ReviewMark, string> = {
 /** Espace étudiant : « Point d'étape : retour de Marie » (sans note). */
 export function ReviewFeedback({ review }: { review: PublishedReview }) {
   return (
-    <section aria-labelledby="review-feedback" className="bg-card space-y-3 rounded-2xl border p-4">
-      <h2 id="review-feedback" className="font-heading text-xl font-bold">
+    <section aria-labelledby="review-feedback" className="bg-card space-y-3 rounded-xl border p-4">
+      <h2 id="review-feedback" className="text-sm font-semibold">
         Point d’étape : retour de Marie
       </h2>
       {review.globalComment.trim() ? (

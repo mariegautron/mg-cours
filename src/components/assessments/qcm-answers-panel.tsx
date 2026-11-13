@@ -25,7 +25,7 @@ export function QcmAnswersPanel({
 }) {
   const grade = gradeAttempt(drawn, answers, manual);
   return (
-    <details className="bg-card mb-3 rounded-3xl border p-3 text-sm shadow-sm">
+    <details className="bg-card mb-3 rounded-xl border p-3 text-sm shadow-sm">
       <summary className="min-h-8 cursor-pointer font-bold">
         Réponses au QCM de {name} ·{" "}
         <span className="font-normal">
@@ -39,7 +39,7 @@ export function QcmAnswersPanel({
           const answer = readAnswer(answers[String(i + 1)], q);
           return (
             <section key={i} className="space-y-1 border-t pt-2 first:border-t-0 first:pt-0">
-              <h3 className="font-medium">
+              <h3 className="text-sm font-semibold">
                 Question {i + 1} · {fmt(q.points)} pt{q.points > 1 ? "s" : ""}
                 {g.earned !== null ? ` · obtenus : ${fmt(g.earned)}` : " · à relire"}
               </h3>

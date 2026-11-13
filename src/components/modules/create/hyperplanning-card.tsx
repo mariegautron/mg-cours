@@ -76,9 +76,9 @@ export function HyperplanningCard({
   const needsChoice = !!read && (candidates.length > 1 || !read.matched);
 
   return (
-    <section aria-labelledby={`${id}-title`} className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby={`${id}-title`} className="bg-card rounded-xl border p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={`${id}-title`} className="font-heading text-xl font-bold">
+        <h2 id={`${id}-title`} className="text-sm font-semibold">
           Export Hyperplanning de l’école
         </h2>
         {service ? <Pill tone="ok">Module retrouvé</Pill> : null}
@@ -128,7 +128,7 @@ export function HyperplanningCard({
             </Button>
           </div>
 
-          <h3 ref={titleRef} tabIndex={-1} className="font-medium outline-none">
+          <h3 ref={titleRef} tabIndex={-1} className="text-sm font-semibold outline-none">
             {service && !needsChoice
               ? `Matière trouvée : ${service.name}`
               : read.matched

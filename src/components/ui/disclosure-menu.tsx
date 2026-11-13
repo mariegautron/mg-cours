@@ -61,7 +61,7 @@ export function DisclosureMenu({
         aria-controls={id}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "border-btn-border hover:bg-muted relative inline-flex h-9 items-center gap-1.5 rounded-[10px] border px-3 text-sm font-medium after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-['']",
+          "border-btn-border hover:bg-muted relative inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-['']",
           className,
         )}
       >

@@ -192,7 +192,7 @@ export function GradingSession({
         aria-labelledby={`${uid}-progress`}
         className="bg-card space-y-1.5 rounded-xl border px-4 py-2"
       >
-        <h2 id={`${uid}-progress`} className="sr-only">
+        <h2 id={`${uid}-progress`} className="sr-only text-sm font-semibold">
           Avancement de la correction
         </h2>
         <div className="flex flex-wrap items-center gap-3">
@@ -349,7 +349,7 @@ export function GradingSession({
                               if (view === "criterion") setView("copy");
                               focusCopy(i.id);
                             }}
-                            className={`inline-flex min-h-11 items-center gap-1 rounded-[10px] border px-2.5 ${
+                            className={`inline-flex min-h-11 items-center gap-1 rounded-lg border px-2.5 ${
                               on ? "border-primary text-primary font-semibold" : "hover:bg-muted"
                             }`}
                           >
@@ -388,7 +388,7 @@ export function GradingSession({
       </section>
 
       {focused && grid?.description?.trim() ? (
-        <details className="bg-muted/40 rounded-2xl border px-3 py-1">
+        <details className="bg-muted/40 rounded-xl border px-3 py-1">
           <summary className="min-h-8 cursor-pointer py-1 text-sm font-semibold">
             Rappels pédagogiques de la grille
           </summary>
@@ -403,7 +403,7 @@ export function GradingSession({
           className="space-y-4"
         >
           {section.title ? (
-            <h2 id={`${uid}-${section.id}`} className="text-lg font-semibold">
+            <h2 id={`${uid}-${section.id}`} className="text-sm font-semibold">
               {section.title}
             </h2>
           ) : null}

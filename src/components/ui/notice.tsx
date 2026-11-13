@@ -38,7 +38,7 @@ export function Notice({
     <div
       role={live ? (level === "blocking" ? "alert" : "status") : undefined}
       className={cn(
-        "bg-muted flex items-start gap-2 rounded-[10px] border p-3 text-sm",
+        "bg-muted flex items-start gap-2 rounded-lg border p-3 text-sm",
         level === "blocking" ? "border-status-blocking" : "border-status-todo",
         className,
       )}

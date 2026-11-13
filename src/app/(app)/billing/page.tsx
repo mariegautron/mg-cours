@@ -84,7 +84,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold">Facturation</h1>
+        <h1 className="text-xl">Facturation</h1>
         <p className="text-muted-foreground">
           Tu fais ta facture toi-même. Ici, tu la déposes et tu suis où elle en est. Chaque case
           s’enregistre toute seule.

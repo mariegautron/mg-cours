@@ -112,7 +112,7 @@ export function HyperplanningImport({
   return (
     <section aria-labelledby={`${id}-title`} className="space-y-3 rounded-lg border p-3">
       <div>
-        <h3 id={`${id}-title`} className="text-sm font-medium">
+        <h3 id={`${id}-title`} className="text-sm font-semibold">
           Importer depuis l’export Hyperplanning
         </h3>
         <p className="text-muted-foreground text-sm">

@@ -188,15 +188,11 @@ export default async function CoursePage({
         <section aria-labelledby="ws" className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-muted-foreground text-[0.8rem]">
+              <p className="text-muted-foreground text-[13px]">
                 Séance {index + 1} sur {courses.length} · {when}
               </p>
-              <p className="text-primary mb-1 text-[0.75rem] font-bold tracking-widest uppercase">
-                {mod.name}
-              </p>
-              <h1 id="ws" className="font-heading text-2xl font-bold">
-                {course.title}
-              </h1>
+              <p className="text-muted-foreground mb-1 text-[13px] font-medium">{mod.name}</p>
+              <h1 id="ws">{course.title}</h1>
               {saved || added ? (
                 <p role="status" className="text-mint text-sm font-semibold">
                   {added ? "Ressource ajoutée au déroulé." : "Enregistré."}
@@ -228,7 +224,7 @@ export default async function CoursePage({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/modules/${id}/courses/${courseId}/start`}
-              className="bg-primary text-primary-foreground hover:bg-primary/85 inline-flex min-h-11 items-center justify-center rounded-[10px] px-4 text-sm font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/85 inline-flex min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold"
             >
               <Play aria-hidden className="mr-2 size-4" />
               Faire cours<span className="sr-only"> : {course.title}</span>
@@ -286,7 +282,7 @@ export default async function CoursePage({
             }}
           />
 
-          <div className="bg-card rounded-3xl border p-4">
+          <div className="bg-card rounded-xl border p-4">
             <div className="space-y-3">
               <p className="text-muted-foreground text-sm">
                 Les exports pour Moodle (cours en PDF, évaluations, progression) sont dans{" "}
@@ -305,8 +301,8 @@ export default async function CoursePage({
             role="group"
             aria-label="Autour de la séance"
           >
-            <section aria-labelledby="at" className="bg-card rounded-3xl border p-4">
-              <h2 id="at" className="font-heading mb-1.5 text-base font-bold">
+            <section aria-labelledby="at" className="bg-card rounded-xl border p-4">
+              <h2 id="at" className="mb-1.5 text-sm font-semibold">
                 Attendus traités
               </h2>
               <CourseExpectationsPicker
@@ -318,8 +314,8 @@ export default async function CoursePage({
               />
             </section>
 
-            <section aria-labelledby="ev" className="bg-card rounded-3xl border p-4">
-              <h2 id="ev" className="font-heading mb-1 text-base font-bold">
+            <section aria-labelledby="ev" className="bg-card rounded-xl border p-4">
+              <h2 id="ev" className="mb-1 text-sm font-semibold">
                 Évaluation liée
               </h2>
               {linked.length === 0 ? (
@@ -328,7 +324,7 @@ export default async function CoursePage({
                 linked.map((a) => (
                   <div key={a.id} className="mb-2">
                     <strong>{a.title}</strong>
-                    <p className="text-muted-foreground text-[0.8rem]">
+                    <p className="text-muted-foreground text-[13px]">
                       {a.is_group_grade ? "Note de groupe" : "Note individuelle"}
                     </p>
                     <p className="my-1.5 flex flex-wrap gap-1.5">
@@ -347,8 +343,8 @@ export default async function CoursePage({
               )}
             </section>
 
-            <section aria-labelledby="qz" className="bg-card rounded-3xl border p-4">
-              <h2 id="qz" className="font-heading mb-1 text-base font-bold">
+            <section aria-labelledby="qz" className="bg-card rounded-xl border p-4">
+              <h2 id="qz" className="mb-1 text-sm font-semibold">
                 Quiz de fin de séance
               </h2>
               <p className="text-muted-foreground mb-1 text-sm">

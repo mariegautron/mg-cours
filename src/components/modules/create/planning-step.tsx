@@ -87,10 +87,10 @@ export function PlanningStep({
       <div className="min-w-0 flex-1 basis-full space-y-4 lg:basis-0">
         <section
           aria-labelledby={`${id}-sessions`}
-          className="bg-card rounded-3xl border p-5 shadow-sm"
+          className="bg-card rounded-xl border p-5 shadow-sm"
         >
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-3">
-            <h2 id={`${id}-sessions`} className="font-heading text-xl font-bold">
+            <h2 id={`${id}-sessions`} className="text-sm font-semibold">
               {sessions.length} séance{sessions.length > 1 ? "s" : ""} proposée
               {sessions.length > 1 ? "s" : ""}
             </h2>
@@ -125,7 +125,7 @@ export function PlanningStep({
                   {sessions.length > 1 ? "s" : ""}
                 </caption>
                 <thead>
-                  <tr className="text-muted-foreground text-left text-[0.8rem]">
+                  <tr className="text-muted-foreground text-left text-[13px]">
                     <th scope="col" className="py-2 pr-3 font-semibold">
                       N°
                     </th>
@@ -198,9 +198,9 @@ export function PlanningStep({
       <div className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none">
         <aside
           aria-labelledby={`${id}-dates`}
-          className="bg-card space-y-3 rounded-3xl border p-5 shadow-sm"
+          className="bg-card space-y-3 rounded-xl border p-5 shadow-sm"
         >
-          <h2 id={`${id}-dates`} className="font-heading text-xl font-bold">
+          <h2 id={`${id}-dates`} className="text-sm font-semibold">
             Dates du module
           </h2>
           {dateField("startDate", "Début")}
@@ -210,9 +210,9 @@ export function PlanningStep({
 
         <aside
           aria-labelledby={`${id}-deadline`}
-          className="bg-card rounded-3xl border p-5 shadow-sm"
+          className="bg-card rounded-xl border p-5 shadow-sm"
         >
-          <h2 id={`${id}-deadline`} className="font-heading mb-2.5 text-xl font-bold">
+          <h2 id={`${id}-deadline`} className="mb-2.5 text-sm font-semibold">
             Échéance de la progression
           </h2>
           {deadline ? (

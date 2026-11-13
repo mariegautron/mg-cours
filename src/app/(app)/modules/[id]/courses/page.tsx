@@ -22,7 +22,7 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
 
   return (
     <div className="max-w-3xl space-y-4">
-      <h1 className="font-heading text-2xl font-bold">Séances</h1>
+      <h1 className="text-xl">Séances</h1>
       <EmptyState
         title="Aucune séance"
         description="Ajoute les dates du planning pour préparer chaque séance."

@@ -18,7 +18,7 @@ export default async function EspaceProjetPage({ params }: PageProps<"/module/[t
   if (!res.espace?.brief) notFound();
   return (
     <EspaceShell token={token} espace={res.espace} current="projet" publishedAt={res.publishedAt}>
-      <h1 className="font-heading mb-4 text-2xl font-bold">{res.espace.brief.title}</h1>
+      <h1 className="mb-4">{res.espace.brief.title}</h1>
       <Markdown source={res.espace.brief.text} headingLevel={2} />
     </EspaceShell>
   );

@@ -83,18 +83,18 @@ export function SessionList({
                   >
                     {c.title}
                   </span>
-                  <span className="text-muted-foreground block text-[0.75rem]">
+                  <span className="text-muted-foreground block text-xs">
                     {listDateLine(c.session_date, c.start_time, c.end_time)}
                   </span>
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   {!c.completion && c.session_date && c.session_date < today ? (
                     // Séance passée jamais clôturée : jamais « Prochaine ».
-                    <Pill tone="warn" className="min-h-[22px] px-2 text-[0.75rem]">
+                    <Pill tone="warn" className="min-h-[22px] px-2 text-xs">
                       À clôturer
                     </Pill>
                   ) : c.id === upcomingId ? (
-                    <Pill tone="key" className="min-h-[22px] px-2 text-[0.75rem]">
+                    <Pill tone="key" className="min-h-[22px] px-2 text-xs">
                       {c.session_date === today ? "Aujourd’hui" : "Prochaine"}
                     </Pill>
                   ) : null}
@@ -106,12 +106,12 @@ export function SessionList({
                           ? "warn"
                           : (STATUS_TONES[c.prep_status] ?? "plain")
                     }
-                    className="min-h-[22px] px-2 text-[0.75rem]"
+                    className="min-h-[22px] px-2 text-xs"
                   >
                     {c.completion ? "Faite" : statusLabel(c.prep_status)}
                   </Pill>
                   {!c.completion && isSessionReady(c) && toBuild(c) > 0 ? (
-                    <span className="text-sun text-right text-[0.7rem] leading-tight font-semibold">
+                    <span className="text-sun text-right text-xs leading-tight font-semibold">
                       {toBuild(c)} ressource{toBuild(c) > 1 ? "s" : ""} à construire
                     </span>
                   ) : null}
@@ -127,7 +127,7 @@ export function SessionList({
         </Notice>
       ) : null}
       {missing.length ? (
-        <div className="bg-muted mx-1.5 mt-2.5 rounded-xl p-3 text-[0.8rem]">
+        <div className="bg-muted mx-1.5 mt-2.5 rounded-xl p-3 text-[13px]">
           <strong>
             {missing.length} attendu{missing.length > 1 ? "s" : ""} sans séance
           </strong>
@@ -187,10 +187,10 @@ export function SessionList({
     const current = courses.findIndex((c) => c.id === currentId);
     return (
       <section aria-labelledby="ls-drawer">
-        <h2 id="ls-drawer" className="sr-only">
+        <h2 id="ls-drawer" className="sr-only text-sm font-semibold">
           {heading}
         </h2>
-        <details className="bg-card min-w-0 rounded-3xl border p-3">
+        <details className="bg-card min-w-0 rounded-xl border p-3">
           <summary className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-1.5">
             <span className="font-heading text-base font-bold">{heading}</span>
             <span className="text-muted-foreground text-sm">
@@ -207,12 +207,12 @@ export function SessionList({
   return (
     <aside
       aria-labelledby="ls"
-      className="bg-card w-full min-w-0 rounded-3xl border p-3.5 lg:w-80 lg:flex-none"
+      className="bg-card w-full min-w-0 rounded-xl border p-3.5 lg:w-80 lg:flex-none"
     >
-      <h2 id="ls" className="font-heading mx-1.5 text-lg font-bold">
+      <h2 id="ls" className="mx-1.5 text-sm font-semibold">
         {heading}
       </h2>
-      <p className="text-muted-foreground mx-1.5 mb-2 text-[0.8rem]">{summary}</p>
+      <p className="text-muted-foreground mx-1.5 mb-2 text-[13px]">{summary}</p>
       {body}
     </aside>
   );

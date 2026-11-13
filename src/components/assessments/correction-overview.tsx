@@ -78,7 +78,7 @@ export function CorrectionOverview({
 
   return (
     <section aria-labelledby="overview" className="space-y-3">
-      <h2 id="overview" className="text-lg font-medium">
+      <h2 id="overview" className="text-sm font-semibold">
         Où j’en suis
       </h2>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
@@ -185,7 +185,7 @@ export function CorrectionOverview({
                                 <span
                                   key={`${m}-${i}`}
                                   className={cn(
-                                    "text-foreground ring-card flex size-7 items-center justify-center rounded-full text-[11px] font-bold ring-2",
+                                    "text-foreground ring-card flex size-7 items-center justify-center rounded-full text-xs font-bold ring-2",
                                     AVATAR_TONES[i % AVATAR_TONES.length],
                                   )}
                                 >
@@ -236,12 +236,10 @@ export function CorrectionOverview({
             aria-labelledby="go"
             className="bg-primary/10 border-primary/50 rounded-xl border p-5"
           >
-            <p className="text-primary text-xs font-bold tracking-widest uppercase">
-              Prochaine copie
-            </p>
+            <p className="text-muted-foreground text-[13px] font-medium">Prochaine copie</p>
             {next ? (
               <>
-                <h3 id="go" className="mt-1 text-xl font-semibold">
+                <h3 id="go" className="mt-1 text-sm font-semibold">
                   {next.state === "in_progress" ? "Reprendre" : "Continuer avec"} {next.title}
                 </h3>
                 <p className="text-muted-foreground mt-1 mb-3 text-sm">
@@ -257,7 +255,7 @@ export function CorrectionOverview({
                 </Button>
               </>
             ) : (
-              <h3 id="go" className="mt-1 text-xl font-semibold">
+              <h3 id="go" className="mt-1 text-sm font-semibold">
                 {total > 0 ? "Tout est corrigé." : "Aucune copie."}
               </h3>
             )}
@@ -265,7 +263,7 @@ export function CorrectionOverview({
 
           {tracked && counts.missing > 0 ? (
             <section aria-labelledby="ab" className="bg-card rounded-xl border p-5">
-              <h3 id="ab" className="mb-2 text-lg font-semibold">
+              <h3 id="ab" className="mb-2 text-sm font-semibold">
                 Non rendus
               </h3>
               <ul className="text-muted-foreground space-y-1 text-sm">
@@ -289,7 +287,7 @@ export function CorrectionOverview({
 
           {compareHref ? (
             <section aria-labelledby="crit" className="bg-card rounded-xl border p-5">
-              <h3 id="crit" className="mb-1 text-lg font-semibold">
+              <h3 id="crit" className="mb-1 text-sm font-semibold">
                 Vérifier la cohérence
               </h3>
               <p className="text-muted-foreground mb-3 text-sm">
@@ -313,7 +311,7 @@ export function CorrectionOverview({
           ) : null}
 
           <section aria-labelledby="stat" className="bg-card rounded-xl border p-5">
-            <h3 id="stat" className="mb-2 text-lg font-semibold">
+            <h3 id="stat" className="mb-2 text-sm font-semibold">
               Pour l’instant
             </h3>
             <dl className="divide-y text-sm">

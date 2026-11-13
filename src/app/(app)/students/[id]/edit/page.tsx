@@ -14,7 +14,7 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">
+      <h1 className="text-xl">
         Modifier « {student.first_name} {student.last_name} »
       </h1>
       <StudentForm action={updateStudent.bind(null, id)} student={student} years={years} />

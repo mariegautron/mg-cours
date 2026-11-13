@@ -97,8 +97,8 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
     <div className="space-y-5">
       <input type="hidden" name="briefMd" value={md} />
 
-      <section aria-labelledby="brief-model" className="bg-card rounded-3xl border p-5 shadow-sm">
-        <h2 id="brief-model" className="font-heading mb-1 text-xl font-bold">
+      <section aria-labelledby="brief-model" className="bg-card rounded-xl border p-5 shadow-sm">
+        <h2 id="brief-model" className="mb-1 text-sm font-semibold">
           Quel genre de projet ?
         </h2>
         <p className="text-muted-foreground mb-3 text-sm">
@@ -114,7 +114,7 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
                 className="hover:bg-accent focus-visible:ring-ring h-full min-h-11 w-full rounded-xl border p-3 text-left focus-visible:ring-2 focus-visible:outline-none"
               >
                 <span className="block font-bold">{m.label}</span>
-                <span className="text-muted-foreground text-[0.8rem]">{m.hint}</span>
+                <span className="text-muted-foreground text-[13px]">{m.hint}</span>
               </button>
             </li>
           ))}
@@ -141,8 +141,8 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
         ) : null}
       </section>
 
-      <section aria-labelledby="brief-title" className="bg-card rounded-3xl border p-5 shadow-sm">
-        <h2 id="brief-title" className="font-heading mb-1 text-xl font-bold">
+      <section aria-labelledby="brief-title" className="bg-card rounded-xl border p-5 shadow-sm">
+        <h2 id="brief-title" className="mb-1 text-sm font-semibold">
           Le brief, section par section
         </h2>
         <p id="brief-hint" className="text-muted-foreground mb-2 text-sm">
@@ -166,7 +166,7 @@ export function BriefEditor({ initial, error }: { initial: string; error?: strin
                     <div className="min-w-0 flex-1">
                       <strong>{s.title || "Sans titre"}</strong>
                       {sectionSummary(s.body) && !isPlaceholderSection(s) ? (
-                        <div className="text-muted-foreground truncate text-[0.8rem]">
+                        <div className="text-muted-foreground truncate text-[13px]">
                           {sectionSummary(s.body)}
                         </div>
                       ) : null}

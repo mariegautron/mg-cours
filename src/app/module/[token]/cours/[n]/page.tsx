@@ -43,11 +43,11 @@ export default async function EspaceCoursSeancePage({
           ← Tous les cours
         </Link>
       </p>
-      <h1 className="font-heading mb-4 text-2xl font-bold">{sessionHeading(course)}</h1>
+      <h1 className="mb-4">{sessionHeading(course)}</h1>
       <div className="space-y-10">
         {course.resources.map((r, i) => (
           <article key={i} aria-labelledby={`r-${i}`}>
-            <h2 id={`r-${i}`} className="font-heading mb-1 text-xl font-bold">
+            <h2 id={`r-${i}`} className="mb-1 text-sm font-semibold">
               {r.title}
             </h2>
             {r.kindLabel ? (

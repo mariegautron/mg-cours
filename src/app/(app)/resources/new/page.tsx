@@ -22,11 +22,11 @@ export default async function NewResourcePage({ searchParams }: PageProps<"/reso
     <div className="space-y-6">
       <div>
         {origin ? (
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">
+          <p className="text-muted-foreground text-[13px] font-medium">
             Pour la {origin.label.replace(/^Séance/, "séance")}
           </p>
         ) : null}
-        <h1 className="text-2xl font-semibold">Nouvelle ressource</h1>
+        <h1 className="text-xl">Nouvelle ressource</h1>
         {origin ? (
           <p className="text-muted-foreground text-sm">
             À l’enregistrement, elle est retenue pour le module et ajoutée à la fin du déroulé.

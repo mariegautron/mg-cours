@@ -29,7 +29,7 @@ export function CorrectionMode({
   return (
     <section aria-labelledby="corr-mode" className="bg-muted/40 space-y-2 rounded-xl border p-4">
       {confirmDialog}
-      <h2 id="corr-mode" className="font-heading text-lg font-bold">
+      <h2 id="corr-mode" className="text-sm font-semibold">
         Façon de corriger
       </h2>
       <p className="text-sm">

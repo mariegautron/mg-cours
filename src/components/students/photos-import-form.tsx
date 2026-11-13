@@ -64,7 +64,7 @@ export function PhotosImportForm() {
         <div className="min-w-0 flex-[1_1_0] space-y-4">
           <section aria-labelledby="d1" className={card}>
             <div className="flex items-center justify-between gap-2">
-              <h2 id="d1" className="text-lg font-semibold">
+              <h2 id="d1" className="text-sm font-semibold">
                 1 · Le fichier
               </h2>
               {report ? <Pill tone="ok">Lu</Pill> : null}
@@ -106,7 +106,7 @@ export function PhotosImportForm() {
 
           {report ? (
             <section aria-labelledby="d2" className={card}>
-              <h2 id="d2" className="text-lg font-semibold">
+              <h2 id="d2" className="text-sm font-semibold">
                 2 · Ce que j’ai trouvé
               </h2>
               <dl className="divide-y text-sm">
@@ -132,7 +132,7 @@ export function PhotosImportForm() {
           ) : null}
 
           <section aria-labelledby="d3" className={card}>
-            <h2 id="d3" className="font-semibold">
+            <h2 id="d3" className="text-sm font-semibold">
               Confidentialité
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -144,7 +144,7 @@ export function PhotosImportForm() {
 
         <section aria-labelledby="ap" className={cn(card, "min-w-0 flex-[2_1_0]")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="ap" className="text-lg font-semibold">
+            <h2 id="ap" className="text-sm font-semibold">
               3 · Vérifie avant d’enregistrer
             </h2>
             <span className="text-muted-foreground text-sm">Rien n’est écrit avant ton accord</span>

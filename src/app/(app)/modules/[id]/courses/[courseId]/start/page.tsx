@@ -84,11 +84,11 @@ export default async function StartCoursePage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
             Séance {position + 1}
             {when ? ` · ${when}` : ""}
           </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Avant de commencer</h1>
+          <h1 className="text-xl">Avant de commencer</h1>
           <p className="text-muted-foreground mt-1">
             {course.title} · le cours se projette depuis l’app, découpé automatiquement. Le nombre
             de diapositives n’a pas d’importance.
@@ -103,7 +103,7 @@ export default async function StartCoursePage({
           aria-labelledby="class-missing"
           className="border-status-todo bg-muted space-y-2 rounded-xl border p-4"
         >
-          <h2 id="class-missing" className="font-heading text-lg font-bold">
+          <h2 id="class-missing" className="text-sm font-semibold">
             Ta classe n’est pas encore en place
           </h2>
           <p className="text-sm">

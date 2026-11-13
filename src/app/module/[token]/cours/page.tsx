@@ -19,13 +19,13 @@ export default async function EspaceCoursPage({ params }: PageProps<"/module/[to
   if (!res.espace?.courses.length) notFound();
   return (
     <EspaceShell token={token} espace={res.espace} current="cours" publishedAt={res.publishedAt}>
-      <h1 className="font-heading mb-4 text-2xl font-bold">Les cours</h1>
+      <h1 className="mb-4">Les cours</h1>
       <ul className="space-y-3">
         {res.espace.courses.map((c) => (
           <li key={c.number}>
             <Link
               href={`/module/${token}/cours/${c.number}`}
-              className="bg-card focus-visible:ring-ring block min-h-11 rounded-2xl border p-4 focus-visible:ring-2 focus-visible:outline-none"
+              className="bg-card focus-visible:ring-ring block min-h-11 rounded-xl border p-4 focus-visible:ring-2 focus-visible:outline-none"
             >
               <strong>{sessionHeading(c)}</strong>
               <span className="text-muted-foreground block text-sm">

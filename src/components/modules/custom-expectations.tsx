@@ -102,7 +102,7 @@ export function CustomExpectations({
   return (
     <section aria-labelledby="custom-expectations" className="space-y-3 rounded-lg border p-4">
       <div>
-        <h2 id="custom-expectations" className="text-lg font-medium">
+        <h2 id="custom-expectations" className="text-sm font-semibold">
           Mes attendus pour ce module
         </h2>
         <p className="text-muted-foreground text-sm">

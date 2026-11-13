@@ -38,8 +38,8 @@ export default async function ConsignesPreviewPage({
           <Link href={`/modules/${id}/assessments/${assessmentId}`}>← Retour à l’évaluation</Link>
         </Button>
       </div>
-      <article className="bg-card space-y-4 rounded-2xl border p-6">
-        <h1 className="font-heading text-3xl font-bold tracking-tight">{assessment.title}</h1>
+      <article className="bg-card space-y-4 rounded-xl border p-6">
+        <h1 className="text-xl">{assessment.title}</h1>
         <p className="text-muted-foreground text-sm">
           {assessment.is_group_grade ? "Oral de groupe" : "Oral individuel"}
           {assessment.date ? ` · ${new Date(assessment.date).toLocaleDateString("fr-FR")}` : ""}
@@ -50,14 +50,14 @@ export default async function ConsignesPreviewPage({
         ) : (
           sections.map((s) => (
             <section key={s.key} className="space-y-1">
-              <h2 className="font-heading text-xl font-bold">{s.heading}</h2>
+              <h2 className="text-sm font-semibold">{s.heading}</h2>
               {s.markdown ? <Markdown source={s.text} headingLevel={3} /> : <p>{s.text}</p>}
             </section>
           ))
         )}
         {criteria.length > 0 ? (
           <section className="space-y-1">
-            <h2 className="font-heading text-xl font-bold">Critères</h2>
+            <h2 className="text-sm font-semibold">Critères</h2>
             <ul className="list-disc pl-5">
               {criteria.map((c) => (
                 <li key={c.label}>

@@ -168,7 +168,7 @@ export function AttemptReview({
           aria-labelledby={`q${q.position}`}
           className="space-y-2 rounded-lg border p-4"
         >
-          <h2 id={`q${q.position}`} className="text-sm font-medium">
+          <h2 id={`q${q.position}`} className="text-sm font-semibold">
             Question {q.position} · {fmt(q.points)} point{q.points > 1 ? "s" : ""}
             {q.open
               ? scores[q.position]?.trim()

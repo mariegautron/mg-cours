@@ -79,11 +79,9 @@ export default async function ClosedCoursePage({
 
   return (
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[3fr_2fr]">
-      <section aria-labelledby="closed" className="bg-card space-y-4 rounded-2xl border p-6">
+      <section aria-labelledby="closed" className="bg-card space-y-4 rounded-xl border p-6">
         <div>
-          <h1 id="closed" className="font-heading text-3xl font-bold tracking-tight">
-            Séance {position + 1} clôturée
-          </h1>
+          <h1 id="closed">Séance {position + 1} clôturée</h1>
           <p className="text-muted-foreground">
             {course.title} · {mod.name}
             {when ? ` · ${when}` : ""}
@@ -116,7 +114,7 @@ export default async function ClosedCoursePage({
         {projection.status !== "none" ? <ProjectionStatus recap={projection} /> : null}
         {moved.length || carryState.skipped.length ? (
           <section aria-labelledby="carried" className="space-y-2 rounded-xl border p-4">
-            <h2 id="carried" className="font-medium">
+            <h2 id="carried" className="text-sm font-semibold">
               Reporté à la séance suivante
             </h2>
             <ul className="space-y-1 text-sm">
@@ -153,8 +151,8 @@ export default async function ClosedCoursePage({
       </section>
 
       <div className="space-y-4">
-        <section aria-labelledby="after" className="bg-card space-y-3 rounded-2xl border p-5">
-          <h2 id="after" className="font-heading text-xl font-semibold">
+        <section aria-labelledby="after" className="bg-card space-y-3 rounded-xl border p-5">
+          <h2 id="after" className="text-sm font-semibold">
             Et maintenant ?
           </h2>
           <div className="flex flex-col gap-2">
@@ -175,8 +173,8 @@ export default async function ClosedCoursePage({
           </div>
         </section>
 
-        <section aria-labelledby="pdf" className="bg-card space-y-3 rounded-2xl border p-5">
-          <h2 id="pdf" className="font-heading text-xl font-semibold">
+        <section aria-labelledby="pdf" className="bg-card space-y-3 rounded-xl border p-5">
+          <h2 id="pdf" className="text-sm font-semibold">
             Il reste à faire
           </h2>
           <p className="text-sm">
@@ -195,8 +193,8 @@ export default async function ClosedCoursePage({
           </DownloadButton>
         </section>
 
-        <section aria-labelledby="next-time" className="bg-card space-y-3 rounded-2xl border p-5">
-          <h2 id="next-time" className="font-heading text-xl font-semibold">
+        <section aria-labelledby="next-time" className="bg-card space-y-3 rounded-xl border p-5">
+          <h2 id="next-time" className="text-sm font-semibold">
             Pour la prochaine fois
           </h2>
           {course.next_time?.trim() ? (

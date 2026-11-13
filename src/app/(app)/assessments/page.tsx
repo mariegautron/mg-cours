@@ -62,7 +62,7 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Évaluations</h1>
+          <h1 className="text-xl">Évaluations</h1>
           <p className="text-muted-foreground">Toutes écoles et modules confondus.</p>
         </div>
         <div className="flex gap-2">

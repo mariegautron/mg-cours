@@ -158,7 +158,7 @@ export function QuizGenerator({
       )}
 
       <section aria-labelledby="picked" className="space-y-2">
-        <h2 id="picked" className="font-medium">
+        <h2 id="picked" className="text-sm font-semibold">
           3. Le QCM ({selected.length} question{selected.length > 1 ? "s" : ""})
         </h2>
         <p role="status" aria-live="polite" className="text-muted-foreground min-h-5 text-sm">

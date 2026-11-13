@@ -158,11 +158,7 @@ export function ModuleCreateWizard({
       <input type="hidden" name="scheduleJson" value={JSON.stringify(sessions)} />
 
       <div>
-        <h1
-          ref={titleRef}
-          tabIndex={-1}
-          className="font-heading text-3xl font-bold tracking-tight outline-none"
-        >
+        <h1 ref={titleRef} tabIndex={-1} className="outline-none">
           {step === 1 ? "Nouveau module" : "Planning et dates"}
         </h1>
         <p className="text-muted-foreground mt-1.5">
@@ -237,9 +233,9 @@ export function ModuleCreateWizard({
 
           <aside
             aria-labelledby="compris"
-            className="bg-card w-full min-w-0 space-y-3 rounded-3xl border p-5 shadow-sm lg:w-[28rem] lg:flex-none"
+            className="bg-card w-full min-w-0 space-y-3 rounded-xl border p-5 shadow-sm lg:w-[28rem] lg:flex-none"
           >
-            <h2 id="compris" className="font-heading text-xl font-bold">
+            <h2 id="compris" className="text-sm font-semibold">
               Ce que j’ai compris
             </h2>
             <Row label="Nom du module" htmlFor="name">
@@ -354,7 +350,7 @@ export function ModuleCreateWizard({
         </p>
       ) : null}
 
-      <div className="bg-background/95 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 backdrop-blur md:sticky md:bottom-2">
+      <div className="bg-background/95 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 backdrop-blur md:sticky md:bottom-2">
         {step === 1 ? (
           <Button type="button" variant="ghost" asChild>
             <Link href="/modules">Annuler</Link>

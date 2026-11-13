@@ -30,13 +30,7 @@ import { SubjectStatusBadge } from "@/components/assessments/subject-status-badg
 import { Pill } from "@/components/dashboard/pill";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
-import {
-  enteredLabel,
-  plannedLabel,
-  plannedMessage,
-  plannedProgress,
-  requirementLabel,
-} from "@/lib/assessments/module-notes";
+import { plannedMessage, plannedProgress, requirementLabel } from "@/lib/assessments/module-notes";
 import {
   buildTimeline,
   courseCellLabel,
@@ -190,7 +184,7 @@ export default async function ModuleAssessmentsPage({
       submitMode: submitModeOf(a),
       qcm: extras.qcm.get(a.id),
     });
-  const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const card = "bg-card rounded-xl border px-5 py-4";
   // Points d'étape : « 2 retours terminés sur 4 », jamais une note.
   const reviewDone = await countDoneReviews(
     assessments.filter((a) => isProgressReview(a)).map((a) => a.id),
@@ -212,21 +206,51 @@ export default async function ModuleAssessmentsPage({
   );
 
   return (
-    <div className="mx-auto max-w-[112rem] space-y-5">
+    <div className="mx-auto max-w-[112rem] space-y-4">
+      {/* En-tête (DA « Atelier ») : titre, une ligne de chiffres, actions alignées à droite. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-3xl">
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Évaluations</h1>
-          <p role="status" className="text-muted-foreground mt-1">
-            {requirementLabel(mod.total_hours, progress)}. {plannedLabel(planned)}.{" "}
-            {enteredLabel(progress)}. {plannedMessage(planned)}
+          <h1>Évaluations</h1>
+          <p role="status" className="text-muted-foreground mt-1 text-sm">
+            <strong className="text-foreground font-semibold">{mod.total_hours} h</strong> de cours
+            ·{" "}
+            <strong className="text-foreground font-semibold">{progress.requirement.total}</strong>{" "}
+            note{progress.requirement.total > 1 ? "s" : ""} exigée
+            {progress.requirement.total > 1 ? "s" : ""} · Prévues{" "}
+            <strong className="text-foreground font-semibold">
+              {planned.planned} / {planned.required}
+            </strong>{" "}
+            · Notées{" "}
+            <strong className="text-foreground font-semibold">
+              {progress.enteredTotal} / {progress.requirement.total}
+            </strong>
+          </p>
+          <p className="text-muted-foreground-2 text-[13px]">
+            {requirementLabel(mod.total_hours, progress).includes("à confirmer")
+              ? "Volume hors palier, à confirmer. "
+              : ""}
+            {plannedMessage(planned)}
           </p>
           {/* Phrase d'aide repliable (lot 4, point 16). */}
-          <details className="text-muted-foreground mt-1 text-sm">
+          <details className="text-muted-foreground text-sm">
             <summary className="min-h-11 cursor-pointer py-2">Comment c’est organisé ?</summary>
             Le projet fil rouge porte le brief et le contexte ; chaque évaluation porte ses attendus
             et sa grille, et un point d’étape (noté ou non) fait le point avec les groupes. Clique
             une évaluation pour la préparer.
           </details>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="secondary">
+            <Link href={`/modules/${id}/rattrapages`}>
+              Rattrapages{makeupsPending > 0 ? ` · ${makeupsPending} à faire` : ""}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/modules/${id}/assessments/add`}>
+              <Plus aria-hidden />
+              Ajouter une évaluation
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -240,7 +264,7 @@ export default async function ModuleAssessmentsPage({
       </p>
 
       {regular.length > 0 && unevaluatedGroups.length > 0 ? (
-        <div role="alert" className="border-status-todo bg-muted rounded-2xl border p-3 text-sm">
+        <div role="alert" className="border-status-todo bg-muted rounded-xl border p-3 text-sm">
           {unevaluatedGroups.map((g) => (
             <p key={g.id}>
               <strong>{/^groupe\b/i.test(g.name) ? g.name : `Groupe ${g.name}`}</strong> n’est
@@ -250,54 +274,31 @@ export default async function ModuleAssessmentsPage({
         </div>
       ) : null}
 
-      <section aria-labelledby="proj" className={card}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-[min(18rem,100%)] flex-1">
-            <h2 id="proj" className="font-heading text-xl font-bold">
-              {project ? `Projet : ${project.title}` : "Pas encore de projet fil rouge"}
-            </h2>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              {project
-                ? `${project.brief_md.trim() ? "Brief rédigé" : "Brief à rédiger"}${
-                    project.themes.length ? ` · ${project.themes.length} thèmes au choix` : ""
-                  }`
-                : "Commence par le projet : il porte le brief des évaluations. Tu peux aussi créer directement une évaluation."}
-            </p>
-          </div>
-          <Pill tone={planned.missingGroup + planned.missingIndividual === 0 ? "ok" : "warn"}>
-            {plannedLabel(planned)}
+      {/* Projet fil rouge : une seule ligne. */}
+      <section
+        aria-labelledby="proj"
+        className="bg-card flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border px-5 py-3"
+      >
+        <span className="text-muted-foreground text-[13px]">Projet fil rouge</span>
+        <h2 id="proj" className="min-w-0 flex-1 text-sm font-medium">
+          {project ? project.title : "Pas encore de projet"}
+        </h2>
+        {project ? (
+          <Pill tone={project.brief_md.trim() ? "ok" : "warn"}>
+            {project.brief_md.trim() ? "Brief rédigé" : "Brief à rédiger"}
+            {project.themes.length ? ` · ${project.themes.length} thèmes` : ""}
           </Pill>
-          <Pill tone={progress.satisfied ? "ok" : "plain"}>{enteredLabel(progress)}</Pill>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild variant="ghost">
-              <Link href={`/modules/${id}/project`}>
-                {project ? "Modifier le brief" : "Créer le projet"}
-              </Link>
-            </Button>
-            {/* Tout est prévu : « Ajouter » devient secondaire (l'étape suivante est ailleurs). */}
-            <Button
-              asChild
-              variant={
-                planned.required > 0 && planned.planned >= planned.required ? "outline" : "default"
-              }
-            >
-              <Link href={`/modules/${id}/assessments/add`}>
-                <Plus aria-hidden />
-                Ajouter une évaluation
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href={`/modules/${id}/rattrapages`}>
-                Rattrapages{makeupsPending > 0 ? ` : ${makeupsPending} à faire` : ""}
-              </Link>
-            </Button>
-            {project ? null : (
-              <Button asChild variant="ghost">
-                <Link href={`/modules/${id}/project/reuse`}>Partir d’un projet existant</Link>
-              </Button>
-            )}
-          </div>
-        </div>
+        ) : null}
+        <Button asChild variant="secondary">
+          <Link href={`/modules/${id}/project`}>
+            {project ? "Modifier le brief" : "Créer le projet"}
+          </Link>
+        </Button>
+        {project ? null : (
+          <Button asChild variant="ghost">
+            <Link href={`/modules/${id}/project/reuse`}>Partir d’un projet existant</Link>
+          </Button>
+        )}
       </section>
 
       {cards.length === 0 ? (
@@ -321,7 +322,7 @@ export default async function ModuleAssessmentsPage({
       ) : (
         <>
           <section aria-labelledby="assessments-list">
-            <h2 id="assessments-list" className="font-heading mb-3 text-xl font-bold">
+            <h2 id="assessments-list" className="mb-3 text-sm font-semibold">
               Évaluations ({assessments.length})
               {assessments.length > planned.planned ? (
                 <span className="text-muted-foreground ml-2 font-sans text-sm font-normal">
@@ -351,7 +352,7 @@ export default async function ModuleAssessmentsPage({
                 return (
                   <li key={a.id} className={`${card} flex flex-col`}>
                     <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
-                      <h3 id={`ev-${a.id}`} className="font-heading min-w-0 text-lg font-bold">
+                      <h3 id={`ev-${a.id}`} className="min-w-0 text-sm font-semibold">
                         <Link
                           href={`/modules/${id}/assessments/${a.id}`}
                           className="focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
@@ -374,7 +375,7 @@ export default async function ModuleAssessmentsPage({
                         ) : null}
                       </span>
                     </div>
-                    <p className="text-muted-foreground mb-1 text-[0.8rem]">
+                    <p className="text-muted-foreground mb-1 text-[13px]">
                       {a.makeup_of_id ? "Rattrapage · " : ""}
                       {a.project_role ? `${PROJECT_ROLE_LABELS[a.project_role]} · ` : ""}
                       {/* Même coefficient que le badge : celui de la règle de l'école, qui fait la moyenne. */}
@@ -510,7 +511,7 @@ export default async function ModuleAssessmentsPage({
 
           {courses.length > 0 ? (
             <section aria-labelledby="mxt" className={card}>
-              <h2 id="mxt" className="font-heading mb-3 text-xl font-bold">
+              <h2 id="mxt" className="mb-3 text-sm font-semibold">
                 Séances et évaluations : où chacune tombe
               </h2>
               {makeups.some((m) => m.date) ? (
@@ -543,7 +544,7 @@ export default async function ModuleAssessmentsPage({
                 tabIndex={0}
                 className="focus-visible:ring-ring overflow-x-auto rounded-md focus-visible:ring-2 focus-visible:outline-none"
               >
-                <table className="w-full min-w-[44rem] border-separate border-spacing-x-2 border-spacing-y-1.5 text-[0.8rem]">
+                <table className="w-full min-w-[44rem] border-separate border-spacing-x-2 border-spacing-y-1.5 text-[13px]">
                   <caption className="sr-only">
                     Quelles séances alimentent quels rendus, évaluation par évaluation
                   </caption>
@@ -634,7 +635,7 @@ export default async function ModuleAssessmentsPage({
                   </tbody>
                 </table>
               </div>
-              <p className="text-muted-foreground mt-3 text-[0.8rem]">
+              <p className="text-muted-foreground mt-3 text-[13px]">
                 Une évaluation de groupe de plus, ou une évaluation individuelle de plus, si tu veux
                 plus de notes que les {progress.requirement.total} exigées.
               </p>
@@ -645,7 +646,7 @@ export default async function ModuleAssessmentsPage({
 
       {averages.length > 0 ? (
         <section aria-labelledby="averages" className={card}>
-          <h2 id="averages" className="font-heading mb-3 text-xl font-bold">
+          <h2 id="averages" className="mb-3 text-sm font-semibold">
             Moyennes pondérées
             {averages.some((a) => a.noted < a.expected) ? (
               <span className="text-sun ml-2 text-base font-semibold">· provisoires</span>

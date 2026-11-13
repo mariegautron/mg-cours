@@ -65,7 +65,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Étudiant·es</h1>
+          <h1 className="text-xl">Étudiant·es</h1>
           <p className="text-muted-foreground">
             {plural(students.length, "personne", "personnes")}
             {scholarGroup ? ` dans ${scholarGroup}` : ""}. Un clic ouvre la fiche : notes,
@@ -192,7 +192,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                     className="hover:bg-accent focus-visible:ring-ring flex min-h-14 flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-3 py-2 focus-visible:ring-2 focus-visible:outline-none"
                   >
                     <StudentPhoto student={s} size="sm" />
-                    <h2 className="min-w-40 flex-1 text-base font-semibold">
+                    <h2 className="min-w-40 flex-1 text-sm font-semibold">
                       {s.first_name} {s.last_name}
                     </h2>
                     <span className="text-muted-foreground text-sm">{promo?.group ?? ""}</span>
@@ -227,7 +227,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
                 <div className="flex items-center gap-3">
                   <StudentPhoto student={s} size="md" />
                   <div>
-                    <h2 className="font-medium">
+                    <h2 className="text-sm font-semibold">
                       {s.first_name} {s.last_name}
                     </h2>
                     {s.email ? <p className="text-muted-foreground text-sm">{s.email}</p> : null}

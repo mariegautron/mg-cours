@@ -32,7 +32,7 @@ export default async function EditQuestionPage({ params }: PageProps<"/questions
   const categories = [...new Set(all.map((q) => q.category).filter(Boolean))];
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {question.name} »</h1>
+      <h1 className="text-xl">Modifier « {question.name} »</h1>
       <p className="text-muted-foreground max-w-2xl text-sm">
         Les QCM déjà passés gardent la version de la question telle qu’elle était à ce moment-là.
       </p>

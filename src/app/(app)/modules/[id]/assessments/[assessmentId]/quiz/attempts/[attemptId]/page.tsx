@@ -68,7 +68,7 @@ export default async function AttemptPage({
           Suivi du QCM
         </Link>
       </nav>
-      <h1 className="text-2xl font-semibold">
+      <h1 className="text-xl">
         Copie de {student.first_name} {student.last_name}
       </h1>
       <p className="text-sm">

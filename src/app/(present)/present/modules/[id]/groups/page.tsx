@@ -51,7 +51,7 @@ export default async function PresentGroupsPage({
               ) : (
                 <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {groups.map((g) => (
-                    <li key={g.id} className="bg-card rounded-3xl border-2 p-6">
+                    <li key={g.id} className="bg-card rounded-xl border-2 p-6">
                       <h3 className="font-heading text-4xl font-bold">{g.name}</h3>
                       <ul className="mt-3 space-y-1 text-3xl">
                         {g.members.map((m) => (

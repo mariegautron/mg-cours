@@ -111,7 +111,7 @@ export function AppreciationList({
                 <div className="flex flex-wrap items-center gap-3">
                   <span
                     aria-hidden
-                    className="bg-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                   >
                     {r.firstName.charAt(0)}
                     {r.lastName.charAt(0)}

@@ -201,7 +201,7 @@ export function RenduReview({
                     setView("copy");
                     setIndex(k);
                   }}
-                  className={`inline-flex min-h-11 items-center gap-1 rounded-[10px] border px-2.5 ${
+                  className={`inline-flex min-h-11 items-center gap-1 rounded-lg border px-2.5 ${
                     on ? "border-primary text-primary font-semibold" : "hover:bg-muted"
                   }`}
                 >
@@ -234,9 +234,9 @@ export function RenduReview({
       </nav>
 
       {view === "criterion" ? (
-        <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-2xl border p-4">
+        <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-xl border p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 id="by-crit" className="font-heading text-lg font-bold">
+            <h2 id="by-crit" className="text-sm font-semibold">
               Par critère
             </h2>
             <label className="flex items-center gap-2 text-sm">
@@ -386,9 +386,9 @@ export function RenduReview({
         <section
           hidden={!withRendu}
           aria-labelledby="rendu-title"
-          className="bg-card space-y-3 rounded-2xl border p-4 min-[1400px]:sticky min-[1400px]:top-16 min-[1400px]:max-h-[calc(100dvh-5rem)] min-[1400px]:overflow-y-auto"
+          className="bg-card space-y-3 rounded-xl border p-4 min-[1400px]:sticky min-[1400px]:top-16 min-[1400px]:max-h-[calc(100dvh-5rem)] min-[1400px]:overflow-y-auto"
         >
-          <h2 id="rendu-title" className="font-heading text-lg font-bold">
+          <h2 id="rendu-title" className="text-sm font-semibold">
             Rendu
           </h2>
           {copy.items.length === 0 ? <p className="text-sm">Pas de rendu.</p> : null}

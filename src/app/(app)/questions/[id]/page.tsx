@@ -45,7 +45,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
       </nav>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{q.name}</h1>
+          <h1 className="text-xl">{q.name}</h1>
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">{QUESTION_TYPE_LABELS[type]}</Badge>
             <Badge variant="outline">{q.category || "Sans catégorie"}</Badge>
@@ -88,7 +88,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
       ) : null}
 
       <section aria-labelledby="preview" className="space-y-3">
-        <h2 id="preview" className="text-lg font-medium">
+        <h2 id="preview" className="text-sm font-semibold">
           Aperçu tel que l’étudiant·e le voit
         </h2>
         <QuestionView
@@ -102,7 +102,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
       </section>
 
       <section aria-labelledby="origin" className="space-y-3">
-        <h2 id="origin" className="text-lg font-medium">
+        <h2 id="origin" className="text-sm font-semibold">
           Ressource d’origine
         </h2>
         {!links.available ? (
@@ -149,7 +149,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
       </section>
 
       <section aria-labelledby="answer" className="space-y-3">
-        <h2 id="answer" className="text-lg font-medium">
+        <h2 id="answer" className="text-sm font-semibold">
           Corrigé (pour toi seule)
         </h2>
         {type === "numerical" ? (
@@ -182,7 +182,7 @@ export default async function QuestionPage({ params, searchParams }: PageProps<"
         )}
         {q.general_feedback ? (
           <div>
-            <h3 className="mb-1 font-medium">Retour général</h3>
+            <h3 className="mb-1 text-sm font-semibold">Retour général</h3>
             <Markdown source={q.general_feedback} />
           </div>
         ) : null}

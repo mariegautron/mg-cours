@@ -44,7 +44,7 @@ export default async function QuizTrialPage({
   } catch (e) {
     return (
       <main className="mx-auto max-w-xl space-y-3 p-6">
-        <h1 className="text-2xl font-semibold">Essai impossible</h1>
+        <h1 className="text-xl">Essai impossible</h1>
         <p role="alert">{e instanceof DrawError ? e.message : "Le tirage a échoué."}</p>
         <Button asChild variant="secondary">
           <Link href={back}>Retour au QCM</Link>

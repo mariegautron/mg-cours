@@ -58,14 +58,32 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  /* Cartes arrondies à 16 px, boutons et champs à 10 px (DA « Studio de nuit »). */
-  --radius-2xl: 1rem;
-  --radius-3xl: 1rem;
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-muted-foreground-2: var(--muted-foreground-2);
+  --color-status-idle-fg: var(--status-idle-fg);
+  --color-status-todo-fg: var(--status-todo-fg);
+  --color-status-ready-fg: var(--status-ready-fg);
+  --color-status-published-fg: var(--status-published-fg);
+  --color-status-blocking-fg: var(--status-blocking-fg);
+  /* DA « Atelier » (13 nov.) : 3 arrondis seulement. Pastilles et étiquettes 6 px, boutons et
+     champs 8 px, surfaces (cartes, panneaux, menus flottants) 12 px. `rounded-full` : avatars et
+     interrupteurs. Les anciennes classes plus grandes retombent sur 12 px (6 px pour 4xl, les
+     badges). */
+  --radius-sm: 6px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
+  --radius-4xl: 6px;
+  /* Échelle de texte : 12 · 13 · 14 · 16 · 20 · 26 px, rien d'autre. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.25rem;
+  --text-3xl: 1.625rem;
+  --text-4xl: 1.625rem;
 }
 
 /* Pas d'ombre portée sur les cartes : contour de 1 px seulement (les menus flottants gardent la leur). */
@@ -90,6 +108,8 @@
   --secondary-foreground: oklch(0.25 0.05 285);
   --muted: oklch(0.95 0.015 285);
   --muted-foreground: oklch(0.46 0.035 285);
+  /* Tertiaire en clair : ≥ 4,5:1 sur blanc. */
+  --muted-foreground-2: oklch(0.52 0.03 285);
   --accent: oklch(0.93 0.04 285);
   --accent-foreground: oklch(0.25 0.06 285);
   --destructive: oklch(0.5 0.22 27);
@@ -131,6 +151,13 @@
   --status-published: #9ccbff;
   --status-blocking: #ff7a85;
   --status-ink: #0e0e11;
+  /* Texte des pastilles (fond = couleur du statut à 13 %) : en clair, la même teinte foncée
+     (≥ 4,5:1 sur blanc) ; en sombre, la couleur du statut elle-même (redéfinie dans .dark). */
+  --status-idle-fg: oklch(0.45 0.02 285);
+  --status-todo-fg: oklch(0.47 0.1 80);
+  --status-ready-fg: oklch(0.45 0.1 160);
+  --status-published-fg: oklch(0.45 0.12 245);
+  --status-blocking-fg: oklch(0.5 0.19 20);
 
   --field: oklch(1 0 0);
   --btn-border: oklch(0.72 0.02 285);
@@ -158,11 +185,13 @@
   --secondary: #1f1f26;
   --secondary-foreground: #ededf0;
   --muted: #1f1f26;
-  --muted-foreground: #9a9aa6;
+  /* Texte secondaire 7:1 sur carte ; tertiaire (dates, compteurs, aides) 5,2:1. */
+  --muted-foreground: #a3a3ae;
+  --muted-foreground-2: #8a8a96;
   --accent: #1f1f26;
   --accent-foreground: #ededf0;
   --destructive: #ff7a85;
-  --border: #26262e;
+  --border: #2c2c36;
   --input: #6a6a78;
   --field: #1f1f26;
   --btn-border: #34343f;
@@ -196,6 +225,12 @@
 
   --margot-outline: #ededf0;
   --margot-wing: #b9a9ff;
+
+  --status-idle-fg: #b9b9c4;
+  --status-todo-fg: #e8c26a;
+  --status-ready-fg: #7fddb0;
+  --status-published-fg: #9ccbff;
+  --status-blocking-fg: #ff7a85;
 }
 
 @layer base {
@@ -208,15 +243,18 @@
   html {
     @apply font-sans;
   }
-  /* Titres en Bricolage Grotesque 800 (DA) : l'emporte sur les `font-bold` des pages. */
-  h1,
-  h2,
-  h3 {
+  /* DA « Atelier » : Bricolage Grotesque 700 seulement pour le h1 (et le logo, le titre de la
+     carte mise en avant, les grands chiffres : classe `title-display`). Les autres titres sont en
+     Inter (classes des pages). */
+  h1 {
     @apply font-heading tracking-tight;
+    font-weight: 700;
+    font-size: var(--text-3xl);
+    line-height: 1.2;
   }
-  h1,
-  h2 {
-    font-weight: 800 !important;
+  /* Icônes lucide : trait 1,75 partout. */
+  svg.lucide {
+    stroke-width: 1.75;
   }
   /* Focus visible partout : anneau de 3 px à l'accent, décalé de 3 px (RGAA 10.7). */
   :focus-visible {
@@ -290,39 +328,40 @@
   /* Carte mise en avant : une par écran, contour lavande sombre, reflet intérieur. */
   .card-featured {
     border-color: var(--featured-border);
-    box-shadow:
-      var(--featured-inset),
-      0 0 0 1px var(--featured-border);
+    box-shadow: var(--featured-inset);
   }
 }
 
 /* Taille du texte (réglage de Marie, cookie `text-size`) : tout est en rem, donc tout suit.
-   Densité (cookie `density`) : « Compacte » par défaut = corps 15 px au lieu de 16 ;
-   « Confortable » garde l'ancienne taille. Les deux réglages se combinent. */
+   Elle se combine avec la densité (corps 14 ou 15 px, plus bas). */
 html[data-text-size="large"] {
   font-size: 112.5%;
 }
 html[data-text-size="xlarge"] {
   font-size: 125%;
 }
-html[data-density="compact"] {
-  font-size: 93.75%;
+/* Densité (DA « Atelier ») : la racine reste à 16 px pour que l'échelle tombe juste ; seul le
+   corps change : 14 px en « Compacte » (défaut), 15 px en « Confortable ». */
+html[data-density="compact"] body {
+  font-size: 0.875rem;
 }
-html[data-density="compact"][data-text-size="large"] {
-  font-size: 105.5%;
+html[data-density="comfortable"] body {
+  font-size: 0.9375rem;
 }
-html[data-density="compact"][data-text-size="xlarge"] {
-  font-size: 117.25%;
-}
-/* Densité compacte : texte d'aide jamais sous 13 px (DA §4), même les petites tailles fixées en dur. */
-html[data-density="compact"]
-  :is(.text-xs, .text-\[0\.7rem\], .text-\[0\.75rem\], .text-\[0\.8rem\], .text-\[11px\]) {
-  font-size: 0.8667rem;
-}
-/* Densité compacte : titre de page 22 px (l'id l'emporte sur les classes de taille des pages). */
-html[data-density="compact"] #contenu h1 {
-  font-size: 1.4667rem;
+/* Hiérarchie : le titre de page est toujours le plus grand texte (26 px, Bricolage 700). */
+#contenu h1 {
+  font-size: var(--text-3xl);
   line-height: 1.2;
+}
+/* Texte d'aide jamais sous 13 px : anciennes tailles libres ramenées dans l'échelle. */
+:is(.text-\[0\.7rem\], .text-\[0\.75rem\], .text-\[0\.8rem\], .text-\[11px\]) {
+  font-size: 0.8125rem;
+}
+/* Titre affiché (logo, carte mise en avant, grands chiffres) : Bricolage 700. */
+.title-display {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 /* Focus et défilement jamais cachés par une barre d'actions collée en bas (RGAA 4.1 / WCAG 2.4.11). */

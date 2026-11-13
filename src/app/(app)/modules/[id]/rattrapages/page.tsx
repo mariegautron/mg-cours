@@ -79,7 +79,7 @@ export default async function MakeupsPage({
         </div>
       ) : null}
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold">Rattrapages</h1>
+        <h1 className="text-xl">Rattrapages</h1>
         <p role="status" className="text-muted-foreground">
           {makeupSummary(groups)} Un rattrapage ne concerne que les évaluations individuelles : sa
           note remplace l’absence excusée dans les moyennes.
@@ -102,7 +102,7 @@ export default async function MakeupsPage({
                 className="bg-card space-y-3 rounded-xl border p-5"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 id={`mk-${g.assessment.id}`} className="text-lg font-semibold">
+                  <h2 id={`mk-${g.assessment.id}`} className="text-sm font-semibold">
                     {g.rows.every((r) => r.step === "done") ? "Rattrapages faits" : "À rattraper"} :{" "}
                     {g.assessment.title}
                   </h2>
@@ -117,7 +117,7 @@ export default async function MakeupsPage({
                     <li key={r.student.id} className="flex flex-wrap items-center gap-3 py-2.5">
                       <span
                         aria-hidden
-                        className="bg-muted text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                        className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                       >
                         {r.student.name
                           .split(/\s+/)
@@ -181,7 +181,7 @@ export default async function MakeupsPage({
 
         <div className="min-w-0 flex-[2_1_0] space-y-4">
           <section aria-labelledby="rg" className="bg-card space-y-2 rounded-xl border p-5">
-            <h2 id="rg" className="text-lg font-semibold">
+            <h2 id="rg" className="text-sm font-semibold">
               Règles appliquées
             </h2>
             <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
@@ -200,7 +200,7 @@ export default async function MakeupsPage({
               aria-labelledby="pr"
               className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
             >
-              <h2 id="pr" className="text-lg font-semibold">
+              <h2 id="pr" className="text-sm font-semibold">
                 Prévenir {toOrganise.length > 1 ? "les personnes" : toOrganise[0].row.student.name}
               </h2>
               <p className="text-muted-foreground text-sm">

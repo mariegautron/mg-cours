@@ -123,7 +123,7 @@ export async function ProgressReviewPage({
         ← {assessment.title}
       </Link>
       {criteria.length === 0 ? (
-        <p className="rounded-2xl border p-3 text-sm">
+        <p className="rounded-xl border p-3 text-sm">
           Ce point d’étape n’a pas encore de critères : choisis la grille de l’évaluation notée
           qu’il prépare.{" "}
           <Link href={`${back}/edit`} className="font-semibold underline underline-offset-2">

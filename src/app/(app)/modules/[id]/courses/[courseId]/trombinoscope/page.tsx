@@ -61,7 +61,7 @@ export default async function ClassPage({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Séance {position + 1} · Ma classe</h1>
+          <h1 className="text-xl">Séance {position + 1} · Ma classe</h1>
           <p className="text-muted-foreground flex items-center gap-2 text-sm">
             <EyeOff aria-hidden className="size-4 shrink-0" />
             Vue privée : jamais projetée.

@@ -53,7 +53,7 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
     <div className="max-w-3xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{group.name}</h1>
+          <h1 className="text-xl">{group.name}</h1>
           <Badge variant="secondary">{GROUP_TYPE_LABELS[group.type] ?? group.type}</Badge>
         </div>
         <DeleteGroupButton moduleId={id} groupId={groupId} />
@@ -69,7 +69,7 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
       />
 
       <section aria-labelledby="group-notes" className="bg-card space-y-2 rounded-xl border p-5">
-        <h2 id="group-notes" className="text-lg font-semibold">
+        <h2 id="group-notes" className="text-sm font-semibold">
           Notes et commentaires du groupe
         </h2>
         {grades.length === 0 ? (
@@ -97,7 +97,7 @@ export default async function GroupPage({ params }: PageProps<"/modules/[id]/gro
 
       <section aria-labelledby="group-obs" className="bg-card space-y-2 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="group-obs" className="text-lg font-semibold">
+          <h2 id="group-obs" className="text-sm font-semibold">
             Observations sur le groupe
           </h2>
           <Badge variant="outline">Pour toi seule</Badge>

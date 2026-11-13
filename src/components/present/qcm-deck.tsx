@@ -89,7 +89,7 @@ function QuestionView({
           {question.choices.map((choice, i) => (
             <li
               key={choice.id}
-              className="bg-card flex items-baseline gap-5 rounded-3xl border-2 px-6 py-3"
+              className="bg-card flex items-baseline gap-5 rounded-xl border-2 px-6 py-3"
             >
               <span
                 aria-label={`Réponse ${choiceLetter(i)}`}
@@ -123,7 +123,7 @@ function CorrectionView({
         <Markdown source={question.statement} headingLevel={3} />
       </div>
       {numeric ? (
-        <p className="border-primary bg-primary/15 rounded-3xl border-2 px-6 py-4 text-3xl">
+        <p className="border-primary bg-primary/15 rounded-xl border-2 px-6 py-4 text-3xl">
           <Check aria-hidden className="mr-3 inline size-8 align-text-bottom" />
           <span className="font-semibold">Bonne réponse : </span>
           {numericAnswerLabel(question.numericValue ?? 0, question.numericTolerance)}
@@ -135,7 +135,7 @@ function CorrectionView({
             return (
               <li
                 key={choice.id}
-                className={`rounded-3xl border-2 px-6 py-2 ${correct ? "border-primary bg-primary/15" : "bg-card"}`}
+                className={`rounded-xl border-2 px-6 py-2 ${correct ? "border-primary bg-primary/15" : "bg-card"}`}
               >
                 <div className="flex items-baseline gap-5">
                   <span className="font-heading text-primary text-3xl font-bold">
@@ -162,7 +162,7 @@ function CorrectionView({
         </ol>
       )}
       {question.generalFeedback.trim() ? (
-        <div className="bg-muted/50 rounded-3xl border-l-8 p-5 text-xl">
+        <div className="bg-muted/50 rounded-xl border-l-8 p-5 text-xl">
           <p className="text-primary mb-1 text-lg font-bold tracking-widest uppercase">À retenir</p>
           <Markdown source={question.generalFeedback} headingLevel={3} />
         </div>

@@ -100,7 +100,7 @@ export function OralStage({
     <div className="space-y-3">
       <section aria-labelledby="stage-title" className="space-y-1 rounded-lg border px-3 py-2">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 id="stage-title" className="text-base font-semibold">
+          <h2 id="stage-title" className="text-sm font-semibold">
             Passage {index + 1} sur {slots.length} — {active.groupName}
           </h2>
           <Badge variant={active.status === "done" ? "default" : "outline"}>
@@ -155,7 +155,7 @@ export function OralStage({
       />
 
       <section aria-labelledby="stage-grid" className="space-y-3">
-        <h2 id="stage-grid" className="sr-only">
+        <h2 id="stage-grid" className="sr-only text-sm font-semibold">
           Correction du groupe {active.groupName}
         </h2>
         {spaces && oralCriteria ? (

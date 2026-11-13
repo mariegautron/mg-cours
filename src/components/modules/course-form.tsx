@@ -181,7 +181,7 @@ export function CourseForm({
 
       {/* Champs exigés par l'école d'abord ; la bibliothèque de ressources, longue, est repliée
           (ses cases restent dans le formulaire et sont enregistrées). */}
-      <details className="rounded-2xl border p-3">
+      <details className="rounded-xl border p-3">
         <summary className="font-heading min-h-11 cursor-pointer py-2 font-bold">
           Ressources de la séance
           <span className="text-muted-foreground ml-2 font-sans text-sm font-normal">

@@ -184,9 +184,9 @@ export function SessionWorkspace({
         {announce}
       </p>
 
-      <div className="bg-card flex flex-wrap items-end justify-between gap-3 rounded-3xl border p-4 shadow-sm">
+      <div className="bg-card flex flex-wrap items-end justify-between gap-3 rounded-xl border p-4 shadow-sm">
         <div className="min-w-72 flex-1">
-          <label htmlFor="session-title" className="text-muted-foreground mb-1 block text-[0.8rem]">
+          <label htmlFor="session-title" className="text-muted-foreground mb-1 block text-[13px]">
             Titre de la séance
           </label>
           <input
@@ -198,7 +198,7 @@ export function SessionWorkspace({
           />
         </div>
         <div>
-          <span id="status-label" className="text-muted-foreground mb-1 block text-[0.8rem]">
+          <span id="status-label" className="text-muted-foreground mb-1 block text-[13px]">
             Statut de préparation
           </span>
           <div role="radiogroup" aria-labelledby="status-label" className="flex gap-1.5">
@@ -253,12 +253,12 @@ export function SessionWorkspace({
         </p>
       ) : null}
 
-      <section aria-labelledby="deroule" className="bg-card rounded-3xl border p-4">
+      <section aria-labelledby="deroule" className="bg-card rounded-xl border p-4">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="deroule" className="font-heading text-xl font-bold">
+          <h2 id="deroule" className="text-sm font-semibold">
             Le déroulé de la séance
           </h2>
-          <span className="text-muted-foreground text-[0.8rem]">
+          <span className="text-muted-foreground text-[13px]">
             Glisse pour changer l’ordre : c’est l’ordre du cours
           </span>
         </div>
@@ -310,9 +310,9 @@ export function SessionWorkspace({
                 <strong className="w-5">{i + 1}</strong>
                 <div className="min-w-40 flex-1">
                   <strong className="line-clamp-2 block break-words">{r.title}</strong>
-                  <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
+                  <span className="text-muted-foreground text-[13px]">{r.subtitle}</span>
                   {activitiesAvailable ? (
-                    <span className="text-muted-foreground block text-[0.8rem]">
+                    <span className="text-muted-foreground block text-[13px]">
                       {describeActivity(r.activity, starts[i]) ?? "Pas encore de détails"}
                     </span>
                   ) : null}
@@ -511,7 +511,7 @@ export function SessionWorkspace({
                   <li key={r.id} className="flex flex-wrap items-center gap-3">
                     <div className="min-w-40 flex-1">
                       <strong className="line-clamp-2 block break-words">{r.title}</strong>
-                      <span className="text-muted-foreground text-[0.8rem]">{r.subtitle}</span>
+                      <span className="text-muted-foreground text-[13px]">{r.subtitle}</span>
                     </div>
                     <Pill>{r.kindLabel}</Pill>
                     <button
@@ -562,8 +562,8 @@ export function SessionWorkspace({
       </section>
 
       {planAvailable ? (
-        <section aria-labelledby="livrable" className="bg-card rounded-3xl border p-5 shadow-sm">
-          <h2 id="livrable" className="font-heading mb-1 text-lg font-bold">
+        <section aria-labelledby="livrable" className="bg-card rounded-xl border p-5 shadow-sm">
+          <h2 id="livrable" className="mb-1 text-sm font-semibold">
             Livrable de la séance
           </h2>
           <label htmlFor="deliverable" className="text-muted-foreground mb-1 block text-sm">

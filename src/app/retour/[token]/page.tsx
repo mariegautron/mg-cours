@@ -33,7 +33,7 @@ const PROBLEMS: Record<string, string> = {
 function Message({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h1 className="font-heading text-3xl font-bold tracking-tight">{title}</h1>
+      <h1 className="text-xl">{title}</h1>
       {children ? <p className="text-muted-foreground">{children}</p> : null}
     </section>
   );
@@ -67,9 +67,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
         <>
           <header className="space-y-2">
             <p className="text-muted-foreground text-sm font-semibold">{res.moduleName}</p>
-            <h1 className="font-heading text-3xl font-bold tracking-tight">
-              Ton avis sur le module
-            </h1>
+            <h1 className="text-xl">Ton avis sur le module</h1>
             <p className="font-semibold">
               Ce questionnaire est anonyme : ton nom n’est jamais enregistré.
             </p>
@@ -90,7 +88,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             <RespondentField linkKey={linkKey} />
             {RATING_SECTIONS.map((section) => (
               <section key={section.id} aria-labelledby={`s-${section.id}`} className="space-y-4">
-                <h2 id={`s-${section.id}`} className="font-heading text-xl font-bold">
+                <h2 id={`s-${section.id}`} className="text-sm font-semibold">
                   {section.title}
                 </h2>
                 <p className="text-muted-foreground text-sm">
@@ -122,7 +120,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             ))}
 
             <section aria-labelledby="s-choices" className="space-y-4">
-              <h2 id="s-choices" className="font-heading text-xl font-bold">
+              <h2 id="s-choices" className="text-sm font-semibold">
                 Deux choix à faire
               </h2>
               {CHOICE_QUESTIONS.map((q) => (
@@ -146,7 +144,7 @@ export default async function FeedbackPage({ params, searchParams }: PageProps<"
             </section>
 
             <section aria-labelledby="s-texts" className="space-y-4">
-              <h2 id="s-texts" className="font-heading text-xl font-bold">
+              <h2 id="s-texts" className="text-sm font-semibold">
                 Raconte-nous
               </h2>
               <p className="text-muted-foreground text-sm">

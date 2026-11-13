@@ -67,7 +67,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Facture</h1>
+        <h1 className="text-xl">Facture</h1>
       </div>
 
       {isPaid(mod.iceberg_state) && mod.finished_at ? (
@@ -114,7 +114,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
             >
               <div>
-                <h2 id="billing-status" className="text-lg font-medium">
+                <h2 id="billing-status" className="text-sm font-semibold">
                   {canGenerate
                     ? "Prêt à facturer ✓"
                     : `${points} point${points > 1 ? "s" : ""} à traiter`}
@@ -136,7 +136,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
           {invoice ? (
             <section aria-labelledby="invoice" className="space-y-4 rounded-lg border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 id="invoice" className="text-lg font-medium">
+                <h2 id="invoice" className="text-sm font-semibold">
                   Facture {invoice.number}
                 </h2>
                 <Badge variant={invoice.status === "paid" ? "secondary" : "outline"}>
@@ -183,7 +183,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
           ) : (
             <>
               <section aria-labelledby="conditions">
-                <h2 id="conditions" className="mb-3 text-lg font-medium">
+                <h2 id="conditions" className="mb-3 text-sm font-semibold">
                   Conditions YNOV avant facturation
                 </h2>
                 <ul className="space-y-1 text-sm">
@@ -219,7 +219,7 @@ export default async function ModuleBillingPage({ params }: PageProps<"/modules/
               </section>
 
               <section aria-labelledby="missing">
-                <h2 id="missing" className="mb-3 text-lg font-medium">
+                <h2 id="missing" className="mb-3 text-sm font-semibold">
                   Mentions obligatoires
                 </h2>
                 {missing.length === 0 ? (

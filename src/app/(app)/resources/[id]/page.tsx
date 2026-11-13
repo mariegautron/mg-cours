@@ -68,10 +68,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
     <div className="flex max-w-7xl flex-col gap-5 lg:flex-row lg:items-start">
       <section aria-labelledby="res-title" className={`${card} min-w-0 flex-[3_1_0] space-y-4`}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1
-            id="res-title"
-            className="font-heading flex flex-wrap items-center gap-2 text-3xl font-bold tracking-tight"
-          >
+          <h1 id="res-title" className="flex flex-wrap items-center gap-2">
             {resource.title}
             {resource.archived_at ? <Badge variant="outline">Archivée</Badge> : null}
           </h1>
@@ -153,7 +150,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
 
         {resource.content ? (
           <section aria-labelledby="content" className="bg-muted/40 max-w-prose rounded-xl p-4">
-            <h2 id="content" className="sr-only">
+            <h2 id="content" className="sr-only text-sm font-semibold">
               Contenu
             </h2>
             <Markdown
@@ -179,7 +176,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
         </p>
 
         <section aria-labelledby="linked-questions" className="space-y-3 border-t pt-4">
-          <h2 id="linked-questions" className="text-lg font-medium">
+          <h2 id="linked-questions" className="text-sm font-semibold">
             {linkedQuestionsTitle(linkedQuestions.length)}
           </h2>
           {!links.available ? (
@@ -247,7 +244,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
         aria-label="Informations"
       >
         <section aria-labelledby="usage" className={card}>
-          <h2 id="usage" className="font-heading mb-2 text-lg font-bold">
+          <h2 id="usage" className="mb-2 text-sm font-semibold">
             Où elle sert
           </h2>
           {modules.length === 0 ? (
@@ -293,7 +290,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
         </section>
 
         <section aria-labelledby="danger" className={card}>
-          <h2 id="danger" className="font-heading mb-2 text-lg font-bold">
+          <h2 id="danger" className="mb-2 text-sm font-semibold">
             Actions
           </h2>
           <div className="flex flex-col items-start gap-2">
@@ -327,7 +324,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
         </section>
 
         <section aria-labelledby="visibility" className={card}>
-          <h2 id="visibility" className="font-heading mb-1 text-lg font-bold">
+          <h2 id="visibility" className="mb-1 text-sm font-semibold">
             Classement
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -349,7 +346,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
 
         {outline.length > 1 ? (
           <nav aria-labelledby="outline" className={card}>
-            <h2 id="outline" className="font-heading mb-2 text-lg font-bold">
+            <h2 id="outline" className="mb-2 text-sm font-semibold">
               Sommaire
             </h2>
             <ol className="space-y-1 text-sm">
@@ -368,7 +365,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
         ) : null}
 
         <section aria-labelledby="files" className={card}>
-          <h2 id="files" className="font-heading mb-2 text-lg font-bold">
+          <h2 id="files" className="mb-2 text-sm font-semibold">
             Fichiers
             {files.length ? ` (${files.length})` : ""}
           </h2>

@@ -115,7 +115,7 @@ export function OralTimer({
         view.phase === "over" && "border-destructive bg-destructive/25 border-2",
       )}
     >
-      <h3 id="oral-timer-title" className="sr-only">
+      <h3 id="oral-timer-title" className="sr-only text-sm font-semibold">
         Chronomètre — {durationMinutes} min
       </h3>
       <p

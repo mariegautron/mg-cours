@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 function Message({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <section className="space-y-2">
-      <h1 className="text-2xl font-semibold">{title}</h1>
+      <h1 className="text-xl">{title}</h1>
       {children ? <p className="text-muted-foreground">{children}</p> : null}
     </section>
   );
@@ -39,9 +39,7 @@ export default async function ClassPage({ params, searchParams }: PageProps<"/q/
               <>
                 <header className="space-y-1">
                   <p className="text-muted-foreground text-sm font-semibold">QCM · {res.title}</p>
-                  <h1 className="font-heading text-3xl font-bold tracking-tight">
-                    Qui êtes-vous ?
-                  </h1>
+                  <h1 className="text-xl">Qui êtes-vous ?</h1>
                   <p className="text-muted-foreground">
                     Choisissez votre nom. Un nom ne peut être pris qu’une fois : ne choisissez pas
                     celui de quelqu’un d’autre.

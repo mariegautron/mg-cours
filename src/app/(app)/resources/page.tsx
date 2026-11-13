@@ -173,7 +173,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Bibliothèque</h1>
+          <h1 className="text-xl">Bibliothèque</h1>
           <p className="text-muted-foreground">
             Ce que tu enseignes, rangé par nature. Chaque chose garde avec elle ce qui va avec.
           </p>
@@ -434,7 +434,7 @@ export default async function ResourcesPage({ searchParams }: PageProps<"/resour
               aria-labelledby={`group-${i}`}
               className="bg-card rounded-xl border p-5"
             >
-              <h2 id={`group-${i}`} className="flex items-baseline gap-2 text-lg font-semibold">
+              <h2 id={`group-${i}`} className="flex items-baseline gap-2 text-sm font-semibold">
                 {g.label}
                 <span className="text-muted-foreground text-sm font-normal">
                   ({g.items.length})

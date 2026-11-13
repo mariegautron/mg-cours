@@ -86,7 +86,7 @@ export function FriseProjected({
                 <li key={s.number} className="text-center">
                   <span
                     className={cn(
-                      "bg-card border-primary font-heading mx-auto flex items-center justify-center rounded-full border-[3px] font-extrabold",
+                      "bg-card border-primary font-heading mx-auto flex items-center justify-center rounded-full border-[3px] font-bold",
                       large ? "size-14 text-2xl" : "size-11 text-lg",
                     )}
                   >
@@ -109,10 +109,10 @@ export function FriseProjected({
               {bands.map((b) => (
                 <li
                   key={b.key}
-                  className={cn("rounded-2xl border-2 px-4 py-3", BAND_STYLE[b.kind])}
+                  className={cn("rounded-xl border-2 px-4 py-3", BAND_STYLE[b.kind])}
                   style={{ gridColumn: `${b.start} / ${b.end + 1}`, gridRow: b.row + 1 }}
                 >
-                  <p className="font-heading leading-snug font-extrabold">{b.label}</p>
+                  <p className="font-heading leading-snug font-bold">{b.label}</p>
                   <p className="text-muted-foreground text-sm">{b.sub}</p>
                 </li>
               ))}
@@ -202,7 +202,7 @@ export function FriseStudent({
                   ) : null}
                 </div>
                 <div className="pb-5">
-                  <p className="text-muted-foreground text-[0.8rem] font-semibold">
+                  <p className="text-muted-foreground text-[13px] font-semibold">
                     {shortDate(s.date)}
                     {s.period ? ` · ${PERIOD_LABELS[s.period]}` : ""}
                   </p>
@@ -226,7 +226,7 @@ export function FriseStudent({
                         <span
                           key={e.label}
                           className={cn(
-                            "inline-flex min-h-7 items-center rounded-full border px-2.5 text-[0.8rem] font-bold",
+                            "inline-flex min-h-7 items-center rounded-full border px-2.5 text-[13px] font-bold",
                             PILL_STYLE[e.kind],
                           )}
                         >
@@ -248,7 +248,7 @@ export function FriseStudent({
           aria-label={embedded ? "Les rendus et les notes" : undefined}
           className="space-y-3"
         >
-          <h2 id={embedded ? undefined : "rendus"} className="font-heading text-xl font-bold">
+          <h2 id={embedded ? undefined : "rendus"} className="text-sm font-semibold">
             Les rendus et les notes
           </h2>
           <ul className="space-y-3">
@@ -257,7 +257,7 @@ export function FriseStudent({
                 key={i}
                 id={next === m ? "prochain" : undefined}
                 className={cn(
-                  "scroll-mt-4 rounded-2xl border-2 p-4",
+                  "scroll-mt-4 rounded-xl border-2 p-4",
                   BAND_STYLE[m.kind],
                   next === m && "ring-primary ring-2",
                 )}
@@ -265,7 +265,7 @@ export function FriseStudent({
                 <p className="font-bold">
                   {m.title}
                   {next === m ? (
-                    <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-0.5 text-[0.7rem]">
+                    <span className="bg-primary text-primary-foreground ml-2 rounded-full px-2 py-0.5 text-xs">
                       Prochain rendu
                     </span>
                   ) : null}
@@ -293,7 +293,7 @@ export function FriseStudent({
             "bg-background/95 py-2.5 backdrop-blur",
             embedded
               ? "border-t"
-              : "sticky bottom-0 -mx-4 border-t px-4 sm:mx-0 sm:rounded-2xl sm:border",
+              : "sticky bottom-0 -mx-4 border-t px-4 sm:mx-0 sm:rounded-xl sm:border",
           )}
         >
           <a

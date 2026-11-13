@@ -1,3 +1,37 @@
+# Système « Atelier » (13 novembre 2026, piste A de l'audit DA)
+
+Couche de règles posée par-dessus « Studio de nuit · lavande » pour une interface plus pro.
+Jetons dans `src/app/globals.css`, composants de base dans `src/components/ui/` et `pill.tsx`.
+
+- **Texte** : 12 · 13 · 14 · 16 · 20 · 26 px, rien d'autre (`text-xs`, `text-[13px]`,
+  `text-sm`, `text-base`/`text-lg`, `text-xl`/`text-2xl`, `text-3xl`/`text-4xl`). Corps 14 px en
+  « Compacte » (défaut), 15 px en « Confortable » ; la racine reste à 16 px.
+- **Hiérarchie** : le h1 (26 px, Bricolage 700) est toujours le plus grand texte de la page.
+  Titres de carte et de section : Inter 600, 14 px. Bricolage 700 seulement pour le logo, le h1, le
+  titre de la carte mise en avant et les grands chiffres (classe `title-display`).
+- **Graisses** : Inter 400, 500, 600 ; Bricolage 700 (plus de 800).
+- **Arrondis** : pastilles et étiquettes 6 px (`rounded-sm`), boutons et champs 8 px
+  (`rounded-lg`), surfaces 12 px (`rounded-xl`). `rounded-full` : avatars et interrupteurs.
+- **Espacements** : 4 · 8 · 12 · 16 · 24 · 32 px.
+- **Couleurs** : contour `#2C2C36`, secondaire `#A3A3AE` (7:1), tertiaire `#8A8A96` (5,2:1,
+  `text-muted-foreground-2`). La lavande ne sert qu'à l'action principale, à l'élément
+  sélectionné (menu, onglet), au focus et aux liens dans un paragraphe.
+- **Bouton** : 36 px de haut (zone cliquable 44 px), 14 px 500. `default` (lavande pleine, une par
+  zone), `secondary` (fond `--secondary` + contour `--btn-border`), `ghost` (texte gris, actions de
+  ligne), `destructive`, `link`. Pas de bouton dessiné à la main : `buttonVariants`.
+- **Pastille / statut** (`Pill`, `Status`) : 22 px, 6 px d'arrondi, texte 12 px 500, icône
+  12 px ; fond = couleur du statut à 13 %, texte = couleur du statut (teinte foncée en clair,
+  jetons `--status-*-fg`). Tons neutres : fond `--muted`, texte gris.
+- **Carte** : 12 px, contour 1 px `--border`, marge 16 × 20 px. Mise en avant : seulement la
+  bordure `--featured-border`.
+- **Icônes** : lucide, trait 1,75, 16 px (menu compris), 12 px dans les pastilles.
+- **Menu latéral** : 232 px, éléments de 34 px (zone 44 px), texte 14 px gris ; actif = fond
+  `--sidebar-accent`, texte blanc, icône lavande. Sous-menu du module en 13 px, actif avec un trait
+  lavande de 2 px à gauche.
+- **Margot** : hors de l'en-tête du tableau de bord ; dans le logo et les écrans vides.
+
+---
+
 # Design — Marelle, « Studio de nuit · lavande » (depuis le 12 novembre 2026)
 
 Rebranding validé par Arnaud (8 novembre) : l'appli s'appelle **Marelle**, sa mascotte est

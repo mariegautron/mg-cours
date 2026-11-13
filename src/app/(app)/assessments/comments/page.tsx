@@ -72,7 +72,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
           </Link>
         ) : null}
         <div>
-          <h1 className="text-2xl font-semibold">Phrases de commentaire</h1>
+          <h1 className="text-xl">Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Tes formulations d’appréciation, par partie : elles passent avant celles de l’appli et
             s’insèrent dans l’appréciation.
@@ -90,7 +90,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
           </p>
           {PARTS.map((part) => (
             <div key={part} className="mt-2">
-              <h2 className="font-semibold">{PART_LABELS[part]}</h2>
+              <h2 className="text-sm font-semibold">{PART_LABELS[part]}</h2>
               <ul className="text-muted-foreground list-disc pl-5">
                 {appPhrases[part].map((p) => (
                   <li key={p}>{p}</li>
@@ -109,7 +109,7 @@ export default async function CommentsPage({ searchParams }: PageProps<"/assessm
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Phrases de commentaire</h1>
+          <h1 className="text-xl">Phrases de commentaire</h1>
           <p className="text-muted-foreground">
             Phrases de correction, par critère : elles s’insèrent pendant la correction.
           </p>

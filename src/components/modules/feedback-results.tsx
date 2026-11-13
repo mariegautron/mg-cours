@@ -61,7 +61,7 @@ export function FeedbackResults({
     <div className="space-y-8">
       {!hasAnalysis && h.strengths.length + h.improvements.length > 0 ? (
         <section aria-labelledby="fh" className="space-y-3">
-          <h3 id="fh" className="font-heading text-lg font-bold">
+          <h3 id="fh" className="text-sm font-semibold">
             En bref
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -104,7 +104,7 @@ export function FeedbackResults({
         </summary>
         <div className="space-y-8 px-4 pb-4">
           <section aria-labelledby="fn" className="space-y-1">
-            <h3 id="fn" className="font-heading text-lg font-bold">
+            <h3 id="fn" className="text-sm font-semibold">
               Les notes
             </h3>
             {summary.ratings.map((s) => (
@@ -121,7 +121,7 @@ export function FeedbackResults({
           </section>
 
           <section aria-labelledby="fc" className="space-y-4">
-            <h3 id="fc" className="font-heading text-lg font-bold">
+            <h3 id="fc" className="text-sm font-semibold">
               Les choix
             </h3>
             {summary.choices.map((c) => {
@@ -153,7 +153,7 @@ export function FeedbackResults({
           </section>
 
           <section aria-labelledby="ft" className="space-y-3">
-            <h3 id="ft" className="font-heading text-lg font-bold">
+            <h3 id="ft" className="text-sm font-semibold">
               Leurs mots
             </h3>
             {summary.texts.map((t) => (

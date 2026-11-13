@@ -54,7 +54,7 @@ export function AppSidebar() {
           className="flex items-center gap-2.5 rounded-lg px-1 py-1"
         >
           <LogoMark />
-          <span className="font-heading text-xl leading-none font-extrabold tracking-tight lowercase group-data-[collapsible=icon]:sr-only">
+          <span className="title-display text-xl leading-none lowercase group-data-[collapsible=icon]:sr-only">
             Marelle
           </span>
         </Link>
@@ -78,15 +78,15 @@ export function AppSidebar() {
                         isActive={active}
                         tooltip={item.label}
                         size="lg"
-                        className="data-active:text-primary h-11 gap-3 rounded-[10px] transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center [&_svg]:size-5"
+                        className="text-muted-foreground data-active:text-foreground data-active:[&_svg]:text-primary relative h-[34px] gap-2.5 rounded-lg text-sm font-medium transition-colors group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center after:absolute after:inset-x-0 after:-inset-y-[5px] after:content-[''] [&_svg]:size-4"
                       >
                         <Link
                           href={item.href}
                           aria-label={item.label}
                           aria-current={active ? "page" : undefined}
                         >
-                          <item.icon aria-hidden className="size-5 shrink-0" />
-                          <span className="font-medium group-data-[collapsible=icon]:sr-only">
+                          <item.icon aria-hidden className="size-4 shrink-0" />
+                          <span className="group-data-[collapsible=icon]:sr-only">
                             {item.label}
                           </span>
                           <LinkPending />

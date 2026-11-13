@@ -26,7 +26,7 @@ export default async function EditCoursePage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {course.title} »</h1>
+      <h1 className="text-xl">Modifier « {course.title} »</h1>
       <CourseForm
         action={updateCourse.bind(null, id, courseId)}
         moduleId={id}

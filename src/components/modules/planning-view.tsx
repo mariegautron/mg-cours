@@ -72,8 +72,8 @@ function Block({ row }: { row: PlanningRow }) {
 function SessionAgenda({ s, moduleId }: { s: PlanningSession; moduleId: string }) {
   const total = s.displayTotal * PX;
   return (
-    <article className="bg-background rounded-2xl border p-4">
-      <h3 className="font-semibold">
+    <article className="bg-background rounded-xl border p-4">
+      <h3 className="text-sm font-semibold">
         <Link
           href={`/modules/${moduleId}/courses/${s.id}`}
           className="underline underline-offset-2"
@@ -124,7 +124,7 @@ export function PlanningView({ days, moduleId }: { days: PlanningDay[]; moduleId
   if (!days.length) {
     return <p className="text-muted-foreground">Ce module n’a pas encore de séance.</p>;
   }
-  const card = "bg-card rounded-3xl border p-5 shadow-sm";
+  const card = "bg-card rounded-xl border p-5 shadow-sm";
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -155,7 +155,7 @@ export function PlanningView({ days, moduleId }: { days: PlanningDay[]; moduleId
           aria-labelledby={`jour-t-${i}`}
           className={card}
         >
-          <h2 id={`jour-t-${i}`} className="font-heading mb-4 text-xl font-bold capitalize">
+          <h2 id={`jour-t-${i}`} className="mb-4 text-sm font-semibold capitalize">
             {day.date ? longDate(day.date) : "Date à fixer"}
           </h2>
           <div className="grid items-start gap-5 lg:grid-cols-2">

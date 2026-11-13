@@ -20,7 +20,7 @@ export function PreviousRecap({
   return (
     <section
       aria-labelledby="previous-recap"
-      className={`bg-card space-y-2 rounded-2xl border p-4 ${className}`}
+      className={`bg-card space-y-2 rounded-xl border p-4 ${className}`}
     >
       <h2 id="previous-recap" className="font-medium">
         Reprise de la séance précédente

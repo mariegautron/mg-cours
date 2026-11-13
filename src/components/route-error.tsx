@@ -30,7 +30,7 @@ export function RouteError({
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-12 text-center">
       <Mascot mood="thinking" className="size-24" />
-      <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold outline-none">
+      <h1 ref={heading} tabIndex={-1} className="outline-none">
         On n’a pas pu charger cette page
       </h1>
       <p className="text-muted-foreground">

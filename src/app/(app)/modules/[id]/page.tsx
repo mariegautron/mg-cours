@@ -75,9 +75,9 @@ function Card({
   aside?: React.ReactNode;
 }) {
   return (
-    <section aria-labelledby={id} className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby={id} className="bg-card rounded-xl border p-5 shadow-sm">
       <div className="mb-3 flex items-center gap-2.5">
-        <h2 id={id} className="font-heading text-lg font-bold">
+        <h2 id={id} className="text-sm font-semibold">
           {title}
         </h2>
         {aside}
@@ -89,8 +89,8 @@ function Card({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-card rounded-2xl border p-3.5">
-      <span className="text-muted-foreground block text-[0.8rem]">{label}</span>
+    <div className="bg-card rounded-xl border p-3.5">
+      <span className="text-muted-foreground block text-[13px]">{label}</span>
       <b className="font-heading text-2xl">{value}</b>
     </div>
   );
@@ -204,10 +204,10 @@ export default async function ModulePage({
     <div className="space-y-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-primary mb-1.5 text-[0.75rem] font-bold tracking-widest uppercase">
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
             Module · {schoolYearOf(mod.year)}
           </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">{mod.name}</h1>
+          <h1 className="text-xl">{mod.name}</h1>
           <p className="text-muted-foreground mt-1.5">{meta}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -231,7 +231,7 @@ export default async function ModulePage({
       </header>
 
       {!mod.school_id ? (
-        <p role="note" className="border-primary/50 bg-primary/10 rounded-2xl border p-3 text-sm">
+        <p role="note" className="border-primary/50 bg-primary/10 rounded-xl border p-3 text-sm">
           École non choisie : règles par défaut appliquées (celles de Nantes Ynov Campus).{" "}
           <Link
             href={`/modules/${mod.id}/edit`}
@@ -247,8 +247,8 @@ export default async function ModulePage({
           role="status"
           className={
             ficheMessage.tone === "ok"
-              ? "rounded-2xl border p-3 text-sm"
-              : "border-destructive/50 rounded-2xl border p-3 text-sm"
+              ? "rounded-xl border p-3 text-sm"
+              : "border-destructive/50 rounded-xl border p-3 text-sm"
           }
         >
           {ficheMessage.text}{" "}
@@ -261,7 +261,7 @@ export default async function ModulePage({
       ) : null}
 
       {pendingCarry.length ? (
-        <p role="status" className="rounded-2xl border border-dashed p-3 text-sm">
+        <p role="status" className="rounded-xl border border-dashed p-3 text-sm">
           <strong>À reporter, en attente :</strong> {pendingCarry.join(", ")}. Il n’y a pas de
           séance suivante pour les accueillir.{" "}
           <Link href={`/modules/${mod.id}/courses/new`} className="underline underline-offset-2">
@@ -272,7 +272,7 @@ export default async function ModulePage({
       ) : null}
 
       {mod.archived_at ? (
-        <div className="bg-muted flex flex-wrap items-center gap-3 rounded-2xl border border-dashed p-3 text-sm">
+        <div className="bg-muted flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-3 text-sm">
           <p>
             <strong>Module archivé</strong> le{" "}
             {new Date(mod.archived_at).toLocaleDateString("fr-FR")} : il est dans « Terminés » et

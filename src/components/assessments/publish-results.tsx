@@ -78,7 +78,7 @@ export function PublishResults({
   if (!available) {
     return (
       <section aria-labelledby="publish" className="space-y-2 rounded-lg border p-4">
-        <h2 id="publish" className="text-lg font-medium">
+        <h2 id="publish" className="text-sm font-semibold">
           Publier les résultats
         </h2>
         <p role="status" className="text-muted-foreground text-sm">
@@ -93,7 +93,7 @@ export function PublishResults({
     <section aria-labelledby="publish" className="space-y-4 rounded-lg border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="publish" className="text-lg font-medium">
+          <h2 id="publish" className="text-sm font-semibold">
             Publier les résultats
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -158,7 +158,7 @@ export function PublishResults({
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <span
                 aria-hidden
-                className="bg-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
               >
                 {s.name
                   .split(/\s+/)

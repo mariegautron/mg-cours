@@ -30,7 +30,7 @@ export function StudentPhotoManager({
     <section aria-labelledby="photo" className="flex flex-wrap items-start gap-4">
       <StudentPhoto student={student} size="lg" />
       <div className="space-y-3">
-        <h2 id="photo" className="text-lg font-medium">
+        <h2 id="photo" className="text-sm font-semibold">
           Photo
         </h2>
         <form action={formAction} className="flex flex-wrap items-end gap-2">

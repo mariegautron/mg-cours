@@ -86,7 +86,7 @@ export default async function CourseClosePage({
     <>
       <section aria-labelledby="obs" className="bg-card space-y-3 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="obs" className="text-lg font-semibold">
+          <h2 id="obs" className="text-sm font-semibold">
             Ce que tu as noté aujourd’hui
           </h2>
           <Pill tone="ok">
@@ -119,7 +119,7 @@ export default async function CourseClosePage({
       </section>
 
       <section aria-labelledby="suite" className="bg-card space-y-2 rounded-xl border p-5">
-        <h2 id="suite" className="text-lg font-semibold">
+        <h2 id="suite" className="text-sm font-semibold">
           Et ensuite ?
         </h2>
         {following ? (
@@ -149,7 +149,7 @@ export default async function CourseClosePage({
           </Link>{" "}
           · Séance {position + 1}
         </p>
-        <h1 className="text-3xl font-semibold">Clôturer la séance {position + 1}</h1>
+        <h1 className="text-xl">Clôturer la séance {position + 1}</h1>
         <p className="text-muted-foreground">
           {course.title}
           {date ? ` · ${date}` : ""} · quatre questions, deux minutes, tes notes sont déjà là.

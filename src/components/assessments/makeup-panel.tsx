@@ -31,7 +31,7 @@ export function MakeupPanel({ moduleId, assessmentId, excused, makeup }: MakeupP
 
   return (
     <section aria-labelledby="makeup" className="space-y-3 rounded-lg border p-4">
-      <h2 id="makeup" className="text-lg font-medium">
+      <h2 id="makeup" className="text-sm font-semibold">
         Rattrapage
       </h2>
       <p className="text-sm">

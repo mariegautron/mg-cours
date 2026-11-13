@@ -15,7 +15,7 @@ export function UpcomingAssessmentsCard({
   if (items.length === 0) return null;
   const H = headingLevel === 2 ? "h2" : "h3";
   return (
-    <section aria-labelledby="upc-eval" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="upc-eval" className="bg-card rounded-xl border p-5 shadow-sm">
       <H id="upc-eval" className="font-heading mb-2 text-lg font-bold">
         Évaluations à venir
       </H>

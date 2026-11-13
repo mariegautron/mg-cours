@@ -36,7 +36,7 @@ export function ResetRequestForm({ expired }: { expired: boolean }) {
   return (
     <Card className="card-featured w-full max-w-sm">
       <CardHeader>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Mot de passe oublié</h1>
+        <h1 className="text-xl">Mot de passe oublié</h1>
         <CardDescription>
           {expired
             ? "Ce lien a expiré ou a déjà servi. Demande-en un nouveau."
@@ -86,7 +86,7 @@ export function NewPasswordForm() {
   return (
     <Card className="card-featured w-full max-w-sm">
       <CardHeader>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Nouveau mot de passe</h1>
+        <h1 className="text-xl">Nouveau mot de passe</h1>
         <CardDescription>Au moins 8 caractères. Tu seras connectée juste après.</CardDescription>
       </CardHeader>
       <CardContent>

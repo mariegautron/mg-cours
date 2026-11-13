@@ -104,8 +104,8 @@ export function ShareLinkPanel({
   ];
 
   return (
-    <section aria-labelledby="share" className="bg-card space-y-3 rounded-3xl border p-5 shadow-sm">
-      <h2 id="share" className="font-heading text-xl font-bold">
+    <section aria-labelledby="share" className="bg-card space-y-3 rounded-xl border p-5 shadow-sm">
+      <h2 id="share" className="text-sm font-semibold">
         Publier pour les étudiant·es
       </h2>
       <p className="text-muted-foreground text-sm">

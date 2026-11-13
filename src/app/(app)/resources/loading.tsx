@@ -6,10 +6,10 @@ export default function Loading() {
   return (
     <div className="space-y-4" data-slot="page-skeleton">
       <RouteLoadingMarker />
-      <h1 className="font-heading text-3xl font-bold tracking-tight">Bibliothèque</h1>
+      <h1 className="text-xl">Bibliothèque</h1>
       <div aria-hidden className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+          <Skeleton key={i} className="h-28 w-full rounded-xl" />
         ))}
       </div>
     </div>

@@ -78,7 +78,7 @@ export default async function CourseNotebookPage({
               })}`
             : ""}
         </p>
-        <h1 className="text-2xl font-semibold">Carnet — {course.title}</h1>
+        <h1 className="text-xl">Carnet — {course.title}</h1>
         <p className="text-muted-foreground flex items-center gap-2 text-sm">
           <EyeOff aria-hidden className="size-4 shrink-0" />
           Vue privée : à ouvrir sur ton téléphone ou dans une 2e fenêtre, jamais au projecteur.
@@ -98,7 +98,7 @@ export default async function CourseNotebookPage({
 
       {previous && carriedOver.length ? (
         <section aria-labelledby="carried" className="space-y-3 rounded-lg border p-4">
-          <h2 id="carried" className="text-lg font-medium">
+          <h2 id="carried" className="text-sm font-semibold">
             Reprise de la séance précédente
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -116,7 +116,7 @@ export default async function CourseNotebookPage({
       ) : null}
 
       <section aria-labelledby="observations" className="space-y-3">
-        <h2 id="observations" className="text-lg font-medium">
+        <h2 id="observations" className="text-sm font-semibold">
           Observations
         </h2>
         <ObservationPanel
@@ -131,7 +131,9 @@ export default async function CourseNotebookPage({
           groupRecent={groupObservations}
         />
 
-        <h3 className="pt-2 font-medium">Notées pendant cette séance ({observations.length})</h3>
+        <h3 className="pt-2 text-sm font-semibold">
+          Notées pendant cette séance ({observations.length})
+        </h3>
         {observations.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucune observation pour l’instant.</p>
         ) : (
@@ -161,7 +163,7 @@ export default async function CourseNotebookPage({
       </section>
 
       <section aria-labelledby="closure" className="space-y-3 rounded-lg border p-4">
-        <h2 id="closure" className="text-lg font-medium">
+        <h2 id="closure" className="text-sm font-semibold">
           Clôture de la séance
         </h2>
         <p className="text-muted-foreground text-sm">

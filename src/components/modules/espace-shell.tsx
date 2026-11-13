@@ -92,7 +92,7 @@ export function EspaceError({
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col">
       <p className="font-heading border-b px-4 py-4 text-base font-bold">Espace étudiant·e</p>
       <main className="flex-1 space-y-2 p-4 sm:py-6">
-        <h1 className="text-2xl font-semibold">{text[0]}</h1>
+        <h1 className="text-xl">{text[0]}</h1>
         <p className="text-muted-foreground">{text[1]}</p>
         <ContactLine tone={tone} className="text-muted-foreground pt-2" />
       </main>

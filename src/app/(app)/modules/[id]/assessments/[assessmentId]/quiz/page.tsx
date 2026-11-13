@@ -44,7 +44,7 @@ export default async function QuizPage({
           {assessment.title}
         </Link>
       </nav>
-      <h1 className="text-2xl font-semibold">QCM{quiz ? ` — ${quiz.title}` : ""}</h1>
+      <h1 className="text-xl">QCM{quiz ? ` — ${quiz.title}` : ""}</h1>
     </div>
   );
   const errorBox =
@@ -137,9 +137,7 @@ export default async function QuizPage({
               {assessment.title}
             </Link>
           </nav>
-          <h1 id="qp" className="font-heading text-3xl font-bold tracking-tight">
-            QCM{quiz ? ` · ${quiz.title}` : ""}
-          </h1>
+          <h1 id="qp">QCM{quiz ? ` · ${quiz.title}` : ""}</h1>
           <p className="text-muted-foreground text-sm">
             Évaluation individuelle sous forme de QCM, tirage différent pour chaque personne.
           </p>
@@ -206,7 +204,7 @@ export default async function QuizPage({
           </p>
         ) : null}
 
-        <h2 id="config" className="font-heading pt-1 text-lg font-bold">
+        <h2 id="config" className="pt-1 text-sm font-semibold">
           Configuration
         </h2>
         <QuizConfigForm
@@ -240,7 +238,7 @@ export default async function QuizPage({
           aria-labelledby="pr"
           className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
         >
-          <h2 id="pr" className="font-heading text-xl font-bold">
+          <h2 id="pr" className="text-sm font-semibold">
             Prêt ?
           </h2>
           <p className="text-muted-foreground text-sm">

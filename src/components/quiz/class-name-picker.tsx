@@ -77,7 +77,7 @@ export function ClassNamePicker({
               >
                 <span
                   aria-hidden
-                  className="bg-primary/20 text-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold"
                 >
                   {n.name
                     .split(/\s+/)

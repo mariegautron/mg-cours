@@ -34,7 +34,7 @@ export default async function NewAssessmentPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nouvelle évaluation</h1>
+      <h1 className="text-xl">Nouvelle évaluation</h1>
       {groups.length === 0 ? (
         <p role="status" className="text-muted-foreground">
           Aucun groupe pour l’instant : l’évaluation sera rattachée à un groupe « Toute la promotion

@@ -1051,7 +1051,7 @@ export function GradeForm({
     });
     if (similar.length === 0) return null;
     return (
-      <div className="space-y-2 rounded-2xl border border-dashed p-3 text-sm">
+      <div className="space-y-2 rounded-xl border border-dashed p-3 text-sm">
         <p className="font-semibold">Déjà noté chez les autres</p>
         <ul className="space-y-1.5">
           {similar.map((entry) => (
@@ -1096,14 +1096,14 @@ export function GradeForm({
     const base = levelCommentBase(c.label, selected);
     const name = `score_${c.id}`;
     const card =
-      "has-[:focus-visible]:ring-ring flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-2xl border-[1.5px] p-3.5 has-[:focus-visible]:ring-2";
+      "has-[:focus-visible]:ring-ring flex min-h-24 cursor-pointer flex-col gap-1.5 rounded-xl border-[1.5px] p-3.5 has-[:focus-visible]:ring-2";
     return (
       <section
         aria-labelledby={`${uid}-step-title`}
-        className="bg-card space-y-4 rounded-3xl border p-5 shadow-sm"
+        className="bg-card space-y-4 rounded-xl border p-5 shadow-sm"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 id={`${uid}-step-title`} className="font-heading text-xl font-bold">
+          <h2 id={`${uid}-step-title`} className="text-sm font-semibold">
             {c.label}
           </h2>
           <span className="text-muted-foreground text-sm">
@@ -1254,7 +1254,7 @@ export function GradeForm({
   }
 
   const attendanceFieldset = isGroup ? null : (
-    <fieldset className="bg-card space-y-1.5 rounded-3xl border p-4 shadow-sm">
+    <fieldset className="bg-card space-y-1.5 rounded-xl border p-4 shadow-sm">
       <legend className="font-heading px-1 text-base font-bold">Présence</legend>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {ATTENDANCE_VALUES.map((value) => (
@@ -1283,8 +1283,8 @@ export function GradeForm({
   );
 
   const totalCard = (
-    <section aria-labelledby={`${uid}-total`} className="bg-card rounded-3xl border p-4 shadow-sm">
-      <h2 id={`${uid}-total`} className="font-heading mb-1 text-base font-bold">
+    <section aria-labelledby={`${uid}-total`} className="bg-card rounded-xl border p-4 shadow-sm">
+      <h2 id={`${uid}-total`} className="mb-1 text-sm font-semibold">
         Total en direct
       </h2>
       <p className="font-heading text-4xl font-bold" aria-live="polite">
@@ -1304,10 +1304,10 @@ export function GradeForm({
         )}
       </p>
       {inProgressNote ? (
-        <p className="text-sun text-[0.8rem] font-semibold">{inProgressNote}</p>
+        <p className="text-sun text-[13px] font-semibold">{inProgressNote}</p>
       ) : null}
       {/* Rien à détailler (ni « 0 / 20 ») tant qu'aucun critère n'est noté. */}
-      <p className="text-muted-foreground text-[0.8rem]" hidden={!!totalEmpty || !grid}>
+      <p className="text-muted-foreground text-[13px]" hidden={!!totalEmpty || !grid}>
         {showAxes
           ? groups
               .map((g) => `${g.axis?.label ?? "Autres"} ${subtotal(g.axis?.id ?? null)}`)
@@ -1324,7 +1324,7 @@ export function GradeForm({
     submissions !== undefined ? (
       <details
         aria-label={`Rendu de ${title}`}
-        className="bg-card rounded-3xl border p-3 text-sm shadow-sm"
+        className="bg-card rounded-xl border p-3 text-sm shadow-sm"
       >
         <summary className="min-h-8 cursor-pointer font-bold">
           Rendu ·{" "}
@@ -1336,7 +1336,7 @@ export function GradeForm({
         </summary>
         <div className="space-y-2 pt-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-heading text-base font-bold">Rendu</h2>
+            <h2 className="text-sm font-semibold">Rendu</h2>
             {submissions.length === 0 ? <span>{submissionSummary(0)}</span> : null}
             {submissions.map((l) => (
               <a
@@ -1375,9 +1375,9 @@ export function GradeForm({
 
   const observationsCard =
     observations.length > 0 ? (
-      <section aria-labelledby={`${uid}-obs`} className="bg-card rounded-3xl border p-4 shadow-sm">
+      <section aria-labelledby={`${uid}-obs`} className="bg-card rounded-xl border p-4 shadow-sm">
         <div className="mb-1 flex items-center gap-2">
-          <h2 id={`${uid}-obs`} className="font-heading text-base font-bold">
+          <h2 id={`${uid}-obs`} className="text-sm font-semibold">
             Ton carnet
           </h2>
           <span className="border-status-todo bg-muted text-sun rounded-full border px-2.5 text-xs font-bold">
@@ -1410,9 +1410,9 @@ export function GradeForm({
   const bilanCard = (
     <section
       aria-labelledby={`${uid}-bilan`}
-      className="bg-card space-y-3 rounded-3xl border p-4 shadow-sm"
+      className="bg-card space-y-3 rounded-xl border p-4 shadow-sm"
     >
-      <h2 id={`${uid}-bilan`} className="font-heading text-base font-bold">
+      <h2 id={`${uid}-bilan`} className="text-sm font-semibold">
         Bilan
       </h2>
       <CommentField
@@ -1566,11 +1566,7 @@ export function GradeForm({
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3
-            id={`copy-${id}-title`}
-            tabIndex={-1}
-            className="font-heading text-xl font-bold outline-none"
-          >
+          <h3 id={`copy-${id}-title`} tabIndex={-1} className="text-sm font-semibold outline-none">
             {title}
           </h3>
           {grade?.value !== undefined && grade?.value !== null ? (
@@ -1594,7 +1590,7 @@ export function GradeForm({
       </div>
 
       {grid?.description?.trim() && !focused ? (
-        <details className="bg-muted/40 rounded-2xl border p-3">
+        <details className="bg-muted/40 rounded-xl border p-3">
           <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
             Rappels pédagogiques de la grille
           </summary>
@@ -1631,7 +1627,7 @@ export function GradeForm({
             <div className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
               {absent ? (
                 <>
-                  <p className="bg-muted rounded-2xl p-3 text-sm">
+                  <p className="bg-muted rounded-xl p-3 text-sm">
                     {ATTENDANCE_LABELS[attendance]} : les critères ne sont pas notés pour cette
                     copie.
                   </p>
@@ -1664,7 +1660,7 @@ export function GradeForm({
                     </Button>
                   </div>
                   {compact ? (
-                    <section className="bg-card rounded-3xl border p-4 shadow-sm">
+                    <section className="bg-card rounded-xl border p-4 shadow-sm">
                       {compactView()}
                     </section>
                   ) : step ? (
@@ -1700,7 +1696,7 @@ export function GradeForm({
                   ) : null}
                 </>
               ) : bonusScale ? (
-                <div className="bg-card space-y-2 rounded-3xl border p-5 shadow-sm">
+                <div className="bg-card space-y-2 rounded-xl border p-5 shadow-sm">
                   <Label htmlFor={`${uid}-raw`}>
                     Score de certification (0–{Math.max(...bonusScale.map((b) => b.max))})
                   </Label>
@@ -1733,7 +1729,7 @@ export function GradeForm({
                   </p>
                 </div>
               ) : (
-                <div className="bg-card space-y-1 rounded-3xl border p-5 shadow-sm">
+                <div className="bg-card space-y-1 rounded-xl border p-5 shadow-sm">
                   <Label htmlFor={`${uid}-value`}>Note (/{maxScore})</Label>
                   <Input
                     id={`${uid}-value`}
@@ -1749,7 +1745,7 @@ export function GradeForm({
                 </div>
               )}
               {members ? (
-                <div className="bg-card rounded-3xl border p-4 shadow-sm">
+                <div className="bg-card rounded-xl border p-4 shadow-sm">
                   {membersFieldset(members)}
                 </div>
               ) : null}
@@ -1800,7 +1796,7 @@ export function GradeForm({
       </p>
 
       {state.conflict ? (
-        <div role="alert" className="border-status-todo bg-muted space-y-2 rounded-2xl border p-3">
+        <div role="alert" className="border-status-todo bg-muted space-y-2 rounded-xl border p-3">
           <p className="text-sm font-semibold">Cette copie a été modifiée dans un autre onglet.</p>
           <p className="text-sm">
             Rien n’a été écrasé. Recharge la page pour voir la dernière version, puis refais ta

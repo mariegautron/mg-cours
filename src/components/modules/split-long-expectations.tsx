@@ -51,10 +51,10 @@ export function SplitLongExpectations({
   }
 
   return (
-    <section aria-labelledby={`${id}-title`} className="bg-card space-y-3 rounded-3xl border p-4">
+    <section aria-labelledby={`${id}-title`} className="bg-card space-y-3 rounded-xl border p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id={`${id}-title`} className="font-heading text-base font-bold">
+          <h2 id={`${id}-title`} className="text-sm font-semibold">
             {plural(plans.length, "attendu")} à découper
           </h2>
           <p className="text-muted-foreground text-sm">

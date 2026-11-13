@@ -296,7 +296,7 @@ export function Wordmark({ size = "md", className }: { size?: "md" | "lg"; class
       <LogoMark className={size === "lg" ? "size-10" : undefined} />
       <span
         className={cn(
-          "font-heading leading-none font-extrabold tracking-tight lowercase",
+          "title-display leading-none lowercase",
           size === "lg" ? "text-3xl" : "text-xl",
         )}
       >

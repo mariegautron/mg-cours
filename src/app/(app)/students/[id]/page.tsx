@@ -123,12 +123,12 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
         <div className="flex flex-wrap items-center gap-4">
           <span
             aria-hidden
-            className="bg-primary/20 text-primary flex size-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+            className="bg-muted text-muted-foreground flex size-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
           >
             {initials}
           </span>
           <div className="min-w-0 flex-1">
-            <h1 id="identity" className="font-heading text-3xl font-bold tracking-tight">
+            <h1 id="identity">
               {student.first_name} {student.last_name}
             </h1>
             <p className="text-muted-foreground text-sm">
@@ -149,7 +149,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           </Button>
         </div>
 
-        <h2 className="sr-only">Résumé</h2>
+        <h2 className="sr-only text-sm font-semibold">Résumé</h2>
         <ul className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
           {allModules.map((m) => {
             const avg = moduleAverages.get(m.moduleId)?.average.average ?? null;
@@ -202,7 +202,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="grades" className={card}>
-        <h2 id="grades" className="font-heading mb-2 text-xl font-bold">
+        <h2 id="grades" className="mb-2 text-sm font-semibold">
           Notes par module
         </h2>
         {allModules.length === 0 ? (
@@ -269,7 +269,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="appreciations" className={card}>
-        <h2 id="appreciations" className="font-heading mb-1 text-lg font-bold">
+        <h2 id="appreciations" className="mb-1 text-sm font-semibold">
           Appréciations
         </h2>
         {!appreciations.available ? (
@@ -307,7 +307,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="attendance" className={card}>
-        <h2 id="attendance" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="attendance" className="mb-2 text-sm font-semibold">
           Présences
         </h2>
         {missed.length === 0 ? (
@@ -324,7 +324,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="submissions" className={card}>
-        <h2 id="submissions" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="submissions" className="mb-2 text-sm font-semibold">
           Rendus
         </h2>
         {submissions.length === 0 ? (
@@ -348,7 +348,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
 
       <section aria-labelledby="observations" className={card}>
         <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="observations" className="font-heading text-xl font-bold">
+          <h2 id="observations" className="text-sm font-semibold">
             Observations
           </h2>
           <Pill tone="warn">Pour toi seule</Pill>
@@ -368,7 +368,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="groups" className={card}>
-        <h2 id="groups" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="groups" className="mb-2 text-sm font-semibold">
           Groupes et promotions
         </h2>
         {groups.length === 0 ? (
@@ -379,7 +379,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
               <section key={y.label} aria-labelledby={`groups-${y.label}`}>
                 <h3
                   id={`groups-${y.label}`}
-                  className="text-muted-foreground mb-1 text-sm font-medium"
+                  className="text-muted-foreground mb-1 text-sm font-semibold"
                 >
                   {y.year === null
                     ? y.label
@@ -401,7 +401,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
             ))}
           </div>
         )}
-        <h3 className="text-muted-foreground mt-3 mb-1 text-sm font-medium">Promotions</h3>
+        <h3 className="text-muted-foreground mt-3 mb-1 text-sm font-semibold">Promotions</h3>
         {promos.length === 0 ? (
           <p className="text-muted-foreground text-sm">Aucune promotion enregistrée.</p>
         ) : (
@@ -416,7 +416,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       </section>
 
       <section aria-labelledby="space" className={card}>
-        <h2 id="space" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="space" className="mb-2 text-sm font-semibold">
           Espace étudiant·e
         </h2>
         <StudentSpaceCard spaces={spaces} />
@@ -428,7 +428,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
 
       {student.personal_notes ? (
         <section aria-labelledby="notes" className={card}>
-          <h2 id="notes" className="font-heading mb-2 text-lg font-bold">
+          <h2 id="notes" className="mb-2 text-sm font-semibold">
             Notes personnelles
           </h2>
           <p className="text-sm whitespace-pre-wrap">{student.personal_notes}</p>
@@ -436,7 +436,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
       ) : null}
 
       <section aria-labelledby="danger" className={card}>
-        <h2 id="danger" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="danger" className="mb-2 text-sm font-semibold">
           Actions
         </h2>
         <StudentActions id={student.id} name={`${student.first_name} ${student.last_name}`} />

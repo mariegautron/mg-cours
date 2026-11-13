@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Nouvelle phrase" };
 export default function NewCommentPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nouvelle phrase</h1>
+      <h1 className="text-xl">Nouvelle phrase</h1>
       <CommentForm action={createComment} />
     </div>
   );

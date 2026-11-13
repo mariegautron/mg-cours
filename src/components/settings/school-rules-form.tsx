@@ -51,7 +51,7 @@ export function SchoolRulesForm({
       aria-labelledby={`${id}-title`}
       className={`scroll-mt-20 space-y-4 rounded-lg border p-4 ${isNew ? "border-primary ring-primary/30 ring-2" : ""}`}
     >
-      <h3 id={`${id}-title`} className="font-medium">
+      <h3 id={`${id}-title`} className="text-sm font-semibold">
         {schoolName}
       </h3>
       {isNew ? (

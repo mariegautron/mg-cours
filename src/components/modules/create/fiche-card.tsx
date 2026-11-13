@@ -136,14 +136,14 @@ export function FicheCard({
   );
 
   return (
-    <section aria-labelledby="fiche-title" className="bg-card rounded-3xl border p-5 shadow-sm">
+    <section aria-labelledby="fiche-title" className="bg-card rounded-xl border p-5 shadow-sm">
       {kept ? <input type="hidden" name="ficheDoc" value={JSON.stringify(kept)} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="fiche-title"
           ref={titleRef}
           tabIndex={-1}
-          className="font-heading text-xl font-bold outline-none"
+          className="text-sm font-semibold outline-none"
         >
           Fiche pédagogique de l’école
         </h2>
@@ -171,7 +171,7 @@ export function FicheCard({
               detail="nom, heures, attendus"
             />
           </ul>
-          <p className="text-muted-foreground mt-2 text-[0.8rem]">
+          <p className="text-muted-foreground mt-2 text-[13px]">
             Rien n’est écrit avant ta confirmation.
           </p>
         </div>

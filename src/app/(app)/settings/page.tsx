@@ -51,7 +51,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               : "← Revenir aux appréciations"}
           </Link>
         ) : null}
-        <h1 className="text-2xl font-semibold">Réglages</h1>
+        <h1 className="text-xl">Réglages</h1>
         <p className="text-muted-foreground">
           Ce que tu règles une fois. Chaque changement s’enregistre et te le dit.
         </p>
@@ -60,7 +60,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-[3_1_0] space-y-10">
           <section aria-labelledby="appearance" className="space-y-2">
-            <h2 id="appearance" className="text-lg font-medium">
+            <h2 id="appearance" className="text-sm font-semibold">
               Apparence
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -71,7 +71,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
 
           <section aria-labelledby="profile">
             <div className="mb-6">
-              <h2 id="profile" className="text-lg font-medium">
+              <h2 id="profile" className="text-sm font-semibold">
                 Profil du prestataire
               </h2>
               <p className="text-muted-foreground text-sm">
@@ -87,7 +87,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           <section aria-labelledby="schools">
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h2 id="schools" className="text-lg font-medium">
+                <h2 id="schools" className="text-sm font-semibold">
                   Écoles
                 </h2>
                 <p className="text-muted-foreground text-sm">Les écoles que tu factures.</p>
@@ -156,7 +156,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
 
           <section aria-labelledby="school-rules" className="space-y-4">
             <div>
-              <h2 id="school-rules" className="text-lg font-medium">
+              <h2 id="school-rules" className="text-sm font-semibold">
                 Règles par école
               </h2>
               <p className="text-muted-foreground text-sm">
@@ -185,7 +185,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           </section>
 
           <section aria-labelledby="appreciation-phrases" className="space-y-2">
-            <h2 id="appreciation-phrases" className="text-lg font-medium">
+            <h2 id="appreciation-phrases" className="text-sm font-semibold">
               Mes formulations d’appréciation
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -201,7 +201,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         </div>
         <div className="min-w-0 flex-[2_1_0] space-y-10">
           <section aria-labelledby="my-data" className="space-y-2">
-            <h2 id="my-data" className="text-lg font-medium">
+            <h2 id="my-data" className="text-sm font-semibold">
               Mes données
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -213,7 +213,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
           </section>
 
           <section aria-labelledby="account" className="space-y-2">
-            <h2 id="account" className="text-lg font-medium">
+            <h2 id="account" className="text-sm font-semibold">
               Compte
             </h2>
             <p className="text-muted-foreground text-sm">Connexion et sécurité.</p>

@@ -111,7 +111,7 @@ export function FeedbackAnalysisAgile() {
   return (
     <section aria-labelledby="fa" className="bg-card space-y-5 rounded-xl border p-5">
       <header className="space-y-1">
-        <h2 id="fa" className="font-heading text-xl font-bold">
+        <h2 id="fa" className="text-sm font-semibold">
           Analyse des réponses
         </h2>
         <p className="text-muted-foreground text-sm">
@@ -121,7 +121,7 @@ export function FeedbackAnalysisAgile() {
       </header>
 
       <div className="border-primary/40 bg-primary/5 space-y-2 rounded-lg border p-4">
-        <h3 className="font-semibold">En une phrase</h3>
+        <h3 className="text-sm font-semibold">En une phrase</h3>
         <p className="text-sm">
           Un module très bien reçu (4,6 sur 5 d’appréciation, 7 réponses sur 7 qui le recommandent),
           porté par la pratique et l’énergie de l’animation. Le point à travailler est la théorie :
@@ -147,7 +147,7 @@ export function FeedbackAnalysisAgile() {
       </p>
 
       <div>
-        <h3 className="font-heading text-lg font-bold">Ce qui marche</h3>
+        <h3 className="text-sm font-semibold">Ce qui marche</h3>
         <ul className="divide-y">
           {STRENGTHS.map((t) => (
             <ThemeCard key={t.title} t={t} />
@@ -156,7 +156,7 @@ export function FeedbackAnalysisAgile() {
       </div>
 
       <div>
-        <h3 className="font-heading text-lg font-bold">À améliorer, par ordre d’importance</h3>
+        <h3 className="text-sm font-semibold">À améliorer, par ordre d’importance</h3>
         <ul className="divide-y">
           {IMPROVEMENTS.map((t) => (
             <ThemeCard key={t.title} t={t} />
@@ -165,7 +165,7 @@ export function FeedbackAnalysisAgile() {
       </div>
 
       <div className="space-y-2">
-        <h3 className="font-heading text-lg font-bold">Ce qu’ils retiennent</h3>
+        <h3 className="text-sm font-semibold">Ce qu’ils retiennent</h3>
         <ul className="list-disc space-y-1 pl-5 text-sm">
           {LEARNED.map((t) => (
             <li key={t}>{t}</li>

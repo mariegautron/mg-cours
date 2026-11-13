@@ -42,8 +42,8 @@ export default async function ReuseProjectPage({
   return (
     <div className="mx-auto max-w-[112rem] space-y-5">
       {projects.length === 0 || !chosen ? (
-        <div className="bg-card max-w-xl space-y-3 rounded-3xl border border-dashed p-6">
-          <h1 className="font-heading text-2xl font-bold">Partir d’un projet existant</h1>
+        <div className="bg-card max-w-xl space-y-3 rounded-xl border border-dashed p-6">
+          <h1 className="text-xl">Partir d’un projet existant</h1>
           <p className="text-muted-foreground">
             Aucun autre projet fil rouge n’existe encore : tu peux écrire celui-ci directement.
           </p>
@@ -55,12 +55,10 @@ export default async function ReuseProjectPage({
         <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
           <section
             aria-labelledby="pe"
-            className="bg-card w-full min-w-0 rounded-3xl border p-5 shadow-sm lg:w-[26rem] lg:flex-none"
+            className="bg-card w-full min-w-0 rounded-xl border p-5 shadow-sm lg:w-[26rem] lg:flex-none"
           >
-            <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-              Évaluations
-            </p>
-            <h1 id="pe" className="font-heading mb-1 text-2xl font-bold">
+            <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Évaluations</p>
+            <h1 id="pe" className="mb-1">
               Partir d’un projet existant
             </h1>
             <p className="text-muted-foreground mb-2 text-sm">
@@ -77,7 +75,7 @@ export default async function ReuseProjectPage({
                       className="aria-[current=true]:bg-accent aria-[current=true]:border-primary/60 hover:bg-accent/60 block min-h-11 rounded-xl border border-transparent p-3"
                     >
                       <strong>{p.title}</strong>
-                      <span className="text-muted-foreground block text-[0.8rem]">
+                      <span className="text-muted-foreground block text-[13px]">
                         {p.moduleName} ({schoolYearOf(p.year)})
                       </span>
                     </Link>
@@ -85,7 +83,7 @@ export default async function ReuseProjectPage({
                 );
               })}
             </ul>
-            <p className="text-muted-foreground mt-2.5 text-[0.8rem]">
+            <p className="text-muted-foreground mt-2.5 text-[13px]">
               Les projets viennent de tes autres modules.
             </p>
             <Button asChild variant="ghost" className="mt-2">
@@ -95,9 +93,9 @@ export default async function ReuseProjectPage({
 
           <section
             aria-labelledby="qg"
-            className="bg-card w-full min-w-0 flex-1 rounded-3xl border p-5 shadow-sm lg:basis-0"
+            className="bg-card w-full min-w-0 flex-1 rounded-xl border p-5 shadow-sm lg:basis-0"
           >
-            <h2 id="qg" className="font-heading mb-0.5 text-xl font-bold">
+            <h2 id="qg" className="mb-0.5 text-sm font-semibold">
               Ce qu’on garde de {chosen.title}
             </h2>
             <p className="text-muted-foreground mb-1 text-sm">
@@ -116,13 +114,13 @@ export default async function ReuseProjectPage({
                   </span>
                   <div className="min-w-0 flex-1">
                     <strong>{r.title}</strong>
-                    <div className="text-muted-foreground text-[0.8rem]">{r.hint}</div>
+                    <div className="text-muted-foreground text-[13px]">{r.hint}</div>
                   </div>
                   <Pill tone={r.kept ? "ok" : "warn"}>{r.kept ? "Gardé" : "À réécrire"}</Pill>
                 </li>
               ))}
             </ul>
-            <p className="text-muted-foreground mt-2.5 text-[0.8rem]">
+            <p className="text-muted-foreground mt-2.5 text-[13px]">
               Jamais copiés :{" "}
               {NOT_COPIED_LABELS.slice(0, 4)
                 .map((l) => l.replace(/^Les /, "les ").replace(/^Le /, "le "))
@@ -133,9 +131,9 @@ export default async function ReuseProjectPage({
 
           <section
             aria-labelledby="nt"
-            className="bg-card w-full min-w-0 rounded-3xl border p-5 shadow-sm lg:w-[24rem] lg:flex-none"
+            className="bg-card w-full min-w-0 rounded-xl border p-5 shadow-sm lg:w-[24rem] lg:flex-none"
           >
-            <h2 id="nt" className="font-heading mb-2 text-xl font-bold">
+            <h2 id="nt" className="mb-2 text-sm font-semibold">
               Le nouveau thème
             </h2>
             <ReuseForm

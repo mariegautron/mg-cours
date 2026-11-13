@@ -54,7 +54,7 @@ export default async function AppreciationsPage({
   return (
     <div className="max-w-6xl space-y-5">
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold">Appréciations</h1>
+        <h1 className="text-xl">Appréciations</h1>
         <p className="text-muted-foreground">
           Une appréciation par étudiant·e, écrite par toi, à coller dans Hyperplanning. {written}{" "}
           écrite{written > 1 ? "s" : ""} sur {students.length}.
@@ -78,7 +78,7 @@ export default async function AppreciationsPage({
             aria-labelledby="ap"
             className="bg-card min-w-0 flex-[3_1_0] space-y-1 rounded-xl border p-5"
           >
-            <h2 id="ap" className="sr-only">
+            <h2 id="ap" className="sr-only text-sm font-semibold">
               Appréciations par personne
             </h2>
             <AppreciationList
@@ -99,7 +99,7 @@ export default async function AppreciationsPage({
 
           <div className="min-w-0 flex-[2_1_0] space-y-4">
             <section aria-labelledby="rg" className="bg-card space-y-2 rounded-xl border p-5">
-              <h2 id="rg" className="text-lg font-semibold">
+              <h2 id="rg" className="text-sm font-semibold">
                 Comment les rédiger
               </h2>
               <p className="text-muted-foreground text-sm">
@@ -127,7 +127,7 @@ export default async function AppreciationsPage({
               </p>
             </section>
             <section aria-labelledby="ex" className="bg-primary/10 space-y-2 rounded-xl border p-5">
-              <h2 id="ex" className="text-lg font-semibold">
+              <h2 id="ex" className="text-sm font-semibold">
                 Reporter dans Hyperplanning
               </h2>
               <AppreciationExport moduleId={id} rows={rows} tooLong={tooLong} />
@@ -139,7 +139,7 @@ export default async function AppreciationsPage({
 
       {overview.length > 0 ? (
         <section aria-labelledby="observations" className="rounded-lg border p-4">
-          <h2 id="observations" className="mb-2 text-lg font-medium">
+          <h2 id="observations" className="mb-2 text-sm font-semibold">
             Observations
           </h2>
           <p className="text-muted-foreground mb-2 text-sm">

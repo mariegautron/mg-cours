@@ -85,7 +85,7 @@ export function GroupMembers({
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <h3 className="mb-2 text-sm font-medium">
+        <h3 className="mb-2 text-sm font-semibold">
           Membres ({members.filter((m) => !leftIds.includes(m.id)).length})
         </h3>
         {members.length === 0 ? (
@@ -128,7 +128,7 @@ export function GroupMembers({
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-medium">Ajouter</h3>
+        <h3 className="mb-2 text-sm font-semibold">Ajouter</h3>
         {created ? (
           <p role="status" className="mb-2 rounded-md border p-2 text-sm">
             {created.name} ajouté·e au groupe. Pense à lui créer son lien d’espace étudiant·e :{" "}

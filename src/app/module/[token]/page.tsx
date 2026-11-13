@@ -29,7 +29,7 @@ export async function generateMetadata({
 }
 
 const card =
-  "bg-card focus-visible:ring-ring block min-h-11 rounded-2xl border p-4 focus-visible:ring-2 focus-visible:outline-none";
+  "bg-card focus-visible:ring-ring block min-h-11 rounded-xl border p-4 focus-visible:ring-2 focus-visible:outline-none";
 
 export default async function SharedFrisePage({ params }: PageProps<"/module/[token]">) {
   const { token } = await params;
@@ -51,7 +51,7 @@ export default async function SharedFrisePage({ params }: PageProps<"/module/[to
       />
       {espace && (espace.brief || espace.evaluations.length || espace.courses.length) ? (
         <section aria-labelledby="acces" className="mt-8 space-y-3">
-          <h2 id="acces" className="font-heading text-xl font-bold">
+          <h2 id="acces" className="text-sm font-semibold">
             Tout ce qu’il vous faut
           </h2>
           <ul className="space-y-3">

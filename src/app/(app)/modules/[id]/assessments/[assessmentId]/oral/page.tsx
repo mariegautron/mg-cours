@@ -57,7 +57,11 @@ export default async function OralPage({
   const durations = rows.map((r) => slotDuration(r.duration_minutes, assessment.duration_minutes));
   // Sans heure de début réglée, les créneaux partent de l'heure de la séance rattachée.
   const { data: courseRow } = assessment.course_id
-    ? await supabase.from("course").select("start_time").eq("id", assessment.course_id).maybeSingle()
+    ? await supabase
+        .from("course")
+        .select("start_time")
+        .eq("id", assessment.course_id)
+        .maybeSingle()
     : { data: null };
   const schedule = oralSchedule(
     assessment.oral_start_time ?? courseRow?.start_time ?? null,
@@ -133,7 +137,7 @@ export default async function OralPage({
         >
           ← {assessment.title}
         </Link>
-        <h1 className="text-xl font-semibold">Faire passer l’oral</h1>
+        <h1 className="text-xl">Faire passer l’oral</h1>
         <Link
           href={`/modules/${id}/assessments/${assessmentId}/consignes`}
           className="text-sm underline underline-offset-2"

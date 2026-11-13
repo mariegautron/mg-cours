@@ -351,7 +351,7 @@ export function OralSpace({
         <h3
           id={`copy-${subjectId}-title`}
           tabIndex={-1}
-          className="font-heading text-lg font-bold outline-none"
+          className="text-sm font-semibold outline-none"
         >
           {subjectName}
         </h3>
@@ -837,7 +837,7 @@ export function OralSpace({
         </div>
       ) : null}
 
-      <details className="bg-card rounded-2xl border p-3" hidden={isRendu}>
+      <details className="bg-card rounded-xl border p-3" hidden={isRendu}>
         <summary className="min-h-9 cursor-pointer font-semibold">
           Déposer le support (PDF)
           {init.support.length > 0
@@ -862,7 +862,7 @@ export function OralSpace({
       {showRecap ? (
         <section
           aria-labelledby={`recap-${subjectId}`}
-          className="bg-card space-y-3 rounded-2xl border p-4"
+          className="bg-card space-y-3 rounded-xl border p-4"
         >
           <h4
             id={`recap-${subjectId}`}

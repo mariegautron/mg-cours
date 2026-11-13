@@ -135,7 +135,7 @@ export function FichePrefill({
   return (
     <section aria-labelledby="fiche" className="mb-6 max-w-2xl space-y-3 rounded-lg border p-4">
       <div>
-        <h2 id="fiche" className="text-lg font-medium">
+        <h2 id="fiche" className="text-sm font-semibold">
           Préremplir depuis la fiche pédagogique
         </h2>
         <p className="text-muted-foreground text-sm">

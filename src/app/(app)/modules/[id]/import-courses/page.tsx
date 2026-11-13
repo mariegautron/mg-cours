@@ -42,7 +42,7 @@ export default async function ImportCoursesPage({
         <Link href={`/modules/${mod.id}/courses`} className="text-sm underline underline-offset-2">
           ← {mod.name}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Importer des séances d’un autre module</h1>
+        <h1 className="mt-2">Importer des séances d’un autre module</h1>
         <p className="text-muted-foreground">
           Reprends le contenu de séances déjà préparées : elles sont ajoutées à la suite de celles
           de ce module, à préparer.

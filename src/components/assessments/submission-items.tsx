@@ -243,7 +243,7 @@ export function SubmissionItems({
             return (
               <li key={id} className="space-y-3 rounded-lg border p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="font-medium">{row.name}</h3>
+                  <h3 className="text-sm font-semibold">{row.name}</h3>
                   <p className="text-muted-foreground text-sm">
                     {receiptStatus(row.items, deadline).label} ·{" "}
                     {submissionSummary(row.items.length)}

@@ -113,8 +113,8 @@ export function DepositBox({
   }
 
   return (
-    <section aria-labelledby="depot" className="bg-card mt-7 rounded-2xl border p-5">
-      <h2 id="depot" className="font-heading text-xl font-bold">
+    <section aria-labelledby="depot" className="bg-card mt-7 rounded-xl border p-5">
+      <h2 id="depot" className="text-sm font-semibold">
         Déposer mon rendu
       </h2>
       <p className="text-muted-foreground mt-1 text-sm">

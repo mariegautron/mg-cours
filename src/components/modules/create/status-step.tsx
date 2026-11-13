@@ -14,7 +14,7 @@ export function StatusStep({
     <li className="flex min-h-12 items-center gap-3 border-t py-2">
       <span
         aria-hidden
-        className={`flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+        className={`flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
           state === "done" ? "bg-mint text-background" : "bg-foreground/20"
         }`}
       >
@@ -31,7 +31,7 @@ export function StatusStep({
         <span className="sr-only">
           {state === "done" ? " : fait" : state === "running" ? " : en cours" : " : à venir"}
         </span>
-        {detail ? <div className="text-muted-foreground text-[0.8rem]">{detail}</div> : null}
+        {detail ? <div className="text-muted-foreground text-[13px]">{detail}</div> : null}
       </div>
     </li>
   );

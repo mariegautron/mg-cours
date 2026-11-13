@@ -23,7 +23,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
     <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[3fr_2fr] lg:items-start">
       <section
         aria-labelledby="res"
-        className="bg-card min-w-0 space-y-3 rounded-2xl border p-6 lg:col-start-1 lg:row-span-2 lg:row-start-1"
+        className="bg-card min-w-0 space-y-3 rounded-xl border p-6 lg:col-start-1 lg:row-span-2 lg:row-start-1"
       >
         <p className="text-muted-foreground text-sm">
           {[
@@ -34,7 +34,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
             .filter(Boolean)
             .join(" · ")}
         </p>
-        <h1 id="res" className="font-heading text-3xl font-bold tracking-tight">
+        <h1 id="res">
           {sheet.isGroupGrade ? "Note de groupe pour " : "Résultat de "}
           {me.name}
         </h1>
@@ -57,7 +57,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
         ) : null}
         {sheet.personalNote ? (
           <div className={notice}>
-            <h2 className="font-medium">Un mot pour toi</h2>
+            <h2 className="text-sm font-semibold">Un mot pour toi</h2>
             <Markdown source={sheet.personalNote} headingLevel={3} />
           </div>
         ) : null}
@@ -66,7 +66,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
           <div className="space-y-2 pt-1">
             {feedback.map(([heading, text]) => (
               <div key={heading}>
-                <h2 className="font-heading text-lg font-bold">{heading}</h2>
+                <h2 className="text-sm font-semibold">{heading}</h2>
                 <div className="text-base leading-relaxed">
                   <Markdown source={text ?? ""} headingLevel={3} />
                 </div>
@@ -76,7 +76,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
         ) : null}
         {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
           <div aria-labelledby="detail" role="group">
-            <h2 id="detail" className="sr-only">
+            <h2 id="detail" className="sr-only text-sm font-semibold">
               Détail par critère
             </h2>
             {sheet.axes.some((a) => a.comment) ? (
@@ -92,7 +92,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
             ) : null}
             <ul className="space-y-4">
               {sheet.criteria.map((c, i) => (
-                <li key={c.label + i} className="bg-background space-y-3 rounded-2xl border p-4">
+                <li key={c.label + i} className="bg-background space-y-3 rounded-xl border p-4">
                   <p className="flex flex-wrap items-center justify-between gap-2">
                     <strong>
                       {c.axis ? `${c.axis} · ` : ""}
@@ -156,7 +156,7 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
 
         {sheet.comments.length > 0 ? (
           <div>
-            <h2 className="font-semibold">Commentaires</h2>
+            <h2 className="text-sm font-semibold">Commentaires</h2>
             <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
               {sheet.comments.map((c, i) => (
                 <li key={i}>{c}</li>
@@ -169,9 +169,9 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
       {absentExcusedNoNote ? null : (
         <section
           aria-labelledby="note"
-          className="bg-primary/10 border-primary/50 order-first rounded-2xl border p-6 lg:order-none lg:col-start-2 lg:row-start-1"
+          className="bg-primary/10 border-primary/50 order-first rounded-xl border p-6 lg:order-none lg:col-start-2 lg:row-start-1"
         >
-          <h2 id="note" className="font-heading mb-1 font-bold">
+          <h2 id="note" className="mb-1 text-sm font-semibold">
             Ta note
           </h2>
           <p className="font-heading text-5xl font-bold">
@@ -192,9 +192,9 @@ export function StudentResult({ sheet, token }: { sheet: PublicSheet; token: str
       )}
       <section
         aria-labelledby="dl"
-        className="bg-card space-y-2 rounded-2xl border p-5 lg:col-start-2 lg:row-start-2"
+        className="bg-card space-y-2 rounded-xl border p-5 lg:col-start-2 lg:row-start-2"
       >
-        <h2 id="dl" className="font-heading font-bold">
+        <h2 id="dl" className="text-sm font-semibold">
           Garder une trace
         </h2>
         <a

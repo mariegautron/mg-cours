@@ -141,7 +141,7 @@ export function EspaceQcm({ groups }: { groups: EspaceQcmGroup[] }) {
   return (
     <section aria-labelledby="mini-qcm" className="mt-12 space-y-6 border-t pt-8">
       <div>
-        <h2 id="mini-qcm" className="font-heading text-xl font-bold">
+        <h2 id="mini-qcm" className="text-sm font-semibold">
           Mini-QCM de la séance
         </h2>
         <p className="text-muted-foreground text-sm">
@@ -151,7 +151,7 @@ export function EspaceQcm({ groups }: { groups: EspaceQcmGroup[] }) {
       </div>
       {groups.map((g, gi) => (
         <div key={gi} className="space-y-3">
-          <h3 className="font-semibold">{g.title}</h3>
+          <h3 className="text-sm font-semibold">{g.title}</h3>
           {g.questions.map((q, qi) => (
             <Question key={qi} q={q} index={qi} />
           ))}

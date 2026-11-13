@@ -3,16 +3,17 @@ import { Check, Circle, CircleDashed, Eye, OctagonAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TONES = {
-  // Pastilles de statut : texte #0E0E11 sur la couleur du statut (jetons --status-*).
-  plain: "border-border bg-muted text-foreground",
-  idle: "border-transparent bg-status-idle text-status-ink",
-  ok: "border-transparent bg-status-ready text-status-ink",
-  warn: "border-transparent bg-status-todo text-status-ink",
-  key: "border-primary text-primary",
-  // « En cours », compte à rebours, information : neutre, sans icône (ce n'est pas un statut).
-  wip: "border-btn-border bg-transparent text-foreground",
-  published: "border-transparent bg-status-published text-status-ink",
-  lock: "border-transparent bg-status-blocking text-status-ink",
+  // DA « Atelier » : fond = couleur du statut à 13 %, texte = couleur du statut (sa teinte foncée
+  // en thème clair, jetons --status-*-fg, ≥ 4,5:1). Tons neutres : fond --muted, texte gris.
+  plain: "bg-muted text-muted-foreground",
+  idle: "bg-status-idle/13 text-status-idle-fg",
+  ok: "bg-status-ready/13 text-status-ready-fg",
+  warn: "bg-status-todo/13 text-status-todo-fg",
+  // Ancienne pastille « clé » à contour lavande : neutre (la lavande est réservée à l'action).
+  key: "bg-muted text-muted-foreground",
+  wip: "bg-muted text-muted-foreground",
+  published: "bg-status-published/13 text-status-published-fg",
+  lock: "bg-status-blocking/13 text-status-blocking-fg",
 } as const;
 
 /** Icône de chaque statut : un statut n'est jamais donné par la couleur seule (RGAA 3.1). */
@@ -42,12 +43,12 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex min-h-6 items-center gap-1.5 rounded-full border px-2.5 text-[0.8rem] font-bold whitespace-nowrap",
+        "inline-flex h-[22px] items-center gap-1 rounded-sm px-2 text-xs font-medium whitespace-nowrap",
         TONES[tone],
         className,
       )}
     >
-      {Icon ? <Icon aria-hidden className="size-3.5 shrink-0" strokeWidth={2.5} /> : null}
+      {Icon ? <Icon aria-hidden className="size-3 shrink-0" /> : null}
       {children}
     </span>
   );

@@ -56,9 +56,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   if (!res.content) {
     return (
       <main className="mx-auto max-w-2xl space-y-2 p-6">
-        <h1 className="font-heading text-3xl font-bold">
-          Bonjour{res.firstName ? ` ${res.firstName}` : ""}
-        </h1>
+        <h1 className="text-xl">Bonjour{res.firstName ? ` ${res.firstName}` : ""}</h1>
         <p className="text-muted-foreground">
           L’espace de ce module n’est pas encore publié. Revenez bientôt.
         </p>
@@ -113,7 +111,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
         <AccueilView data={data} />
         {feedback ? (
           <section aria-labelledby="avis" className="bg-card mt-6 space-y-2 rounded-xl border p-5">
-            <h2 id="avis" className="font-heading text-lg font-bold">
+            <h2 id="avis" className="text-sm font-semibold">
               Ton avis sur le module
             </h2>
             <p className="text-muted-foreground text-sm">

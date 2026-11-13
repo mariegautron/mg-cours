@@ -16,7 +16,7 @@ export default async function ModuleImportStudentsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Ajouter les étudiant·es</h1>
+        <h1 className="text-xl">Ajouter les étudiant·es</h1>
         <p className="text-muted-foreground">
           Dépose l’export Hyperplanning (CSV ou XLSX) tel quel. Aperçu avant tout enregistrement.
         </p>

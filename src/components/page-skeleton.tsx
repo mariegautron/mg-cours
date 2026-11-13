@@ -14,9 +14,9 @@ export function PageSkeleton({ className = "max-w-3xl" }: { className?: string }
         <Skeleton className="h-8 w-2/3 max-w-sm" />
         <Skeleton className="h-4 w-1/2 max-w-xs" />
       </div>
-      <Skeleton className="h-32 w-full rounded-2xl" />
-      <Skeleton className="h-32 w-full rounded-2xl" />
-      <Skeleton className="h-32 w-full rounded-2xl" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-32 w-full rounded-xl" />
     </div>
   );
 }

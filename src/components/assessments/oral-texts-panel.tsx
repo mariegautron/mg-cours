@@ -156,7 +156,7 @@ export function OralTextsPanel({
   return (
     <section
       aria-labelledby={`texts-${subjectId}`}
-      className="bg-card space-y-3 rounded-2xl border p-4"
+      className="bg-card space-y-3 rounded-xl border p-4"
     >
       {confirmDialog}
       <h4
@@ -399,7 +399,7 @@ export function OralRoutePanel({
   return (
     <section
       aria-labelledby={`route-${subjectId}`}
-      className="bg-card space-y-3 rounded-2xl border p-4"
+      className="bg-card space-y-3 rounded-xl border p-4"
     >
       <h4
         id={`route-${subjectId}`}

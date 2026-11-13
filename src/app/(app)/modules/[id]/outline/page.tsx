@@ -121,12 +121,8 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Documents
-          </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            Progression pédagogique
-          </h1>
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Documents</p>
+          <h1 className="text-xl">Progression pédagogique</h1>
           <p className="text-muted-foreground mt-1">
             Vérifie que tout est prêt, génère le PDF, envoie-le à l’école, puis dis-le-moi.
           </p>
@@ -136,14 +132,14 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
       {banner ? (
         <div
           role="status"
-          className={`rounded-2xl border px-4 py-3.5 ${
+          className={`rounded-xl border px-4 py-3.5 ${
             banner.tone === "warn" ? "border-status-todo bg-muted" : "bg-card"
           }`}
         >
           <strong>{banner.strong}</strong> <span>{banner.rest}</span>
         </div>
       ) : (
-        <div role="status" className="border-status-ready bg-muted rounded-2xl border px-4 py-3.5">
+        <div role="status" className="border-status-ready bg-muted rounded-xl border px-4 py-3.5">
           <strong>Progression pédagogique envoyée.</strong>{" "}
           <span>
             {outline?.sent_at
@@ -160,9 +156,9 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
       <div className="flex flex-wrap items-start gap-5 min-[1460px]:flex-nowrap">
         <section
           aria-labelledby="ver"
-          className="bg-card w-full min-w-0 rounded-3xl border p-4 min-[1460px]:w-[35rem] min-[1460px]:flex-none"
+          className="bg-card w-full min-w-0 rounded-xl border p-4 min-[1460px]:w-[35rem] min-[1460px]:flex-none"
         >
-          <h2 id="ver" className="font-heading mb-1 text-xl font-bold">
+          <h2 id="ver" className="mb-1 text-sm font-semibold">
             Avant de générer
           </h2>
           <p className="text-muted-foreground mb-2 text-sm">
@@ -181,7 +177,7 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
               <li key={c.key} className="flex items-start gap-3 border-t py-2.5">
                 <span
                   aria-hidden
-                  className={`mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-[0.8rem] font-bold ${
+                  className={`mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-[13px] font-bold ${
                     c.ok
                       ? "bg-status-ready text-status-ink"
                       : "border-status-todo text-warning border-[1.5px]"
@@ -231,8 +227,8 @@ export default async function ModuleOutlinePage({ params }: PageProps<"/modules/
           {outline && !depositedOutline ? (
             // Aperçu du PDF (lot 3) : il s'ouvre dans un onglet, sans téléchargement. (Un aperçu
             // dans la page demande d'autoriser l'appli à s'afficher dans un cadre : voir DECISIONS-NUIT.)
-            <section aria-labelledby="apercu" className="bg-card rounded-3xl border p-4">
-              <h2 id="apercu" className="font-heading text-lg font-bold">
+            <section aria-labelledby="apercu" className="bg-card rounded-xl border p-4">
+              <h2 id="apercu" className="text-sm font-semibold">
                 Aperçu du PDF
               </h2>
               <p className="text-muted-foreground text-sm">

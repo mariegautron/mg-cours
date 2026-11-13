@@ -11,7 +11,7 @@ import { seeOthers } from "@/lib/plural";
 import { displayFirstName } from "@/lib/ynov/teacher-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PenLine, Play } from "lucide-react";
+import { Play } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { TodayPrep } from "@/components/dashboard/today-prep";
@@ -28,7 +28,7 @@ import { CopyMessageButton } from "@/components/projects/copy-message-button";
 import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
 import { copyText, dueToday } from "@/lib/projects/surprises";
 import { EmptyState } from "@/components/empty-state";
-import { Mascot } from "@/components/mascot";
+import { buttonVariants } from "@/components/ui/button";
 import {
   getSessionPrep,
   listCoursesAfter,
@@ -56,16 +56,16 @@ import { listModules } from "@/lib/modules/queries";
 import { listOutlineSentModuleIds } from "@/lib/outline/queries";
 import { inFilter, moduleListState } from "@/lib/modules/list-state";
 import { getProfile } from "@/lib/settings/queries";
-import { alertMascotMood, outlineAlerts, outlineAlertSummary } from "@/lib/ynov/trame";
+import { outlineAlerts } from "@/lib/ynov/trame";
 import { sessionHeading } from "@/lib/plural";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
 
-const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-[10px] border border-btn-border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
-
-// Icônes monochromes : la couleur sert l'action et les statuts, rien d'autre.
-const TODO_TONES = ["bg-muted text-primary", "bg-muted text-primary", "bg-muted text-primary"];
+// Boutons de la page : composants de base (DA « Atelier »). Actions de ligne en « ghost »,
+// actions d'une carte en « secondary », une seule action pleine par zone.
+const BTN = buttonVariants({ variant: "ghost" });
+const BTN_2 = buttonVariants({ variant: "secondary" });
+const BTN_1 = buttonVariants();
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const passwordChanged = (await searchParams).password === "changed";
@@ -147,7 +147,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const alerts = outlineAlerts(
     modules.map((m) => ({ ...m, outline_sent: outlineSentIds.has(m.id) })),
   );
-  const summary = outlineAlertSummary(alerts);
   const firstName = displayFirstName(profile?.legal_name);
 
   const upcomingEvals = dropHiddenModules(
@@ -345,13 +344,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const nextUntil = upcoming ? daysBetween(today, upcoming.session_date!) : null;
 
   const todoCard = (
-    <section aria-labelledby="todo" className="bg-card rounded-3xl border p-4">
-      <h2 id="todo" className="font-heading text-xl font-bold">
-        À faire
+    <section aria-labelledby="todo" className="bg-card rounded-xl border px-5 py-4">
+      <h2 id="todo" className="mb-1 text-sm font-semibold">
+        À faire <span className="text-muted-foreground-2 font-normal">{allTodos.length}</span>
       </h2>
-      <p className="text-muted-foreground mb-1 text-sm">
-        {allTodos.length > 1 ? `${allTodos.length} choses, par urgence.` : "Par urgence."}
-      </p>
       {todos.length === 0 ? (
         <EmptyState
           compact
@@ -365,10 +361,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               key={t.key}
               className="flex min-h-16 items-center justify-between gap-3 border-t py-3 first:border-t-0"
             >
-              <div className="flex min-w-0 items-center gap-3.5">
+              <div className="flex min-w-0 items-center gap-3">
                 <span
                   aria-hidden
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-full font-extrabold ${TODO_TONES[i % 3]}`}
+                  className="bg-muted text-muted-foreground flex size-[22px] shrink-0 items-center justify-center rounded-sm text-xs font-medium"
                 >
                   {i + 1}
                 </span>
@@ -386,7 +382,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       )}
       {moreTodos.length > 0 ? (
         <details className="border-t pt-2">
-          <summary className="text-primary min-h-11 cursor-pointer py-2 text-sm font-semibold">
+          <summary className="text-muted-foreground min-h-11 cursor-pointer py-2 text-sm font-semibold">
             {seeOthers(moreTodos.length)}
           </summary>
           <ol>
@@ -411,8 +407,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   );
 
   const doneTodayCard = doneToday.length ? (
-    <section aria-labelledby="done-today" className="bg-card rounded-3xl border p-4">
-      <h2 id="done-today" className="font-heading text-lg font-bold">
+    <section aria-labelledby="done-today" className="bg-card rounded-xl border px-5 py-4">
+      <h2 id="done-today" className="text-sm font-semibold">
         Faite{doneToday.length > 1 ? "s" : ""} aujourd’hui
       </h2>
       <ul>
@@ -432,8 +428,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ) : null;
 
   const surprisesCard = surprises.length ? (
-    <section aria-labelledby="surprises" className="bg-card rounded-3xl border p-4">
-      <h2 id="surprises" className="font-heading mb-2 text-xl font-bold">
+    <section aria-labelledby="surprises" className="bg-card rounded-xl border px-5 py-4">
+      <h2 id="surprises" className="mb-2 text-sm font-semibold">
         Imprévu{surprises.length > 1 ? "s" : ""} à envoyer
       </h2>
       <ul className="space-y-3">
@@ -460,16 +456,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ) : null;
 
   const resumeCard = resume ? (
-    <section aria-labelledby="resume" className="bg-card rounded-3xl border p-4">
-      <div className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className="bg-muted text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl"
-        >
-          <PenLine className="size-5" />
-        </span>
+    <section aria-labelledby="resume" className="bg-card rounded-xl border px-5 py-4">
+      <div>
         <div>
-          <h2 id="resume" className="font-heading text-lg font-bold">
+          <h2 id="resume" className="text-sm font-semibold">
             Reprendre
           </h2>
           <p className="font-semibold">{resume.title}</p>
@@ -487,8 +477,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const correctCard =
     toCorrect.length > 0 ? (
-      <section aria-labelledby="corr" className="bg-card rounded-3xl border p-4">
-        <h2 id="corr" className="font-heading mb-2 text-lg font-bold">
+      <section aria-labelledby="corr" className="bg-card rounded-xl border px-5 py-4">
+        <h2 id="corr" className="mb-2 text-sm font-semibold">
           À corriger
         </h2>
         <ul className="space-y-3">
@@ -541,9 +531,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           </p>
         ) : null}
         <header>
-          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
-            Aujourd’hui · {dayText}
-          </h1>
+          <h1 className="text-xl">Aujourd’hui · {dayText}</h1>
           <p className="text-muted-foreground mt-1.5">
             Ta journée en un coup d’œil : la séance en cours, ce qu’il faut savoir avant d’entrer,
             ce qui vient après.
@@ -552,13 +540,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
         <section
           aria-labelledby="seance"
-          className="bg-card card-featured rounded-3xl border p-4 sm:p-5"
+          className="bg-card card-featured rounded-xl border px-5 py-4 sm:p-5"
         >
           <div className="min-w-0">
-            <p className="text-primary mb-1.5 text-[0.8rem] font-bold tracking-wider uppercase">
+            <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">
               {range ? `${range} · ` : ""}Séance {prep.number} sur {prep.total} · {hero.module.name}
             </p>
-            <h2 id="seance" className="font-heading text-3xl font-bold">
+            <h2 id="seance" className="title-display text-xl">
               {hero.title}
             </h2>
             <p className="mt-2 flex flex-wrap gap-1.5">
@@ -573,14 +561,14 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               </Pill>
             </p>
             {/* Boutons en ligne sous le titre : visibles sans défiler à 1366 × 768, zoom 125 %. */}
-            <div className="mt-4 flex flex-wrap gap-2.5">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={
                   heroEnded
                     ? `/modules/${hero.module.id}/courses/${hero.id}/close`
                     : `/modules/${hero.module.id}/courses/${hero.id}/start`
                 }
-                className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+                className={BTN_1}
               >
                 {heroEnded ? null : <Play aria-hidden className="size-4" />}
                 {heroEnded ? "Clôturer la séance" : "Commencer le cours"}
@@ -590,7 +578,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
               {heroEnded ? (
                 <Link
                   href={`/modules/${hero.module.id}/courses/${hero.id}/start`}
-                  className={`${BTN} min-h-12`}
+                  className={BTN_2}
                 >
                   Rouvrir la séance<span className="sr-only"> : {hero.title}</span>
                 </Link>
@@ -599,7 +587,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   href="https://edusign.app/professor/home"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${BTN} min-h-12`}
+                  className={BTN_2}
                 >
                   Ouvrir Edusign<span className="sr-only"> (nouvel onglet)</span>
                 </a>
@@ -622,8 +610,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         {doneTodayCard}
 
         {sessions.length > 1 ? (
-          <section aria-labelledby="after" className="bg-card rounded-3xl border p-4">
-            <h2 id="after" className="font-heading text-lg font-bold">
+          <section aria-labelledby="after" className="bg-card rounded-xl border px-5 py-4">
+            <h2 id="after" className="text-sm font-semibold">
               Ensuite aujourd’hui
             </h2>
             <ul>
@@ -677,13 +665,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           Mot de passe changé. Tu es connectée.
         </p>
       ) : null}
-      <header className="flex flex-wrap items-center gap-3.5">
-        <Mascot mood={alertMascotMood(summary)} className="size-14" />
+      {/* Margot sort de l'en-tête (DA « Atelier ») : elle reste dans le logo et les écrans vides. */}
+      <header>
         <div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            {firstName ? `Bonjour ${firstName}` : "Bonjour"}
-          </h1>
-          <p className="text-muted-foreground">
+          <h1>{firstName ? `Bonjour ${firstName}` : "Bonjour"}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             {dayLine(
               dayText,
               0,
@@ -693,50 +679,47 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </div>
       </header>
 
-      {/* Jour sans cours : une seule ligne sur tous les modules en cours (pas sur un seul). */}
-      <p
+      {/* Bande de chiffres : 4 cases égales dans un seul cadre (DA « Atelier »). */}
+      <dl
         role="status"
-        className="bg-card text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border px-4 py-2.5 text-sm"
+        className="bg-card grid grid-cols-2 divide-x divide-y rounded-xl border sm:grid-cols-4 sm:divide-y-0"
       >
-        <span>
-          <strong className="text-foreground">{runningModules.length}</strong> module
-          {runningModules.length > 1 ? "s" : ""} en cours
-        </span>
-        <span>
-          {weekRunning.length === 0 ? (
-            "Pas de séance cette semaine"
-          ) : (
-            <>
-              Séances faites cette semaine :{" "}
-              <strong className="text-foreground">
-                {weekRunning.filter((c) => c.completion).length} / {weekRunning.length}
-              </strong>
-            </>
-          )}
-        </span>
-        <span>
-          Appréciations à écrire :{" "}
-          <strong className="text-foreground">
-            {appreciationTodos.reduce((n, a) => n + a.remaining, 0)}
-          </strong>
-        </span>
-        <span>
-          Observations cette semaine :{" "}
-          <strong className="text-foreground">{weekObservations}</strong>
-        </span>
-      </p>
+        {[
+          {
+            label: `module${runningModules.length > 1 ? "s" : ""} en cours`,
+            value: String(runningModules.length),
+          },
+          {
+            label: "séances faites cette semaine",
+            value:
+              weekRunning.length === 0
+                ? "—"
+                : `${weekRunning.filter((c) => c.completion).length} / ${weekRunning.length}`,
+          },
+          {
+            label: "appréciations à écrire",
+            value: String(appreciationTodos.reduce((n, a) => n + a.remaining, 0)),
+          },
+          { label: "observations cette semaine", value: String(weekObservations) },
+        ].map((k) => (
+          <div key={k.label} className="flex flex-col-reverse gap-1 px-4 py-3">
+            <dt className="text-muted-foreground text-[13px]">{k.label}</dt>
+            <dd className="text-foreground text-xl font-semibold tabular-nums">{k.value}</dd>
+          </div>
+        ))}
+      </dl>
 
-      <div className="flex flex-wrap items-start gap-4.5 lg:flex-nowrap">
-        <div className="min-w-0 flex-1 basis-full space-y-3.5 lg:basis-0">
+      <div className="flex flex-wrap items-start gap-4 lg:flex-nowrap">
+        <div className="min-w-0 flex-1 basis-full space-y-3 lg:basis-0">
           {doneTodayCard}
           {/* « À faire » d'abord : visible sans défiler à 125 %, avant la carte du prochain cours. */}
           {todoCard}
           {upcoming ? (
             <section
               aria-labelledby="next"
-              className="bg-card card-featured rounded-3xl border p-4"
+              className="bg-card card-featured rounded-xl border px-5 py-4"
             >
-              <p className="mb-1.5 flex flex-wrap items-center gap-2.5">
+              <p className="mb-1.5 flex flex-wrap items-center gap-2">
                 <Pill tone="wip">{untilLabel(today, upcoming.session_date!)}</Pill>
                 <span className="text-muted-foreground text-sm">
                   {formatSessionDay(upcoming.session_date!)}
@@ -745,7 +728,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                     : ""}
                 </span>
               </p>
-              <h2 id="next" className="font-heading text-2xl font-bold sm:text-3xl">
+              <h2 id="next" className="title-display text-xl">
                 {sessionHeading(upcoming.position, upcoming.title)}
               </h2>
               <p className="text-muted-foreground mt-1 mb-4">
@@ -755,20 +738,20 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                   ? ` · ${focus.students.total} étudiant·e${focus.students.total > 1 ? "s" : ""}`
                   : ""}
               </p>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 <Link
                   href={`/modules/${upcoming.module.id}/courses/${upcoming.id}#deroule`}
-                  className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+                  className={BTN_1}
                 >
                   Préparer la séance {upcoming.position}
                 </Link>
-                <Link href={`/modules/${upcoming.module.id}`} className={`${BTN} min-h-12`}>
+                <Link href={`/modules/${upcoming.module.id}`} className={BTN_2}>
                   Voir le module
                 </Link>
               </div>
             </section>
           ) : (
-            <section aria-label="Prochaine séance" className="bg-card rounded-3xl border shadow-sm">
+            <section aria-label="Prochaine séance" className="bg-card rounded-xl border">
               {modules.length === 0 ? (
                 <EmptyState
                   title="Pas encore de module"

@@ -17,8 +17,8 @@ export function JourneySteps({ journey }: { journey: ModuleSteps }) {
   if (!journey.steps.length) return null;
   const current = journey.current;
   return (
-    <section aria-labelledby="etapes" className="bg-card rounded-3xl border px-4 py-4 shadow-sm">
-      <h2 id="etapes" className="font-heading mx-2 mb-1.5 text-xl font-bold">
+    <section aria-labelledby="etapes" className="bg-card rounded-xl border px-4 py-4 shadow-sm">
+      <h2 id="etapes" className="mx-2 mb-1.5 text-sm font-semibold">
         Où j’en suis
       </h2>
       <ol>
@@ -41,7 +41,7 @@ export function JourneySteps({ journey }: { journey: ModuleSteps }) {
                 <span
                   aria-hidden
                   className={cn(
-                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-[0.8rem] font-bold",
+                    "flex size-7 shrink-0 items-center justify-center rounded-full border text-[13px] font-bold",
                     s.state === "done" && "bg-mint text-background border-transparent",
                     isCurrent && "bg-primary text-primary-foreground border-transparent",
                     !isCurrent && s.state !== "done" && "text-muted-foreground",

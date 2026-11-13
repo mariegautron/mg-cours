@@ -201,7 +201,7 @@ export function SurprisesEditor({
         action={action}
         className="space-y-2 rounded-lg border border-dashed p-3"
       >
-        <h3 className="font-medium">Ajouter un imprévu</h3>
+        <h3 className="text-sm font-semibold">Ajouter un imprévu</h3>
         <Label htmlFor="surprise-title">Titre</Label>
         <Input
           id="surprise-title"

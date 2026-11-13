@@ -195,9 +195,9 @@ export function ProgressReviewScreen({
       </div>
 
       {view === "criterion" ? (
-        <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-2xl border p-4">
+        <section aria-labelledby="by-crit" className="bg-card space-y-3 rounded-xl border p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 id="by-crit" className="font-heading text-lg font-bold">
+            <h2 id="by-crit" className="text-sm font-semibold">
               Par critère
             </h2>
             <label className="flex items-center gap-2 text-sm">
@@ -335,9 +335,9 @@ function RenduColumn({
   return (
     <section
       aria-labelledby="rendu-title"
-      className="bg-card space-y-3 rounded-2xl border p-4 lg:sticky lg:top-16 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto"
+      className="bg-card space-y-3 rounded-xl border p-4 lg:sticky lg:top-16 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto"
     >
-      <h2 id="rendu-title" className="font-heading text-lg font-bold">
+      <h2 id="rendu-title" className="text-sm font-semibold">
         Dépôt
       </h2>
       {copy.items.length === 0 ? (
@@ -507,7 +507,7 @@ function ReviewPanel({
   return (
     <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="font-heading text-xl font-bold">{copy.name}</h2>
+        <h2 className="text-sm font-semibold">{copy.name}</h2>
         <span className="rounded-md border px-2 py-0.5 text-sm">{REVIEW_STATE_LABELS[state]}</span>
         <p role="status" className="text-muted-foreground ml-auto text-sm">
           {status}
@@ -526,9 +526,9 @@ function ReviewPanel({
             aria-labelledby={`crit-${c.id}`}
             tabIndex={-1}
             onKeyDown={(e) => onCardKey(e, c.id)}
-            className="bg-card space-y-2 rounded-2xl border p-4"
+            className="bg-card space-y-2 rounded-xl border p-4"
           >
-            <h3 id={`crit-${c.id}`} className="font-semibold">
+            <h3 id={`crit-${c.id}`} className="text-sm font-semibold">
               {c.label}
             </h3>
             <div role="group" aria-label={`Repère : ${c.label}`} className="flex flex-wrap gap-2">
@@ -595,9 +595,9 @@ function ReviewPanel({
         );
       })}
 
-      <section aria-labelledby="global-title" className="bg-card space-y-2 rounded-2xl border p-4">
+      <section aria-labelledby="global-title" className="bg-card space-y-2 rounded-xl border p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 id="global-title" className="font-semibold">
+          <h3 id="global-title" className="text-sm font-semibold">
             <label htmlFor={`g-${copy.id}`}>Commentaire global</label>
           </h3>
           <Button
@@ -622,9 +622,9 @@ function ReviewPanel({
       {copy.isGroup && copy.members.length ? (
         <section
           aria-labelledby="members-title"
-          className="bg-card space-y-2 rounded-2xl border p-4"
+          className="bg-card space-y-2 rounded-xl border p-4"
         >
-          <h3 id="members-title" className="font-semibold">
+          <h3 id="members-title" className="text-sm font-semibold">
             Membres : mot perso (facultatif)
           </h3>
           <p className="text-muted-foreground text-sm">
@@ -647,8 +647,8 @@ function ReviewPanel({
         </section>
       ) : null}
 
-      <section aria-labelledby="private-title" className="space-y-1 rounded-2xl border p-4">
-        <h3 id="private-title" className="font-semibold">
+      <section aria-labelledby="private-title" className="space-y-1 rounded-xl border p-4">
+        <h3 id="private-title" className="text-sm font-semibold">
           <label htmlFor={`n-${copy.id}`}>Mes notes (pour toi seule, jamais envoyées)</label>
         </h3>
         <Textarea

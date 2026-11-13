@@ -104,7 +104,7 @@ export function DocumentSlot({
   return (
     <section aria-labelledby={headingId} className="min-w-0 space-y-3 rounded-lg border p-4">
       <div>
-        <h3 id={headingId} className="font-medium">
+        <h3 id={headingId} className="text-sm font-semibold">
           {title}
           {documents.length ? (
             <span className="text-muted-foreground font-normal"> ({documents.length})</span>
@@ -235,7 +235,7 @@ export function ModuleDocuments({
       />
       {/* Un seul endroit pour déposer sa facture : la page Facture (mêmes fichiers). */}
       <section className="rounded-lg border p-4 text-sm">
-        <h3 className="font-medium">Ma facture</h3>
+        <h3 className="text-sm font-semibold">Ma facture</h3>
         <p className="text-muted-foreground">
           {(() => {
             const n = documents.filter((d) => d.kind === "external_invoice").length;

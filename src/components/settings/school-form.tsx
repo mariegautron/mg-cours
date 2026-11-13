@@ -97,7 +97,7 @@ export function SchoolForm({
           <ArrowLeft aria-hidden className="size-4" />
           Réglages
         </Link>
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <h1 className="text-xl">{title}</h1>
         <p className="text-muted-foreground text-sm">
           Les champs marqués <span aria-hidden>*</span>
           <span className="sr-only">d’un astérisque</span> sont obligatoires.

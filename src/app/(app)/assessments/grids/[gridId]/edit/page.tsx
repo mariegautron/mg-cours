@@ -31,7 +31,7 @@ export default async function EditGridPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {grid.name} »</h1>
+      <h1 className="text-xl">Modifier « {grid.name} »</h1>
       <GridForm action={updateGrid.bind(null, gridId)} grid={grid} usage={usage} />
     </div>
   );

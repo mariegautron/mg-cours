@@ -10,7 +10,7 @@ import { getModule } from "@/lib/modules/queries";
 
 export const metadata: Metadata = { title: "Ajouter une évaluation" };
 
-const card = "bg-card rounded-3xl border p-5 shadow-sm";
+const card = "bg-card rounded-xl border p-5 shadow-sm";
 
 /**
  * Ajouter ou rattacher une évaluation (US-126, maquette « EvalAjouter ») : les façons d'en ajouter
@@ -32,10 +32,8 @@ export default async function AddAssessmentPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Évaluations
-          </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Ajouter une évaluation</h1>
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Évaluations</p>
+          <h1 className="text-xl">Ajouter une évaluation</h1>
           <p className="text-muted-foreground mt-1">
             Quatre façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
             d’ensemble.
@@ -49,12 +47,12 @@ export default async function AddAssessmentPage({
       <div className="max-w-[48rem]">
         <div className="w-full min-w-0 space-y-4">
           <section aria-labelledby="ad" className={card}>
-            <h2 id="ad" className="font-heading mb-3 text-2xl font-bold">
+            <h2 id="ad" className="mb-3 text-sm font-semibold">
               Ajouter une évaluation
             </h2>
             <div className="flex flex-col gap-2.5">
-              <section aria-labelledby="create" className="bg-muted/40 rounded-2xl border p-4">
-                <h3 id="create" className="text-lg font-bold">
+              <section aria-labelledby="create" className="bg-muted/40 rounded-xl border p-4">
+                <h3 id="create" className="text-sm font-semibold">
                   En créer une nouvelle
                 </h3>
                 <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
@@ -66,9 +64,9 @@ export default async function AddAssessmentPage({
               </section>
               <section
                 aria-labelledby="create-review"
-                className="bg-muted/40 rounded-2xl border p-4"
+                className="bg-muted/40 rounded-xl border p-4"
               >
-                <h3 id="create-review" className="text-lg font-bold">
+                <h3 id="create-review" className="text-sm font-semibold">
                   Point d’étape
                 </h3>
                 <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
@@ -85,9 +83,9 @@ export default async function AddAssessmentPage({
               {otherAssessments.length > 0 ? (
                 <section
                   aria-labelledby="from-module"
-                  className="bg-muted/40 rounded-2xl border p-4"
+                  className="bg-muted/40 rounded-xl border p-4"
                 >
-                  <h3 id="from-module" className="text-lg font-bold">
+                  <h3 id="from-module" className="text-sm font-semibold">
                     Reprendre une évaluation d’un autre module
                   </h3>
                   <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
@@ -114,11 +112,8 @@ export default async function AddAssessmentPage({
                   </form>
                 </section>
               ) : null}
-              <section
-                aria-labelledby="from-library"
-                className="bg-muted/40 rounded-2xl border p-4"
-              >
-                <h3 id="from-library" className="text-lg font-bold">
+              <section aria-labelledby="from-library" className="bg-muted/40 rounded-xl border p-4">
+                <h3 id="from-library" className="text-sm font-semibold">
                   Depuis la bibliothèque
                 </h3>
                 <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
@@ -156,8 +151,8 @@ export default async function AddAssessmentPage({
                 )}
               </section>
 
-              <section aria-labelledby="school" className="bg-muted/40 rounded-2xl border p-4">
-                <h3 id="school" className="text-lg font-bold">
+              <section aria-labelledby="school" className="bg-muted/40 rounded-xl border p-4">
+                <h3 id="school" className="text-sm font-semibold">
                   Une note de l’école
                 </h3>
                 <p className="text-muted-foreground mt-0.5 mb-3 text-sm">
@@ -170,7 +165,7 @@ export default async function AddAssessmentPage({
           </section>
 
           <section aria-labelledby="mo" className={card}>
-            <h2 id="mo" className="font-heading mb-1.5 text-lg font-bold">
+            <h2 id="mo" className="mb-1.5 text-sm font-semibold">
               Ce que tu peux changer, et où
             </h2>
             <div className="space-y-1.5 text-sm">

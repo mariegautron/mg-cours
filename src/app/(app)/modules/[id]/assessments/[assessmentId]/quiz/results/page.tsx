@@ -95,7 +95,7 @@ export default async function QuizResultsPage({
   return (
     <div className="max-w-4xl space-y-4">
       <div className="space-y-1">
-        <h1 className="font-heading text-3xl font-bold tracking-tight">Résultats du QCM</h1>
+        <h1 className="text-xl">Résultats du QCM</h1>
         <p className="text-muted-foreground">
           {submitted.length} personne{submitted.length > 1 ? "s ont" : " a"} passé le QCM
           {average !== null && total !== null
@@ -108,7 +108,7 @@ export default async function QuizResultsPage({
         aria-labelledby="ou"
         className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
       >
-        <h2 id="ou" className="font-heading text-lg font-bold">
+        <h2 id="ou" className="text-sm font-semibold">
           Donner les notes
         </h2>
         {toReview > 0 || notTaken > 0 ? (
@@ -143,7 +143,7 @@ export default async function QuizResultsPage({
       </section>
 
       <section aria-labelledby="nq" className={card}>
-        <h2 id="nq" className="font-heading mb-2 text-lg font-bold">
+        <h2 id="nq" className="mb-2 text-sm font-semibold">
           Notes
         </h2>
         {attempts.length === 0 ? (

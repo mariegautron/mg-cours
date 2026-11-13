@@ -30,7 +30,7 @@ import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 
 const initial: OutlineActionState = {};
 
-const card = "bg-card rounded-3xl border p-5 shadow-sm";
+const card = "bg-card rounded-xl border p-5 shadow-sm";
 
 /** Aperçu schématique du PDF : une page, jamais le vrai contenu. */
 function PagePreview() {
@@ -96,7 +96,7 @@ export function OutlineActions({
     <div className="space-y-4">
       <section aria-labelledby="gen" className={card}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="gen" className="font-heading text-xl font-bold">
+          <h2 id="gen" className="text-sm font-semibold">
             Le document
           </h2>
           {deposited ? <Pill tone="ok">Progression envoyée</Pill> : null}
@@ -197,7 +197,7 @@ export function OutlineActions({
       </section>
 
       <section aria-labelledby="env" className={card}>
-        <h2 id="env" className="font-heading mb-1.5 text-xl font-bold">
+        <h2 id="env" className="mb-1.5 text-sm font-semibold">
           Une fois envoyée à l’école
         </h2>
         <p className="text-muted-foreground mb-3 text-sm">
@@ -265,7 +265,7 @@ export function OutlineActions({
             </Button>
           )}
         </div>
-        <p className="text-muted-foreground mt-2.5 text-[0.8rem]">
+        <p className="text-muted-foreground mt-2.5 text-[13px]">
           {status === "validated"
             ? "Progression validée par l’école."
             : status === "sent" || hasDepositedOutline

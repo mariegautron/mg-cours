@@ -316,3 +316,23 @@ Lot 1, ce qui est fait à ce stade :
   à confirmer au prochain essai.
 - **Textes d'aide** : jamais sous 13 px en densité compacte (même les tailles fixées en dur).
 - **Menu latéral** : 14rem au lieu de 16rem (≈ 262 px à 125 %).
+
+## 13 novembre : DA « Atelier » (piste A de l'audit, choix d'Arnaud)
+
+Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
+- jetons (contour, gris secondaire et tertiaire, texte des pastilles en clair), échelles de texte
+  et d'arrondis posées dans `@theme` : toutes les anciennes classes retombent dans l'échelle ;
+- règle globale « Bricolage 800 sur tous les titres » retirée : h1 en Bricolage 700 26 px partout,
+  h2 / h3 des pages passés en Inter 600 14 px (109 fichiers, classes de taille et de graisse
+  retirées des titres), titres mis en avant du tableau de bord en `title-display` ;
+- bouton, pastille, badge, carte, menu latéral et sous-menu du module refaits selon le système ;
+- lavande retirée des sur-titres en capitales, des numéros et tuiles d'icône, de la pastille
+  « clé », du nom du module dans le sous-menu, des avatars d'initiales ;
+- tableau de bord : Margot sortie de l'en-tête, bande de 4 chiffres dans un cadre, boutons via
+  `buttonVariants` (un seul plein par zone), numéros d'« À faire » en petits carrés gris,
+  compteur à côté du titre, tuile d'icône de « Reprendre » retirée ;
+- Évaluations d'un module : en-tête avec une ligne de chiffres, « Ajouter une évaluation »
+  (principal) et « Rattrapages » (secondaire) à droite, projet sur une ligne.
+- **Pas fait** : la liste des évaluations en tableau (laissée au fil « Améliorer encore l'UX »
+  qui refait la mise en page) ; espacements hors échelle hors des pages touchées ; textes en
+  `text-[0.65rem]`/`[0.85rem]` restants dans des chaînes de modèle (outline-actions, ressources).

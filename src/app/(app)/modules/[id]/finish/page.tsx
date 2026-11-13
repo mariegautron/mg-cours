@@ -80,10 +80,8 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
   return (
     <div className="flex max-w-6xl flex-col gap-5 lg:flex-row lg:items-start">
       <section aria-labelledby="tm" className={`${card} min-w-0 flex-[3_1_0] space-y-3`}>
-        <p className="text-primary text-xs font-bold tracking-widest uppercase">Où j’en suis</p>
-        <h1 id="tm" className="font-heading text-3xl font-bold tracking-tight">
-          Terminer le module
-        </h1>
+        <p className="text-muted-foreground text-[13px] font-medium">Où j’en suis</p>
+        <h1 id="tm">Terminer le module</h1>
         <p className="text-muted-foreground">
           Tout ce qu’il reste avant de le terminer. Rien n’est bloquant : tu peux revenir.
         </p>
@@ -112,7 +110,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           ))}
         </ul>
         <section aria-labelledby="admin-docs" className="space-y-2 border-t pt-3">
-          <h2 id="admin-docs" className="font-heading text-xl font-bold">
+          <h2 id="admin-docs" className="text-sm font-semibold">
             Documents administratifs
           </h2>
           <AdminDocsChecklist
@@ -121,7 +119,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           />
         </section>
         <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-          <h2 className="font-heading text-xl font-bold">Ton retour, pour toi seule</h2>
+          <h2 className="text-sm font-semibold">Ton retour, pour toi seule</h2>
           <Pill tone="plain">Privé</Pill>
         </div>
         {mod.finished_at && !askNote ? null : (
@@ -140,7 +138,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           aria-labelledby="cl"
           className="bg-primary/10 border-primary/50 space-y-2 rounded-xl border p-5"
         >
-          <h2 id="cl" className="font-heading text-xl font-bold">
+          <h2 id="cl" className="text-sm font-semibold">
             Terminer
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -150,7 +148,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           </p>
         </section>
         <section aria-labelledby="fb" className={`${card} space-y-2`}>
-          <h2 id="fb" className="font-heading text-lg font-bold">
+          <h2 id="fb" className="text-sm font-semibold">
             Retour des étudiant·es
           </h2>
           <p className="text-muted-foreground text-sm">
@@ -161,7 +159,7 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
           </Button>
         </section>
         <section aria-labelledby="ar" className={`${card} space-y-1`}>
-          <h2 id="ar" className="font-heading text-lg font-bold">
+          <h2 id="ar" className="text-sm font-semibold">
             Ce qui reste accessible
           </h2>
           <p className="text-muted-foreground text-sm">

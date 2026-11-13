@@ -21,7 +21,7 @@ import {
   withQcmLimit,
 } from "@/lib/present/qcm";
 
-const card = "bg-card rounded-3xl border p-5 shadow-sm";
+const card = "bg-card rounded-xl border p-5 shadow-sm";
 const EDUSIGN = "https://edusign.app/professor/home";
 
 function readHidden(courseId: string, fallback: Set<string>): Set<string> {
@@ -151,7 +151,7 @@ export function PrepPanel({
 
   return (
     <div className="space-y-5">
-      <div className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-4 shadow-sm">
+      <div className="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-4 shadow-sm">
         <Button type="button" size="touch-lg" onClick={start}>
           Commencer le cours
           <span className="sr-only">

@@ -31,7 +31,7 @@ export default async function ResourceHistoryPage({
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Historique — {resource.title}</h1>
+        <h1 className="text-xl">Historique — {resource.title}</h1>
         <p className="text-muted-foreground">
           <Link href={`/resources/${id}`} className="underline underline-offset-2">
             Retour à la ressource

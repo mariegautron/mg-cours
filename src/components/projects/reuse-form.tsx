@@ -73,7 +73,7 @@ export function ReuseForm({
       >
         {replace ? "Remplacer le brief" : "Créer le projet"}
       </PendingButton>
-      <p className="text-muted-foreground text-[0.8rem]">
+      <p className="text-muted-foreground text-[13px]">
         {replace
           ? "Le brief actuel est remplacé ; les évaluations, groupes et notes du module ne bougent pas. Les thèmes repris s’ajoutent à ceux du projet."
           : "Tu retrouves ensuite le brief section par section, avec ce qui reste à réécrire signalé."}

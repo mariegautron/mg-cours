@@ -49,9 +49,9 @@ export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "not
 const pts = (n: number) =>
   `${n.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} pt${n >= 2 ? "s" : ""}`;
 
-const card = "bg-card rounded-2xl border p-5 shadow-sm";
+const card = "bg-card rounded-xl border p-5 shadow-sm";
 const tile =
-  "bg-card hover:bg-accent focus-visible:ring-ring block rounded-2xl border p-5 shadow-sm focus-visible:ring-2 focus-visible:outline-none";
+  "bg-card hover:bg-accent focus-visible:ring-ring block rounded-xl border p-5 shadow-sm focus-visible:ring-2 focus-visible:outline-none";
 
 export function EspaceLayout({
   data,
@@ -85,9 +85,7 @@ export function EspaceLayout({
       </a>
       <aside className="border-b p-4 lg:border-r lg:border-b-0 lg:p-6 [@media(max-height:500px)]:py-2">
         <div className="lg:sticky lg:top-6">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase max-lg:hidden">
-            Mon espace
-          </p>
+          <p className="text-muted-foreground text-[13px] font-medium max-lg:hidden">Mon espace</p>
           {/* Téléphone : en-tête d'une ligne ; les onglets sont fixés en bas de l'écran (lot 5, 27). */}
           <p className="font-heading mt-1 text-lg leading-tight font-bold max-lg:mt-0 max-lg:truncate max-lg:text-base [@media(max-height:500px)]:mt-0 [@media(max-height:500px)]:text-base">
             <span className="lg:hidden">Mon espace · </span>
@@ -199,13 +197,11 @@ export function AccueilView({ data }: { data: EspaceData }) {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-3xl font-bold tracking-tight">
-        Bonjour{firstName ? ` ${firstName}` : ""}
-      </h1>
+      <h1 className="text-xl">Bonjour{firstName ? ` ${firstName}` : ""}</h1>
 
       {quizOpen && espace?.quiz ? (
-        <section aria-labelledby="quiz" className="bg-card card-featured rounded-2xl border p-4">
-          <h2 id="quiz" className="font-heading text-xl font-bold">
+        <section aria-labelledby="quiz" className="bg-card card-featured rounded-xl border p-4">
+          <h2 id="quiz" className="text-sm font-semibold">
             {data.quizMakeupPlanned
               ? "Rattrapage prévu"
               : data.quizSubmittedAt
@@ -244,9 +240,9 @@ export function AccueilView({ data }: { data: EspaceData }) {
       ) : null}
 
       {next && nextIndex !== null ? (
-        <section aria-labelledby="prochain" className="bg-card rounded-2xl border p-4">
-          <p className="text-primary text-xs font-bold tracking-widest uppercase">Prochain rendu</p>
-          <h2 id="prochain" className="font-heading mt-1 text-2xl font-bold">
+        <section aria-labelledby="prochain" className="bg-card rounded-xl border p-4">
+          <p className="text-muted-foreground text-[13px] font-medium">Prochain rendu</p>
+          <h2 id="prochain" className="mt-1 text-sm font-semibold">
             {next.title}
           </h2>
           <p className="mt-1 text-lg">
@@ -276,14 +272,14 @@ export function AccueilView({ data }: { data: EspaceData }) {
       ) : null}
 
       <section aria-labelledby="frise" className={card}>
-        <h2 id="frise" className="sr-only">
+        <h2 id="frise" className="sr-only text-sm font-semibold">
           La frise du module
         </h2>
         <FriseProjected frise={frise} embedded />
       </section>
 
       <section aria-labelledby="acces" className="hidden space-y-3 min-[600px]:block">
-        <h2 id="acces" className="font-heading text-xl font-bold">
+        <h2 id="acces" className="text-sm font-semibold">
           Tout le cours au même endroit
         </h2>
         <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -337,7 +333,7 @@ export function ProjetView({ espace }: { espace: Espace }) {
   if (!espace.brief) return <Empty title="Le projet" text="Le brief n’est pas encore publié." />;
   return (
     <article className="max-w-3xl">
-      <h1 className="font-heading mb-4 text-3xl font-bold">{espace.brief.title}</h1>
+      <h1 className="mb-4">{espace.brief.title}</h1>
       <Markdown source={espace.brief.text} headingLevel={2} />
     </article>
   );
@@ -391,7 +387,7 @@ export function EvaluationView({
           </ul>
         </nav>
       ) : null}
-      <h1 className="font-heading text-3xl font-bold">{e.title}</h1>
+      <h1 className="text-xl">{e.title}</h1>
       {e.sections.length + (e.grid ? 1 : 0) > 1 ? (
         <nav aria-label="Sur cette page" className="mt-2">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -447,10 +443,7 @@ export function EvaluationView({
           aria-labelledby={`s-${s.heading.replace(/\s+/g, "-")}`}
           className="mt-7"
         >
-          <h2
-            id={`s-${s.heading.replace(/\s+/g, "-")}`}
-            className="font-heading mb-2 text-xl font-bold"
-          >
+          <h2 id={`s-${s.heading.replace(/\s+/g, "-")}`} className="mb-2 text-sm font-semibold">
             {s.heading}
           </h2>
           <Markdown source={s.text} headingLevel={3} />
@@ -458,7 +451,7 @@ export function EvaluationView({
       ))}
       {e.documents.length > 0 ? (
         <section aria-labelledby="eval-documents" className="mt-7">
-          <h2 id="eval-documents" className="font-heading mb-2 text-xl font-bold">
+          <h2 id="eval-documents" className="mb-2 text-sm font-semibold">
             Documents à télécharger
           </h2>
           <ul className="list-disc space-y-1 pl-5">
@@ -479,7 +472,7 @@ export function EvaluationView({
       {deposit}
       {e.grid ? (
         <section aria-labelledby="grille" id="grille" className="mt-9 scroll-mt-6">
-          <h2 className="font-heading mb-1 text-xl font-bold">
+          <h2 className="mb-1 text-sm font-semibold">
             <span id="grille-titre">La grille d’évaluation</span>
           </h2>
           <p className="text-muted-foreground mb-3 text-sm">
@@ -488,7 +481,7 @@ export function EvaluationView({
           {e.grid.axes.map((axis, ai) => (
             <div key={ai} className="mb-6">
               {axis.label ? (
-                <h3 className="font-heading text-lg font-bold">
+                <h3 className="text-sm font-semibold">
                   {axis.label}{" "}
                   <span className="text-muted-foreground text-sm font-semibold">
                     · {pts(axis.points)}
@@ -532,13 +525,13 @@ export function CoursListView({ data }: { data: EspaceData }) {
     return <Empty title="Cours" text="Aucune fiche n’est publiée pour l’instant." />;
   return (
     <div className="max-w-4xl">
-      <h1 className="font-heading mb-6 text-3xl font-bold">Cours</h1>
+      <h1 className="mb-6">Cours</h1>
       <div className="space-y-8">
         {courses.map((c) => {
           const total = c.resources.reduce((n, r) => n + (r.minutes ?? 0), 0);
           return (
             <section key={c.number} aria-labelledby={`seance-${c.number}`}>
-              <h2 id={`seance-${c.number}`} className="font-heading mb-2 text-xl font-bold">
+              <h2 id={`seance-${c.number}`} className="mb-2 text-sm font-semibold">
                 {sessionHeading(c)}
                 {total ? (
                   <span className="text-muted-foreground ml-2 text-sm font-normal">
@@ -613,9 +606,7 @@ export function CoursFicheView({
           </Link>
           <span className="text-muted-foreground"> · {sessionHeading(course)}</span>
         </p>
-        <h1 id="fiche-titre" className="font-heading text-3xl font-bold">
-          {resource.title}
-        </h1>
+        <h1 id="fiche-titre">{resource.title}</h1>
         <p className="text-muted-foreground mt-1 mb-6 text-sm">
           {[
             resource.kindLabel,
@@ -647,7 +638,7 @@ export function CoursFicheView({
         ) : null}
         {resource.documents.length > 0 ? (
           <section aria-labelledby="fiche-documents" className="mt-8">
-            <h2 id="fiche-documents" className="font-heading text-xl font-bold">
+            <h2 id="fiche-documents" className="text-sm font-semibold">
               Documents à télécharger
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -743,10 +734,10 @@ export function NotesView({ data }: { data: EspaceData }) {
   );
   return (
     <div className="max-w-3xl">
-      <h1 className="font-heading mb-4 text-3xl font-bold">Notes et corrigés</h1>
+      <h1 className="mb-4">Notes et corrigés</h1>
       {results.length > 1 ? (
         <nav aria-label="Tes résultats" className={`${card} mb-5`}>
-          <h2 className="font-heading mb-2 text-lg font-bold">Vue d’ensemble</h2>
+          <h2 className="mb-2 text-sm font-semibold">Vue d’ensemble</h2>
           <ul className="divide-y text-sm">
             {results.map(({ sheet }, i) => (
               <li key={i}>
@@ -779,7 +770,7 @@ export function NotesView({ data }: { data: EspaceData }) {
               <details open={i === 0} className="group/result">
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <div>
-                    <h2 className="font-heading text-xl font-bold">{sheet.title}</h2>
+                    <h2 className="text-sm font-semibold">{sheet.title}</h2>
                     <p className="text-muted-foreground text-sm">
                       {[
                         sheet.date ? new Date(sheet.date).toLocaleDateString("fr-FR") : null,
@@ -793,7 +784,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                     </p>
 
                     {sheet.value !== null ? (
-                      <p className="bg-muted mt-2 inline-flex items-baseline gap-1 rounded-2xl px-4 py-2">
+                      <p className="bg-muted mt-2 inline-flex items-baseline gap-1 rounded-xl px-4 py-2">
                         <span className="font-heading text-5xl font-bold">{fmt(sheet.value)}</span>
                         <span className="text-foreground/80 text-xl font-semibold">
                           / {fmt(sheet.maxScore)}
@@ -822,10 +813,10 @@ export function NotesView({ data }: { data: EspaceData }) {
                           key={label}
                           className={
                             label === "Ce qui est réussi"
-                              ? "border-status-ready bg-muted rounded-2xl border p-4"
+                              ? "border-status-ready bg-muted rounded-xl border p-4"
                               : label === "Pour progresser"
-                                ? "border-status-todo bg-muted rounded-2xl border p-4"
-                                : "bg-muted/30 rounded-2xl border p-4"
+                                ? "border-status-todo bg-muted rounded-xl border p-4"
+                                : "bg-muted/30 rounded-xl border p-4"
                           }
                         >
                           <dt className="font-heading mb-1 text-lg font-bold">{label}</dt>
@@ -838,7 +829,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                   ) : null}
                   {sheet.attendance === "present" && sheet.criteria.length > 0 ? (
                     <div className="mt-4 space-y-2">
-                      <h3 className="font-heading text-xl font-bold">Détail par critère</h3>
+                      <h3 className="text-sm font-semibold">Détail par critère</h3>
                       {sheet.axes.some((a) => a.comment) ? (
                         <ul className="space-y-1 text-base">
                           {sheet.axes
@@ -854,7 +845,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                         {sheet.criteria.map((c, ci) => (
                           <li
                             key={c.label + ci}
-                            className="bg-background space-y-3 rounded-2xl border p-4"
+                            className="bg-background space-y-3 rounded-xl border p-4"
                           >
                             <p className="flex flex-wrap items-center justify-between gap-2">
                               <strong className="font-heading text-lg">
@@ -899,7 +890,7 @@ export function NotesView({ data }: { data: EspaceData }) {
                   ) : null}
                   {sheet.comments.length > 0 ? (
                     <div className="mt-4">
-                      <h3 className="font-medium">Commentaires</h3>
+                      <h3 className="text-sm font-semibold">Commentaires</h3>
                       <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-sm">
                         {sheet.comments.map((c, ci) => (
                           <li key={ci}>{c}</li>
@@ -920,7 +911,7 @@ export function NotesView({ data }: { data: EspaceData }) {
 export function Empty({ title, text }: { title: string; text: string }) {
   return (
     <div className="max-w-2xl space-y-2">
-      <h1 className="font-heading text-3xl font-bold">{title}</h1>
+      <h1 className="text-xl">{title}</h1>
       <p className="text-muted-foreground">{text}</p>
     </div>
   );
@@ -934,7 +925,7 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
   }
   return (
     <div className="max-w-3xl">
-      <h1 className="font-heading mb-4 text-3xl font-bold">Évaluations</h1>
+      <h1 className="mb-4">Évaluations</h1>
       <ul className="space-y-3">
         {espace.evaluations.map((e, i) => {
           const due = dateOfEvaluation(e, frise);

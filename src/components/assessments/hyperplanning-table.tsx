@@ -16,7 +16,7 @@ export function HyperplanningTable({
   return (
     <section aria-labelledby="hyperplanning" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="hyperplanning" className="text-lg font-medium">
+        <h2 id="hyperplanning" className="text-sm font-semibold">
           À saisir dans Hyperplanning
         </h2>
         <Button asChild size="sm" variant="secondary">

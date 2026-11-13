@@ -35,7 +35,7 @@ export function ProjectForm({
   return (
     <form onSubmit={keepFormValues(formAction)} className="space-y-5">
       <UnsavedChangesGuard />
-      <div className="bg-card rounded-3xl border p-5 shadow-sm">
+      <div className="bg-card rounded-xl border p-5 shadow-sm">
         <div className="space-y-2">
           <Label htmlFor="title" className="text-muted-foreground font-normal">
             Titre du projet
@@ -53,8 +53,8 @@ export function ProjectForm({
 
       <BriefEditor initial={project?.brief_md ?? ""} error={fe.briefMd} />
 
-      <section aria-labelledby="client-card" className="bg-card rounded-3xl border p-5 shadow-sm">
-        <h2 id="client-card" className="font-heading mb-1 text-xl font-bold">
+      <section aria-labelledby="client-card" className="bg-card rounded-xl border p-5 shadow-sm">
+        <h2 id="client-card" className="mb-1 text-sm font-semibold">
           Le client et le contexte
         </h2>
         <p id="clientContextMd-hint" className="text-muted-foreground mb-3 text-sm">
@@ -80,7 +80,7 @@ export function ProjectForm({
       </section>
 
       {state.error ? <ActionError error={state.error} /> : null}
-      <div className="bg-background/95 flex flex-wrap items-center gap-3 rounded-2xl border p-3 backdrop-blur md:sticky md:bottom-2">
+      <div className="bg-background/95 flex flex-wrap items-center gap-3 rounded-xl border p-3 backdrop-blur md:sticky md:bottom-2">
         <PendingButton type="submit" pending={pending} pendingLabel="Enregistrement…">
           {project ? "Enregistrer le projet" : "Créer le projet"}
         </PendingButton>

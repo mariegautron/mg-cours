@@ -31,7 +31,7 @@ export function BottomNav({ email }: { email: string }) {
   const current = activeEntry(pathname);
   const drawerActive = drawer.some((e) => e.key === current);
   const item =
-    "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[0.7rem] font-medium leading-tight";
+    "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium leading-tight";
 
   return (
     <>

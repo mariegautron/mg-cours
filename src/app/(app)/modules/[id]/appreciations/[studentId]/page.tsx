@@ -65,12 +65,12 @@ export default async function AppreciationPage({
         <div className="flex items-center gap-3">
           <span
             aria-hidden
-            className="bg-primary/20 text-primary flex size-12 items-center justify-center rounded-full text-lg font-bold"
+            className="bg-muted text-muted-foreground flex size-12 items-center justify-center rounded-full text-lg font-bold"
           >
             {initials}
           </span>
           <div>
-            <h2 id="ds" className="font-heading text-xl font-bold">
+            <h2 id="ds" className="text-sm font-semibold">
               {name}
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -81,7 +81,7 @@ export default async function AppreciationPage({
             </p>
           </div>
         </div>
-        <h3 className="font-heading pt-2 font-bold">D’après</h3>
+        <h3 className="pt-2 text-sm font-semibold">D’après</h3>
         <AppreciationBasisPanel
           excluded={found?.excluded ?? []}
           lines={found?.lines ?? []}

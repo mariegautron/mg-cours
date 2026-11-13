@@ -159,7 +159,7 @@ export function StudentLinksPanel({
 
   return (
     <div className="space-y-3 border-t pt-4">
-      <h3 className="font-heading text-lg font-bold">Liens personnels</h3>
+      <h3 className="text-sm font-semibold">Liens personnels</h3>
       <p className="text-muted-foreground text-sm">
         Un lien par étudiant·e : prénom, notes et corrigés publiés pour elle ou lui, et le même
         contenu que ci-dessus (publie-le d’abord). {active} lien{active > 1 ? "s" : ""} actif

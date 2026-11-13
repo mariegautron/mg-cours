@@ -333,7 +333,7 @@ export function ScheduleEditor({
 
       {onRows ? null : (
         <section aria-labelledby={`${id}-preview`} className="space-y-2 rounded-lg border p-3">
-          <h3 id={`${id}-preview`} className="text-sm font-medium">
+          <h3 id={`${id}-preview`} className="text-sm font-semibold">
             Aperçu : {plan.sessions.length} séance{plan.sessions.length > 1 ? "s" : ""} à créer
           </h3>
           <div aria-live="polite" className="space-y-2 text-sm">

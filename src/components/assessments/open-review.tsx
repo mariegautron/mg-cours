@@ -276,10 +276,10 @@ export function OpenReview({
         data-answer-card
         aria-label={`Question ${q.position} de ${c.name}`}
         onKeyDown={(e) => onCardKey(e, c, q)}
-        className="bg-card space-y-2 rounded-2xl border p-3"
+        className="bg-card space-y-2 rounded-xl border p-3"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-heading text-base font-bold">
+          <h3 className="text-sm font-semibold">
             {opts.showName ? `${c.name} · ` : ""}Question {q.position} · {fmt(q.points)} pt
             {q.points > 1 ? "s" : ""}
           </h3>
@@ -536,9 +536,9 @@ export function OpenReview({
         return first ? (
           <section
             aria-label="Attendu"
-            className="bg-muted/50 space-y-1 rounded-2xl border p-3 text-sm"
+            className="bg-muted/50 space-y-1 rounded-xl border p-3 text-sm"
           >
-            <h2 className="font-heading font-bold">Attendu (pour toi seule)</h2>
+            <h2 className="text-sm font-semibold">Attendu (pour toi seule)</h2>
             <p className="whitespace-pre-wrap">{first.expected || "Pas d’attendu rédigé."}</p>
           </section>
         ) : null;
@@ -616,7 +616,7 @@ export function OpenReview({
           )}
           <section
             aria-label="Commentaire global"
-            className="bg-card space-y-2 rounded-2xl border p-3"
+            className="bg-card space-y-2 rounded-xl border p-3"
           >
             <label className="block space-y-1 text-sm">
               <span className="font-heading text-base font-bold">Commentaire global</span>
@@ -628,7 +628,7 @@ export function OpenReview({
               />
             </label>
             {conflict(`${selected.id}|global`)}
-            <h3 className="font-heading text-base font-bold">Lettre de chaque critère</h3>
+            <h3 className="text-sm font-semibold">Lettre de chaque critère</h3>
             <p className="text-muted-foreground text-xs">
               Pré-choisie seulement quand tous les paliers de ses questions sont identiques.
             </p>
@@ -788,7 +788,7 @@ export function OpenReview({
       {showLinks ? (
         <section
           aria-label="Rattachements"
-          className="bg-card space-y-2 rounded-2xl border p-3 text-sm"
+          className="bg-card space-y-2 rounded-xl border p-3 text-sm"
         >
           <p className="text-muted-foreground">
             Chaque question se rattache à un ou plusieurs critères de la grille.
@@ -827,9 +827,9 @@ export function OpenReview({
         <dialog
           open
           aria-labelledby="write-title"
-          className="bg-background fixed inset-0 z-50 m-auto max-h-[85vh] w-[min(46rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border p-5 shadow-lg"
+          className="bg-background fixed inset-0 z-50 m-auto max-h-[85vh] w-[min(46rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border p-5 shadow-lg"
         >
-          <h2 id="write-title" className="font-heading text-xl font-bold">
+          <h2 id="write-title" className="text-sm font-semibold">
             Enregistrer dans l’évaluation
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">

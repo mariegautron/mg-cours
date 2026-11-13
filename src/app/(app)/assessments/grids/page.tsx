@@ -20,7 +20,7 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Grilles de correction</h1>
+          <h1 className="text-xl">Grilles de correction</h1>
           <p className="text-muted-foreground">Réutilisables dans plusieurs évaluations.</p>
         </div>
         <Button asChild>
@@ -52,7 +52,7 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
             <li key={g.id} id={`grille-${g.id}`} className="scroll-mt-20 rounded-lg border p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="font-medium">{g.name}</h2>
+                  <h2 className="text-sm font-semibold">{g.name}</h2>
                   <p className="text-muted-foreground text-sm">
                     {g.criteria.length} critère{g.criteria.length > 1 ? "s" : ""} ·{" "}
                     {criteriaTotal(g.criteria)} points
@@ -85,9 +85,11 @@ export default async function GridsPage({ searchParams }: PageProps<"/assessment
                   {groupByAxis(g.criteria, g.axes).map((group) => (
                     <section key={group.axis?.id ?? "none"}>
                       {group.axis ? (
-                        <h3 className="text-foreground font-medium">{group.axis.label}</h3>
+                        <h3 className="text-foreground text-sm font-semibold">
+                          {group.axis.label}
+                        </h3>
                       ) : g.axes.length > 0 ? (
-                        <h3 className="text-foreground font-medium">Autres critères</h3>
+                        <h3 className="text-foreground text-sm font-semibold">Autres critères</h3>
                       ) : null}
                       <ul className="space-y-2">
                         {group.criteria.map((c) => (

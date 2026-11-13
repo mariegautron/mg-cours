@@ -151,7 +151,7 @@ export default async function ResultsPage({
     <div className="max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-3xl font-semibold">
+          <h1 className="text-xl">
             {allDone ? "Tout est corrigé : envoyer les résultats" : "Envoyer les résultats"}
           </h1>
           <p className="text-muted-foreground">
@@ -181,7 +181,7 @@ export default async function ResultsPage({
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         <section aria-labelledby="ver" className={`${card} min-w-0 flex-[1_1_0]`}>
-          <h2 id="ver" className="text-lg font-semibold">
+          <h2 id="ver" className="text-sm font-semibold">
             Avant d’envoyer
           </h2>
           <ul className="divide-y text-sm">
@@ -227,7 +227,7 @@ export default async function ResultsPage({
             aria-labelledby="pre"
             className="bg-primary/10 border-primary/50 space-y-3 rounded-xl border p-5"
           >
-            <h2 id="pre" className="text-lg font-semibold">
+            <h2 id="pre" className="text-sm font-semibold">
               Comment envoyer ?
             </h2>
             {toRewrite.length > 0 ? (
@@ -288,7 +288,7 @@ export default async function ResultsPage({
 
           {hasGrades && previewPeople.length > 0 ? (
             <section aria-labelledby="apercu" className={card}>
-              <h2 id="apercu" className="font-semibold">
+              <h2 id="apercu" className="text-sm font-semibold">
                 Voir comme l’étudiant·e
               </h2>
               <p className="text-muted-foreground text-sm">
@@ -321,7 +321,7 @@ export default async function ResultsPage({
 
           {sheets.length > 0 ? (
             <section aria-labelledby="sui" className={card}>
-              <h2 id="sui" className="font-semibold">
+              <h2 id="sui" className="text-sm font-semibold">
                 Ensuite
               </h2>
               <p className="text-muted-foreground text-sm">

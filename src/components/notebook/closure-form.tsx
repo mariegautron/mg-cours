@@ -77,7 +77,7 @@ export function ClosureForm({
         <div className="min-w-0 flex-[1_1_0] space-y-4 lg:flex-[3_1_0]">
           <fieldset className={card}>
             <legend className="sr-only">La séance a été…</legend>
-            <h2 className="text-lg font-semibold" aria-hidden>
+            <h2 className="text-sm font-semibold" aria-hidden>
               1 · La séance a-t-elle eu lieu comme prévu ?
             </h2>
             <div className="flex flex-wrap gap-2">
@@ -101,7 +101,7 @@ export function ClosureForm({
 
           <section aria-labelledby="q2" className={card}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 id="q2" className="text-lg font-semibold">
+              <h2 id="q2" className="text-sm font-semibold">
                 2 · Qu’est-ce qui s’est vraiment passé ?
               </h2>
               <span className="text-muted-foreground text-sm">Relevé pendant le cours</span>
@@ -149,7 +149,7 @@ export function ClosureForm({
                                     return next;
                                   })
                                 }
-                                className={`focus-visible:ring-ring min-h-11 px-3 text-[0.8rem] font-semibold focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset ${
+                                className={`focus-visible:ring-ring min-h-11 px-3 text-[13px] font-semibold focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset ${
                                   isSkipped === value
                                     ? "bg-primary text-primary-foreground"
                                     : "hover:bg-accent"
@@ -193,7 +193,7 @@ export function ClosureForm({
           </section>
 
           <section aria-labelledby="q3" className={card}>
-            <h2 id="q3" className="text-lg font-semibold">
+            <h2 id="q3" className="text-sm font-semibold">
               3 · Que demandes-tu pour la prochaine fois ?
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -208,7 +208,7 @@ export function ClosureForm({
 
           <section aria-labelledby="q4" className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="q4" className="text-lg font-semibold">
+              <h2 id="q4" className="text-sm font-semibold">
                 4 · Et pour toi, que retiens-tu ?
               </h2>
               <Pill tone="warn">Pour toi seule</Pill>

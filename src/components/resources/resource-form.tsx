@@ -576,7 +576,7 @@ export function ResourceForm({
           className="min-w-0 flex-[2_1_0] space-y-3 lg:max-w-md"
         >
           <section className="bg-card space-y-4 rounded-xl border p-4">
-            <h2 className="font-heading text-lg font-bold">Classement</h2>
+            <h2 className="text-sm font-semibold">Classement</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Le type se choisit par les pastilles « C'est un… » ; la liste ne sert qu'à « Autre… ». */}
               <div className={showKindSelect ? "space-y-2" : "hidden"}>
@@ -760,7 +760,7 @@ export function ResourceForm({
           </section>
           <aside aria-labelledby="slides-title" className="bg-card space-y-2 rounded-xl border p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="slides-title" className="font-heading text-lg font-bold">
+              <h2 id="slides-title" className="text-sm font-semibold">
                 Diapositives ({slides.length ? slides.length + 1 : 0})
               </h2>
               {slides.length > 0 ? (
@@ -841,7 +841,7 @@ export function ResourceForm({
 
           {resource ? (
             <section className="bg-card space-y-2 rounded-xl border p-4 text-sm">
-              <h2 className="font-heading text-lg font-bold">Questions et corrigé</h2>
+              <h2 className="text-sm font-semibold">Questions et corrigé</h2>
               <p className="text-muted-foreground">
                 Les questions liées et le corrigé se gèrent depuis la fiche de la ressource.
               </p>

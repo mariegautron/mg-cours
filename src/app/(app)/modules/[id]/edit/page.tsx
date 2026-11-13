@@ -22,12 +22,12 @@ export default async function EditModulePage({ params }: PageProps<"/modules/[id
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {mod.name} »</h1>
+      <h1 className="text-xl">Modifier « {mod.name} »</h1>
       <ModuleForm action={updateModule.bind(null, id)} schools={schools} module={mod} />
 
       {/* Dupliquer et supprimer : une seule fois, ici (doublon D17). */}
       <section aria-labelledby="module-actions" className="space-y-4 border-t pt-6">
-        <h2 id="module-actions" className="text-lg font-medium">
+        <h2 id="module-actions" className="text-sm font-semibold">
           Dupliquer ou supprimer le module
         </h2>
         <ModuleDangerZone

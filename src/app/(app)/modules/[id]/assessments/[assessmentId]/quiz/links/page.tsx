@@ -72,9 +72,7 @@ export default async function QuizLinksPage({
       <div className="flex min-w-0 flex-[3_1_0] flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
-            <h1 className="font-heading text-3xl font-bold tracking-tight">
-              Liens personnels et suivi des copies
-            </h1>
+            <h1 className="text-xl">Liens personnels et suivi des copies</h1>
           </div>
           <p role="status">
             <Pill tone={quiz.status === "published" ? "published" : "plain"}>
@@ -105,7 +103,7 @@ export default async function QuizLinksPage({
               <div className="grid gap-4 md:grid-cols-2 md:[&>section:first-child]:order-2">
                 <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 id="ma" className="font-heading text-lg font-bold">
+                    <h2 id="ma" className="text-sm font-semibold">
                       En classe : code et QR
                     </h2>
                   </div>
@@ -164,7 +162,7 @@ export default async function QuizLinksPage({
                 </section>
 
                 <section aria-labelledby="mb" className={`${card} space-y-2`}>
-                  <h2 id="mb" className="font-heading text-lg font-bold">
+                  <h2 id="mb" className="text-sm font-semibold">
                     Par lien personnel
                   </h2>
                   <p className="text-muted-foreground text-sm">
@@ -209,7 +207,7 @@ export default async function QuizLinksPage({
             <div className="grid gap-4 pt-3 md:grid-cols-2 md:[&>section:first-child]:order-2">
               <section aria-labelledby="ma" className={`${card} border-primary/60 space-y-2`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 id="ma" className="font-heading text-lg font-bold">
+                  <h2 id="ma" className="text-sm font-semibold">
                     En classe : code et QR
                   </h2>
                 </div>
@@ -268,7 +266,7 @@ export default async function QuizLinksPage({
               </section>
 
               <section aria-labelledby="mb" className={`${card} space-y-2`}>
-                <h2 id="mb" className="font-heading text-lg font-bold">
+                <h2 id="mb" className="text-sm font-semibold">
                   Par lien personnel
                 </h2>
                 <p className="text-muted-foreground text-sm">
@@ -297,7 +295,7 @@ export default async function QuizLinksPage({
 
         <section aria-labelledby="follow" className={`${card} order-1`}>
           <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="follow" className="font-heading text-lg font-bold">
+            <h2 id="follow" className="text-sm font-semibold">
               Suivi des copies
             </h2>
             <span className="text-muted-foreground text-sm">
@@ -378,7 +376,7 @@ export default async function QuizLinksPage({
 
       <div className="min-w-0 flex-[1_1_0] space-y-4 lg:max-w-xs">
         <section aria-labelledby="ac" className={`${card} space-y-2`}>
-          <h2 id="ac" className="font-heading text-lg font-bold">
+          <h2 id="ac" className="text-sm font-semibold">
             Actions
           </h2>
           <div className="flex flex-col gap-2">

@@ -233,7 +233,7 @@ export function ExpectationsEditor({
   return (
     <div className="space-y-6">
       <section aria-labelledby={`${id}-read`} className="space-y-3 rounded-lg border p-4">
-        <h2 id={`${id}-read`} className="text-lg font-medium">
+        <h2 id={`${id}-read`} className="text-sm font-semibold">
           Lire la fiche de l’école
         </h2>
         {document ? (
@@ -307,7 +307,7 @@ export function ExpectationsEditor({
         <input type="hidden" name="expectationsJson" value={payload} />
 
         <section aria-labelledby={`${id}-objectives`} className="space-y-3">
-          <h2 id={`${id}-objectives`} className="text-lg font-medium">
+          <h2 id={`${id}-objectives`} className="text-sm font-semibold">
             Objectifs pédagogiques ({objectives.length})
           </h2>
           {objectives.length ? (
@@ -322,7 +322,7 @@ export function ExpectationsEditor({
         </section>
 
         <section aria-labelledby={`${id}-units`} className="space-y-3">
-          <h2 id={`${id}-units`} className="text-lg font-medium">
+          <h2 id={`${id}-units`} className="text-sm font-semibold">
             Unités pédagogiques ({units.length})
           </h2>
           <p className="text-muted-foreground text-sm">

@@ -279,7 +279,7 @@ function ImportPreview({
 
       {headers.length > 0 ? (
         <section aria-labelledby="columns" className="space-y-2 rounded-md border p-3">
-          <h2 id="columns" className="text-sm font-medium">
+          <h2 id="columns" className="text-sm font-semibold">
             Colonnes du fichier
           </h2>
           <p className="text-sm">
@@ -322,7 +322,7 @@ function ImportPreview({
 
       {previewState.groupPlan ? (
         <section aria-labelledby="group-plan" className="space-y-1 rounded-md border p-3">
-          <h2 id="group-plan" className="text-sm font-medium">
+          <h2 id="group-plan" className="text-sm font-semibold">
             Groupes de « {previewState.moduleName} »
           </h2>
           <p className="text-sm">{describeGroupPlan(previewState.groupPlan)}</p>

@@ -29,7 +29,8 @@ export function ModuleSideNav({
   const expanded = collapsedId !== open.id;
   const active = activeModuleNav(pathname, open.id);
   const link =
-    "text-muted-foreground hover:text-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-foreground focus-visible:ring-ring flex min-h-11 items-center rounded-lg px-2.5 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none aria-[current=page]:font-semibold";
+    // Sous-menu du module (DA « Atelier ») : 13 px, l'actif garde un trait lavande de 2 px à gauche.
+    "text-muted-foreground hover:text-foreground aria-[current=page]:text-foreground aria-[current=page]:border-primary focus-visible:ring-ring relative flex h-8 items-center rounded-r-lg border-l-2 border-transparent px-2.5 text-[13px] font-medium after:absolute after:inset-x-0 after:-inset-y-[6px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none";
 
   return (
     <div
@@ -43,7 +44,7 @@ export function ModuleSideNav({
         {/* Nom complet sur 2 lignes (et au survol), plus de nom tronqué (lot 4, point 15). */}
         <span
           title={open.name}
-          className="text-primary line-clamp-2 min-w-0 px-2 py-1 text-[0.8rem] font-bold break-words"
+          className="text-muted-foreground line-clamp-2 min-w-0 px-2 py-1 text-[13px] font-semibold break-words"
         >
           {open.name}
         </span>

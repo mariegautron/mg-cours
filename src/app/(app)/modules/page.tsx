@@ -163,7 +163,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Modules</h1>
+          <h1 className="text-xl">Modules</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">
             Chaque ligne dit où en est le module et ce qu’il faut faire ensuite. Un module se
             termine depuis sa dernière étape, « Terminer le module ».
@@ -280,9 +280,9 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
               <section
                 key={g.year}
                 aria-labelledby={`year-${g.year}`}
-                className="bg-card rounded-3xl border px-5 shadow-sm"
+                className="bg-card rounded-xl border px-5 shadow-sm"
               >
-                <h2 id={`year-${g.year}`} className="font-heading pt-4 text-lg font-bold">
+                <h2 id={`year-${g.year}`} className="pt-4 text-sm font-semibold">
                   {g.year}
                 </h2>
                 {list(g.rows, "h3")}
@@ -291,7 +291,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
           ) : (
             <section
               aria-label="Liste des modules"
-              className="bg-card rounded-3xl border px-5 shadow-sm"
+              className="bg-card rounded-xl border px-5 shadow-sm"
             >
               {list(shown, "h2")}
             </section>

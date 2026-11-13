@@ -55,7 +55,7 @@ export function QuizResults({ state }: { state: SubmittedState }) {
             Vos réponses sont envoyées
           </span>
         </p>
-        <h1 className="font-heading text-4xl font-bold tracking-tight">Merci, c’est terminé</h1>
+        <h1 className="text-xl">Merci, c’est terminé</h1>
         <p>
           Votre copie est rendue ({dateTime(state.submitted_at)}).
           {state.late ? " Elle a été rendue après l’heure limite." : ""}
@@ -74,7 +74,7 @@ export function QuizResults({ state }: { state: SubmittedState }) {
           </p>
           {r.review && r.questions ? (
             <div className="space-y-4">
-              <h2 className="text-lg font-medium">Corrigé</h2>
+              <h2 className="text-sm font-semibold">Corrigé</h2>
               {r.questions.map((q) => {
                 const item = r.review!.find((x) => x.position === q.position);
                 const answer = r.answers?.[String(q.position)];
@@ -84,7 +84,7 @@ export function QuizResults({ state }: { state: SubmittedState }) {
                     aria-labelledby={`c${q.position}`}
                     className="space-y-2 rounded-lg border p-4"
                   >
-                    <h3 id={`c${q.position}`} className="text-sm font-medium">
+                    <h3 id={`c${q.position}`} className="text-sm font-semibold">
                       Question {q.position} ·{" "}
                       {item
                         ? `${fmt(item.earned)} / ${fmt(item.max)} pt${item.max > 1 ? "s" : ""}`

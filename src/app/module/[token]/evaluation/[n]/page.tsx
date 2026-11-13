@@ -56,9 +56,9 @@ export default async function EspaceEvaluationPage({
           </ul>
         </nav>
       ) : null}
-      <h1 className="font-heading text-2xl font-bold">{e.title}</h1>
+      <h1 className="text-xl">{e.title}</h1>
       {e.type ? <p className="text-muted-foreground mt-1 text-sm">{e.type}</p> : null}
-      <dl className="bg-card mt-4 grid gap-3 rounded-2xl border p-4 sm:grid-cols-2">
+      <dl className="bg-card mt-4 grid gap-3 rounded-xl border p-4 sm:grid-cols-2">
         {facts.map(([label, value]) => (
           <div key={label}>
             <dt className="text-muted-foreground text-xs font-bold tracking-widest uppercase">
@@ -71,7 +71,7 @@ export default async function EspaceEvaluationPage({
 
       {e.sections.map((s) => (
         <section key={s.heading} aria-labelledby={`s-${s.heading}`} className="mt-6">
-          <h2 id={`s-${s.heading}`} className="font-heading mb-2 text-xl font-bold">
+          <h2 id={`s-${s.heading}`} className="mb-2 text-sm font-semibold">
             {s.heading}
           </h2>
           <Markdown source={s.text} headingLevel={3} />
@@ -80,7 +80,7 @@ export default async function EspaceEvaluationPage({
 
       {e.grid ? (
         <section aria-labelledby="grille" className="mt-8">
-          <h2 id="grille" className="font-heading mb-1 text-xl font-bold">
+          <h2 id="grille" className="mb-1 text-sm font-semibold">
             La grille d’évaluation
           </h2>
           <p className="text-muted-foreground mb-3 text-sm">
@@ -89,7 +89,7 @@ export default async function EspaceEvaluationPage({
           {e.grid.axes.map((axis, ai) => (
             <div key={ai} className="mb-5">
               {axis.label ? (
-                <h3 className="font-heading text-lg font-bold">
+                <h3 className="text-sm font-semibold">
                   {axis.label}{" "}
                   <span className="text-muted-foreground text-sm font-semibold">
                     · {axis.points} point{axis.points > 1 ? "s" : ""}
@@ -98,7 +98,7 @@ export default async function EspaceEvaluationPage({
               ) : null}
               <ul className="mt-2 space-y-3">
                 {axis.criteria.map((c, ci) => (
-                  <li key={ci} className="bg-card rounded-2xl border p-4">
+                  <li key={ci} className="bg-card rounded-xl border p-4">
                     <p className="font-semibold">
                       {c.label}
                       <span className="text-muted-foreground ml-2 text-sm font-normal">

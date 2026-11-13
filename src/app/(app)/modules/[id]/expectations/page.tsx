@@ -41,7 +41,7 @@ export default async function ExpectationsPage({
         <Link href={`/modules/${mod.id}`} className="text-sm underline underline-offset-2">
           ← {mod.name}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Attendus de l’école</h1>
+        <h1 className="mt-2">Attendus de l’école</h1>
         <p className="text-muted-foreground">
           Objectifs pédagogiques du module et objectif de chaque unité, lus dans la fiche YNOV.
         </p>
@@ -86,14 +86,14 @@ export default async function ExpectationsPage({
       />
 
       <section aria-labelledby="couverture" className="space-y-2 rounded-lg border p-4">
-        <h2 id="couverture" className="text-lg font-medium">
+        <h2 id="couverture" className="text-sm font-semibold">
           Couverture : quelles séances et évaluations traitent chaque attendu
         </h2>
         <ExpectationCoverage moduleId={mod.id} />
       </section>
 
       <section aria-labelledby="planning" className="space-y-2 rounded-lg border p-4">
-        <h2 id="planning" className="text-lg font-medium">
+        <h2 id="planning" className="text-sm font-semibold">
           Séances
         </h2>
         <p className="text-muted-foreground text-sm">

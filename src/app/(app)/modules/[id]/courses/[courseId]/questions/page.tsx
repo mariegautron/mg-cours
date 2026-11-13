@@ -38,12 +38,8 @@ export default async function CourseQuestionsPage({
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            {mod.name}
-          </p>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            Questions de la séance : {course.title}
-          </h1>
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">{mod.name}</p>
+          <h1 className="text-xl">Questions de la séance : {course.title}</h1>
           <p className="text-muted-foreground mt-1">
             Les questions se lient aux ressources. Le quiz de fin de séance reprend celles des
             ressources du déroulé de cette séance.
@@ -77,7 +73,7 @@ export default async function CourseQuestionsPage({
               .filter((p) => p.resourceId === r.id)
               .map((p) => p.questionId);
             return (
-              <li key={r.id} className="bg-card rounded-2xl border p-4">
+              <li key={r.id} className="bg-card rounded-xl border p-4">
                 <details open={resources.length === 1}>
                   <summary className="min-h-11 cursor-pointer py-1 font-semibold">
                     {r.title}

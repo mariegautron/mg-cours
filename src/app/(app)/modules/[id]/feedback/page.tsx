@@ -60,8 +60,8 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
   return (
     <div className="max-w-5xl space-y-5">
       <header className="space-y-1">
-        <p className="text-primary text-xs font-bold tracking-widest uppercase">Fin de module</p>
-        <h1 className="font-heading text-3xl font-bold tracking-tight">Retour des étudiant·es</h1>
+        <p className="text-muted-foreground text-[13px] font-medium">Fin de module</p>
+        <h1 className="text-xl">Retour des étudiant·es</h1>
         <p className="text-muted-foreground">
           Un questionnaire anonyme pour savoir ce qui a marché et ce qu’il faut changer pour la
           prochaine promo. Les réponses n’ont aucun lien avec une personne.
@@ -77,7 +77,7 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
           {id === AGILE_FEEDBACK_MODULE_ID && summary.total > 0 ? <FeedbackAnalysisAgile /> : null}
 
           <section aria-labelledby="fl" className={`${card} space-y-3`}>
-            <h2 id="fl" className="font-heading text-xl font-bold">
+            <h2 id="fl" className="text-sm font-semibold">
               Donner accès au questionnaire
             </h2>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -101,7 +101,7 @@ export default async function FeedbackPage({ params }: PageProps<"/modules/[id]/
           </section>
 
           <section aria-labelledby="fr" className={`${card} space-y-4`}>
-            <h2 id="fr" className="font-heading text-xl font-bold">
+            <h2 id="fr" className="text-sm font-semibold">
               Réponses reçues : {summary.total}
             </h2>
             {summary.total === 0 ? (

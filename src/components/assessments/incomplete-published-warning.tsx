@@ -36,7 +36,7 @@ export function IncompletePublishedWarning({
       aria-labelledby="inc-pub"
       className="border-status-todo bg-muted space-y-2 rounded-xl border p-4"
     >
-      <h2 id="inc-pub" className="font-semibold">
+      <h2 id="inc-pub" className="text-sm font-semibold">
         Résultats publiés pour une copie incomplète
       </h2>
       <p className="text-sm">

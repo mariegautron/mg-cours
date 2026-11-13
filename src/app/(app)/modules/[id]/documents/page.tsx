@@ -19,7 +19,7 @@ export default async function ModuleDocumentsPage({
   return (
     <div className="max-w-4xl space-y-6">
       <section aria-labelledby="documents">
-        <h1 id="documents" className="font-heading mb-3 text-2xl font-bold">
+        <h1 id="documents" className="mb-3">
           Documents{documents.length ? ` (${documents.length})` : ""}
         </h1>
         {mod.slides_url ? (
@@ -38,7 +38,7 @@ export default async function ModuleDocumentsPage({
 
       {/* Exports pour Moodle : une seule fois, ici (doublon D25), plus sur chaque séance. */}
       <section aria-labelledby="moodle" className="space-y-3 rounded-lg border p-4">
-        <h2 id="moodle" className="text-lg font-medium">
+        <h2 id="moodle" className="text-sm font-semibold">
           Pour Moodle
         </h2>
         <div className="flex flex-wrap items-center gap-2">

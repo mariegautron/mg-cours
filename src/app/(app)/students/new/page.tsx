@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Nouvel·le étudiant·e" };
 export default function NewStudentPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Nouvel·le étudiant·e</h1>
+      <h1 className="text-xl">Nouvel·le étudiant·e</h1>
       <StudentForm action={createStudent} />
     </div>
   );

@@ -77,7 +77,7 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">Banque de questions</h1>
+          <h1 className="text-xl">Banque de questions</h1>
           <p className="text-muted-foreground">
             {active.length} question{active.length > 1 ? "s" : ""}, à toi et non liées à un module.
             Chaque QCM en tire un nombre au hasard pour chaque étudiant·e, dans un ordre différent.

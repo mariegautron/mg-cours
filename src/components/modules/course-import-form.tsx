@@ -97,7 +97,7 @@ export function CourseImportForm({
       </fieldset>
 
       <section aria-labelledby="preview" className="space-y-2 rounded-lg border p-4">
-        <h2 id="preview" className="font-medium">
+        <h2 id="preview" className="text-sm font-semibold">
           Aperçu
         </h2>
         <p role="status" className="text-sm">

@@ -66,10 +66,10 @@ export function listSlide(section: number, heading: string, items: string[]): Pr
 
 /** Mise en page propre à chaque rôle de diapo (titre « Exemple : … », « À toi : … »…). */
 const ROLE_FRAME: Record<SlideRole, string> = {
-  definition: "border-primary bg-primary/10 rounded-3xl border-4 p-8",
+  definition: "border-primary bg-primary/10 rounded-xl border-4 p-8",
   exemple: "border-primary/60 border-l-8 pl-8",
-  exercice: "border-primary bg-primary/15 rounded-3xl border-2 border-dashed p-8",
-  attention: "rounded-3xl border-4 border-status-todo bg-muted p-8",
+  exercice: "border-primary bg-primary/15 rounded-xl border-2 border-dashed p-8",
+  attention: "rounded-xl border-4 border-status-todo bg-muted p-8",
   schema: "",
 };
 
@@ -333,7 +333,7 @@ function cadreSlide(
           {cadre.blocks.map((b) => (
             <div
               key={b.key}
-              className={`rounded-3xl border-2 p-6 ${b.key_ ? "border-primary bg-primary/15" : "bg-card"} ${b.wide ? "sm:col-span-2" : ""}`}
+              className={`rounded-xl border-2 p-6 ${b.key_ ? "border-primary bg-primary/15" : "bg-card"} ${b.wide ? "sm:col-span-2" : ""}`}
             >
               <dt className="text-primary text-xl font-bold tracking-widest uppercase">
                 {b.label}
@@ -386,7 +386,7 @@ function gridSlides(section: number, grid: NonNullable<SubjectDeckInput["grid"]>
             {criterion.levels.map((l, li) => (
               <li
                 key={li}
-                className={`rounded-3xl border-2 p-5 ${li === 0 ? "border-primary bg-primary/15" : "bg-card"}`}
+                className={`rounded-xl border-2 p-5 ${li === 0 ? "border-primary bg-primary/15" : "bg-card"}`}
               >
                 <span className="font-heading text-6xl leading-none font-bold">
                   {l.points}

@@ -300,8 +300,8 @@ export default async function AssessmentPage({
     : 0;
   // Oral : heure de début et durée par groupe, réglables la veille depuis la préparation.
   const oralTiming = isOralAssessment(assessment) ? (
-    <section aria-labelledby="oral-timing" className="bg-card rounded-3xl border p-5 shadow-sm">
-      <h2 id="oral-timing" className="font-heading mb-2 text-xl font-bold">
+    <section aria-labelledby="oral-timing" className="bg-card rounded-xl border p-5 shadow-sm">
+      <h2 id="oral-timing" className="mb-2 text-sm font-semibold">
         Horaires de l’oral
       </h2>
       <OralTimingForm
@@ -387,7 +387,7 @@ export default async function AssessmentPage({
     submitMode: submitModeOf(assessment),
     qcm: dayJExtras.qcm.get(assessmentId),
   });
-  const card = "bg-card rounded-3xl border p-4";
+  const card = "bg-card rounded-xl border p-4";
   // Une fois la date passée (ou des notes saisies), on vient pour les copies : elles passent en haut,
   // la préparation (cadre, sujet, grille, attendus) se replie sous un sommaire (lot 0 E, points 35-36).
   // Un rattrapage : on vient pour la (les) copie(s) de la personne excusée, en haut tout de suite.
@@ -402,7 +402,7 @@ export default async function AssessmentPage({
   // « Attendus évalués » : dans les deux mises en page (note de groupe et individuelle).
   const evaluatedSection = (
     <section aria-labelledby="at" className={card}>
-      <h2 id="at" className="font-heading mb-1.5 text-lg font-bold">
+      <h2 id="at" className="mb-1.5 text-sm font-semibold">
         Attendus évalués
       </h2>
       <p className="text-muted-foreground mb-2 text-sm">Choisis ceux que l’épreuve vérifie.</p>
@@ -496,7 +496,7 @@ export default async function AssessmentPage({
           >
             ← Les évaluations
           </Link>
-          <h1 className="font-heading text-3xl font-bold tracking-tight">{assessment.title}</h1>
+          <h1 className="text-xl">{assessment.title}</h1>
           <p className="text-muted-foreground mt-1">
             {[
               assessment.project_role ? "Projet fil rouge" : null,
@@ -760,7 +760,7 @@ export default async function AssessmentPage({
       </div>
 
       <details id="preparation" open={!copiesFirst} className="group/prep space-y-4">
-        <summary className="hover:bg-muted font-heading flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2 text-lg font-bold">
+        <summary className="hover:bg-muted font-heading flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-lg font-bold">
           Préparation
           <span className="text-muted-foreground font-sans text-sm font-normal">
             {[
@@ -791,7 +791,7 @@ export default async function AssessmentPage({
             <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
               {!assessment.is_group_grade && blocks.examKind ? (
                 <section aria-labelledby="ty" className={`${card} space-y-3`}>
-                  <h2 id="ty" className="font-heading text-xl font-bold">
+                  <h2 id="ty" className="text-sm font-semibold">
                     Quelle épreuve ?
                   </h2>
                   <ExamKindForm
@@ -811,7 +811,7 @@ export default async function AssessmentPage({
               ) : null}
               {kindNow === "school_grade" ? (
                 <section aria-labelledby="ng" className={`${card} space-y-2`}>
-                  <h2 id="ng" className="font-heading text-xl font-bold">
+                  <h2 id="ng" className="text-sm font-semibold">
                     Note de l’école
                   </h2>
                   <p className="text-sm">
@@ -833,7 +833,7 @@ export default async function AssessmentPage({
                 className={`${card} w-full min-w-0 flex-1 space-y-4 lg:basis-0`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 id="gr" className="font-heading text-xl font-bold">
+                  <h2 id="gr" className="text-sm font-semibold">
                     Grille de correction
                   </h2>
                   {grid ? <Pill tone="ok">{formatNumber(gridTotal)} points</Pill> : null}
@@ -890,7 +890,7 @@ export default async function AssessmentPage({
                               </div>
                             ) : null}
                             {g.criteria.map((c) => (
-                              <div key={c.id} className="rounded-2xl border p-3">
+                              <div key={c.id} className="rounded-xl border p-3">
                                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                                   <strong>
                                     {c.label}
@@ -910,7 +910,7 @@ export default async function AssessmentPage({
                                         <strong>
                                           {formatNumber(l.points)} pt{l.points >= 2 ? "s" : ""}
                                         </strong>
-                                        <span className="text-muted-foreground block text-[0.8rem]">
+                                        <span className="text-muted-foreground block text-[13px]">
                                           {l.description}
                                         </span>
                                       </li>
@@ -966,7 +966,7 @@ export default async function AssessmentPage({
 
               <section aria-labelledby="ce" className={card} hidden={!blocks.dayJ}>
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <h2 id="ce" className="font-heading text-xl font-bold">
+                  <h2 id="ce" className="text-sm font-semibold">
                     Le cadre pour les étudiant·es
                   </h2>
                   <Pill tone={toneOf[frame.tone]} className="whitespace-normal">
@@ -1083,7 +1083,7 @@ export default async function AssessmentPage({
               {blocks.expectations ? evaluatedSection : null}
               {assessment.is_group_grade ? (
                 <section aria-labelledby="ae" className={card}>
-                  <h2 id="ae" className="font-heading mb-1.5 text-xl font-bold">
+                  <h2 id="ae" className="mb-1.5 text-sm font-semibold">
                     Ce qu’on évalue
                   </h2>
                   {blank(assessment.evaluated_md) ? (
@@ -1096,7 +1096,7 @@ export default async function AssessmentPage({
                 </section>
               ) : blocks.makeupAndBonus ? (
                 <section aria-labelledby="bonus" className={card}>
-                  <h2 id="bonus" className="font-heading mb-1.5 text-lg font-bold">
+                  <h2 id="bonus" className="mb-1.5 text-sm font-semibold">
                     Note bonus
                   </h2>
                   <BonusSettings
@@ -1116,7 +1116,7 @@ export default async function AssessmentPage({
             hidden={!blocks.subject}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="subject" className="font-heading text-xl font-bold">
+              <h2 id="subject" className="text-sm font-semibold">
                 Sujet
               </h2>
             </div>
@@ -1130,14 +1130,14 @@ export default async function AssessmentPage({
 
             {subjectParts.map((part) => (
               <div key={part.key}>
-                <h3 className="mb-1 font-bold">{part.heading}</h3>
+                <h3 className="mb-1 text-sm font-semibold">{part.heading}</h3>
                 {part.markdown ? <Markdown source={part.text} /> : <p>{part.text}</p>}
               </div>
             ))}
 
             {files.length > 0 ? (
               <div>
-                <h3 className="mb-1 font-bold">Fichiers joints</h3>
+                <h3 className="mb-1 text-sm font-semibold">Fichiers joints</h3>
                 <ul className="space-y-1 text-sm">
                   {files.map((f) => (
                     <li key={f.path}>
@@ -1162,7 +1162,7 @@ export default async function AssessmentPage({
           blocks.submissions &&
           examKindOf(assessment) !== "qcm" ? (
             <section aria-labelledby="rendus" className="space-y-3">
-              <h2 id="rendus" className="text-lg font-medium">
+              <h2 id="rendus" className="text-sm font-semibold">
                 Rendus déposés
               </h2>
               <p className="text-muted-foreground text-sm">

@@ -33,7 +33,7 @@ export default async function EditAssessmentPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Modifier « {assessment.title} »</h1>
+      <h1 className="text-xl">Modifier « {assessment.title} »</h1>
       {assessment.needs_review ? (
         <p
           role="status"
@@ -56,7 +56,7 @@ export default async function EditAssessmentPage({
         assessment={assessment}
       >
         <section aria-labelledby="files-heading" className="max-w-xl space-y-3">
-          <h2 id="files-heading" className="text-lg font-medium">
+          <h2 id="files-heading" className="text-sm font-semibold">
             Fichiers joints au sujet
           </h2>
           <p className="text-muted-foreground text-sm">

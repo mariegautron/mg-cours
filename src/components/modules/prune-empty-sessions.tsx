@@ -38,7 +38,7 @@ export function PruneEmptySessions({
   }
 
   return (
-    <details className="bg-card rounded-3xl border p-4">
+    <details className="bg-card rounded-xl border p-4">
       <summary className="min-h-11 cursor-pointer text-sm font-semibold">
         {sessions.length} séance{sessions.length > 1 ? "s" : ""} vide
         {sessions.length > 1 ? "s" : ""} sans date : les supprimer ?

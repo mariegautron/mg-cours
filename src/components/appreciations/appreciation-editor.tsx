@@ -203,9 +203,7 @@ export function AppreciationEditor({
       {confirmDialog}
       <section className="bg-card space-y-3 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 id="ed" className="font-heading text-2xl font-bold">
-            L’appréciation de {name}
-          </h1>
+          <h1 id="ed">L’appréciation de {name}</h1>
           <Pill tone={status === "written" ? "ok" : status === "too_long" ? "lock" : "warn"}>
             {STATUS_LABELS[status]}
             {saved !== text.trim() && status !== "todo" ? " · à enregistrer" : ""}
@@ -295,7 +293,7 @@ export function AppreciationEditor({
       </section>
 
       <section aria-labelledby="ok" className="bg-primary/10 space-y-2 rounded-xl border p-5">
-        <h2 id="ok" className="text-lg font-semibold">
+        <h2 id="ok" className="text-sm font-semibold">
           Quand c’est bon
         </h2>
         <div className="flex flex-wrap gap-2">

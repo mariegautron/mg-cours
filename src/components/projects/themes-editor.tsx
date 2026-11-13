@@ -108,8 +108,8 @@ export function ThemesEditor({
           </div>
 
           {current ? (
-            <div className="bg-muted/30 w-full min-w-0 flex-1 space-y-3 rounded-2xl border p-4">
-              <h3 className="font-heading text-lg font-bold">
+            <div className="bg-muted/30 w-full min-w-0 flex-1 space-y-3 rounded-xl border p-4">
+              <h3 className="text-sm font-semibold">
                 Détail du thème : {current.title.trim() || "sans titre"}
               </h3>
               <div className="space-y-1">

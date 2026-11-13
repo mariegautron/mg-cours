@@ -102,7 +102,7 @@ export function SimpleInvoice({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 id={`simple-invoice-${moduleId}`} className="text-lg font-semibold">
+          <h2 id={`simple-invoice-${moduleId}`} className="text-sm font-semibold">
             {title && href ? (
               <Link href={href} className="underline-offset-2 hover:underline">
                 {title}

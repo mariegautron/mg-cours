@@ -41,7 +41,7 @@ export function ModuleRoster({ moduleId, rows }: { moduleId: string; rows: Roste
   return (
     <section aria-labelledby="roster" className="rounded-lg border p-4">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="roster" className="text-lg font-medium">
+        <h2 id="roster" className="text-sm font-semibold">
           Inscrit·es · {active.length}
           {rows.length > active.length ? (
             <span className="text-muted-foreground text-sm font-normal">

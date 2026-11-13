@@ -90,7 +90,7 @@ export function PhraseManager({ phrases }: { phrases: Phrases }) {
     <div className="space-y-5">
       {PARTS.map((part) => (
         <section key={part} aria-labelledby={`phrases-${part}`} className="space-y-2">
-          <h3 id={`phrases-${part}`} className="font-medium">
+          <h3 id={`phrases-${part}`} className="text-sm font-semibold">
             {PART_LABELS[part]}
           </h3>
           {phrases[part].length === 0 ? (

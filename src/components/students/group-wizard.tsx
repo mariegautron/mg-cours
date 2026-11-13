@@ -76,7 +76,7 @@ const WAYS: { value: Way; label: string; hint: string; go: string }[] = [
 ];
 
 const STEP_LABELS = ["La manière", "Les groupes", "Récapitulatif"] as const;
-const card = "bg-card rounded-3xl border p-5 shadow-sm";
+const card = "bg-card rounded-xl border p-5 shadow-sm";
 
 /** Assistant « Constituer les groupes » en trois étapes (US-132, maquettes Groupes*). */
 export function GroupWizard({
@@ -207,12 +207,7 @@ export function GroupWizard({
   if (result.created) {
     return (
       <section aria-labelledby="done" className={`${card} space-y-3`}>
-        <h2
-          id="done"
-          ref={heading}
-          tabIndex={-1}
-          className="font-heading text-2xl font-bold outline-none"
-        >
+        <h2 id="done" ref={heading} tabIndex={-1} className="text-sm font-semibold outline-none">
           {result.created} groupe{result.created > 1 ? "s" : ""} créé{result.created > 1 ? "s" : ""}
         </h2>
         {result.themesMessage ? <p role="status">{result.themesMessage}</p> : null}
@@ -298,14 +293,8 @@ export function GroupWizard({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-primary mb-1.5 text-xs font-bold tracking-widest uppercase">
-            Étudiant·es
-          </p>
-          <h1
-            ref={heading}
-            tabIndex={-1}
-            className="font-heading text-3xl font-bold tracking-tight outline-none"
-          >
+          <p className="text-muted-foreground mb-1.5 text-[13px] font-medium">Étudiant·es</p>
+          <h1 ref={heading} tabIndex={-1} className="outline-none">
             {titles[step][0]}
           </h1>
           <p className="text-muted-foreground mt-1">{titles[step][1]}</p>
@@ -326,7 +315,7 @@ export function GroupWizard({
         <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
           <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
             <section aria-labelledby="nb" className={card}>
-              <h2 id="nb" className="font-heading mb-2.5 text-xl font-bold">
+              <h2 id="nb" className="mb-2.5 text-sm font-semibold">
                 Combien de groupes ?
               </h2>
               <div className="flex flex-wrap items-center gap-4">
@@ -369,14 +358,14 @@ export function GroupWizard({
                   <strong>{describeSizes(sizesPreview) || "—"}</strong>.
                 </p>
               </div>
-              <p className="text-muted-foreground mt-2 text-[0.8rem]">
+              <p className="text-muted-foreground mt-2 text-[13px]">
                 Tu peux aussi donner une taille (« groupes de 3 ») : je calcule le nombre de
                 groupes.
               </p>
             </section>
 
             <section aria-labelledby="ma" className={card}>
-              <h2 id="ma" className="font-heading mb-2.5 text-xl font-bold">
+              <h2 id="ma" className="mb-2.5 text-sm font-semibold">
                 Comment veux-tu les former ?
               </h2>
               <div
@@ -387,7 +376,7 @@ export function GroupWizard({
                 {WAYS.map((w) => (
                   <label
                     key={w.value}
-                    className={`flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-4 ${
+                    className={`flex cursor-pointer flex-col gap-1.5 rounded-xl border p-4 ${
                       way === w.value ? "border-primary/70 bg-primary/10" : "bg-muted/40"
                     }`}
                   >
@@ -408,7 +397,7 @@ export function GroupWizard({
             </section>
 
             <section aria-labelledby="re" className={card}>
-              <h2 id="re" className="font-heading mb-1 text-xl font-bold">
+              <h2 id="re" className="mb-1 text-sm font-semibold">
                 Règles (facultatives)
               </h2>
               <label className="flex min-h-14 items-start gap-3 border-t py-3">
@@ -448,7 +437,7 @@ export function GroupWizard({
             aria-labelledby="qui"
             className={`${card} w-full min-w-0 space-y-3 lg:w-[26rem] lg:flex-none`}
           >
-            <h2 id="qui" className="font-heading text-xl font-bold">
+            <h2 id="qui" className="text-sm font-semibold">
               Qui est concerné·e ?
             </h2>
             <p className="text-muted-foreground text-sm">
@@ -529,7 +518,7 @@ export function GroupWizard({
                 </ul>
               </fieldset>
             ) : null}
-            <p className="text-muted-foreground border-t pt-3 text-[0.8rem]">
+            <p className="text-muted-foreground border-t pt-3 text-[13px]">
               Les photos servent à t’y retrouver. Elles ne sont jamais projetées ni exportées.
             </p>
           </aside>
@@ -555,7 +544,7 @@ export function GroupWizard({
                 className={`${card} w-full min-w-0 lg:w-[20rem] lg:flex-none`}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <h2 id="sg" className="font-heading text-xl font-bold">
+                  <h2 id="sg" className="text-sm font-semibold">
                     Sans groupe
                   </h2>
                   <span className="text-muted-foreground text-sm">
@@ -767,7 +756,7 @@ export function GroupWizard({
               Ajouter un groupe
             </Button>
           ) : null}
-          <p className="text-muted-foreground text-[0.8rem]">
+          <p className="text-muted-foreground text-[13px]">
             Un groupe verrouillé, ou une personne verrouillée, ne bouge pas quand tu refais le
             tirage. Les photos ne sont jamais projetées.
           </p>
@@ -783,7 +772,7 @@ export function GroupWizard({
         <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
           <section aria-labelledby="rg" className={`${card} w-full min-w-0 flex-1 lg:basis-0`}>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 id="rg" className="font-heading text-xl font-bold">
+              <h2 id="rg" className="text-sm font-semibold">
                 {groups.length} groupe{groups.length > 1 ? "s" : ""} · {summary.placed} étudiant·e
                 {summary.placed > 1 ? "s" : ""}
               </h2>
@@ -793,10 +782,10 @@ export function GroupWizard({
               {groups.map((g, gi) => (
                 <li key={g.id} className="flex flex-wrap items-center gap-3 border-t py-3">
                   <div className="w-44 min-w-0">
-                    <h3 className="font-heading text-base font-bold break-words">
+                    <h3 className="text-sm font-semibold break-words">
                       {g.name.trim() || `Groupe ${gi + 1}`}
                     </h3>
-                    <span className="text-muted-foreground text-[0.8rem]">
+                    <span className="text-muted-foreground text-[13px]">
                       {g.members.length} personne{g.members.length > 1 ? "s" : ""}
                     </span>
                   </div>
@@ -828,7 +817,7 @@ export function GroupWizard({
 
           <div className="w-full min-w-0 space-y-4 lg:w-[26rem] lg:flex-none">
             <section aria-labelledby="ve" className={card}>
-              <h2 id="ve" className="font-heading mb-2 text-xl font-bold">
+              <h2 id="ve" className="mb-2 text-sm font-semibold">
                 Vérifications
               </h2>
               <ul className="space-y-2 text-sm">
@@ -858,7 +847,7 @@ export function GroupWizard({
             </section>
 
             <section aria-labelledby="ty" className={card}>
-              <h2 id="ty" className="font-heading mb-2 text-xl font-bold">
+              <h2 id="ty" className="mb-2 text-sm font-semibold">
                 Type des groupes
               </h2>
               <Label htmlFor="type" className="sr-only">
@@ -877,7 +866,7 @@ export function GroupWizard({
             </section>
 
             <section aria-labelledby="et" className={card}>
-              <h2 id="et" className="font-heading mb-2 text-xl font-bold">
+              <h2 id="et" className="mb-2 text-sm font-semibold">
                 Et ensuite ?
               </h2>
               <div className="space-y-3 text-sm">
@@ -920,7 +909,7 @@ export function GroupWizard({
         </div>
       ) : null}
 
-      <div className="bg-background/95 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 backdrop-blur md:sticky md:bottom-2">
+      <div className="bg-background/95 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 backdrop-blur md:sticky md:bottom-2">
         <div className="flex flex-wrap items-center gap-3">
           {step === 0 ? (
             <Button type="button" variant="ghost" asChild>
