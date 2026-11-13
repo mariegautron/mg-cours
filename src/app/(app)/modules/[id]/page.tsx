@@ -9,6 +9,7 @@ import { Pencil, Presentation } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
 import { PhaseSteps } from "@/components/modules/phase-steps";
+import { SchoolTopicsCard } from "@/components/modules/school-topics-card";
 import { ChevronRight } from "lucide-react";
 import { listToCorrect } from "@/lib/dashboard/overview-queries";
 import { modulePhase, phaseFromParam, PREPARE_STEP_KEYS, stepsFor } from "@/lib/modules/phases";
@@ -408,6 +409,10 @@ export default async function ModulePage({
         </div>
 
         <div className="w-full min-w-0 space-y-4 lg:w-96 lg:flex-none">
+          <SchoolTopicsCard
+            moduleId={mod.id}
+            initial={(mod as { school_topics?: string | null }).school_topics ?? ""}
+          />
           {finishedView ? (
             <>
               {mod.finished_at && !mod.archived_at ? (

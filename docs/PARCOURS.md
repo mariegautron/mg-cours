@@ -26,6 +26,26 @@ Statut QA : ⬜ à faire · 📝 prompt de test prêt · 🚧 en cours · 🔧 c
 
 Les numéros restent stables (les prompts de test y font référence). P6 n'a plus de section propre.
 
+## 13 novembre 2026 : nouvelle navigation (lots N1-N4) et « Sujets à voir avec l'école »
+
+Chemins à jour pour la QA (table unique `src/lib/nav/places.ts`) :
+- **Menu de gauche** : Aujourd'hui (onglets Aujourd'hui · Agenda des évaluations), « Mes modules en
+  cours » (le module ouvert se déplie ; changer de module garde la section), Tous les modules,
+  Étudiant·es, Bibliothèque (onglets Ressources · Questions · Grilles · Phrases de commentaire),
+  Facturation, Réglages. Plus d'entrée « Évaluations ».
+- **Un module** : Cette semaine · Séances (Liste · Planning · Importer des dates) · Évaluations
+  (Toutes · Projet fil rouge · Rattrapages) · Classe (Étudiant·es et groupes · Appréciations) ·
+  Espace étudiant·es · Programme (Attendus et couverture · Progression) · Clôture (Avis ·
+  Documents · Facture · Terminer le module).
+- **Fil d'Ariane** jusqu'à l'objet : Modules › module › Évaluations › Étude de cas › Corriger ;
+  Modules › module › Séances › Séance 3 · lun. 17 nov. › Clôturer.
+- **Phases** « Préparer · Enseigner · Clôturer » sous le fil d'Ariane de chaque page du module ;
+  l'accueil du module (« Cette semaine ») montre la liste de la phase choisie. Le contenu de
+  « Préparer » est provisoire (étapes actuelles), Arnaud le redéfinit. « Où j'en suis » disparaît.
+- **Séances › Liste** : vraie page liste (plus de redirection vers la séance du jour).
+- **Sujets à voir avec l'école** : champ libre sur l'accueil du module, repris sur Aujourd'hui tant
+  qu'il est rempli (« Tout est vu » le vide). Migration `20261216000000_module_school_topics.sql`.
+
 ## Nuit du 12 au 13 novembre 2026 : rebranding Marelle et corrections UX/UI transverses
 
 Changements qui touchent plusieurs parcours (détail et choix : `docs/DECISIONS-NUIT-2026-11-12.md`).

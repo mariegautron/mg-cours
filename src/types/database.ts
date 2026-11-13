@@ -1400,6 +1400,7 @@ export type Database = {
           owner_id: string
           purchase_order_ref: string | null
           school_id: string | null
+          school_topics: string | null
           slides_url: string | null
           start_date: string | null
           student_intro: string | null
@@ -1427,6 +1428,7 @@ export type Database = {
           owner_id?: string
           purchase_order_ref?: string | null
           school_id?: string | null
+          school_topics?: string | null
           slides_url?: string | null
           start_date?: string | null
           student_intro?: string | null
@@ -1454,6 +1456,7 @@ export type Database = {
           owner_id?: string
           purchase_order_ref?: string | null
           school_id?: string | null
+          school_topics?: string | null
           slides_url?: string | null
           start_date?: string | null
           student_intro?: string | null

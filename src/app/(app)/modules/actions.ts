@@ -460,6 +460,17 @@ export async function setHiddenFromToday(id: string, hidden: boolean): Promise<A
   return { saved: true };
 }
 
+/** « Sujets à voir avec l'école » : texte libre du module (vide = rien à afficher). */
+export async function setSchoolTopics(id: string, text: string): Promise<AdminDocState> {
+  const value = text.trim().slice(0, 4000) || null;
+  const supabase = await createClient();
+  const { error } = await supabase.from("module").update({ school_topics: value }).eq("id", id);
+  if (error) return { error: failure("enregistrer") };
+  revalidatePath(`/modules/${id}`);
+  revalidatePath("/dashboard");
+  return { saved: true };
+}
+
 export interface DuplicateState {
   error?: string;
 }

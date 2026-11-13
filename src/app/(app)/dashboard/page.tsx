@@ -474,6 +474,37 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     </section>
   ) : null;
 
+  // « Sujets à voir avec l'école » : les modules dont le champ libre est rempli.
+  const schoolTopics = modules.filter(
+    (m) => ((m as { school_topics?: string | null }).school_topics ?? "").trim() !== "",
+  );
+  const schoolTopicsCard = schoolTopics.length ? (
+    <section aria-labelledby="school-topics" className="bg-card rounded-xl border px-5 py-4">
+      <h2 id="school-topics" className="mb-1 text-sm font-semibold">
+        Sujets à voir avec l’école{" "}
+        <span className="text-muted-foreground-2 font-normal">{schoolTopics.length}</span>
+      </h2>
+      <ul>
+        {schoolTopics.map((m) => (
+          <li key={m.id} className="border-t first:border-t-0">
+            <Link
+              href={`/modules/${m.id}#school-topics`}
+              className="group hover:bg-muted/50 -mx-2 flex min-h-11 items-start gap-3 rounded-lg px-2 py-2.5"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium group-hover:underline">{m.name}</span>
+                <span className="text-muted-foreground line-clamp-3 block text-[0.8125rem] whitespace-pre-wrap">
+                  {(m as { school_topics?: string | null }).school_topics}
+                </span>
+              </span>
+              <ChevronRight aria-hidden className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null;
+
   const correctCard =
     toCorrect.length > 0 ? (
       <section aria-labelledby="corr" className="bg-card rounded-xl border px-5 py-4">
@@ -639,6 +670,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <div className="min-w-0 space-y-4">{todoCard}</div>
           <div className="min-w-0 space-y-4">
             {correctCard}
+            {schoolTopicsCard}
             {upcomingEvalsCard}
             {weekCard}
             {resumeCard}
@@ -770,6 +802,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </div>
         <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">
           {correctCard}
+          {schoolTopicsCard}
           {upcomingEvalsCard}
           {weekCard}
           {resumeCard}
