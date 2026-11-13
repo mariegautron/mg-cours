@@ -71,6 +71,7 @@ export function ExamKindForm({
   quizHref,
   typeLabel = "",
   editHref,
+  allowMakeup = true,
 }: {
   moduleId: string;
   assessmentId: string;
@@ -84,6 +85,8 @@ export function ExamKindForm({
   quizHref: string;
   typeLabel?: string;
   editHref: string;
+  /** Faux sur un rattrapage : on ne prépare pas le rattrapage d'un rattrapage. */
+  allowMakeup?: boolean;
 }) {
   const [state, setState] = useState(initial);
   const [pending, start] = useTransition();
@@ -149,7 +152,7 @@ export function ExamKindForm({
           étudiant·es rendent ».
         </p>
       ) : null}
-      <label className="flex min-h-12 items-start gap-3">
+      <label className="flex min-h-12 items-start gap-3" hidden={!allowMakeup}>
         <input
           type="checkbox"
           checked={state.makeupPrepared}

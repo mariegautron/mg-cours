@@ -28,7 +28,7 @@ export async function loadMakeupGroups(moduleId: string): Promise<MakeupGroup[]>
   for (const r of (enrolledRows ?? []) as { assessment_id: string; student_id: string }[]) {
     enrolled.set(r.assessment_id, [...(enrolled.get(r.assessment_id) ?? []), r.student_id]);
   }
-  return makeupOverview({
+  const groups = makeupOverview({
     assessments,
     grades: (grades ?? []) as never,
     enrolled,
@@ -36,6 +36,31 @@ export async function loadMakeupGroups(moduleId: string): Promise<MakeupGroup[]>
       (students ?? []).map((s) => [s.id, `${s.first_name} ${s.last_name}`] as const),
     ),
   });
+  // « Passé ? » : copie de QCM rendue ou dépôt reçu pour le rattrapage (lecture seule).
+  if (makeupIds.length) {
+    const [{ data: quizzes }, { data: items }] = await Promise.all([
+      supabase.from("quiz").select("id, assessment_id").in("assessment_id", makeupIds),
+      supabase
+        .from("submission_item")
+        .select("assessment_id, student_id")
+        .in("assessment_id", makeupIds),
+    ]);
+    const taken = new Set<string>();
+    for (const it of items ?? [])
+      if (it.student_id) taken.add(`${it.assessment_id}:${it.student_id}`);
+    const quizOf = new Map((quizzes ?? []).map((q) => [q.id, q.assessment_id] as const));
+    if (quizOf.size) {
+      const { data: attempts } = await supabase
+        .from("quiz_attempt")
+        .select("quiz_id, student_id, submitted_at")
+        .in("quiz_id", [...quizOf.keys()])
+        .not("submitted_at", "is", null);
+      for (const a of attempts ?? []) taken.add(`${quizOf.get(a.quiz_id)}:${a.student_id}`);
+    }
+    for (const g of groups)
+      if (g.makeup) for (const r of g.rows) r.taken = taken.has(`${g.makeup.id}:${r.student.id}`);
+  }
+  return groups;
 }
 
 /** Rattrapages pas encore faits (à préparer, à inscrire ou à noter) d'un module. */

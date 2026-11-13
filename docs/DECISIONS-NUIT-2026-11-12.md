@@ -279,3 +279,18 @@ Lot 1, ce qui est fait à ce stade :
   `20261215000000_module_hidden_from_today.sql`, qui recopie puis retire la clé provisoire de
   `admin_docs`). Le code lit la colonne, et l'ancienne clé en secours ; contrôle en lecture seule
   dans `docs/schema-bdd/controle-hidden-from-today.sql`. Ordre : migration, puis push du code.
+
+## 13 novembre : rattrapages et statut des copies (retour d'Arnaud sur la prod)
+
+- **Statut clair par personne** :
+  - page Rattrapages : « Pas encore passé » (rien de rendu), « Rendu, à corriger » (copie de QCM
+    rendue ou dépôt reçu), « Noté · note remplacée : 14/20 » ; lien « Corriger » / « Saisir la
+    note » sur la ligne ;
+  - tableau des copies de toute évaluation : « Pas encore rendu », « Rendu, à corriger »,
+    « En cours · 2 sur 4 », « Noté » (« À corriger » quand les rendus ne sont pas suivis : oral,
+    écrit en classe). Pastilles d'initiales neutres (plus de couleurs vives).
+- **Page d'un rattrapage** : les copies sont tout en haut dès l'ouverture, la préparation est
+  repliée ; le type affiché est celui de l'évaluation rattrapée (une étude de cas n'est plus
+  affichée « QCM ») ; plus de case « Préparer d'avance un sujet de rattrapage » ni de « Note
+  bonus ». Dans le cadre, les lignes longues (« Comment c'est noté »…) sont résumées sur 2 lignes
+  sans syntaxe Markdown : le texte complet reste dans « Sujet ».

@@ -10,6 +10,28 @@ export const COPY_STATE_LABELS: Record<CopyState, string> = {
   done: "Corrigé",
 };
 
+/**
+ * Statut clair d'une copie (même vocabulaire que la page Rattrapages) : « Pas encore rendu »,
+ * « Rendu, à corriger », « En cours », « Noté ». Sans suivi des rendus (oral, écrit en classe),
+ * une copie sans note est « À corriger ».
+ */
+export function copyStatus(r: {
+  state: CopyState;
+  received?: boolean;
+  scored: number | null;
+  total: number | null;
+}): { tone: "idle" | "warn" | "ok"; label: string } {
+  if (r.state === "done") return { tone: "ok", label: "Noté" };
+  if (r.state === "in_progress")
+    return {
+      tone: "warn",
+      label: r.scored !== null ? `En cours · ${r.scored} sur ${r.total}` : "En cours",
+    };
+  if (r.received === false) return { tone: "idle", label: "Pas encore rendu" };
+  if (r.received === true) return { tone: "warn", label: "Rendu, à corriger" };
+  return { tone: "warn", label: "À corriger" };
+}
+
 export interface OverviewGrade {
   value: number | null;
   scores: unknown;

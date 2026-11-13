@@ -186,7 +186,20 @@ export default async function AssessmentPage({
   }
   // Type d'évaluation unique (lot 5) : seuls les blocs utiles à ce type sont affichés (une Note de
   // l'école : la saisie des notes, le coefficient imposé et l'essentiel).
-  const kindNow = assessmentKindOf(assessment);
+  // Rattrapage : il a le type de l'évaluation qu'il rattrape (une étude de cas reste une étude de
+  // cas, même si son QCM est enregistré autrement).
+  const original = makeupOf
+    ? (
+        await (
+          await createClient()
+        )
+          .from("assessment")
+          .select("kind, type, exam_kind, title")
+          .eq("id", makeupOf.id)
+          .maybeSingle()
+      ).data
+    : null;
+  const kindNow = assessmentKindOf(original ?? assessment);
   const blocks = kindBlocks(kindNow);
   const targets = gradingTargets(assessment.is_group_grade, assessment.groups);
   // Observations de cours (carnet) : consultables pendant la correction, jamais exportées.
@@ -377,9 +390,11 @@ export default async function AssessmentPage({
   const card = "bg-card rounded-3xl border p-4";
   // Une fois la date passée (ou des notes saisies), on vient pour les copies : elles passent en haut,
   // la préparation (cadre, sujet, grille, attendus) se replie sous un sommaire (lot 0 E, points 35-36).
+  // Un rattrapage : on vient pour la (les) copie(s) de la personne excusée, en haut tout de suite.
   const copiesFirst =
     targets.length > 0 &&
-    (hasGrades ||
+    (!!assessment.makeup_of_id ||
+      hasGrades ||
       (() => {
         const day = assessment.date ?? course?.session_date ?? null;
         return !!day && day.slice(0, 10) <= todayInParis();
@@ -980,7 +995,16 @@ export default async function AssessmentPage({
                           className="flex flex-wrap items-start gap-3 py-2.5 text-sm"
                         >
                           <strong className="w-40 flex-none">{line.label}</strong>
-                          <span className="min-w-0 flex-1">{line.text || "À renseigner."}</span>
+                          {/* Résumé sur 2 lignes, sans syntaxe Markdown : le texte complet est dans « Sujet ». */}
+                          <span className="line-clamp-2 min-w-0 flex-1">
+                            {line.text
+                              ? line.text
+                                  .replace(/[#>*_`]+/g, "")
+                                  .replace(/^\s*[-•]\s+/gm, "")
+                                  .replace(/\s+/g, " ")
+                                  .trim()
+                              : "À renseigner."}
+                          </span>
                           <Pill tone={line.filled ? "ok" : "warn"}>
                             {line.filled ? "Prérempli" : "À renseigner"}
                           </Pill>

@@ -7,21 +7,14 @@ import { useState } from "react";
 import { Pill } from "@/components/dashboard/pill";
 import { Button } from "@/components/ui/button";
 import {
-  COPY_STATE_LABELS,
+  copyStatus,
   filterRows,
   progressNote,
   submissionLabel,
-  type CopyState,
   type Overview,
   type OverviewFilter,
 } from "@/lib/assessments/overview";
 import { cn } from "@/lib/utils";
-
-const TONE: Record<CopyState, "idle" | "ok" | "warn"> = {
-  todo: "idle",
-  in_progress: "warn",
-  done: "ok",
-};
 
 const FILTER_LABELS: Record<OverviewFilter, string> = {
   all: "Tous",
@@ -30,7 +23,7 @@ const FILTER_LABELS: Record<OverviewFilter, string> = {
   missing: "Non rendus",
 };
 
-const AVATAR_TONES = ["bg-mint", "bg-sun", "bg-sky", "bg-coral", "bg-primary"];
+const AVATAR_TONES = ["bg-muted"];
 
 const fmt = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
 
@@ -192,7 +185,7 @@ export function CorrectionOverview({
                                 <span
                                   key={`${m}-${i}`}
                                   className={cn(
-                                    "text-background ring-card flex size-7 items-center justify-center rounded-full text-[11px] font-bold ring-2",
+                                    "text-foreground ring-card flex size-7 items-center justify-center rounded-full text-[11px] font-bold ring-2",
                                     AVATAR_TONES[i % AVATAR_TONES.length],
                                   )}
                                 >
@@ -215,14 +208,14 @@ export function CorrectionOverview({
                         </td>
                       ) : null}
                       <td className="py-1 pr-3">
-                        <Pill tone={TONE[r.state]}>
-                          {r.attendance === "absent_excused"
-                            ? (r.makeup?.label ?? "Excusé·e · rattrapage à prévoir")
-                            : COPY_STATE_LABELS[r.state]}
-                          {r.state === "in_progress" && r.scored !== null
-                            ? ` · ${r.scored} sur ${r.total}`
-                            : ""}
-                        </Pill>
+                        {/* Statut clair : pas encore rendu / rendu, à corriger / noté. */}
+                        {r.attendance === "absent_excused" ? (
+                          <Pill tone="warn">
+                            {r.makeup?.label ?? "Excusé·e · rattrapage à prévoir"}
+                          </Pill>
+                        ) : (
+                          <Pill tone={copyStatus(r).tone}>{copyStatus(r).label}</Pill>
+                        )}
                       </td>
                       <td className="py-1 text-right font-semibold tabular-nums">
                         {r.value !== null ? fmt(r.value) : "—"}

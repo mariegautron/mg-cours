@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
 import { CopyMessage } from "@/components/assessments/copy-message";
-import { Pill } from "@/components/dashboard/pill";
+import { Status } from "@/components/dashboard/pill";
 import { MakeupPanel } from "@/components/assessments/makeup-panel";
 import { Button } from "@/components/ui/button";
-import { MAKEUP_STEP_LABELS, makeupSummary } from "@/lib/assessments/makeup-overview";
+import { makeupRowStatus, makeupSummary } from "@/lib/assessments/makeup-overview";
 import { getModule } from "@/lib/modules/queries";
 import { loadMakeupGroups } from "@/lib/assessments/makeup-queries";
 import { createClient } from "@/lib/supabase/server";
@@ -117,7 +117,7 @@ export default async function MakeupsPage({
                     <li key={r.student.id} className="flex flex-wrap items-center gap-3 py-2.5">
                       <span
                         aria-hidden
-                        className="bg-primary/20 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                        className="bg-muted text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                       >
                         {r.student.name
                           .split(/\s+/)
@@ -131,14 +131,24 @@ export default async function MakeupsPage({
                           {g.assessment.title} · absence excusée
                         </span>
                       </span>
-                      <Pill tone={r.step === "done" ? "ok" : "warn"}>
-                        {MAKEUP_STEP_LABELS[r.step]}
+                      {/* Statut clair : pas encore passé / rendu, à corriger / noté. */}
+                      <Status state={makeupRowStatus(r).state}>
+                        {makeupRowStatus(r).label}
                         {r.step === "done" &&
                         g.makeup &&
                         makeupValue(g.makeup.id, r.student.id) !== null
                           ? ` : ${makeupValue(g.makeup.id, r.student.id)!.toLocaleString("fr-FR")}/${maxOf.get(g.makeup.id) ?? 20}`
                           : ""}
-                      </Pill>
+                      </Status>
+                      {g.makeup && r.step === "to_grade" ? (
+                        <Link
+                          href={`/modules/${id}/assessments/${g.makeup.id}/correct`}
+                          className="text-primary text-sm underline underline-offset-2"
+                        >
+                          {r.taken ? "Corriger" : "Saisir la note"}
+                          <span className="sr-only"> de {r.student.name}</span>
+                        </Link>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

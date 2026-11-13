@@ -29,6 +29,24 @@ export interface OverviewGrade {
 export interface MakeupRow {
   student: { id: string; name: string };
   step: MakeupStep;
+  /**
+   * Rattrapage passé (copie de QCM rendue ou dépôt reçu), renseigné par la requête. Sert à dire
+   * « Pas encore passé » ou « Rendu, à corriger » tant que la note n'est pas saisie.
+   */
+  taken?: boolean;
+}
+
+/** Statut affiché d'une ligne : « Pas encore passé » / « Rendu, à corriger » / « Noté ». */
+export function makeupRowStatus(row: MakeupRow): {
+  state: "idle" | "todo" | "ready";
+  label: string;
+} {
+  if (row.step === "done") return { state: "ready", label: "Noté · note remplacée" };
+  if (row.step === "to_grade")
+    return row.taken
+      ? { state: "todo", label: "Rendu, à corriger" }
+      : { state: "idle", label: "Pas encore passé" };
+  return { state: "todo", label: MAKEUP_STEP_LABELS[row.step] };
 }
 
 export interface MakeupGroup {
