@@ -145,9 +145,12 @@ export async function listToCorrect(limit = 3): Promise<ToCorrect[]> {
       "id, title, type, review_graded, module_id, date, is_group_grade, makeup_of_id, is_bonus, auto_validated_criterion_ids, grading_grid:grading_grid_id(grid_criterion(id, is_bonus)), module:module_id(name, archived_at, finished_at), assessment_group(student_group:student_group_id(id, name, group_member(student:student_id(id, first_name, last_name))))",
     )
     .is("makeup_of_id", null);
+  // Pas de correction proposée avant l'épreuve (retest du 13 nov.) : seulement les évaluations
+  // passées, ou sans date.
+  const todayIso = new Date().toISOString().slice(0, 10);
   const rows = (data ?? []).filter((a) => {
     const m = a.module as { archived_at: string | null; finished_at?: string | null } | null;
-    return m && !m.archived_at && !m.finished_at;
+    return m && !m.archived_at && !m.finished_at && (!a.date || a.date.slice(0, 10) <= todayIso);
   });
   if (rows.length === 0) return [];
   const { data: grades } = await supabase

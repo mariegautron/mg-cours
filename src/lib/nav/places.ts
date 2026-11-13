@@ -232,3 +232,18 @@ export function sameSectionIn(pathname: string, otherModuleId: string): string {
   const entry = moduleEntries(otherModuleId).find((e) => e.key === place.moduleEntry)!;
   return entry.tabs.find((t) => t.key === place.tab)?.href ?? entry.href;
 }
+
+/**
+ * Pages d'action sous une section, sans objet déclaré : leur libellé de fil d'Ariane, d'après le
+ * dernier segment de l'adresse (« Ajouter une évaluation », « Partir d'un projet existant »…).
+ */
+export const ACTION_LABELS: Record<string, string> = {
+  add: "Ajouter une évaluation",
+  new: "Créer",
+  reuse: "Partir d’un projet existant",
+  wizard: "Faire les groupes",
+  import: "Importer",
+  edit: "Modifier",
+  history: "Historique",
+  photos: "Photos",
+};

@@ -778,7 +778,7 @@ export default async function AssessmentPage({
                 title={assessment.title}
                 status={assessment.prep_status}
               />
-              <DayJBlock dayJ={dayJTop} titleId="dayj-prep" />
+              <DayJBlock dayJ={dayJTop} titleId="dayj-top" />
             </section>
           ) : null}
           <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
@@ -995,6 +995,7 @@ export default async function AssessmentPage({
                         maxScore: assessment.maxScore,
                         coefficient: ruleCoefficient,
                         whereToSubmit: assessment.where_to_submit,
+                        hasGrid: !!grid,
                       }).map((line) => (
                         <li
                           key={line.label}

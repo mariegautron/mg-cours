@@ -380,3 +380,25 @@ Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
   tablette, coches de phase tirées des étapes, règle « une étape de préparation bloque ».
 - « Sujets à voir avec l'école » : colonne `module.school_topics` (migration 20261216000000),
   carte sur l'accueil du module, bloc sur Aujourd'hui.
+
+## 13 novembre : retest « Préparer les évaluations » v3
+
+Fait : boutons des cartes d'évaluation qui passent à la ligne (plus de « Faire passer l'ora »
+coupé), noms accessibles avec le titre ; « Mes modules en cours » = modules avec une séance dans les
+14 derniers ou 45 prochains jours, triés par séance la plus proche, année scolaire si deux modules
+ont le même nom (menu et fil d'Ariane) ; un seul calcul de « à compléter » (Aujourd'hui lit
+désormais la publication dans l'espace et l'état du QCM, comme la carte) ; onglets affichés
+seulement sur les pages qui sont des onglets ; fil d'Ariane jusqu'à la page affichée (liens du QCM,
+résultats du QCM, copie, Ajouter une évaluation, Partir d'un projet existant…) ; page de l'oral avec
+l'état du sujet et un lien « Prêt pour le jour J ? » ; rappel J-7 toujours visible dans « À faire » ;
+« Évaluations à venir » en tête de la colonne de droite d'Aujourd'hui ; agenda trié de la plus
+proche à la plus lointaine, évaluations passées repliées, année toujours dans le filtre Module ;
+ouverture programmée d'un QCM en encadré neutre ; cadre d'un QCM : « points des questions
+additionnés » (et « grille à créer » sans grille) ; « Plusieurs façons de faire », un seul titre
+« Ajouter une évaluation », année des évaluations à reprendre ; espace manquante après
+« Évaluations (6) » ; « (3 de groupe, 2 individuelles) » remis dans l'en-tête ; « 1 copie rendue
+sur 3 » ; plus de correction proposée sur Aujourd'hui avant la date de l'épreuve.
+
+Pas fait : lenteur de la page Évaluations (≈ 5 s) et du filtre de l'agenda (à mesurer avec
+les requêtes) ; alignement du lien « Copies » du sommaire (à vérifier à l'écran) ; « (2027) » sur
+« Partir d'un projet existant » vient du nom du module (donnée), pas du code.

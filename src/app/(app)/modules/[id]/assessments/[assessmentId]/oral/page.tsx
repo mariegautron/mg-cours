@@ -7,6 +7,7 @@ import {
   toObservationLines,
 } from "@/app/(app)/modules/[id]/assessments/grading-sections";
 import { OralPlan, type PlanSlot } from "@/components/assessments/oral-plan";
+import { SubjectStatusBadge } from "@/components/assessments/subject-status-badge";
 import { OralStage, type StageSlot } from "@/components/assessments/oral-stage";
 import {
   getAssessment,
@@ -132,6 +133,20 @@ export default async function OralPage({
     <div className="mx-auto max-w-[96rem] space-y-3">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1>Faire passer l’oral</h1>
+        {/* Même repère que les autres évaluations : l'état du sujet, et la préparation complète
+            (« Prêt pour le jour J ? ») à un clic, sur la page de l'évaluation. */}
+        <SubjectStatusBadge
+          moduleId={id}
+          assessmentId={assessmentId}
+          title={assessment.title}
+          status={assessment.prep_status}
+        />
+        <Link
+          href={`/modules/${id}/assessments/${assessmentId}#dayj-top`}
+          className="text-sm underline-offset-2 hover:underline"
+        >
+          Prêt pour le jour J ?
+        </Link>
         <Link
           href={`/modules/${id}/assessments/${assessmentId}/consignes`}
           className="text-sm underline underline-offset-2"

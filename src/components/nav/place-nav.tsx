@@ -7,7 +7,7 @@ import { ChevronRight } from "lucide-react";
 
 import { useOpenModule } from "@/components/modules/module-nav-context";
 import { SectionTabs } from "@/components/nav/section-tabs";
-import { GLOBAL_ENTRIES, placeOf, tabsOf } from "@/lib/nav/places";
+import { ACTION_LABELS, GLOBAL_ENTRIES, placeOf, tabsOf } from "@/lib/nav/places";
 
 /** Fin du fil d'Ariane fournie par la page (objet, puis sous-page éventuelle). */
 type Crumb = { label: string; href?: string };
@@ -54,10 +54,17 @@ export function ObjectCrumbs({
   const pathname = usePathname();
   const all = [...items];
   if (base && pathname !== base && pathname.startsWith(`${base}/`)) {
-    const seg = pathname.slice(base.length + 1).split("/")[0];
     all[all.length - 1] = { ...all[all.length - 1], href: base };
-    // La sous-page est un lien quand on est plus bas qu'elle (une copie de QCM, par exemple).
-    all.push({ label: subPages?.[seg] ?? seg, href: `${base}/${seg}` });
+    // Chaque niveau connu sous l'objet (« QCM en ligne », puis « Liens et suivi ») ; chacun est un
+    // lien vers sa page, la dernière est la page affichée.
+    const parts = pathname.slice(base.length + 1).split("/");
+    for (let i = 1; i <= parts.length; i++) {
+      const rel = parts.slice(0, i).join("/");
+      const label = subPages?.[rel];
+      if (label) all.push({ label, href: `${base}/${rel}` });
+    }
+    // Le dernier niveau reconnu est la page affichée (ex. une copie sous « quiz/attempts »).
+    if (all.length > items.length) all[all.length - 1] = { ...all[all.length - 1], href: pathname };
   }
   const key = JSON.stringify(all);
   useEffect(() => {
@@ -95,10 +102,21 @@ export function PlaceNav() {
     if (place.crumbHref !== entry.href) trail.push({ label: place.crumb, href: place.crumbHref });
   }
   trail.push(...crumbs);
+  // Page d'action plus bas que la section, sans objet déclaré : son libellé termine le fil.
+  if (
+    crumbs.length === 0 &&
+    pathname !== place.crumbHref &&
+    pathname.startsWith(`${place.crumbHref}/`)
+  ) {
+    const seg = pathname.split("/").pop() ?? "";
+    if (ACTION_LABELS[seg]) trail.push({ label: ACTION_LABELS[seg] });
+  }
   // Une sous-page sans objet déclaré (Modifier, Ajouter…) : la section reste un lien.
   const last = trail.length - 1;
   const isHere = (c: Crumb, i: number) => (c.href ? c.href === pathname : i === last);
-  const tabs = tabsOf(place);
+  // Onglets seulement sur les pages qui sont elles-mêmes un onglet (pas sur une évaluation, un QCM…).
+  const allTabs = tabsOf(place);
+  const tabs = allTabs.some((t) => t.href === pathname) ? allTabs : [];
 
   return (
     <div className="mb-4 space-y-2">

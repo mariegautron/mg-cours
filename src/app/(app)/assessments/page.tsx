@@ -12,7 +12,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { kindOf } from "@/lib/assessments/individual";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import { listAllAssessments } from "@/lib/assessments/queries";
-import { moduleLabels } from "@/lib/dashboard/module-labels";
 
 const SELECT = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
@@ -44,9 +43,9 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
         ]),
     ).values(),
   ];
-  const labelOf = moduleLabels(uniqueModules);
+  // Année scolaire toujours affichée dans le filtre (demande du retest).
   const moduleOptions = uniqueModules
-    .map((m) => [m.id, labelOf.get(m.id) ?? m.name] as const)
+    .map((m) => [m.id, m.year ? `${m.name} (${schoolYearOf(m.year)})` : m.name] as const)
     .sort((a, b) => a[1].localeCompare(b[1], "fr"));
   const assessments = all.filter(
     (a) =>
@@ -57,6 +56,14 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
       (!fromDate || (a.date ?? "") >= fromDate) &&
       (!toDate || (a.date !== null && a.date <= toDate)),
   );
+
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const upcoming = assessments
+    .filter((a) => !a.date || a.date.slice(0, 10) >= todayIso)
+    .sort((x, y) => (x.date ?? "9999").localeCompare(y.date ?? "9999"));
+  const past = assessments
+    .filter((a) => a.date && a.date.slice(0, 10) < todayIso)
+    .sort((x, y) => (y.date ?? "").localeCompare(x.date ?? ""));
 
   return (
     <div className="space-y-6">
@@ -124,36 +131,95 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
           actions={[{ label: "Voir les modules", href: "/modules" }]}
         />
       ) : (
-        <ul className="space-y-2">
-          {assessments.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/modules/${a.module_id}/assessments/${a.id}`}
-                className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
-              >
-                <div>
-                  <p className="font-medium">{a.title}</p>
-                  <p className="text-muted-foreground text-sm">
-                    <strong className="text-foreground">{a.module?.name}</strong> (
-                    {a.module ? schoolYearOf(a.module.year) : ""})
-                    {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""} ·{" "}
-                    {a.groups.map((g) => g.name).join(", ") || "—"}
-                  </p>
-                </div>
-                <span className="flex flex-wrap gap-1.5">
-                  <Badge variant={isSubjectToBuild(a) ? "outline" : "secondary"}>
-                    Sujet : {PREP_STATUS_LABELS[a.prep_status]}
-                  </Badge>
-                  <Badge
-                    variant={a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"}
-                  >
-                    {a.inProgressCount > 0 ? "en cours" : a.gradeCount > 0 ? "notée" : "à noter"}
-                  </Badge>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* De la plus proche à la plus lointaine ; sans date à la fin ; les passées repliées. */}
+          {[
+            { key: "upcoming", list: upcoming },
+            { key: "past", list: past },
+          ].map(({ key, list }) =>
+            list.length === 0 ? null : key === "past" ? (
+              <details key={key}>
+                <summary className="text-muted-foreground min-h-11 cursor-pointer py-2 text-sm font-medium">
+                  {list.length} évaluation{list.length > 1 ? "s" : ""} passée
+                  {list.length > 1 ? "s" : ""}
+                </summary>
+                <ul className="space-y-2">
+                  {list.map((a) => (
+                    <li key={a.id}>
+                      <Link
+                        href={`/modules/${a.module_id}/assessments/${a.id}`}
+                        className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        <div>
+                          <p className="font-medium">{a.title}</p>
+                          <p className="text-muted-foreground text-sm">
+                            <strong className="text-foreground">{a.module?.name}</strong> (
+                            {a.module ? schoolYearOf(a.module.year) : ""})
+                            {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""} ·{" "}
+                            {a.groups.map((g) => g.name).join(", ") || "—"}
+                          </p>
+                        </div>
+                        <span className="flex flex-wrap gap-1.5">
+                          <Badge variant={isSubjectToBuild(a) ? "outline" : "secondary"}>
+                            Sujet : {PREP_STATUS_LABELS[a.prep_status]}
+                          </Badge>
+                          <Badge
+                            variant={
+                              a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"
+                            }
+                          >
+                            {a.inProgressCount > 0
+                              ? "en cours"
+                              : a.gradeCount > 0
+                                ? "notée"
+                                : "à noter"}
+                          </Badge>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <ul key={key} className="space-y-2">
+                {list.map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={`/modules/${a.module_id}/assessments/${a.id}`}
+                      className="hover:bg-accent focus-visible:ring-ring flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 focus-visible:ring-2 focus-visible:outline-none"
+                    >
+                      <div>
+                        <p className="font-medium">{a.title}</p>
+                        <p className="text-muted-foreground text-sm">
+                          <strong className="text-foreground">{a.module?.name}</strong> (
+                          {a.module ? schoolYearOf(a.module.year) : ""})
+                          {a.date ? ` · ${new Date(a.date).toLocaleDateString("fr-FR")}` : ""} ·{" "}
+                          {a.groups.map((g) => g.name).join(", ") || "—"}
+                        </p>
+                      </div>
+                      <span className="flex flex-wrap gap-1.5">
+                        <Badge variant={isSubjectToBuild(a) ? "outline" : "secondary"}>
+                          Sujet : {PREP_STATUS_LABELS[a.prep_status]}
+                        </Badge>
+                        <Badge
+                          variant={
+                            a.gradeCount > 0 && a.inProgressCount === 0 ? "secondary" : "outline"
+                          }
+                        >
+                          {a.inProgressCount > 0
+                            ? "en cours"
+                            : a.gradeCount > 0
+                              ? "notée"
+                              : "à noter"}
+                        </Badge>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ),
+          )}
+        </>
       )}
     </div>
   );

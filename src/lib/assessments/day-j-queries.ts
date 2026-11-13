@@ -86,7 +86,6 @@ export async function listUpcomingAssessments(
   if (onlyModuleId) q = q.eq("module_id", onlyModuleId);
   const { data } = await q;
   const rows = (data ?? []).filter((a) => a.module && !a.module.archived_at);
-  const ids = rows.map((a) => a.id);
   // Mêmes compléments que la carte de l'évaluation (publication dans l'espace, QCM) : un seul
   // calcul de « à compléter », partout (Aujourd'hui, carte, page).
   const byModule = new Map<string, string[]>();

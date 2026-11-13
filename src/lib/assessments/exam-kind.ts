@@ -65,6 +65,8 @@ export function individualFrame(input: {
   coefficient: number;
   /** « Où rendre » saisi par l'enseignante : remplace le texte déduit. */
   whereToSubmit?: string | null;
+  /** Une grille est reliée (sinon : ne pas promettre une « grille à paliers »). */
+  hasGrid?: boolean;
 }): FrameLine[] {
   const what: Record<ExamKind, string> = {
     files: "Un travail individuel à rendre : un ou plusieurs fichiers (rapport, code, captures…).",
@@ -115,7 +117,13 @@ export function individualFrame(input: {
       label: "Comment c’est noté",
       text:
         how ||
-        `Note individuelle sur ${out(input.maxScore)}, coefficient ×${out(input.coefficient)}, grille à paliers.`,
+        `Note individuelle sur ${out(input.maxScore)}, coefficient ×${out(input.coefficient)}, ${
+          input.kind === "qcm"
+            ? "points des questions additionnés"
+            : input.hasGrid === false
+              ? "grille à créer"
+              : "grille à paliers"
+        }.`,
       filled: true,
     },
   ];

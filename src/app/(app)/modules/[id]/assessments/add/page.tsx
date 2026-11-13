@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { SchoolGradeForm } from "@/components/assessments/school-grade-form";
 import { Button } from "@/components/ui/button";
+import { schoolYearOf } from "@/lib/modules/list-state";
 import { reuseAssessment } from "@/app/(app)/modules/[id]/assessments/reuse-action";
 import { listAllAssessments, listGrids } from "@/lib/assessments/queries";
 import { getModule } from "@/lib/modules/queries";
@@ -32,10 +33,9 @@ export default async function AddAssessmentPage({
     <div className="mx-auto max-w-[112rem] space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-muted-foreground mb-1.5 text-[0.8125rem] font-medium">Évaluations</p>
           <h1>Ajouter une évaluation</h1>
           <p className="text-muted-foreground mt-1">
-            Quatre façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
+            Plusieurs façons de faire, au choix. Les évaluations déjà prévues sont dans la vue
             d’ensemble.
           </p>
         </div>
@@ -44,8 +44,8 @@ export default async function AddAssessmentPage({
       <div className="max-w-[48rem]">
         <div className="w-full min-w-0 space-y-4">
           <section aria-labelledby="ad" className={card}>
-            <h2 id="ad" className="mb-3 text-sm font-semibold">
-              Ajouter une évaluation
+            <h2 id="ad" className="sr-only">
+              Façons d’ajouter une évaluation
             </h2>
             <div className="flex flex-col gap-2.5">
               <section aria-labelledby="create" className="bg-muted/40 rounded-xl border p-4">
@@ -97,11 +97,12 @@ export default async function AddAssessmentPage({
                     <select
                       id="reuse-source"
                       name="sourceId"
-                      className="border-input min-h-11 min-w-0 flex-1 rounded-xl border bg-transparent px-3 text-sm"
+                      className="border-input bg-field h-8 min-w-0 flex-1 rounded-lg border px-2.5 text-sm"
                     >
                       {otherAssessments.map((o) => (
                         <option key={o.id} value={o.id}>
                           {o.title} — {o.module?.name}
+                          {o.module?.year ? ` (${schoolYearOf(o.module.year)})` : ""}
                         </option>
                       ))}
                     </select>

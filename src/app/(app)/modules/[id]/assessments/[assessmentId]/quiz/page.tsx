@@ -237,8 +237,8 @@ export default async function QuizPage({
             envoyé les siennes.
           </p>
           <p className="text-muted-foreground text-sm">
-            {submitted}/{attempts.length} copie{attempts.length > 1 ? "s" : ""} rendue
-            {submitted > 1 ? "s" : ""}
+            {submitted} copie{submitted > 1 ? "s" : ""} rendue{submitted > 1 ? "s" : ""} sur{" "}
+            {attempts.length}
             {toReview ? ` · ${toReview} à relire` : ""}.
           </p>
           <div className="flex flex-col gap-2">

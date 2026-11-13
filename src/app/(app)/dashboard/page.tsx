@@ -271,8 +271,11 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     });
   }
   // Les 3 plus urgentes ; les autres se déplient (« Voir les N autres »).
-  const todos = allTodos.slice(0, 3);
-  const moreTodos = allTodos.slice(3);
+  // Les 3 plus urgentes, plus toute évaluation à 7 jours ou moins avec un manque (rappel J-7) :
+  // elle reste visible sans dépliage, même derrière des séances à clôturer.
+  const pinned = (t: (typeof allTodos)[number], i: number) => i < 3 || t.kind === "assessment_prep";
+  const todos = allTodos.filter(pinned);
+  const moreTodos = allTodos.filter((t, i) => !pinned(t, i));
   const { days, nextWeek } = weekDays(
     today,
     coursesWeek.filter((c) => c.module && !c.module.archived_at),
@@ -669,9 +672,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
           <div className="min-w-0 space-y-4">{todoCard}</div>
           <div className="min-w-0 space-y-4">
+            {upcomingEvalsCard}
             {correctCard}
             {schoolTopicsCard}
-            {upcomingEvalsCard}
             {weekCard}
             {resumeCard}
           </div>
@@ -800,10 +803,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           )}
           {surprisesCard}
         </div>
-        <div className="w-full min-w-0 space-y-3.5 lg:w-[440px] lg:flex-none">
+        <div className="w-full min-w-0 space-y-3 lg:w-[440px] lg:flex-none">
+          {upcomingEvalsCard}
           {correctCard}
           {schoolTopicsCard}
-          {upcomingEvalsCard}
           {weekCard}
           {resumeCard}
         </div>
