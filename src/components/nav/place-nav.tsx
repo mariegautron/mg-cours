@@ -12,14 +12,26 @@ import { GLOBAL_ENTRIES, placeOf, tabsOf } from "@/lib/nav/places";
 /** Fin du fil d'Ariane fournie par la page (objet, puis sous-page éventuelle). */
 type Crumb = { label: string; href?: string };
 
-const Ctx = createContext<{ crumbs: Crumb[]; setCrumbs: (c: Crumb[]) => void }>({
+const Ctx = createContext<{
+  crumbs: Crumb[];
+  setCrumbs: (c: Crumb[]) => void;
+  moduleNames: Record<string, string>;
+}>({
   crumbs: [],
   setCrumbs: () => {},
+  moduleNames: {},
 });
 
-export function PlaceNavProvider({ children }: { children: React.ReactNode }) {
+export function PlaceNavProvider({
+  children,
+  moduleNames = {},
+}: {
+  children: React.ReactNode;
+  /** Nom de chaque module (dès le rendu serveur, sans attendre l'hydratation). */
+  moduleNames?: Record<string, string>;
+}) {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
-  const value = useMemo(() => ({ crumbs, setCrumbs }), [crumbs]);
+  const value = useMemo(() => ({ crumbs, setCrumbs, moduleNames }), [crumbs, moduleNames]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -44,7 +56,8 @@ export function ObjectCrumbs({
   if (base && pathname !== base && pathname.startsWith(`${base}/`)) {
     const seg = pathname.slice(base.length + 1).split("/")[0];
     all[all.length - 1] = { ...all[all.length - 1], href: base };
-    all.push({ label: subPages?.[seg] ?? seg });
+    // La sous-page est un lien quand on est plus bas qu'elle (une copie de QCM, par exemple).
+    all.push({ label: subPages?.[seg] ?? seg, href: `${base}/${seg}` });
   }
   const key = JSON.stringify(all);
   useEffect(() => {
@@ -61,7 +74,7 @@ export function ObjectCrumbs({
 export function PlaceNav() {
   const pathname = usePathname();
   const openModule = useOpenModule();
-  const { crumbs } = useContext(Ctx);
+  const { crumbs, moduleNames } = useContext(Ctx);
   const place = placeOf(pathname);
   if (!place) return null;
 
@@ -69,37 +82,44 @@ export function PlaceNav() {
   if (place.moduleId) {
     trail.push({ label: "Modules", href: "/modules" });
     trail.push({
-      label: openModule?.id === place.moduleId ? openModule.name : "Module",
+      label:
+        moduleNames[place.moduleId] ??
+        (openModule?.id === place.moduleId ? openModule.name : "Module"),
       href: `/modules/${place.moduleId}`,
     });
-    if (place.moduleEntry !== "week") trail.push({ label: place.crumb, href: place.crumbHref });
+    if (place.crumbHref !== `/modules/${place.moduleId}`)
+      trail.push({ label: place.crumb, href: place.crumbHref });
   } else {
     const entry = GLOBAL_ENTRIES.find((e) => e.key === place.menu)!;
     trail.push({ label: entry.label, href: entry.href });
     if (place.crumbHref !== entry.href) trail.push({ label: place.crumb, href: place.crumbHref });
   }
   trail.push(...crumbs);
-  // Le dernier élément est la page elle-même : pas de lien.
+  // Une sous-page sans objet déclaré (Modifier, Ajouter…) : la section reste un lien.
   const last = trail.length - 1;
+  const isHere = (c: Crumb, i: number) => (c.href ? c.href === pathname : i === last);
   const tabs = tabsOf(place);
 
   return (
     <div className="mb-4 space-y-2">
-      {trail.length > 1 ? (
+      {trail.length > 1 || trail[0].href !== pathname ? (
         <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-[0.8125rem]">
           <ol className="flex flex-wrap items-center gap-1">
             {trail.map((c, i) => (
               <li key={`${i}-${c.label}`} className="flex items-center gap-1">
                 {i > 0 ? <ChevronRight aria-hidden className="size-3.5" /> : null}
-                {i < last && c.href && c.href !== pathname ? (
+                {c.href && !isHere(c, i) ? (
                   <Link
                     href={c.href}
-                    className="hover:text-foreground underline-offset-2 hover:underline"
+                    className="hover:text-foreground inline-flex min-h-11 items-center underline-offset-2 hover:underline"
                   >
                     {c.label}
                   </Link>
                 ) : (
-                  <span aria-current={i === last ? "page" : undefined} className="text-foreground">
+                  <span
+                    aria-current={isHere(c, i) ? "page" : undefined}
+                    className="text-foreground inline-flex min-h-11 items-center"
+                  >
                     {c.label}
                   </span>
                 )}

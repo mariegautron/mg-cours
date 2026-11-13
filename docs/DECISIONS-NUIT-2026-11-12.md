@@ -365,3 +365,18 @@ Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
     dessinés à la main (« Créer un module », boutons des pages module et séance, actions des
     lignes de module) passent sur `buttonVariants`. « Prêt pour le jour J ? » : manques avec une
     icône, sans « ! ».
+
+## 13 novembre : nouvelle navigation (N1-N4, G début) et relecture
+
+- Table unique `src/lib/nav/places.ts` ; menu, onglets (`SectionTabs`), fil d'Ariane
+  (`PlaceNav`, `ObjectCrumbs`) et phases (`ModulePhases`) la lisent. Styles des onglets et des
+  phases isolés dans leurs composants (DA à revoir par Arnaud).
+- « Où j'en suis » remplacé par les phases ; contenu de « Préparer » = étapes actuelles
+  (provisoire, `PhaseSteps`).
+- Relecture UX (sous-agent) corrigée : fils d'Ariane en double retirés (QCM, copie, questions),
+  fil affiché aussi pour les sous-pages (une fiche étudiant·e, Modifier le module), section
+  toujours cliquable, nom du module dès le rendu serveur, liens du fil à 44 px, séances du module
+  chargées une seule fois par page. **Plus tard** : « Plus » pour les onglets en trop sur
+  tablette, coches de phase tirées des étapes, règle « une étape de préparation bloque ».
+- « Sujets à voir avec l'école » : colonne `module.school_topics` (migration 20261216000000),
+  carte sur l'accueil du module, bloc sur Aujourd'hui.

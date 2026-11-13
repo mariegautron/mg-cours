@@ -97,10 +97,13 @@ export function AppSidebar({
                       ) : null}
                       {item.key === "dashboard" && shownModules.length > 0 ? (
                         <div className="mt-2 mb-1 group-data-[collapsible=icon]:hidden">
-                          <p className="text-muted-foreground-2 px-2 pb-1 text-xs font-medium">
+                          <p
+                            id="my-modules"
+                            className="text-muted-foreground-2 px-2 pb-1 text-xs font-medium"
+                          >
                             Mes modules en cours
                           </p>
-                          <ul className="flex flex-col">
+                          <ul aria-labelledby="my-modules" className="flex flex-col">
                             {shownModules.map((m) => {
                               const here = place?.moduleId === m.id;
                               return (
@@ -108,9 +111,6 @@ export function AppSidebar({
                                   {/* Changer de module garde la section (Évaluations → Évaluations). */}
                                   <Link
                                     href={sameSectionIn(pathname, m.id)}
-                                    aria-current={
-                                      here && place?.moduleEntry === "week" ? "page" : undefined
-                                    }
                                     title={m.name}
                                     className={`hover:bg-sidebar-accent flex min-h-11 items-center rounded-lg px-2 text-sm ${
                                       here ? "text-foreground font-medium" : "text-muted-foreground"

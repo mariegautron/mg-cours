@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActionError } from "@/components/action-error";
@@ -42,7 +41,6 @@ export default async function AttemptPage({
     ? await supabase.from("question").select("id, general_feedback").in("id", openIds)
     : { data: [] };
   const expectedOf = new Map((bankRows ?? []).map((b) => [b.id, b.general_feedback]));
-  const back = `/modules/${id}/assessments/${assessmentId}/quiz/links`;
   // Copies rendues, par ordre alphabétique : précédente / suivante.
   const { data: siblings } = await supabase
     .from("quiz_attempt")
@@ -63,11 +61,6 @@ export default async function AttemptPage({
 
   return (
     <div className="max-w-3xl space-y-6">
-      <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
-        <Link href={back} className="underline-offset-2 hover:underline">
-          Suivi du QCM
-        </Link>
-      </nav>
       <h1>
         Copie de {student.first_name} {student.last_name}
       </h1>

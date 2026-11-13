@@ -39,11 +39,6 @@ export default async function QuizPage({
 
   const heading = (
     <div className="space-y-1">
-      <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
-        <Link href={back} className="underline-offset-2 hover:underline">
-          {assessment.title}
-        </Link>
-      </nav>
       <h1>QCM{quiz ? ` — ${quiz.title}` : ""}</h1>
     </div>
   );
@@ -132,11 +127,6 @@ export default async function QuizPage({
     <div className="flex max-w-6xl flex-col gap-5 lg:flex-row lg:items-start">
       <section aria-labelledby="qp" className={`${card} min-w-0 flex-[3_1_0] space-y-4`}>
         <div className="space-y-1">
-          <nav aria-label="Fil d’Ariane" className="text-muted-foreground text-sm">
-            <Link href={back} className="underline-offset-2 hover:underline">
-              {assessment.title}
-            </Link>
-          </nav>
           <h1 id="qp">QCM{quiz ? ` · ${quiz.title}` : ""}</h1>
           <p className="text-muted-foreground text-sm">
             Évaluation individuelle sous forme de QCM, tirage différent pour chaque personne.

@@ -23,9 +23,12 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   if (!user) redirect("/login");
   // « Mes modules en cours » du menu : non archivés, non terminés, non masqués d'Aujourd'hui.
-  const runningModules = (await listModules())
-    .filter((m) => !m.finished_at && !isHiddenFromToday(m))
+  const allModules = await listModules({ includeArchived: true });
+  const runningModules = allModules
+    .filter((m) => !m.archived_at && !m.finished_at && !isHiddenFromToday(m))
     .map((m) => ({ id: m.id, name: m.name }));
+  // Nom de chaque module pour le fil d'Ariane, dès le rendu serveur.
+  const moduleNames = Object.fromEntries(allModules.map((m) => [m.id, m.name]));
 
   return (
     <NavigationStatusProvider>
@@ -37,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         Aller au contenu
       </a>
       <ModuleNavProvider>
-        <PlaceNavProvider>
+        <PlaceNavProvider moduleNames={moduleNames}>
           <SidebarProvider>
             <RailSync />
             <AppSidebar runningModules={runningModules} />

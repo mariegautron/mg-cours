@@ -54,7 +54,7 @@ export type CourseWithResources = Tables<"course"> & {
   resources: LinkedResource[];
 };
 
-export async function getModuleCourses(moduleId: string): Promise<CourseWithResources[]> {
+async function loadModuleCourses(moduleId: string): Promise<CourseWithResources[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("course")
@@ -345,3 +345,6 @@ export async function getImportableCourses(moduleId: string): Promise<Importable
     })[]
   ).map(({ course_resource, ...c }) => ({ ...c, resourceLinks: course_resource }));
 }
+
+/** Séances d'un module, une seule requête par rendu (layouts et page la partagent). */
+export const getModuleCourses = cache(loadModuleCourses);
