@@ -410,3 +410,7 @@ les requêtes) ; alignement du lien « Copies » du sommaire (à vérifier à l'
   projet existant » ; une seule zone principale sur « Essai à blanc » ; fil d'Ariane « Liens
   personnels et suivi des copies ». Lenteur du filtre de l'agenda : non mesurée faute d'accès aux
   journaux de requêtes (piste : chaque page recharge toutes les évaluations et leurs notes).
+- Petits restes du retest : année toujours visible en tête des modules du menu (« 26-27 ») ; un
+  lien vers un bloc replié ouvre la section qui le contient (`OpenOnHash`, ex. « 3 à compléter »
+  de l'en-tête d'un oral) ; « Continuer avec » ne propose plus une copie non rendue ; sommaire
+  aligné ; agenda filtré dans le navigateur, sans recharger toutes les évaluations et notes.

@@ -681,7 +681,10 @@ export default async function AssessmentPage({
       ) : null}
 
       {/* Sommaire : chaque bloc à un clic, sans défiler. */}
-      <nav aria-label="Sommaire de l’évaluation" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <nav
+        aria-label="Sommaire de l’évaluation"
+        className="flex flex-wrap items-center gap-x-4 text-sm leading-none"
+      >
         {targets.length > 0 ? (
           <a
             href="#copies"

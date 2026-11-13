@@ -147,8 +147,11 @@ export function correctionOverview(
       values.length > 0
         ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100
         : null,
+    // Prochaine copie à reprendre : jamais une copie non rendue (rien à corriger).
     next:
-      rows.find((r) => r.state === "in_progress") ?? rows.find((r) => r.state === "todo") ?? null,
+      rows.find((r) => r.state === "in_progress") ??
+      rows.find((r) => r.state === "todo" && r.received !== false) ??
+      null,
   };
 }
 

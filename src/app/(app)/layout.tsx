@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
 import { ModuleNavProvider } from "@/components/modules/module-nav-context";
 import { PlaceNav, PlaceNavProvider } from "@/components/nav/place-nav";
+import { OpenOnHash } from "@/components/nav/open-on-hash";
 import { RailSync } from "@/components/rail-sync";
 import { GlobalSearch } from "@/components/search/global-search";
 import { NavigationStatusProvider } from "@/components/navigation-status";
@@ -15,7 +16,6 @@ import { createClient } from "@/lib/supabase/server";
 import { isHiddenFromToday, moduleLabels } from "@/lib/dashboard/module-labels";
 import { todayInParis } from "@/lib/modules/next-session";
 import { isCurrentModule } from "@/lib/modules/current";
-import { schoolYearOf } from "@/lib/modules/list-state";
 import { listCourseProgress } from "@/lib/dashboard/overview-queries";
 import { listModules } from "@/lib/modules/queries";
 
@@ -62,8 +62,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     .map((m) => ({
       id: m.id,
       name: m.name,
-      // Année affichée en premier quand deux modules ont le même nom (lignes sinon identiques).
-      year: labels.get(m.id) !== m.name ? schoolYearOf(m.year) : null,
+      // Année toujours visible en tête (« 26-27 ») : deux modules aux noms proches se distinguent
+      // même quand la ligne est coupée.
+      year: `${String(m.year % 100).padStart(2, "0")}-${String((m.year + 1) % 100).padStart(2, "0")}`,
     }));
   const moduleNames = Object.fromEntries(allModules.map((m) => [m.id, labels.get(m.id) ?? m.name]));
 
@@ -99,6 +100,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                 className="flex-1 p-4 pb-20 outline-none sm:p-6 md:pb-6"
               >
                 <PlaceNav />
+                <OpenOnHash />
                 {children}
               </div>
             </SidebarInset>
