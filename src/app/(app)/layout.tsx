@@ -12,7 +12,8 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
-import { isHiddenFromToday } from "@/lib/dashboard/module-labels";
+import { isHiddenFromToday, moduleLabels } from "@/lib/dashboard/module-labels";
+import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -24,11 +25,29 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   if (!user) redirect("/login");
   // « Mes modules en cours » du menu : non archivés, non terminés, non masqués d'Aujourd'hui.
   const allModules = await listModules({ includeArchived: true });
+  // Deux modules du même nom (une année sur l'autre) : l'année scolaire partout (menu, fil d'Ariane).
+  const labels = moduleLabels(allModules);
+  // « Mes modules en cours » : la même règle qu'Aujourd'hui (séances récentes ou à venir), triés
+  // par séance la plus proche. Modules non terminés, non masqués.
+  const today = todayInParis();
+  const shift = (d: number) =>
+    new Date(Date.parse(`${today}T12:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10);
+  const { data: dated } = await supabase
+    .from("course")
+    .select("module_id, session_date")
+    .gte("session_date", shift(-14))
+    .lte("session_date", shift(45));
+  const nearest = new Map<string, number>();
+  for (const c of dated ?? []) {
+    if (!c.session_date) continue;
+    const dist = Math.abs(Date.parse(c.session_date) - Date.parse(today));
+    nearest.set(c.module_id, Math.min(nearest.get(c.module_id) ?? Infinity, dist));
+  }
   const runningModules = allModules
-    .filter((m) => !m.archived_at && !m.finished_at && !isHiddenFromToday(m))
-    .map((m) => ({ id: m.id, name: m.name }));
-  // Nom de chaque module pour le fil d'Ariane, dès le rendu serveur.
-  const moduleNames = Object.fromEntries(allModules.map((m) => [m.id, m.name]));
+    .filter((m) => !m.archived_at && !m.finished_at && !isHiddenFromToday(m) && nearest.has(m.id))
+    .sort((a, b) => (nearest.get(a.id) ?? 0) - (nearest.get(b.id) ?? 0))
+    .map((m) => ({ id: m.id, name: labels.get(m.id) ?? m.name }));
+  const moduleNames = Object.fromEntries(allModules.map((m) => [m.id, labels.get(m.id) ?? m.name]));
 
   return (
     <NavigationStatusProvider>

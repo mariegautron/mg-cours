@@ -199,7 +199,6 @@ export default async function ModuleAssessmentsPage({
         ).size;
   const titleOf = new Map(assessments.map((a) => [a.id, a.title]));
   const makeupRowsAll = (await loadMakeupGroups(id)).flatMap((g) => g.rows);
-  const makeupsPending = makeupRowsAll.filter((r) => r.step !== "done").length;
   // Absence excusée pas encore rattrapée : « rattrapage en attente » à côté de la moyenne.
   const makeupPendingIds = new Set(
     makeupRowsAll.filter((r) => r.step !== "done").map((r) => r.student.id),
@@ -220,7 +219,8 @@ export default async function ModuleAssessmentsPage({
             <strong className="text-foreground font-semibold">
               {planned.planned} / {planned.required}
             </strong>{" "}
-            · Notées{" "}
+            ({planned.plannedGroup} de groupe, {planned.plannedIndividual} individuelle
+            {planned.plannedIndividual > 1 ? "s" : ""}) · Notées{" "}
             <strong className="text-foreground font-semibold">
               {progress.enteredTotal} / {progress.requirement.total}
             </strong>
@@ -240,11 +240,6 @@ export default async function ModuleAssessmentsPage({
           </details>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="secondary">
-            <Link href={`/modules/${id}/rattrapages`}>
-              Rattrapages{makeupsPending > 0 ? ` · ${makeupsPending} à faire` : ""}
-            </Link>
-          </Button>
           <Button asChild>
             <Link href={`/modules/${id}/assessments/add`}>
               <Plus aria-hidden />
@@ -323,7 +318,7 @@ export default async function ModuleAssessmentsPage({
         <>
           <section aria-labelledby="assessments-list">
             <h2 id="assessments-list" className="mb-3 text-sm font-semibold">
-              Évaluations ({assessments.length})
+              Évaluations ({assessments.length}){" "}
               {assessments.length > planned.planned ? (
                 <span className="text-muted-foreground ml-2 font-sans text-sm font-normal">
                   dont {assessments.length - planned.planned} hors notes exigées (rattrapages,
@@ -459,7 +454,7 @@ export default async function ModuleAssessmentsPage({
                       <Button
                         asChild
                         variant={frame.tone === "ok" ? "default" : "outline"}
-                        className="min-w-0 flex-1"
+                        className="flex-auto"
                       >
                         <Link
                           href={
@@ -480,6 +475,7 @@ export default async function ModuleAssessmentsPage({
                                 : a.gradeCount + a.inProgressCount > 0
                                   ? "Continuer la correction"
                                   : "Corriger"}
+                          <span className="sr-only"> : {a.title}</span>
                         </Link>
                       </Button>
                       {oral && frame.tone !== "ok" ? (
@@ -488,7 +484,7 @@ export default async function ModuleAssessmentsPage({
                             href={`/modules/${id}/assessments/${a.id}`}
                             aria-describedby={`ev-${a.id}`}
                           >
-                            Préparer
+                            Préparer<span className="sr-only"> : {a.title}</span>
                           </Link>
                         </Button>
                       ) : null}

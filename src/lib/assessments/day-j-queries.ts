@@ -1,4 +1,4 @@
-import { dayJReadiness, submitModeOf } from "@/lib/assessments/day-j";
+import { dayJReadiness, espaceUpToDate, submitModeOf } from "@/lib/assessments/day-j";
 import { parseEspace, type EspaceEvaluation } from "@/lib/modules/espace";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,15 +87,19 @@ export async function listUpcomingAssessments(
   const { data } = await q;
   const rows = (data ?? []).filter((a) => a.module && !a.module.archived_at);
   const ids = rows.map((a) => a.id);
-  const { data: quizzes } = ids.length
-    ? await supabase
-        .from("quiz")
-        .select("id, assessment_id, status, opens_at, quiz_draw_rule(id)")
-        .in("assessment_id", ids)
-    : { data: [] };
-  const qcmBy = new Map((quizzes ?? []).map((z) => [z.assessment_id, z]));
+  // Mêmes compléments que la carte de l'évaluation (publication dans l'espace, QCM) : un seul
+  // calcul de « à compléter », partout (Aujourd'hui, carte, page).
+  const byModule = new Map<string, string[]>();
+  for (const a of rows) byModule.set(a.module_id, [...(byModule.get(a.module_id) ?? []), a.id]);
+  const extrasBy = new Map(
+    await Promise.all(
+      [...byModule.entries()].map(
+        async ([mid, aids]) => [mid, await loadDayJExtras(mid, aids)] as const,
+      ),
+    ),
+  );
   return rows.map((a) => {
-    const z = qcmBy.get(a.id);
+    const extras = extrasBy.get(a.module_id)!;
     const { missing } = dayJReadiness({
       moduleId: a.module_id,
       id: a.id,
@@ -118,13 +122,10 @@ export async function listUpcomingAssessments(
       submitMode: submitModeOf(a),
       files: a.files,
       isOral: a.project_role === "oral",
-      qcm: z
-        ? {
-            rulesOk: z.quiz_draw_rule.length > 0,
-            drawsPrepared: true,
-            opened: z.status !== "draft",
-          }
+      published: extras.published
+        ? espaceUpToDate(extras.published.get(a.id), { ...a, submit_mode: submitModeOf(a) })
         : undefined,
+      qcm: extras.qcm.get(a.id),
     });
     return {
       id: a.id,
