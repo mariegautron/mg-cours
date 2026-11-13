@@ -7,9 +7,11 @@ import { toast } from "sonner";
 
 import { reopenModule } from "@/app/(app)/modules/actions";
 import type { ModuleListState } from "@/lib/modules/list-state";
+import { buttonVariants } from "@/components/ui/button";
 
-const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+// Bouton secondaire commun (DA « Atelier », 32 px).
+
+const BTN = buttonVariants({ variant: "secondary" });
 
 /**
  * Actions rapides d'une ligne de module : Facture, et « Rouvrir » pour un module terminé. Terminer

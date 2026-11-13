@@ -44,11 +44,13 @@ import {
   resourceSubtitle,
   uncoveredExpectations,
 } from "@/lib/modules/workspace";
+import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Séance" };
 
-const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+// Bouton secondaire commun (DA « Atelier », 32 px).
+
+const BTN = buttonVariants({ variant: "secondary" });
 
 export default async function CoursePage({
   params,

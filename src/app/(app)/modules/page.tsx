@@ -21,6 +21,7 @@ import {
 } from "@/lib/modules/list-state";
 import { listModules } from "@/lib/modules/queries";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Modules" };
 
@@ -170,10 +171,7 @@ export default async function ModulesPage({ searchParams }: PageProps<"/modules"
             termine depuis sa dernière étape, « Terminer le module ».
           </p>
         </div>
-        <Link
-          href="/modules/new"
-          className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-12 items-center rounded-xl px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
-        >
+        <Link href="/modules/new" className={buttonVariants()}>
           Créer un module
         </Link>
       </div>

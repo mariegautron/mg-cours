@@ -358,3 +358,10 @@ Règles dans le haut de `docs/DESIGN.md`. Ce qui est appliqué :
     cliquables (fond au survol, chevron, titre souligné au survol seulement) avec ce qui manque en
     une phrase grise ; plus de liens soulignés en enfilade (aussi dans « Prêt pour le jour J ? »).
   - projection inchangée.
+  - suite (captures d'Arnaud) : la règle « cibles tactiles de 44 px » forçait la hauteur visuelle
+    des boutons, champs et listes sous 1 024 px de large (fenêtre étroite, panneau latéral
+    ouvert). Elle ne s'applique plus qu'au téléphone et aux écrans tactiles sans souris ; ailleurs
+    la zone cliquable est agrandie par le pseudo-élément sans grossir le dessin. Les boutons
+    dessinés à la main (« Créer un module », boutons des pages module et séance, actions des
+    lignes de module) passent sur `buttonVariants`. « Prêt pour le jour J ? » : manques avec une
+    icône, sans « ! ».

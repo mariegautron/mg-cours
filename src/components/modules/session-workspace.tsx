@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
 
@@ -45,8 +45,9 @@ export interface WorkspaceResource {
   parts?: CoursePartsInfo;
 }
 
-const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+// Bouton secondaire commun (DA « Atelier », 32 px).
+
+const BTN = buttonVariants({ variant: "secondary" });
 
 /**
  * Séance ouverte (maquette « Séances ») : titre, statut, déroulé réordonnable (glisser-déposer ET
@@ -497,7 +498,7 @@ export function SessionWorkspace({
         ) : null}
         <details className="mt-3">
           <summary
-            className={cn(BTN, "min-h-12 cursor-pointer list-none")}
+            className={cn(BTN, "cursor-pointer list-none")}
             aria-label="Ajouter une ressource déjà utilisée dans le module"
           >
             Ajouter une ressource déjà utilisée dans le module
@@ -557,7 +558,7 @@ export function SessionWorkspace({
         <div className="mt-3 flex flex-wrap gap-2.5">
           <Link
             href={`/resources/new?module=${moduleId}&course=${courseId}`}
-            className={cn(BTN, "min-h-12 bg-transparent")}
+            className={cn(BTN, "bg-transparent")}
           >
             Créer une ressource
           </Link>

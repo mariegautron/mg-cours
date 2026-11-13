@@ -364,7 +364,9 @@ html {
 }
 
 /* Cibles tactiles d'au moins 44 px sur téléphone, tablette et écrans tactiles (RGAA 4.1 / WCAG 2.5.8). */
-@media (max-width: 64rem), (pointer: coarse) {
+/* Seulement téléphone et écran tactile sans souris : au portable (même fenêtre étroite), le
+   visuel reste compact et la zone cliquable est agrandie par le pseudo-élément des boutons. */
+@media (max-width: 40rem), (hover: none) and (pointer: coarse) {
   button:not([data-sidebar="rail"]):not([data-slot="switch"]):not(.sr-only),
   [data-slot="button"],
   select,
@@ -376,7 +378,9 @@ html {
     min-height: 2.75rem;
   }
 }
-@media (max-width: 64rem), (pointer: coarse) {
+/* Seulement téléphone et écran tactile sans souris : au portable (même fenêtre étroite), le
+   visuel reste compact et la zone cliquable est agrandie par le pseudo-élément des boutons. */
+@media (max-width: 40rem), (hover: none) and (pointer: coarse) {
   [data-slot="button"][data-size^="icon"],
   button[data-sidebar="trigger"],
   [data-slot$="-close"],

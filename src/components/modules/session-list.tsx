@@ -14,6 +14,7 @@ import {
   statusLabel,
 } from "@/lib/modules/workspace";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 /** Colonne étroite de la maquette « Séances » : toutes les séances du module, la courante surlignée. */
 export function SessionList({
@@ -54,8 +55,8 @@ export function SessionList({
       .filter((c) => !c.completion && c.session_date && c.session_date >= today)
       .sort((a, b) => a.session_date!.localeCompare(b.session_date!))[0]?.id ??
     (focus && (!focus.session_date || focus.session_date >= today) ? focus.id : null);
-  const BTN =
-    "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+  // Bouton secondaire commun (DA « Atelier », 32 px).
+  const BTN = buttonVariants({ variant: "secondary" });
   const heading = courses.length > 1 ? `Les ${courses.length} séances` : "La séance";
   const summary = `${minutes ? `${hoursLabel(minutes)} sur ${totalHours} h · ` : ""}${ready} sur ${courses.length} ${courses.length > 1 ? "prêtes" : "prête"}`;
   const body = (

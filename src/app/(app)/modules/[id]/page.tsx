@@ -42,6 +42,7 @@ import { trameStatus } from "@/lib/ynov/trame";
 import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import { HiddenFromTodayToggle } from "@/components/modules/hidden-from-today-toggle";
 import { isHiddenFromToday } from "@/lib/dashboard/module-labels";
+import { buttonVariants } from "@/components/ui/button";
 
 export async function generateMetadata({
   params,
@@ -53,8 +54,9 @@ export async function generateMetadata({
   return { title: mod?.name ?? "Module" };
 }
 
-const BTN =
-  "focus-visible:ring-ring hover:bg-accent inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none";
+// Bouton secondaire commun (DA « Atelier », 32 px).
+
+const BTN = buttonVariants({ variant: "secondary" });
 
 const INVOICE_LABEL = {
   draft: "En préparation",
