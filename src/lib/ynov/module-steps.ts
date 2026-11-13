@@ -238,7 +238,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
             summary: `${plural(ctx.roster.students, "inscrit·e", "inscrit·es")} · ${plural(ctx.roster.groups, "groupe")}`,
             action:
               ctx.roster.students === 0
-                ? { label: "Importer la liste", href: `${base}/groups/import` }
+                ? { label: "Ajouter les étudiant·es", href: `${base}/groups/import` }
                 : { label: "Faire les groupes", href: `${base}/groups/wizard` },
             badge:
               ctx.roster.students === 0 ? "importer la liste de la classe" : "faire les groupes",
@@ -291,7 +291,7 @@ export function moduleSteps(ctx: ModuleStepsContext): ModuleSteps {
     },
     {
       key: "admin",
-      title: "Documents administratifs",
+      title: "Cocher les documents administratifs (Clôture)",
       state: inProgress(adminDone, adminDocs.done > 0),
       summary: `${adminDocs.done}/${adminDocs.total}`,
       action: { label: "Cocher les documents", href: `${base}/finish#admin-docs` },

@@ -6,7 +6,7 @@ import { addScheduleToModule } from "@/app/(app)/modules/actions";
 import { ScheduleForm } from "@/components/modules/schedule-form";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
 
-export const metadata: Metadata = { title: "Planning du module" };
+export const metadata: Metadata = { title: "Importer des dates" };
 
 export default async function ModuleSchedulePage({ params }: PageProps<"/modules/[id]/schedule">) {
   const { id } = await params;

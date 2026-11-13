@@ -193,7 +193,6 @@ export default async function CoursePage({
               <p className="text-muted-foreground text-[0.8125rem]">
                 Séance {index + 1} sur {courses.length} · {when}
               </p>
-              <p className="text-muted-foreground mb-1 text-[0.8125rem] font-medium">{mod.name}</p>
               <h1 id="ws">{course.title}</h1>
               {saved || added ? (
                 <p role="status" className="text-mint text-sm font-semibold">

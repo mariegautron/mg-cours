@@ -268,7 +268,7 @@ export function GroupWizard({
 
   const titles = [
     [
-      "Constituer les groupes",
+      "Faire les groupes",
       `${moduleName} · ${students.length} étudiant·es, photos comprises. Choisis la manière, je m’occupe du reste.`,
     ],
     [

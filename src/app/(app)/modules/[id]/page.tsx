@@ -8,7 +8,10 @@ import { notFound } from "next/navigation";
 import { Pencil, Presentation } from "lucide-react";
 
 import { Pill } from "@/components/dashboard/pill";
-import { JourneySteps } from "@/components/modules/journey-steps";
+import { PhaseSteps } from "@/components/modules/phase-steps";
+import { ChevronRight } from "lucide-react";
+import { listToCorrect } from "@/lib/dashboard/overview-queries";
+import { modulePhase, phaseFromParam, PREPARE_STEP_KEYS, stepsFor } from "@/lib/modules/phases";
 import { listUpcomingAssessments } from "@/lib/assessments/day-j-queries";
 import { daysBetween } from "@/lib/dashboard/todo";
 import { formatSessionDay } from "@/lib/dashboard/today";
@@ -103,10 +106,11 @@ export default async function ModulePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ fiche?: string }>;
+  searchParams: Promise<{ fiche?: string; phase?: string }>;
 }) {
   const { id } = await params;
-  const ficheMessage = ficheNotice((await searchParams).fiche);
+  const sp = await searchParams;
+  const ficheMessage = ficheNotice(sp.fiche);
   const [
     mod,
     courses,
@@ -194,6 +198,53 @@ export default async function ModulePage({
   // La moyenne de la classe n'est plus redite ici : elle est dans la page Évaluations du module.
   const retro = finishedView ? await getRetrospectiveNote(id) : null;
   const dueIn = trame.dueDate ? daysBetween(today, trame.dueDate.toISOString().slice(0, 10)) : null;
+  // Phase du module (lot N4) : calculée, ou choisie dans le fil de phase (?phase=…).
+  const currentPhase = modulePhase({ today, closed, courses });
+  const shownPhase = phaseFromParam(sp.phase) ?? currentPhase;
+  // « Cette semaine » (phase Enseigner) : seulement ce qui est à faire dans les 7 jours.
+  const inWeek = (d: string | null) => !!d && d >= today && daysBetween(today, d) <= 7;
+  const weekRows: { key: string; title: string; detail: string; action: string; href: string }[] =
+    [];
+  courses.forEach((c, i) => {
+    if (c.completion || !c.session_date) return;
+    if (c.session_date < today) {
+      weekRows.push({
+        key: `close-${c.id}`,
+        title: `Clôturer la séance ${i + 1}`,
+        detail: `${formatSessionDay(c.session_date)} · ${c.title}`,
+        action: "Clôturer",
+        href: `/modules/${id}/courses/${c.id}/close`,
+      });
+    } else if (inWeek(c.session_date)) {
+      weekRows.push({
+        key: `next-${c.id}`,
+        title: `Séance ${i + 1} · ${formatSessionDay(c.session_date)}`,
+        detail: `${c.title} · ${isSessionReady(c) ? "prête" : "à préparer"}`,
+        action: c.session_date === today ? "Faire cours" : "Préparer",
+        href:
+          c.session_date === today
+            ? `/modules/${id}/courses/${c.id}/start`
+            : `/modules/${id}/courses/${c.id}`,
+      });
+    }
+  });
+  for (const t of (await listToCorrect(Number.MAX_SAFE_INTEGER)).filter((x) => x.moduleId === id)) {
+    weekRows.push({
+      key: `corr-${t.assessmentId}`,
+      title: `Corriger : ${t.title}`,
+      detail: `${t.remaining} copie${t.remaining > 1 ? "s" : ""} restante${t.remaining > 1 ? "s" : ""} sur ${t.total}`,
+      action: "Corriger",
+      href: `/modules/${id}/assessments/${t.assessmentId}/correct${t.nextCopyId ? `?copy=${t.nextCopyId}` : ""}`,
+    });
+  }
+  if (makeupsPending > 0)
+    weekRows.push({
+      key: "makeups",
+      title: "Rattrapages à organiser",
+      detail: `${makeupsPending} à faire`,
+      action: "Voir",
+      href: `/modules/${id}/rattrapages`,
+    });
   const meta = [
     mod.school?.name ?? "École non renseignée",
     mod.level,
@@ -286,7 +337,74 @@ export default async function ModulePage({
 
       <div className="flex flex-wrap items-start gap-6 lg:flex-nowrap">
         <div className="min-w-0 flex-1 basis-full space-y-4 lg:basis-0">
-          <JourneySteps journey={journey} />
+          {/* Trois phases (lot N4) à la place de la liste de 13 étapes « Où j'en suis ». */}
+          {shownPhase === "prepare" ? (
+            <section aria-labelledby="phase-title" className="space-y-2">
+              <h2 id="phase-title" className="text-sm font-semibold">
+                Préparer le module
+              </h2>
+              {/* Contenu provisoire : Arnaud redéfinit cette liste. */}
+              <PhaseSteps steps={stepsFor(journey.steps, PREPARE_STEP_KEYS)} label="Préparer" />
+            </section>
+          ) : shownPhase === "close" ? (
+            <section aria-labelledby="phase-title" className="space-y-2">
+              <h2 id="phase-title" className="text-sm font-semibold">
+                Clôturer le module
+              </h2>
+              <PhaseSteps
+                steps={[
+                  ...stepsFor(journey.steps, ["appreciations"]),
+                  {
+                    key: "teach",
+                    number: 0,
+                    title: "Avis des étudiant·es",
+                    state: "todo",
+                    summary: "questionnaire de fin de module",
+                    action: { label: "Voir les avis", href: `/modules/${id}/feedback` },
+                    badge: "",
+                  },
+                  ...stepsFor(journey.steps, ["admin", "invoice", "finish"]),
+                ]}
+                label="Clôturer"
+              />
+            </section>
+          ) : (
+            <section aria-labelledby="phase-title" className="space-y-2">
+              <h2 id="phase-title" className="text-sm font-semibold">
+                Cette semaine
+              </h2>
+              {weekRows.length === 0 ? (
+                <p className="text-muted-foreground bg-card rounded-xl border px-5 py-4 text-sm">
+                  Rien à faire dans les 7 prochains jours.
+                </p>
+              ) : (
+                <ul aria-label="Cette semaine" className="bg-card rounded-xl border px-5 py-2">
+                  {weekRows.map((r) => (
+                    <li key={r.key} className="border-t first:border-t-0">
+                      <Link
+                        href={r.href}
+                        className="group hover:bg-muted/50 -mx-2 flex min-h-14 items-center gap-3 rounded-lg px-2 py-2.5"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium group-hover:underline">{r.title}</span>
+                          <span className="text-muted-foreground block text-[0.8125rem]">
+                            {r.detail}
+                          </span>
+                        </span>
+                        <span className="text-muted-foreground text-[0.8125rem] font-medium">
+                          {r.action}
+                        </span>
+                        <ChevronRight
+                          aria-hidden
+                          className="text-muted-foreground size-4 shrink-0"
+                        />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </div>
 
         <div className="w-full min-w-0 space-y-4 lg:w-96 lg:flex-none">

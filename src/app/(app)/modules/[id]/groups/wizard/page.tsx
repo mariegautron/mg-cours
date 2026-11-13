@@ -11,7 +11,7 @@ import { listStudents } from "@/lib/students/queries";
 import { listEnrollments } from "@/lib/students/enrollment";
 import { EmptyState } from "@/components/empty-state";
 
-export const metadata: Metadata = { title: "Constituer les groupes" };
+export const metadata: Metadata = { title: "Faire les groupes" };
 
 export default async function GroupWizardPage({
   params,
@@ -30,7 +30,7 @@ export default async function GroupWizardPage({
         title="Ta classe n’est pas encore là"
         description="Importe la liste de la promo (export Hyperplanning) : les groupes se font ensuite à partir des inscrit·es."
         actions={[
-          { label: "Importer la liste", href: `/modules/${id}/groups/import` },
+          { label: "Ajouter les étudiant·es", href: `/modules/${id}/groups/import` },
           { label: "Choisir dans toute la base", href: `/modules/${id}/groups/wizard?toutes=1` },
         ]}
       />

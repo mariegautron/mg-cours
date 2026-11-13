@@ -9,6 +9,7 @@ import { ModuleSideNav } from "@/components/modules/module-side-nav";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
 import { activeEntry, MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
+import { placeOf, sameSectionIn } from "@/lib/nav/places";
 import {
   Sidebar,
   SidebarContent,
@@ -33,8 +34,16 @@ const LOOK: Record<MenuKey, { icon: typeof Sun }> = {
 
 export const NAV_ICONS = LOOK;
 
-export function AppSidebar() {
+export function AppSidebar({
+  runningModules = [],
+}: {
+  /** « Mes modules en cours » : non terminés et non masqués d'Aujourd'hui. */
+  runningModules?: { id: string; name: string }[];
+}) {
   const pathname = usePathname();
+  const place = placeOf(pathname);
+  // Au plus 6 modules, puis « Tous les modules » (entrée du menu).
+  const shownModules = runningModules.slice(0, 6);
 
   return (
     <Sidebar collapsible="icon">
@@ -83,7 +92,41 @@ export function AppSidebar() {
                           <LinkPending />
                         </Link>
                       </SidebarMenuButton>
-                      {item.key === "modules" ? <ModuleSideNav /> : null}
+                      {item.key === "modules" ? (
+                        <ModuleSideNav exclude={shownModules.map((m) => m.id)} />
+                      ) : null}
+                      {item.key === "dashboard" && shownModules.length > 0 ? (
+                        <div className="mt-2 mb-1 group-data-[collapsible=icon]:hidden">
+                          <p className="text-muted-foreground-2 px-2 pb-1 text-xs font-medium">
+                            Mes modules en cours
+                          </p>
+                          <ul className="flex flex-col">
+                            {shownModules.map((m) => {
+                              const here = place?.moduleId === m.id;
+                              return (
+                                <li key={m.id}>
+                                  {/* Changer de module garde la section (Évaluations → Évaluations). */}
+                                  <Link
+                                    href={sameSectionIn(pathname, m.id)}
+                                    aria-current={
+                                      here && place?.moduleEntry === "week" ? "page" : undefined
+                                    }
+                                    title={m.name}
+                                    className={`hover:bg-sidebar-accent flex min-h-11 items-center rounded-lg px-2 text-sm ${
+                                      here ? "text-foreground font-medium" : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    <span className="line-clamp-2 min-w-0 break-words">
+                                      {m.name}
+                                    </span>
+                                  </Link>
+                                  {here ? <ModuleSideNav only={m.id} hideTitle /> : null}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
                     </SidebarMenuItem>
                   );
                 })}

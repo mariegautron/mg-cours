@@ -90,7 +90,7 @@ export function sessionReadiness(i: ReadinessInput): Readiness {
           key: "groups",
           ok: false,
           title: "Pas encore de groupes",
-          action: { label: "Constituer les groupes", href: `/modules/${i.moduleId}/groups/wizard` },
+          action: { label: "Faire les groupes", href: `/modules/${i.moduleId}/groups/wizard` },
         },
   );
 

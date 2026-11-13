@@ -115,7 +115,7 @@ export default async function StartCoursePage({
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline" size="touch">
               <a href={`/modules/${id}/groups/import`} target="_blank" rel="noopener noreferrer">
-                Importer la liste<span className="sr-only"> (nouvel onglet)</span>
+                Ajouter les étudiant·es<span className="sr-only"> (nouvel onglet)</span>
               </a>
             </Button>
             <Button asChild variant="outline" size="touch">

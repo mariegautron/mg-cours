@@ -176,7 +176,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/student
           description="Importe la liste de la promotion, puis le trombinoscope pour avoir les photos. Tu peux aussi ajouter une personne à la main."
           actions={[
             { label: "Importer une liste", href: "/students/import" },
-            { label: "Importer le trombinoscope", href: "/students/photos" },
+            { label: "Importer les photos", href: "/students/photos" },
           ]}
         />
       ) : view === "list" ? (

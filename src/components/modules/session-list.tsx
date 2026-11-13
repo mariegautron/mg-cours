@@ -38,7 +38,8 @@ export function SessionList({
    * « column » : colonne à gauche (grand écran) ; « drawer » : liste repliée en haut de la page, pour
    * laisser au moins 560 px à la colonne de travail (portable à 125 %).
    */
-  layout?: "column" | "drawer";
+  /** « page » : la page Séances › Liste, en pleine largeur. */
+  layout?: "column" | "drawer" | "page";
 }) {
   const minutes = courses.reduce((n, c) => n + (minutesBetween(c.start_time, c.end_time) ?? 0), 0);
   // Une séance « Prête » dont le déroulé garde une ressource « À construire » ne compte pas comme
@@ -157,7 +158,7 @@ export function SessionList({
                 href={`/modules/${moduleId}/schedule`}
                 className="hover:bg-muted flex min-h-11 items-center rounded-lg px-3 text-sm"
               >
-                Depuis un planning
+                Importer des dates
               </Link>
             </li>
             <li>
@@ -172,12 +173,12 @@ export function SessionList({
         </DisclosureMenu>
         {courses.length ? (
           <Link href={`/modules/${moduleId}/planning`} className={BTN}>
-            Planning du module
+            Planning
           </Link>
         ) : null}
         {courses.length ? (
           <Link href={`/modules/${moduleId}/frise`} className={BTN}>
-            Frise du module
+            Espace étudiant·es
           </Link>
         ) : null}
       </div>
@@ -208,7 +209,10 @@ export function SessionList({
   return (
     <aside
       aria-labelledby="ls"
-      className="bg-card w-full min-w-0 rounded-xl border p-3.5 lg:w-80 lg:flex-none"
+      className={cn(
+        "bg-card w-full min-w-0 rounded-xl border p-3.5",
+        layout === "column" && "lg:w-80 lg:flex-none",
+      )}
     >
       <h2 id="ls" className="mx-1.5 text-sm font-semibold">
         {heading}

@@ -12,6 +12,8 @@ import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
+import { isHiddenFromToday } from "@/lib/dashboard/module-labels";
+import { listModules } from "@/lib/modules/queries";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const supabase = await createClient();
@@ -20,6 +22,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+  // « Mes modules en cours » du menu : non archivés, non terminés, non masqués d'Aujourd'hui.
+  const runningModules = (await listModules())
+    .filter((m) => !m.finished_at && !isHiddenFromToday(m))
+    .map((m) => ({ id: m.id, name: m.name }));
 
   return (
     <NavigationStatusProvider>
@@ -34,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <PlaceNavProvider>
           <SidebarProvider>
             <RailSync />
-            <AppSidebar />
+            <AppSidebar runningModules={runningModules} />
             <SidebarInset className="min-w-0">
               <header className="flex h-14 items-center gap-2 border-b px-4">
                 <SidebarTrigger className="max-md:hidden" />

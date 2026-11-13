@@ -55,7 +55,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
           </h1>
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
-              <Link href={`/modules/${mod.id}/appreciations`}>Appréciations Hyperplanning</Link>
+              <Link href={`/modules/${mod.id}/appreciations`}>Appréciations</Link>
             </Button>
             {groups.length > 0 ? (
               <OpenInWindowButton
@@ -70,10 +70,10 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
               <Link href={`/modules/${mod.id}/groups/import`}>Ajouter les étudiant·es</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-              <Link href="/students/photos">Trombinoscope</Link>
+              <Link href="/students/photos">Photos</Link>
             </Button>
             <Button asChild size="sm" variant="secondary">
-              <Link href={`/modules/${mod.id}/groups/wizard`}>Constituer les groupes</Link>
+              <Link href={`/modules/${mod.id}/groups/wizard`}>Faire les groupes</Link>
             </Button>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default async function ModuleGroupsPage({ params }: PageProps<"/modules/[
             title="Pas encore de groupes"
             description="Crée un groupe (TP, TD, projet) pour y rattacher les étudiant·es et saisir les notes. Il faut des étudiant·es dans le module pour former des groupes."
             actions={[
-              { label: "Constituer les groupes", href: `/modules/${mod.id}/groups/wizard` },
+              { label: "Faire les groupes", href: `/modules/${mod.id}/groups/wizard` },
               { label: "Ajouter les étudiant·es", href: `/modules/${mod.id}/groups/import` },
             ]}
           />
