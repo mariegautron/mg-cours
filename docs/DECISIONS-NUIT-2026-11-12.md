@@ -270,3 +270,12 @@ Lot 1, ce qui est fait à ce stade :
   Messages en bas à droite au-dessus des barres collées. `Notice` sans rôle annoncé par défaut
   (seulement après une action). Onglet « Notes » court sur téléphone.
 - **Pas fait** : garder les onglets en haut dans l'aperçu de l'espace côté Marie (tablette).
+
+## Suites du 13 novembre (décisions d'Arnaud)
+
+- `X-Frame-Options` passé de `DENY` à `SAMEORIGIN` (accord d'Arnaud) : les aperçus PDF de l'appli
+  peuvent s'afficher dans ses propres pages ; les autres sites ne peuvent toujours pas l'encadrer.
+- « Masquer d'Aujourd'hui » : vraie colonne `module.hidden_from_today` (migration
+  `20261215000000_module_hidden_from_today.sql`, qui recopie puis retire la clé provisoire de
+  `admin_docs`). Le code lit la colonne, et l'ancienne clé en secours ; contrôle en lecture seule
+  dans `docs/schema-bdd/controle-hidden-from-today.sql`. Ordre : migration, puis push du code.

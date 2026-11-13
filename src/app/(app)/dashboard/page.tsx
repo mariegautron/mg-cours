@@ -96,9 +96,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   // Modules masqués d'Aujourd'hui (modules de test…) : ils ne comptent nulle part sur cette page.
   // Calculé sur tous les modules, archivés compris (facture, rattrapages d'un module terminé).
   const allModules = await listModules({ includeArchived: true });
-  const hiddenIds = new Set(
-    allModules.filter((m) => isHiddenFromToday(m.admin_docs)).map((m) => m.id),
-  );
+  const hiddenIds = new Set(allModules.filter((m) => isHiddenFromToday(m)).map((m) => m.id));
   for (let i = modules.length - 1; i >= 0; i--)
     if (hiddenIds.has(modules[i].id)) modules.splice(i, 1);
   for (const list of [

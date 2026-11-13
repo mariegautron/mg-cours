@@ -23,7 +23,6 @@ import { createClient } from "@/lib/supabase/server";
 import { REQUIRED_ADMIN_DOCS } from "@/lib/ynov/invoice";
 import type { Tables } from "@/types/db";
 import { failure, NOT_FOUND, SESSION_EXPIRED } from "@/lib/messages";
-import { HIDDEN_FROM_TODAY_KEY } from "@/lib/dashboard/module-labels";
 
 export interface ModuleFormState {
   error?: string;
@@ -448,19 +447,13 @@ export async function setAdminDoc(id: string, key: string, value: boolean): Prom
   return { saved: true };
 }
 
-/**
- * « Masquer d'Aujourd'hui » (lot 6, point 28) : le module ne compte plus sur le tableau de bord.
- * Rangé provisoirement dans `admin_docs` (pas de migration) : à déplacer dans une vraie colonne.
- */
+/** « Masquer d'Aujourd'hui » (lot 6, point 28) : le module ne compte plus sur le tableau de bord. */
 export async function setHiddenFromToday(id: string, hidden: boolean): Promise<AdminDocState> {
   const supabase = await createClient();
-  const { data: mod } = await supabase.from("module").select("admin_docs").eq("id", id).single();
-  if (!mod) return { error: NOT_FOUND.module };
-  const adminDocs = {
-    ...((mod.admin_docs as Record<string, boolean>) ?? {}),
-    [HIDDEN_FROM_TODAY_KEY]: hidden,
-  };
-  const { error } = await supabase.from("module").update({ admin_docs: adminDocs }).eq("id", id);
+  const { error } = await supabase
+    .from("module")
+    .update({ hidden_from_today: hidden })
+    .eq("id", id);
   if (error) return { error: failure("enregistrer") };
   revalidatePath(`/modules/${id}`);
   revalidatePath("/dashboard");

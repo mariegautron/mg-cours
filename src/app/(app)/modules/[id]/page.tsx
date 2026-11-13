@@ -225,7 +225,7 @@ export default async function ModulePage({
             Modifier
           </Link>
           <DisclosureMenu label="Plus" srLabel="d’actions sur le module" panelClassName="right-0">
-            <HiddenFromTodayToggle moduleId={mod.id} hidden={isHiddenFromToday(mod.admin_docs)} />
+            <HiddenFromTodayToggle moduleId={mod.id} hidden={isHiddenFromToday(mod)} />
           </DisclosureMenu>
         </div>
       </header>

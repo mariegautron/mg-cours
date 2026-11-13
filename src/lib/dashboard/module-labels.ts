@@ -49,14 +49,24 @@ export function relabelModules<T extends object>(
   return items;
 }
 
-/** Clé de `module.admin_docs` qui masque un module d'Aujourd'hui (réglage provisoire, sans migration). */
-export const HIDDEN_FROM_TODAY_KEY = "hidden_from_today";
+/**
+ * Ancienne clé de `module.admin_docs` qui masquait un module d'Aujourd'hui (nuit du 12 nov.),
+ * reprise dans la colonne `module.hidden_from_today` par la migration 20261215000000. Encore lue
+ * en secours tant que la migration n'est pas passée partout.
+ */
+const LEGACY_HIDDEN_KEY = "hidden_from_today";
 
-export function isHiddenFromToday(adminDocs: unknown): boolean {
+/** Module masqué d'Aujourd'hui : la colonne, sinon l'ancienne clé provisoire. */
+export function isHiddenFromToday(m: {
+  hidden_from_today?: boolean | null;
+  admin_docs?: unknown;
+}): boolean {
+  if (m.hidden_from_today === true) return true;
+  const docs = m.admin_docs;
   return (
-    !!adminDocs &&
-    typeof adminDocs === "object" &&
-    (adminDocs as Record<string, unknown>)[HIDDEN_FROM_TODAY_KEY] === true
+    !!docs &&
+    typeof docs === "object" &&
+    (docs as Record<string, unknown>)[LEGACY_HIDDEN_KEY] === true
   );
 }
 

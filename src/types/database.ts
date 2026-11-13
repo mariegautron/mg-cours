@@ -1392,6 +1392,7 @@ export type Database = {
           hours_lecture: number | null
           hours_td: number | null
           hours_tp: number | null
+          hidden_from_today: boolean
           iceberg_state: Database["public"]["Enums"]["iceberg_state"]
           id: string
           level: string | null
@@ -1418,6 +1419,7 @@ export type Database = {
           hours_lecture?: number | null
           hours_td?: number | null
           hours_tp?: number | null
+          hidden_from_today?: boolean
           iceberg_state?: Database["public"]["Enums"]["iceberg_state"]
           id?: string
           level?: string | null
@@ -1444,6 +1446,7 @@ export type Database = {
           hours_lecture?: number | null
           hours_td?: number | null
           hours_tp?: number | null
+          hidden_from_today?: boolean
           iceberg_state?: Database["public"]["Enums"]["iceberg_state"]
           id?: string
           level?: string | null
