@@ -1,11 +1,14 @@
-import { ASSESSMENT_FILES_BUCKET, downloadHeaders } from "@/lib/assessments/files";
+import { ASSESSMENT_FILES_BUCKET, downloadHeaders, previewHeaders } from "@/lib/assessments/files";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-/** Télécharge un fichier rendu (bucket privé, session requise), jamais affiché dans le navigateur. */
+/**
+ * Fichier rendu (bucket privé, session requise). Téléchargement par défaut ; `?apercu=1` sert un
+ * PDF ou une image en ligne pour l'aperçu de la correction (tout autre type reste téléchargé).
+ */
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: RouteContext<"/api/assessments/[id]/submissions/[itemId]">,
 ) {
   const { id, itemId } = await ctx.params;
@@ -22,5 +25,8 @@ export async function GET(
     .from(ASSESSMENT_FILES_BUCKET)
     .download(item.storage_path);
   if (error || !data) return new Response("Fichier introuvable", { status: 404 });
-  return new Response(data, { headers: downloadHeaders(item.file_name ?? "rendu", data.size) });
+  const name = item.file_name ?? "rendu";
+  const preview =
+    new URL(req.url).searchParams.get("apercu") === "1" ? previewHeaders(name, data.size) : null;
+  return new Response(data, { headers: preview ?? downloadHeaders(name, data.size) });
 }

@@ -84,7 +84,7 @@ export function ModuleDangerZone({
       ) : null}
       <form ref={formRef} action={dupAction} className="flex flex-wrap items-end gap-3">
         <div className="space-y-2">
-          <Label htmlFor="dup-name">Nom de la copie</Label>
+          <Label htmlFor="dup-name">Nom du nouveau module</Label>
           <Input
             id="dup-name"
             name="name"
@@ -122,14 +122,25 @@ export function ModuleDangerZone({
             <AlertDialogHeader>
               <AlertDialogTitle>Dupliquer « {name} » ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Un nouveau module « {copyName.trim() || name} » ({copyYear}) est créé avec les
-                séances, les ressources, le projet et les évaluations. Ni notes, ni dates, ni
+                Un nouveau module « {copyName.trim() || name} »
+                {(copyName.trim() || name).includes(copyYear) ? "" : ` (${copyYear})`} est créé avec
+                les séances, les ressources, le projet et les évaluations. Ni notes, ni dates, ni
                 groupes. Le module actuel ne change pas.
                 {(copyName.trim() || name) === name
                   ? " Attention : la copie porte le même nom que l’original."
                   : ""}
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {/* Le nom se choisit aussi ici, dans la fenêtre (même valeur que le champ de la page). */}
+            <div className="space-y-2">
+              <Label htmlFor="dup-name-dialog">Nom du nouveau module</Label>
+              <Input
+                id="dup-name-dialog"
+                value={copyName}
+                onChange={(e) => setCopyName(e.target.value)}
+                maxLength={200}
+              />
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={() => formRef.current?.requestSubmit()}>

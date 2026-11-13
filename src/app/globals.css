@@ -314,6 +314,11 @@ html[data-density="compact"][data-text-size="large"] {
 html[data-density="compact"][data-text-size="xlarge"] {
   font-size: 117.25%;
 }
+/* Densité compacte : texte d'aide jamais sous 13 px (DA §4), même les petites tailles fixées en dur. */
+html[data-density="compact"]
+  :is(.text-xs, .text-\[0\.7rem\], .text-\[0\.75rem\], .text-\[0\.8rem\], .text-\[11px\]) {
+  font-size: 0.8667rem;
+}
 /* Densité compacte : titre de page 22 px (l'id l'emporte sur les classes de taille des pages). */
 html[data-density="compact"] #contenu h1 {
   font-size: 1.4667rem;

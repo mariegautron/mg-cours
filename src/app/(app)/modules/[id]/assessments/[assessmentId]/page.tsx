@@ -652,7 +652,8 @@ export default async function AssessmentPage({
         </div>
       </div>
 
-      {!assessment.makeup_of_id && blocks.dayJ ? (
+      {/* Date passée : « Avant le jour J » n'est plus l'action du moment, il va dans la Préparation. */}
+      {!assessment.makeup_of_id && blocks.dayJ && !copiesFirst ? (
         <section aria-label="Avant le jour J" className={`${card} space-y-2`}>
           <div className="flex flex-wrap items-center gap-2">
             <SubjectStatusBadge
@@ -775,6 +776,17 @@ export default async function AssessmentPage({
           </span>
         </summary>
         <div className="space-y-4 pt-2">
+          {!assessment.makeup_of_id && blocks.dayJ && copiesFirst ? (
+            <section aria-label="Avant le jour J" className={`${card} space-y-2`}>
+              <SubjectStatusBadge
+                moduleId={id}
+                assessmentId={assessmentId}
+                title={assessment.title}
+                status={assessment.prep_status}
+              />
+              <DayJBlock dayJ={dayJTop} titleId="dayj-prep" />
+            </section>
+          ) : null}
           <div className="flex flex-wrap items-start gap-5 lg:flex-nowrap">
             <div className="w-full min-w-0 flex-1 space-y-4 lg:basis-0">
               {!assessment.is_group_grade && blocks.examKind ? (

@@ -37,7 +37,7 @@ export default async function PreviewChooserPage({ params }: PageProps<"/modules
           {students.map((s) => (
             <li key={s.id}>
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/modules/${id}/apercu/${s.id}`}>
+                <Link href={`/modules/${id}/apercu/${s.id}`} prefetch={false}>
                   {s.first_name} {s.last_name}
                 </Link>
               </Button>

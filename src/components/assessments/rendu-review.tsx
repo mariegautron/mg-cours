@@ -379,14 +379,14 @@ export function RenduReview({
           view !== "copy"
             ? "hidden"
             : withRendu
-              ? "grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
+              ? "grid gap-4 min-[1400px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
               : "mx-auto max-w-4xl"
         }
       >
         <section
           hidden={!withRendu}
           aria-labelledby="rendu-title"
-          className="bg-card space-y-3 rounded-2xl border p-4 lg:sticky lg:top-16 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto"
+          className="bg-card space-y-3 rounded-2xl border p-4 min-[1400px]:sticky min-[1400px]:top-16 min-[1400px]:max-h-[calc(100dvh-5rem)] min-[1400px]:overflow-y-auto"
         >
           <h2 id="rendu-title" className="font-heading text-lg font-bold">
             Rendu
@@ -429,13 +429,13 @@ export function RenduReview({
             isPdf(preview) ? (
               <iframe
                 title={`Aperçu : ${itemTitle(preview)}`}
-                src={fileHref(preview)}
-                className="h-[70dvh] w-full rounded-lg border"
+                src={`${fileHref(preview)}?apercu=1`}
+                className="h-[70dvh] w-full rounded-lg border bg-white"
               />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={fileHref(preview)}
+                src={`${fileHref(preview)}?apercu=1`}
                 alt={`Rendu : ${itemTitle(preview)}`}
                 className="w-full rounded-lg border"
               />

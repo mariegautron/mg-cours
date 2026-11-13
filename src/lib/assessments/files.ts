@@ -27,6 +27,36 @@ function asciiName(name: string) {
  * En-têtes d'un fichier de sujet : toujours téléchargé, jamais interprété par le navigateur
  * (un .html fourni comme extrait de code ne doit pas s'exécuter sur notre origine).
  */
+/** Types affichables en aperçu dans l'appli (jamais de SVG ni de HTML : du code pourrait s'y cacher). */
+const PREVIEW_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+};
+
+/**
+ * En-têtes d'APERÇU d'un rendu (PDF ou image) dans les pages de l'appli : vrai type, `inline`,
+ * encadrable seulement par l'appli elle-même. `null` pour tout autre type (téléchargement).
+ */
+export function previewHeaders(name: string, size?: number): Record<string, string> | null {
+  const ext = name.toLowerCase().split(".").pop() ?? "";
+  const type = PREVIEW_TYPES[ext];
+  if (!type) return null;
+  const headers: Record<string, string> = {
+    "Content-Type": type,
+    "Content-Disposition": `inline; filename="${asciiName(name)}"`,
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'self'",
+    "Cache-Control": "private, no-store",
+  };
+  if (size !== undefined) headers["Content-Length"] = String(size);
+  return headers;
+}
+
 export function downloadHeaders(name: string, size?: number): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/octet-stream",

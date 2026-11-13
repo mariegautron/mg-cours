@@ -294,3 +294,25 @@ Lot 1, ce qui est fait à ce stade :
   affichée « QCM ») ; plus de case « Préparer d'avance un sujet de rattrapage » ni de « Note
   bonus ». Dans le cadre, les lignes longues (« Comment c'est noté »…) sont résumées sur 2 lignes
   sans syntaxe Markdown : le texte complet reste dans « Sujet ».
+
+## 13 novembre : retours du retest en prod (`ux-ui-commun/retest-rebranding.md`)
+
+- **Aperçu des rendus** : la route d'un rendu sert maintenant un PDF ou une image en ligne avec
+  son vrai type quand on demande `?apercu=1` (en-têtes `inline`, encadrable par l'appli seule).
+  Tout autre type, et le lien « Télécharger », restent en téléchargement protégé. Le rendu passe
+  au-dessus de la grille sous ~1 400 px pour garder un aperçu lisible.
+- **Évaluation à date passée** : « Avant le jour J » (statut du sujet, « Prêt pour le jour J ? »)
+  ne s'affiche plus en haut une fois la date passée : il passe dans la Préparation repliée, les
+  copies sont juste sous l'en-tête. Vaut pour toutes les évaluations, pas seulement les rattrapages.
+- **Dupliquer le module** : le nom se choisit aussi dans la fenêtre de confirmation ; l'année
+  n'est plus répétée quand elle est déjà dans le nom.
+- **« Clôturer la séance » encore visibles après « Masquer d'Aujourd'hui »** : le code retire
+  bien les séances des modules masqués. Hypothèse : ces cartes viennent de l'**autre** module
+  « TEST – à supprimer (essais Claude) » (2027-2028, `b5765809…`), créé par une duplication
+  d'avant la correction (qui recopiait les dates). À masquer ou supprimer (accord d'Arnaud).
+- **« Voir comme un·e étudiant·e » qui déconnecte** : rien dans le code de l'aperçu ne ferme la
+  session. Hypothèse : 10 liens préchargés d'un coup au moment où le jeton de session expire
+  (le renouvellement concurrent peut invalider la session). Préchargement coupé sur cette liste ;
+  à confirmer au prochain essai.
+- **Textes d'aide** : jamais sous 13 px en densité compacte (même les tailles fixées en dur).
+- **Menu latéral** : 14rem au lieu de 16rem (≈ 262 px à 125 %).
