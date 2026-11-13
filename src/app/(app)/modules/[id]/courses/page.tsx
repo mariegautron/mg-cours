@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { SessionList } from "@/components/modules/session-list";
 import { checkPlannedHours, totalPlannedHours } from "@/lib/modules/course-duration";
 import { getModule, getModuleCourses } from "@/lib/modules/queries";
@@ -43,7 +44,15 @@ export default async function ModuleCoursesPage({ params }: PageProps<"/modules/
   const hours = checkPlannedHours(totalPlannedHours(courses), mod.total_hours);
   return (
     <div className="max-w-4xl space-y-4">
-      <h1>Séances</h1>
+      <PageHeader
+        title="Séances"
+        meta={
+          <>
+            <strong>{courses.length}</strong> séance{courses.length > 1 ? "s" : ""} ·{" "}
+            <strong>{mod.total_hours} h</strong> prévues au module
+          </>
+        }
+      />
       <SessionList
         layout="page"
         moduleId={id}

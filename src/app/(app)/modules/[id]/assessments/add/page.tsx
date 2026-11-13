@@ -39,9 +39,6 @@ export default async function AddAssessmentPage({
             d’ensemble.
           </p>
         </div>
-        <Button asChild variant="ghost">
-          <Link href={`/modules/${id}/assessments`}>← Vue d’ensemble</Link>
-        </Button>
       </div>
 
       <div className="max-w-[48rem]">

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { addScheduleToModule } from "@/app/(app)/modules/actions";
@@ -16,9 +15,6 @@ export default async function ModuleSchedulePage({ params }: PageProps<"/modules
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <Link href={`/modules/${mod.id}/courses`} className="text-sm underline underline-offset-2">
-          ← {mod.name}
-        </Link>
         <h1 className="mt-2">Ajouter des séances depuis un planning</h1>
         <p className="text-muted-foreground">
           {courses.length

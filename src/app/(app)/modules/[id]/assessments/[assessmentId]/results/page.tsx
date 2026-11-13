@@ -158,9 +158,6 @@ export default async function ResultsPage({
             : rien n’est parti avant ton clic.
           </p>
         </div>
-        <Button asChild variant="ghost" size="touch">
-          <Link href={back}>← Vue d’ensemble</Link>
-        </Button>
       </div>
 
       {!hasGrades && resultLinks.byStudent.size === 0 ? (

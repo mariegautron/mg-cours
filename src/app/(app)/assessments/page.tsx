@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { kindOf } from "@/lib/assessments/individual";
 import { PREP_STATUS_LABELS, PREP_STATUSES } from "@/lib/assessments/subject";
 import { listAllAssessments } from "@/lib/assessments/queries";
@@ -59,12 +60,7 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1>Agenda des évaluations</h1>
-          <p className="text-muted-foreground">Toutes écoles et modules confondus.</p>
-        </div>
-      </div>
+      <PageHeader title="Agenda des évaluations" meta="Toutes écoles et modules confondus." />
 
       <form
         role="search"

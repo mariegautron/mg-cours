@@ -38,9 +38,6 @@ export default async function ExpectationsPage({
   return (
     <div className="max-w-5xl space-y-6">
       <div>
-        <Link href={`/modules/${mod.id}`} className="text-sm underline underline-offset-2">
-          ← {mod.name}
-        </Link>
         <h1 className="mt-2">Attendus de l’école</h1>
         <p className="text-muted-foreground">
           Objectifs pédagogiques du module et objectif de chaque unité, lus dans la fiche YNOV.

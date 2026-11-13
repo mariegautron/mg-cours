@@ -43,9 +43,6 @@ export default async function PreviewChooserPage({ params }: PageProps<"/modules
           ))}
         </ul>
       )}
-      <Button asChild variant="ghost">
-        <Link href={`/modules/${id}/frise`}>← Page de publication</Link>
-      </Button>
     </div>
   );
 }

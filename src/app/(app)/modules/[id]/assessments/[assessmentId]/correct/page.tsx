@@ -219,9 +219,6 @@ export default async function CorrectPage({
       );
       return (
         <div className="mx-auto max-w-[96rem] space-y-3">
-          <Link href={back} className="text-sm underline underline-offset-2">
-            ← {assessment.title}
-          </Link>
           <RenduReview
             moduleId={id}
             assessmentId={assessmentId}

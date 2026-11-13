@@ -441,9 +441,6 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
         </h2>
         <StudentActions id={student.id} name={`${student.first_name} ${student.last_name}`} />
       </section>
-      <Button asChild variant="ghost" size="touch">
-        <Link href="/students">← Étudiant·es</Link>
-      </Button>
     </div>
   );
 }

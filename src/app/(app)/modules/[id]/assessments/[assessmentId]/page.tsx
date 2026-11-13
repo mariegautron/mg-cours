@@ -490,12 +490,6 @@ export default async function AssessmentPage({
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link
-            href={`/modules/${id}/assessments`}
-            className="text-muted-foreground hover:text-foreground text-sm underline-offset-2 hover:underline"
-          >
-            ← Les évaluations
-          </Link>
           <h1>{assessment.title}</h1>
           <p className="text-muted-foreground mt-1">
             {[

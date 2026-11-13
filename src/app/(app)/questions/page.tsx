@@ -105,12 +105,6 @@ export default async function QuestionsPage({ searchParams }: PageProps<"/questi
             : ""}
         </p>
       ) : null}
-      <Link
-        href="/resources"
-        className="text-primary focus-visible:ring-ring inline-flex min-h-11 items-center rounded-sm text-sm font-semibold underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
-      >
-        ← Bibliothèque
-      </Link>
 
       <nav aria-label="Thèmes" className="flex flex-wrap gap-2">
         {[

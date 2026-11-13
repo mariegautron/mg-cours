@@ -92,9 +92,6 @@ export default async function ModuleProjectPage({ params }: PageProps<"/modules/
               </Link>
             </Button>
           ) : null}
-          <Button asChild variant="ghost">
-            <Link href={`/modules/${mod.id}/assessments`}>← Les évaluations</Link>
-          </Button>
         </div>
       </div>
 

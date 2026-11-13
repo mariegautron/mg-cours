@@ -131,12 +131,6 @@ export default async function OralPage({
   return (
     <div className="mx-auto max-w-[96rem] space-y-3">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <Link
-          href={`/modules/${id}/assessments/${assessmentId}`}
-          className="text-sm underline underline-offset-2"
-        >
-          ← {assessment.title}
-        </Link>
         <h1>Faire passer l’oral</h1>
         <Link
           href={`/modules/${id}/assessments/${assessmentId}/consignes`}

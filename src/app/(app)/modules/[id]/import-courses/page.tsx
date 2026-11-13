@@ -1,6 +1,5 @@
 import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { importCourses } from "@/app/(app)/modules/[id]/import-courses/actions";
@@ -39,9 +38,6 @@ export default async function ImportCoursesPage({
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <Link href={`/modules/${mod.id}/courses`} className="text-sm underline underline-offset-2">
-          ← {mod.name}
-        </Link>
         <h1 className="mt-2">Importer des séances d’un autre module</h1>
         <p className="text-muted-foreground">
           Reprends le contenu de séances déjà préparées : elles sont ajoutées à la suite de celles
