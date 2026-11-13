@@ -110,7 +110,7 @@ describe("planProjectReuse", () => {
   });
   it("libellé de choix", () => {
     expect(reusableLabel({ moduleName: "Agile", year: 2025, title: "Refonte" })).toBe(
-      "Agile (2025) : Refonte",
+      "Agile (2025-2026) : Refonte",
     );
   });
 });

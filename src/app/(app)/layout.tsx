@@ -14,6 +14,9 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { createClient } from "@/lib/supabase/server";
 import { isHiddenFromToday, moduleLabels } from "@/lib/dashboard/module-labels";
 import { todayInParis } from "@/lib/modules/next-session";
+import { isCurrentModule } from "@/lib/modules/current";
+import { schoolYearOf } from "@/lib/modules/list-state";
+import { listCourseProgress } from "@/lib/dashboard/overview-queries";
 import { listModules } from "@/lib/modules/queries";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -27,26 +30,41 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   const allModules = await listModules({ includeArchived: true });
   // Deux modules du même nom (une année sur l'autre) : l'année scolaire partout (menu, fil d'Ariane).
   const labels = moduleLabels(allModules);
-  // « Mes modules en cours » : la même règle qu'Aujourd'hui (séances récentes ou à venir), triés
-  // par séance la plus proche. Modules non terminés, non masqués.
+  // « Mes modules en cours » : la même règle qu'Aujourd'hui (`isCurrentModule`), triés par
+  // séance la plus proche. Modules non terminés, non masqués.
   const today = todayInParis();
-  const shift = (d: number) =>
-    new Date(Date.parse(`${today}T12:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10);
-  const { data: dated } = await supabase
-    .from("course")
-    .select("module_id, session_date")
-    .gte("session_date", shift(-14))
-    .lte("session_date", shift(45));
-  const nearest = new Map<string, number>();
-  for (const c of dated ?? []) {
+  const in30 = new Date(Date.parse(`${today}T12:00:00Z`) + 30 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const [progress, { data: nextRows }] = await Promise.all([
+    listCourseProgress(),
+    supabase
+      .from("course")
+      .select("module_id, session_date")
+      .gte("session_date", today)
+      .lte("session_date", in30),
+  ]);
+  const nextDays = new Map<string, number>();
+  for (const c of nextRows ?? []) {
     if (!c.session_date) continue;
-    const dist = Math.abs(Date.parse(c.session_date) - Date.parse(today));
-    nearest.set(c.module_id, Math.min(nearest.get(c.module_id) ?? Infinity, dist));
+    const d = Math.round((Date.parse(c.session_date) - Date.parse(today)) / 86_400_000);
+    nextDays.set(c.module_id, Math.min(nextDays.get(c.module_id) ?? Infinity, d));
   }
   const runningModules = allModules
-    .filter((m) => !m.archived_at && !m.finished_at && !isHiddenFromToday(m) && nearest.has(m.id))
-    .sort((a, b) => (nearest.get(a.id) ?? 0) - (nearest.get(b.id) ?? 0))
-    .map((m) => ({ id: m.id, name: labels.get(m.id) ?? m.name }));
+    .filter(
+      (m) =>
+        !m.archived_at &&
+        !m.finished_at &&
+        !isHiddenFromToday(m) &&
+        isCurrentModule(m, progress.get(m.id) ?? { done: 0, total: 0 }, nextDays.get(m.id) ?? null),
+    )
+    .sort((a, b) => (nextDays.get(a.id) ?? 999) - (nextDays.get(b.id) ?? 999))
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      // Année affichée en premier quand deux modules ont le même nom (lignes sinon identiques).
+      year: labels.get(m.id) !== m.name ? schoolYearOf(m.year) : null,
+    }));
   const moduleNames = Object.fromEntries(allModules.map((m) => [m.id, labels.get(m.id) ?? m.name]));
 
   return (

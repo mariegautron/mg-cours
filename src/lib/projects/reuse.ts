@@ -86,5 +86,5 @@ export function planProjectReuse(
 
 /** « Agile (2025) : Refonte accessible » pour la liste de choix. */
 export function reusableLabel(p: { moduleName: string; year: number; title: string }): string {
-  return `${p.moduleName} (${p.year}) : ${p.title}`;
+  return `${p.moduleName} (${p.year}-${p.year + 1}) : ${p.title}`;
 }

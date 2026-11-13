@@ -42,7 +42,7 @@ import { deadlineOf } from "@/lib/deposits/rules";
 import { SubmissionItems } from "@/components/assessments/submission-items";
 import { groupByOwner } from "@/lib/projects/submission-items";
 import { listSubmissionItems } from "@/lib/projects/submission-queries";
-import { Pill } from "@/components/dashboard/pill";
+import { Pill, Status } from "@/components/dashboard/pill";
 import { OpenInWindowButton } from "@/components/present/open-in-window-button";
 import { DayJBlock } from "@/components/assessments/day-j-block";
 import { dayJReadiness, espaceUpToDate, submitModeOf } from "@/lib/assessments/day-j";
@@ -583,6 +583,25 @@ export default async function AssessmentPage({
               </>
             ) : null}
           </p>
+          {/* Même repère sur toutes les évaluations (oral compris) : l'état du sujet et « Prêt pour
+              le jour J ? », même quand la préparation est repliée sous les copies. */}
+          {!assessment.makeup_of_id && blocks.dayJ && copiesFirst ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Sujet :</span>
+              <SubjectStatusBadge
+                moduleId={id}
+                assessmentId={assessmentId}
+                title={assessment.title}
+                status={assessment.prep_status}
+              />
+              <a href="#dayj-top" className="inline-flex min-h-11 items-center gap-1.5">
+                <span className="text-muted-foreground">Prêt pour le jour J ?</span>
+                <Status state={dayJTop.allReady ? "ready" : "todo"}>
+                  {dayJTop.allReady ? "Prête" : `${dayJTop.missing.length} à compléter`}
+                </Status>
+              </a>
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {blocks.quiz && !assessment.is_group_grade && !isUngradedReview(assessment) ? (
@@ -772,12 +791,7 @@ export default async function AssessmentPage({
         <div className="space-y-4 pt-2">
           {!assessment.makeup_of_id && blocks.dayJ && copiesFirst ? (
             <section aria-label="Avant le jour J" className={`${card} space-y-2`}>
-              <SubjectStatusBadge
-                moduleId={id}
-                assessmentId={assessmentId}
-                title={assessment.title}
-                status={assessment.prep_status}
-              />
+              {/* L'état du sujet est dans l'en-tête (un seul « Prête · Remettre À construire »). */}
               <DayJBlock dayJ={dayJTop} titleId="dayj-top" />
             </section>
           ) : null}

@@ -38,12 +38,12 @@ export function AppSidebar({
   runningModules = [],
 }: {
   /** « Mes modules en cours » : non terminés et non masqués d'Aujourd'hui. */
-  runningModules?: { id: string; name: string }[];
+  runningModules?: { id: string; name: string; year?: string | null }[];
 }) {
   const pathname = usePathname();
   const place = placeOf(pathname);
-  // Au plus 6 modules, puis « Tous les modules » (entrée du menu).
-  const shownModules = runningModules.slice(0, 6);
+  // Au plus 8 modules, puis « Tous les modules » (entrée du menu).
+  const shownModules = runningModules.slice(0, 8);
 
   return (
     <Sidebar collapsible="icon">
@@ -111,7 +111,7 @@ export function AppSidebar({
                                   {/* Changer de module garde la section (Évaluations → Évaluations). */}
                                   <Link
                                     href={sameSectionIn(pathname, m.id)}
-                                    title={m.name}
+                                    title={m.year ? `${m.name} (${m.year})` : m.name}
                                     className={`hover:bg-sidebar-accent flex min-h-11 items-center rounded-lg px-2 text-sm ${
                                       here ? "text-foreground font-medium" : "text-muted-foreground"
                                     }`}

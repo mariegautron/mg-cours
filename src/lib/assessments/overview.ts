@@ -154,12 +154,15 @@ export function correctionOverview(
 
 export type OverviewFilter = "all" | "todo" | "done" | "missing";
 
-/** Filtre de la liste : « À corriger » regroupe à corriger et en cours. */
+/**
+ * Filtre de la liste : « À corriger » regroupe à corriger et en cours, mais seulement les copies
+ * rendues (ou sans suivi des rendus) : une copie non rendue est dans « Non rendus », pas ailleurs.
+ */
 export function filterRows(rows: readonly OverviewRow[], filter: OverviewFilter): OverviewRow[] {
   if (filter === "all") return [...rows];
   if (filter === "done") return rows.filter((r) => r.state === "done");
   if (filter === "missing") return rows.filter((r) => r.received === false);
-  return rows.filter((r) => r.state !== "done");
+  return rows.filter((r) => r.state !== "done" && r.received !== false);
 }
 
 /** « 2 critères sur 4 notés. » ; « » sans grille. */

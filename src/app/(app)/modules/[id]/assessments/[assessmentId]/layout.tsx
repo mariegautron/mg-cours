@@ -4,7 +4,7 @@ import { getAssessment } from "@/lib/assessments/queries";
 
 /** Sous-pages d'une évaluation, pour le fil d'Ariane (Modules › SCRUM › Évaluations › Étude de cas › Corriger). */
 const SUB_PAGES: Record<string, string> = {
-  "quiz/links": "Liens et suivi des copies",
+  "quiz/links": "Liens personnels et suivi des copies",
   "quiz/results": "Résultats du QCM",
   "quiz/essai": "Essai à blanc",
   "quiz/generate": "Générer des questions",

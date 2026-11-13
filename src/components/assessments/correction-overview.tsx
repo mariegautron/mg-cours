@@ -64,7 +64,8 @@ export function CorrectionOverview({
   const rows = filterRows(overview.rows, filter);
   const counts: Record<OverviewFilter, number> = {
     all: overview.total,
-    todo: overview.todo + overview.inProgress,
+    // Même règle que le filtre : seulement les copies rendues (ou sans suivi des rendus).
+    todo: filterRows(overview.rows, "todo").length,
     done: overview.done,
     missing: overview.rows.filter((r) => r.received === false).length,
   };

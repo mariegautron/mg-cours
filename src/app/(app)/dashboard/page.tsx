@@ -29,6 +29,7 @@ import { listSurprisesForCourses } from "@/lib/projects/surprise-queries";
 import { copyText, dueToday } from "@/lib/projects/surprises";
 import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
+import { isCurrentModule } from "@/lib/modules/current";
 import {
   getSessionPrep,
   listCoursesAfter,
@@ -54,7 +55,6 @@ import { listBillingOverview } from "@/lib/invoice/queries";
 import { todayInParis } from "@/lib/modules/next-session";
 import { listModules } from "@/lib/modules/queries";
 import { listOutlineSentModuleIds } from "@/lib/outline/queries";
-import { inFilter, moduleListState } from "@/lib/modules/list-state";
 import { getProfile } from "@/lib/settings/queries";
 import { outlineAlerts } from "@/lib/ynov/trame";
 import { sessionHeading } from "@/lib/plural";
@@ -322,13 +322,20 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   });
   const activeModules = modules.filter((m) => !m.archived_at && !m.finished_at);
   // Même définition que le filtre « En cours » de la page Modules.
+  // Même règle que « Mes modules en cours » du menu (`isCurrentModule`).
+  const nextIn = new Map<string, number>();
+  for (const c of coursesAfter) {
+    if (!c.module || !c.session_date) continue;
+    nextIn.set(
+      c.module.id,
+      Math.min(nextIn.get(c.module.id) ?? Infinity, daysBetween(today, c.session_date)),
+    );
+  }
   const runningModules = modules.filter((m) =>
-    inFilter(
-      moduleListState({
-        ...m,
-        courses: { done: progress.get(m.id)?.done ?? 0, total: progress.get(m.id)?.total ?? 0 },
-      }),
-      "running",
+    isCurrentModule(
+      m,
+      { done: progress.get(m.id)?.done ?? 0, total: progress.get(m.id)?.total ?? 0 },
+      nextIn.get(m.id) ?? null,
     ),
   );
 

@@ -43,18 +43,18 @@ export default async function QuizTrialPage({
     }));
   } catch (e) {
     return (
-      <main className="mx-auto max-w-xl space-y-3 p-6">
+      <div className="mx-auto max-w-xl space-y-3 p-6">
         <h1>Essai impossible</h1>
         <p role="alert">{e instanceof DrawError ? e.message : "Le tirage a échoué."}</p>
         <Button asChild variant="secondary">
           <Link href={back}>Retour au QCM</Link>
         </Button>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
+    <div className="mx-auto max-w-3xl p-4">
       <QuizRunner
         token="essai"
         title={quiz.title}
@@ -66,6 +66,6 @@ export default async function QuizTrialPage({
         dryRun
         exitHref={back}
       />
-    </main>
+    </div>
   );
 }

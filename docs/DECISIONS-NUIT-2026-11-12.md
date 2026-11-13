@@ -402,3 +402,11 @@ sur 3 » ; plus de correction proposée sur Aujourd'hui avant la date de l'épre
 Pas fait : lenteur de la page Évaluations (≈ 5 s) et du filtre de l'agenda (à mesurer avec
 les requêtes) ; alignement du lien « Copies » du sommaire (à vérifier à l'écran) ; « (2027) » sur
 « Partir d'un projet existant » vient du nom du module (donnée), pas du code.
+- Revérification (après 5c951a0), corrigé : une seule règle « module en cours » pour le menu et
+  Aujourd'hui (`isCurrentModule` : cours commencés, ou une séance dans les 30 prochains jours) ;
+  menu jusqu'à 8 modules, l'année en tête quand deux modules ont le même nom ; en-tête de toute
+  évaluation (oral compris) avec « Sujet » et « Prêt pour le jour J ? » quand la préparation est
+  repliée ; « À corriger » ne compte que les copies rendues ; « (2027-2028) » sur « Partir d'un
+  projet existant » ; une seule zone principale sur « Essai à blanc » ; fil d'Ariane « Liens
+  personnels et suivi des copies ». Lenteur du filtre de l'agenda : non mesurée faute d'accès aux
+  journaux de requêtes (piste : chaque page recharge toutes les évaluations et leurs notes).
