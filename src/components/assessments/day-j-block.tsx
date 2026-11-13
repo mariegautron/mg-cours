@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleDashed } from "lucide-react";
 
 import type { DayJ } from "@/lib/assessments/day-j";
 import { Status } from "@/components/dashboard/pill";
@@ -45,9 +46,12 @@ export function DayJBlock({
               {it.label}
             </Link>
           ) : (
-            <Link href={it.href} className="underline-offset-2 hover:underline">
-              <span aria-hidden>! </span>
-              {it.label} : {it.todo}
+            <Link
+              href={it.href}
+              className="text-status-todo-fg inline-flex items-center gap-1.5 underline-offset-2 hover:underline"
+            >
+              <CircleDashed aria-hidden className="size-3 shrink-0" />
+              {it.label} : <span className="text-muted-foreground">{it.todo}</span>
             </Link>
           )}
         </li>

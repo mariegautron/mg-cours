@@ -55,3 +55,6 @@ next-env.d.ts
 
 # Worktrees des sessions parallèles
 .claude/worktrees/
+
+# Réglages locaux de l'assistant (permissions personnelles)
+.claude/settings.local.json
