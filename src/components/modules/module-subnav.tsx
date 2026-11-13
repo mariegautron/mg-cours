@@ -2,26 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 
 import { DisclosureMenu } from "@/components/ui/disclosure-menu";
 import { activeModuleNav, moduleNavItems, moduleSectionLabel } from "@/lib/modules/nav";
 
 /**
- * Coque des sous-pages d'un module : fil d'Ariane et liens vers les zones du module. Absente sur la fiche, qui a déjà son en-tête et ses onglets.
+ * Menu du module sur tablette (le menu latéral n'est alors qu'un rail d'icônes) : 4 entrées
+ * visibles, les autres dans « Plus ». Sur ordinateur, le menu latéral porte ces liens.
  */
-export function ModuleSubnav({
-  moduleId,
-  moduleName,
-  archived,
-}: {
-  moduleId: string;
-  moduleName: string;
-  archived: boolean;
-}) {
+export function ModuleSubnav({ moduleId }: { moduleId: string }) {
   const pathname = usePathname();
-  const label = moduleSectionLabel(pathname, moduleId);
-  if (!label) return null;
+  // Le fil d'Ariane et les onglets sont dans `PlaceNav` (table de navigation unique).
+  if (!moduleSectionLabel(pathname, moduleId)) return null;
   const active = activeModuleNav(pathname, moduleId);
   const items = moduleNavItems(moduleId);
   // Tablette : 4 entrées visibles, les autres dans « Plus » (plus de défilement horizontal).
@@ -29,45 +21,7 @@ export function ModuleSubnav({
   const more = items.slice(4);
 
   return (
-    <div className="mb-6 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav
-          aria-label="Fil d’Ariane du module"
-          className="text-muted-foreground min-w-0 text-sm break-words"
-        >
-          <ol className="flex flex-wrap items-center gap-1">
-            <li>
-              <Link
-                href={archived ? "/modules?filter=finished" : "/modules"}
-                className="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
-              >
-                {archived ? "Modules terminés" : "Modules"}
-              </Link>
-            </li>
-            <li aria-hidden>
-              <ChevronRight className="size-3.5" />
-            </li>
-            <li>
-              <Link
-                href={`/modules/${moduleId}`}
-                className="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
-              >
-                {moduleName}
-              </Link>
-            </li>
-            <li aria-hidden>
-              <ChevronRight className="size-3.5" />
-            </li>
-            <li>
-              <span aria-current="page" className="text-foreground">
-                {label}
-              </span>
-            </li>
-          </ol>
-        </nav>
-        {/* « Prochaine étape » : seulement sur « Où j'en suis » et Aujourd'hui (lot 2, point 11). */}
-      </div>
-
+    <div className="mb-3">
       {/* Le menu latéral porte ces liens dès l'ordinateur ; la tablette (rail d'icônes) garde la barre. */}
       <nav
         aria-label="Sections du module (liens)"

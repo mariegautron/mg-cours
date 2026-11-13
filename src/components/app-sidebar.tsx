@@ -2,21 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BookMarked,
-  ClipboardCheck,
-  GraduationCap,
-  Library,
-  Receipt,
-  Settings,
-  Sun,
-} from "lucide-react";
+import { BookMarked, GraduationCap, Library, Receipt, Settings, Sun } from "lucide-react";
 
 import { LogoMark } from "@/components/mascot";
 import { ModuleSideNav } from "@/components/modules/module-side-nav";
 import { LinkPending } from "@/components/navigation-status";
 import { GlobalSearch } from "@/components/search/global-search";
-import { MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
+import { activeEntry, MENU_ENTRIES, type MenuKey } from "@/lib/nav/menu";
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +27,6 @@ const LOOK: Record<MenuKey, { icon: typeof Sun }> = {
   modules: { icon: BookMarked },
   students: { icon: GraduationCap },
   library: { icon: Library },
-  assessments: { icon: ClipboardCheck },
   billing: { icon: Receipt },
   settings: { icon: Settings },
 };
@@ -70,7 +61,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {MENU_ENTRIES.map((entry) => {
                   const item = { ...entry, ...LOOK[entry.key] };
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  const active = activeEntry(pathname) === item.key;
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton

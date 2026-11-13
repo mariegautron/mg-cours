@@ -32,6 +32,8 @@ describe("activeEntry", () => {
     expect(activeEntry("/modules/abc/build")).toBe("modules");
     expect(activeEntry("/modules")).toBe("modules");
     expect(activeEntry("/resources/x")).toBe("library");
+    expect(activeEntry("/assessments/grids/g1/edit")).toBe("library");
+    expect(activeEntry("/assessments")).toBe("dashboard");
     expect(activeEntry("/modulesx")).toBeNull();
     expect(activeEntry("/")).toBeNull();
   });

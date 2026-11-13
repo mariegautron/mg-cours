@@ -1,3 +1,5 @@
+import { GLOBAL_ENTRIES, placeOf, type GlobalEntry, type GlobalKey } from "@/lib/nav/places";
+
 /**
  * US-118 : trois formes de menu selon la largeur. Fonctions pures ; les composants lisent ces
  * constantes (les classes Tailwind `md:` / `lg:` utilisent les mêmes seuils : 48rem et 64rem).
@@ -15,24 +17,10 @@ export function menuFormForWidth(width: number): MenuForm {
   return "full";
 }
 
-export type MenuKey =
-  "dashboard" | "modules" | "students" | "library" | "assessments" | "billing" | "settings";
-
-export interface MenuEntry {
-  key: MenuKey;
-  href: string;
-  label: string;
-}
-
-export const MENU_ENTRIES: readonly MenuEntry[] = [
-  { key: "dashboard", href: "/dashboard", label: "Aujourd’hui" },
-  { key: "modules", href: "/modules", label: "Modules" },
-  { key: "students", href: "/students", label: "Étudiant·es" },
-  { key: "library", href: "/resources", label: "Bibliothèque" },
-  { key: "assessments", href: "/assessments", label: "Évaluations" },
-  { key: "billing", href: "/billing", label: "Facturation" },
-  { key: "settings", href: "/settings", label: "Réglages" },
-];
+/** Entrées du menu de gauche : celles de la table de navigation unique (plus d'« Évaluations »). */
+export type MenuKey = GlobalKey;
+export type MenuEntry = GlobalEntry;
+export const MENU_ENTRIES: readonly MenuEntry[] = GLOBAL_ENTRIES;
 
 /** Entrées de la barre du bas : quatre directes + « Plus » ; le reste est dans le tiroir. */
 export const BOTTOM_COUNT = 4;
@@ -46,9 +34,7 @@ export function entriesForForm(form: MenuForm): { main: MenuEntry[]; drawer: Men
   return { main: MENU_ENTRIES.slice(0, BOTTOM_COUNT), drawer: MENU_ENTRIES.slice(BOTTOM_COUNT) };
 }
 
-/** Entrée courante par préfixe d'URL (« /modules/abc » → Modules). */
+/** Entrée courante, lue dans la table (une grille allume Bibliothèque, /assessments Aujourd'hui). */
 export function activeEntry(pathname: string): MenuKey | null {
-  return (
-    MENU_ENTRIES.find((e) => pathname === e.href || pathname.startsWith(`${e.href}/`))?.key ?? null
-  );
+  return placeOf(pathname)?.menu ?? null;
 }

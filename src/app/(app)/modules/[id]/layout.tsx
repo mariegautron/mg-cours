@@ -11,7 +11,7 @@ export default async function ModuleLayout({ children, params }: LayoutProps<"/m
   return (
     <>
       <ModuleNavRegister id={mod.id} name={mod.name} />
-      <ModuleSubnav moduleId={mod.id} moduleName={mod.name} archived={!!mod.archived_at} />
+      <ModuleSubnav moduleId={mod.id} />
       {children}
     </>
   );

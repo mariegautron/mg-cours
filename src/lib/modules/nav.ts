@@ -1,16 +1,10 @@
 /**
- * Barre de navigation d'un module (E19 / US-115 suite, US-116) : sept liens vers des écrans
- * existants. L'entrée courante se déduit du chemin.
+ * Menu d'un module : les 7 entrées de la table de navigation unique (`lib/nav/places.ts`).
+ * Gardé pour les composants existants ; toute la logique est dans la table.
  */
-export type ModuleNavKey =
-  | "journey"
-  | "sessions"
-  | "assessments"
-  | "students"
-  | "space"
-  | "documents"
-  | "invoice"
-  | "feedback";
+import { moduleEntries, placeOf, type ModuleEntryKey } from "@/lib/nav/places";
+
+export type ModuleNavKey = ModuleEntryKey;
 
 export interface ModuleNavItem {
   key: ModuleNavKey;
@@ -19,58 +13,17 @@ export interface ModuleNavItem {
 }
 
 export function moduleNavItems(moduleId: string): ModuleNavItem[] {
-  const base = `/modules/${moduleId}`;
-  return [
-    { key: "journey", label: "Où j’en suis", href: base },
-    { key: "sessions", label: "Séances", href: `${base}/courses` },
-    { key: "assessments", label: "Évaluations", href: `${base}/assessments` },
-    { key: "students", label: "Étudiant·es et groupes", href: `${base}/groups` },
-    { key: "space", label: "Espace étudiant·es", href: `${base}/frise` },
-    { key: "documents", label: "Documents", href: `${base}/documents` },
-    { key: "invoice", label: "Facture", href: `${base}/billing` },
-    { key: "feedback", label: "Avis des étudiant·es", href: `${base}/feedback` },
-  ];
+  return moduleEntries(moduleId).map(({ key, label, href }) => ({ key, label, href }));
 }
 
-// Premier segment sous /modules/{id}/ → entrée du menu et libellé du fil d'Ariane.
-const SECTION: Record<string, { key: ModuleNavKey | null; label: string }> = {
-  documents: { key: "documents", label: "Documents" },
-  expectations: { key: "journey", label: "Attendus de l’école" },
-  matching: { key: "journey", label: "Rapprochement des ressources" },
-  outline: { key: "journey", label: "Progression" },
-  schedule: { key: "sessions", label: "Planning" },
-  "import-courses": { key: "sessions", label: "Import des séances" },
-  courses: { key: "sessions", label: "Séances" },
-  frise: { key: "space", label: "Espace étudiant·es" },
-  planning: { key: "journey", label: "Planning du module" },
-  build: { key: "sessions", label: "Construire les séances" },
-  assessments: { key: "assessments", label: "Évaluations" },
-  project: { key: "assessments", label: "Projet fil rouge" },
-  groups: { key: "students", label: "Étudiant·es et groupes" },
-  rattrapages: { key: "assessments", label: "Rattrapages" },
-  appreciations: { key: "students", label: "Appréciations" },
-  billing: { key: "invoice", label: "Facture" },
-  feedback: { key: "feedback", label: "Avis des étudiant·es" },
-  finish: { key: "journey", label: "Terminer le module" },
-  edit: { key: null, label: "Modifier" },
-  apercu: { key: "space", label: "Aperçu de l’espace" },
-};
-
-function section(pathname: string, moduleId: string) {
-  // La fiche du module est l'écran « Où j'en suis ».
-  if (pathname === `/modules/${moduleId}`)
-    return { key: "journey" as const, label: "Où j’en suis" };
-  const prefix = `/modules/${moduleId}/`;
-  if (!pathname.startsWith(prefix)) return null;
-  return SECTION[pathname.slice(prefix.length).split("/")[0]] ?? null;
-}
-
-/** Entrée courante (`null` sur la fiche elle-même, dont les onglets gardent leur propre état). */
+/** Entrée courante du module (`null` hors de ce module). */
 export function activeModuleNav(pathname: string, moduleId: string): ModuleNavKey | null {
-  return section(pathname, moduleId)?.key ?? null;
+  const place = placeOf(pathname);
+  return place?.moduleId === moduleId ? place.moduleEntry : null;
 }
 
-/** Dernier élément du fil d'Ariane ; `null` sur la fiche module (qui a déjà son en-tête). */
+/** Libellé de la section pour le fil d'Ariane (`null` hors de ce module). */
 export function moduleSectionLabel(pathname: string, moduleId: string): string | null {
-  return section(pathname, moduleId)?.label ?? null;
+  const place = placeOf(pathname);
+  return place?.moduleId === moduleId ? place.crumb : null;
 }

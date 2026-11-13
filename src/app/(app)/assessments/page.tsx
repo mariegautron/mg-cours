@@ -2,7 +2,6 @@ import { isSubjectToBuild } from "@/lib/prep-status";
 import { schoolYearOf } from "@/lib/modules/list-state";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +15,7 @@ import { moduleLabels } from "@/lib/dashboard/module-labels";
 
 const SELECT = "border-input h-8 rounded-lg border bg-field px-2.5 text-sm";
 
-export const metadata: Metadata = { title: "Évaluations" };
+export const metadata: Metadata = { title: "Agenda des évaluations" };
 
 export default async function AssessmentsPage({ searchParams }: PageProps<"/assessments">) {
   const sp = await searchParams;
@@ -62,16 +61,8 @@ export default async function AssessmentsPage({ searchParams }: PageProps<"/asse
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1>Évaluations</h1>
+          <h1>Agenda des évaluations</h1>
           <p className="text-muted-foreground">Toutes écoles et modules confondus.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/modules">
-              <Plus aria-hidden />
-              Ajouter (choisir le module)
-            </Link>
-          </Button>
         </div>
       </div>
 
