@@ -86,7 +86,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     data.deposits = deposits;
   }
   // Bandeau du QCM lu en direct : un QCM publié apparaît sans attendre la mise à jour de
-  // l'espace ; une copie rendue le dit au lieu d'inviter à passer le QCM.
+  // l'espace, seulement pour les personnes qui ont encore à le passer.
   if (data.espace && slug.length === 0) {
     const live = await liveQuizForToken(token);
     data.espace = {
@@ -95,7 +95,6 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
         ? { title: live.title, closesAt: live.closesAt, url: data.espace.quiz?.url ?? null }
         : null,
     };
-    data.quizSubmittedAt = live?.submittedAt ?? null;
     data.quizMakeupPlanned = !!live?.makeupPlanned;
   }
   const number = Number(arg);

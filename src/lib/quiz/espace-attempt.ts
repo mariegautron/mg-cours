@@ -3,19 +3,77 @@ import "server-only";
 import { hashToken, isWellFormedToken } from "@/lib/quiz/token";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-/**
- * QCM publié et ouvert du module d'un lien d'espace, lu en direct (sans attendre « Mettre à jour
- * les cours publiés ») : titre et fermeture seulement, jamais les questions. Plus copie rendue.
- */
-export async function liveQuizForToken(
-  token: string,
-): Promise<{
+export interface LiveQuiz {
   title: string;
   closesAt: string | null;
-  submittedAt: string | null;
   /** Excusé·e au QCM principal avec un rattrapage prévu : « Rattrapage prévu » au lieu de « ouvert ». */
   makeupPlanned?: boolean;
-} | null> {
+}
+
+/**
+ * QCM publié et ouvert qu'une personne a ENCORE à passer, lu en direct (sans attendre « Mettre à
+ * jour les cours publiés ») : titre et fermeture seulement, jamais les questions. `null` si elle a
+ * déjà rendu une copie ou a une note dans la famille (principal ou rattrapage), et pour un
+ * rattrapage auquel elle n'est pas inscrite.
+ */
+export async function liveQuizForStudent(
+  moduleId: string,
+  studentId: string,
+): Promise<LiveQuiz | null> {
+  const admin = createAdminClient();
+  const { data: quizzes } = await admin
+    .from("quiz")
+    .select("title, closes_at, assessment!inner(id, module_id, makeup_of_id)")
+    .eq("assessment.module_id", moduleId)
+    .eq("status", "published");
+  type A = { id: string; makeup_of_id: string | null };
+  const candidates = (quizzes ?? [])
+    .filter((q) => !q.closes_at || new Date(q.closes_at).getTime() > Date.now())
+    .map((q) => ({ ...q, a: q.assessment as unknown as A }))
+    // Les rattrapages d'abord : une personne inscrite voit le sien, pas le QCM principal.
+    .sort((x, y) => Number(!!y.a.makeup_of_id) - Number(!!x.a.makeup_of_id));
+  if (candidates.length === 0) return null;
+
+  const [{ data: family }, { data: atts }, { data: grades }, { data: enrolled }] =
+    await Promise.all([
+      admin.from("assessment").select("id, makeup_of_id").eq("module_id", moduleId),
+      admin
+        .from("quiz_attempt")
+        .select("quiz!inner(assessment!inner(id))")
+        .eq("student_id", studentId)
+        .eq("status", "submitted")
+        .is("revoked_at", null),
+      admin.from("grade").select("assessment_id, value, attendance").eq("student_id", studentId),
+      admin.from("assessment_student").select("assessment_id").eq("student_id", studentId),
+    ]);
+  const submitted = new Set(
+    (atts ?? []).map((t) => (t.quiz as unknown as { assessment: { id: string } }).assessment.id),
+  );
+  const graded = new Set(
+    (grades ?? []).filter((g) => g.value !== null).map((g) => g.assessment_id),
+  );
+
+  for (const q of candidates) {
+    const root = q.a.makeup_of_id ?? q.a.id;
+    const ids = (family ?? [])
+      .filter((f) => f.id === root || f.makeup_of_id === root)
+      .map((f) => f.id);
+    if (ids.some((id) => submitted.has(id) || graded.has(id))) continue;
+    const open = { title: q.title, closesAt: q.closes_at };
+    if (q.a.makeup_of_id) {
+      if ((enrolled ?? []).some((e) => e.assessment_id === q.a.id)) return open;
+      continue;
+    }
+    const excused = (grades ?? []).some(
+      (g) => g.assessment_id === q.a.id && g.attendance === "absent_excused",
+    );
+    return excused ? { ...open, makeupPlanned: true } : open;
+  }
+  return null;
+}
+
+/** Même lecture, à partir du jeton d'un lien d'espace. */
+export async function liveQuizForToken(token: string): Promise<LiveQuiz | null> {
   if (!isWellFormedToken(token)) return null;
   const admin = createAdminClient();
   const { data: link } = await admin
@@ -24,61 +82,7 @@ export async function liveQuizForToken(
     .eq("token_hash", hashToken(token))
     .is("revoked_at", null)
     .maybeSingle();
-  if (!link) return null;
-  const { data: quizzes } = await admin
-    .from("quiz")
-    .select("id, title, closes_at, assessment!inner(id, module_id, makeup_of_id)")
-    .eq("assessment.module_id", link.module_id)
-    .eq("status", "published");
-  const open = (quizzes ?? []).find(
-    (q) => !q.closes_at || new Date(q.closes_at).getTime() > Date.now(),
-  );
-  if (!open) return null;
-  // Copie rendue sur ce QCM ou sur un QCM de la même famille (principal ou rattrapage) :
-  // une personne qui a passé le rattrapage n'est plus invitée à passer le QCM principal.
-  const a = open.assessment as unknown as { id: string; makeup_of_id: string | null };
-  const root = a.makeup_of_id ?? a.id;
-  const { data: atts } = await admin
-    .from("quiz_attempt")
-    .select("submitted_at, quiz!inner(assessment!inner(id, makeup_of_id))")
-    .eq("student_id", link.student_id)
-    .eq("status", "submitted")
-    .is("revoked_at", null)
-    .order("submitted_at", { ascending: false });
-  const same = (atts ?? []).find((t) => {
-    const x = (t.quiz as unknown as { assessment: { id: string; makeup_of_id: string | null } })
-      .assessment;
-    return x.id === root || x.makeup_of_id === root;
-  });
-  if (same) return { title: open.title, closesAt: open.closes_at, submittedAt: same.submitted_at };
-  // Rattrapage noté directement (sans copie de QCM) : la personne a déjà sa note dans la famille.
-  const { data: family } = await admin
-    .from("assessment")
-    .select("id")
-    .or(`id.eq.${root},makeup_of_id.eq.${root}`);
-  // Seulement pour le QCM principal : un rattrapage ouvert reste affiché à qui doit le passer.
-  const ids = (family ?? []).map((f) => f.id).filter((x) => x !== a.id);
-  if (!a.makeup_of_id && ids.length) {
-    const { data: graded } = await admin
-      .from("grade")
-      .select("updated_at")
-      .eq("student_id", link.student_id)
-      .in("assessment_id", ids)
-      .not("value", "is", null)
-      .limit(1);
-    if (graded?.[0]) return null;
-    // Excusé·e au principal, rattrapage prévu mais pas encore noté.
-    const { data: excused } = await admin
-      .from("grade")
-      .select("id")
-      .eq("student_id", link.student_id)
-      .eq("assessment_id", a.id)
-      .eq("attendance", "absent_excused")
-      .limit(1);
-    if (excused?.[0])
-      return { title: open.title, closesAt: open.closes_at, submittedAt: null, makeupPlanned: true };
-  }
-  return { title: open.title, closesAt: open.closes_at, submittedAt: null };
+  return link ? liveQuizForStudent(link.module_id, link.student_id) : null;
 }
 
 /**

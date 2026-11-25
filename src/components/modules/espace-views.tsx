@@ -37,8 +37,6 @@ export interface EspaceData {
   publishedAt: string | null;
   /** Dépôts de cette personne (ou de son groupe), par évaluation : heure serveur et retard en minutes. */
   deposits?: Record<string, { at: string; late: number }>;
-  /** Copie du QCM ouvert déjà rendue par cette personne (date de remise). */
-  quizSubmittedAt?: string | null;
   /** Excusé·e au QCM principal, rattrapage prévu : pas d'invitation à passer le QCM. */
   quizMakeupPlanned?: boolean;
 }
@@ -186,7 +184,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
   const { base, espace, frise, results, firstName } = data;
   const today = new Date().toISOString().slice(0, 10);
   // Exclues de « Prochain rendu » : déjà rendue, note publiée, oral ou point d'étape sans dépôt.
-  const noted = new Set(results.map((r) => r.sheet.title));
+  const noted = new Set(results.flatMap((r) => [r.sheet.title, r.sheet.replacesTitle ?? ""]));
   const settled = new Set([
     ...Object.keys(data.deposits ?? {}),
     ...(espace?.evaluations ?? [])
@@ -206,9 +204,7 @@ export function AccueilView({ data }: { data: EspaceData }) {
           <h2 id="quiz" className="title-display text-xl">
             {data.quizMakeupPlanned
               ? "Rattrapage prévu"
-              : data.quizSubmittedAt
-                ? "Ton évaluation individuelle est rendue"
-                : "Ton évaluation individuelle est ouverte"}
+              : "Ton évaluation individuelle est ouverte"}
           </h2>
           <p className="mt-1">
             {espace.quiz.title}
@@ -217,10 +213,6 @@ export function AccueilView({ data }: { data: EspaceData }) {
           {data.quizMakeupPlanned ? (
             <p className="mt-2">
               Tu passeras l’évaluation en rattrapage : Marie te donnera la date et le lien.
-            </p>
-          ) : data.quizSubmittedAt ? (
-            <p className="mt-2 font-semibold">
-              Copie rendue le {parisLongDateTime(data.quizSubmittedAt)}.
             </p>
           ) : espace.quiz.url ? (
             <a
@@ -935,7 +927,9 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
         {espace.evaluations.map((e, i) => {
           const due = dateOfEvaluation(e, frise);
           const dep = data.deposits?.[e.id];
-          const publishedNote = data.results.some((r) => r.sheet.title === e.title);
+          const publishedNote = data.results.some(
+            (r) => r.sheet.title === e.title || r.sheet.replacesTitle === e.title,
+          );
           const status = isNoDepositEvaluation(e)
             ? null
             : e.graded || publishedNote

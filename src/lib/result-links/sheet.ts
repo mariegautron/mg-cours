@@ -7,6 +7,30 @@ import type { ResultSheet } from "@/lib/assessments/results";
 export interface PublicSheet extends Omit<ResultSheet, "recipients"> {
   /** Seulement la personne concernée, sans adresse e-mail. */
   recipients: { name: string; firstName?: string; email: null }[];
+  /** Ajouté à la lecture : évaluation d'origine dont ce rattrapage remplace la ligne. */
+  replacesTitle?: string;
+}
+
+/**
+ * Absence excusée rattrapée : quand le résultat du rattrapage est publié lui aussi (c'est lui qui a
+ * le détail et les commentaires), la ligne de l'évaluation d'origine, qui ne fait que reprendre sa
+ * note, n'est pas affichée en double.
+ */
+export function mergeMakeupResults<T extends { sheet: PublicSheet }>(results: readonly T[]): T[] {
+  const titles = new Set(results.map((r) => r.sheet.title));
+  const replaced = new Map(
+    results.flatMap((r) =>
+      r.sheet.makeupTitle && titles.has(r.sheet.makeupTitle)
+        ? [[r.sheet.makeupTitle, r.sheet.title] as const]
+        : [],
+    ),
+  );
+  return results
+    .filter((r) => !(r.sheet.makeupTitle && titles.has(r.sheet.makeupTitle)))
+    .map((r) => {
+      const original = replaced.get(r.sheet.title);
+      return original ? { ...r, sheet: { ...r.sheet, replacesTitle: original } } : r;
+    });
 }
 
 /**

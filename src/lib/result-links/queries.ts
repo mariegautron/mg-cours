@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-import { parsePublicSheet, type PublicSheet, type ViewInfo } from "./sheet";
+import { mergeMakeupResults, parsePublicSheet, type PublicSheet, type ViewInfo } from "./sheet";
 
 export interface ResultLinksData {
   /** La table existe : sinon « Publier » est indisponible (l'envoi par e-mail reste). */
@@ -54,8 +54,10 @@ export async function listPublishedSheets(
     .eq("student_id", studentId)
     .is("revoked_at", null)
     .order("published_at", { ascending: false });
-  return (data ?? []).flatMap((r) => {
-    const sheet = parsePublicSheet(r.payload);
-    return sheet ? [{ sheet, publishedAt: r.published_at }] : [];
-  });
+  return mergeMakeupResults(
+    (data ?? []).flatMap((r) => {
+      const sheet = parsePublicSheet(r.payload);
+      return sheet ? [{ sheet, publishedAt: r.published_at }] : [];
+    }),
+  );
 }

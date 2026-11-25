@@ -2,7 +2,7 @@ import "server-only";
 
 import { clientIp, recordFailure } from "@/lib/quiz/public";
 import { hashToken, isWellFormedToken } from "@/lib/quiz/token";
-import { parsePublicSheet, type PublicSheet } from "@/lib/result-links/sheet";
+import { mergeMakeupResults, parsePublicSheet, type PublicSheet } from "@/lib/result-links/sheet";
 import { createAnonClient } from "@/lib/supabase/admin";
 
 import { parseEspace, type Espace } from "./espace";
@@ -53,7 +53,7 @@ export async function callStudentView(token: string, count = true): Promise<Stud
     content: frise
       ? { frise, espace: parseEspace(row.payload), publishedAt: row.published_at ?? null }
       : null,
-    results,
+    results: mergeMakeupResults(results),
   };
 }
 

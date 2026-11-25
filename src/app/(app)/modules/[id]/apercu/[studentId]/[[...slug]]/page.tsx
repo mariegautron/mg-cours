@@ -18,6 +18,7 @@ import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
 import { getModule } from "@/lib/modules/queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
+import { liveQuizForStudent } from "@/lib/quiz/espace-attempt";
 import { listPublishedSheets } from "@/lib/result-links/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
@@ -44,13 +45,26 @@ export default async function PreviewPage({
 
   const results = student ? await listPublishedSheets(id, student.id) : [];
 
+  // Bandeau du QCM : même règle que le vrai espace (seulement qui a encore à le passer). Le module
+  // a déjà été vérifié ci-dessus (getModule ne rend que ceux de l'enseignante).
+  const live = student && slug.length === 0 ? await liveQuizForStudent(id, student.id) : null;
+
   const base = `/modules/${id}/apercu/${studentId}`;
   const data: EspaceData = {
     token: "apercu",
     base,
     firstName: student?.first_name ?? "Prénom",
     frise,
-    espace,
+    espace:
+      espace && student
+        ? {
+            ...espace,
+            quiz: live
+              ? { title: live.title, closesAt: live.closesAt, url: espace.quiz?.url ?? null }
+              : null,
+          }
+        : espace,
+    quizMakeupPlanned: !!live?.makeupPlanned,
     results,
     publishedAt: null,
     deposits: undefined,
