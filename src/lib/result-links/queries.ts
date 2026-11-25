@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-import type { ViewInfo } from "./sheet";
+import { parsePublicSheet, type PublicSheet, type ViewInfo } from "./sheet";
 
 export interface ResultLinksData {
   /** La table existe : sinon « Publier » est indisponible (l'envoi par e-mail reste). */
@@ -36,4 +36,26 @@ export async function listResultLinks(assessmentId: string): Promise<ResultLinks
   } catch {
     return { available: false, byStudent: new Map() };
   }
+}
+
+/**
+ * Résultats déjà publiés pour UNE personne sur un module, tels que son espace les affiche (mêmes
+ * filtres et même ordre que `mg_student_view`). Sert à l'aperçu côté enseignante : aucune vue comptée.
+ */
+export async function listPublishedSheets(
+  moduleId: string,
+  studentId: string,
+): Promise<{ sheet: PublicSheet; publishedAt: string | null }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("result_link")
+    .select("payload, published_at, assessment!inner(module_id)")
+    .eq("assessment.module_id", moduleId)
+    .eq("student_id", studentId)
+    .is("revoked_at", null)
+    .order("published_at", { ascending: false });
+  return (data ?? []).flatMap((r) => {
+    const sheet = parsePublicSheet(r.payload);
+    return sheet ? [{ sheet, publishedAt: r.published_at }] : [];
+  });
 }

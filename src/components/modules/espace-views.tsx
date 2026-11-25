@@ -802,12 +802,15 @@ export function NotesView({ data }: { data: EspaceData }) {
                   </span>
                 </summary>
                 <div className="mt-3">
-                  <a
-                    href={`${data.base}/pdf/${i + 1}`}
-                    className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-lg px-4 font-semibold focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    Télécharger mon PDF
-                  </a>
+                  {/* L'aperçu côté enseignante n'a pas de route PDF : le bouton y est masqué. */}
+                  {data.token !== "apercu" ? (
+                    <a
+                      href={`${data.base}/pdf/${i + 1}`}
+                      className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center rounded-lg px-4 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+                    >
+                      Télécharger mon PDF
+                    </a>
+                  ) : null}
                   {feedback.length ? (
                     <dl className="mt-4 space-y-3 text-base">
                       {feedback.map(([label, text]) => (

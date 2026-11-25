@@ -18,13 +18,15 @@ import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
 import { getModule } from "@/lib/modules/queries";
 import { notebookStudents } from "@/lib/notebook/notebook";
+import { listPublishedSheets } from "@/lib/result-links/queries";
 import { listModuleGroups } from "@/lib/students/queries";
 
 export const metadata: Metadata = { title: "Aperçu de l’espace étudiant·e" };
 
 /**
  * Aperçu en lecture seule de l'espace d'un·e étudiant·e : le contenu qui serait publié maintenant
- * (pas l'ancienne publication). Aucun dépôt, aucune note : rien n'est écrit.
+ * (pas l'ancienne publication) et les résultats réellement publiés pour cette personne. Rien n'est
+ * écrit : aucun dépôt, aucune vue comptée.
  */
 export default async function PreviewPage({
   params,
@@ -40,6 +42,8 @@ export default async function PreviewPage({
   const student = notebookStudents(groups).find((s) => s.id === studentId);
   if (!student && studentId !== "exemple") notFound();
 
+  const results = student ? await listPublishedSheets(id, student.id) : [];
+
   const base = `/modules/${id}/apercu/${studentId}`;
   const data: EspaceData = {
     token: "apercu",
@@ -47,7 +51,7 @@ export default async function PreviewPage({
     firstName: student?.first_name ?? "Prénom",
     frise,
     espace,
-    results: [],
+    results,
     publishedAt: null,
     deposits: undefined,
   };
@@ -84,8 +88,9 @@ export default async function PreviewPage({
   return (
     <div>
       <div role="note" className="bg-muted border-b px-4 py-2 text-sm">
-        <strong>Aperçu en lecture seule</strong> — espace de {data.firstName}, tel qu’il serait
-        publié maintenant. Aucun dépôt ni aucune note ne sont enregistrés.{" "}
+        <strong>Aperçu en lecture seule</strong> — espace de {data.firstName}. Le contenu est celui
+        qui serait publié maintenant ; les notes sont celles que tu as déjà publiées. Rien n’est
+        enregistré ici.{" "}
         <Link href={`/modules/${id}/apercu`} className="underline underline-offset-2">
           Changer d’étudiant·e
         </Link>{" "}
