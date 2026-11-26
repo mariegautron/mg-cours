@@ -264,6 +264,7 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `result-links`, `quiz-class-link`.
 - **À regarder en QA** : liens expirés ou faux, mobile, accessibilité (RGAA), ce qui est visible avant/après évaluation.
 - **Améliorations notées** :
+  - 26 nov. : un rattrapage reprend les attendus évalués de l'évaluation d'origine (`c0a3842`).
   - 26 nov. : « Terminer le module » : les lignes Hyperplanning et Moodle semblaient sans effet (ancre déjà dans l'adresse) ; elles mènent à l'interrupteur et le surlignent (`44f73f6`).
   - 26 nov. : appréciation du module publiable dans les espaces (photo du texte, retrait possible, aperçu compris ; migration `20261217000000`) (`1796616`).
   - 26 nov. : « Terminer le module » compte les avis reçus même après la fermeture du questionnaire (`f0c3eff`).
