@@ -98,6 +98,21 @@ async function createMakeup(
       }
     }
 
+    // Le rattrapage évalue les mêmes attendus. Sans effet sur la création si la copie échoue :
+    // ils restent modifiables sur la page du rattrapage.
+    const { data: expectations } = await supabase
+      .from("assessment_expectation")
+      .select("module_expectation_id")
+      .eq("assessment_id", originalId);
+    if (expectations?.length) {
+      await supabase.from("assessment_expectation").insert(
+        expectations.map((e) => ({
+          assessment_id: makeupId!,
+          module_expectation_id: e.module_expectation_id,
+        })),
+      );
+    }
+
     const { copied } = await copyAssessmentFiles(
       supabase,
       auth.user.id,
