@@ -27,7 +27,12 @@ export function AdminDocsChecklist({
           const checked = !!adminDocs[doc.key];
           const id = `admin-doc-${moduleId}-${doc.key}`;
           return (
-            <li key={doc.key} className="flex items-center gap-3">
+            <li
+              key={doc.key}
+              id={`doc-${doc.key}`}
+              tabIndex={-1}
+              className="target:bg-muted target:ring-ring -mx-2 flex scroll-mt-24 scroll-mb-24 items-center gap-3 rounded-lg px-2 py-1 target:ring-2"
+            >
               <Switch
                 id={id}
                 checked={checked}

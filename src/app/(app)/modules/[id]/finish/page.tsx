@@ -67,10 +67,13 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
     feedbackResponses: feedbackLink.data || feedbackCount.count ? (feedbackCount.count ?? 0) : null,
     hrefs: {
       sessions: `/modules/${id}/courses`,
-      notes: `/modules/${id}/finish#admin-docs`,
+      // Même page : une ancre vers l’interrupteur à activer.
+      notes: "#doc-notes_hyperplanning",
       appreciations: `/modules/${id}/appreciations`,
       makeups: `/modules/${id}/rattrapages`,
-      documents: `/modules/${id}/finish#admin-docs`,
+      documents: (ctx.module.admin_docs.supports_moodle
+        ? "#doc-sujets_grilles_moodle"
+        : "#doc-supports_moodle") as string,
       invoice: `/modules/${id}/billing`,
       agreement: `/modules/${id}/documents#convention`,
       feedback: `/modules/${id}/feedback`,
@@ -94,7 +97,12 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
                   {i.done ? "✓" : i.optional ? "·" : "!"}
                 </Pill>
                 <div>
-                  {i.href ? (
+                  {i.href?.startsWith("#") ? (
+                    // Ancre native : elle défile et surligne à chaque clic, même si l’adresse la porte déjà.
+                    <a href={i.href} className="font-bold underline-offset-2 hover:underline">
+                      {i.label}
+                    </a>
+                  ) : i.href ? (
                     <Link href={i.href} className="font-bold underline-offset-2 hover:underline">
                       {i.label}
                     </Link>
