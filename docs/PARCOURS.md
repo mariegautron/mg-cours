@@ -264,6 +264,7 @@ directes : les liens reçus par les étudiant·es.
 - **e2e** : `result-links`, `quiz-class-link`.
 - **À regarder en QA** : liens expirés ou faux, mobile, accessibilité (RGAA), ce qui est visible avant/après évaluation.
 - **Améliorations notées** :
+  - 26 nov. : « Terminer le module » : les lignes Hyperplanning et Moodle semblaient sans effet (ancre déjà dans l'adresse) ; elles mènent à l'interrupteur et le surlignent (`44f73f6`).
   - 26 nov. : appréciation du module publiable dans les espaces (photo du texte, retrait possible, aperçu compris ; migration `20261217000000`) (`1796616`).
   - 26 nov. : « Terminer le module » compte les avis reçus même après la fermeture du questionnaire (`f0c3eff`).
   - 25 nov. : bandeau de l'évaluation individuelle affiché seulement à qui doit encore la passer (plus de « Copie rendue le … » ; rattrapage réservé aux inscrit·es ; même règle dans l'aperçu) ; rattrapage publié = une seule ligne dans « Notes et corrigés » (`c3142ee`).
