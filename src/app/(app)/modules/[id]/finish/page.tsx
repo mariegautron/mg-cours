@@ -63,7 +63,8 @@ export default async function FinishModulePage({ params }: PageProps<"/modules/[
       pending: makeupRows.filter((r) => r.step !== "done").length,
       total: makeupRows.length,
     },
-    feedbackResponses: feedbackLink.data ? (feedbackCount.count ?? 0) : null,
+    // Des réponses reçues comptent même quand le questionnaire est ensuite fermé.
+    feedbackResponses: feedbackLink.data || feedbackCount.count ? (feedbackCount.count ?? 0) : null,
     hrefs: {
       sessions: `/modules/${id}/courses`,
       notes: `/modules/${id}/finish#admin-docs`,
