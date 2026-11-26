@@ -17,6 +17,8 @@ import {
 import { listPhrases } from "@/lib/appreciations/queries";
 import { getAppreciationBasis } from "@/lib/appreciations/basis-queries";
 import { cleanAppreciation } from "@/lib/appreciations/appreciation";
+import { isPublishable } from "@/lib/appreciations/publication";
+import { listPublicationRows } from "@/lib/appreciations/publication-queries";
 import { failure } from "@/lib/messages";
 import { getSchoolRulesForModule } from "@/lib/settings/rules-queries";
 import { createClient } from "@/lib/supabase/server";
@@ -162,4 +164,34 @@ export async function detectTemplateParts(
     if (hit) found[part] = hit;
   }
   return { sentences: Object.keys(found).length ? found : null };
+}
+
+/** Publie dans les espaces le texte actuel de chaque appréciation écrite et relue. */
+export async function publishAppreciations(moduleId: string): Promise<AppreciationState> {
+  const rows = await listPublicationRows(moduleId);
+  if (!rows) return { error: "La publication arrive après la mise à jour de la base de données." };
+  const supabase = await createClient();
+  const now = new Date().toISOString();
+  for (const r of rows.filter((x) => isPublishable(x) && x.published_text !== x.text)) {
+    const { error } = await supabase
+      .from("appreciation")
+      .update({ published_text: r.text, published_at: now })
+      .eq("module_id", moduleId)
+      .eq("student_id", r.student_id);
+    if (error) return { error: failure("publier les appréciations") };
+  }
+  revalidatePath(`/modules/${moduleId}/appreciations`);
+  return {};
+}
+
+/** Retire des espaces toutes les appréciations du module ; les textes de travail sont conservés. */
+export async function unpublishAppreciations(moduleId: string): Promise<AppreciationState> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("appreciation")
+    .update({ published_text: null, published_at: null })
+    .eq("module_id", moduleId);
+  if (error) return { error: failure("retirer les appréciations") };
+  revalidatePath(`/modules/${moduleId}/appreciations`);
+  return {};
 }

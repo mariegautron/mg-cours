@@ -14,6 +14,7 @@ import {
   type EspaceData,
   type EspaceSection,
 } from "@/components/modules/espace-views";
+import { publishedAppreciation } from "@/lib/appreciations/publication-queries";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
 import { getModule } from "@/lib/modules/queries";
@@ -66,6 +67,7 @@ export default async function PreviewPage({
         : espace,
     quizMakeupPlanned: !!live?.makeupPlanned,
     results,
+    appreciation: student ? await publishedAppreciation(id, student.id) : null,
     publishedAt: null,
     deposits: undefined,
   };
@@ -103,8 +105,8 @@ export default async function PreviewPage({
     <div>
       <div role="note" className="bg-muted border-b px-4 py-2 text-sm">
         <strong>Aperçu en lecture seule</strong> — espace de {data.firstName}. Le contenu est celui
-        qui serait publié maintenant ; les notes sont celles que tu as déjà publiées. Rien n’est
-        enregistré ici.{" "}
+        qui serait publié maintenant ; les notes et l’appréciation sont celles que tu as déjà
+        publiées. Rien n’est enregistré ici.{" "}
         <Link href={`/modules/${id}/apercu`} className="underline underline-offset-2">
           Changer d’étudiant·e
         </Link>{" "}

@@ -6,6 +6,9 @@ import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { AppreciationList } from "@/components/appreciations/appreciation-list";
 import { AppreciationExport } from "@/components/appreciations/appreciation-export";
+import { AppreciationPublication } from "@/components/appreciations/appreciation-publication";
+import { publicationSummary } from "@/lib/appreciations/publication";
+import { listPublicationRows } from "@/lib/appreciations/publication-queries";
 import { appreciationStatus, hasHole, sortRows } from "@/lib/appreciations/appreciation";
 import { moduleStudentAverages } from "@/lib/assessments/queries";
 import { listAppreciations } from "@/lib/appreciations/queries";
@@ -33,6 +36,10 @@ export default async function AppreciationsPage({
   if (!mod) notFound();
 
   const students = notebookStudents(groups);
+  // `null` tant que la base n'a pas les colonnes de publication : le bloc est alors masqué.
+  const publicationRows = await listPublicationRows(id);
+  const publication = publicationRows ? publicationSummary(publicationRows) : null;
+  const nameOf = new Map(students.map((s) => [s.id, `${s.first_name} ${s.last_name}`]));
   const averageOf = new Map(averages.map((a) => [a.student.id, a.average.average]));
 
   const rows = students.map((s) => ({
@@ -132,6 +139,20 @@ export default async function AppreciationsPage({
               </h2>
               <AppreciationExport moduleId={id} rows={rows} tooLong={tooLong} />
             </section>
+            {publication ? (
+              <section aria-labelledby="pu" className="bg-card space-y-2 rounded-xl border p-5">
+                <h2 id="pu" className="text-sm font-semibold">
+                  Espaces étudiant·es
+                </h2>
+                <AppreciationPublication
+                  moduleId={id}
+                  published={publication.published}
+                  pendingNames={publication.pending
+                    .flatMap((sid) => nameOf.get(sid) ?? [])
+                    .sort((a, b) => a.localeCompare(b, "fr"))}
+                />
+              </section>
+            ) : null}
             <BackLink href={`/modules/${id}/groups`}>← Étudiant·es et groupes</BackLink>
           </div>
         </div>

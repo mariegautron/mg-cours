@@ -39,6 +39,20 @@ export interface EspaceData {
   deposits?: Record<string, { at: string; late: number }>;
   /** Excusé·e au QCM principal, rattrapage prévu : pas d'invitation à passer le QCM. */
   quizMakeupPlanned?: boolean;
+  /** Appréciation du module, seulement si l'enseignante l'a publiée. */
+  appreciation?: string | null;
+}
+
+/** Appréciation publiée, en tête de « Notes et corrigés ». */
+function ModuleAppreciation({ text }: { text: string }) {
+  return (
+    <section aria-labelledby="appreciation" className={`${card} mb-5`}>
+      <h2 id="appreciation" className="mb-2 text-sm font-semibold">
+        Appréciation du module
+      </h2>
+      <p className="text-base leading-relaxed whitespace-pre-line">{text}</p>
+    </section>
+  );
 }
 
 export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
@@ -714,6 +728,14 @@ export function CoursFicheView({
 const fmt = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
 
 export function NotesView({ data }: { data: EspaceData }) {
+  if (!data.results.length && data.appreciation) {
+    return (
+      <div className="max-w-3xl">
+        <h1 className="mb-4">Notes et corrigés</h1>
+        <ModuleAppreciation text={data.appreciation} />
+      </div>
+    );
+  }
   if (!data.results.length) {
     return (
       <Empty
@@ -729,6 +751,7 @@ export function NotesView({ data }: { data: EspaceData }) {
   return (
     <div className="max-w-3xl">
       <h1 className="mb-4">Notes et corrigés</h1>
+      {data.appreciation ? <ModuleAppreciation text={data.appreciation} /> : null}
       {results.length > 1 ? (
         <nav aria-label="Tes résultats" className={`${card} mb-5`}>
           <h2 className="mb-2 text-sm font-semibold">Vue d’ensemble</h2>

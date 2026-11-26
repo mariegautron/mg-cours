@@ -21,6 +21,7 @@ import { getDeposit } from "@/app/espace/[token]/deposit-actions";
 import { EspaceError } from "@/components/modules/espace-shell";
 import { APP_NAME } from "@/lib/brand";
 import { callStudentView, studentFeedbackPath } from "@/lib/modules/student-public";
+import { publishedAppreciationForToken } from "@/lib/appreciations/publication-queries";
 import { liveQuizForToken } from "@/lib/quiz/espace-attempt";
 import { loadPublishedReview } from "@/lib/assessments/review-public";
 import { ReviewFeedback } from "@/components/modules/review-feedback";
@@ -97,6 +98,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     };
     data.quizMakeupPlanned = !!live?.makeupPlanned;
   }
+  if (slug[0] === "notes") data.appreciation = await publishedAppreciationForToken(token);
   const number = Number(arg);
 
   let current: EspaceSection;
