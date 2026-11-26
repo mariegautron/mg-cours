@@ -6,7 +6,7 @@ import { Markdown, markdownOutline } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
 import { formatMinutes } from "@/lib/modules/activity";
-import { documentKind } from "@/lib/modules/espace";
+import { documentKind, listDocuments, type EspaceListedDocument } from "@/lib/modules/espace";
 import { formatSize } from "@/lib/storage/files";
 import {
   dueLabel,
@@ -55,7 +55,13 @@ function ModuleAppreciation({ text }: { text: string }) {
   );
 }
 
-export type EspaceSection = "accueil" | "cours" | "projet" | "evaluation" | "notes";
+export type EspaceSection =
+  | "accueil"
+  | "cours"
+  | "documents"
+  | "projet"
+  | "evaluation"
+  | "notes";
 
 /** « 1 pt », « 1,5 pt », « 3 pts » : virgule française, pluriel à partir de 2. */
 const pts = (n: number) =>
@@ -84,6 +90,12 @@ export function EspaceLayout({
       show: !!espace?.evaluations.length,
     },
     { key: "cours", label: "Cours", href: `${base}/cours`, show: !!espace?.courses.length },
+    {
+      key: "documents",
+      label: "Documents",
+      href: `${base}/documents`,
+      show: listDocuments(espace).length > 0,
+    },
     { key: "projet", label: "Projet", href: `${base}/projet`, show: !!espace?.brief },
     { key: "notes", label: "Notes et corrigés", href: `${base}/notes`, show: true },
   ];
@@ -117,7 +129,7 @@ export function EspaceLayout({
                     <Link
                       href={i.href}
                       aria-current={i.key === current ? "page" : undefined}
-                      className={`focus-visible:ring-ring flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none max-lg:min-h-12 max-lg:px-2 max-lg:text-xs ${
+                      className={`focus-visible:ring-ring flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:outline-none max-lg:min-h-12 max-lg:px-1 max-lg:text-[0.6875rem] ${
                         i.key === current ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                       }`}
                     >
@@ -565,6 +577,44 @@ export function CoursListView({ data }: { data: EspaceData }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Tous les fichiers à télécharger au même endroit, les modèles à remplir en premier. */
+export function DocumentsView({ data }: { data: EspaceData }) {
+  const docs = listDocuments(data.espace);
+  if (docs.length === 0)
+    return <Empty title="Documents" text="Aucun document à télécharger pour le moment." />;
+  const groups: { id: string; title: string; items: EspaceListedDocument[] }[] = [
+    { id: "docs-modeles", title: "Modèles à remplir", items: docs.filter((d) => d.template) },
+    { id: "docs-autres", title: "Autres documents", items: docs.filter((d) => !d.template) },
+  ];
+  return (
+    <div className="max-w-3xl space-y-8">
+      <h1>Documents</h1>
+      {groups
+        .filter((g) => g.items.length > 0)
+        .map((g) => (
+          <section key={g.id} aria-labelledby={g.id} className="space-y-3">
+            <h2 id={g.id} className="text-sm font-semibold">
+              {g.title}
+            </h2>
+            <ul className="space-y-3">
+              {g.items.map((d) => (
+                <li key={d.href}>
+                  <a href={`${data.base}/${d.href}`} className={tile}>
+                    <span className="block font-semibold">
+                      Télécharger {d.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ")} (
+                      {documentKind(d.name)}, {formatSize(d.size)})
+                    </span>
+                    <span className="text-muted-foreground mt-1 block text-sm">{d.from}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import {
   AccueilView,
   CoursFicheView,
+  DocumentsView,
   CoursListView,
   EspaceLayout,
   EvaluationView,
@@ -79,6 +80,9 @@ export default async function PreviewPage({
   if (slug.length === 0) {
     current = "accueil";
     body = <AccueilView data={data} />;
+  } else if (section === "documents" && slug.length === 1) {
+    current = "documents";
+    body = <DocumentsView data={data} />;
   } else if (section === "projet" && slug.length === 1 && espace) {
     current = "projet";
     body = <ProjetView espace={espace} />;

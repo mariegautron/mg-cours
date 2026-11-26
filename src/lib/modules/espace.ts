@@ -82,6 +82,56 @@ export function selectDocuments(
     .map((f) => ({ name: f.name, path: f.path, mime: f.mime, size: f.size }));
 }
 
+/** Document de l'onglet « Documents » : d'où il vient et l'adresse relative à l'espace. */
+export interface EspaceListedDocument {
+  name: string;
+  size: number;
+  /** Fiche ou évaluation qui le porte. */
+  from: string;
+  /** Modèle à remplir (fiche de type « Modèle »). */
+  template: boolean;
+  /** Chemin après `/espace/<jeton>/`, servi par les routes de téléchargement existantes. */
+  href: string;
+}
+
+/**
+ * Tous les documents publiés (fiches de cours et évaluations), chacun une seule fois même quand sa
+ * fiche est rattachée à plusieurs séances.
+ */
+export function listDocuments(
+  espace: {
+    courses: {
+      number: number;
+      resources: { title: string; kindLabel: string | null; documents: EspaceDocument[] }[];
+    }[];
+    evaluations: { title: string; documents: EspaceDocument[] }[];
+  } | null,
+): EspaceListedDocument[] {
+  const seen = new Set<string>();
+  const out: EspaceListedDocument[] = [];
+  const add = (d: EspaceDocument, from: string, template: boolean, route: string) => {
+    if (seen.has(d.path)) return;
+    seen.add(d.path);
+    out.push({
+      name: d.name,
+      size: d.size,
+      from,
+      template,
+      href: `${route}/${encodeURIComponent(d.name)}`,
+    });
+  };
+  for (const c of espace?.courses ?? []) {
+    c.resources.forEach((r, i) => {
+      for (const d of r.documents)
+        add(d, r.title, r.kindLabel === "Modèle", `document/${c.number}/${i}`);
+    });
+  }
+  (espace?.evaluations ?? []).forEach((e, i) => {
+    for (const d of e.documents) add(d, e.title, false, `evaluation-fichier/${i + 1}`);
+  });
+  return out;
+}
+
 /** Nom de fichier en minuscules tiré d'un titre (« Jalon 2 : Sprint Review » → « jalon-2-sprint-review »). */
 export function fileSlug(title: string, fallback = "document"): string {
   const s = safeDownloadName(title)
