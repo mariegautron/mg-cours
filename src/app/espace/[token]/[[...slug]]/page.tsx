@@ -156,6 +156,7 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
           accepts={ev.submit.accepts}
           initial={await getDeposit(token, ev.id)}
           deadlineLabel={dueLabel(due, ev.time)}
+          flexible={ev.flexible}
         />
       );
     }

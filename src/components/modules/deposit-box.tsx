@@ -33,12 +33,15 @@ export function DepositBox({
   accepts,
   initial,
   deadlineLabel,
+  flexible = false,
 }: {
   token: string;
   assessmentId: string;
   accepts: "file" | "link" | "both";
   initial: DepositState;
   deadlineLabel: string;
+  /** Point d’étape non noté : la date est un repère, rien n’est « en retard ». */
+  flexible?: boolean;
 }) {
   const [state, setState] = useState<DepositState>(initial);
   const [files, setFiles] = useState<File[]>([]);
@@ -118,7 +121,9 @@ export function DepositBox({
         Déposer mon rendu
       </h2>
       <p className="text-muted-foreground mt-1 text-sm">
-        À rendre : {deadlineLabel}.{" "}
+        {flexible
+          ? `Déposez quand vous voulez. Date conseillée : ${deadlineLabel}.`
+          : `À rendre : ${deadlineLabel}.`}{" "}
         {state.group ? `Rendu de groupe (${state.group}) : tout le groupe voit le même dépôt.` : ""}
       </p>
 
@@ -128,7 +133,7 @@ export function DepositBox({
             C’est rendu ! Le {state.submittedAt ? fmtDate(state.submittedAt) : ""}
             {state.byName && state.group ? `, déposé par ${state.byName}` : ""}.
           </p>
-          {state.lateMinutes > 0 ? (
+          {!flexible && state.lateMinutes > 0 ? (
             <p className="text-muted-foreground">
               Rendu en retard ({lateLabel(state.lateMinutes)}). C’est seulement signalé.
             </p>
@@ -154,8 +159,9 @@ export function DepositBox({
         </div>
       ) : (
         <p className="text-muted-foreground mt-3 text-sm">
-          Pas encore rendu. Tu peux déposer à tout moment ; après la date limite, ce sera signalé en
-          retard.
+          {flexible
+            ? "Aucun dépôt pour le moment."
+            : "Pas encore rendu. Tu peux déposer à tout moment ; après la date limite, ce sera signalé en retard."}
         </p>
       )}
 

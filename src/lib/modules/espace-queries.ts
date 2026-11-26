@@ -1,6 +1,8 @@
 import "server-only";
 
 import { loadSubjectDeck } from "@/lib/assessments/present-data";
+import type { SubjectDeckInput } from "@/components/present/deck";
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { listModuleAssessments } from "@/lib/assessments/queries";
 import { canPresent, subjectSections } from "@/lib/assessments/subject";
 import {
@@ -10,6 +12,7 @@ import {
   type Espace,
   type EspaceEvaluation,
   type EspaceOptions,
+  type EspaceGrid,
 } from "@/lib/modules/espace";
 import { EMPTY_ACTIVITY } from "@/lib/modules/activity";
 import { getCourseActivities } from "@/lib/modules/activity-queries";
@@ -21,6 +24,28 @@ import { resourceKey } from "@/lib/present/plan";
 import { createClient } from "@/lib/supabase/server";
 import { isImageMime, parseResourceFiles } from "@/lib/resources/files";
 import { KIND_LABELS, studentFacing } from "@/lib/resources/kind";
+
+/**
+ * Grille affichée sur le barème de l'évaluation : une grille sur 80 notée sur 20 montre des points
+ * sur 20 (bonus compris), comme la note.
+ */
+function onMaxScore(grid: NonNullable<SubjectDeckInput["grid"]>): EspaceGrid {
+  const total = grid.axes.reduce((n, x) => n + x.points, 0);
+  const ratio = total > 0 && grid.maxScore ? grid.maxScore / total : 1;
+  const on = (n: number) => Math.round(n * ratio * 100) / 100;
+  return {
+    maxScore: grid.maxScore ?? total,
+    axes: grid.axes.map((x) => ({
+      label: x.label,
+      points: on(x.points),
+      criteria: x.criteria.map((c) => ({
+        ...c,
+        weight: on(c.weight),
+        levels: c.levels.map((l) => ({ ...l, points: on(l.points) })),
+      })),
+    })),
+  };
+}
 
 const COURSE_KINDS = new Set(["course", "workshop", "project", "template"]);
 
@@ -73,6 +98,7 @@ export async function loadEspace(
         title: a.title,
         type: a.type,
         groupGrade: a.is_group_grade,
+        flexible: isUngradedReview(a),
         sessionNumber: a.course_id ? (numberOf.get(a.course_id) ?? null) : null,
         date: a.date,
         time: a.oral_start_time ? a.oral_start_time.slice(0, 5) : null,
@@ -86,16 +112,7 @@ export async function loadEspace(
           size: f.size,
         })),
         sections: subjectSections(a).map((s) => ({ heading: s.heading, text: s.text })),
-        grid: deck.grid
-          ? {
-              maxScore: deck.grid.maxScore,
-              axes: deck.grid.axes.map((x) => ({
-                label: x.label,
-                points: x.points,
-                criteria: x.criteria,
-              })),
-            }
-          : null,
+        grid: deck.grid ? onMaxScore(deck.grid) : null,
       });
     }
   }

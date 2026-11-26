@@ -55,13 +55,7 @@ function ModuleAppreciation({ text }: { text: string }) {
   );
 }
 
-export type EspaceSection =
-  | "accueil"
-  | "cours"
-  | "documents"
-  | "projet"
-  | "evaluation"
-  | "notes";
+export type EspaceSection = "accueil" | "cours" | "documents" | "projet" | "evaluation" | "notes";
 
 /** « 1 pt », « 1,5 pt », « 3 pts » : virgule française, pluriel à partir de 2. */
 const pts = (n: number) =>
@@ -177,6 +171,7 @@ function depositStatus(
   today: string,
 ): string | null {
   if (e.submit.mode !== "app") return null;
+  if (e.flexible) return deposit ? `Déposé le ${parisDayTime(deposit.at)}` : null;
   if (deposit) {
     const when = parisDayTime(deposit.at);
     return deposit.late > 0 ? `Rendu en retard (${lateLabel(deposit.late)})` : `Rendu le ${when}`;
@@ -261,15 +256,18 @@ export function AccueilView({ data }: { data: EspaceData }) {
 
       {next && nextIndex !== null ? (
         <section aria-labelledby="prochain" className="bg-card rounded-xl border p-4">
-          <p className="text-muted-foreground text-[0.8125rem] font-medium">Prochain rendu</p>
+          <p className="text-muted-foreground text-[0.8125rem] font-medium">
+            {next.flexible ? "Prochaine étape conseillée" : "Prochain rendu"}
+          </p>
           <h2 id="prochain" className="title-display mt-1 text-xl">
             {next.title}
           </h2>
           <p className="mt-1 text-base">
-            À rendre : <strong>{dueLabel(dateOfEvaluation(next, frise), next.time)}</strong>
+            {next.flexible ? "Date conseillée" : "À rendre"} :{" "}
+            <strong>{dueLabel(dateOfEvaluation(next, frise), next.time)}</strong>
             {next.whereToSubmit ? ` · ${next.whereToSubmit}` : ""}
           </p>
-          {reminder(dateOfEvaluation(next, frise), today) ? (
+          {!next.flexible && reminder(dateOfEvaluation(next, frise), today) ? (
             <p className="font-semibold">{reminder(dateOfEvaluation(next, frise), today)}</p>
           ) : null}
           <p className="mt-4 flex flex-wrap gap-2">
@@ -373,7 +371,7 @@ export function EvaluationView({
   const e = espace?.evaluations[index];
   if (!espace || !e) return <Empty title="Évaluations" text="Cette évaluation n’existe pas." />;
   const facts = [
-    ["À rendre", dueLabel(dateOfEvaluation(e, frise), e.time)],
+    [e.flexible ? "Date conseillée" : "À rendre", dueLabel(dateOfEvaluation(e, frise), e.time)],
     e.sessionNumber ? ["Séance", `Séance ${e.sessionNumber}`] : null,
     e.durationMinutes ? ["Durée", `${e.durationMinutes} min`] : null,
     e.whereToSubmit ? ["Où rendre", e.whereToSubmit] : null,
@@ -1007,17 +1005,21 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
             ? null
             : e.graded || publishedNote
               ? "noté"
-              : dep
-                ? dep.late > 0
-                  ? "rendu en retard"
-                  : "rendu"
-                : e.submit.mode === "app"
-                  ? due && due < today
-                    ? "pas encore rendu"
-                    : "à rendre"
-                  : due && due < today
-                    ? "rendu"
-                    : "à rendre";
+              : e.flexible
+                ? dep
+                  ? "déposé"
+                  : "à déposer quand vous voulez"
+                : dep
+                  ? dep.late > 0
+                    ? "rendu en retard"
+                    : "rendu"
+                  : e.submit.mode === "app"
+                    ? due && due < today
+                      ? "pas encore rendu"
+                      : "à rendre"
+                    : due && due < today
+                      ? "rendu"
+                      : "à rendre";
           return (
             <li key={i}>
               <Link href={`${base}/evaluation/${i + 1}`} className={tile}>

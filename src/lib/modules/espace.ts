@@ -39,6 +39,8 @@ export interface EspaceEvaluation {
   title: string;
   type: string | null;
   groupGrade: boolean;
+  /** Point d’étape non noté : dépôt quand on veut, la date n’est qu’un repère. */
+  flexible?: boolean;
   sessionNumber: number | null;
   /** AAAA-MM-JJ ou null. */
   date: string | null;
@@ -314,6 +316,7 @@ export function parseEspace(payload: unknown): Espace | null {
       return [
         {
           id: str(o.id) ?? "",
+          flexible: o.flexible === true,
           submit: {
             mode: obj(o.submit).mode === "app" ? ("app" as const) : ("elsewhere" as const),
             accepts:
