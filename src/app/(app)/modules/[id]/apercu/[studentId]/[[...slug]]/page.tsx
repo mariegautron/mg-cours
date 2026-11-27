@@ -15,6 +15,10 @@ import {
   type EspaceData,
   type EspaceSection,
 } from "@/components/modules/espace-views";
+import { FollowUpItems } from "@/components/modules/follow-up-items";
+import { ReviewFeedback } from "@/components/modules/review-feedback";
+import { loadFollowUp } from "@/lib/deposits/follow-up";
+import { createClient } from "@/lib/supabase/server";
 import { publishedAppreciation } from "@/lib/appreciations/publication-queries";
 import { loadEspace } from "@/lib/modules/espace-queries";
 import { loadFrise } from "@/lib/modules/frise-queries";
@@ -71,6 +75,15 @@ export default async function PreviewPage({
     appreciation: student ? await publishedAppreciation(id, student.id) : null,
     publishedAt: null,
     deposits: undefined,
+    followUp:
+      student && espace
+        ? await loadFollowUp(
+            await createClient(),
+            id,
+            student.id,
+            espace.evaluations.map((e) => e.id),
+          )
+        : undefined,
   };
   const [section, arg] = slug;
   const number = Number(arg);
@@ -91,7 +104,25 @@ export default async function PreviewPage({
     body = <EvaluationsListView data={data} />;
   } else if (section === "evaluation" && slug.length === 2 && Number.isInteger(number)) {
     current = "evaluation";
-    body = <EvaluationView data={data} index={number - 1} deposit={null} />;
+    const evaluation = espace?.evaluations[number - 1];
+    const followUp = evaluation ? data.followUp?.[evaluation.id] : undefined;
+    body = (
+      <EvaluationView
+        data={data}
+        index={number - 1}
+        deposit={
+          followUp ? (
+            <>
+              {followUp.review ? <ReviewFeedback review={followUp.review} /> : null}
+              <FollowUpItems
+                items={followUp.items}
+                fileHref={(it) => `/api/assessments/${evaluation!.id}/submissions/${it.id}`}
+              />
+            </>
+          ) : null
+        }
+      />
+    );
   } else if (section === "cours" && slug.length === 1) {
     current = "cours";
     body = <CoursListView data={data} />;
@@ -110,7 +141,7 @@ export default async function PreviewPage({
       <div role="note" className="bg-muted border-b px-4 py-2 text-sm">
         <strong>Aperçu en lecture seule</strong> — espace de {data.firstName}. Le contenu est celui
         qui serait publié maintenant ; les notes et l’appréciation sont celles que tu as déjà
-        publiées. Rien n’est enregistré ici.{" "}
+        publiées, avec les dépôts et les retours publiés. On ne peut pas déposer ici.{" "}
         <Link href={`/modules/${id}/apercu`} className="underline underline-offset-2">
           Changer d’étudiant·e
         </Link>{" "}

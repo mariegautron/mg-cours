@@ -16,6 +16,34 @@ const obj = (v: unknown): Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 const text = (v: unknown) => (typeof v === "string" ? v : "");
 
+/** Version publiée d'un retour, pour une personne : jamais le brouillon ni les notes privées. */
+export function parsePublishedReview(
+  a: { review_criterion_ids: string[] | null; grading_grid: unknown },
+  review: { published: unknown; published_at: string | null },
+  studentId: string,
+): PublishedReview | null {
+  if (!review.published || !review.published_at) return null;
+  const pub = obj(review.published);
+  const marks = obj(pub.marks);
+  const comments = obj(pub.comments);
+  const grid = a.grading_grid as {
+    grid_criterion: { id: string; label: string; position: number; is_bonus: boolean }[];
+  } | null;
+  const criteria = reviewCriteria(
+    [...(grid?.grid_criterion ?? [])].sort((x, y) => x.position - y.position),
+    a.review_criterion_ids,
+  ).map((c) => {
+    const m = marks[c.id];
+    return { label: c.label, mark: isReviewMark(m) ? m : null, comment: text(comments[c.id]) };
+  });
+  return {
+    globalComment: text(pub.global_comment),
+    criteria,
+    personal: text(obj(pub.person_comments)[studentId]),
+    publishedAt: review.published_at,
+  };
+}
+
 /**
  * Retour publié d'un point d'étape pour la personne du lien d'espace : le commentaire global,
  * chaque critère avec son repère et son commentaire, son mot perso. Jamais les notes privées.
@@ -70,26 +98,7 @@ export async function loadPublishedReview(
       .eq("assessment_id", assessmentId)
       .eq("subject_id", subjectId)
       .maybeSingle();
-    if (!review?.published || !review.published_at) return null;
-    const pub = obj(review.published);
-    const marks = obj(pub.marks);
-    const comments = obj(pub.comments);
-    const grid = a.grading_grid as unknown as {
-      grid_criterion: { id: string; label: string; position: number; is_bonus: boolean }[];
-    } | null;
-    const criteria = reviewCriteria(
-      [...(grid?.grid_criterion ?? [])].sort((x, y) => x.position - y.position),
-      a.review_criterion_ids,
-    ).map((c) => {
-      const m = marks[c.id];
-      return { label: c.label, mark: isReviewMark(m) ? m : null, comment: text(comments[c.id]) };
-    });
-    return {
-      globalComment: text(pub.global_comment),
-      criteria,
-      personal: text(obj(pub.person_comments)[link.student_id]),
-      publishedAt: review.published_at,
-    };
+    return review ? parsePublishedReview(a, review, link.student_id) : null;
   } catch {
     return null;
   }

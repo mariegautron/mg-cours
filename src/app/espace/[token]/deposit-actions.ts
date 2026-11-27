@@ -149,7 +149,11 @@ export async function commitDeposit(
   const res = await loadDepositContext(token, assessmentId);
   if (!res.ok) return empty(res.error);
   const { ctx } = res;
-  if (ctx.graded) return { ...(await readState(ctx)), error: "Ton rendu est corrigé, tu ne peux plus le remplacer." };
+  if (ctx.graded)
+    return {
+      ...(await readState(ctx)),
+      error: "Ton rendu est corrigé, tu ne peux plus le remplacer.",
+    };
   const check = validateDeposit({ files, link }, ctx.accepts);
   if (!check.ok) return { ...(await readState(ctx)), error: check.error };
   if (!/^[0-9a-f-]{36}$/i.test(batchId))

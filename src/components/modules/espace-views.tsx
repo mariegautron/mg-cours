@@ -6,6 +6,7 @@ import { Markdown, markdownOutline } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
 import { formatMinutes } from "@/lib/modules/activity";
+import type { FollowUp } from "@/lib/deposits/follow-up";
 import { documentKind, listDocuments, type EspaceListedDocument } from "@/lib/modules/espace";
 import { formatSize } from "@/lib/storage/files";
 import {
@@ -37,6 +38,8 @@ export interface EspaceData {
   publishedAt: string | null;
   /** Dépôts de cette personne (ou de son groupe), par évaluation : heure serveur et retard en minutes. */
   deposits?: Record<string, { at: string; late: number }>;
+  /** Points d'étape non notés : documents enregistrés et retour publié, par évaluation. */
+  followUp?: Record<string, FollowUp>;
   /** Excusé·e au QCM principal, rattrapage prévu : pas d'invitation à passer le QCM. */
   quizMakeupPlanned?: boolean;
   /** Appréciation du module, seulement si l'enseignante l'a publiée. */
@@ -208,6 +211,9 @@ export function AccueilView({ data }: { data: EspaceData }) {
   const noted = new Set(results.flatMap((r) => [r.sheet.title, r.sheet.replacesTitle ?? ""]));
   const settled = new Set([
     ...Object.keys(data.deposits ?? {}),
+    ...Object.entries(data.followUp ?? {})
+      .filter(([, f]) => f.review || f.items.length)
+      .map(([id]) => id),
     ...(espace?.evaluations ?? [])
       .filter((e) => noted.has(e.title) || isNoDepositEvaluation(e))
       .map((e) => e.id),
@@ -1006,9 +1012,11 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
             : e.graded || publishedNote
               ? "noté"
               : e.flexible
-                ? dep
-                  ? "déposé"
-                  : "à déposer quand vous voulez"
+                ? data.followUp?.[e.id]?.review
+                  ? "retour disponible"
+                  : dep || data.followUp?.[e.id]?.items.length
+                    ? "déposé"
+                    : "à déposer quand vous voulez"
                 : dep
                   ? dep.late > 0
                     ? "rendu en retard"
@@ -1032,7 +1040,12 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
                   ) : null}
                 </span>
                 <span className="text-muted-foreground block text-sm">
-                  {e.groupGrade ? "Note de groupe" : "Note individuelle"} · {dueLabel(due, e.time)}
+                  {e.flexible
+                    ? "Sans note · date conseillée"
+                    : e.groupGrade
+                      ? "Note de groupe"
+                      : "Note individuelle"}{" "}
+                  · {dueLabel(due, e.time)}
                 </span>
               </Link>
             </li>
