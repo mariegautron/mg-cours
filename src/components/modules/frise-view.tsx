@@ -9,6 +9,7 @@ import {
   summaryLine,
   type BandKind,
   type Frise,
+  milestoneKindLabel,
 } from "@/lib/modules/frise";
 import { cn } from "@/lib/utils";
 
@@ -274,7 +275,7 @@ export function FriseStudent({
                   {m.sessionNumber
                     ? `Séance ${m.sessionNumber}${dateOf.get(m.sessionNumber) ? ` · ${shortDate(dateOf.get(m.sessionNumber) ?? null)}` : ""} · `
                     : ""}
-                  {m.kind === "group" ? "note de groupe" : "note individuelle"}
+                  {milestoneKindLabel(m)}
                 </p>
                 {m.deliverable ? (
                   <p className="mt-1.5 text-sm">

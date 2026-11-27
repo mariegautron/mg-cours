@@ -20,7 +20,7 @@ export async function loadFrise(moduleId: string): Promise<Frise | null> {
     supabase
       .from("assessment")
       .select(
-        "id, title, course_id, is_group_grade, makeup_of_id, project_role, project_id, deliverable_md, prep_status",
+        "id, title, course_id, is_group_grade, makeup_of_id, project_role, project_id, deliverable_md, prep_status, kind, type, review_graded",
       )
       .eq("module_id", moduleId),
   ]);

@@ -495,6 +495,8 @@ ressources/activités existantes (proposition de séances depuis les attendus, r
 | US-181 | Point d’étape non noté : l’onglet « Copies » suit les retours (à faire, en cours, terminés), sans note ni moyenne | livré |
 | US-182 | Planning : une fiche secondaire qui a un horaire s’affiche (elle n’est plus comptée en « pause ou marge ») | livré |
 | US-183 | Espace étudiant·e : le retour disponible ressort (carte et pastille pleines, lien « Lire le retour », bloc sur l’accueil) ; les dépôts à venir restent discrets ; sur la page du point, le retour passe en tête, critères et point de vigilance mis en forme | livré |
+| US-184 | Accueil de l’espace : un point d’étape non déposé reste proposé après sa date conseillée ; la frise ne compte plus les points d’étape comme des notes | livré |
+| US-185 | Vitesse de l’espace : dépôts lus en parallèle, fonctions serveur à Francfort (même région que la base) | livré |
 
 | US-173     | Clôture : une fiche « à reporter » passe dans le déroulé de la séance suivante (en tête), retirée de la séance clôturée, sans doublon, annulable depuis « Séance N clôturée » et refaite sans doublon par « Modifier la clôture » ; « pas fait volontairement » ni reporté ni rappelé ; sans séance suivante, le report attend et la fiche module le signale (migration `20261116000000_course_carried_over`). Mini-QCM projetés publiés dans l'espace étudiant·e, par séance, seulement une fois la séance clôturée (à republier). | Fait |
 

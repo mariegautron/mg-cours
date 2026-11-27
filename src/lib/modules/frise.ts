@@ -4,6 +4,7 @@
  * jamais d'étudiant·e, de note, de ressource ni de montant.
  */
 
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { isSubjectToBuild } from "@/lib/prep-status";
 
 export interface FriseCourseInput {
@@ -26,6 +27,9 @@ export interface FriseAssessmentInput {
   /** Rendu attendu (texte destiné aux étudiant·es), repris seulement si le sujet n'est pas « à construire ». */
   deliverable_md?: string | null;
   prep_status?: string | null;
+  kind?: string | null;
+  type?: string | null;
+  review_graded?: boolean | null;
 }
 
 export type MilestoneKind = "group" | "individual";
@@ -51,6 +55,8 @@ export interface FriseMilestone {
   role: MilestoneRole | null;
   /** Première ligne du rendu attendu (texte étudiant·es) ; `null` si absent ou sujet à construire. */
   deliverable: string | null;
+  /** Point d’étape non noté : jamais compté ni nommé comme une note. */
+  ungraded?: boolean;
 }
 
 export interface Frise {
@@ -119,9 +125,9 @@ export function buildFrise(input: {
       sessionNumber: a.course_id ? (numberById.get(a.course_id) ?? null) : null,
       kind: (a.is_group_grade ? "group" : "individual") as MilestoneKind,
       role: a.project_role ?? null,
+      ...(isUngradedReview(a) ? { ungraded: true } : {}),
       // Le rendu attendu ne sort que d'un sujet prêt ou fourni : un sujet « à construire » reste privé.
-      deliverable:
-        !isSubjectToBuild(a) ? firstLine(a.deliverable_md) : null,
+      deliverable: !isSubjectToBuild(a) ? firstLine(a.deliverable_md) : null,
     }))
     .sort((a, b) => (a.sessionNumber ?? 999) - (b.sessionNumber ?? 999));
   const hasProject = regular.some((a) => a.project_id);
@@ -150,8 +156,10 @@ export function summaryLine(f: Frise): string {
   const n = f.sessions.length;
   const parts = [`${n} séance${n > 1 ? "s" : ""}`];
   if (f.totalHours) parts.push(`${f.totalHours} heures`);
-  const notes = f.milestones.length;
+  const notes = f.milestones.filter((m) => !m.ungraded).length;
   if (notes) parts.push(`${notes} note${notes > 1 ? "s" : ""}`);
+  const checkpoints = f.milestones.length - notes;
+  if (checkpoints) parts.push(`${checkpoints} point${checkpoints > 1 ? "s" : ""} d’étape`);
   return parts.join(" · ");
 }
 
@@ -188,6 +196,7 @@ export function parseFrise(raw: unknown): Frise | null {
       kind: o.kind === "individual" ? "individual" : "group",
       role: o.role === "milestone" || o.role === "oral" || o.role === "individual" ? o.role : null,
       deliverable: typeof o.deliverable === "string" ? o.deliverable : null,
+      ...(o.ungraded === true ? { ungraded: true } : {}),
     });
   }
   return {
@@ -209,6 +218,12 @@ export function sessionHeading(s: { number: number; title: string }): string {
   return !t || /^séance\s*\d+$/i.test(t) ? `Séance ${s.number}` : `Séance ${s.number} · ${t}`;
 }
 
+/** « note de groupe », « note individuelle » ou, sans note, « point d’étape ». */
+export function milestoneKindLabel(m: Pick<FriseMilestone, "kind" | "ungraded">): string {
+  if (m.ungraded) return "sans note";
+  return m.kind === "group" ? "note de groupe" : "note individuelle";
+}
+
 /** Libellé court d'un jalon, avec son rôle : « Jalon 1 : rendu », « Oral de fin de projet »… */
 export function milestoneLabel(m: FriseMilestone): string {
   if (m.role === "oral") return "Oral de fin de projet";
@@ -228,7 +243,7 @@ export function sessionEvents(frise: Frise): Map<number, SessionEvent[]> {
   if (frise.launchSession) add(frise.launchSession, { kind: "launch", label: "Lancement" });
   for (const m of frise.milestones) {
     if (m.sessionNumber === null) continue;
-    const kindLabel = m.kind === "group" ? "note de groupe" : "note individuelle";
+    const kindLabel = milestoneKindLabel(m);
     add(m.sessionNumber, {
       kind: m.kind,
       label:
@@ -294,7 +309,7 @@ export function bandLayout(frise: Frise): Band[] {
     raw.push({
       key: `m${i}`,
       label: m.role === "milestone" ? `${m.title} : rendu` : milestoneLabel(m),
-      sub: `Séance ${m.sessionNumber} · ${m.kind === "group" ? "note de groupe" : "note individuelle"}`,
+      sub: `Séance ${m.sessionNumber} · ${milestoneKindLabel(m)}`,
       kind: m.kind,
       start: clamp(end - 1),
       end,

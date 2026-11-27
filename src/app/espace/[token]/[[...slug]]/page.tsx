@@ -81,17 +81,23 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
   // État des dépôts (heure serveur) pour les évaluations rendues dans Marelle.
   if (data.espace && ["accueil", "evaluation"].includes(section ?? "accueil")) {
     const deposits: NonNullable<EspaceData["deposits"]> = {};
-    for (const ev of data.espace.evaluations) {
-      if (ev.id && ev.submit.mode === "app") {
-        const st = await getDeposit(token, ev.id);
-        if (st.submittedAt) deposits[ev.id] = { at: st.submittedAt, late: st.lateMinutes };
-      }
-    }
+    // Toutes les lectures en parallèle : une par une, la page prenait plusieurs secondes.
+    const [followUp] = await Promise.all([
+      followUpForToken(
+        token,
+        data.espace.evaluations.map((e) => e.id),
+      ),
+      Promise.all(
+        data.espace.evaluations
+          .filter((ev) => ev.id && ev.submit.mode === "app")
+          .map(async (ev) => {
+            const st = await getDeposit(token, ev.id);
+            if (st.submittedAt) deposits[ev.id] = { at: st.submittedAt, late: st.lateMinutes };
+          }),
+      ),
+    ]);
     data.deposits = deposits;
-    data.followUp = await followUpForToken(
-      token,
-      data.espace.evaluations.map((e) => e.id),
-    );
+    data.followUp = followUp;
   }
   // Bandeau du QCM lu en direct : un QCM publié apparaît sans attendre la mise à jour de
   // l'espace, seulement pour les personnes qui ont encore à le passer.

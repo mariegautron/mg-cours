@@ -415,7 +415,10 @@ export function nextEvaluationIndex(
     e.date ?? (e.sessionNumber !== null ? (dateOf.get(e.sessionNumber) ?? null) : null);
   const upcoming = espace.evaluations
     .map((e, index) => ({ e, index, due: dueOf(e) }))
-    .filter((x) => !x.e.graded && !deposited.has(x.e.id) && !!x.due && x.due >= today)
+    // Un point d'étape non noté reste proposé après sa date conseillée tant que rien n'est déposé.
+    .filter(
+      (x) => !x.e.graded && !deposited.has(x.e.id) && !!x.due && (x.e.flexible || x.due >= today),
+    )
     .sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.index - b.index);
   return upcoming[0]?.index ?? null;
 }
