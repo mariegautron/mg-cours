@@ -202,7 +202,15 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
         );
       }
     }
-    body = <EvaluationView data={data} index={number - 1} deposit={deposit} feedback={feedback} />;
+    body = (
+      <EvaluationView
+        data={data}
+        index={number - 1}
+        deposit={deposit}
+        feedback={feedback}
+        canDeposit={!!deposit && !!ev?.id && ev.submit.mode === "app" && !feedback}
+      />
+    );
   } else if (section === "cours" && slug.length === 2 && Number.isInteger(number)) {
     // Ancienne adresse d'une séance : on ouvre sa première fiche.
     redirect(`/espace/${token}/cours/${number}/1`);
