@@ -43,6 +43,7 @@ const initialsOf = (name: string) =>
  */
 export function CorrectionOverview({
   overview,
+  review = false,
   maxScore,
   noun,
   compareHref,
@@ -50,6 +51,8 @@ export function CorrectionOverview({
   correctHref,
 }: {
   overview: Overview;
+  /** Point d'étape non noté : on parle de retours, sans colonne de note ni moyenne. */
+  review?: boolean;
   maxScore: number;
   /** « groupe » ou « étudiant·e », pour les libellés. */
   noun: string;
@@ -69,6 +72,7 @@ export function CorrectionOverview({
     done: overview.done,
     missing: overview.rows.filter((r) => r.received === false).length,
   };
+  const total0 = overview.total;
   const tracked = overview.rows.some((r) => r.received !== undefined);
   const filters = (Object.keys(FILTER_LABELS) as OverviewFilter[]).filter(
     (f) => f !== "missing" || tracked,
@@ -86,7 +90,9 @@ export function CorrectionOverview({
         <div className="bg-card min-w-0 flex-[1_1_0] space-y-3 rounded-xl border p-5 lg:flex-[3_1_0]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p role="status" className="text-lg font-semibold">
-              {overview.label}
+              {review
+                ? `${overview.done} retour${overview.done > 1 ? "s" : ""} terminé${overview.done > 1 ? "s" : ""} sur ${total0}`
+                : overview.label}
               {overview.average !== null
                 ? ` · moyenne ${fmt(overview.average)} / ${fmt(maxScore)}`
                 : ""}
@@ -101,7 +107,12 @@ export function CorrectionOverview({
                   aria-pressed={filter === f}
                   onClick={() => setFilter(f)}
                 >
-                  {FILTER_LABELS[f]} · {counts[f]}
+                  {review && f === "todo"
+                    ? "À faire"
+                    : review && f === "done"
+                      ? "Terminés"
+                      : FILTER_LABELS[f]}{" "}
+                  · {counts[f]}
                 </Button>
               ))}
             </div>
@@ -109,7 +120,11 @@ export function CorrectionOverview({
           {total > 0 ? (
             <div
               role="img"
-              aria-label={`${overview.done} corrigé${overview.done > 1 ? "s" : ""}, ${overview.inProgress} en cours, ${overview.todo} à corriger`}
+              aria-label={
+                review
+                  ? `Retours : ${overview.done} terminés, ${overview.inProgress} en cours, ${overview.todo} à faire`
+                  : `${overview.done} corrigé${overview.done > 1 ? "s" : ""}, ${overview.inProgress} en cours, ${overview.todo} à corriger`
+              }
               className="bg-muted flex h-2.5 overflow-hidden rounded-full"
             >
               <span className="bg-mint" style={{ width: `${(overview.done / total) * 100}%` }} />
@@ -155,9 +170,11 @@ export function CorrectionOverview({
                     <th scope="col" className="py-2 pr-3 font-medium">
                       Statut
                     </th>
-                    <th scope="col" className="py-2 text-right font-medium">
-                      Note
-                    </th>
+                    {review ? null : (
+                      <th scope="col" className="py-2 text-right font-medium">
+                        Note
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -215,12 +232,22 @@ export function CorrectionOverview({
                             {r.makeup?.label ?? "Excusé·e · rattrapage à prévoir"}
                           </Pill>
                         ) : (
-                          <Pill tone={copyStatus(r).tone}>{copyStatus(r).label}</Pill>
+                          <Pill tone={copyStatus(r).tone}>
+                            {!review
+                              ? copyStatus(r).label
+                              : r.state === "done"
+                                ? "Retour terminé"
+                                : r.state === "in_progress"
+                                  ? "Retour en cours"
+                                  : "Retour à faire"}
+                          </Pill>
                         )}
                       </td>
-                      <td className="py-1 text-right font-semibold tabular-nums">
-                        {r.value !== null ? fmt(r.value) : "—"}
-                      </td>
+                      {review ? null : (
+                        <td className="py-1 text-right font-semibold tabular-nums">
+                          {r.value !== null ? fmt(r.value) : "—"}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -237,7 +264,9 @@ export function CorrectionOverview({
             aria-labelledby="go"
             className="bg-primary/10 border-primary/50 rounded-xl border p-5"
           >
-            <p className="text-muted-foreground text-[0.8125rem] font-medium">Prochaine copie</p>
+            <p className="text-muted-foreground text-[0.8125rem] font-medium">
+              {review ? "Prochain retour" : "Prochaine copie"}
+            </p>
             {next ? (
               <>
                 <h3 id="go" className="mt-1 text-sm font-semibold">
@@ -246,18 +275,27 @@ export function CorrectionOverview({
                 <p className="text-muted-foreground mt-1 mb-3 text-sm">
                   {next.state === "in_progress"
                     ? progressNote(next)
-                    : `Elle n’est pas encore commencée.`}
+                    : review
+                      ? "Le retour n’est pas encore commencé."
+                      : `Elle n’est pas encore commencée.`}
                 </p>
                 <Button asChild size="touch" className="w-full">
                   <Link href={`${correctHref}?copy=${next.id}`}>
                     {next.state === "in_progress" ? "Reprendre" : "Continuer"}
-                    <span className="sr-only"> la correction : {next.title}</span>
+                    <span className="sr-only">
+                      {review ? " le retour : " : " la correction : "}
+                      {next.title}
+                    </span>
                   </Link>
                 </Button>
               </>
             ) : (
               <h3 id="go" className="mt-1 text-sm font-semibold">
-                {total > 0 ? "Tout est corrigé." : "Aucune copie."}
+                {total > 0
+                  ? review
+                    ? "Tous les retours sont terminés."
+                    : "Tout est corrigé."
+                  : "Aucune copie."}
               </h3>
             )}
           </section>
@@ -311,7 +349,7 @@ export function CorrectionOverview({
             </section>
           ) : null}
 
-          <section aria-labelledby="stat" className="bg-card rounded-xl border p-5">
+          <section aria-labelledby="stat" className="bg-card rounded-xl border p-5" hidden={review}>
             <h3 id="stat" className="mb-2 text-sm font-semibold">
               Pour l’instant
             </h3>

@@ -262,6 +262,21 @@ export default async function AssessmentPage({
       ? { label: "Excusé·e · rattrapage préparé", href: `/modules/${id}/assessments/${mk.id}` }
       : { label: "Excusé·e · rattrapage à prévoir", href: `/modules/${id}/rattrapages` };
   };
+  // Point d'étape non noté : l'avancement vient des retours, pas des notes.
+  const ungraded = isUngradedReview(assessment);
+  const reviewRows = ungraded
+    ? ((
+        await (await createClient())
+          .from("progress_review")
+          .select("subject_id, state, published_at, global_comment")
+          .eq("assessment_id", assessmentId)
+      ).data ?? [])
+    : [];
+  const reviewStateOf = (subjectId: string) => {
+    const row = reviewRows.find((r) => r.subject_id === subjectId);
+    if (row?.state === "done" || row?.published_at) return "done" as const;
+    return row?.global_comment?.trim() ? ("in_progress" as const) : ("todo" as const);
+  };
   const overview = correctionOverview(
     sections.flatMap((section) =>
       section.items.map((item) => ({
@@ -271,6 +286,7 @@ export default async function AssessmentPage({
         context: assessment.is_group_grade ? item.theme : section.title,
         members: item.members?.map((m) => m.name),
         grade: item.grade ?? null,
+        reviewState: ungraded ? reviewStateOf(item.id) : undefined,
         // Rendus suivis seulement pour une évaluation individuelle : copie de QCM rendue, ou
         // fichiers et liens déposés quand ils sont lisibles.
         received: quizSubmitted
@@ -462,6 +478,7 @@ export default async function AssessmentPage({
         <>
           <CorrectionOverview
             overview={overview}
+            review={ungraded}
             maxScore={assessment.maxScore}
             noun={assessment.is_group_grade ? "groupe" : "étudiant·e"}
             correctHref={`/modules/${id}/assessments/${assessmentId}/correct`}

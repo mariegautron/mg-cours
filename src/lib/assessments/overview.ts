@@ -50,6 +50,8 @@ export interface OverviewItem {
   grade?: OverviewGrade | null;
   /** Rendu déposé (au moins un fichier ou lien) ; `undefined` si les rendus ne sont pas suivis. */
   received?: boolean;
+  /** Point d'étape non noté : où en est le retour (il n'y a jamais de note). */
+  reviewState?: CopyState;
   /** Présence enregistrée sur la copie (absence excusée / non prévenue). */
   attendance?: string | null;
   /** Absence excusée : où en est le rattrapage (libellé + lien). */
@@ -123,7 +125,9 @@ export function correctionOverview(
   const rows = items.map((item): OverviewRow => {
     // Absence excusée : rien à noter, la copie compte comme traitée (même règle que la correction).
     const state: CopyState =
-      item.attendance === "absent_excused" ? "done" : copyState(item.grade, criteriaIds);
+      item.attendance === "absent_excused"
+        ? "done"
+        : (item.reviewState ?? copyState(item.grade, criteriaIds));
     const hasGrid = criteriaIds.length > 0;
     return {
       ...item,
