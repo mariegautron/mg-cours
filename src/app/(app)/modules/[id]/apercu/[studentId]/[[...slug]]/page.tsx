@@ -110,15 +110,23 @@ export default async function PreviewPage({
       <EvaluationView
         data={data}
         index={number - 1}
-        deposit={
-          followUp ? (
+        feedback={
+          followUp?.review ? (
             <>
-              {followUp.review ? <ReviewFeedback review={followUp.review} /> : null}
+              <ReviewFeedback review={followUp.review} />
               <FollowUpItems
                 items={followUp.items}
                 fileHref={(it) => `/api/assessments/${evaluation!.id}/submissions/${it.id}`}
               />
             </>
+          ) : null
+        }
+        deposit={
+          followUp && !followUp.review ? (
+            <FollowUpItems
+              items={followUp.items}
+              fileHref={(it) => `/api/assessments/${evaluation!.id}/submissions/${it.id}`}
+            />
           ) : null
         }
       />

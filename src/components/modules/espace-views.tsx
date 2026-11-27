@@ -1,3 +1,4 @@
+import { ArrowRight, Check, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 
 import { ContactLine } from "@/components/modules/contact-line";
@@ -204,6 +205,38 @@ function dateOfEvaluation(e: EspaceEvaluation, frise: Frise) {
   );
 }
 
+/** Accueil : les retours publiés sur les points d'étape, un lien direct par retour. */
+function ReviewCallout({ data }: { data: EspaceData }) {
+  const ready = (data.espace?.evaluations ?? [])
+    .map((e, index) => ({ e, index }))
+    .filter(({ e }) => data.followUp?.[e.id]?.review);
+  if (ready.length === 0) return null;
+  return (
+    <section
+      aria-labelledby="retours"
+      className="border-primary bg-primary/10 rounded-xl border-2 p-5"
+    >
+      <h2 id="retours" className="title-display flex items-center gap-2 text-xl">
+        <MessageSquareText aria-hidden className="size-6 shrink-0" />
+        {ready.length > 1 ? "Les retours de Marie" : "Le retour de Marie est arrivé"}
+      </h2>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {ready.map(({ e, index }) => (
+          <li key={e.id}>
+            <Link
+              href={`${data.base}/evaluation/${index + 1}`}
+              className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-lg px-4 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+            >
+              Lire le retour : {e.title}
+              <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function AccueilView({ data }: { data: EspaceData }) {
   const { base, espace, frise, results, firstName } = data;
   const today = new Date().toISOString().slice(0, 10);
@@ -225,6 +258,8 @@ export function AccueilView({ data }: { data: EspaceData }) {
   return (
     <div className="space-y-6">
       <h1>Bonjour{firstName ? ` ${firstName}` : ""}</h1>
+
+      <ReviewCallout data={data} />
 
       {quizOpen && espace?.quiz ? (
         <section aria-labelledby="quiz" className="bg-card card-featured rounded-xl border p-4">
@@ -367,9 +402,12 @@ export function EvaluationView({
   data,
   index,
   deposit,
+  feedback,
 }: {
   data: EspaceData;
   index: number;
+  /** Retour publié d'un point d'étape : affiché en tête, avant la consigne. */
+  feedback?: React.ReactNode;
   /** Zone de dépôt (rendu « dans Marelle »), calculée côté serveur par la page. */
   deposit?: React.ReactNode;
 }) {
@@ -412,6 +450,7 @@ export function EvaluationView({
         </nav>
       ) : null}
       <h1>{e.title}</h1>
+      {feedback ? <div className="mt-4 [&>section+section]:mt-3">{feedback}</div> : null}
       {e.sections.length + (e.grid ? 1 : 0) > 1 ? (
         <nav aria-label="Sur cette page" className="mt-2">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -991,6 +1030,31 @@ export function Empty({ title, text }: { title: string; text: string }) {
   );
 }
 
+/** État d'une évaluation : seul ce qui demande à être lu est plein, le reste reste discret. */
+function StatusBadge({ status }: { status: string }) {
+  const base = "inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-sm font-semibold";
+  if (status === "retour disponible") {
+    return (
+      <span className={`${base} bg-primary text-primary-foreground`}>
+        <MessageSquareText aria-hidden className="size-4" />
+        Retour disponible
+      </span>
+    );
+  }
+  if (status === "déposé") {
+    return (
+      <span className={`${base} border-success text-success border`}>
+        <Check aria-hidden className="size-4" />
+        Déposé
+      </span>
+    );
+  }
+  if (status === "dépôt ouvert") {
+    return <span className="text-muted-foreground text-sm">Dépôt ouvert</span>;
+  }
+  return <span className={`${base} bg-muted`}>{status}</span>;
+}
+
 export function EvaluationsListView({ data }: { data: EspaceData }) {
   const { base, espace, frise } = data;
   const today = new Date().toISOString().slice(0, 10);
@@ -1016,7 +1080,7 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
                   ? "retour disponible"
                   : dep || data.followUp?.[e.id]?.items.length
                     ? "déposé"
-                    : "à déposer quand vous voulez"
+                    : "dépôt ouvert"
                 : dep
                   ? dep.late > 0
                     ? "rendu en retard"
@@ -1030,14 +1094,17 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
                       : "à rendre";
           return (
             <li key={i}>
-              <Link href={`${base}/evaluation/${i + 1}`} className={tile}>
-                <span className="flex flex-wrap items-baseline justify-between gap-2">
+              <Link
+                href={`${base}/evaluation/${i + 1}`}
+                className={
+                  status === "retour disponible"
+                    ? `${tile} !border-primary !bg-primary/10 !border-2`
+                    : tile
+                }
+              >
+                <span className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{e.title}</strong>
-                  {status ? (
-                    <span className="bg-muted rounded-full px-3 py-0.5 text-sm font-semibold">
-                      {status}
-                    </span>
-                  ) : null}
+                  {status ? <StatusBadge status={status} /> : null}
                 </span>
                 <span className="text-muted-foreground block text-sm">
                   {e.flexible
@@ -1047,6 +1114,12 @@ export function EvaluationsListView({ data }: { data: EspaceData }) {
                       : "Note individuelle"}{" "}
                   · {dueLabel(due, e.time)}
                 </span>
+                {status === "retour disponible" ? (
+                  <span className="mt-2 inline-flex items-center gap-2 font-semibold underline underline-offset-4">
+                    Lire le retour de Marie
+                    <ArrowRight aria-hidden className="size-4" />
+                  </span>
+                ) : null}
               </Link>
             </li>
           );

@@ -169,21 +169,34 @@ export default async function EspacePage({ params }: PageProps<"/espace/[token]/
     }
     // Point d’étape : le retour publié de Marie d’abord, puis les documents reçus et le dépôt.
     const review = ev?.id ? await loadPublishedReview(token, ev.id) : null;
+    let feedback: React.ReactNode = null;
     if (review || followUp?.items.length) {
-      // Retour terminé : le dépôt est fermé, la zone de dépôt n’apporte plus rien.
-      const closed = !!review && !!ev?.id && !!(await getDeposit(token, ev.id)).closed;
-      deposit = (
-        <>
-          {review ? <ReviewFeedback review={review} /> : null}
-          <FollowUpItems
-            items={followUp?.items ?? []}
-            fileHref={(it) => `${data.base}/depot/${ev!.id}/${it.id}`}
-          />
-          {closed ? null : deposit}
-        </>
+      const received = (
+        <FollowUpItems
+          items={followUp?.items ?? []}
+          fileHref={(it) => `${data.base}/depot/${ev!.id}/${it.id}`}
+        />
       );
+      if (review) {
+        // Retour terminé : le dépôt est fermé, la zone de dépôt n’apporte plus rien.
+        const closed = !!ev?.id && !!(await getDeposit(token, ev.id)).closed;
+        feedback = (
+          <>
+            <ReviewFeedback review={review} />
+            {received}
+          </>
+        );
+        if (closed) deposit = null;
+      } else {
+        deposit = (
+          <>
+            {received}
+            {deposit}
+          </>
+        );
+      }
     }
-    body = <EvaluationView data={data} index={number - 1} deposit={deposit} />;
+    body = <EvaluationView data={data} index={number - 1} deposit={deposit} feedback={feedback} />;
   } else if (section === "cours" && slug.length === 2 && Number.isInteger(number)) {
     // Ancienne adresse d'une séance : on ouvre sa première fiche.
     redirect(`/espace/${token}/cours/${number}/1`);
