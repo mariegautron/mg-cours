@@ -108,7 +108,7 @@ export async function loadPlanning(
       endTime: c.end_time,
       items: [
         ...c.course_resource
-          .filter((cr) => cr.role === "primary" && cr.resource)
+          .filter((cr) => (cr.role === "primary" || cr.start_time) && cr.resource)
           .map((cr) => ({
             title: cr.resource!.title,
             startTime: cr.start_time,

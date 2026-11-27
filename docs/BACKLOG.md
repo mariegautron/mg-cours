@@ -493,6 +493,7 @@ ressources/activités existantes (proposition de séances depuis les attendus, r
 | US-179 | Point d’étape non noté sans grille : retour par commentaire global ; ni grille ni date de séance réclamées | livré |
 | US-180 | Espace étudiant·e et aperçu : retour disponible et documents reçus (téléchargeables) sur les points d’étape, y compris ceux ajoutés par l’enseignante | livré |
 | US-181 | Point d’étape non noté : l’onglet « Copies » suit les retours (à faire, en cours, terminés), sans note ni moyenne | livré |
+| US-182 | Planning : une fiche secondaire qui a un horaire s’affiche (elle n’est plus comptée en « pause ou marge ») | livré |
 
 | US-173     | Clôture : une fiche « à reporter » passe dans le déroulé de la séance suivante (en tête), retirée de la séance clôturée, sans doublon, annulable depuis « Séance N clôturée » et refaite sans doublon par « Modifier la clôture » ; « pas fait volontairement » ni reporté ni rappelé ; sans séance suivante, le report attend et la fiche module le signale (migration `20261116000000_course_carried_over`). Mini-QCM projetés publiés dans l'espace étudiant·e, par séance, seulement une fois la séance clôturée (à republier). | Fait |
 
