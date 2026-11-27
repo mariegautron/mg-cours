@@ -184,7 +184,19 @@ export function resourceSlides(section: number, resource: Tables<"resource">): P
 
   const files = parseResourceFiles(resource.files);
   const others = [];
+  // Une image déjà placée dans le texte a sa diapo : on ne la rajoute pas à la fin.
+  const inText = new Set(
+    parseMarkdown(resource.content ?? "").flatMap((b) =>
+      b.type === "image" ? [decodeURIComponent(b.src.split(/[?#]/)[0].split("/").pop() ?? "")] : [],
+    ),
+  );
   for (const file of files) {
+    if (
+      isImageMime(file.mime) &&
+      (inText.has(file.name) || inText.has(file.name.replace("-clair.", ".")))
+    ) {
+      continue;
+    }
     const url = resourceFileUrl(resource.id, file.name);
     if (isImageMime(file.mime)) {
       const readable = readableFileName(file.name);

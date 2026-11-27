@@ -35,7 +35,7 @@ export type Block =
   | { type: "heading"; level: HeadingLevel; runs: InlineRun[] }
   | { type: "paragraph"; runs: InlineRun[] }
   | ListBlock
-  | { type: "code"; text: string }
+  | { type: "code"; text: string; lang?: string }
   | { type: "quote"; runs: InlineRun[] }
   | { type: "image"; alt: string; src: string }
   | { type: "hr" }
@@ -80,7 +80,13 @@ export function parseInline(input: string): InlineRun[] {
     if (/^<br\s*\/?>$/i.test(part)) {
       runs.push({ break: true });
     } else if (/^(\*\*|__)[^]+(\*\*|__)$/.test(part) && part.length > 4) {
-      runs.push({ text: part.slice(2, -2), bold: true });
+      // Du code peut se trouver dans un passage en gras : les deux mises en forme se cumulent.
+      for (const piece of part.slice(2, -2).split(/(`[^`]+`)/)) {
+        if (!piece) continue;
+        if (/^`[^`]+`$/.test(piece)) {
+          runs.push({ text: piece.slice(1, -1), code: true, bold: true });
+        } else runs.push({ text: piece, bold: true });
+      }
     } else if (/^[*_][^]+[*_]$/.test(part) && part.length > 2) {
       runs.push({ text: part.slice(1, -1), italic: true });
     } else if (/^`[^`]+`$/.test(part)) {
@@ -128,6 +134,9 @@ export function parseMarkdown(source: string): Block[] {
   // Pile d'imbrication de listes en cours : plus l'indentation est grande, plus on est profond.
   let listStack: { indent: number; list: ListBlock }[] = [];
 
+  // Texte source de chaque point : une suite sur la ligne suivante se relit avec son début.
+  const itemSource = new Map<ListItem, string>();
+
   const flushPara = () => {
     if (para.length) blocks.push({ type: "paragraph", runs: parseInline(para.join(" ")) });
     para = [];
@@ -140,10 +149,11 @@ export function parseMarkdown(source: string): Block[] {
     if (/^```/.test(line)) {
       flushPara();
       listStack = [];
+      const lang = line.slice(3).trim();
       const code: string[] = [];
       i++;
       while (i < lines.length && !/^```/.test(lines[i])) code.push(lines[i++]);
-      blocks.push({ type: "code", text: code.join("\n") });
+      blocks.push({ type: "code", text: code.join("\n"), ...(lang ? { lang } : {}) });
       continue;
     }
 
@@ -212,6 +222,7 @@ export function parseMarkdown(source: string): Block[] {
       const ordered = /\d/.test(item[2]);
       const checked = item[3] ? item[3].toLowerCase() === "x" : null;
       const newItem: ListItem = { runs: parseInline(item[4]), checked, children: [] };
+      itemSource.set(newItem, item[4]);
 
       while (listStack.length && indent < listStack[listStack.length - 1].indent) {
         listStack.pop();
@@ -258,7 +269,20 @@ export function parseMarkdown(source: string): Block[] {
     if (quote) {
       flushPara();
       listStack = [];
-      blocks.push({ type: "quote", runs: parseInline(quote[1]) });
+      // Des lignes « > » qui se suivent forment une seule citation ; une ligne vide la coupe en deux.
+      const parts = [quote[1]];
+      while (i + 1 < lines.length && /^>/.test(lines[i + 1]) && !NOTE_START.test(lines[i + 1])) {
+        parts.push(lines[++i].replace(/^>\s?/, ""));
+      }
+      blocks.push({
+        type: "quote",
+        runs: parseInline(
+          parts
+            .map((p) => p.trim() || "<br>")
+            .join(" ")
+            .replace(/ ?<br> ?/g, "<br>"),
+        ),
+      });
       continue;
     }
 
@@ -279,7 +303,9 @@ export function parseMarkdown(source: string): Block[] {
       const items = listStack[listStack.length - 1].list.items;
       const last = items[items.length - 1];
       if (last) {
-        last.runs = [...last.runs, ...parseInline(` ${line.trim()}`)];
+        const text = `${itemSource.get(last) ?? ""} ${line.trim()}`;
+        itemSource.set(last, text);
+        last.runs = parseInline(text);
         continue;
       }
     }

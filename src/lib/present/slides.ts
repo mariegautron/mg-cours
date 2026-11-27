@@ -36,6 +36,8 @@ const ROLE_PREFIXES: [RegExp, SlideRole][] = [
   [/^(exercice|[àa] toi|cas pratique|mise en situation)\s*[:—–-]/i, "exercice"],
   [/^(attention|erreur courante|pi[èe]ge)\s*[:—–-]/i, "attention"],
   [/^sch[ée]ma\s*[:—–-]/i, "schema"],
+  [/^(erreurs [àa] [ée]viter|[àa] [ée]viter|le pi[èe]ge)/i, "attention"],
+  [/^(fil conducteur|appliqu[ée] [àa]|atelier r[ée]parons)/i, "exemple"],
 ];
 
 export const ROLE_LABELS: Record<SlideRole, string> = {

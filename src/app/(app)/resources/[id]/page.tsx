@@ -154,6 +154,7 @@ export default async function ResourcePage({ params, searchParams }: PageProps<"
               Contenu
             </h2>
             <Markdown
+              variant="fiche"
               source={resource.content}
               showNotes
               anchorPrefix="c"

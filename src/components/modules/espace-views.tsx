@@ -671,6 +671,45 @@ export function DocumentsView({ data }: { data: EspaceData }) {
   );
 }
 
+/** Sommaire : les parties, et sous chacune ses diapos repliées. */
+function FicheToc({ toc }: { toc: ReturnType<typeof markdownOutline> }) {
+  const groups: { head: (typeof toc)[number]; children: typeof toc }[] = [];
+  for (const h of toc) {
+    if (h.level === 1 || groups.length === 0) groups.push({ head: h, children: [] });
+    else groups[groups.length - 1].children.push(h);
+  }
+  const link =
+    "focus-visible:ring-ring inline-block min-h-6 rounded hover:underline focus-visible:ring-2 focus-visible:outline-none";
+  return (
+    <ul className="mt-2 space-y-2 text-sm">
+      {groups.map(({ head, children }) => (
+        <li key={head.id}>
+          <a href={`#${head.id}`} className={`${link} font-semibold`}>
+            {head.text}
+          </a>
+          {children.length > 0 ? (
+            <details>
+              <summary className="text-muted-foreground min-h-6 cursor-pointer text-xs">
+                {children.length} point{children.length > 1 ? "s" : ""}
+                <span className="sr-only"> : {head.text}</span>
+              </summary>
+              <ul className="mt-1 space-y-1 border-l pl-3">
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <a href={`#${c.id}`} className={link}>
+                      {c.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Une seule fiche à la fois : sommaire des titres, puis « Précédente / Suivante » entre les fiches. */
 export function CoursFicheView({
   data,
@@ -726,6 +765,8 @@ export function CoursFicheView({
             headingLevel={2}
             anchorPrefix="fiche"
             resolveImageSrc={resolveImage}
+            variant="fiche"
+            imageNames={resource.images.map((i) => i.name)}
           />
         ) : null}
         {resource.url ? (
@@ -787,32 +828,13 @@ export function CoursFicheView({
               <summary className="min-h-6 cursor-pointer text-sm font-bold">
                 Dans cette fiche
               </summary>
-              <ul className="mt-2 space-y-1 text-sm">
-                {toc.map((h) => (
-                  <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
-                    <a href={`#${h.id}`} className="inline-block min-h-6 hover:underline">
-                      {h.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <FicheToc toc={toc} />
             </details>
           </nav>
           <nav aria-label="Sommaire de la fiche" className="hidden xl:block">
-            <div className="xl:sticky xl:top-6">
+            <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
               <p className="mb-2 text-sm font-bold">Dans cette fiche</p>
-              <ul className="space-y-1 text-sm">
-                {toc.map((h) => (
-                  <li key={h.id} className={h.level === 2 ? "pl-3" : undefined}>
-                    <a
-                      href={`#${h.id}`}
-                      className="focus-visible:ring-ring inline-block min-h-6 rounded hover:underline focus-visible:ring-2 focus-visible:outline-none"
-                    >
-                      {h.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <FicheToc toc={toc} />
             </div>
           </nav>
         </>

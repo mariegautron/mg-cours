@@ -54,7 +54,12 @@ export default async function EspaceCoursSeancePage({
               <p className="text-muted-foreground mb-3 text-sm">{r.kindLabel}</p>
             ) : null}
             {r.content ? (
-              <Markdown source={r.content} headingLevel={3} resolveImageSrc={resolver(i)} />
+              <Markdown
+                source={r.content}
+                headingLevel={3}
+                resolveImageSrc={resolver(i)}
+                variant="fiche"
+              />
             ) : null}
             {r.url ? (
               <p className="mt-3">
