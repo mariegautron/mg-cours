@@ -498,6 +498,7 @@ ressources/activités existantes (proposition de séances depuis les attendus, r
 | US-184 | Accueil de l’espace : un point d’étape non déposé reste proposé après sa date conseillée ; la frise ne compte plus les points d’étape comme des notes | livré |
 | US-185 | Vitesse de l’espace : dépôts lus en parallèle, fonctions serveur à Francfort (même région que la base) | livré |
 | US-186 | Page d’évaluation de l’espace : bouton « Déposer mon rendu » dès le haut, qui mène à la zone de dépôt | livré |
+| US-187 | Espace étudiant·e, page « Cours » : la date de chaque séance remplace les durées des fiches | livré |
 
 | US-173     | Clôture : une fiche « à reporter » passe dans le déroulé de la séance suivante (en tête), retirée de la séance clôturée, sans doublon, annulable depuis « Séance N clôturée » et refaite sans doublon par « Modifier la clôture » ; « pas fait volontairement » ni reporté ni rappelé ; sans séance suivante, le report attend et la fiche module le signale (migration `20261116000000_course_carried_over`). Mini-QCM projetés publiés dans l'espace étudiant·e, par séance, seulement une fois la séance clôturée (à republier). | Fait |
 

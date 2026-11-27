@@ -6,7 +6,6 @@ import { ContactLine } from "@/components/modules/contact-line";
 import { Markdown, markdownOutline } from "@/components/markdown";
 import { CriterionLevels } from "@/components/results/criterion-levels";
 import { FriseProjected } from "@/components/modules/frise-view";
-import { formatMinutes } from "@/lib/modules/activity";
 import type { FollowUp } from "@/lib/deposits/follow-up";
 import { documentKind, listDocuments, type EspaceListedDocument } from "@/lib/modules/espace";
 import { formatSize } from "@/lib/storage/files";
@@ -605,14 +604,14 @@ export function CoursListView({ data }: { data: EspaceData }) {
       <h1 className="mb-6">Cours</h1>
       <div className="space-y-8">
         {courses.map((c) => {
-          const total = c.resources.reduce((n, r) => n + (r.minutes ?? 0), 0);
+          const date = data.frise.sessions.find((x) => x.number === c.number)?.date ?? null;
           return (
             <section key={c.number} aria-labelledby={`seance-${c.number}`}>
               <h2 id={`seance-${c.number}`} className="mb-2 text-sm font-semibold">
                 {sessionHeading(c)}
-                {total ? (
+                {date ? (
                   <span className="text-muted-foreground ml-2 text-sm font-normal">
-                    · {formatMinutes(total)}
+                    · {dueLabel(date, null)}
                   </span>
                 ) : null}
               </h2>
@@ -621,11 +620,7 @@ export function CoursListView({ data }: { data: EspaceData }) {
                   <li key={i}>
                     <Link href={`${data.base}/cours/${c.number}/${i + 1}`} className={tile}>
                       <strong>{r.title}</strong>
-                      <span className="text-muted-foreground block text-sm">
-                        {[r.kindLabel, r.minutes ? formatMinutes(r.minutes) : null]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
+                      <span className="text-muted-foreground block text-sm">{r.kindLabel}</span>
                     </Link>
                   </li>
                 ))}
@@ -723,13 +718,7 @@ export function CoursFicheView({
         </p>
         <h1 id="fiche-titre">{resource.title}</h1>
         <p className="text-muted-foreground mt-1 mb-6 text-sm">
-          {[
-            resource.kindLabel,
-            resource.minutes ? formatMinutes(resource.minutes) : null,
-            `Fiche ${at + 1} sur ${flat.length}`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {[resource.kindLabel, `Fiche ${at + 1} sur ${flat.length}`].filter(Boolean).join(" · ")}
         </p>
         {resource.content ? (
           <Markdown
