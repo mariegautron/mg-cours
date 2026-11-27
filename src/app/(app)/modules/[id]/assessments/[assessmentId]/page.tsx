@@ -378,6 +378,7 @@ export default async function AssessmentPage({
     whereToSubmit: assessment.where_to_submit,
     files: assessment.files,
     isOral: assessment.project_role === "oral",
+    ungradedReview: isUngradedReview(assessment),
     published: dayJExtras.published
       ? espaceUpToDate(dayJExtras.published.get(assessmentId), {
           ...assessment,

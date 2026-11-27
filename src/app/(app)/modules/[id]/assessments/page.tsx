@@ -178,6 +178,7 @@ export default async function ModuleAssessmentsPage({
       whereToSubmit: a.where_to_submit,
       files: a.files,
       isOral: a.project_role === "oral",
+      ungradedReview: isUngradedReview(a),
       published: extras.published
         ? espaceUpToDate(extras.published.get(a.id), { ...a, submit_mode: submitModeOf(a) })
         : undefined,
@@ -405,7 +406,11 @@ export default async function ModuleAssessmentsPage({
                     />
                     <StatusRow
                       label="Grille de correction"
-                      status={gridStatus(a.grading_grid?.name ?? null)}
+                      status={
+                        isUngradedReview(a) && !a.grading_grid
+                          ? { tone: "ok", label: "Pas nécessaire" }
+                          : gridStatus(a.grading_grid?.name ?? null)
+                      }
                     />
                     {evaluated.available ? (
                       <StatusRow

@@ -129,7 +129,11 @@ export function ProgressReviewScreen({
           {doneCount} retour{doneCount > 1 ? "s" : ""} terminé{doneCount > 1 ? "s" : ""} sur{" "}
           {copies.length}
         </p>
-        <div role="group" aria-label="Vue" className="flex gap-1.5">
+        <div
+          role="group"
+          aria-label="Vue"
+          className={cn("flex gap-1.5", criteria.length === 0 && "hidden")}
+        >
           {(
             [
               ["copy", "Par copie"],
@@ -514,7 +518,9 @@ function ReviewPanel({
         </p>
       </div>
       <p className="text-muted-foreground text-sm">
-        Point d’étape sans note. Un repère par critère : en avance, sur la bonne voie ou à revoir.
+        {criteria.length
+          ? "Point d’étape sans note. Un repère par critère : en avance, sur la bonne voie ou à revoir."
+          : "Point d’étape sans note : écris ton retour dans le commentaire global."}
       </p>
 
       {criteria.map((c) => {
@@ -600,18 +606,20 @@ function ReviewPanel({
           <h3 id="global-title" className="text-sm font-semibold">
             <label htmlFor={`g-${copy.id}`}>Commentaire global</label>
           </h3>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => setPublic("global", proposeGlobal(marks, criteria, copy.isGroup))}
-          >
-            Proposer
-          </Button>
+          {criteria.length ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setPublic("global", proposeGlobal(marks, criteria, copy.isGroup))}
+            >
+              Proposer
+            </Button>
+          ) : null}
         </div>
         <Textarea
           id={`g-${copy.id}`}
-          rows={4}
+          rows={criteria.length ? 4 : 18}
           maxLength={10000}
           value={global}
           onChange={(e) => setPublic("global", e.target.value)}
@@ -702,7 +710,11 @@ function ReviewPanel({
                 </ul>
               </>
             ) : (
-              <p>Chaque critère a son repère et son commentaire.</p>
+              <p>
+                {criteria.length
+                  ? "Chaque critère a son repère et son commentaire."
+                  : "Le commentaire global est écrit."}
+              </p>
             )}
             <p className="text-muted-foreground">
               Le dépôt se ferme une fois le retour terminé. Les étudiant·es le verront après «

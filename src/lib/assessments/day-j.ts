@@ -31,6 +31,8 @@ export interface DayJInput {
   submitMode?: string | null;
   files: unknown;
   isOral?: boolean;
+  /** Point d'étape non noté : ni grille, ni date alignée sur la séance (la date est conseillée). */
+  ungradedReview?: boolean;
   /** Sujet publié et à jour dans l'espace des étudiant·es ; `undefined` = inconnu. */
   published?: boolean;
   /** Pour un QCM : règles possibles, tirages préparés, publié ou ouverture programmée. */
@@ -81,7 +83,7 @@ export function dayJReadiness(i: DayJInput): DayJ {
     "Rédige les consignes du sujet.",
     edit,
   );
-  if (!isQcm) {
+  if (!isQcm && !i.ungradedReview) {
     add("grid", !!i.gradingGridId, "Grille reliée", "Relie une grille de correction.");
   }
   add(
@@ -95,7 +97,7 @@ export function dayJReadiness(i: DayJInput): DayJ {
     // Sans séance, rien ne permet de dire que la date est « cohérente ».
     add("date", false, "Pas rattachée à une séance", "absente de la frise des étudiant·es.", edit);
   } else {
-    const mismatch = !!(i.date && i.courseDate && i.date !== i.courseDate);
+    const mismatch = !i.ungradedReview && !!(i.date && i.courseDate && i.date !== i.courseDate);
     const dm = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
     add(
       "date",

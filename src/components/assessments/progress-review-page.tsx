@@ -122,27 +122,17 @@ export async function ProgressReviewPage({
       <Link href={back} className="text-sm underline underline-offset-2">
         ← {assessment.title}
       </Link>
-      {criteria.length === 0 ? (
-        <p className="rounded-xl border p-3 text-sm">
-          Ce point d’étape n’a pas encore de critères : choisis la grille de l’évaluation notée
-          qu’il prépare.{" "}
-          <Link href={`${back}/edit`} className="font-semibold underline underline-offset-2">
-            Modifier le point d’étape
-          </Link>
-        </p>
-      ) : (
-        <ProgressReviewScreen
-          moduleId={moduleId}
-          assessmentId={assessment.id}
-          title={assessment.title}
-          copies={copies}
-          criteria={criteria}
-          deadline={deadlineOf(assessment.date, null)?.toISOString() ?? null}
-          initialId={initialId}
-          doneCount={doneCount}
-          publishable={publishable}
-        />
-      )}
+      <ProgressReviewScreen
+        moduleId={moduleId}
+        assessmentId={assessment.id}
+        title={assessment.title}
+        copies={copies}
+        criteria={criteria}
+        deadline={deadlineOf(assessment.date, null)?.toISOString() ?? null}
+        initialId={initialId}
+        doneCount={doneCount}
+        publishable={publishable}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { isUngradedReview } from "@/lib/assessments/progress-review";
 import { dayJReadiness, espaceUpToDate, submitModeOf } from "@/lib/assessments/day-j";
 import { parseEspace, type EspaceEvaluation } from "@/lib/modules/espace";
 import { createClient } from "@/lib/supabase/server";
@@ -121,6 +122,7 @@ export async function listUpcomingAssessments(
       submitMode: submitModeOf(a),
       files: a.files,
       isOral: a.project_role === "oral",
+      ungradedReview: isUngradedReview(a),
       published: extras.published
         ? espaceUpToDate(extras.published.get(a.id), { ...a, submit_mode: submitModeOf(a) })
         : undefined,
