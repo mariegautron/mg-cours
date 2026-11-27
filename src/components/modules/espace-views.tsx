@@ -1,4 +1,4 @@
-import { ArrowRight, Check, MessageSquareText } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, MessageSquareText } from "lucide-react";
 import Link from "next/link";
 
 import { ContactLine } from "@/components/modules/contact-line";
@@ -403,6 +403,7 @@ export function EvaluationView({
   index,
   deposit,
   feedback,
+  canDeposit = false,
 }: {
   data: EspaceData;
   index: number;
@@ -410,6 +411,8 @@ export function EvaluationView({
   feedback?: React.ReactNode;
   /** Zone de dépôt (rendu « dans Marelle »), calculée côté serveur par la page. */
   deposit?: React.ReactNode;
+  /** La zone de dépôt est présente en bas de page : on y mène dès le haut. */
+  canDeposit?: boolean;
 }) {
   const { base, espace, frise } = data;
   const e = espace?.evaluations[index];
@@ -451,6 +454,17 @@ export function EvaluationView({
       ) : null}
       <h1>{e.title}</h1>
       {feedback ? <div className="mt-4 [&>section+section]:mt-3">{feedback}</div> : null}
+      {canDeposit ? (
+        <p className="mt-4">
+          <a
+            href="#depot"
+            className="bg-primary text-primary-foreground focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-lg px-5 font-semibold focus-visible:ring-2 focus-visible:outline-none"
+          >
+            Déposer mon rendu
+            <ArrowDown aria-hidden className="size-4" />
+          </a>
+        </p>
+      ) : null}
       {e.sections.length + (e.grid ? 1 : 0) > 1 ? (
         <nav aria-label="Sur cette page" className="mt-2">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
